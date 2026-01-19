@@ -1065,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('blog-content').innerHTML = post.content;
     } else if (postId) {
         // Only redirect if there's an ID parameter but it's invalid
-        window.location.href = '/blog.html';
+        window.location.href = '/blog';
     }
     // If no ID parameter, assume content is loaded directly via inline script
 });
