@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Hisan Ali - Digital Marketing Expert in Oman</title>
+    <meta name="description" content="Learn about Hisan Ali, a passionate Digital Marketing Expert in Oman with 5+ years of experience in SEO, Google Ads, and Social Media Marketing.">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .page-hero {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 140px 0 80px;
+            background: linear-gradient(135deg, #0D0614 0%, #1A0B2E 50%, #0D0614 100%);
+        }
+        .page-hero .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .page-hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .page-hero-content h1 {
+            font-size: 56px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .page-hero-content p {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.8;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .breadcrumb a {
+            color: rgba(255, 255, 255, 0.7);
+            transition: color 0.3s ease;
+        }
+        .breadcrumb a:hover {
+            color: white;
+        }
+        .breadcrumb span {
+            color: var(--primary);
+        }
+        .breadcrumb i {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
+        }
+
+        /* About Detail Section */
+        .about-detail {
+            padding: 100px 0;
+            background: var(--bg);
+        }
+        .about-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 80px;
+            align-items: start;
+        }
+        .about-image-section {
+            position: sticky;
+            top: 120px;
+        }
+        .about-main-image {
+            position: relative;
+        }
+        .about-main-image img {
+            width: 100%;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+        }
+        .image-decoration {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid var(--primary);
+            border-radius: 24px;
+            top: 20px;
+            left: 20px;
+            z-index: -1;
+        }
+        .about-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 32px;
+        }
+        .about-stat-box {
+            background: var(--bg-light);
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .about-stat-box:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .about-stat-box h3 {
+            font-size: 32px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+        .about-stat-box p {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .about-text-section h2 {
+            font-size: 42px;
+            margin-bottom: 24px;
+            color: var(--dark);
+        }
+        .about-text-section .lead {
+            font-size: 20px;
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 32px;
+        }
+        .about-text-section p {
+            color: var(--text);
+            line-height: 1.9;
+            margin-bottom: 20px;
+        }
+
+        /* Journey Timeline */
+        .journey-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+        .timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 3px;
+        }
+        .timeline-item {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 50px;
+            position: relative;
+            margin-bottom: 50px;
+            width: 50%;
+        }
+        .timeline-item:nth-child(even) {
+            justify-content: flex-start;
+            padding-left: 50px;
+            padding-right: 0;
+            margin-left: auto;
+        }
+        .timeline-dot {
+            position: absolute;
+            right: -12px;
+            top: 20px;
+            width: 24px;
+            height: 24px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: var(--shadow-md);
+        }
+        .timeline-item:nth-child(even) .timeline-dot {
+            left: -12px;
+            right: auto;
+        }
+        .timeline-content {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        .timeline-content:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        .timeline-year {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(101, 40, 247, 0.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .timeline-content h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+        .timeline-content p {
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Skills Section */
+        .skills-section {
+            padding: 100px 0;
+            background: var(--bg);
+        }
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .skill-card {
+            background: var(--bg-light);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .skill-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        .skill-card:hover::before {
+            transform: scaleX(1);
+        }
+        .skill-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        .skill-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 36px;
+            color: white;
+        }
+        .skill-card h3 {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+        .skill-card p {
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Values Section */
+        .values-section {
+            padding: 100px 0;
+            background: var(--gradient-primary);
+        }
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        .value-card {
+            text-align: center;
+            padding: 40px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+        .value-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .value-icon {
+            font-size: 48px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .value-card h3 {
+            font-size: 20px;
+            color: white;
+            margin-bottom: 12px;
+        }
+        .value-card p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 1024px) {
+            .about-detail-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+            .about-image-section {
+                position: relative;
+                top: 0;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .values-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-hero {
+                padding: 120px 0 60px;
+                min-height: 50vh;
+            }
+            .page-hero-content h1 {
+                font-size: 36px;
+            }
+            .page-hero-content p {
+                font-size: 16px;
+            }
+            .about-detail {
+                padding: 60px 0;
+            }
+            .about-text-section h2 {
+                font-size: 28px;
+            }
+            .about-text-section .lead {
+                font-size: 17px;
+            }
+            .about-stats-row {
+                grid-template-columns: 1fr;
+            }
+            .journey-section {
+                padding: 60px 0;
+            }
+            .timeline::before {
+                left: 20px;
+            }
+            .timeline-item,
+            .timeline-item:nth-child(even) {
+                width: 100%;
+                padding-left: 60px;
+                padding-right: 0;
+                margin-left: 0;
+            }
+            .timeline-dot,
+            .timeline-item:nth-child(even) .timeline-dot {
+                left: 8px;
+                right: auto;
+            }
+            .skills-section {
+                padding: 60px 0;
+            }
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+            .values-section {
+                padding: 60px 0;
+            }
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preloader"><div class="loader"></div></div>
+
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo"><a href="/"><span class="logo-text">Hisan</span><span class="logo-dot">.</span></a></div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/about" class="nav-link active">About</a></li>
+                    <li><a href="/services" class="nav-link">Services</a></li>
+                    <li><a href="/#portfolio" class="nav-link">Portfolio</a></li>
+                    <li><a href="/blog" class="nav-link">Blog</a></li>
+                    <li><a href="/contact" class="nav-link">Contact</a></li>
+                </ul>
+                <div class="nav-cta"><a href="/contact" class="btn-primary">Let's Talk</a></div>
+                <div class="hamburger"><span></span><span></span><span></span></div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Hero -->
+    <section class="page-hero">
+        <div class="hero-bg">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        <div class="container">
+            <div class="page-hero-content">
+                <div class="breadcrumb">
+                    <a href="/">Home</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>About</span>
+                </div>
+                <h1>About <span class="gradient-text">Me</span></h1>
+                <p>Passionate about transforming businesses through strategic digital marketing and delivering measurable results that matter.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Detail Section -->
+    <section class="about-detail">
+        <div class="container">
+            <div class="about-detail-grid">
+                <div class="about-image-section">
+                    <div class="about-main-image">
+                        <img src="../Hisan.jpg" alt="Hisan Ali - Digital Marketing Expert">
+                        <div class="image-decoration"></div>
+                    </div>
+                    <div class="about-stats-row">
+                        <div class="about-stat-box">
+                            <h3>5+</h3>
+                            <p>Years Experience</p>
+                        </div>
+                        <div class="about-stat-box">
+                            <h3>500+</h3>
+                            <p>Projects Done</p>
+                        </div>
+                        <div class="about-stat-box">
+                            <h3>98%</h3>
+                            <p>Happy Clients</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-text-section">
+                    <h2>Hi, I'm Hisan Ali</h2>
+                    <p class="lead">A passionate Digital Marketing Expert based in Oman, dedicated to helping businesses achieve exceptional growth through strategic digital marketing solutions.</p>
+                    <p>With over 5 years of hands-on experience in the digital marketing industry, I've had the privilege of working with diverse businesses across Oman and the GCC region. My journey in digital marketing began with a simple curiosity about how businesses connect with their audiences online, and it has evolved into a deep expertise in creating impactful marketing strategies.</p>
+                    <p>I specialize in Search Engine Optimization (SEO), Google Ads Management, and Social Media Marketing. My approach is always data-driven, focusing on understanding your business goals first, then crafting customized strategies that deliver measurable results. I believe that every business deserves a strong online presence, and I'm committed to making that happen.</p>
+                    <p>What sets me apart is my dedication to transparency and continuous learning. The digital landscape is always evolving, and I stay ahead of the curve by constantly updating my skills and strategies. When you work with me, you get a partner who genuinely cares about your success.</p>
+                    <p>When I'm not optimizing campaigns or analyzing data, you'll find me exploring new digital tools, sharing knowledge through my blog, or enjoying a good cup of coffee while brainstorming creative solutions for my clients.</p>
+                    <a href="/contact" class="btn-primary btn-large" style="margin-top: 24px;">
+                        <span>Let's Work Together</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Journey Section -->
+    <section class="journey-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">My Journey</span>
+                <h2 class="section-title">Professional Timeline</h2>
+                <p class="section-subtitle">Key milestones in my digital marketing career</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2020</span>
+                        <h3>Started Digital Marketing Journey</h3>
+                        <p>Began exploring SEO and Google Ads, completed multiple certifications, and started freelancing for local businesses in Oman.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2021</span>
+                        <h3>First Major Client Success</h3>
+                        <p>Helped a local e-commerce business increase their organic traffic by 200% and achieved first-page rankings for competitive keywords.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2022</span>
+                        <h3>Expanded Service Offerings</h3>
+                        <p>Added social media marketing and content strategy to services. Started working with businesses across the GCC region.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2023</span>
+                        <h3>100+ Successful Projects</h3>
+                        <p>Reached milestone of 100+ completed projects with 98% client satisfaction rate. Became Google Ads certified professional.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2024-Present</span>
+                        <h3>Continued Growth & Innovation</h3>
+                        <p>Focusing on advanced SEO strategies, AI-powered marketing, and helping more businesses achieve their digital goals.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section class="skills-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Expertise</span>
+                <h2 class="section-title">My Skills & Expertise</h2>
+                <p class="section-subtitle">Specialized knowledge to drive your digital success</p>
+            </div>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <div class="skill-icon"><i class="fas fa-search"></i></div>
+                    <h3>SEO Optimization</h3>
+                    <p>Expert in on-page, off-page, and technical SEO. I help websites rank higher and attract quality organic traffic that converts.</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon"><i class="fab fa-google"></i></div>
+                    <h3>Google Ads</h3>
+                    <p>Google Ads certified professional. I create and manage high-performing PPC campaigns that maximize ROI and drive results.</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon"><i class="fas fa-bullhorn"></i></div>
+                    <h3>Social Media Marketing</h3>
+                    <p>Strategic social media campaigns across all platforms. Building engaged communities and driving brand awareness.</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Analytics & Reporting</h3>
+                    <p>Data-driven decision making with comprehensive analytics. I turn data into actionable insights for continuous improvement.</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon"><i class="fas fa-pen-fancy"></i></div>
+                    <h3>Content Strategy</h3>
+                    <p>Creating compelling content that resonates with your audience and supports your marketing goals across all channels.</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon"><i class="fas fa-rocket"></i></div>
+                    <h3>Growth Strategy</h3>
+                    <p>Holistic digital marketing strategies aligned with your business objectives. Sustainable growth through integrated campaigns.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge" style="background: rgba(255,255,255,0.2); color: white;">My Values</span>
+                <h2 class="section-title" style="color: white;">What I Stand For</h2>
+                <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">The principles that guide my work</p>
+            </div>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon"><i class="fas fa-handshake"></i></div>
+                    <h3>Transparency</h3>
+                    <p>Clear communication and honest reporting. You'll always know exactly what's happening with your campaigns.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3>Results-Driven</h3>
+                    <p>Every strategy is focused on achieving measurable outcomes that impact your bottom line.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon"><i class="fas fa-lightbulb"></i></div>
+                    <h3>Innovation</h3>
+                    <p>Staying ahead of trends and leveraging new technologies to give you a competitive edge.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon"><i class="fas fa-heart"></i></div>
+                    <h3>Dedication</h3>
+                    <p>Your success is my success. I'm committed to going above and beyond for every client.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Transform Your Digital Presence?</h2>
+                <p>Let's discuss how I can help you achieve your marketing goals and drive real results for your business.</p>
+                <a href="/contact" class="btn-primary btn-large">
+                    <span>Get In Touch</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-text">Hisan</span>
+                        <span class="logo-dot">.</span>
+                    </div>
+                    <p>Digital Marketing Expert helping businesses grow through strategic SEO, Google Ads, and Social Media Marketing.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/services">Services</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="/services">SEO</a></li>
+                        <li><a href="/services">Google Ads</a></li>
+                        <li><a href="/services">Social Media</a></li>
+                        <li><a href="/services">Consultation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> hisanali73@gmail.com</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Muscat, Oman</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Hisan Ali. All rights reserved. Digital Marketing Expert in Oman.</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../script.js"></script>
+</body>
+</html>

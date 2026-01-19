@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Marketing Services - SEO, Google Ads, Social Media | Hisan Ali</title>
+    <meta name="description" content="Professional digital marketing services in Oman. Expert SEO, Google Ads management, Social Media Marketing, and more. Get measurable results for your business.">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .page-hero {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 140px 0 80px;
+            background: linear-gradient(135deg, #0D0614 0%, #1A0B2E 50%, #0D0614 100%);
+        }
+        .page-hero .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .page-hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .page-hero-content h1 {
+            font-size: 56px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .page-hero-content p {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.8;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .breadcrumb a {
+            color: rgba(255, 255, 255, 0.7);
+            transition: color 0.3s ease;
+        }
+        .breadcrumb a:hover {
+            color: white;
+        }
+        .breadcrumb span {
+            color: var(--primary);
+        }
+        .breadcrumb i {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
+        }
+
+        /* Services Overview */
+        .services-overview {
+            padding: 100px 0;
+            background: var(--bg);
+        }
+        .services-intro {
+            max-width: 800px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+        .services-intro p {
+            font-size: 18px;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        /* Service Detail Cards */
+        .service-detail {
+            padding: 80px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .service-detail:last-child {
+            border-bottom: none;
+        }
+        .service-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        .service-detail:nth-child(even) .service-detail-grid {
+            direction: rtl;
+        }
+        .service-detail:nth-child(even) .service-detail-grid > * {
+            direction: ltr;
+        }
+        .service-visual {
+            position: relative;
+        }
+        .service-icon-large {
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 400px;
+            margin: 0 auto;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .service-icon-large::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .service-detail-content h2 {
+            font-size: 40px;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+        .service-detail-content .service-desc {
+            font-size: 18px;
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 32px;
+        }
+        .service-benefits {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .benefit-item i {
+            color: var(--primary);
+            font-size: 20px;
+            margin-top: 2px;
+        }
+        .benefit-item span {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Pricing Section */
+        .pricing-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .pricing-card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+        .pricing-card.featured {
+            background: var(--gradient-primary);
+            transform: scale(1.05);
+        }
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-8px);
+        }
+        .pricing-card.featured * {
+            color: white;
+        }
+        .pricing-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .pricing-card h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        .pricing-card .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 24px 0;
+        }
+        .pricing-card.featured .price {
+            color: white;
+        }
+        .pricing-card .price span {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-light);
+        }
+        .pricing-card.featured .price span {
+            color: rgba(255,255,255,0.8);
+        }
+        .pricing-features {
+            list-style: none;
+            margin: 32px 0;
+            text-align: left;
+        }
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .pricing-card.featured .pricing-features li {
+            border-color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.9);
+        }
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+        .pricing-features i {
+            color: var(--primary);
+        }
+        .pricing-card.featured .pricing-features i {
+            color: white;
+        }
+        .pricing-card .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+        .pricing-card.featured .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        /* Process Section */
+        .process-section {
+            padding: 100px 0;
+            background: var(--bg);
+        }
+        .process-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        .process-card {
+            text-align: center;
+            position: relative;
+        }
+        .process-card::after {
+            content: '';
+            position: absolute;
+            top: 50px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+        .process-card:last-child::after {
+            display: none;
+        }
+        .process-number {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 24px;
+            position: relative;
+            z-index: 1;
+        }
+        .process-card h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+        .process-card p {
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+        .faq-grid {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .faq-item {
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .faq-question {
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .faq-question:hover {
+            background: var(--bg-light);
+        }
+        .faq-question h3 {
+            font-size: 18px;
+            color: var(--dark);
+            margin: 0;
+        }
+        .faq-question i {
+            color: var(--primary);
+            transition: transform 0.3s ease;
+        }
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+        .faq-answer {
+            padding: 0 32px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .faq-item.active .faq-answer {
+            padding: 0 32px 24px;
+            max-height: 300px;
+        }
+        .faq-answer p {
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        @media (max-width: 1024px) {
+            .service-detail-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+            .service-detail:nth-child(even) .service-detail-grid {
+                direction: ltr;
+            }
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+            .pricing-card.featured {
+                transform: none;
+            }
+            .pricing-card.featured:hover {
+                transform: translateY(-8px);
+            }
+            .process-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .process-card::after {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-hero {
+                padding: 120px 0 60px;
+                min-height: 50vh;
+            }
+            .page-hero-content h1 {
+                font-size: 36px;
+            }
+            .page-hero-content p {
+                font-size: 16px;
+            }
+            .services-overview {
+                padding: 60px 0;
+            }
+            .service-detail {
+                padding: 50px 0;
+            }
+            .service-detail-content h2 {
+                font-size: 28px;
+            }
+            .service-benefits {
+                grid-template-columns: 1fr;
+            }
+            .service-icon-large {
+                font-size: 80px;
+                max-width: 280px;
+            }
+            .pricing-section,
+            .process-section,
+            .faq-section {
+                padding: 60px 0;
+            }
+            .process-grid {
+                grid-template-columns: 1fr;
+            }
+            .pricing-card {
+                padding: 32px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preloader"><div class="loader"></div></div>
+
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo"><a href="/"><span class="logo-text">Hisan</span><span class="logo-dot">.</span></a></div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/about" class="nav-link">About</a></li>
+                    <li><a href="/services" class="nav-link active">Services</a></li>
+                    <li><a href="/#portfolio" class="nav-link">Portfolio</a></li>
+                    <li><a href="/blog" class="nav-link">Blog</a></li>
+                    <li><a href="/contact" class="nav-link">Contact</a></li>
+                </ul>
+                <div class="nav-cta"><a href="/contact" class="btn-primary">Let's Talk</a></div>
+                <div class="hamburger"><span></span><span></span><span></span></div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Hero -->
+    <section class="page-hero">
+        <div class="hero-bg">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        <div class="container">
+            <div class="page-hero-content">
+                <div class="breadcrumb">
+                    <a href="/">Home</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Services</span>
+                </div>
+                <h1>My <span class="gradient-text">Services</span></h1>
+                <p>Comprehensive digital marketing solutions tailored to elevate your brand and drive measurable business growth.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Overview -->
+    <section class="services-overview">
+        <div class="container">
+            <div class="services-intro">
+                <p>I offer a full suite of digital marketing services designed to help businesses of all sizes achieve their online goals. From increasing your search visibility to managing high-performing ad campaigns, every strategy is customized to deliver real results.</p>
+            </div>
+
+            <!-- SEO Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-1">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Search Engine Optimization</h2>
+                        <p class="service-desc">Dominate search results and drive organic traffic that converts. My comprehensive SEO strategies are designed to improve your website's visibility, attract qualified leads, and establish your brand as an authority in your industry.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Keyword Research & Strategy</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>On-Page Optimization</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Technical SEO Audit</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Link Building</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Local SEO</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Monthly Reporting</span>
+                            </div>
+                        </div>
+                        <a href="/contact" class="btn-primary">
+                            <span>Get SEO Quote</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Ads Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-2">
+                            <i class="fab fa-google"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Google Ads Management</h2>
+                        <p class="service-desc">Maximize your advertising ROI with expertly managed Google Ads campaigns. I create data-driven campaigns that target your ideal customers, optimize for conversions, and deliver measurable results.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Campaign Strategy & Setup</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Keyword Research & Bidding</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Ad Copy Creation</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Landing Page Optimization</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>A/B Testing</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Conversion Tracking</span>
+                            </div>
+                        </div>
+                        <a href="/contact" class="btn-primary">
+                            <span>Start Advertising</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-3">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Social Media Marketing</h2>
+                        <p class="service-desc">Build a powerful social media presence that engages your audience and drives real business results. From strategy development to content creation, I help you connect with your audience on the platforms that matter most.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Social Media Strategy</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Content Creation</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Community Management</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Paid Social Campaigns</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Influencer Outreach</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Analytics & Insights</span>
+                            </div>
+                        </div>
+                        <a href="/contact" class="btn-primary">
+                            <span>Grow Your Social</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphic Design Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-5">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Graphic Design</h2>
+                        <p class="service-desc">Professional graphic design that brings your brand to life. From social media graphics to marketing materials, I create visually compelling designs that capture attention and communicate your brand message effectively.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Brand Identity Design</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Social Media Graphics</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Ad Creatives</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Marketing Collateral</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Presentation Design</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Infographics</span>
+                            </div>
+                        </div>
+                        <a href="/contact" class="btn-primary">
+                            <span>Get Design Quote</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">How I Work</span>
+                <h2 class="section-title">My Process</h2>
+                <p class="section-subtitle">A systematic approach to delivering results</p>
+            </div>
+            <div class="process-grid">
+                <div class="process-card">
+                    <div class="process-number">1</div>
+                    <h3>Discovery</h3>
+                    <p>Understanding your business, goals, target audience, and current marketing efforts.</p>
+                </div>
+                <div class="process-card">
+                    <div class="process-number">2</div>
+                    <h3>Strategy</h3>
+                    <p>Developing a customized strategy aligned with your objectives and budget.</p>
+                </div>
+                <div class="process-card">
+                    <div class="process-number">3</div>
+                    <h3>Execution</h3>
+                    <p>Implementing the strategy with precision and continuous optimization.</p>
+                </div>
+                <div class="process-card">
+                    <div class="process-number">4</div>
+                    <h3>Results</h3>
+                    <p>Measuring success with detailed reporting and ongoing improvements.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">FAQ</span>
+                <h2 class="section-title">Frequently Asked Questions</h2>
+                <p class="section-subtitle">Common questions about my services</p>
+            </div>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How long does it take to see results from SEO?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>SEO is a long-term strategy. Typically, you can start seeing improvements within 3-6 months, with more significant results appearing after 6-12 months. The timeline depends on factors like your website's current state, competition, and the keywords you're targeting.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>What's the minimum budget for Google Ads?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>I recommend a minimum monthly ad spend of $500-1000 to gather meaningful data and achieve results. However, the ideal budget depends on your industry, competition, and goals. I'll help you determine the right budget during our consultation.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Do you offer monthly reporting?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! Transparency is one of my core values. You'll receive detailed monthly reports showing key metrics, progress toward goals, and actionable insights. I also provide regular check-ins to discuss performance and strategy adjustments.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Can you work with businesses outside Oman?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Absolutely! While I'm based in Oman, I work with clients across the GCC region and internationally. Digital marketing is not limited by geography, and I've successfully helped businesses from various countries achieve their online goals.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>What makes your services different?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>I focus on delivering measurable results, not vanity metrics. Every strategy is customized to your specific business goals. You get direct communication with me (no middlemen), transparent reporting, and a genuine commitment to your success.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Grow Your Business?</h2>
+                <p>Let's discuss your digital marketing needs and create a strategy that delivers real results.</p>
+                <a href="/contact" class="btn-primary btn-large">
+                    <span>Get Free Consultation</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-text">Hisan</span>
+                        <span class="logo-dot">.</span>
+                    </div>
+                    <p>Digital Marketing Expert helping businesses grow through strategic SEO, Google Ads, and Social Media Marketing.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/services">Services</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="/services">SEO</a></li>
+                        <li><a href="/services">Google Ads</a></li>
+                        <li><a href="/services">Social Media</a></li>
+                        <li><a href="/services">Consultation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> hisanali73@gmail.com</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Muscat, Oman</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Hisan Ali. All rights reserved. Digital Marketing Expert in Oman.</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../script.js"></script>
+    <script>
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                const isActive = item.classList.contains('active');
+
+                // Close all other items
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+
+                // Toggle current item
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
