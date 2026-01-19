@@ -148,86 +148,6 @@
             margin-bottom: 20px;
         }
 
-        /* Journey Timeline */
-        .journey-section {
-            padding: 100px 0;
-            background: var(--bg-light);
-        }
-        .timeline {
-            position: relative;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 3px;
-            height: 100%;
-            background: var(--gradient-primary);
-            border-radius: 3px;
-        }
-        .timeline-item {
-            display: flex;
-            justify-content: flex-end;
-            padding-right: 50px;
-            position: relative;
-            margin-bottom: 50px;
-            width: 50%;
-        }
-        .timeline-item:nth-child(even) {
-            justify-content: flex-start;
-            padding-left: 50px;
-            padding-right: 0;
-            margin-left: auto;
-        }
-        .timeline-dot {
-            position: absolute;
-            right: -12px;
-            top: 20px;
-            width: 24px;
-            height: 24px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            border: 4px solid white;
-            box-shadow: var(--shadow-md);
-        }
-        .timeline-item:nth-child(even) .timeline-dot {
-            left: -12px;
-            right: auto;
-        }
-        .timeline-content {
-            background: white;
-            padding: 32px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-        }
-        .timeline-content:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-        .timeline-year {
-            display: inline-block;
-            padding: 6px 16px;
-            background: rgba(101, 40, 247, 0.1);
-            color: var(--primary);
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        .timeline-content h3 {
-            font-size: 20px;
-            margin-bottom: 12px;
-            color: var(--dark);
-        }
-        .timeline-content p {
-            color: var(--text);
-            line-height: 1.7;
-        }
-
         /* Skills Section */
         .skills-section {
             padding: 100px 0;
@@ -365,24 +285,6 @@
             .about-stats-row {
                 grid-template-columns: 1fr;
             }
-            .journey-section {
-                padding: 60px 0;
-            }
-            .timeline::before {
-                left: 20px;
-            }
-            .timeline-item,
-            .timeline-item:nth-child(even) {
-                width: 100%;
-                padding-left: 60px;
-                padding-right: 0;
-                margin-left: 0;
-            }
-            .timeline-dot,
-            .timeline-item:nth-child(even) .timeline-dot {
-                left: 8px;
-                right: auto;
-            }
             .skills-section {
                 padding: 60px 0;
             }
@@ -474,59 +376,6 @@
                         <span>Let's Work Together</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Journey Section -->
-    <section class="journey-section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">My Journey</span>
-                <h2 class="section-title">Professional Timeline</h2>
-                <p class="section-subtitle">Key milestones in my digital marketing career</p>
-            </div>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-year">2020</span>
-                        <h3>Started Digital Marketing Journey</h3>
-                        <p>Began exploring SEO and Google Ads, completed multiple certifications, and started freelancing for local businesses in Oman.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-year">2021</span>
-                        <h3>First Major Client Success</h3>
-                        <p>Helped a local e-commerce business increase their organic traffic by 200% and achieved first-page rankings for competitive keywords.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-year">2022</span>
-                        <h3>Expanded Service Offerings</h3>
-                        <p>Added social media marketing and content strategy to services. Started working with businesses across the GCC region.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-year">2023</span>
-                        <h3>100+ Successful Projects</h3>
-                        <p>Reached milestone of 100+ completed projects with 98% client satisfaction rate. Became Google Ads certified professional.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-year">2024-Present</span>
-                        <h3>Continued Growth & Innovation</h3>
-                        <p>Focusing on advanced SEO strategies, AI-powered marketing, and helping more businesses achieve their digital goals.</p>
-                    </div>
                 </div>
             </div>
         </div>
