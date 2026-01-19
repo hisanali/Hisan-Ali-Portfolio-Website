@@ -345,30 +345,177 @@ if (portfolioFilters.length > 0) {
 }
 
 // ===================================
-// Form Validation (if contact form exists)
+// Form Validation and Submission
 // ===================================
 
-const contactForm = document.querySelector('.contact-form');
+const contactForm = document.getElementById('contactForm');
 
 if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const name = contactForm.querySelector('input[name="name"]').value;
-        const email = contactForm.querySelector('input[name="email"]').value;
-        const message = contactForm.querySelector('textarea[name="message"]').value;
+        const name = contactForm.querySelector('#name').value.trim();
+        const email = contactForm.querySelector('#email').value.trim();
+        const subject = contactForm.querySelector('#subject').value.trim();
+        const message = contactForm.querySelector('#message').value.trim();
 
-        if (name && email && message) {
-            // Form is valid, you can send data here
-            console.log('Form submitted:', { name, email, message });
+        // Basic validation
+        if (!name || !email || !subject || !message) {
+            showNotification('Please fill in all fields.', 'error');
+            return;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showNotification('Please enter a valid email address.', 'error');
+            return;
+        }
+
+        // Get the submit button
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Sending...</span><i class="fas fa-spinner fa-spin"></i>';
+
+        // Simulate form submission (replace with actual API call)
+        setTimeout(() => {
+            console.log('Form submitted:', { name, email, subject, message });
 
             // Show success message
-            alert('Thank you for your message! I will get back to you soon.');
+            showNotification('Thank you for your message! I will get back to you soon.', 'success');
+
+            // Reset form
             contactForm.reset();
-        } else {
-            alert('Please fill in all fields.');
+
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }, 1500);
+
+        // For actual implementation, use this structure:
+        /*
+        try {
+            const response = await fetch('YOUR_API_ENDPOINT', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, subject, message })
+            });
+
+            if (response.ok) {
+                showNotification('Thank you for your message! I will get back to you soon.', 'success');
+                contactForm.reset();
+            } else {
+                showNotification('Something went wrong. Please try again.', 'error');
+            }
+        } catch (error) {
+            showNotification('Unable to send message. Please email me directly.', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
         }
+        */
     });
+}
+
+// Notification helper function
+function showNotification(message, type = 'success') {
+    // Remove existing notification if any
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+    // Add to body
+    document.body.appendChild(notification);
+
+    // Add styles if not already present
+    if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 100px;
+                right: 30px;
+                padding: 18px 24px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+                max-width: 400px;
+            }
+
+            .notification-success {
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+            }
+
+            .notification-error {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+            }
+
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 15px;
+            }
+
+            .notification-content i {
+                font-size: 20px;
+            }
+
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .notification {
+                    top: 80px;
+                    right: 16px;
+                    left: 16px;
+                    max-width: none;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Show notification
+    setTimeout(() => {
+        notification.style.opacity = '1';
+    }, 100);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideInRight 0.3s ease reverse';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 5000);
 }
 
 // ===================================
