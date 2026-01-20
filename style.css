@@ -449,9 +449,16 @@ img {
     gap: 16px;
 }
 
+.first-hero-card,
 .hero-card:first-child {
     grid-column: 1 / -1;
     justify-content: center;
+}
+
+.first-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .card-icon {
