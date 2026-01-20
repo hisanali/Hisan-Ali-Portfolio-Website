@@ -451,7 +451,6 @@ img {
 
 .hero-card:first-child {
     grid-column: 1 / -1;
-    width: 100%;
     justify-content: center;
 }
 
