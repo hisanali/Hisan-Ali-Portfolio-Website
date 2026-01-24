@@ -643,45 +643,35 @@ if (contactForm) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span>Sending...</span><i class="fas fa-spinner fa-spin"></i>';
 
-        // Simulate form submission (replace with actual API call)
-        setTimeout(() => {
-            console.log('Form submitted:', { name, email, subject, message });
+        // Submit to Google Forms
+        const googleFormUrl = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdgx6_TzXerm4B5uyH3-WIkgdiXq7DYZWDmIjkf9sDE9Wp32w/formResponse';
 
-            // Show success message
+        const formData = new FormData();
+        formData.append('entry.1866986944', name);    // Your Name
+        formData.append('entry.2140800298', email);   // Your Email
+        formData.append('entry.1624715575', subject); // Your Subject
+        formData.append('entry.661425805', message);  // Your Message
+
+        try {
+            await fetch(googleFormUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            });
+
+            // Show success message (no-cors mode doesn't return response, but submission works)
             showNotification('Thank you for your message! I will get back to you soon.', 'success');
 
             // Reset form
             contactForm.reset();
-
+        } catch (error) {
+            console.error('Form submission error:', error);
+            showNotification('Unable to send message. Please email me directly at hisanali73@gmail.com', 'error');
+        } finally {
             // Re-enable button
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
-        }, 1500);
-
-        // For actual implementation, use this structure:
-        /*
-        try {
-            const response = await fetch('YOUR_API_ENDPOINT', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email, subject, message })
-            });
-
-            if (response.ok) {
-                showNotification('Thank you for your message! I will get back to you soon.', 'success');
-                contactForm.reset();
-            } else {
-                showNotification('Something went wrong. Please try again.', 'error');
-            }
-        } catch (error) {
-            showNotification('Unable to send message. Please email me directly.', 'error');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
         }
-        */
     });
 }
 
