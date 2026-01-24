@@ -2,6 +2,87 @@
 // Modern Portfolio JavaScript
 // ===================================
 
+// Hero Background Effect - Cursor-following Orbs
+document.addEventListener('DOMContentLoaded', () => {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+
+    // Create orbs container
+    const orbsContainer = document.createElement('div');
+    orbsContainer.className = 'hero-orbs';
+    orbsContainer.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 1;
+    `;
+    hero.style.position = 'relative';
+    hero.insertBefore(orbsContainer, hero.firstChild);
+
+    // Create orbs that follow cursor - more visible with dramatic movement
+    const orbConfigs = [
+        { size: 300, color: 'rgba(139, 92, 246, 0.5)', baseX: 15, baseY: 25, speed: 1 },
+        { size: 250, color: 'rgba(236, 72, 153, 0.45)', baseX: 65, baseY: 15, speed: 0.7 },
+        { size: 220, color: 'rgba(249, 115, 22, 0.4)', baseX: 75, baseY: 55, speed: 0.85 },
+        { size: 200, color: 'rgba(139, 92, 246, 0.45)', baseX: 25, baseY: 65, speed: 1.2 },
+        { size: 180, color: 'rgba(236, 72, 153, 0.4)', baseX: 45, baseY: 45, speed: 1.5 }
+    ];
+
+    const orbs = [];
+
+    orbConfigs.forEach((config, i) => {
+        const orb = document.createElement('div');
+        orb.style.cssText = `
+            position: absolute;
+            width: ${config.size}px;
+            height: ${config.size}px;
+            background: radial-gradient(circle, ${config.color} 0%, transparent 70%);
+            border-radius: 50%;
+            left: ${config.baseX}%;
+            top: ${config.baseY}%;
+            filter: blur(50px);
+        `;
+        orbsContainer.appendChild(orb);
+        orbs.push({ element: orb, config, currentX: 0, currentY: 0 });
+    });
+
+    // Track mouse position
+    let mouseX = 0;
+    let mouseY = 0;
+
+    hero.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        mouseX = (e.clientX - rect.left) / rect.width - 0.5;
+        mouseY = (e.clientY - rect.top) / rect.height - 0.5;
+    });
+
+    hero.addEventListener('mouseleave', () => {
+        mouseX = 0;
+        mouseY = 0;
+    });
+
+    // Animate orbs towards cursor with dramatic movement
+    function animate() {
+        orbs.forEach((orb) => {
+            // Much larger movement range - up to 150px based on speed
+            const targetX = mouseX * 300 * orb.config.speed;
+            const targetY = mouseY * 300 * orb.config.speed;
+
+            // Faster response for more immediate feel
+            orb.currentX += (targetX - orb.currentX) * 0.15;
+            orb.currentY += (targetY - orb.currentY) * 0.15;
+
+            orb.element.style.transform = `translate(${orb.currentX}px, ${orb.currentY}px)`;
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+});
+
 // Preloader
 window.addEventListener('load', () => {
     const preloader = document.querySelector('.preloader');
