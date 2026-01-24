@@ -619,12 +619,18 @@ if (contactForm) {
 
         const name = contactForm.querySelector('#name').value.trim();
         const email = contactForm.querySelector('#email').value.trim();
-        const subject = contactForm.querySelector('#subject').value.trim();
+        const subject = contactForm.querySelector('#subject')?.value.trim() || '';
         const message = contactForm.querySelector('#message').value.trim();
 
+        // Check if this is the contact page form (has phone field)
+        const isContactPage = !!contactForm.querySelector('#phone');
+        const phone = isContactPage ? (contactForm.querySelector('#phone').value.trim() || '') : '';
+        const service = isContactPage ? (contactForm.querySelector('#service').value || '') : '';
+        const budget = isContactPage ? (contactForm.querySelector('#budget').value || '') : '';
+
         // Basic validation
-        if (!name || !email || !subject || !message) {
-            showNotification('Please fill in all fields.', 'error');
+        if (!name || !email || !message) {
+            showNotification('Please fill in all required fields.', 'error');
             return;
         }
 
@@ -643,14 +649,39 @@ if (contactForm) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span>Sending...</span><i class="fas fa-spinner fa-spin"></i>';
 
-        // Submit to Google Forms
-        const googleFormUrl = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdgx6_TzXerm4B5uyH3-WIkgdiXq7DYZWDmIjkf9sDE9Wp32w/formResponse';
-
+        // Determine which Google Form to submit to
+        let googleFormUrl;
         const formData = new FormData();
-        formData.append('entry.1866986944', name);    // Your Name
-        formData.append('entry.2140800298', email);   // Your Email
-        formData.append('entry.1624715575', subject); // Your Subject
-        formData.append('entry.661425805', message);  // Your Message
+
+        if (isContactPage) {
+            // Contact page form - submit to second Google Form
+            googleFormUrl = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSfJndk37Z7sfGsaS8Nn3ujDMIBhU75pl0FRnykxge4fwxFfcQ/formResponse';
+            formData.append('entry.975940308', name);      // Your Name
+            formData.append('entry.974041241', email);     // Email Address
+            formData.append('entry.1031713771', phone);    // Phone Number
+            formData.append('entry.406911209', subject);   // Subject
+            formData.append('entry.1629603893', budget);   // Estimated Budget
+            formData.append('entry.1936083772', message);  // Your Message
+            // Map service dropdown values to Google Form radio options
+            const serviceMap = {
+                'seo': 'SEO Optimization',
+                'google-ads': 'Google ADS management',
+                'social-media': 'Social Media Marketing',
+                'graphic-design': 'Graphic Design',
+                'consultation': 'Consultation',
+                'other': 'Other'
+            };
+            if (service && serviceMap[service]) {
+                formData.append('entry.427941684', serviceMap[service]); // Service Interested in
+            }
+        } else {
+            // Home page form - submit to first Google Form
+            googleFormUrl = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdgx6_TzXerm4B5uyH3-WIkgdiXq7DYZWDmIjkf9sDE9Wp32w/formResponse';
+            formData.append('entry.1866986944', name);     // Your Name
+            formData.append('entry.2140800298', email);    // Your Email
+            formData.append('entry.1624715575', subject);  // Your Subject
+            formData.append('entry.661425805', message);   // Your Message
+        }
 
         try {
             await fetch(googleFormUrl, {
