@@ -29,252 +29,59 @@
     <meta name="author" content="Hisan Ali">
     <meta name="robots" content="index, follow">
 
-    <!-- Structured Data - Service Page -->
+    <!-- Structured Data - Service -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "WebPage",
-        "@id": "https://hisanali.com/services/#webpage",
-        "url": "https://hisanali.com/services/",
-        "name": "Digital Marketing Services - SEO, Google Ads, Social Media | Hisan Ali",
-        "description": "Professional digital marketing services in Oman. Expert SEO, Google Ads management, Social Media Marketing, and more.",
-        "isPartOf": {
-            "@type": "WebSite",
-            "@id": "https://hisanali.com/#website"
+        "@type": "Service",
+        "serviceType": "Digital Marketing Services",
+        "provider": {
+            "@type": "ProfessionalService",
+            "name": "Hisan Ali - Digital Marketing Expert",
+            "url": "https://hisanali.com"
         },
-        "about": {
-            "@type": "Thing",
-            "name": "Digital Marketing Services"
+        "areaServed": {
+            "@type": "Country",
+            "name": "Oman"
         },
-        "primaryImageOfPage": {
-            "@type": "ImageObject",
-            "url": "https://hisanali.com/Hisan.jpg"
-        },
-        "breadcrumb": {
-            "@type": "BreadcrumbList",
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Digital Marketing Services",
             "itemListElement": [
                 {
-                    "@type": "ListItem",
-                    "position": 1,
-                    "name": "Home",
-                    "item": "https://hisanali.com/"
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Search Engine Optimization (SEO)",
+                        "description": "Comprehensive SEO services including on-page, off-page, and technical SEO"
+                    }
                 },
                 {
-                    "@type": "ListItem",
-                    "position": 2,
-                    "name": "Services",
-                    "item": "https://hisanali.com/services/"
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Google Ads Management",
+                        "description": "Expert PPC campaign management for maximum ROI"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Social Media Marketing",
+                        "description": "Strategic social media campaigns to build brand presence"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Graphic Design",
+                        "description": "Professional graphic design for digital marketing materials"
+                    }
                 }
             ]
         }
-    }
-    </script>
-
-    <!-- Structured Data - Service Catalog -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "name": "Digital Marketing Services by Hisan Ali",
-        "description": "Comprehensive digital marketing services offered in Oman",
-        "numberOfItems": 4,
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "item": {
-                    "@type": "Service",
-                    "@id": "https://hisanali.com/services/#seo",
-                    "name": "Search Engine Optimization (SEO)",
-                    "description": "Dominate search results and drive organic traffic that converts. Comprehensive SEO strategies including keyword research, on-page optimization, technical SEO audit, link building, local SEO, and monthly reporting.",
-                    "provider": {
-                        "@type": "ProfessionalService",
-                        "@id": "https://hisanali.com/#business"
-                    },
-                    "areaServed": {
-                        "@type": "Country",
-                        "name": "Oman"
-                    },
-                    "serviceType": "SEO Services",
-                    "termsOfService": "https://hisanali.com/contact/",
-                    "offers": {
-                        "@type": "Offer",
-                        "availability": "https://schema.org/InStock",
-                        "priceSpecification": {
-                            "@type": "PriceSpecification",
-                            "priceCurrency": "OMR"
-                        }
-                    }
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 2,
-                "item": {
-                    "@type": "Service",
-                    "@id": "https://hisanali.com/services/#google-ads",
-                    "name": "Google Ads Management",
-                    "description": "Maximize your advertising ROI with expertly managed Google Ads campaigns. Services include campaign strategy, keyword research, ad copy creation, landing page optimization, A/B testing, and conversion tracking.",
-                    "provider": {
-                        "@type": "ProfessionalService",
-                        "@id": "https://hisanali.com/#business"
-                    },
-                    "areaServed": {
-                        "@type": "Country",
-                        "name": "Oman"
-                    },
-                    "serviceType": "PPC Advertising",
-                    "offers": {
-                        "@type": "Offer",
-                        "availability": "https://schema.org/InStock",
-                        "priceSpecification": {
-                            "@type": "PriceSpecification",
-                            "priceCurrency": "OMR"
-                        }
-                    }
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 3,
-                "item": {
-                    "@type": "Service",
-                    "@id": "https://hisanali.com/services/#social-media",
-                    "name": "Social Media Marketing",
-                    "description": "Build a powerful social media presence that engages your audience and drives real business results. Services include strategy development, content creation, community management, paid social campaigns, influencer outreach, and analytics.",
-                    "provider": {
-                        "@type": "ProfessionalService",
-                        "@id": "https://hisanali.com/#business"
-                    },
-                    "areaServed": {
-                        "@type": "Country",
-                        "name": "Oman"
-                    },
-                    "serviceType": "Social Media Marketing",
-                    "offers": {
-                        "@type": "Offer",
-                        "availability": "https://schema.org/InStock",
-                        "priceSpecification": {
-                            "@type": "PriceSpecification",
-                            "priceCurrency": "OMR"
-                        }
-                    }
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 4,
-                "item": {
-                    "@type": "Service",
-                    "@id": "https://hisanali.com/services/#graphic-design",
-                    "name": "Graphic Design",
-                    "description": "Professional graphic design that brings your brand to life. Services include brand identity design, social media graphics, ad creatives, marketing collateral, presentation design, and infographics.",
-                    "provider": {
-                        "@type": "ProfessionalService",
-                        "@id": "https://hisanali.com/#business"
-                    },
-                    "areaServed": {
-                        "@type": "Country",
-                        "name": "Oman"
-                    },
-                    "serviceType": "Graphic Design",
-                    "offers": {
-                        "@type": "Offer",
-                        "availability": "https://schema.org/InStock",
-                        "priceSpecification": {
-                            "@type": "PriceSpecification",
-                            "priceCurrency": "OMR"
-                        }
-                    }
-                }
-            }
-        ]
-    }
-    </script>
-
-    <!-- Structured Data - HowTo (Process) -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "HowTo",
-        "name": "How Hisan Ali Delivers Digital Marketing Results",
-        "description": "A systematic 4-step approach to delivering measurable digital marketing results for your business.",
-        "step": [
-            {
-                "@type": "HowToStep",
-                "position": 1,
-                "name": "Discovery",
-                "text": "Understanding your business, goals, target audience, and current marketing efforts through comprehensive consultation."
-            },
-            {
-                "@type": "HowToStep",
-                "position": 2,
-                "name": "Strategy",
-                "text": "Developing a customized digital marketing strategy aligned with your objectives and budget."
-            },
-            {
-                "@type": "HowToStep",
-                "position": 3,
-                "name": "Execution",
-                "text": "Implementing the strategy with precision and continuous optimization for best results."
-            },
-            {
-                "@type": "HowToStep",
-                "position": 4,
-                "name": "Results",
-                "text": "Measuring success with detailed reporting and ongoing improvements to maximize ROI."
-            }
-        ]
-    }
-    </script>
-
-    <!-- Structured Data - FAQPage -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {
-                "@type": "Question",
-                "name": "How long does it take to see results from SEO?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "SEO is a long-term strategy. Typically, you can start seeing improvements within 3-6 months, with more significant results appearing after 6-12 months. The timeline depends on factors like your website's current state, competition, and the keywords you're targeting."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "What's the minimum budget for Google Ads?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "I recommend a minimum monthly ad spend of $500-1000 to gather meaningful data and achieve results. However, the ideal budget depends on your industry, competition, and goals. I'll help you determine the right budget during our consultation."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "Do you offer monthly reporting?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Yes! Transparency is one of my core values. You'll receive detailed monthly reports showing key metrics, progress toward goals, and actionable insights. I also provide regular check-ins to discuss performance and strategy adjustments."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "Can you work with businesses outside Oman?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Absolutely! While I'm based in Oman, I work with clients across the GCC region and internationally. Digital marketing is not limited by geography, and I've successfully helped businesses from various countries achieve their online goals."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "What makes your services different?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "I focus on delivering measurable results, not vanity metrics. Every strategy is customized to your specific business goals. You get direct communication with me (no middlemen), transparent reporting, and a genuine commitment to your success."
-                }
-            }
-        ]
     }
     </script>
 
