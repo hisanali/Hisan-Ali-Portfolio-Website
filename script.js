@@ -2,6 +2,188 @@
 // Modern Portfolio JavaScript
 // ===================================
 
+// Sneaky Peeker Character in Hero Section
+document.addEventListener('DOMContentLoaded', () => {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+
+    // Create the sneaky character peeking from the right side
+    const peeker = document.createElement('div');
+    peeker.className = 'sneaky-peeker';
+    peeker.innerHTML = `
+        <div class="thought-bubble"><span class="typing-text"></span></div>
+        <div class="peeker-face">
+            <div class="peeker-eyes">
+                <div class="peeker-eye left-eye">
+                    <div class="pupil"></div>
+                </div>
+                <div class="peeker-eye right-eye">
+                    <div class="pupil"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    hero.appendChild(peeker);
+
+    // Click to scroll to contact section
+    peeker.addEventListener('click', () => {
+        document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Typing effect for thought bubble
+    const typingText = peeker.querySelector('.typing-text');
+    const messages = ["Hi, I'm watching you", "Click me to contact Hisan"];
+    let messageIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let isPaused = false;
+
+    function typeEffect() {
+        const currentMessage = messages[messageIndex];
+
+        if (!isDeleting && charIndex <= currentMessage.length) {
+            typingText.textContent = currentMessage.substring(0, charIndex);
+            charIndex++;
+            setTimeout(typeEffect, 50);
+        } else if (!isDeleting && charIndex > currentMessage.length) {
+            isPaused = true;
+            setTimeout(() => {
+                isDeleting = true;
+                typeEffect();
+            }, 1500);
+        } else if (isDeleting && charIndex > 0) {
+            typingText.textContent = currentMessage.substring(0, charIndex - 1);
+            charIndex--;
+            setTimeout(typeEffect, 25);
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            messageIndex = (messageIndex + 1) % messages.length;
+            setTimeout(typeEffect, 500);
+        }
+    }
+
+    typeEffect();
+
+    // Add styles for the peeker
+    const peekerStyles = document.createElement('style');
+    peekerStyles.textContent = `
+        .sneaky-peeker {
+            position: absolute;
+            right: -30px;
+            bottom: 20%;
+            width: 80px;
+            height: 100px;
+            z-index: 10;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .peeker-face {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6528F7, #A855F7);
+            border-radius: 50% 0 0 50%;
+            position: relative;
+            box-shadow: -5px 0 20px rgba(101, 40, 247, 0.3);
+        }
+        .peeker-eyes {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-70%, -50%);
+            display: flex;
+            gap: 12px;
+        }
+        .peeker-eye {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        .pupil {
+            width: 10px;
+            height: 10px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease;
+        }
+        .sneaky-peeker:hover {
+            transform: translateX(-20px);
+        }
+        .sneaky-peeker:hover .peeker-face {
+            animation: wiggle 0.5s ease;
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+        .thought-bubble {
+            position: absolute;
+            right: 90px;
+            top: -10px;
+            background: white;
+            color: #1a1a2e;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transform: scale(0.8) translateX(20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+        .thought-bubble::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 8px solid transparent;
+            border-left-color: white;
+        }
+        .sneaky-peeker:hover .thought-bubble {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+        }
+        .thought-bubble.pop {
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    `;
+    document.head.appendChild(peekerStyles);
+
+    // Make eyes follow cursor
+    const leftPupil = peeker.querySelector('.left-eye .pupil');
+    const rightPupil = peeker.querySelector('.right-eye .pupil');
+
+    document.addEventListener('mousemove', (e) => {
+        const peekerRect = peeker.getBoundingClientRect();
+        const peekerCenterX = peekerRect.left + peekerRect.width / 2;
+        const peekerCenterY = peekerRect.top + peekerRect.height / 2;
+
+        const angle = Math.atan2(e.clientY - peekerCenterY, e.clientX - peekerCenterX);
+        const distance = 3;
+
+        const pupilX = Math.cos(angle) * distance;
+        const pupilY = Math.sin(angle) * distance;
+
+        leftPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+        rightPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+    });
+});
+
 // Hero Background Effect - Cursor-following Orbs
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');
