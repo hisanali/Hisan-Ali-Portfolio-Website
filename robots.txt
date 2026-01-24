@@ -1,0 +1,10 @@
+# Robots.txt for hisanali.com
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://hisanali.com/sitemap.xml
+
+# Disallow admin and server directories
+Disallow: /admin/
+Disallow: /server/
