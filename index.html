@@ -33,20 +33,105 @@
     <meta name="geo.region" content="OM">
     <meta name="geo.placename" content="Muscat">
 
-    <!-- Structured Data - Person/LocalBusiness -->
+    <!-- Structured Data - WebSite -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Hisan Ali - Digital Marketing Expert",
+        "alternateName": "Hisan Ali",
+        "url": "https://hisanali.com",
+        "description": "Professional Digital Marketing Expert in Oman specializing in SEO, Google Ads, and Social Media Marketing.",
+        "publisher": {
+            "@type": "Person",
+            "name": "Hisan Ali"
+        },
+        "inLanguage": "en",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://hisanali.com/blog?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+
+    <!-- Structured Data - Person -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "@id": "https://hisanali.com/#person",
+        "name": "Hisan Ali",
+        "givenName": "Hisan",
+        "familyName": "Ali",
+        "jobTitle": "Digital Marketing Expert",
+        "description": "Professional Digital Marketing Expert in Oman with 5+ years of experience specializing in SEO, Google Ads, and Social Media Marketing.",
+        "url": "https://hisanali.com",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://hisanali.com/Hisan.jpg",
+            "width": 800,
+            "height": 800
+        },
+        "email": "mailto:hisanali73@gmail.com",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Mabelah",
+            "addressLocality": "Muscat",
+            "addressRegion": "Muscat Governorate",
+            "addressCountry": "OM"
+        },
+        "sameAs": [
+            "https://www.linkedin.com/in/hisanali/",
+            "https://www.instagram.com/_hisxnnn_"
+        ],
+        "knowsAbout": [
+            "Search Engine Optimization",
+            "SEO",
+            "Google Ads",
+            "PPC Advertising",
+            "Social Media Marketing",
+            "Digital Marketing Strategy",
+            "Content Marketing",
+            "Graphic Design",
+            "Analytics",
+            "Conversion Optimization"
+        ],
+        "hasCredential": {
+            "@type": "EducationalOccupationalCredential",
+            "credentialCategory": "certification",
+            "name": "Google Ads Certified"
+        },
+        "worksFor": {
+            "@type": "Organization",
+            "name": "Hisan Ali Digital Marketing",
+            "url": "https://hisanali.com"
+        }
+    }
+    </script>
+
+    <!-- Structured Data - ProfessionalService/LocalBusiness -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "ProfessionalService",
+        "@id": "https://hisanali.com/#business",
         "name": "Hisan Ali - Digital Marketing Expert",
+        "alternateName": "Hisan Ali Digital Marketing",
+        "description": "Professional digital marketing services in Oman including SEO, Google Ads, Social Media Marketing, and Graphic Design. Delivering measurable results for businesses.",
         "image": "https://hisanali.com/Hisan.jpg",
+        "logo": "https://hisanali.com/Hisan.jpg",
         "url": "https://hisanali.com",
-        "telephone": "",
         "email": "hisanali73@gmail.com",
         "address": {
             "@type": "PostalAddress",
+            "streetAddress": "Mabelah",
             "addressLocality": "Muscat",
-            "addressRegion": "Muscat",
+            "addressRegion": "Muscat Governorate",
+            "postalCode": "",
             "addressCountry": "OM"
         },
         "geo": {
@@ -54,27 +139,175 @@
             "latitude": 23.5880,
             "longitude": 58.3829
         },
+        "areaServed": [
+            {
+                "@type": "Country",
+                "name": "Oman"
+            },
+            {
+                "@type": "GeoCircle",
+                "geoMidpoint": {
+                    "@type": "GeoCoordinates",
+                    "latitude": 23.5880,
+                    "longitude": 58.3829
+                },
+                "geoRadius": "500000"
+            }
+        ],
         "priceRange": "$$",
-        "openingHours": "Su-Th 09:00-18:00",
+        "currenciesAccepted": "OMR, USD",
+        "paymentAccepted": "Bank Transfer, Cash",
+        "openingHoursSpecification": [
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+                "opens": "09:00",
+                "closes": "18:00"
+            }
+        ],
         "sameAs": [
             "https://www.linkedin.com/in/hisanali/",
             "https://www.instagram.com/_hisxnnn_"
         ],
-        "service": [
+        "founder": {
+            "@type": "Person",
+            "@id": "https://hisanali.com/#person"
+        },
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Digital Marketing Services",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Search Engine Optimization (SEO)",
+                        "description": "Comprehensive SEO services including on-page, off-page, and technical SEO to improve website visibility and drive organic traffic.",
+                        "provider": {"@id": "https://hisanali.com/#business"},
+                        "areaServed": "Oman",
+                        "serviceType": "SEO Services"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Google Ads Management",
+                        "description": "Expert Google Ads PPC campaign management for maximum ROI, including campaign setup, optimization, and performance reporting.",
+                        "provider": {"@id": "https://hisanali.com/#business"},
+                        "areaServed": "Oman",
+                        "serviceType": "PPC Advertising"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Social Media Marketing",
+                        "description": "Strategic social media marketing campaigns to build brand presence, engage audiences, and drive conversions.",
+                        "provider": {"@id": "https://hisanali.com/#business"},
+                        "areaServed": "Oman",
+                        "serviceType": "Social Media Marketing"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Graphic Design",
+                        "description": "Professional graphic design services for brand identity, social media graphics, marketing materials, and ad creatives.",
+                        "provider": {"@id": "https://hisanali.com/#business"},
+                        "areaServed": "Oman",
+                        "serviceType": "Graphic Design"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Digital Marketing Strategy",
+                        "description": "Comprehensive digital marketing strategies aligned with business goals, including market research and competitor analysis.",
+                        "provider": {"@id": "https://hisanali.com/#business"},
+                        "areaServed": "Oman",
+                        "serviceType": "Marketing Consulting"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Freelance Consultation",
+                        "description": "Expert one-on-one digital marketing consultation and strategy sessions for businesses.",
+                        "provider": {"@id": "https://hisanali.com/#business"},
+                        "areaServed": "Oman",
+                        "serviceType": "Marketing Consulting"
+                    }
+                }
+            ]
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "5",
+            "bestRating": "5",
+            "worstRating": "1",
+            "ratingCount": "3",
+            "reviewCount": "3"
+        },
+        "review": [
             {
-                "@type": "Service",
-                "name": "Search Engine Optimization (SEO)",
-                "description": "Comprehensive SEO services to improve website visibility and organic traffic"
+                "@type": "Review",
+                "author": {
+                    "@type": "Person",
+                    "name": "Ahmed Al Balushi"
+                },
+                "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": "5",
+                    "bestRating": "5"
+                },
+                "reviewBody": "Hisan transformed our online presence completely. Our organic traffic increased by 200% in just 3 months, and we're now ranking on the first page for our target keywords. His SEO expertise is exceptional!"
             },
             {
-                "@type": "Service",
-                "name": "Google Ads Management",
-                "description": "Expert Google Ads campaign management for maximum ROI"
+                "@type": "Review",
+                "author": {
+                    "@type": "Person",
+                    "name": "Sarah Johnson"
+                },
+                "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": "5",
+                    "bestRating": "5"
+                },
+                "reviewBody": "Working with Hisan on our Google Ads campaign was a game-changer. He delivered exceptional ROI and our lead generation increased by 400%. Professional, responsive, and results-driven!"
             },
             {
-                "@type": "Service",
-                "name": "Social Media Marketing",
-                "description": "Strategic social media marketing to build brand presence and engagement"
+                "@type": "Review",
+                "author": {
+                    "@type": "Person",
+                    "name": "Mohammed Al Rashdi"
+                },
+                "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": "5",
+                    "bestRating": "5"
+                },
+                "reviewBody": "Hisan's digital marketing expertise helped us reach new markets and significantly grow our sales. His strategic approach and clear reporting made it easy to see the value. Highly recommended!"
+            }
+        ]
+    }
+    </script>
+
+    <!-- Structured Data - BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://hisanali.com/"
             }
         ]
     }
