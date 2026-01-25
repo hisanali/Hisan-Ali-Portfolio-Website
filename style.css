@@ -396,11 +396,12 @@ img {
    ================================== */
 .hero {
     min-height: 100vh;
+    min-height: 100svh;
     display: flex;
     align-items: center;
     position: relative;
     overflow: hidden;
-    padding: 120px 0 80px;
+    padding: clamp(90px, 12vh, 120px) 0 clamp(50px, 10vh, 80px);
     background: linear-gradient(135deg, #0D0614 0%, #1A0B2E 50%, #0D0614 100%);
 }
 
@@ -481,7 +482,7 @@ img {
 }
 
 .hero-title {
-    font-size: 64px;
+    font-size: clamp(40px, 4.5vw, 64px);
     color: white;
     margin-bottom: 24px;
     animation: fadeInUp 0.8s ease 0.2s both;
@@ -497,7 +498,7 @@ img {
 .hero-description {
     font-size: 18px;
     color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 36px;
+    margin-bottom: clamp(24px, 4vh, 36px);
     line-height: 1.8;
     animation: fadeInUp 0.8s ease 0.4s both;
 }
@@ -505,14 +506,14 @@ img {
 .hero-buttons {
     display: flex;
     gap: 16px;
-    margin-bottom: 48px;
+    margin-bottom: clamp(28px, 6vh, 48px);
     animation: fadeInUp 0.8s ease 0.6s both;
 }
 
 .hero-stats {
     display: flex;
     gap: 32px;
-    padding: 24px 0;
+    padding: clamp(12px, 3vh, 24px) 0;
     animation: fadeInUp 0.8s ease 0.8s both;
 }
 
@@ -2448,6 +2449,63 @@ img {
 
     .logo-dot {
         font-size: 28px;
+    }
+}
+
+@media (max-height: 800px) and (min-width: 900px) {
+    .hero {
+        padding: 100px 0 40px;
+    }
+
+    .hero-badge {
+        margin-top: 8px;
+        margin-bottom: 16px;
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .hero-title {
+        font-size: clamp(34px, 4vw, 52px);
+        margin-bottom: 16px;
+    }
+
+    .hero-description {
+        font-size: 16px;
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+
+    .hero-buttons {
+        margin-bottom: 24px;
+        gap: 12px;
+    }
+
+    .hero-stats {
+        padding: 12px 0;
+        gap: 20px;
+    }
+
+    .stat-number {
+        font-size: 30px;
+    }
+
+    .hero-image {
+        gap: 16px;
+    }
+
+    .hero-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+    }
+
+    .scroll-indicator {
+        display: none;
     }
 }
 
