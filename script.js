@@ -7,8 +7,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
     if (!toggle) return;
 
+    const themeStorage = {
+        get(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (err) {
+                return null;
+            }
+        },
+        set(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (err) {
+                // Storage can be blocked in some Safari/private modes.
+            }
+        },
+        remove(key) {
+            try {
+                localStorage.removeItem(key);
+            } catch (err) {
+                // Ignore storage errors.
+            }
+        }
+    };
+
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    const storedTheme = localStorage.getItem('theme');
+    const isMobile = window.matchMedia('(max-width: 768px)');
+    if (isMobile.matches) {
+        themeStorage.remove('theme');
+    }
+
+    const storedTheme = isMobile.matches ? null : themeStorage.get('theme');
     const initialTheme = storedTheme || (prefersDark.matches ? 'dark' : 'light');
 
     const applyTheme = (theme) => {
@@ -25,15 +54,22 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(initialTheme);
 
     toggle.addEventListener('click', () => {
+        if (isMobile.matches) return;
         const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
-        localStorage.setItem('theme', nextTheme);
+        themeStorage.set('theme', nextTheme);
         applyTheme(nextTheme);
     });
 
-    prefersDark.addEventListener('change', (event) => {
-        if (localStorage.getItem('theme')) return;
+    const handleSchemeChange = (event) => {
+        if (themeStorage.get('theme')) return;
         applyTheme(event.matches ? 'dark' : 'light');
-    });
+    };
+
+    if (typeof prefersDark.addEventListener === 'function') {
+        prefersDark.addEventListener('change', handleSchemeChange);
+    } else if (typeof prefersDark.addListener === 'function') {
+        prefersDark.addListener(handleSchemeChange);
+    }
 });
 
 // Sneaky Peeker Character in Hero Section
