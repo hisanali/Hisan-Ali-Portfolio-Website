@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');
     if (!hero) return;
+    if (window.matchMedia('(max-width: 768px)').matches) return;
 
     // Create the sneaky character peeking from the right side
     const peeker = document.createElement('div');
@@ -64,6 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     typeEffect();
 
+    // Show the peeker on first load for a short intro
+    setTimeout(() => {
+        peeker.classList.add('intro');
+        setTimeout(() => {
+            peeker.classList.remove('intro');
+        }, 3200);
+    }, 400);
+
     // Add styles for the peeker
     const peekerStyles = document.createElement('style');
     peekerStyles.textContent = `
@@ -76,6 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
             z-index: 10;
             transition: transform 0.3s ease;
             cursor: pointer;
+        }
+        .sneaky-peeker.intro {
+            transform: translateX(-15px);
         }
         .peeker-face {
             width: 80px;
@@ -139,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
             transition: all 0.3s ease;
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             pointer-events: none;
+        }
+        .sneaky-peeker.intro .thought-bubble {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            animation: popIn 0.35s ease;
         }
         .thought-bubble::after {
             content: '';
@@ -697,7 +714,7 @@ if (contactForm) {
             contactForm.reset();
         } catch (error) {
             console.error('Form submission error:', error);
-            showNotification('Unable to send message. Please email me directly at hisanali73@gmail.com', 'error');
+            showNotification('Unable to send message. Please email me directly at workhisan@gmail.com', 'error');
         } finally {
             // Re-enable button
             submitBtn.disabled = false;
@@ -861,7 +878,7 @@ if (lazyImages.length > 0) {
 
 console.log('%c👋 Hello! Thanks for checking out my portfolio!', 'color: #6528F7; font-size: 20px; font-weight: bold;');
 console.log('%cInterested in working together? Let\'s connect!', 'color: #A855F7; font-size: 14px;');
-console.log('%cEmail: hisanali73@gmail.com', 'color: #4ECDC4; font-size: 12px;');
+console.log('%cEmail: workhisan@gmail.com', 'color: #4ECDC4; font-size: 12px;');
 
 // ===================================
 // Performance Optimization
