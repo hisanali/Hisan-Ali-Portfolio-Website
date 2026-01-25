@@ -412,6 +412,11 @@
             overflow: hidden;
             box-shadow: var(--shadow-sm);
         }
+        body.theme-dark .faq-item {
+            background: #0F172A;
+            border: 1px solid #1F2937;
+            box-shadow: none;
+        }
         .faq-question {
             padding: 24px 32px;
             display: flex;
@@ -422,6 +427,9 @@
         }
         .faq-question:hover {
             background: var(--bg-light);
+        }
+        body.theme-dark .faq-question:hover {
+            background: rgba(255, 255, 255, 0.03);
         }
         .faq-question h3 {
             font-size: 18px;
@@ -533,7 +541,12 @@
                     <li><a href="/blog" class="nav-link">Blog</a></li>
                     <li><a href="/contact" class="nav-link">Contact</a></li>
                 </ul>
-                <div class="nav-cta"><a href="/contact" class="btn-primary">Let's Talk</a></div>
+                <div class="nav-actions">
+                    <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="nav-cta"><a href="/contact" class="btn-primary">Let's Talk</a></div>
+                </div>
                 <div class="hamburger"><span></span><span></span><span></span></div>
             </div>
         </nav>

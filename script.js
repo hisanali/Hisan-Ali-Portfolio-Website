@@ -2,6 +2,40 @@
 // Modern Portfolio JavaScript
 // ===================================
 
+// Theme Toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.querySelector('.theme-toggle');
+    if (!toggle) return;
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const storedTheme = localStorage.getItem('theme');
+    const initialTheme = storedTheme || (prefersDark.matches ? 'dark' : 'light');
+
+    const applyTheme = (theme) => {
+        const isDark = theme === 'dark';
+        document.body.classList.toggle('theme-dark', isDark);
+        toggle.setAttribute('aria-pressed', String(isDark));
+        toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        const icon = toggle.querySelector('i');
+        if (icon) {
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    };
+
+    applyTheme(initialTheme);
+
+    toggle.addEventListener('click', () => {
+        const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+        localStorage.setItem('theme', nextTheme);
+        applyTheme(nextTheme);
+    });
+
+    prefersDark.addEventListener('change', (event) => {
+        if (localStorage.getItem('theme')) return;
+        applyTheme(event.matches ? 'dark' : 'light');
+    });
+});
+
 // Sneaky Peeker Character in Hero Section
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');

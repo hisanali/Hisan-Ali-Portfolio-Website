@@ -40,7 +40,7 @@
         "mainEntity": {
             "@type": "ProfessionalService",
             "name": "Hisan Ali - Digital Marketing Expert",
-            "email": "hisanali73@gmail.com",
+            "email": "workhisan@gmail.com",
             "address": {
                 "@type": "PostalAddress",
                 "addressLocality": "Muscat",
@@ -227,6 +227,10 @@
             border-radius: 24px;
             box-shadow: var(--shadow-lg);
         }
+        body.theme-dark .contact-form-side {
+            background: #0F172A;
+            border: 1px solid #1F2937;
+        }
         .form-header {
             margin-bottom: 32px;
         }
@@ -273,6 +277,13 @@
             transition: var(--transition);
             background: var(--bg-light);
         }
+        body.theme-dark .form-group-full input,
+        body.theme-dark .form-group-full select,
+        body.theme-dark .form-group-full textarea {
+            background: #0B1220;
+            color: #E2E8F0;
+            border-color: #1F2937;
+        }
         .form-group-full input:focus,
         .form-group-full select:focus,
         .form-group-full textarea:focus {
@@ -280,6 +291,11 @@
             border-color: var(--primary);
             background: white;
             box-shadow: 0 0 0 4px rgba(101, 40, 247, 0.1);
+        }
+        body.theme-dark .form-group-full input:focus,
+        body.theme-dark .form-group-full select:focus,
+        body.theme-dark .form-group-full textarea:focus {
+            background: #0B1220;
         }
         .form-group-full textarea {
             min-height: 150px;
@@ -373,6 +389,10 @@
             text-align: center;
             transition: var(--transition);
         }
+        body.theme-dark .why-card {
+            background: #0F172A;
+            border: 1px solid #1F2937;
+        }
         .why-card:hover {
             transform: translateY(-8px);
             box-shadow: var(--shadow-lg);
@@ -460,7 +480,12 @@
                     <li><a href="/blog" class="nav-link">Blog</a></li>
                     <li><a href="/contact" class="nav-link active">Contact</a></li>
                 </ul>
-                <div class="nav-cta"><a href="/contact" class="btn-primary">Let's Talk</a></div>
+                <div class="nav-actions">
+                    <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="nav-cta"><a href="/contact" class="btn-primary">Let's Talk</a></div>
+                </div>
                 <div class="hamburger"><span></span><span></span><span></span></div>
             </div>
         </nav>
@@ -504,7 +529,7 @@
                             </div>
                             <div class="info-content">
                                 <h3>Email Me</h3>
-                                <a href="mailto:hisanali73@gmail.com">hisanali73@gmail.com</a>
+                                <a href="mailto:workhisan@gmail.com">workhisan@gmail.com</a>
                                 <p>I'll respond within 24 hours</p>
                             </div>
                         </div>
@@ -700,7 +725,7 @@
                 </div>
                 <div class="footer-contact">
                     <h4>Contact</h4>
-                    <p><i class="fas fa-envelope"></i> hisanali73@gmail.com</p>
+                    <p><i class="fas fa-envelope"></i> workhisan@gmail.com</p>
                     <p><i class="fas fa-map-marker-alt"></i> Muscat, Oman</p>
                 </div>
             </div>
