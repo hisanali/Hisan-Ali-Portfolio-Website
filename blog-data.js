@@ -1619,6 +1619,198 @@ const blogPosts = {
 
             <p>Remember, trust is paramount in e-commerce. Invest in customer reviews, clear policies, and excellent customer service to build a loyal customer base that will drive sustainable growth for your online store.</p>
         `
+    },
+    10: {
+        title: "Email Marketing Automation Playbook: Welcome, Nurture, and Win-Back",
+        category: "Email Marketing",
+        date: "Jan 24, 2026",
+        readTime: "7 min read",
+        content: `
+            <p>Email is still one of the highest ROI channels, but only when it is structured. Automation lets you deliver the right message at the right moment, without manual effort. This playbook gives you the exact flows, timing, and content patterns to build a high-performing lifecycle program.</p>
+
+            <h2>Start with the Core Automations</h2>
+            <p>These are the foundational flows every brand should have:</p>
+            <ul>
+                <li><strong>Welcome series:</strong> 3-5 emails that introduce your brand, highlight benefits, and guide first action</li>
+                <li><strong>Lead nurture:</strong> Educational sequences that build trust and move prospects toward conversion</li>
+                <li><strong>Abandoned cart or inquiry:</strong> Remind, reassure, and remove friction within 1-24 hours</li>
+                <li><strong>Post-purchase:</strong> Deliver value, reduce returns, and encourage repeat purchases</li>
+                <li><strong>Win-back:</strong> Re-engage inactive subscribers with a clear reason to return</li>
+            </ul>
+
+            <div class="highlight">
+                <p><strong>Rule of thumb:</strong> If a user action happens often, it should trigger an automated message.</p>
+            </div>
+
+            <h2>Welcome Series: The Highest Impact Flow</h2>
+            <p>Your welcome series should do three things fast: set expectations, deliver value, and prompt a first action.</p>
+            <ul>
+                <li>Email 1 (immediate): brand story + primary value promise</li>
+                <li>Email 2 (day 2): best content or top products</li>
+                <li>Email 3 (day 4): social proof and FAQs</li>
+                <li>Email 4 (day 6): offer or incentive if needed</li>
+            </ul>
+
+            <h2>Segmentation and Personalization</h2>
+            <p>Personalization is more than using a first name. Use behavior to tailor content:</p>
+            <ul>
+                <li>Segment by product interest, industry, or content category</li>
+                <li>Use dynamic blocks for location, pricing, or use cases</li>
+                <li>Adjust cadence based on engagement level</li>
+            </ul>
+
+            <h2>Deliverability Essentials</h2>
+            <p>Your emails must reach the inbox before they can perform:</p>
+            <ul>
+                <li>Use a consistent sending domain and authenticate with SPF, DKIM, and DMARC</li>
+                <li>Clean lists quarterly to remove inactive contacts</li>
+                <li>Avoid spam-trigger words and aggressive formatting</li>
+                <li>Keep image-to-text ratio balanced</li>
+            </ul>
+
+            <h2>Measure What Matters</h2>
+            <p>Track performance per flow, not just per campaign:</p>
+            <ul>
+                <li><strong>Open rate:</strong> Subject line quality and sender reputation</li>
+                <li><strong>Click rate:</strong> Offer clarity and CTA strength</li>
+                <li><strong>Conversion rate:</strong> Alignment between email and landing page</li>
+                <li><strong>Revenue per recipient:</strong> True ROI by flow</li>
+            </ul>
+
+            <h2>Optimization Checklist</h2>
+            <ul>
+                <li>Test 2 subject lines every month</li>
+                <li>Refresh at least 1 automation quarterly</li>
+                <li>Shorten email body by 15-20% if clicks are low</li>
+                <li>Use a single primary CTA per email</li>
+            </ul>
+
+            <h2>Conclusion</h2>
+            <p>Automation turns email from a broadcast tool into a revenue engine. Build the core flows, keep them clean and relevant, and you will compound results month after month.</p>
+        `
+    },
+    11: {
+        title: "Conversion Rate Optimization Checklist for High-Performing Landing Pages",
+        category: "Conversion Optimization",
+        date: "Jan 22, 2026",
+        readTime: "8 min read",
+        content: `
+            <p>Traffic is only half the equation. If your landing pages are not converting, you are paying for visitors you cannot keep. Use this practical CRO checklist to improve clarity, build trust, and turn more clicks into customers.</p>
+
+            <h2>Message Match and Clarity</h2>
+            <ul>
+                <li>Headline mirrors the ad or link that brought visitors in</li>
+                <li>Value proposition is clear within 5 seconds</li>
+                <li>One primary goal per page</li>
+            </ul>
+
+            <h2>Above-the-Fold Essentials</h2>
+            <ul>
+                <li>Single strong headline and short supporting copy</li>
+                <li>Primary CTA visible without scrolling</li>
+                <li>Hero visual supports the offer, not distracts</li>
+            </ul>
+
+            <h2>Trust and Risk Reduction</h2>
+            <ul>
+                <li>Testimonials or reviews near the CTA</li>
+                <li>Logos of clients or partners if applicable</li>
+                <li>Clear guarantees, refunds, or trial details</li>
+                <li>Security badges for checkout or forms</li>
+            </ul>
+
+            <h2>Form Optimization</h2>
+            <p>Every extra field reduces conversions. Keep it lean:</p>
+            <ul>
+                <li>Ask only for information required to take action</li>
+                <li>Use inline validation to prevent errors</li>
+                <li>Offer alternatives like chat or call if the form is long</li>
+            </ul>
+
+            <h2>Mobile Experience</h2>
+            <ul>
+                <li>Buttons are large and easy to tap</li>
+                <li>Form fields are stacked and readable</li>
+                <li>Page loads in under 3 seconds on mobile</li>
+            </ul>
+
+            <div class="highlight">
+                <p><strong>CRO reminder:</strong> Small changes win. Test one change at a time to isolate impact.</p>
+            </div>
+
+            <h2>Testing and Analytics</h2>
+            <ul>
+                <li>Set up goal tracking for every CTA</li>
+                <li>Run A/B tests on headlines, CTA copy, and layouts</li>
+                <li>Review heatmaps to spot friction areas</li>
+                <li>Monitor conversion rate by traffic source</li>
+            </ul>
+
+            <h2>Quick Wins You Can Implement Today</h2>
+            <ul>
+                <li>Reduce headline length and sharpen the offer</li>
+                <li>Move testimonials above the fold</li>
+                <li>Switch CTA from generic to benefit-driven text</li>
+                <li>Remove a non-essential form field</li>
+            </ul>
+
+            <h2>Conclusion</h2>
+            <p>Great landing pages remove friction, build confidence, and guide visitors to a single action. Use this checklist to prioritize high-impact improvements and compound results.</p>
+        `
+    },
+    12: {
+        title: "Content Repurposing Framework: Turn One Idea into 10+ Assets",
+        category: "Content Strategy",
+        date: "Jan 21, 2026",
+        readTime: "6 min read",
+        content: `
+            <p>Creating content from scratch every week burns time and budget. Repurposing lets you get maximum reach from a single strong idea. Use this framework to expand one pillar piece into a multi-channel content system.</p>
+
+            <h2>Step 1: Build a Pillar Asset</h2>
+            <p>Start with one high-effort, high-value piece such as:</p>
+            <ul>
+                <li>A long-form blog post or guide</li>
+                <li>A webinar or workshop</li>
+                <li>A research report or case study</li>
+            </ul>
+
+            <h2>Step 2: Break It into Themes</h2>
+            <p>Extract 5-7 key points, stats, or frameworks. Each becomes a separate piece of content.</p>
+
+            <h2>Step 3: Map Formats to Channels</h2>
+            <ul>
+                <li>Blog post into 3-5 social posts</li>
+                <li>Webinar into short video clips</li>
+                <li>Case study into a visual carousel</li>
+                <li>Guide into an email series</li>
+                <li>Key stats into infographic snippets</li>
+            </ul>
+
+            <div class="highlight">
+                <p><strong>Efficiency tip:</strong> Batch repurposing in one session to keep tone and visuals consistent.</p>
+            </div>
+
+            <h2>Step 4: Refresh and Re-release</h2>
+            <p>Update older content with new examples, visuals, or data points. Relaunch it with a new hook.</p>
+
+            <h2>Step 5: Track and Double Down</h2>
+            <ul>
+                <li>Identify which format performs best on each channel</li>
+                <li>Expand winning topics into deeper assets</li>
+                <li>Retire formats that do not match your audience</li>
+            </ul>
+
+            <h2>Repurposing Checklist</h2>
+            <ul>
+                <li>One pillar piece per month</li>
+                <li>At least 10 micro-assets per pillar</li>
+                <li>Consistent CTA across all formats</li>
+                <li>Scheduled distribution across 2-3 weeks</li>
+            </ul>
+
+            <h2>Conclusion</h2>
+            <p>Repurposing is not recycling. It is re-packaging the same idea to fit how people consume content on each channel. Master this framework and you will scale output without scaling workload.</p>
+        `
     }
 };
 
