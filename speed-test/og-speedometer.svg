@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="PageSpeed Test">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220" />
+      <stop offset="50%" stop-color="#1a0b2e" />
+      <stop offset="100%" stop-color="#0b1220" />
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6b5cff" />
+      <stop offset="50%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <g transform="translate(160 110)">
+    <circle cx="230" cy="205" r="190" fill="none" stroke="url(#ring)" stroke-width="28" stroke-linecap="round" filter="url(#glow)" />
+    <circle cx="230" cy="205" r="140" fill="#0f172a" stroke="#1f2937" stroke-width="2" />
+    <path d="M230 205 L330 130" stroke="#f59e0b" stroke-width="10" stroke-linecap="round" />
+    <circle cx="230" cy="205" r="10" fill="#f59e0b" />
+    <text x="230" y="225" font-family="'Poppins', Arial, sans-serif" font-size="44" text-anchor="middle" fill="#e2e8f0">93</text>
+    <text x="230" y="260" font-family="'Inter', Arial, sans-serif" font-size="18" text-anchor="middle" fill="#94a3b8">Performance</text>
+  </g>
+  <g transform="translate(520 170)">
+    <text x="0" y="0" font-family="'Poppins', Arial, sans-serif" font-size="54" fill="#f8fafc">PageSpeed Test Tool</text>
+    <text x="0" y="50" font-family="'Inter', Arial, sans-serif" font-size="24" fill="#cbd5f5">Measure mobile & desktop performance in seconds</text>
+    <g transform="translate(0 90)">
+      <rect width="420" height="54" rx="27" fill="#6b5cff" />
+      <text x="210" y="36" font-family="'Inter', Arial, sans-serif" font-size="20" text-anchor="middle" fill="#ffffff">Run Fast Lighthouse Checks</text>
+    </g>
+  </g>
+</svg>

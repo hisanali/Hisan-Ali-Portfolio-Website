@@ -38,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const storedTheme = isMobile.matches ? null : themeStorage.get('theme');
-    const initialTheme = storedTheme || (prefersDark.matches ? 'dark' : 'light');
+    const defaultTheme = document.body.getAttribute('data-theme-default');
+    const initialTheme = storedTheme || defaultTheme || (prefersDark.matches ? 'dark' : 'light');
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
@@ -69,6 +70,36 @@ document.addEventListener('DOMContentLoaded', () => {
         prefersDark.addEventListener('change', handleSchemeChange);
     } else if (typeof prefersDark.addListener === 'function') {
         prefersDark.addListener(handleSchemeChange);
+    }
+});
+
+// Ensure speed test nav icon + mobile link are present on every page
+document.addEventListener('DOMContentLoaded', () => {
+    const navActions = document.querySelector('.nav-actions');
+    if (navActions && !navActions.querySelector('.nav-tool')) {
+        const navTool = document.createElement('a');
+        navTool.className = 'nav-tool';
+        navTool.href = '/speed-test';
+        navTool.setAttribute('aria-label', 'Page speed test');
+        navTool.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M12 3a9 9 0 0 0-9 9c0 2.46 1 4.68 2.62 6.3.2.2.48.31.77.31h11.22c.29 0 .57-.12.77-.31A8.96 8.96 0 0 0 21 12a9 9 0 0 0-9-9zm5.66 14H6.34A6.96 6.96 0 0 1 5 12a7 7 0 1 1 14 0c0 1.86-.72 3.55-1.34 5zM12 7a1 1 0 0 0-1 1v4.59l-2.3 2.3a1 1 0 1 0 1.41 1.41l2.6-2.6a1 1 0 0 0 .29-.71V8a1 1 0 0 0-1-1z"/>
+            </svg>
+        `;
+        const themeToggle = navActions.querySelector('.theme-toggle');
+        if (themeToggle) {
+            navActions.insertBefore(navTool, themeToggle);
+        } else {
+            navActions.prepend(navTool);
+        }
+    }
+
+    const navMenu = document.querySelector('.nav-menu');
+    if (navMenu && !navMenu.querySelector('a[href="/speed-test"]')) {
+        const li = document.createElement('li');
+        li.className = 'mobile-only';
+        li.innerHTML = '<a href="/speed-test" class="nav-link">Page Speed Test</a>';
+        navMenu.appendChild(li);
     }
 });
 
