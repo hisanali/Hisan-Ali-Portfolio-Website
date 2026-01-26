@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <!-- Main Pages -->
     <url>
@@ -49,8 +49,42 @@
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
-
-    <!-- Blog Posts -->
+    <url>
+        <loc>https://hisanali.com/gcc/oman/</loc>
+        <lastmod>2026-01-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/gcc/uae/</loc>
+        <lastmod>2026-01-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/gcc/ksa/</loc>
+        <lastmod>2026-01-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/gcc/qatar/</loc>
+        <lastmod>2026-01-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/gcc/kuwait/</loc>
+        <lastmod>2026-01-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/gcc/bahrain/</loc>
+        <lastmod>2026-01-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>    <!-- Blog Posts -->
     <url>
         <loc>https://hisanali.com/blog/email-marketing-automation-playbook/</loc>
         <lastmod>2026-01-24</lastmod>
@@ -124,3 +158,4 @@
         <priority>0.7</priority>
     </url>
 </urlset>
+
