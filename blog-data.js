@@ -1619,6 +1619,193 @@ const blogPosts = {
 
             <p>Remember, trust is paramount in e-commerce. Invest in customer reviews, clear policies, and excellent customer service to build a loyal customer base that will drive sustainable growth for your online store.</p>
         `
+    },
+    10: {
+        title: "Local SEO Checklist for Muscat Businesses in 2026",
+        category: "Local SEO",
+        date: "Jan 22, 2026",
+        readTime: "6 min read",
+        content: `
+            <p>Local search is the fastest path to getting more walk-ins, calls, and bookings in Muscat. With Google Maps and “near me” searches driving high-intent traffic, a structured local SEO checklist helps you win the local pack and stay visible year-round.</p>
+
+            <h2>Why Local SEO Matters in Muscat</h2>
+            <p>Muscat customers search with urgency: “best cafe in Qurum,” “dentist Al Khuwair,” or “salon near me.” If your business is not optimized, competitors capture these ready-to-buy searches.</p>
+
+            <div class="highlight">
+                <p><strong>Quick Win:</strong> A fully optimized Google Business Profile can increase calls and direction requests by 30%+ within weeks.</p>
+            </div>
+
+            <h2>Local SEO Checklist</h2>
+
+            <h3>1. Google Business Profile Optimization</h3>
+            <ul>
+                <li>Use your exact business name, address, and phone number (NAP)</li>
+                <li>Select the most relevant primary category and 2-3 secondary categories</li>
+                <li>Upload fresh photos (exterior, interior, team, products)</li>
+                <li>Add services, pricing, and business description with Muscat keywords</li>
+                <li>Post weekly updates (offers, events, new arrivals)</li>
+            </ul>
+
+            <h3>2. Location Landing Pages</h3>
+            <p>Create dedicated pages for Muscat neighborhoods you serve:</p>
+            <ul>
+                <li>Qurum, Al Khuwair, Al Ghubrah, Ruwi, Seeb</li>
+                <li>Use unique content for each page (avoid duplicates)</li>
+                <li>Include driving directions and landmarks</li>
+                <li>Add embedded Google Map and localized testimonials</li>
+            </ul>
+
+            <h3>3. Reviews & Reputation</h3>
+            <ul>
+                <li>Request reviews after purchases or appointments</li>
+                <li>Reply to every review within 48 hours</li>
+                <li>Use bilingual replies (Arabic/English) when possible</li>
+                <li>Showcase top reviews on your website</li>
+            </ul>
+
+            <h3>4. Local Citations</h3>
+            <p>Ensure consistent NAP across directories:</p>
+            <ul>
+                <li>Oman business directories and local listings</li>
+                <li>Industry-specific directories (clinics, restaurants, salons)</li>
+                <li>Social profiles with matching contact details</li>
+            </ul>
+
+            <h3>5. On-Page SEO Essentials</h3>
+            <ul>
+                <li>Title tags with “Muscat” or neighborhood keywords</li>
+                <li>Schema markup for LocalBusiness</li>
+                <li>Mobile-first design and fast load time</li>
+                <li>Clear call-to-action buttons (Call, WhatsApp, Directions)</li>
+            </ul>
+
+            <h2>Metrics to Monitor</h2>
+            <ul>
+                <li>Google Business Profile views, calls, and direction requests</li>
+                <li>Local keyword rankings (maps + organic)</li>
+                <li>Website traffic by location</li>
+                <li>Review count and average rating</li>
+            </ul>
+
+            <h2>Final Takeaway</h2>
+            <p>Local SEO in Muscat is about trust, proximity, and relevance. Follow this checklist consistently and you’ll see steady improvements in visibility, calls, and walk-ins.</p>
+        `
+    },
+    11: {
+        title: "Email Marketing Automation for Oman Businesses",
+        category: "Email Marketing",
+        date: "Jan 21, 2026",
+        readTime: "7 min read",
+        content: `
+            <p>Email remains one of the highest-ROI channels for Oman businesses. Automation makes it scalable—helping you nurture leads, recover abandoned carts, and retain customers without extra manual effort.</p>
+
+            <h2>Why Automation Wins</h2>
+            <p>Automation ensures the right message reaches the right customer at the right time. It improves conversion rates, reduces churn, and maximizes lifetime value.</p>
+
+            <div class="highlight">
+                <p><strong>Benchmark:</strong> Automated emails often generate 2–3x higher conversion rates than one-off campaigns.</p>
+            </div>
+
+            <h2>Essential Automation Flows</h2>
+
+            <h3>1. Welcome Series</h3>
+            <ul>
+                <li>Email 1: Brand intro + value proposition</li>
+                <li>Email 2: Best sellers or popular services</li>
+                <li>Email 3: Social proof + CTA to book or purchase</li>
+            </ul>
+
+            <h3>2. Abandoned Cart Recovery</h3>
+            <ul>
+                <li>Send within 1 hour with product reminder</li>
+                <li>Second email within 24 hours with benefits</li>
+                <li>Optional incentive at 48–72 hours</li>
+            </ul>
+
+            <h3>3. Lead Nurturing</h3>
+            <ul>
+                <li>Educational content tailored to industry</li>
+                <li>Case studies with Omani market relevance</li>
+                <li>Clear next step: call, consultation, or quote</li>
+            </ul>
+
+            <h3>4. Re-Engagement Flow</h3>
+            <ul>
+                <li>Identify inactive subscribers after 60–90 days</li>
+                <li>Send a “We miss you” offer or update</li>
+                <li>Remove unengaged contacts to protect deliverability</li>
+            </ul>
+
+            <h2>Personalization That Works</h2>
+            <ul>
+                <li>Segment by location (Muscat, Salalah, Sohar)</li>
+                <li>Use browsing or purchase history</li>
+                <li>Include bilingual subject lines when appropriate</li>
+                <li>Send at peak local times (12–2pm or 8–10pm GST)</li>
+            </ul>
+
+            <h2>Key Metrics to Track</h2>
+            <ul>
+                <li>Open rate and click-through rate</li>
+                <li>Conversion rate per automation flow</li>
+                <li>Revenue per email sent</li>
+                <li>List growth and unsubscribe rate</li>
+            </ul>
+
+            <h2>Conclusion</h2>
+            <p>With the right automation flows, Oman businesses can build consistent revenue, improve retention, and create a better customer experience. Start with the essential flows, test your messaging, and expand as you grow.</p>
+        `
+    },
+    12: {
+        title: "TikTok Ads Strategy for Oman Brands in 2026",
+        category: "Social Media",
+        date: "Jan 19, 2026",
+        readTime: "6 min read",
+        content: `
+            <p>TikTok has become a major discovery platform in Oman, especially for younger audiences. A clear ad strategy helps brands build awareness fast while driving clicks and conversions.</p>
+
+            <h2>Why TikTok Works in Oman</h2>
+            <p>Short-form video content creates high engagement. With competitive CPMs and viral potential, TikTok can outperform traditional platforms for brand lift and traffic.</p>
+
+            <div class="highlight">
+                <p><strong>Pro Tip:</strong> The first 2 seconds decide success. Start with a bold hook or question.</p>
+            </div>
+
+            <h2>Campaign Setup Essentials</h2>
+            <ul>
+                <li>Objective: Awareness, Traffic, or Conversions</li>
+                <li>Targeting: Interests, behaviors, and location (Oman)</li>
+                <li>Placements: TikTok only or multi-placement for scale</li>
+                <li>Budget: Start with OMR 10–20/day for testing</li>
+            </ul>
+
+            <h2>Creative Best Practices</h2>
+            <ul>
+                <li>Use native-style content, not polished ads</li>
+                <li>Feature real people, testimonials, or demos</li>
+                <li>Use on-screen text and captions</li>
+                <li>Keep videos between 9–20 seconds</li>
+                <li>End with a clear call-to-action</li>
+            </ul>
+
+            <h2>Winning Ad Formats</h2>
+            <ul>
+                <li><strong>In-Feed Ads:</strong> Best for traffic and conversions</li>
+                <li><strong>Spark Ads:</strong> Boost existing organic posts for social proof</li>
+                <li><strong>Collection Ads:</strong> Great for e-commerce catalogs</li>
+            </ul>
+
+            <h2>Optimization Checklist</h2>
+            <ul>
+                <li>A/B test 3–5 creative variations</li>
+                <li>Monitor watch time and hook performance</li>
+                <li>Refresh creatives every 10–14 days</li>
+                <li>Use TikTok Pixel for conversion tracking</li>
+            </ul>
+
+            <h2>Conclusion</h2>
+            <p>TikTok ads in Oman are still underutilized, giving brands an edge. Focus on creative testing, strong hooks, and clear CTAs to build performance quickly.</p>
+        `
     }
 };
 
