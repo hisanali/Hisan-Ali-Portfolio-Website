@@ -1,0 +1,6 @@
+.vscode/
+admin/
+server/
+http-server.err
+http-server.log
+tracking.js
