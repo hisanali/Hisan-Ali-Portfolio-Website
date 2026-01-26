@@ -1193,6 +1193,55 @@
             return response.json();
         };
 
+        const getDeviceType = () => {
+            const ua = navigator.userAgent || '';
+            const isTablet = /tablet|ipad|playbook|silk/i.test(ua) || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) >= 600);
+            const isMobile = /mobi|android|iphone|ipod|phone/i.test(ua) && !isTablet;
+            if (isTablet) return 'Tablet';
+            if (isMobile) return 'Mobile';
+            return 'Desktop';
+        };
+
+        const getOS = () => {
+            const ua = navigator.userAgent || '';
+            if (/windows nt/i.test(ua)) return 'Windows';
+            if (/mac os x/i.test(ua) && !/iphone|ipad|ipod/i.test(ua)) return 'macOS';
+            if (/android/i.test(ua)) return 'Android';
+            if (/iphone|ipad|ipod/i.test(ua)) return 'iOS';
+            if (/linux/i.test(ua)) return 'Linux';
+            return 'Unknown';
+        };
+
+        const getCountry = () => {
+            const lang = navigator.language || '';
+            const regionMatch = lang.match(/-([A-Z]{2})$/i);
+            if (regionMatch) return regionMatch[1].toUpperCase();
+            const locale = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+            if (locale) return `Unknown (${locale})`;
+            return 'Unknown';
+        };
+
+        const submitToGoogleForm = async (url) => {
+            const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdxAGMSeEO5dsvl-F8GlirEX9wrGXNVPS5KyvJhdD3ne7fJew/formResponse';
+            const formData = new URLSearchParams();
+            formData.append('entry.1221255009', url);
+            formData.append('entry.92154413', getDeviceType());
+            formData.append('entry.327520390', getOS());
+            formData.append('entry.971300372', getCountry());
+            formData.append('fvv', '1');
+            formData.append('pageHistory', '0');
+            formData.append('fbzx', Date.now().toString());
+
+            await fetch(formUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: formData.toString()
+            });
+        };
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             errorBox.style.display = 'none';
@@ -1204,6 +1253,8 @@
                 errorBox.style.display = 'block';
                 return;
             }
+
+            submitToGoogleForm(url).catch(() => {});
 
             statusRow.hidden = false;
             emptyState.hidden = true;
