@@ -130,6 +130,7 @@
             font-size: 16px;
             font-family: 'Inter', sans-serif;
             background: white;
+            color: var(--dark);
         }
         .input-row input:focus {
             outline: none;
@@ -516,6 +517,14 @@
         .theme-dark .metrics-legend ul {
             color: #94a3b8;
         }
+        .theme-dark .input-row input {
+            background: #0b1220;
+            color: #e2e8f0;
+            border-color: rgba(148, 163, 184, 0.28);
+        }
+        .theme-dark .input-row input::placeholder {
+            color: rgba(148, 163, 184, 0.7);
+        }
         .theme-dark .remark-pill.good {
             background: rgba(16, 185, 129, 0.25);
             color: #34d399;
@@ -585,6 +594,12 @@
             }
             .metric-list {
                 grid-template-columns: 1fr;
+            }
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .result-card {
+                padding: 20px;
             }
         }
     </style>

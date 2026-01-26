@@ -523,8 +523,16 @@ const fadeInObserver = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe sections
+const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+
+// Observe sections (disable on mobile to avoid blank content)
 document.querySelectorAll('section:not(.hero)').forEach(section => {
+    if (isMobileView) {
+        section.style.opacity = '1';
+        section.style.transform = 'none';
+        section.style.transition = 'none';
+        return;
+    }
     section.style.opacity = '0';
     section.style.transform = 'translateY(30px)';
     section.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
@@ -533,6 +541,12 @@ document.querySelectorAll('section:not(.hero)').forEach(section => {
 
 // Observe service cards
 document.querySelectorAll('.service-card').forEach((card, index) => {
+    if (isMobileView) {
+        card.style.opacity = '1';
+        card.style.transform = 'none';
+        card.style.transition = 'none';
+        return;
+    }
     card.style.opacity = '0';
     card.style.transform = 'translateY(30px)';
     card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
@@ -541,6 +555,12 @@ document.querySelectorAll('.service-card').forEach((card, index) => {
 
 // Observe portfolio items
 document.querySelectorAll('.portfolio-item').forEach((item, index) => {
+    if (isMobileView) {
+        item.style.opacity = '1';
+        item.style.transform = 'none';
+        item.style.transition = 'none';
+        return;
+    }
     item.style.opacity = '0';
     item.style.transform = 'translateY(30px)';
     item.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
