@@ -384,12 +384,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Preloader
-window.addEventListener('load', () => {
-    const preloader = document.querySelector('.preloader');
-    setTimeout(() => {
-        preloader.classList.add('hide');
-    }, 1000);
-});
+const preloader = document.querySelector('.preloader');
+if (preloader) {
+    const hidePreloader = () => preloader.classList.add('hide');
+
+    // Prefer load event, but fall back to a timeout so the page isn't blocked.
+    window.addEventListener('load', () => {
+        setTimeout(hidePreloader, 600);
+    });
+
+    setTimeout(hidePreloader, 2000);
+}
 
 // ===================================
 // Navigation
@@ -400,22 +405,30 @@ const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 const header = document.querySelector('.header');
 
-// Mobile menu toggle
-hamburger.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
-    hamburger.classList.toggle('active');
-});
-
-// Close mobile menu when clicking on a link
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
+if (hamburger && navMenu) {
+    // Mobile menu toggle
+    hamburger.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        hamburger.classList.toggle('active');
     });
-});
+}
+
+if (hamburger && navMenu && navLinks.length > 0) {
+    // Close mobile menu when clicking on a link
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            navMenu.classList.remove('active');
+            hamburger.classList.remove('active');
+        });
+    });
+}
 
 // Active nav link on scroll
 window.addEventListener('scroll', () => {
+    if (!header || navLinks.length === 0) {
+        return;
+    }
+
     let current = '';
     const sections = document.querySelectorAll('section');
 
