@@ -593,13 +593,51 @@
                 grid-template-columns: 1fr;
             }
             .metric-list {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             .results-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
             }
             .result-card {
-                padding: 20px;
+                padding: 16px;
+            }
+            .result-header {
+                gap: 8px;
+            }
+            .score-ring {
+                width: 70px;
+                height: 70px;
+            }
+            .score-ring span {
+                width: 54px;
+                height: 54px;
+                font-size: 16px;
+            }
+            .remark-pill {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+            .metric-item {
+                padding: 12px;
+            }
+            .metric-item p {
+                font-size: 16px;
+            }
+            .metric-item small,
+            .metric-target {
+                font-size: 11px;
+            }
+            .metric-bar {
+                height: 6px;
+            }
+            .summary-row {
+                grid-template-columns: 1fr;
+            }
+            .summary-item h4 {
+                font-size: 11px;
+            }
+            .summary-item p {
+                font-size: 14px;
             }
         }
     </style>
