@@ -1284,14 +1284,9 @@
             event.preventDefault();
             clearInputError();
 
-            const rawInput = urlInput.value;
-            const url = normalizeUrl(rawInput);
-            if (!url || !isValidUrl(rawInput.trim())) {
-                if (/\s/.test(rawInput.trim())) {
-                    errorBox.textContent = 'Please enter only one website (no spaces).';
-                } else {
-                    errorBox.textContent = 'Please enter a valid website (example: example.com).';
-                }
+            const rawInput = urlInput.value.trim();
+            if (!rawInput) {
+                errorBox.textContent = 'Please enter a website to test.';
                 errorBox.style.display = 'block';
                 urlInput.classList.remove('input-error');
                 void urlInput.offsetWidth;
@@ -1303,7 +1298,24 @@
                 return;
             }
 
-            submitToGoogleForm(url).catch(() => {});
+            if (!rawInput.includes('.')) {
+                errorBox.textContent = 'Please enter a valid website.';
+                errorBox.style.display = 'block';
+                urlInput.classList.remove('input-error');
+                void urlInput.offsetWidth;
+                urlInput.classList.add('input-error');
+                urlInput.focus();
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                submitToGoogleForm(rawInput).catch(() => {});
+                return;
+            }
+
+            const firstToken = rawInput.split(/\s+/)[0];
+            const url = normalizeUrl(firstToken);
+
+            submitToGoogleForm(rawInput).catch(() => {});
 
             statusRow.hidden = false;
             emptyState.hidden = true;
@@ -1324,15 +1336,8 @@
                 updateCard(mobileCard, mobileData);
                 updateCard(desktopCard, desktopData);
             } catch (error) {
-                errorBox.textContent = error.message || 'Something went wrong. Please try again.';
-                errorBox.style.display = 'block';
                 emptyState.hidden = false;
-                urlInput.classList.remove('input-error');
-                void urlInput.offsetWidth;
-                urlInput.classList.add('input-error');
-                if (navigator.vibrate) {
-                    navigator.vibrate(200);
-                }
+                console.warn(error);
             } finally {
                 statusRow.hidden = true;
                 resultsGrid.classList.remove('is-loading');
