@@ -464,8 +464,20 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
             border-radius: 14px;
             padding: 16px 20px;
-            margin-top: 20px;
+            margin-bottom: 18px;
             display: none;
+        }
+        .input-error {
+            border-color: rgba(239, 68, 68, 0.9) !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18) !important;
+            animation: inputShake 0.35s ease-in-out;
+        }
+        @keyframes inputShake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            50% { transform: translateX(4px); }
+            75% { transform: translateX(-3px); }
+            100% { transform: translateX(0); }
         }
         .metrics-legend {
             margin-top: 36px;
@@ -719,6 +731,7 @@
                 </div>
 
                 <form id="speedForm" novalidate>
+                    <div class="error-box" id="errorBox"></div>
                     <div class="input-row">
                         <input id="urlInput" type="url" name="url" placeholder="https://example.com" required>
                         <button class="btn-primary btn-large" type="submit">
@@ -728,7 +741,7 @@
                     </div>
                 </form>
 
-                <p class="helper-text">Tip: Include the full URL (https://). We test performance only to keep things fast.</p>
+                <p class="helper-text">Tip: You can enter example.com and we will add https:// automatically.</p>
 
                 <div class="results-grid" id="resultsGrid">
                     <div class="result-card" data-strategy="mobile">
@@ -900,8 +913,6 @@
                     <span>Running performance test. This can take up to 30 seconds.</span>
                 </div>
 
-                <div class="error-box" id="errorBox"></div>
-
                 <div class="empty-state" id="emptyState">
                     <i class="fas fa-chart-line" style="font-size: 32px; margin-bottom: 12px; color: var(--primary);"></i>
                     <p>Enter a URL to see the performance scores and lab metrics.</p>
@@ -1062,6 +1073,25 @@
             return trimmed;
         };
 
+        const isValidHostname = (host) => {
+            if (!host) return false;
+            if (host === 'localhost') return true;
+            if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+            return host.includes('.');
+        };
+
+        const isValidUrl = (value) => {
+            try {
+                if (/\s/.test(value)) return false;
+                const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+                const parsed = new URL(withScheme);
+                if (!/^https?:$/i.test(parsed.protocol)) return false;
+                return isValidHostname(parsed.hostname);
+            } catch (error) {
+                return false;
+            }
+        };
+
         const updateCard = (card, data) => {
             const lighthouse = data.lighthouseResult;
             const audits = lighthouse.audits || {};
@@ -1187,10 +1217,12 @@
             });
             params.append('category', 'PERFORMANCE');
             const response = await fetch(`${endpoint}?${params.toString()}`);
+            const payload = await response.json().catch(() => null);
             if (!response.ok) {
-                throw new Error('Unable to fetch PageSpeed Insights data.');
+                const apiMessage = payload?.error?.message;
+                throw new Error(apiMessage || 'Unable to fetch PageSpeed Insights data.');
             }
-            return response.json();
+            return payload;
         };
 
         const getDeviceType = () => {
@@ -1221,6 +1253,12 @@
             return 'Unknown';
         };
 
+        const clearInputError = () => {
+            errorBox.style.display = 'none';
+            errorBox.textContent = '';
+            urlInput.classList.remove('input-error');
+        };
+
         const submitToGoogleForm = async (url) => {
             const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdxAGMSeEO5dsvl-F8GlirEX9wrGXNVPS5KyvJhdD3ne7fJew/formResponse';
             const formData = new URLSearchParams();
@@ -1244,13 +1282,24 @@
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            errorBox.style.display = 'none';
-            errorBox.textContent = '';
+            clearInputError();
 
-            const url = normalizeUrl(urlInput.value);
-            if (!url) {
-                errorBox.textContent = 'Please enter a valid URL.';
+            const rawInput = urlInput.value;
+            const url = normalizeUrl(rawInput);
+            if (!url || !isValidUrl(rawInput.trim())) {
+                if (/\s/.test(rawInput.trim())) {
+                    errorBox.textContent = 'Please enter only one website (no spaces).';
+                } else {
+                    errorBox.textContent = 'Please enter a valid website (example: example.com).';
+                }
                 errorBox.style.display = 'block';
+                urlInput.classList.remove('input-error');
+                void urlInput.offsetWidth;
+                urlInput.classList.add('input-error');
+                urlInput.focus();
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
                 return;
             }
 
@@ -1278,12 +1327,24 @@
                 errorBox.textContent = error.message || 'Something went wrong. Please try again.';
                 errorBox.style.display = 'block';
                 emptyState.hidden = false;
+                urlInput.classList.remove('input-error');
+                void urlInput.offsetWidth;
+                urlInput.classList.add('input-error');
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
             } finally {
                 statusRow.hidden = true;
                 resultsGrid.classList.remove('is-loading');
                 submitButton.disabled = false;
                 submitButton.removeAttribute('aria-busy');
                 submitButton.innerHTML = '<i class="fas fa-bolt"></i><span>Run Test</span>';
+            }
+        });
+
+        urlInput.addEventListener('input', () => {
+            if (errorBox.style.display === 'block') {
+                clearInputError();
             }
         });
     </script>
