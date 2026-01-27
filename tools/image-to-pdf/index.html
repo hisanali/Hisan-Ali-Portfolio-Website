@@ -99,6 +99,64 @@
             gap: 16px;
             margin-top: 24px;
         }
+        .preview-panel {
+            margin-top: 24px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(101, 40, 247, 0.12);
+            box-shadow: var(--shadow-sm);
+        }
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .preview-header h4 {
+            font-size: 16px;
+            color: var(--dark);
+            margin: 0;
+        }
+        .preview-meta {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        .preview-stage {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.08));
+            border-radius: 16px;
+            padding: 18px;
+            display: grid;
+            place-items: center;
+            min-height: 260px;
+            max-height: 460px;
+            overflow: auto;
+        }
+        .preview-list {
+            width: 100%;
+            display: grid;
+            gap: 16px;
+        }
+        .preview-page {
+            width: 100%;
+            display: grid;
+            justify-items: center;
+        }
+        .preview-canvas {
+            width: 100%;
+            max-width: 520px;
+            height: auto;
+            border-radius: 12px;
+            background: #f8fafc;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+        }
+        .preview-placeholder {
+            font-size: 13px;
+            color: var(--text-light);
+            text-align: center;
+            max-width: 260px;
+        }
         .option-card {
             background: white;
             border-radius: 16px;
@@ -185,40 +243,201 @@
             padding: 60px 0 90px;
             background: var(--bg);
         }
-        .more-tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
-        }
-        .more-tool-card {
+        .tool-extras {
+            padding: 70px 0;
             background: var(--bg-light);
+        }
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 28px;
+            align-items: center;
+        }
+        .tips-art {
+            background: linear-gradient(135deg, #20132F, #4B1D6F);
+            border-radius: 22px;
+            padding: 28px;
+            display: grid;
+            place-items: center;
+            min-height: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+        .tips-art::after {
+            content: "";
+            position: absolute;
+            inset: 20px;
             border-radius: 18px;
-            padding: 18px;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+        .tips-icons {
             display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            border: 1px solid rgba(101, 40, 247, 0.1);
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            align-items: center;
+            gap: 18px;
+            position: relative;
+            z-index: 1;
         }
-        .more-tool-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
+        .tips-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 26px;
         }
-        .more-tool-card i {
-            color: var(--primary);
-            font-size: 20px;
-            margin-top: 2px;
+        .tips-connector {
+            width: 34px;
+            height: 3px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.6);
         }
-        .more-tool-card h3 {
-            font-size: 16px;
+        .tips-steps h3 {
+            font-size: 22px;
             color: var(--dark);
-            margin-bottom: 4px;
+            margin-bottom: 16px;
         }
-        .more-tool-card p {
-            font-size: 13px;
-            color: var(--text-light);
+        .step-list {
+            list-style: none;
             margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 12px;
+        }
+        .step-list li {
+            display: grid;
+            grid-template-columns: 32px 1fr;
+            gap: 12px;
+            align-items: start;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(101, 40, 247, 0.12);
+            color: var(--primary);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 22px;
+        }
+        .tool-card {
+            background: #ffffff;
+            border-radius: 22px;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .tool-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 22px 46px rgba(15, 23, 42, 0.14);
+            border-color: rgba(101, 40, 247, 0.32);
+        }
+        .tool-card-hero {
+            padding: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 110px;
+        }
+        .tool-card[data-theme="sunset"] .tool-card-hero {
+            background: linear-gradient(135deg, #2A0F44, #5B1466);
+        }
+        .tool-card[data-theme="ocean"] .tool-card-hero {
+            background: linear-gradient(135deg, #0B233F, #0F4C5C);
+        }
+        .tool-card[data-theme="forest"] .tool-card-hero {
+            background: linear-gradient(135deg, #12323A, #1F6E4F);
+        }
+        .tool-card[data-theme="ember"] .tool-card-hero {
+            background: linear-gradient(135deg, #2E1A10, #7C2D12);
+        }
+        .tool-card[data-theme="mint"] .tool-card-hero {
+            background: linear-gradient(135deg, #0F2A2A, #1E7666);
+        }
+        .tool-card[data-theme="cosmos"] .tool-card-hero {
+            background: linear-gradient(135deg, #101625, #2A2D72);
+        }
+        .tool-visual {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .tool-connector {
+            width: 26px;
+            height: 2px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+        .icon-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            color: white;
+            font-size: 20px;
+            background: linear-gradient(135deg, #6528F7, #A855F7);
+            box-shadow: 0 10px 22px rgba(101, 40, 247, 0.25);
+        }
+        .icon-badge.alt {
+            background: linear-gradient(135deg, #0EA5E9, #22D3EE);
+            box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22);
+        }
+        .tool-body {
+            padding: 22px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .tool-card h3 {
+            font-size: 20px;
+            letter-spacing: -0.01em;
+            color: var(--dark);
+            margin: 0;
+        }
+        .tool-summary {
+            color: var(--text-light);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tool-tag {
+            background: rgba(101, 40, 247, 0.08);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 999px;
+        }
+        .tool-link {
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-weight: 700;
+            font-size: 13px;
+            background: linear-gradient(135deg, #0F172A, #334155);
+            padding: 10px 16px;
+            border-radius: 999px;
+            width: fit-content;
+            letter-spacing: 0.01em;
         }
         @media (max-width: 768px) {
             .tool-hero-content h1 {
@@ -228,7 +447,114 @@
                 padding: 24px;
             }
         }
-    </style>
+            body.theme-dark .tool-panel {
+            background: #0F172A;
+            border-color: #1F2937;
+        }
+        body.theme-dark .drop-zone {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.45);
+        }
+        body.theme-dark .drop-zone h3 {
+            color: #F8FAFC;
+        }
+        body.theme-dark .drop-zone p {
+            color: #94A3B8;
+        }
+        body.theme-dark .option-card,
+        body.theme-dark .file-item,
+        body.theme-dark .selected-file,
+        body.theme-dark .preview-panel,
+        body.theme-dark .toggle-card,
+        body.theme-dark .color-card {
+            background: #0B1220;
+            border-color: #1F2937;
+        }
+        body.theme-dark .option-card label,
+        body.theme-dark .preview-meta,
+        body.theme-dark .status-text,
+        body.theme-dark .helper-note,
+        body.theme-dark .preview-placeholder {
+            color: #94A3B8;
+        }
+        body.theme-dark .file-meta {
+            color: #E2E8F0;
+        }
+        body.theme-dark .option-card select,
+        body.theme-dark .option-card input,
+        body.theme-dark input[type="text"],
+        body.theme-dark input[type="number"],
+        body.theme-dark input[type="range"],
+        body.theme-dark textarea {
+            background: #0F172A;
+            color: #E2E8F0;
+            border-color: #334155;
+        }
+        body.theme-dark .preview-stage {
+            background: rgba(15, 23, 42, 0.55);
+        }
+        body.theme-dark .preview-canvas {
+            background: #0B1220;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
+        }
+        body.theme-dark .file-actions button,
+        body.theme-dark .selected-file button {
+            background: rgba(239, 68, 68, 0.18);
+            color: #FCA5A5;
+        }        body.theme-dark .preview-card a {
+            background: #111827;
+            border-color: #334155;
+            color: #E2E8F0;
+        }
+        body.theme-dark .preview-card a i {
+            color: #E2E8F0;
+        }
+        body.theme-dark .tab-icon {
+            background: #0B1220;
+            border-color: #1F2937;
+        }
+        body.theme-dark .tab-icon img {
+            image-rendering: pixelated;
+        }
+        body.theme-dark .tab-icon.zoom img {
+            image-rendering: pixelated;
+        }
+        body.theme-dark .browser-editable {
+            border-bottom-color: rgba(148, 163, 184, 0.45);
+        }
+        body.theme-dark .tool-card,
+        body.theme-dark .tool-body {
+            background: #0F172A;
+            border-color: #1F2937;
+        }
+        body.theme-dark .tool-card h3 {
+            color: #F8FAFC;
+        }
+        body.theme-dark .tool-summary {
+            color: #CBD5E1;
+        }
+        body.theme-dark .tool-tag {
+            background: rgba(248, 250, 252, 0.08);
+            color: #E2E8F0;
+        }
+        body.theme-dark .tool-link {
+            background: #111827;
+        }        body.theme-dark .btn-secondary {
+            background: #111827;
+            color: #E2E8F0;
+            border-color: #334155;
+        }
+        body.theme-dark .btn-secondary i,
+        body.theme-dark .btn-secondary span {
+            color: #E2E8F0;
+        }
+        body.theme-dark .result-card,
+        body.theme-dark .preview-card,
+        body.theme-dark .file-item {
+            background: #0B1220;
+            border-color: #1F2937;
+            color: #E2E8F0;
+        }</style>
 </head>
 <body>
     <header class="header">
@@ -312,6 +638,17 @@
                     </div>
                 </div>
 
+                <div class="preview-panel">
+                    <div class="preview-header">
+                        <h4>Live PDF Layout Preview</h4>
+                        <span class="preview-meta" id="previewMeta">Waiting for images</span>
+                    </div>
+                    <div class="preview-stage" id="previewStage">
+                        <div id="previewPlaceholder" class="preview-placeholder">Select images to see page size and margins before downloading.</div>
+                        <div id="previewList" class="preview-list" aria-label="PDF preview pages"></div>
+                    </div>
+                </div>
+
                 <div id="fileList" class="file-list"></div>
 
                 <div class="action-row">
@@ -326,6 +663,34 @@
         </div>
     </section>
 
+    <section class="tool-extras">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Tips</span>
+                <h2 class="section-title">How to Convert Images to PDF</h2>
+                <p class="section-subtitle">A clean, fast workflow for JPG to PDF, PNG to PDF, and WebP to PDF.</p>
+            </div>
+            <div class="tips-grid">
+                <div class="tips-art">
+                    <div class="tips-icons">
+                        <div class="tips-icon"><i class="fas fa-image"></i></div>
+                        <div class="tips-connector"></div>
+                        <div class="tips-icon"><i class="fas fa-file-pdf"></i></div>
+                    </div>
+                </div>
+                <div class="tips-steps">
+                    <h3>Quick steps</h3>
+                    <ol class="step-list">
+                        <li><span class="step-num">1</span><span>Upload your JPG, PNG, or WebP images and keep the order you want.</span></li>
+                        <li><span class="step-num">2</span><span>Select a page size or match each image to its own PDF page.</span></li>
+                        <li><span class="step-num">3</span><span>Click Create PDF and download your file instantly.</span></li>
+                        <li><span class="step-num">4</span><span>Use this image to PDF tool for scans, receipts, notes, and portfolios.</span></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="more-tools">
         <div class="container">
             <div class="section-header">
@@ -333,33 +698,78 @@
                 <h2 class="section-title">More Tools</h2>
                 <p class="section-subtitle">Jump to another free tool in one click.</p>
             </div>
-            <div class="more-tools-grid">
-                <a class="more-tool-card" href="/tools/pdf-compressor/">
-                    <i class="fas fa-compress-alt"></i>
-                    <div>
-                        <h3>PDF Compressor</h3>
-                        <p>Reduce size with a quality slider.</p>
+            <div class="tools-grid">
+                <a class="tool-card" href="/tools/pdf-to-image/" data-theme="ocean">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-image"></i></span>
+                        </div>
                     </div>
-                </a>
-                <a class="more-tool-card" href="/tools/pdf-to-image/">
-                    <i class="fas fa-image"></i>
-                    <div>
+                    <div class="tool-body">
                         <h3>PDF to Image</h3>
-                        <p>Export pages as PNG or JPEG.</p>
+                        <p class="tool-summary">Export PDF pages as images.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">JPEG</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="more-tool-card" href="/tools/image-converter/">
-                    <i class="fas fa-sync-alt"></i>
-                    <div>
+                <a class="tool-card" href="/tools/image-converter/" data-theme="forest">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-image"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-retweet"></i></span>
+                        </div>
+                    </div>
+                    <div class="tool-body">
                         <h3>Image Converter</h3>
-                        <p>Convert PNG, JPEG, WebP.</p>
+                        <p class="tool-summary">Convert between PNG, JPEG, and WebP.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">JPEG</span>
+                            <span class="tool-tag">WebP</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="more-tool-card" href="/speed-test/">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <div>
-                        <h3>Page Speed Test</h3>
-                        <p>Check Core Web Vitals fast.</p>
+                <a class="tool-card" href="/tools/pdf-compressor/" data-theme="ember">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-compress-alt"></i></span>
+                        </div>
+                    </div>
+                    <div class="tool-body">
+                        <h3>PDF Compressor</h3>
+                        <p class="tool-summary">Reduce PDF size with a quality slider.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PDF</span>
+                            <span class="tool-tag">Quality</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
+                </a>
+                <a class="tool-card" href="/tools/favicon-generator/" data-theme="mint">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-image"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-icons"></i></span>
+                        </div>
+                    </div>
+                    <div class="tool-body">
+                        <h3>Favicon Generator</h3>
+                        <p class="tool-summary">Create favicon sizes and get the HTML snippet.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">ICO</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
                     </div>
                 </a>
             </div>
@@ -417,8 +827,12 @@
         const createPdfBtn = document.getElementById('createPdfBtn');
         const pageSizeSelect = document.getElementById('pageSize');
         const pageMarginSelect = document.getElementById('pageMargin');
+        const previewList = document.getElementById('previewList');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const previewMeta = document.getElementById('previewMeta');
 
         let selectedFiles = [];
+        let previewToken = 0;
 
         const updateStatus = (message) => {
             statusText.textContent = message;
@@ -440,6 +854,9 @@
             fileList.innerHTML = '';
             if (selectedFiles.length === 0) {
                 updateStatus('No files selected.');
+                previewPlaceholder.style.display = 'block';
+                previewList.innerHTML = '';
+                previewMeta.textContent = 'Waiting for images';
                 return;
             }
             updateStatus(selectedFiles.length + ' file(s) ready.');
@@ -466,6 +883,7 @@
                 img.src = thumbUrl;
                 img.onload = () => URL.revokeObjectURL(thumbUrl);
             });
+            updatePreview();
         };
 
         const addFiles = (files) => {
@@ -518,6 +936,101 @@
             return { width: 794, height: 1123 };
         };
 
+        const loadImageForPreview = (file) => new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                resolve(img);
+            };
+            img.onerror = (error) => {
+                URL.revokeObjectURL(url);
+                reject(error);
+            };
+            img.src = url;
+        });
+
+        const updatePreview = async () => {
+            if (selectedFiles.length === 0) {
+                previewPlaceholder.style.display = 'block';
+                previewList.innerHTML = '';
+                previewMeta.textContent = 'Waiting for images';
+                return;
+            }
+
+            const currentToken = ++previewToken;
+            const pageSize = pageSizeSelect.value;
+            const margin = Number(pageMarginSelect.value) || 0;
+            previewMeta.textContent = 'Loading preview...';
+
+            try {
+                previewList.innerHTML = '';
+                previewPlaceholder.style.display = 'none';
+
+                for (let i = 0; i < selectedFiles.length; i += 1) {
+                    const file = selectedFiles[i];
+                    const bitmap = await loadImageForPreview(file);
+                    if (currentToken !== previewToken) return;
+
+                    const imgWidth = bitmap.naturalWidth || bitmap.width;
+                    const imgHeight = bitmap.naturalHeight || bitmap.height;
+                    const page = getPageDimensions(imgWidth, imgHeight, pageSize);
+                    const pageWidth = page.width;
+                    const pageHeight = page.height;
+
+                    const maxWidth = 700;
+                    const maxHeight = 520;
+                    const scale = Math.min(maxWidth / pageWidth, maxHeight / pageHeight, 1);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'preview-canvas';
+                    canvas.width = Math.round(pageWidth * scale);
+                    canvas.height = Math.round(pageHeight * scale);
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#f1f5f9';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.save();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = 'rgba(15, 23, 42, 0.18)';
+                    ctx.shadowBlur = 16;
+                    ctx.shadowOffsetY = 8;
+                    ctx.fillRect(12, 12, canvas.width - 24, canvas.height - 24);
+                    ctx.restore();
+
+                    const innerWidth = canvas.width - 24 - margin * scale * 2;
+                    const innerHeight = canvas.height - 24 - margin * scale * 2;
+                    const safeInnerWidth = Math.max(innerWidth, 20);
+                    const safeInnerHeight = Math.max(innerHeight, 20);
+                    const ratio = Math.min(safeInnerWidth / (imgWidth * scale), safeInnerHeight / (imgHeight * scale));
+                    const renderWidth = imgWidth * scale * ratio;
+                    const renderHeight = imgHeight * scale * ratio;
+                    const offsetX = (canvas.width - renderWidth) / 2;
+                    const offsetY = (canvas.height - renderHeight) / 2;
+
+                    ctx.drawImage(bitmap, offsetX, offsetY, renderWidth, renderHeight);
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'preview-page';
+                    wrapper.appendChild(canvas);
+                    previewList.appendChild(wrapper);
+                }
+
+                const pageLabel = pageSize === 'auto' ? 'Match each image' : pageSize.toUpperCase();
+                previewMeta.textContent = pageLabel + ' · Margin ' + margin + 'px';
+            } catch (error) {
+                console.error(error);
+                previewPlaceholder.style.display = 'block';
+                previewList.innerHTML = '';
+                previewMeta.textContent = 'Preview unavailable';
+            }
+        };
+
+        pageSizeSelect.addEventListener('change', updatePreview);
+        pageMarginSelect.addEventListener('change', updatePreview);
+
         const loadImageData = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result);
@@ -525,25 +1038,14 @@
             reader.readAsDataURL(file);
         });
 
-        const createImageBitmapSafe = async (file) => {
-            if ('createImageBitmap' in window) {
-                return createImageBitmap(file);
-            }
-            const dataUrl = await loadImageData(file);
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = dataUrl;
-            });
-        };
-
-        const bitmapToJpeg = async (bitmap) => {
+        const imageToJpegData = (image) => {
+            const width = image.naturalWidth || image.width;
+            const height = image.naturalHeight || image.height;
             const canvas = document.createElement('canvas');
-            canvas.width = bitmap.width;
-            canvas.height = bitmap.height;
+            canvas.width = width;
+            canvas.height = height;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(bitmap, 0, 0);
+            ctx.drawImage(image, 0, 0, width, height);
             return canvas.toDataURL('image/jpeg', 0.92);
         };
 
@@ -567,10 +1069,12 @@
                 for (let i = 0; i < selectedFiles.length; i += 1) {
                     updateStatus('Processing ' + (i + 1) + ' of ' + selectedFiles.length + '...');
                     const file = selectedFiles[i];
-                    const bitmap = await createImageBitmapSafe(file);
-                    const jpegData = await bitmapToJpeg(bitmap);
+                    const image = await loadImageForPreview(file);
+                    const jpegData = imageToJpegData(image);
 
-                    const page = getPageDimensions(bitmap.width, bitmap.height, pageSize);
+                    const imageWidth = image.naturalWidth || image.width;
+                    const imageHeight = image.naturalHeight || image.height;
+                    const page = getPageDimensions(imageWidth, imageHeight, pageSize);
                     const pageWidth = page.width;
                     const pageHeight = page.height;
 
@@ -582,9 +1086,9 @@
 
                     const availableWidth = pageWidth - margin * 2;
                     const availableHeight = pageHeight - margin * 2;
-                    const ratio = Math.min(availableWidth / bitmap.width, availableHeight / bitmap.height);
-                    const renderWidth = bitmap.width * ratio;
-                    const renderHeight = bitmap.height * ratio;
+                    const ratio = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
+                    const renderWidth = imageWidth * ratio;
+                    const renderHeight = imageHeight * ratio;
                     const offsetX = (pageWidth - renderWidth) / 2;
                     const offsetY = (pageHeight - renderHeight) / 2;
 
@@ -607,3 +1111,9 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+

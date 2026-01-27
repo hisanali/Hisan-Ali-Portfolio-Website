@@ -30,16 +30,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .tools-hero {
-            min-height: 68vh;
+            min-height: 60vh;
             display: flex;
             align-items: center;
             position: relative;
             overflow: hidden;
-            padding: 140px 0 90px;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(101, 40, 247, 0.28), transparent 45%),
-                radial-gradient(circle at 80% 0%, rgba(78, 205, 196, 0.28), transparent 45%),
-                linear-gradient(140deg, #0B1020 0%, #111827 50%, #0B1020 100%);
+            padding: 140px 0 80px;
+            background: linear-gradient(135deg, #0D0614 0%, #1A0B2E 50%, #0D0614 100%);
         }
         .tools-hero .hero-bg {
             position: absolute;
@@ -53,28 +50,14 @@
             max-width: 860px;
             margin: 0 auto;
         }
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 18px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.12);
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(6px);
-        }
         .tools-hero-content h1 {
-            font-size: 56px;
+            font-size: 54px;
             color: white;
             margin-bottom: 16px;
         }
         .tools-hero-content p {
-            font-size: 20px;
-            color: rgba(255, 255, 255, 0.78);
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.72);
             line-height: 1.8;
         }
         .breadcrumb {
@@ -100,7 +83,7 @@
             font-size: 10px;
         }
         .tools-section {
-            padding: 90px 0 110px;
+            padding: 80px 0 110px;
             background: var(--bg);
         }
         .tools-grid {
@@ -109,34 +92,124 @@
             gap: 26px;
         }
         .tool-card {
-            background: var(--bg-light);
+            background: #ffffff;
             border-radius: 22px;
-            padding: 26px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(148, 163, 184, 0.18);
             display: flex;
             flex-direction: column;
             gap: 12px;
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            overflow: hidden;
+            position: relative;
         }
         .tool-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: 0 22px 46px rgba(15, 23, 42, 0.14);
+            border-color: rgba(101, 40, 247, 0.32);
         }
-        .tool-icon {
+        .tool-card-hero {
+            padding: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 128px;
+            border-radius: 22px 22px 0 0;
+            background-size: 300% 300%;
+            background-position: 0% 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-card-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0) 60%);
+            transform: translateX(-120%);
+            opacity: 0;
+        }
+        .tool-card[data-theme="sunset"] .tool-card-hero {
+            background: linear-gradient(135deg, #2A0F44, #5B1466, #D946EF);
+        }
+        .tool-card[data-theme="ocean"] .tool-card-hero {
+            background: linear-gradient(135deg, #0B233F, #0F4C5C, #22D3EE);
+        }
+        .tool-card[data-theme="forest"] .tool-card-hero {
+            background: linear-gradient(135deg, #12323A, #1F6E4F, #34D399);
+        }
+        .tool-card[data-theme="ember"] .tool-card-hero {
+            background: linear-gradient(135deg, #2E1A10, #7C2D12, #F97316);
+        }
+        .tool-card[data-theme="mint"] .tool-card-hero {
+            background: linear-gradient(135deg, #0F2A2A, #1E7666, #2DD4BF);
+        }
+        .tool-card[data-theme="cosmos"] .tool-card-hero {
+            background: linear-gradient(135deg, #101625, #2A2D72, #60A5FA);
+        }
+        .tool-card[data-theme="fire"] .tool-card-hero {
+            background: linear-gradient(135deg, #3B0A05, #E25822, #FBBF24);
+        }
+        .tool-card:hover .tool-card-hero {
+            animation: gradientDrift 1.4s ease-in-out 1;
+            animation-fill-mode: both;
+        }
+        .tool-card:hover .tool-card-hero::after {
+            animation: sheenMove 1.2s linear 1;
+            animation-fill-mode: both;
+            opacity: 0.85;
+        }
+        @keyframes gradientDrift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes sheenMove {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(120%); }
+        }
+        .tool-visual {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .tool-visual.single .tool-connector,
+        .tool-visual.single .icon-badge.alt {
+            display: none;
+        }
+        .tool-connector {
+            width: 26px;
+            height: 2px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .icon-badge {
             width: 54px;
             height: 54px;
-            border-radius: 16px;
+            border-radius: 14px;
             display: grid;
             place-items: center;
-            font-size: 22px;
             color: white;
-            background: var(--gradient-primary);
+            font-size: 22px;
+            background: linear-gradient(135deg, #6528F7, #A855F7);
+            box-shadow: 0 10px 22px rgba(101, 40, 247, 0.25);
+        }
+        .icon-badge.alt {
+            background: linear-gradient(135deg, #0EA5E9, #22D3EE);
+            box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22);
+        }
+        .tool-body {
+            padding: 24px 26px 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-radius: 0 0 22px 22px;
+            background: #ffffff;
         }
         .tool-card h3 {
-            font-size: 20px;
+            font-size: 22px;
+            letter-spacing: -0.01em;
             color: var(--dark);
+            margin: 0;
         }
         .tool-summary {
             color: var(--text-light);
@@ -149,38 +222,26 @@
             gap: 8px;
         }
         .tool-tag {
-            background: rgba(37, 99, 235, 0.12);
-            color: #2563eb;
+            background: rgba(101, 40, 247, 0.08);
+            color: var(--primary);
             font-size: 12px;
             font-weight: 600;
             padding: 6px 12px;
             border-radius: 999px;
         }
         .tool-link {
-            margin-top: auto;
+            margin-top: 6px;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: var(--dark);
+            color: white;
             font-weight: 700;
-            font-size: 14px;
-        }
-        .tool-link i {
-            color: var(--primary);
-        }
-        .tools-trust {
-            margin-top: 32px;
-            display: flex;
-            justify-content: center;
-            gap: 18px;
-            flex-wrap: wrap;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-        }
-        .tools-trust span {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 13px;
+            background: linear-gradient(135deg, #0F172A, #334155);
+            padding: 10px 16px;
+            border-radius: 999px;
+            width: fit-content;
+            letter-spacing: 0.01em;
         }
         .tools-note {
             margin-top: 48px;
@@ -188,15 +249,32 @@
             color: var(--text-light);
             font-size: 14px;
         }
+        body.theme-dark .tool-card {
+            background: #0F172A;
+            border-color: rgba(148, 163, 184, 0.25);
+        }
+        body.theme-dark .tool-body {
+            background: #0F172A;
+        }
+        body.theme-dark .tool-card h3 {
+            color: #F8FAFC;
+        }
+        body.theme-dark .tool-summary {
+            color: #CBD5E1;
+        }
+        body.theme-dark .tool-tag {
+            background: rgba(248, 250, 252, 0.08);
+            color: #E2E8F0;
+        }
+        body.theme-dark .tool-link {
+            background: #111827;
+        }
         @media (max-width: 768px) {
             .tools-hero-content h1 {
                 font-size: 38px;
             }
             .tools-hero-content p {
                 font-size: 16px;
-            }
-            .tools-trust {
-                font-size: 13px;
             }
         }
     </style>
@@ -253,81 +331,121 @@
                 <i class="fas fa-chevron-right"></i>
                 <span>Tools</span>
             </div>
-            <span class="hero-badge"><i class="fas fa-lock"></i> Private tools with zero uploads</span>
-            <h1>Free, Fast Tools for Images & PDFs</h1>
-            <p>Make PDFs, convert images, and shrink files in seconds — all inside your browser.</p>
-            <div class="tools-trust">
-                <span><i class="fas fa-bolt"></i> Instant results</span>
-                <span><i class="fas fa-shield-alt"></i> Files stay local</span>
-                <span><i class="fas fa-mobile-alt"></i> Mobile friendly</span>
-            </div>
+            <h1>Simple, Fast Online Tools</h1>
+            <p>Convert files in seconds. Everything runs in your browser.</p>
         </div>
     </section>
 
     <section class="tools-section">
         <div class="container">
             <div class="tools-grid">
-                <a class="tool-card" href="/tools/image-to-pdf/">
-                    <div class="tool-icon"><i class="fas fa-file-pdf"></i></div>
-                    <h3>Image to PDF</h3>
-                    <p class="tool-summary">Combine images into one clean PDF.</p>
-                    <div class="tool-tags">
-                        <span class="tool-tag">JPG</span>
-                        <span class="tool-tag">PNG</span>
-                        <span class="tool-tag">WebP</span>
+                <a class="tool-card" href="/tools/image-to-pdf/" data-theme="sunset">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-image"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-file-pdf"></i></span>
+                        </div>
                     </div>
-                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                    <div class="tool-body">
+                        <h3>Image to PDF</h3>
+                        <p class="tool-summary">Combine images into one clean PDF.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">JPG</span>
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">WebP</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
                 </a>
-                <a class="tool-card" href="/tools/pdf-to-image/">
-                    <div class="tool-icon"><i class="fas fa-image"></i></div>
-                    <h3>PDF to Image</h3>
-                    <p class="tool-summary">Export PDF pages as images.</p>
-                    <div class="tool-tags">
-                        <span class="tool-tag">PNG</span>
-                        <span class="tool-tag">JPEG</span>
+                <a class="tool-card" href="/tools/pdf-to-image/" data-theme="ocean">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-image"></i></span>
+                        </div>
                     </div>
-                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                    <div class="tool-body">
+                        <h3>PDF to Image</h3>
+                        <p class="tool-summary">Export PDF pages as images.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">JPEG</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
                 </a>
-                <a class="tool-card" href="/tools/image-converter/">
-                    <div class="tool-icon"><i class="fas fa-sync-alt"></i></div>
-                    <h3>Image Converter</h3>
-                    <p class="tool-summary">Convert between PNG, JPEG, and WebP.</p>
-                    <div class="tool-tags">
-                        <span class="tool-tag">PNG</span>
-                        <span class="tool-tag">JPEG</span>
-                        <span class="tool-tag">WebP</span>
+                <a class="tool-card" href="/tools/image-converter/" data-theme="forest">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-image"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-retweet"></i></span>
+                        </div>
                     </div>
-                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                    <div class="tool-body">
+                        <h3>Image Converter</h3>
+                        <p class="tool-summary">Convert between PNG, JPEG, and WebP.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">JPEG</span>
+                            <span class="tool-tag">WebP</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
                 </a>
-                <a class="tool-card" href="/tools/pdf-compressor/">
-                    <div class="tool-icon"><i class="fas fa-compress-alt"></i></div>
-                    <h3>PDF Compressor</h3>
-                    <p class="tool-summary">Reduce PDF size with a quality slider.</p>
-                    <div class="tool-tags">
-                        <span class="tool-tag">PDF</span>
-                        <span class="tool-tag">Quality</span>
+                <a class="tool-card" href="/tools/pdf-compressor/" data-theme="ember">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-compress-alt"></i></span>
+                        </div>
                     </div>
-                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                    <div class="tool-body">
+                        <h3>PDF Compressor</h3>
+                        <p class="tool-summary">Reduce PDF size with a quality slider.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PDF</span>
+                            <span class="tool-tag">Quality</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
                 </a>
-                <a class="tool-card" href="/tools/favicon-generator/">
-                    <div class="tool-icon"><i class="fas fa-icons"></i></div>
-                    <h3>Favicon Generator</h3>
-                    <p class="tool-summary">Create favicon sizes and get the HTML snippet.</p>
-                    <div class="tool-tags">
-                        <span class="tool-tag">PNG</span>
-                        <span class="tool-tag">ICO</span>
+                <a class="tool-card" href="/tools/favicon-generator/" data-theme="mint">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-image"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-icons"></i></span>
+                        </div>
                     </div>
-                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                    <div class="tool-body">
+                        <h3>Favicon Generator</h3>
+                        <p class="tool-summary">Create favicon sizes and get the HTML snippet.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">PNG</span>
+                            <span class="tool-tag">ICO</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
                 </a>
-                <a class="tool-card" href="/speed-test/">
-                    <div class="tool-icon"><i class="fas fa-tachometer-alt"></i></div>
-                    <h3>Page Speed Test</h3>
-                    <p class="tool-summary">Measure Core Web Vitals instantly.</p>
-                    <div class="tool-tags">
-                        <span class="tool-tag">Web</span>
-                        <span class="tool-tag">SEO</span>
+                <a class="tool-card" href="/speed-test/" data-theme="fire">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual single">
+                            <span class="icon-badge"><i class="fas fa-gauge-high"></i></span>
+                        </div>
                     </div>
-                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                    <div class="tool-body">
+                        <h3>Page Speed Test</h3>
+                        <p class="tool-summary">Measure Core Web Vitals instantly.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">Web</span>
+                            <span class="tool-tag">SEO</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
                 </a>
             </div>
             <p class="tools-note">All tools run directly in your browser. Your files stay on your device.</p>
