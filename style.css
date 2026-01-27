@@ -89,6 +89,65 @@ body {
     margin-bottom: 12px;
 }
 
+.case-study-section {
+    padding: 80px 0;
+}
+
+.case-study-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 32px;
+    background: var(--bg-light);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: var(--shadow-sm);
+}
+
+.case-study-summary h3 {
+    margin-top: 0;
+}
+
+.case-study-summary p {
+    color: var(--text-muted);
+}
+
+.case-study-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.kpi-item {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+
+.kpi-value {
+    display: block;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.kpi-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.case-study-details ul {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.case-study-details li {
+    color: var(--text);
+}
+
 .hero-subdescription {
     margin-top: 12px;
     font-size: 16px;
