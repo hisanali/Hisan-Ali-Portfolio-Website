@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Online Tools | Image and PDF Utilities</title>
+    <meta name="description" content="Free browser-based tools for image and PDF conversion. Convert images to PDF, extract PDF pages as images, and change image formats instantly.">
+
+    <link rel="canonical" href="https://hisanali.com/tools/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hisanali.com/tools/">
+    <meta property="og:title" content="Free Online Tools | Image and PDF Utilities">
+    <meta property="og:description" content="Convert images to PDF, extract PDF pages as images, and change image formats instantly. All tools run in your browser.">
+    <meta property="og:image" content="https://hisanali.com/Hisan.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://hisanali.com/tools/">
+    <meta name="twitter:title" content="Free Online Tools | Image and PDF Utilities">
+    <meta name="twitter:description" content="Convert images to PDF, extract PDF pages as images, and change image formats instantly.">
+    <meta name="twitter:image" content="https://hisanali.com/Hisan.jpg">
+
+    <meta name="keywords" content="image to pdf, pdf to image, image converter, webp to jpg, png to jpeg, online tools">
+    <meta name="robots" content="index, follow">
+
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .tools-hero {
+            min-height: 68vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 140px 0 90px;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(101, 40, 247, 0.28), transparent 45%),
+                radial-gradient(circle at 80% 0%, rgba(78, 205, 196, 0.28), transparent 45%),
+                linear-gradient(140deg, #0B1020 0%, #111827 50%, #0B1020 100%);
+        }
+        .tools-hero .hero-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+        .tools-hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(6px);
+        }
+        .tools-hero-content h1 {
+            font-size: 56px;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .tools-hero-content p {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.8;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .breadcrumb a {
+            color: rgba(255, 255, 255, 0.7);
+            transition: color 0.3s ease;
+        }
+        .breadcrumb a:hover {
+            color: white;
+        }
+        .breadcrumb span {
+            color: var(--primary);
+        }
+        .breadcrumb i {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
+        }
+        .tools-section {
+            padding: 90px 0 110px;
+            background: var(--bg);
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 26px;
+        }
+        .tool-card {
+            background: var(--bg-light);
+            border-radius: 22px;
+            padding: 26px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .tool-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+            border-color: rgba(59, 130, 246, 0.35);
+        }
+        .tool-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            font-size: 22px;
+            color: white;
+            background: var(--gradient-primary);
+        }
+        .tool-card h3 {
+            font-size: 20px;
+            color: var(--dark);
+        }
+        .tool-summary {
+            color: var(--text-light);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tool-tag {
+            background: rgba(37, 99, 235, 0.12);
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 999px;
+        }
+        .tool-link {
+            margin-top: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .tool-link i {
+            color: var(--primary);
+        }
+        .tools-trust {
+            margin-top: 32px;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        .tools-trust span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tools-note {
+            margin-top: 48px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .tools-hero-content h1 {
+                font-size: 38px;
+            }
+            .tools-hero-content p {
+                font-size: 16px;
+            }
+            .tools-trust {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <span class="logo-text">Hisan</span>
+                    <span class="logo-dot">.</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/about" class="nav-link">About</a></li>
+                    <li><a href="/services" class="nav-link">Services</a></li>
+                    <li><a href="/#stats" class="nav-link">Results</a></li>
+                    <li><a href="/#portfolio" class="nav-link">Portfolio</a></li>
+                    <li><a href="/tools" class="nav-link">Tools</a></li>
+                    <li><a href="/blog" class="nav-link">Blog</a></li>
+                    <li><a href="/contact" class="nav-link">Contact</a></li>
+                    <li class="mobile-only"><a href="/speed-test" class="nav-link">Page Speed Test</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <a class="nav-tool" href="/speed-test" aria-label="Page speed test">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path fill="currentColor" d="M12 3a9 9 0 0 0-9 9c0 2.46 1 4.68 2.62 6.3.2.2.48.31.77.31h11.22c.29 0 .57-.12.77-.31A8.96 8.96 0 0 0 21 12a9 9 0 0 0-9-9zm5.66 14H6.34A6.96 6.96 0 0 1 5 12a7 7 0 1 1 14 0c0 1.86-.72 3.55-1.34 5zM12 7a1 1 0 0 0-1 1v4.59l-2.3 2.3a1 1 0 1 0 1.41 1.41l2.6-2.6a1 1 0 0 0 .29-.71V8a1 1 0 0 0-1-1z"/>
+                        </svg>
+                    </a>
+                    <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="nav-cta">
+                        <a href="/contact" class="btn-primary">Let&apos;s Talk</a>
+                    </div>
+                </div>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <section class="tools-hero">
+        <div class="hero-bg">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        <div class="container tools-hero-content">
+            <div class="breadcrumb">
+                <a href="/">Home</a>
+                <i class="fas fa-chevron-right"></i>
+                <span>Tools</span>
+            </div>
+            <span class="hero-badge"><i class="fas fa-lock"></i> Private tools with zero uploads</span>
+            <h1>Free, Fast Tools for Images & PDFs</h1>
+            <p>Make PDFs, convert images, and shrink files in seconds — all inside your browser.</p>
+            <div class="tools-trust">
+                <span><i class="fas fa-bolt"></i> Instant results</span>
+                <span><i class="fas fa-shield-alt"></i> Files stay local</span>
+                <span><i class="fas fa-mobile-alt"></i> Mobile friendly</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="tools-section">
+        <div class="container">
+            <div class="tools-grid">
+                <a class="tool-card" href="/tools/image-to-pdf/">
+                    <div class="tool-icon"><i class="fas fa-file-pdf"></i></div>
+                    <h3>Image to PDF</h3>
+                    <p class="tool-summary">Combine images into one clean PDF.</p>
+                    <div class="tool-tags">
+                        <span class="tool-tag">JPG</span>
+                        <span class="tool-tag">PNG</span>
+                        <span class="tool-tag">WebP</span>
+                    </div>
+                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="tool-card" href="/tools/pdf-to-image/">
+                    <div class="tool-icon"><i class="fas fa-image"></i></div>
+                    <h3>PDF to Image</h3>
+                    <p class="tool-summary">Export PDF pages as images.</p>
+                    <div class="tool-tags">
+                        <span class="tool-tag">PNG</span>
+                        <span class="tool-tag">JPEG</span>
+                    </div>
+                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="tool-card" href="/tools/image-converter/">
+                    <div class="tool-icon"><i class="fas fa-sync-alt"></i></div>
+                    <h3>Image Converter</h3>
+                    <p class="tool-summary">Convert between PNG, JPEG, and WebP.</p>
+                    <div class="tool-tags">
+                        <span class="tool-tag">PNG</span>
+                        <span class="tool-tag">JPEG</span>
+                        <span class="tool-tag">WebP</span>
+                    </div>
+                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="tool-card" href="/tools/pdf-compressor/">
+                    <div class="tool-icon"><i class="fas fa-compress-alt"></i></div>
+                    <h3>PDF Compressor</h3>
+                    <p class="tool-summary">Reduce PDF size with a quality slider.</p>
+                    <div class="tool-tags">
+                        <span class="tool-tag">PDF</span>
+                        <span class="tool-tag">Quality</span>
+                    </div>
+                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="tool-card" href="/tools/favicon-generator/">
+                    <div class="tool-icon"><i class="fas fa-icons"></i></div>
+                    <h3>Favicon Generator</h3>
+                    <p class="tool-summary">Create favicon sizes and get the HTML snippet.</p>
+                    <div class="tool-tags">
+                        <span class="tool-tag">PNG</span>
+                        <span class="tool-tag">ICO</span>
+                    </div>
+                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="tool-card" href="/speed-test/">
+                    <div class="tool-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    <h3>Page Speed Test</h3>
+                    <p class="tool-summary">Measure Core Web Vitals instantly.</p>
+                    <div class="tool-tags">
+                        <span class="tool-tag">Web</span>
+                        <span class="tool-tag">SEO</span>
+                    </div>
+                    <span class="tool-link">Open tool <i class="fas fa-arrow-right"></i></span>
+                </a>
+            </div>
+            <p class="tools-note">All tools run directly in your browser. Your files stay on your device.</p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-text">Hisan</span>
+                        <span class="logo-dot">.</span>
+                    </div>
+                    <p>Digital Marketing Expert helping businesses grow through strategic SEO, Google Ads, and Social Media Marketing.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/services">Services</a></li>
+                        <li><a href="/tools">Tools</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Tools</h4>
+                    <ul>
+                        <li><a href="/tools/image-to-pdf/">Image to PDF</a></li>
+                        <li><a href="/tools/pdf-to-image/">PDF to Image</a></li>
+                        <li><a href="/tools/image-converter/">Image Converter</a></li>
+                        <li><a href="/tools/pdf-compressor/">PDF Compressor</a></li>
+                        <li><a href="/tools/favicon-generator/">Favicon Generator</a></li>
+                        <li><a href="/speed-test/">Page Speed Test</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/legal/privacy-policy/">Privacy Policy</a></li>
+                        <li><a href="/legal/terms/">Terms of Service</a></li>
+                        <li><a href="/legal/cookie-policy/">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> workhisan@gmail.com</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Muscat, Oman</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Hisan Ali. All rights reserved. Digital Marketing Expert in Oman.</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+
+    <script src="../script.js"></script>
+</body>
+</html>
