@@ -401,38 +401,74 @@
             padding: 100px 0;
             background: var(--bg-light);
         }
-        .faq-grid {
-            max-width: 800px;
-            margin: 0 auto;
+        .faq-layout {
+            display: grid;
+            grid-template-columns: minmax(240px, 0.9fr) minmax(320px, 1.1fr);
+            gap: 32px;
+            align-items: start;
+        }
+        .faq-side {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(101, 40, 247, 0.08);
+        }
+        .faq-side h3 {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+        .faq-side p {
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .faq-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(101, 40, 247, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+        .faq-list {
+            display: grid;
+            gap: 14px;
         }
         .faq-item {
             background: white;
-            border-radius: 16px;
-            margin-bottom: 16px;
+            border-radius: 18px;
             overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.18);
             box-shadow: var(--shadow-sm);
         }
-        body.theme-dark .faq-item {
+        body.theme-dark .faq-item,
+        body.theme-dark .faq-side {
             background: #0F172A;
-            border: 1px solid #1F2937;
+            border-color: #1F2937;
             box-shadow: none;
         }
         .faq-question {
-            padding: 24px 32px;
+            padding: 20px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 16px;
             cursor: pointer;
             transition: var(--transition);
         }
         .faq-question:hover {
-            background: var(--bg-light);
+            background: rgba(101, 40, 247, 0.05);
         }
         body.theme-dark .faq-question:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.04);
         }
         .faq-question h3 {
-            font-size: 18px;
+            font-size: 17px;
             color: var(--dark);
             margin: 0;
         }
@@ -444,18 +480,18 @@
             transform: rotate(180deg);
         }
         .faq-answer {
-            padding: 0 32px;
+            padding: 0 24px;
             max-height: 0;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: max-height 0.35s ease, padding 0.35s ease;
         }
         .faq-item.active .faq-answer {
-            padding: 0 32px 24px;
-            max-height: 300px;
+            padding: 0 24px 20px;
+            max-height: 800px;
         }
         .faq-answer p {
             color: var(--text);
-            line-height: 1.8;
+            line-height: 1.7;
         }
 
         @media (max-width: 1024px) {
@@ -482,6 +518,9 @@
             }
             .process-card::after {
                 display: none;
+            }
+            .faq-layout {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -546,6 +585,7 @@
                     <li><a href="/about" class="nav-link">About</a></li>
                     <li><a href="/services" class="nav-link active">Services</a></li>
                     <li><a href="/#portfolio" class="nav-link">Portfolio</a></li>
+                    <li><a href="/tools" class="nav-link">Tools</a></li>
                     <li><a href="/blog" class="nav-link">Blog</a></li>
                     
                     <li><a href="/contact" class="nav-link">Contact</a></li>
@@ -819,20 +859,27 @@
 
     <!-- FAQ Section -->
     <section class="faq-section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">FAQ</span>
-                <h2 class="section-title">Frequently Asked Questions</h2>
-                <p class="section-subtitle">Common questions about my services</p>
+    <div class="container">
+        <div class="section-header">
+            <span class="section-badge">FAQ</span>
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-subtitle">Common questions about my services</p>
+        </div>
+        <div class="faq-layout">
+            <div class="faq-side">
+                <span class="faq-pill"><i class="fas fa-life-ring"></i> Support</span>
+                <h3>Clear answers before we start</h3>
+                <p>Every strategy is customized. Here are quick answers to the most common questions about timelines, budgets, and reporting.</p>
+                <p>If you have a specific goal, I will map a plan that fits your budget and timeline.</p>
             </div>
-            <div class="faq-grid">
+            <div class="faq-list">
                 <div class="faq-item">
                     <div class="faq-question">
                         <h3>How long does it take to see results from SEO?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>SEO is a long-term strategy. Typically, you can start seeing improvements within 3-6 months, with more significant results appearing after 6-12 months. The timeline depends on factors like your website's current state, competition, and the keywords you're targeting.</p>
+                        <p>SEO is a long-term strategy. Typically, you can start seeing improvements within 3-6 months, with more significant results appearing after 6-12 months. The timeline depends on your website's current state, competition, and keywords.</p>
                     </div>
                 </div>
                 <div class="faq-item">
@@ -841,7 +888,7 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>I recommend a minimum monthly ad spend of $500-1000 to gather meaningful data and achieve results. However, the ideal budget depends on your industry, competition, and goals. I'll help you determine the right budget during our consultation.</p>
+                        <p>The minimum budget varies by industry. I recommend starting at $500/month to collect useful data, then scaling once we see consistent conversions.</p>
                     </div>
                 </div>
                 <div class="faq-item">
@@ -850,30 +897,31 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Yes! Transparency is one of my core values. You'll receive detailed monthly reports showing key metrics, progress toward goals, and actionable insights. I also provide regular check-ins to discuss performance and strategy adjustments.</p>
+                        <p>Yes. You receive a monthly performance report plus clear action items for the next cycle. Weekly updates are available for active campaigns.</p>
                     </div>
                 </div>
                 <div class="faq-item">
                     <div class="faq-question">
-                        <h3>Can you work with businesses outside Oman?</h3>
+                        <h3>Can you work with small businesses?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Absolutely! While I'm based in Oman, I work with clients across the GCC region and internationally. Digital marketing is not limited by geography, and I've successfully helped businesses from various countries achieve their online goals.</p>
+                        <p>Absolutely. I work with startups and SMEs and adapt strategies to your budget while focusing on fast, measurable wins.</p>
                     </div>
                 </div>
                 <div class="faq-item">
                     <div class="faq-question">
-                        <h3>What makes your services different?</h3>
+                        <h3>What makes your approach different?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>I focus on delivering measurable results, not vanity metrics. Every strategy is customized to your specific business goals. You get direct communication with me (no middlemen), transparent reporting, and a genuine commitment to your success.</p>
+                        <p>I focus on measurable results, not vanity metrics. You get direct communication, transparent reporting, and strategies tied to your business goals.</p>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- CTA Section -->
     <section class="cta-section">
@@ -907,6 +955,7 @@
                         <li><a href="/about">About</a></li>
                         <li><a href="/services">Services</a></li>
                         <li><a href="/#portfolio">Portfolio</a></li>
+                        <li><a href="/tools">Tools</a></li>
                         <li><a href="/blog">Blog</a></li>
                     </ul>
                 </div>
@@ -939,6 +988,7 @@
         </div>
     </footer>
 
+
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
     <script src="../script.js"></script>
     <script>
@@ -946,20 +996,30 @@
         document.querySelectorAll('.faq-question').forEach(question => {
             question.addEventListener('click', () => {
                 const item = question.parentElement;
+                const answer = item.querySelector('.faq-answer');
                 const isActive = item.classList.contains('active');
 
-                // Close all other items
-                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.faq-item').forEach(i => {
+                    i.classList.remove('active');
+                    const a = i.querySelector('.faq-answer');
+                    if (a) a.style.maxHeight = null;
+                });
 
-                // Toggle current item
                 if (!isActive) {
                     item.classList.add('active');
+                    if (answer) {
+                        answer.style.maxHeight = answer.scrollHeight + 'px';
+                    }
                 }
             });
         });
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
