@@ -8,3 +8,14 @@ Sitemap: https://hisanali.com/sitemap.xml
 # Disallow admin and server directories
 Disallow: /admin/
 Disallow: /server/
+
+# Block legacy WordPress/Elementor paths
+Disallow: /wp-admin/
+Disallow: /wp-content/
+Disallow: /wp-includes/
+Disallow: /wp-json/
+Disallow: /*?elementor_library=
+Disallow: /comments/
+Disallow: /feed/
+Disallow: /search/
+Disallow: /category/

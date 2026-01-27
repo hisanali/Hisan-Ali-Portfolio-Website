@@ -1,4 +1,113 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/home-2",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about-2",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/contact-2",
+      "destination": "/contact/",
+      "permanent": true
+    },
+    {
+      "source": "/projects",
+      "destination": "/services/",
+      "permanent": true
+    },
+    {
+      "source": "/form",
+      "destination": "/contact/",
+      "permanent": true
+    },
+    {
+      "source": "/form/simple-contact-form",
+      "destination": "/contact/",
+      "permanent": true
+    },
+    {
+      "source": "/form/simple-contact-form-2",
+      "destination": "/contact/",
+      "permanent": true
+    },
+    {
+      "source": "/author/hisanali73gmail-com",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/category/uncategorized",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/hello-world",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/comments/feed",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/:slug*.html",
+      "destination": "/blog/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-json",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-admin/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-content/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-includes/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "query",
+          "key": "elementor_library"
+        }
+      ],
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "query",
+          "key": "replytocom"
+        }
+      ],
+      "destination": "/blog/",
+      "permanent": true
+    }
+  ]
 }
