@@ -537,10 +537,11 @@ const fadeInObserver = new IntersectionObserver((entries) => {
 }, observerOptions);
 
 const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+const hasHomeHero = !!document.querySelector('.hero');
 
-// Observe sections (disable on mobile to avoid blank content)
+// Observe sections on the homepage only (disable on mobile to avoid blank content)
 document.querySelectorAll('section:not(.hero)').forEach(section => {
-    if (isMobileView) {
+    if (!hasHomeHero || isMobileView) {
         section.style.opacity = '1';
         section.style.transform = 'none';
         section.style.transition = 'none';
@@ -1035,3 +1036,248 @@ function debounce(func, wait) {
 window.addEventListener('scroll', debounce(() => {
     // Any expensive scroll operations can go here
 }, 100));
+
+// ===================================
+// Blog Feedback (ratings + comments)
+// ===================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname.replace(/\/+$/, '');
+    if (!path.startsWith('/blog/') || path === '/blog') return;
+
+    const articleContent = document.querySelector('.blog-post-content');
+    if (!articleContent) return;
+
+    const storageKey = 'blog_feedback_v1';
+    const userKey = 'blog_feedback_user_id_v1';
+    const blogSlug = path.split('/').filter(Boolean).pop();
+    if (!blogSlug) return;
+
+    const ensureUserId = () => {
+        try {
+            let userId = localStorage.getItem(userKey);
+            if (!userId) {
+                userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+                localStorage.setItem(userKey, userId);
+            }
+            return userId;
+        } catch (err) {
+            return 'anonymous_user';
+        }
+    };
+
+    const userId = ensureUserId();
+
+    const loadData = () => {
+        try {
+            const raw = localStorage.getItem(storageKey);
+            const parsed = raw ? JSON.parse(raw) : {};
+            if (typeof parsed === 'object' && parsed !== null) {
+                return parsed;
+            }
+            return {};
+        } catch (err) {
+            return {};
+        }
+    };
+
+    const saveData = (data) => {
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(data));
+        } catch (err) {
+            showNotification('Could not save feedback in this browser mode.', 'error');
+        }
+    };
+
+    const allData = loadData();
+    if (!allData[blogSlug]) {
+        allData[blogSlug] = { ratings: {}, comments: [] };
+    }
+
+    if (!allData[blogSlug].ratings || typeof allData[blogSlug].ratings !== 'object') {
+        allData[blogSlug].ratings = {};
+    }
+    if (!Array.isArray(allData[blogSlug].comments)) {
+        allData[blogSlug].comments = [];
+    }
+
+    const feedbackRoot = document.createElement('section');
+    feedbackRoot.className = 'blog-feedback';
+    feedbackRoot.innerHTML = `
+        <div class="blog-feedback-header">
+            <h2>Rate This Article</h2>
+            <p>Share your feedback to help us improve future posts.</p>
+        </div>
+        <div class="rating-panel">
+            <div class="rating-stars" role="radiogroup" aria-label="Rate this article from 1 to 5">
+                <button type="button" class="rating-star" data-rating="1" aria-label="1 star">&#9733;</button>
+                <button type="button" class="rating-star" data-rating="2" aria-label="2 stars">&#9733;</button>
+                <button type="button" class="rating-star" data-rating="3" aria-label="3 stars">&#9733;</button>
+                <button type="button" class="rating-star" data-rating="4" aria-label="4 stars">&#9733;</button>
+                <button type="button" class="rating-star" data-rating="5" aria-label="5 stars">&#9733;</button>
+            </div>
+            <div class="rating-summary" aria-live="polite">No ratings yet.</div>
+        </div>
+        <div class="comments-panel">
+            <h3>Comments</h3>
+            <form class="comment-form" novalidate>
+                <div class="comment-form-row">
+                    <input type="text" name="name" maxlength="50" placeholder="Your name (optional)">
+                </div>
+                <div class="comment-form-row">
+                    <textarea name="comment" rows="4" maxlength="500" placeholder="Write your comment..." required></textarea>
+                    <div class="comment-meta">
+                        <span class="comment-counter">0/500</span>
+                    </div>
+                </div>
+                <button type="submit" class="comment-submit">Post Comment</button>
+            </form>
+            <div class="comment-list" aria-live="polite"></div>
+        </div>
+    `;
+
+    articleContent.appendChild(feedbackRoot);
+
+    const starButtons = Array.from(feedbackRoot.querySelectorAll('.rating-star'));
+    const ratingSummary = feedbackRoot.querySelector('.rating-summary');
+    const commentForm = feedbackRoot.querySelector('.comment-form');
+    const commentInput = feedbackRoot.querySelector('textarea[name="comment"]');
+    const nameInput = feedbackRoot.querySelector('input[name="name"]');
+    const commentCounter = feedbackRoot.querySelector('.comment-counter');
+    const commentList = feedbackRoot.querySelector('.comment-list');
+
+    const blockedTerms = ['http://', 'https://', 'viagra', 'casino', 'crypto giveaway'];
+    const hasBlockedTerm = (text) => {
+        const normalized = text.toLowerCase();
+        return blockedTerms.some(term => normalized.includes(term));
+    };
+
+    const formatDate = (isoDate) => {
+        try {
+            return new Date(isoDate).toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (err) {
+            return 'Just now';
+        }
+    };
+
+    const renderStars = () => {
+        const selected = Number(allData[blogSlug].ratings[userId] || 0);
+        starButtons.forEach((button) => {
+            const value = Number(button.getAttribute('data-rating') || 0);
+            button.classList.toggle('active', value <= selected);
+        });
+    };
+
+    const renderRatingSummary = () => {
+        const ratingValues = Object.values(allData[blogSlug].ratings)
+            .map(value => Number(value))
+            .filter(value => value >= 1 && value <= 5);
+
+        if (!ratingValues.length) {
+            ratingSummary.textContent = 'No ratings yet.';
+            return;
+        }
+
+        const total = ratingValues.reduce((sum, value) => sum + value, 0);
+        const avg = (total / ratingValues.length).toFixed(1);
+        ratingSummary.textContent = `${avg}/5 from ${ratingValues.length} rating${ratingValues.length > 1 ? 's' : ''}`;
+    };
+
+    const renderComments = () => {
+        const comments = allData[blogSlug].comments.slice().sort((a, b) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        commentList.innerHTML = '';
+
+        if (!comments.length) {
+            const empty = document.createElement('p');
+            empty.className = 'comment-empty';
+            empty.textContent = 'Be the first to comment.';
+            commentList.appendChild(empty);
+            return;
+        }
+
+        comments.forEach((comment) => {
+            const item = document.createElement('article');
+            item.className = 'comment-item';
+
+            const header = document.createElement('div');
+            header.className = 'comment-item-header';
+
+            const author = document.createElement('strong');
+            author.className = 'comment-author';
+            author.textContent = comment.name || 'Anonymous';
+
+            const time = document.createElement('time');
+            time.className = 'comment-time';
+            time.dateTime = comment.createdAt;
+            time.textContent = formatDate(comment.createdAt);
+
+            const body = document.createElement('p');
+            body.className = 'comment-body';
+            body.textContent = comment.text;
+
+            header.appendChild(author);
+            header.appendChild(time);
+            item.appendChild(header);
+            item.appendChild(body);
+            commentList.appendChild(item);
+        });
+    };
+
+    starButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const value = Number(button.getAttribute('data-rating') || 0);
+            if (!value) return;
+            allData[blogSlug].ratings[userId] = value;
+            saveData(allData);
+            renderStars();
+            renderRatingSummary();
+            showNotification('Thanks for rating this article!', 'success');
+        });
+    });
+
+    commentInput.addEventListener('input', () => {
+        commentCounter.textContent = `${commentInput.value.length}/500`;
+    });
+
+    commentForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = (nameInput.value || '').trim().slice(0, 50);
+        const commentText = (commentInput.value || '').trim();
+
+        if (!commentText) {
+            showNotification('Please write a comment before posting.', 'error');
+            return;
+        }
+
+        if (hasBlockedTerm(commentText)) {
+            showNotification('Comment blocked by spam filter.', 'error');
+            return;
+        }
+
+        allData[blogSlug].comments.push({
+            id: `c_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            name: name || 'Anonymous',
+            text: commentText,
+            createdAt: new Date().toISOString()
+        });
+
+        saveData(allData);
+        commentForm.reset();
+        commentCounter.textContent = '0/500';
+        renderComments();
+        showNotification('Comment posted successfully!', 'success');
+    });
+
+    renderStars();
+    renderRatingSummary();
+    renderComments();
+});

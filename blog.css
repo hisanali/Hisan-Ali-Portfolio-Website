@@ -238,6 +238,20 @@
     box-shadow: var(--shadow-sm);
 }
 
+.blog-featured-image {
+    margin: 0 0 28px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.blog-featured-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
 .blog-post-content h2 {
     font-size: 32px;
     font-weight: 700;
@@ -435,10 +449,178 @@
     opacity: 0.6;
 }
 
+/* Blog Feedback */
+.blog-feedback {
+    margin-top: 40px;
+    padding-top: 36px;
+    border-top: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.blog-feedback-header h2 {
+    font-size: 28px;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+.blog-feedback-header p {
+    margin-bottom: 20px;
+}
+
+.rating-panel {
+    background: var(--bg);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 28px;
+}
+
+.rating-stars {
+    display: inline-flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.rating-star {
+    border: none;
+    background: transparent;
+    font-size: 32px;
+    line-height: 1;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+    padding: 0;
+}
+
+.rating-star:hover,
+.rating-star.active {
+    color: #f59e0b;
+}
+
+.rating-star:hover {
+    transform: translateY(-1px);
+}
+
+.rating-summary {
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0.9;
+}
+
+.comments-panel h3 {
+    font-size: 24px;
+    margin-bottom: 16px;
+    color: var(--dark);
+}
+
+.comment-form-row {
+    margin-bottom: 12px;
+}
+
+.comment-form input,
+.comment-form textarea {
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--dark);
+}
+
+.comment-form textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.comment-form input:focus,
+.comment-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(101, 40, 247, 0.12);
+}
+
+.comment-meta {
+    margin-top: 8px;
+    text-align: right;
+}
+
+.comment-counter {
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.comment-submit {
+    border: none;
+    background: var(--gradient-primary);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(101, 40, 247, 0.25);
+}
+
+.comment-list {
+    margin-top: 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.comment-empty {
+    margin: 0;
+    color: var(--text);
+    opacity: 0.75;
+}
+
+.comment-item {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.comment-item-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-size: 14px;
+    color: var(--dark);
+}
+
+.comment-time {
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.comment-body {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text);
+    font-size: 15px;
+    white-space: pre-wrap;
+}
+
 /* Dark Theme Overrides */
 .theme-dark .blog-post-content {
     background: #0F172A;
     border: 1px solid #1F2937;
+}
+
+.theme-dark .blog-featured-image {
+    border-color: #1F2937;
 }
 
 .theme-dark .author-card,
@@ -464,6 +646,23 @@
 
 .theme-dark .blog-post-content .highlight {
     background: linear-gradient(135deg, rgba(101, 40, 247, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%);
+}
+
+.theme-dark .blog-feedback {
+    border-top-color: rgba(148, 163, 184, 0.2);
+}
+
+.theme-dark .rating-panel,
+.theme-dark .comment-item {
+    background: #0B1220;
+    border-color: #1F2937;
+}
+
+.theme-dark .comment-form input,
+.theme-dark .comment-form textarea {
+    background: #0B1220;
+    border-color: #1F2937;
+    color: var(--text);
 }
 
 /* Responsive */
@@ -551,6 +750,18 @@
 
     .author-card {
         padding: 24px;
+    }
+
+    .blog-feedback-header h2 {
+        font-size: 24px;
+    }
+
+    .comments-panel h3 {
+        font-size: 22px;
+    }
+
+    .rating-star {
+        font-size: 28px;
     }
 }
 
