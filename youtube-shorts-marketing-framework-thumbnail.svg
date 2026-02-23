@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="YouTube Shorts Marketing Framework thumbnail">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3f0d12"/>
+      <stop offset="100%" stop-color="#a71d31"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g2)"/>
+  <circle cx="1000" cy="150" r="130" fill="#fca5a5" opacity="0.22"/>
+  <circle cx="210" cy="540" r="180" fill="#fecaca" opacity="0.14"/>
+  <text x="600" y="250" text-anchor="middle" fill="#fee2e2" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="700">Video Marketing</text>
+  <text x="600" y="330" text-anchor="middle" fill="#ffffff" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800">YouTube Shorts</text>
+  <text x="600" y="392" text-anchor="middle" fill="#ffffff" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800">Framework</text>
+  <text x="600" y="470" text-anchor="middle" fill="#fecaca" font-family="Inter, Arial, sans-serif" font-size="28">Turn Short Videos Into Qualified Leads</text>
+</svg>

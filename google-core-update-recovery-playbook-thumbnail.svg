@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Google Core Update Recovery Playbook thumbnail">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#be123c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g2)"/>
+  <circle cx="1030" cy="140" r="130" fill="#fda4af" opacity="0.22"/>
+  <text x="600" y="250" text-anchor="middle" fill="#fecdd3" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">Algorithm Update Strategy</text>
+  <text x="600" y="330" text-anchor="middle" fill="#ffffff" font-family="Poppins, Arial, sans-serif" font-size="58" font-weight="800">Core Update</text>
+  <text x="600" y="390" text-anchor="middle" fill="#ffffff" font-family="Poppins, Arial, sans-serif" font-size="58" font-weight="800">Recovery Playbook</text>
+  <text x="600" y="468" text-anchor="middle" fill="#fecdd3" font-family="Inter, Arial, sans-serif" font-size="28">Diagnose Losses and Rebuild Rankings</text>
+</svg>

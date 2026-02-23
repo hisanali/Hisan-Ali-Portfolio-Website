@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Zero-Click SEO Strategy 2026 thumbnail">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g1)"/>
+  <circle cx="1020" cy="130" r="120" fill="#60a5fa" opacity="0.22"/>
+  <circle cx="180" cy="520" r="170" fill="#93c5fd" opacity="0.14"/>
+  <text x="600" y="250" text-anchor="middle" fill="#dbeafe" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="700">SEO Strategy</text>
+  <text x="600" y="330" text-anchor="middle" fill="#ffffff" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800">Zero-Click SEO</text>
+  <text x="600" y="392" text-anchor="middle" fill="#ffffff" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800">for 2026</text>
+  <text x="600" y="470" text-anchor="middle" fill="#bfdbfe" font-family="Inter, Arial, sans-serif" font-size="28">Win Visibility Beyond Blue Links</text>
+</svg>
