@@ -6,24 +6,24 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
-    <title>Image Converter | PNG, JPEG, WebP, SVG, AVIF</title>
-    <meta name="description" content="Convert images between PNG, JPEG, WebP, SVG, AVIF, BMP, and GIF formats in your browser. Fast, free, and private.">
+    <title>UTM Builder | Campaign URL Generator</title>
+    <meta name="description" content="Build clean UTM-tagged campaign links for Google Ads, Meta Ads, email, and social media. Copy shareable URLs instantly.">
 
-    <link rel="canonical" href="https://hisanali.com/tools/image-converter/">
+    <link rel="canonical" href="https://hisanali.com/tools/utm-builder/">
 
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://hisanali.com/tools/image-converter/">
-    <meta property="og:title" content="Image Converter | PNG, JPEG, WebP, SVG, AVIF">
-    <meta property="og:description" content="Convert images between PNG, JPEG, WebP, SVG, AVIF, BMP, and GIF formats in your browser.">
+    <meta property="og:url" content="https://hisanali.com/tools/utm-builder/">
+    <meta property="og:title" content="UTM Builder | Campaign URL Generator">
+    <meta property="og:description" content="Build UTM-tagged campaign URLs and copy them in one click.">
     <meta property="og:image" content="https://hisanali.com/Hisan.jpg">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://hisanali.com/tools/image-converter/">
-    <meta name="twitter:title" content="Image Converter | PNG, JPEG, WebP, SVG, AVIF">
-    <meta name="twitter:description" content="Convert images between PNG, JPEG, WebP, SVG, AVIF, BMP, and GIF formats in your browser.">
+    <meta name="twitter:url" content="https://hisanali.com/tools/utm-builder/">
+    <meta name="twitter:title" content="UTM Builder | Campaign URL Generator">
+    <meta name="twitter:description" content="Build UTM-tagged campaign URLs and copy them in one click.">
     <meta name="twitter:image" content="https://hisanali.com/Hisan.jpg">
 
-    <meta name="keywords" content="image converter, png to jpg, jpg to webp, webp converter, svg converter, avif converter">
+    <meta name="keywords" content="utm builder, campaign url builder, utm parameters, marketing url generator">
     <meta name="robots" content="index, follow">
 
     
@@ -35,7 +35,7 @@
         "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://hisanali.com/"},
             {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://hisanali.com/tools/"},
-            {"@type": "ListItem", "position": 3, "name": "Image Converter", "item": "https://hisanali.com/tools/image-converter/"}
+            {"@type": "ListItem", "position": 3, "name": "UTM Builder", "item": "https://hisanali.com/tools/utm-builder/"}
         ]
     }
     </script>
@@ -197,6 +197,148 @@
             margin-top: 16px;
             font-size: 13px;
             color: var(--text-light);
+        }
+        .utm-redesign {
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+        .utm-redesign .utm-grid {
+            display: grid;
+            grid-template-columns: 56% 44%;
+            gap: 24px;
+            align-items: start;
+        }
+        .utm-redesign .result-hero {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            min-height: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .utm-redesign .result-hero h3 {
+            margin: 0;
+            font-size: 22px;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+        .utm-redesign .result-hero p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .utm-redesign #resultUrl {
+            width: 100% !important;
+            min-height: 220px;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            padding: 14px !important;
+            font-family: "Inter", sans-serif !important;
+            font-size: 15px;
+            color: #0f172a;
+            background: #ffffff;
+            resize: vertical;
+        }
+        .utm-redesign .copy-row {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+        .utm-redesign .copy-row button {
+            border-radius: 10px;
+            height: 42px;
+            font-weight: 700;
+            transition: all 150ms ease;
+        }
+        .utm-redesign .copy-row .btn-primary {
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+        }
+        .utm-redesign .copy-row .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        .utm-redesign .controls {
+            display: grid;
+            gap: 12px;
+        }
+        .utm-redesign .field-row {
+            display: grid;
+            gap: 8px;
+        }
+        .utm-redesign .field-row label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+        .utm-redesign .field-row input {
+            height: 46px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-size: 15px;
+            color: #0f172a;
+            background: #ffffff;
+            transition: all 150ms ease;
+        }
+        .utm-redesign .field-row input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+        }
+        .utm-redesign .controls-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .utm-redesign .toolbar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .utm-redesign .toolbar .btn-primary,
+        .utm-redesign .toolbar .btn-secondary {
+            height: 46px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .utm-redesign .toolbar .btn-primary {
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+        }
+        .utm-redesign .toolbar .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        .utm-redesign .status-text {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .utm-redesign .helper-note {
+            margin: 0;
+            font-size: 12px;
+            color: #64748b;
+        }
+        @media (max-width: 1024px) {
+            .utm-redesign .utm-grid {
+                grid-template-columns: 1fr;
+            }
+            .utm-redesign .controls-split {
+                grid-template-columns: 1fr;
+            }
+            .utm-redesign .toolbar {
+                grid-template-columns: 1fr;
+            }
+            .utm-redesign .copy-row {
+                flex-direction: column;
+            }
+            .utm-redesign .result-hero {
+                min-height: auto;
+            }
         }
         .more-tools {
             padding: 60px 0 90px;
@@ -575,56 +717,73 @@
                 <i class="fas fa-chevron-right"></i>
                 <a href="/tools/">Tools</a>
                 <i class="fas fa-chevron-right"></i>
-                <span>Image Converter</span>
+                <span>UTM Builder</span>
             </div>
-            <h1>Image Converter</h1>
-            <p>Convert PNG, JPEG, WebP, SVG, AVIF, BMP, or GIF images in seconds. Everything stays in your browser.</p>
+            <h1>UTM Builder</h1>
+            <p>Create campaign URLs with UTM parameters for ads, email, social, and referral tracking.</p>
         </div>
     </section>
 
     <section class="tool-section">
         <div class="container">
-            <div class="tool-panel">
-                <div id="dropZone" class="drop-zone">
-                    <h3>Drop images here</h3>
-                    <p>or click to select image files</p>
-                    <label class="btn-primary" for="imageFiles">Choose Images</label>
-                    <input id="imageFiles" type="file" accept="image/*,.svg" multiple>
-                </div>
+            <div class="tool-panel utm-redesign">
+                <div class="utm-grid">
+                    <section class="result-hero">
+                        <h3>Generated Campaign URL</h3>
+                        <p>Build once, copy instantly, and keep your campaign tracking clean.</p>
+                        <textarea id="resultUrl" rows="6" readonly></textarea>
+                        <div class="copy-row">
+                            <button class="btn-primary" id="copyBtn" disabled>
+                                <i class="fas fa-copy"></i>
+                                <span>Copy URL</span>
+                            </button>
+                            <button class="btn-secondary" id="clearBtn">
+                                <i class="fas fa-rotate-left"></i>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                        <small id="previewHint">Your UTM link will appear here.</small>
+                    </section>
 
-                <div class="options-row">
-                    <div class="option-card">
-                        <label for="targetFormat">Convert to</label>
-                        <select id="targetFormat">
-                            <option value="png">PNG</option>
-                            <option value="jpeg">JPEG</option>
-                            <option value="webp">WebP</option>
-                            <option value="svg">SVG</option>
-                            <option value="avif">AVIF</option>
-                            <option value="bmp">BMP</option>
-                            <option value="gif">GIF</option>
-                        </select>
-                    </div>
-                    <div class="option-card" id="qualityWrap">
-                        <label for="qualityRange">Quality (JPEG/WebP/AVIF)</label>
-                        <input id="qualityRange" type="range" min="0.5" max="1" step="0.05" value="0.9">
-                    </div>
+                    <aside class="controls">
+                        <div class="field-row">
+                            <label for="baseUrl">Website URL</label>
+                            <input id="baseUrl" type="text" placeholder="https://example.com/landing-page">
+                        </div>
+                        <div class="controls-split">
+                            <div class="field-row">
+                                <label for="utmSource">utm_source</label>
+                                <input id="utmSource" type="text" placeholder="google, newsletter">
+                            </div>
+                            <div class="field-row">
+                                <label for="utmMedium">utm_medium</label>
+                                <input id="utmMedium" type="text" placeholder="cpc, email, social">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <label for="utmCampaign">utm_campaign</label>
+                            <input id="utmCampaign" type="text" placeholder="ramadan_offer_2026">
+                        </div>
+                        <div class="controls-split">
+                            <div class="field-row">
+                                <label for="utmContent">utm_content</label>
+                                <input id="utmContent" type="text" placeholder="cta_button_a (optional)">
+                            </div>
+                            <div class="field-row">
+                                <label for="utmTerm">utm_term</label>
+                                <input id="utmTerm" type="text" placeholder="keyword (optional)">
+                            </div>
+                        </div>
+                        <div class="toolbar">
+                            <button class="btn-primary" id="buildBtn">
+                                <i class="fas fa-link"></i>
+                                <span>Build URL</span>
+                            </button>
+                        </div>
+                        <span class="status-text" id="statusText">Add at least URL, source, medium, and campaign.</span>
+                        <p class="helper-note">Tip: keep values lowercase and consistent for cleaner analytics reports.</p>
+                    </aside>
                 </div>
-
-                <div id="fileList" class="file-list"></div>
-
-                <div class="action-row">
-                    <button class="btn-primary" id="convertBtn">
-                        <i class="fas fa-sync-alt"></i>
-                        <span>Convert Images</span>
-                    </button>
-                    <button class="btn-secondary" id="downloadZipBtn" disabled>
-                        <i class="fas fa-file-archive"></i>
-                        <span>Download ZIP</span>
-                    </button>
-                    <span class="status-text" id="statusText">No files selected.</span>
-                </div>
-                <p class="helper-note">Your images never leave your device. Larger batches may take longer.</p>
             </div>
         </div>
     </section>
@@ -633,8 +792,8 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-badge">Tips</span>
-                <h2 class="section-title">How to Convert Images Online</h2>
-                <p class="section-subtitle">Fast image conversions without uploading files.</p>
+                <h2 class="section-title">How to Build UTM Links</h2>
+                <p class="section-subtitle">Use a consistent structure so your campaigns stay clean in GA4.</p>
             </div>
             <div class="tips-grid">
                 <div class="tips-art">
@@ -647,10 +806,10 @@
                 <div class="tips-steps">
                     <h3>Quick steps</h3>
                     <ol class="step-list">
-                        <li><span class="step-num">1</span><span>Select your image files to convert.</span></li>
-                        <li><span class="step-num">2</span><span>Pick the output format and set the quality level.</span></li>
-                        <li><span class="step-num">3</span><span>Convert and download a single file or ZIP.</span></li>
-                        <li><span class="step-num">4</span><span>Use WebP/AVIF for smaller size or PNG/SVG for wider compatibility.</span></li>
+                        <li><span class="step-num">1</span><span>Enter destination URL and required UTM fields.</span></li>
+                        <li><span class="step-num">2</span><span>Use standard values like cpc, email, and social.</span></li>
+                        <li><span class="step-num">3</span><span>Click Build URL and copy the final campaign link.</span></li>
+                        <li><span class="step-num">4</span><span>Use one naming convention to avoid split reports.</span></li>
                     </ol>
                 </div>
             </div>
@@ -780,6 +939,8 @@
                         <li><a href="/tools/pdf-compressor/">PDF Compressor</a></li>
                         <li><a href="/tools/image-converter/">Image Converter</a></li>
                         <li><a href="/tools/favicon-generator/">Favicon Generator</a></li>
+                        <li><a href="/tools/qr-code-generator/">QR Code Generator</a></li>
+                        <li><a href="/tools/utm-builder/">UTM Builder</a></li>
                     </ul>
                 </div>
                 <div class="footer-links">
@@ -806,283 +967,113 @@
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
 
     <script src="../../script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
-        const dropZone = document.getElementById('dropZone');
-        const imageInput = document.getElementById('imageFiles');
-        const fileList = document.getElementById('fileList');
-        const convertBtn = document.getElementById('convertBtn');
-        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const baseUrl = document.getElementById('baseUrl');
+        const utmSource = document.getElementById('utmSource');
+        const utmMedium = document.getElementById('utmMedium');
+        const utmCampaign = document.getElementById('utmCampaign');
+        const utmContent = document.getElementById('utmContent');
+        const utmTerm = document.getElementById('utmTerm');
+        const buildBtn = document.getElementById('buildBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultUrl = document.getElementById('resultUrl');
+        const previewHint = document.getElementById('previewHint');
         const statusText = document.getElementById('statusText');
-        const targetFormat = document.getElementById('targetFormat');
-        const qualityWrap = document.getElementById('qualityWrap');
-        const qualityRange = document.getElementById('qualityRange');
-
-        let selectedFiles = [];
-        let convertedFiles = [];
 
         const updateStatus = (message) => {
             statusText.textContent = message;
         };
 
-        const updateQualityVisibility = () => {
-            const format = targetFormat.value;
-            const needsQuality = ['jpeg', 'webp', 'avif'].includes(format);
-            qualityWrap.style.display = needsQuality ? 'grid' : 'none';
+        const slugify = (value) => {
+            return (value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_\-./]/g, '');
         };
 
-        const formatBytes = (bytes) => {
-            if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
-            const units = ['B', 'KB', 'MB', 'GB'];
-            let idx = 0;
-            let value = bytes;
-            while (value >= 1024 && idx < units.length - 1) {
-                value /= 1024;
-                idx += 1;
+        const normalizeUrl = (value) => {
+            if (!value) return '';
+            return /^https?:\/\//i.test(value) ? value.trim() : 'https://' + value.trim();
+        };
+
+        const buildUtmUrl = () => {
+            const base = normalizeUrl(baseUrl.value);
+            const source = slugify(utmSource.value);
+            const medium = slugify(utmMedium.value);
+            const campaign = slugify(utmCampaign.value);
+            const content = slugify(utmContent.value);
+            const term = slugify(utmTerm.value);
+
+            if (!base || !source || !medium || !campaign) {
+                return '';
             }
-            return value.toFixed(value >= 10 || idx === 0 ? 0 : 1) + ' ' + units[idx];
+
+            let parsed;
+            try {
+                parsed = new URL(base);
+            } catch (error) {
+                return '';
+            }
+
+            parsed.searchParams.set('utm_source', source);
+            parsed.searchParams.set('utm_medium', medium);
+            parsed.searchParams.set('utm_campaign', campaign);
+            if (content) parsed.searchParams.set('utm_content', content);
+            if (term) parsed.searchParams.set('utm_term', term);
+
+            return parsed.toString();
         };
 
-        const renderFiles = () => {
-            fileList.innerHTML = '';
-            if (selectedFiles.length === 0) {
-                updateStatus('No files selected.');
+        const renderResult = () => {
+            const url = buildUtmUrl();
+            if (!url) {
+                resultUrl.value = '';
+                copyBtn.disabled = true;
+                updateStatus('Please provide a valid URL with source, medium, and campaign.');
                 return;
             }
-            updateStatus(selectedFiles.length + ' file(s) ready.');
-            selectedFiles.forEach((file, index) => {
-                const thumbUrl = URL.createObjectURL(file);
-                const item = document.createElement('div');
-                item.className = 'file-item';
-                item.innerHTML =
-                    '<div class="file-preview">' +
-                    '<img class="file-thumb" alt="Preview">' +
-                    '<div class="file-meta">' +
-                    '<i class="fas fa-image"></i>' +
-                    '<div>' +
-                    '<div>' + file.name + '</div>' +
-                    '<small>' + formatBytes(file.size) + '</small>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="file-actions">' +
-                    '<button type="button" data-index="' + index + '">Remove</button>' +
-                    '</div>';
-                fileList.appendChild(item);
-                const img = item.querySelector('.file-thumb');
-                img.src = thumbUrl;
-                img.onload = () => URL.revokeObjectURL(thumbUrl);
+            resultUrl.value = url;
+            previewHint.textContent = 'Ready to copy and use in campaigns.';
+            copyBtn.disabled = false;
+            updateStatus('UTM URL generated.');
+        };
+
+        buildBtn.addEventListener('click', renderResult);
+        copyBtn.addEventListener('click', async () => {
+            if (!resultUrl.value) return;
+            try {
+                await navigator.clipboard.writeText(resultUrl.value);
+                updateStatus('Copied to clipboard.');
+            } catch (error) {
+                resultUrl.select();
+                document.execCommand('copy');
+                updateStatus('Copied to clipboard.');
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            baseUrl.value = '';
+            utmSource.value = '';
+            utmMedium.value = '';
+            utmCampaign.value = '';
+            utmContent.value = '';
+            utmTerm.value = '';
+            resultUrl.value = '';
+            previewHint.textContent = 'Your UTM link will appear here.';
+            copyBtn.disabled = true;
+            updateStatus('Cleared.');
+        });
+
+        [baseUrl, utmSource, utmMedium, utmCampaign, utmContent, utmTerm].forEach((input) => {
+            input.addEventListener('input', () => {
+                if (!resultUrl.value) return;
+                renderResult();
             });
-        };
-
-        const addFiles = (files) => {
-            const isImageFile = (file) => {
-                if (file.type && file.type.startsWith('image/')) return true;
-                return /\.(png|jpe?g|webp|svg|avif|bmp|gif)$/i.test(file.name || '');
-            };
-            const images = Array.from(files).filter((file) => isImageFile(file));
-            const rejected = Array.from(files).filter((file) => !isImageFile(file));
-            if (rejected.length > 0) {
-                updateStatus('Unsupported files removed. Please use image files only.');
-            }
-            if (images.length === 0) return;
-            selectedFiles = selectedFiles.concat(images);
-            renderFiles();
-        };
-
-        const clearConverted = () => {
-            convertedFiles.forEach((file) => URL.revokeObjectURL(file.url));
-            convertedFiles = [];
-            downloadZipBtn.disabled = true;
-            downloadZipBtn.style.display = 'none';
-        };
-
-        const handleDropZoneClick = (event) => {
-            const target = event.target && event.target.nodeType === 1 ? event.target : event.target.parentElement;
-            if (target && target.closest('label, input, button, a')) return;
-            imageInput.click();
-        };
-
-        dropZone.addEventListener('click', handleDropZoneClick);
-        dropZone.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-        dropZone.addEventListener('drop', (event) => {
-            event.preventDefault();
-            dropZone.classList.remove('dragover');
-            addFiles(event.dataTransfer.files);
-        });
-        imageInput.addEventListener('change', (event) => {
-            addFiles(event.target.files);
-            imageInput.value = '';
-        });
-        fileList.addEventListener('click', (event) => {
-            const button = event.target.closest('button[data-index]');
-            if (!button) return;
-            const idx = Number(button.dataset.index);
-            selectedFiles.splice(idx, 1);
-            renderFiles();
-        });
-        targetFormat.addEventListener('change', updateQualityVisibility);
-        updateQualityVisibility();
-
-        const loadImage = (file) => new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = URL.createObjectURL(file);
-        });
-
-        const canvasToBlob = (canvas, mimeType, quality) => new Promise((resolve) => {
-            canvas.toBlob((blob) => resolve(blob), mimeType, quality);
-        });
-
-        const createSvgBlob = (canvas) => {
-            const dataUrl = canvas.toDataURL('image/png');
-            const svg =
-                '<svg xmlns="http://www.w3.org/2000/svg" width="' + canvas.width + '" height="' + canvas.height + '" viewBox="0 0 ' + canvas.width + ' ' + canvas.height + '">' +
-                '<image href="' + dataUrl + '" width="' + canvas.width + '" height="' + canvas.height + '"/></svg>';
-            return new Blob([svg], { type: 'image/svg+xml' });
-        };
-
-        convertBtn.addEventListener('click', async () => {
-            if (selectedFiles.length === 0) {
-                updateStatus('Please select at least one image.');
-                return;
-            }
-
-            convertBtn.disabled = true;
-            convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Converting...</span>';
-            clearConverted();
-            updateStatus('Converting images...');
-
-            try {
-                const format = targetFormat.value;
-                const mimeTypeMap = {
-                    png: 'image/png',
-                    jpeg: 'image/jpeg',
-                    webp: 'image/webp',
-                    avif: 'image/avif',
-                    bmp: 'image/bmp',
-                    gif: 'image/gif'
-                };
-                const quality = parseFloat(qualityRange.value) || 0.9;
-                let fallbackToPngCount = 0;
-
-                for (let i = 0; i < selectedFiles.length; i += 1) {
-                    const file = selectedFiles[i];
-                    const image = await loadImage(file);
-                    const canvas = document.createElement('canvas');
-                    canvas.width = image.width;
-                    canvas.height = image.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(image, 0, 0);
-                    URL.revokeObjectURL(image.src);
-
-                    let blob;
-                    let outputFormat = format;
-                    if (format === 'svg') {
-                        blob = createSvgBlob(canvas);
-                    } else {
-                        const requestedMimeType = mimeTypeMap[format] || 'image/png';
-                        blob = await canvasToBlob(canvas, requestedMimeType, quality);
-                        if (!blob) {
-                            continue;
-                        }
-                        if (blob.type && blob.type !== requestedMimeType) {
-                            outputFormat = 'png';
-                            fallbackToPngCount += 1;
-                        }
-                    }
-
-                    if (!blob) {
-                        continue;
-                    }
-                    const extension = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
-                    const newName = file.name.replace(/\.[^/.]+$/, '') + '.' + extension;
-                    const url = URL.createObjectURL(blob);
-                    convertedFiles.push({ fileName: newName, blob, url });
-                }
-
-                if (convertedFiles.length === 1) {
-                    const single = convertedFiles[0];
-                    const link = document.createElement('a');
-                    link.href = single.url;
-                    link.download = single.fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    updateStatus('Converted and downloaded: ' + single.fileName);
-                } else {
-                    downloadZipBtn.style.display = convertedFiles.length > 1 ? 'inline-flex' : 'none';
-                    downloadZipBtn.disabled = convertedFiles.length === 0;
-                    updateStatus('Done. ' + convertedFiles.length + ' image(s) converted.');
-                }
-
-                if (fallbackToPngCount > 0) {
-                    updateStatus('Done. ' + convertedFiles.length + ' image(s) converted. ' + fallbackToPngCount + ' file(s) saved as PNG because that format is not supported by your browser.');
-                }
-
-                fileList.innerHTML = '';
-                convertedFiles.forEach((file) => {
-                    const item = document.createElement('div');
-                    item.className = 'file-item';
-                    item.innerHTML =
-                        '<div class="file-preview">' +
-                        '<img class="file-thumb" alt="Preview" src="' + file.url + '">' +
-                        '<div class="file-meta">' +
-                        '<i class="fas fa-check-circle"></i>' +
-                        '<div>' +
-                        '<div>' + file.fileName + '</div>' +
-                        '<small>Ready to download</small>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>' +
-                        '<div class="file-actions">' +
-                        '<a class="btn-secondary" href="' + file.url + '" download="' + file.fileName + '">Download</a>' +
-                        '</div>';
-                    fileList.appendChild(item);
-                });
-                downloadZipBtn.style.display = convertedFiles.length > 1 ? 'inline-flex' : 'none';
-            } catch (error) {
-                console.error(error);
-                updateStatus('Conversion failed. Try smaller images.');
-            } finally {
-                convertBtn.disabled = false;
-                convertBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Convert Images</span>';
-            }
-        });
-
-        downloadZipBtn.addEventListener('click', async () => {
-            if (convertedFiles.length === 0) return;
-            downloadZipBtn.disabled = true;
-            downloadZipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Preparing ZIP...</span>';
-            try {
-                const zip = new JSZip();
-                convertedFiles.forEach((file) => {
-                    zip.file(file.fileName, file.blob);
-                });
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(zipBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'converted-images.zip';
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                URL.revokeObjectURL(url);
-                updateStatus('ZIP downloaded.');
-            } catch (error) {
-                console.error(error);
-                updateStatus('Unable to create ZIP.');
-            } finally {
-                downloadZipBtn.disabled = false;
-                downloadZipBtn.innerHTML = '<i class="fas fa-file-archive"></i><span>Download ZIP</span>';
-            }
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') renderResult();
+            });
         });
     </script>
 </body>
