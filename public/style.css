@@ -1552,19 +1552,7 @@ img {
     transition: transform 0.4s ease;
 }
 
-.blog-home-thumbnail {
-    width: 100%;
-    aspect-ratio: 16/10;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.4s ease;
-}
-
 .blog-card-home:hover .blog-placeholder-home {
-    transform: scale(1.05);
-}
-
-.blog-card-home:hover .blog-home-thumbnail {
     transform: scale(1.05);
 }
 
