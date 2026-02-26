@@ -556,6 +556,15 @@ img {
     border: 1px solid rgba(148, 163, 184, 0.28);
 }
 
+.theme-dark .experience-badge .badge-number {
+    color: #F8FAFC;
+    text-shadow: none;
+}
+
+.theme-dark .experience-badge .badge-text {
+    color: #E2E8F0;
+}
+
 .theme-dark .service-card,
 .theme-dark .testimonial-card,
 .theme-dark .blog-card-home,
