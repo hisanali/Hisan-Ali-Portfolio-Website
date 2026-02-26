@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const storedTheme = isMobile.matches ? null : themeStorage.get('theme');
     const defaultTheme = document.body.getAttribute('data-theme-default');
-    const initialTheme = storedTheme || defaultTheme || (prefersDark.matches ? 'dark' : 'light');
+    const initialTheme = storedTheme || defaultTheme || 'dark';
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
@@ -61,9 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTheme(nextTheme);
     });
 
-    const handleSchemeChange = (event) => {
+    const handleSchemeChange = () => {
         if (themeStorage.get('theme')) return;
-        applyTheme(event.matches ? 'dark' : 'light');
+        applyTheme('dark');
     };
 
     if (typeof prefersDark.addEventListener === 'function') {
