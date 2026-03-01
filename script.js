@@ -5,7 +5,6 @@
 // Theme Toggle
 document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
-    if (!toggle) return;
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -13,11 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const isDark = theme === 'dark';
         document.documentElement.classList.toggle('theme-dark', isDark);
         document.body.classList.toggle('theme-dark', isDark);
-        toggle.setAttribute('aria-pressed', String(isDark));
-        toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-        const icon = toggle.querySelector('i');
-        if (icon) {
-            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        if (toggle) {
+            toggle.setAttribute('aria-pressed', String(isDark));
+            toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
         }
     };
 
@@ -27,10 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applySystemTheme();
 
-    toggle.addEventListener('click', () => {
-        const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
-        applyTheme(nextTheme);
-    });
+    if (toggle) {
+        toggle.addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        });
+    }
 
     const handleSchemeChange = () => applySystemTheme();
 
