@@ -357,11 +357,15 @@ img {
     width: 100%;
     height: 100%;
     background: var(--dark);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.preloader.is-enabled {
+    display: flex;
 }
 
 .preloader.hide {

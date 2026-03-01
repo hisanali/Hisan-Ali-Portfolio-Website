@@ -386,14 +386,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // Preloader
 const preloader = document.querySelector('.preloader');
 if (preloader) {
-    const hidePreloader = () => preloader.classList.add('hide');
-
-    // Prefer load event, but fall back to a timeout so the page isn't blocked.
-    window.addEventListener('load', () => {
-        setTimeout(hidePreloader, 600);
-    });
-
-    setTimeout(hidePreloader, 2000);
+    const isRequired = preloader.getAttribute('data-required') === 'true';
+    if (!isRequired) {
+        preloader.remove();
+    } else {
+        preloader.classList.add('is-enabled');
+        const hidePreloader = () => preloader.classList.add('hide');
+        window.addEventListener('load', () => {
+            setTimeout(hidePreloader, 300);
+        });
+        setTimeout(hidePreloader, 1200);
+    }
 }
 
 // ===================================
