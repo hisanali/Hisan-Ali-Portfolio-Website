@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    let manualOverride = false;
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const applySystemTheme = () => {
+        if (manualOverride) return;
         applyTheme(prefersDark.matches ? 'dark' : 'light');
     };
 
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (toggle) {
         toggle.addEventListener('click', () => {
+            manualOverride = true;
             const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
             applyTheme(nextTheme);
         });
@@ -42,6 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (typeof prefersDark.addListener === 'function') {
         prefersDark.addListener(handleSchemeChange);
     }
+
+    // Re-sync theme when the tab/page regains focus or visibility.
+    window.addEventListener('pageshow', applySystemTheme);
+    window.addEventListener('focus', applySystemTheme);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) applySystemTheme();
+    });
+
+    // Extra guard for browsers that delay media query updates.
+    let syncAttempts = 0;
+    const syncInterval = window.setInterval(() => {
+        applySystemTheme();
+        syncAttempts += 1;
+        if (syncAttempts >= 8 || manualOverride) {
+            window.clearInterval(syncInterval);
+        }
+    }, 500);
 });
 
 // Ensure speed test nav icon + mobile link are present on every page
