@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Punch Monkey Viral Marketing Playbook thumbnail</title>
+  <desc id="desc">Gradient card for Punch Monkey marketing playbook article.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff7b54"/>
+      <stop offset="100%" stop-color="#ffb347"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="150" cy="110" r="120" fill="rgba(255,255,255,0.18)"/>
+  <circle cx="1080" cy="560" r="180" fill="rgba(0,0,0,0.12)"/>
+  <text x="80" y="250" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800" fill="#1f2937">Punch Monkey</text>
+  <text x="80" y="330" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800" fill="#1f2937">Viral Marketing</text>
+  <text x="80" y="400" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600" fill="#111827">Trend to Traffic Playbook (2026)</text>
+</svg>

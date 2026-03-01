@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Trendjacking Playbook 2026 thumbnail</title>
+  <desc id="desc">Gradient card for 72-hour trendjacking playbook article.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14532d"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="150" cy="520" r="200" fill="rgba(255,255,255,0.16)"/>
+  <circle cx="1050" cy="140" r="170" fill="rgba(5,46,22,0.35)"/>
+  <text x="80" y="250" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800" fill="#ecfdf5">72-Hour</text>
+  <text x="80" y="330" font-family="Poppins, Arial, sans-serif" font-size="62" font-weight="800" fill="#ecfdf5">Trendjacking Playbook</text>
+  <text x="80" y="400" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600" fill="#d1fae5">For Oman and GCC Brands (2026)</text>
+</svg>

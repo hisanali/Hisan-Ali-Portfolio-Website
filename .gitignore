@@ -4,3 +4,9 @@ server/
 http-server.err
 http-server.log
 tracking.js
+node_modules/
+.next/
+.DS_Store
+.env.local
+.env.development.local
+.env.production.local

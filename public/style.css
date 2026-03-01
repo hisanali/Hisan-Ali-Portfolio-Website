@@ -52,6 +52,21 @@ body.theme-dark {
     --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.55);
 }
 
+html.theme-dark {
+    --bg: #0B1220;
+    --bg-light: #111827;
+    --text: #CBD5E1;
+    --text-light: #94A3B8;
+    --border: #1F2937;
+    --dark: #F8FAFC;
+    --dark-light: #E2E8F0;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+}
+
 body.theme-dark {
     color-scheme: dark;
 }

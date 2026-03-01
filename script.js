@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('theme-dark', isDark);
         document.body.classList.toggle('theme-dark', isDark);
         toggle.setAttribute('aria-pressed', String(isDark));
         toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
