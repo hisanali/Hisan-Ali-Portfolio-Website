@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const m=window.matchMedia('(max-width: 768px)').matches;const t=(m?null:localStorage.getItem('theme'))||'dark';if(t==='dark')document.documentElement.classList.add('theme-dark');}catch(e){document.documentElement.classList.add('theme-dark');}})();</script>
+    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -769,7 +769,7 @@
                                 </div>
                                 <p data-metric="fcp">--</p>
                                 <small>First Contentful Paint</small>
-                                <div class="metric-target" data-metric-target>Best: ≤1.8s</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤1.8s</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="lcp">
@@ -779,7 +779,7 @@
                                 </div>
                                 <p data-metric="lcp">--</p>
                                 <small>Largest Contentful Paint</small>
-                                <div class="metric-target" data-metric-target>Best: ≤2.5s</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤2.5s</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="cls">
@@ -789,7 +789,7 @@
                                 </div>
                                 <p data-metric="cls">--</p>
                                 <small>Cumulative Layout Shift</small>
-                                <div class="metric-target" data-metric-target>Best: ≤0.10</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤0.10</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="tbt">
@@ -799,7 +799,7 @@
                                 </div>
                                 <p data-metric="tbt">--</p>
                                 <small>Total Blocking Time</small>
-                                <div class="metric-target" data-metric-target>Best: ≤200ms</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤200ms</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="si">
@@ -809,7 +809,7 @@
                                 </div>
                                 <p data-metric="si">--</p>
                                 <small>Visual load speed</small>
-                                <div class="metric-target" data-metric-target>Best: ≤3.4s</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤3.4s</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                         </div>
@@ -850,7 +850,7 @@
                                 </div>
                                 <p data-metric="fcp">--</p>
                                 <small>First Contentful Paint</small>
-                                <div class="metric-target" data-metric-target>Best: ≤1.8s</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤1.8s</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="lcp">
@@ -860,7 +860,7 @@
                                 </div>
                                 <p data-metric="lcp">--</p>
                                 <small>Largest Contentful Paint</small>
-                                <div class="metric-target" data-metric-target>Best: ≤2.5s</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤2.5s</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="cls">
@@ -870,7 +870,7 @@
                                 </div>
                                 <p data-metric="cls">--</p>
                                 <small>Cumulative Layout Shift</small>
-                                <div class="metric-target" data-metric-target>Best: ≤0.10</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤0.10</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="tbt">
@@ -880,7 +880,7 @@
                                 </div>
                                 <p data-metric="tbt">--</p>
                                 <small>Total Blocking Time</small>
-                                <div class="metric-target" data-metric-target>Best: ≤200ms</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤200ms</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                             <div class="metric-item" data-metric-card="si">
@@ -890,7 +890,7 @@
                                 </div>
                                 <p data-metric="si">--</p>
                                 <small>Visual load speed</small>
-                                <div class="metric-target" data-metric-target>Best: ≤3.4s</div>
+                                <div class="metric-target" data-metric-target>Best: â‰¤3.4s</div>
                                 <div class="metric-bar"><div class="metric-fill" data-metric-bar></div></div>
                             </div>
                         </div>
@@ -932,10 +932,10 @@
                 <div class="metrics-legend">
                     <h4>Metrics Explained</h4>
                     <ul>
-                        <li><strong>FCP:</strong> First Contentful Paint — time until the first text/image appears.</li>
-                        <li><strong>LCP:</strong> Largest Contentful Paint — time until the main content is visible.</li>
-                        <li><strong>CLS:</strong> Cumulative Layout Shift — visual stability score (lower is better).</li>
-                        <li><strong>TBT:</strong> Total Blocking Time — how long scripts block interaction.</li>
+                        <li><strong>FCP:</strong> First Contentful Paint â€” time until the first text/image appears.</li>
+                        <li><strong>LCP:</strong> Largest Contentful Paint â€” time until the main content is visible.</li>
+                        <li><strong>CLS:</strong> Cumulative Layout Shift â€” visual stability score (lower is better).</li>
+                        <li><strong>TBT:</strong> Total Blocking Time â€” how long scripts block interaction.</li>
                         <li><strong>Speed Index:</strong> how quickly content is visually displayed.</li>
                     </ul>
                 </div>
@@ -1029,11 +1029,11 @@
         };
 
         const metricTargets = {
-            fcp: { good: 1800, needs: 3000, best: '≤1.8s' },
-            lcp: { good: 2500, needs: 4000, best: '≤2.5s' },
-            cls: { good: 0.1, needs: 0.25, best: '≤0.10' },
-            tbt: { good: 200, needs: 600, best: '≤200ms' },
-            si: { good: 3400, needs: 5800, best: '≤3.4s' }
+            fcp: { good: 1800, needs: 3000, best: 'â‰¤1.8s' },
+            lcp: { good: 2500, needs: 4000, best: 'â‰¤2.5s' },
+            cls: { good: 0.1, needs: 0.25, best: 'â‰¤0.10' },
+            tbt: { good: 200, needs: 600, best: 'â‰¤200ms' },
+            si: { good: 3400, needs: 5800, best: 'â‰¤3.4s' }
         };
 
         const scoreColor = (score) => {
@@ -1216,7 +1216,7 @@
                     opportunities.forEach((item) => {
                         const li = document.createElement('li');
                         const saving = item.savingsMs ? `Save ~${(item.savingsMs / 1000).toFixed(1)}s` : item.display || 'Opportunity';
-                        li.textContent = `${item.title} — ${saving}`;
+                        li.textContent = `${item.title} â€” ${saving}`;
                         suggestionsEl.appendChild(li);
                     });
                 }
@@ -1389,6 +1389,7 @@
     </script>
 </body>
 </html>
+
 
 
 

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const m=window.matchMedia('(max-width: 768px)').matches;const t=(m?null:localStorage.getItem('theme'))||'dark';if(t==='dark')document.documentElement.classList.add('theme-dark');}catch(e){document.documentElement.classList.add('theme-dark');}})();</script>
+    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -180,7 +180,7 @@
                             <li>Keep videos between 7-15 seconds for maximum watch time</li>
                             <li>Use trending audio but add your unique twist</li>
                             <li>Hook viewers in the first 3 seconds</li>
-                            <li>Include captions—80% of users watch with sound off</li>
+                            <li>Include captionsâ€”80% of users watch with sound off</li>
                         </ul>
 
                         <h3>2. Strategic Story Usage</h3>
@@ -404,6 +404,7 @@
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
     <script src="../../script.js"></script></body>
 </html>
+
 
 
 

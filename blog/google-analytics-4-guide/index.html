@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const m=window.matchMedia('(max-width: 768px)').matches;const t=(m?null:localStorage.getItem('theme'))||'dark';if(t==='dark')document.documentElement.classList.add('theme-dark');}catch(e){document.documentElement.classList.add('theme-dark');}})();</script>
+    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -403,7 +403,7 @@
                         <h2>Conclusion</h2>
                         <p>Google Analytics 4 is more powerful than Universal Analytics, but it requires a shift in thinking. Focus on engaged users, conversion paths, and cross-platform behavior rather than just page views and sessions.</p>
 
-                        <p>Start by setting up your key conversions, then gradually explore the various reports and explorations. The transition to GA4 is complete—now it's time to unlock its full potential for data-driven decision making.</p>
+                        <p>Start by setting up your key conversions, then gradually explore the various reports and explorations. The transition to GA4 is completeâ€”now it's time to unlock its full potential for data-driven decision making.</p>
 
                         <p>Remember: data is only valuable when it drives action. Use GA4 insights to continuously optimize your digital marketing efforts and improve business results.</p>
 
@@ -508,6 +508,7 @@
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
     <script src="../../script.js"></script></body>
 </html>
+
 
 
 

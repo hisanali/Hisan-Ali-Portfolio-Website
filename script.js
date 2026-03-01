@@ -7,39 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
     if (!toggle) return;
 
-    const themeStorage = {
-        get(key) {
-            try {
-                return localStorage.getItem(key);
-            } catch (err) {
-                return null;
-            }
-        },
-        set(key, value) {
-            try {
-                localStorage.setItem(key, value);
-            } catch (err) {
-                // Storage can be blocked in some Safari/private modes.
-            }
-        },
-        remove(key) {
-            try {
-                localStorage.removeItem(key);
-            } catch (err) {
-                // Ignore storage errors.
-            }
-        }
-    };
-
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    const isMobile = window.matchMedia('(max-width: 768px)');
-    if (isMobile.matches) {
-        themeStorage.remove('theme');
-    }
-
-    const storedTheme = isMobile.matches ? null : themeStorage.get('theme');
-    const defaultTheme = document.body.getAttribute('data-theme-default');
-    const initialTheme = storedTheme || defaultTheme || 'dark';
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
@@ -53,19 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    applyTheme(initialTheme);
+    const applySystemTheme = () => {
+        applyTheme(prefersDark.matches ? 'dark' : 'light');
+    };
+
+    applySystemTheme();
 
     toggle.addEventListener('click', () => {
-        if (isMobile.matches) return;
         const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
-        themeStorage.set('theme', nextTheme);
         applyTheme(nextTheme);
     });
 
-    const handleSchemeChange = () => {
-        if (themeStorage.get('theme')) return;
-        applyTheme('dark');
-    };
+    const handleSchemeChange = () => applySystemTheme();
 
     if (typeof prefersDark.addEventListener === 'function') {
         prefersDark.addEventListener('change', handleSchemeChange);

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const m=window.matchMedia('(max-width: 768px)').matches;const t=(m?null:localStorage.getItem('theme'))||'dark';if(t==='dark')document.documentElement.classList.add('theme-dark');}catch(e){document.documentElement.classList.add('theme-dark');}})();</script>
+    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
 <title>Favicon Generator | Free Online Tool</title>
     <meta name="description" content="Generate favicon sizes and HTML tags from a single image. Fast, private, and free.">
 
@@ -956,7 +956,7 @@
                 <div class="tab-preview" id="tabPreview" hidden>
                     <div class="preview-row-inline">
                         <div>
-                            <div class="preview-label">True size (16×16)</div>
+                            <div class="preview-label">True size (16Ã—16)</div>
                             <div class="tab-strip">
                                 <div class="tab-chip small">
                                     <div class="tab-icon" id="tabIconWrap">
@@ -976,7 +976,7 @@
                             </div>
                         </div>
                         <div>
-                            <div class="preview-label">Zoomed preview (32×32)</div>
+                            <div class="preview-label">Zoomed preview (32Ã—32)</div>
                             <div class="tab-strip">
                                 <div class="tab-chip zoom">
                                     <div class="tab-icon zoom" id="tabIconWrapZoom">
@@ -1601,6 +1601,7 @@
     </script>
 </body>
 </html>
+
 
 
 
