@@ -462,6 +462,7 @@ const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 const header = document.querySelector('.header');
 const navContainer = document.querySelector('.nav-container');
+const isMobileOrCoarse = window.matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
 
 if (hamburger && navMenu) {
     const setMobileNavState = (isOpen) => {
@@ -526,6 +527,15 @@ if (hamburger && navMenu && navLinks.length > 0) {
 // Active nav link on scroll
 window.addEventListener('scroll', () => {
     if (!header || navLinks.length === 0) {
+        return;
+    }
+
+    if (isMobileOrCoarse) {
+        if (window.scrollY > 100) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
         return;
     }
 
@@ -733,14 +743,16 @@ const createTypingEffect = (element, text, speed = 100) => {
 // Parallax Effect for Hero Background
 // ===================================
 
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero-bg');
+if (!isMobileOrCoarse) {
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.hero-bg');
 
-    if (hero && scrolled <= window.innerHeight) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-    }
-});
+        if (hero && scrolled <= window.innerHeight) {
+            hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+        }
+    });
+}
 
 // ===================================
 // Dynamic Year in Footer

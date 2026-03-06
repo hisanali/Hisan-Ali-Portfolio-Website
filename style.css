@@ -2108,7 +2108,6 @@ img {
         opacity: 1;
         pointer-events: auto;
         overflow-y: auto;
-        overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
     }
 
@@ -2184,37 +2183,38 @@ img {
 
     /* Hero Section Mobile - More Attractive */
     .hero {
-        padding: 52px 0 44px;
+        padding: 44px 0 28px;
         min-height: auto;
         align-items: flex-start;
+        overflow: visible;
     }
 
     .hero-container {
-        gap: 32px;
+        gap: 20px;
     }
 
     .hero-title {
-        font-size: 42px;
+        font-size: 36px;
         line-height: 1.12;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
     }
 
     .hero-description {
         font-size: 16px;
-        margin-bottom: 30px;
-        line-height: 1.7;
+        margin-bottom: 16px;
+        line-height: 1.6;
     }
 
     .hero-badge {
         font-size: 13px;
         padding: 8px 16px;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
     }
 
     .hero-buttons {
         flex-direction: column;
-        gap: 14px;
-        margin-bottom: 36px;
+        gap: 10px;
+        margin-bottom: 0;
     }
 
     .btn-large {
@@ -2224,28 +2224,7 @@ img {
     }
 
     .hero-stats {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 20px;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-
-    .stat-divider {
         display: none;
-    }
-
-    .stat-item {
-        text-align: center;
-    }
-
-    .stat-number {
-        font-size: 28px;
-    }
-
-    .stat-label {
-        font-size: 13px;
     }
 
     .hero-image {
@@ -2666,6 +2645,12 @@ img {
     }
 }
 
+@media (pointer: coarse) and (max-width: 1024px) {
+    .hero-stats {
+        display: none !important;
+    }
+}
+
 @media (max-width: 480px) {
     .container {
         padding: 0 16px;
@@ -2673,18 +2658,18 @@ img {
 
     /* Hero Section */
     .hero {
-        padding: 42px 0 32px;
+        padding: 36px 0 24px;
         min-height: auto;
     }
 
     .hero-title {
-        font-size: 39px;
+        font-size: 32px;
         line-height: 1.12;
     }
 
     .hero-description {
-        font-size: 15px;
-        margin-bottom: 24px;
+        font-size: 14px;
+        margin-bottom: 14px;
     }
 
     .hero-badge {
@@ -2693,21 +2678,8 @@ img {
     }
 
     .btn-large {
-        padding: 13px 24px;
+        padding: 12px 20px;
         font-size: 14px;
-    }
-
-    .hero-stats {
-        padding: 18px;
-        gap: 16px;
-    }
-
-    .stat-number {
-        font-size: 24px;
-    }
-
-    .stat-label {
-        font-size: 12px;
     }
 
     /* Sections */
