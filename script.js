@@ -358,6 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');
     if (!hero) return;
+    const disableOrbEffect = window.matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
+    if (disableOrbEffect) return;
 
     // Create orbs container
     const orbsContainer = document.createElement('div');

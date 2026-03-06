@@ -2252,6 +2252,12 @@ img {
         display: none;
     }
 
+    .gradient-orb {
+        animation: none;
+        filter: blur(64px);
+        opacity: 0.3;
+    }
+
     .scroll-indicator {
         display: none;
     }
