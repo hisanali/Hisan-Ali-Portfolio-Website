@@ -2101,12 +2101,13 @@ img {
         opacity: 0;
         pointer-events: none;
         transform: translateY(-8px);
-        transition: max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease, padding 0.25s ease;
+        will-change: max-height, opacity, transform;
+        transition: max-height 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease, transform 0.22s ease;
     }
 
     .nav-menu.active {
         padding: 14px;
-        max-height: calc(100vh - 110px);
+        max-height: calc(100vh - 88px);
         opacity: 1;
         pointer-events: auto;
         transform: translateY(0);
@@ -2185,8 +2186,9 @@ img {
 
     /* Hero Section Mobile - More Attractive */
     .hero {
-        padding: 100px 0 50px;
-        min-height: 70vh;
+        padding: 52px 0 44px;
+        min-height: auto;
+        align-items: flex-start;
     }
 
     .hero-container {
@@ -2667,8 +2669,8 @@ img {
 
     /* Hero Section */
     .hero {
-        padding: 90px 0 40px;
-        min-height: 65vh;
+        padding: 42px 0 32px;
+        min-height: auto;
     }
 
     .hero-title {
