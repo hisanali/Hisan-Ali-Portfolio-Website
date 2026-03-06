@@ -86,10 +86,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const navMenu = document.querySelector('.nav-menu');
-    if (navMenu && !navMenu.querySelector('a[href="/speed-test"]')) {
+    const hasSpeedTestLink = navMenu
+        ? [...navMenu.querySelectorAll('a')].some((anchor) => {
+              const href = (anchor.getAttribute('href') || '').replace(/\/+$/, '');
+              return href === '/speed-test';
+          })
+        : false;
+
+    if (navMenu && !hasSpeedTestLink) {
         const li = document.createElement('li');
         li.className = 'mobile-only';
-        li.innerHTML = '<a href="/speed-test" class="nav-link">Page Speed Test</a>';
+        li.innerHTML = '<a href="/speed-test/" class="nav-link">Page Speed Test</a>';
         navMenu.appendChild(li);
     }
 });
