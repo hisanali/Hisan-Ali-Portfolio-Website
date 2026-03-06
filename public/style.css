@@ -409,8 +409,9 @@ img {
     top: 0;
     left: 0;
     width: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: var(--bg);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     z-index: 1000;
     transition: var(--transition);
@@ -418,6 +419,16 @@ img {
 
 .theme-dark .header {
     background: rgba(15, 23, 42, 0.9);
+    border-bottom-color: var(--border);
+}
+
+.theme-dark .hamburger {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+.theme-dark .hamburger span {
+    background: var(--text);
 }
 
 .header.scrolled {
@@ -432,6 +443,7 @@ img {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 24px;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -500,6 +512,10 @@ img {
     color: var(--text);
     position: relative;
     transition: var(--transition);
+}
+
+.nav-link-icon {
+    display: none;
 }
 
 .nav-link::after {
@@ -634,17 +650,37 @@ img {
 
 .hamburger {
     display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    gap: 5px;
+    gap: 4px;
+    transition: var(--transition);
 }
 
 .hamburger span {
-    width: 25px;
-    height: 3px;
-    background: var(--dark);
-    border-radius: 3px;
+    width: 16px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
     transition: var(--transition);
+}
+
+.hamburger.active span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
 }
 
 /* ===================================
@@ -2022,30 +2058,90 @@ img {
 }
 
 @media (max-width: 768px) {
+    .header {
+        position: sticky;
+    }
+
     .container {
         padding: 0 20px;
     }
 
+    .nav-container {
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
     .nav-menu {
-        position: fixed;
-        left: -100%;
-        top: 70px;
+        position: static;
+        order: 3;
+        flex: 0 0 100%;
         flex-direction: column;
-        background: var(--bg);
-        width: 100%;
-        text-align: center;
-        transition: 0.3s;
-        box-shadow: var(--shadow-lg);
-        padding: 30px 0;
-        gap: 16px;
+        gap: 10px;
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--bg-light);
+        overflow: hidden;
+        overflow-y: auto;
+        max-height: 0;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px);
+        transition: max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease, padding 0.25s ease;
     }
 
     .nav-menu.active {
-        left: 0;
+        padding: 14px;
+        max-height: calc(100vh - 110px);
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+        -webkit-overflow-scrolling: touch;
     }
 
     .nav-menu .mobile-only {
         display: block;
+    }
+
+    .nav-menu li {
+        width: 100%;
+    }
+
+    .nav-menu .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        padding: 12px 16px;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-align: left;
+    }
+
+    .nav-menu .nav-link .nav-link-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        min-width: 20px;
+        color: var(--primary);
+        font-size: 14px;
+    }
+
+    .nav-menu .nav-link::after {
+        display: none;
+    }
+
+    .nav-menu .nav-link:hover,
+    .nav-menu .nav-link.active {
+        color: var(--primary);
+        border-color: var(--primary);
     }
 
 

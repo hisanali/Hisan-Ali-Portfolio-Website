@@ -113,6 +113,46 @@ document.addEventListener('DOMContentLoaded', () => {
         li.innerHTML = '<a href="/speed-test/" class="nav-link">Page Speed Test</a>';
         navMenu.appendChild(li);
     }
+
+    const navIconMap = {
+        '/': 'fa-house',
+        '/about': 'fa-user',
+        '/services': 'fa-briefcase',
+        '/tools': 'fa-screwdriver-wrench',
+        '/blog': 'fa-pen-nib',
+        '/contact': 'fa-envelope',
+        '/speed-test': 'fa-gauge-high'
+    };
+
+    const normalizePath = (href) => {
+        try {
+            const url = new URL(href, window.location.origin);
+            const cleaned = url.pathname.replace(/\/+$/, '');
+            return cleaned || '/';
+        } catch {
+            return href;
+        }
+    };
+
+    if (navMenu) {
+        navMenu.querySelectorAll('.nav-link').forEach((link) => {
+            if (link.querySelector('.nav-link-icon')) {
+                return;
+            }
+
+            const normalizedPath = normalizePath(link.getAttribute('href') || '');
+            const iconClass = navIconMap[normalizedPath];
+            if (!iconClass) {
+                return;
+            }
+
+            const iconWrap = document.createElement('span');
+            iconWrap.className = 'nav-link-icon';
+            iconWrap.setAttribute('aria-hidden', 'true');
+            iconWrap.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            link.prepend(iconWrap);
+        });
+    }
 });
 
 // Sneaky Peeker Character in Hero Section
@@ -419,12 +459,54 @@ const hamburger = document.querySelector('.hamburger');
 const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 const header = document.querySelector('.header');
+const navContainer = document.querySelector('.nav-container');
 
 if (hamburger && navMenu) {
+    const setMobileNavState = (isOpen) => {
+        navMenu.classList.toggle('active', isOpen);
+        hamburger.classList.toggle('active', isOpen);
+        hamburger.setAttribute('aria-expanded', String(isOpen));
+    };
+
+    hamburger.setAttribute('role', 'button');
+    hamburger.setAttribute('tabindex', '0');
+    hamburger.setAttribute('aria-label', 'Toggle menu');
+    hamburger.setAttribute('aria-expanded', 'false');
+
     // Mobile menu toggle
     hamburger.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        hamburger.classList.toggle('active');
+        const nextState = !navMenu.classList.contains('active');
+        setMobileNavState(nextState);
+    });
+
+    hamburger.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            const nextState = !navMenu.classList.contains('active');
+            setMobileNavState(nextState);
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!navMenu.classList.contains('active') || !navContainer) {
+            return;
+        }
+
+        if (!navContainer.contains(event.target)) {
+            setMobileNavState(false);
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            setMobileNavState(false);
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && navMenu.classList.contains('active')) {
+            setMobileNavState(false);
+        }
     });
 }
 
@@ -434,6 +516,7 @@ if (hamburger && navMenu && navLinks.length > 0) {
         link.addEventListener('click', () => {
             navMenu.classList.remove('active');
             hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
         });
     });
 }
