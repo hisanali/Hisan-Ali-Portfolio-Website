@@ -86,12 +86,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const navMenu = document.querySelector('.nav-menu');
-    const hasSpeedTestLink = navMenu
-        ? [...navMenu.querySelectorAll('a')].some((anchor) => {
+    const speedTestLinks = navMenu
+        ? [...navMenu.querySelectorAll('a')].filter((anchor) => {
               const href = (anchor.getAttribute('href') || '').replace(/\/+$/, '');
               return href === '/speed-test';
           })
-        : false;
+        : [];
+
+    // Keep the first speed-test item and remove accidental duplicates.
+    if (speedTestLinks.length > 1) {
+        speedTestLinks.slice(1).forEach((anchor) => {
+            const parentItem = anchor.closest('li');
+            if (parentItem) {
+                parentItem.remove();
+            } else {
+                anchor.remove();
+            }
+        });
+    }
+
+    const hasSpeedTestLink = speedTestLinks.length > 0;
 
     if (navMenu && !hasSpeedTestLink) {
         const li = document.createElement('li');
