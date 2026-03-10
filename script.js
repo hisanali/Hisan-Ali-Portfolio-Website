@@ -691,13 +691,92 @@ document.querySelectorAll('.portfolio-item').forEach((item, index) => {
     fadeInObserver.observe(item);
 });
 
-// Observe testimonial cards
-document.querySelectorAll('.testimonial-card').forEach((card, index) => {
+// Observe process cards
+document.querySelectorAll('.process-card').forEach((card, index) => {
     card.style.opacity = '0';
     card.style.transform = 'translateY(30px)';
     card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
     fadeInObserver.observe(card);
 });
+
+// ===================================
+// Foil Effect for Methodology Cards
+// ===================================
+const processCards = document.querySelectorAll('.process-card');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (processCards.length) {
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    let currentScrollY = window.scrollY;
+    let targetScrollY = window.scrollY;
+
+    const setCardFoilVars = (card, x, y, sweep, tilt) => {
+        card.style.setProperty('--foil-bg-x', `${x * 1.05}px`);
+        card.style.setProperty('--foil-bg-y', `${y * 0.52}px`);
+        card.style.setProperty('--foil-bg2-x', `${x * 1.72}px`);
+        card.style.setProperty('--foil-bg2-y', `${y * 0.82}px`);
+        card.style.setProperty('--foil-sheen-x', `${sweep + x * 1.6}px`);
+        card.style.setProperty('--foil-sheen-y', `${y * 0.85}px`);
+        card.style.setProperty('--foil-tilt', `${tilt}deg`);
+    };
+
+    const applyCardFoil = (card, index) => {
+        const rect = card.getBoundingClientRect();
+        const viewportMid = window.innerHeight * 0.5;
+        const cardMid = rect.top + rect.height * 0.5;
+        const normalized = clamp((viewportMid - cardMid) / window.innerHeight, -1, 1);
+        const pointerX = parseFloat(card.dataset.foilPointerX || '0');
+        const pointerY = parseFloat(card.dataset.foilPointerY || '0');
+        const drift = Math.sin((currentScrollY * 0.022) + index * 1.3) * 12;
+        const baseX = normalized * 30 + drift;
+        const baseY = normalized * 14;
+        const finalX = clamp(baseX + pointerX, -40, 40);
+        const finalY = clamp(baseY + pointerY, -22, 22);
+        const sweep = ((currentScrollY * 2.8) + index * 240) % 760 - 380;
+        const tilt = clamp(10 + normalized * 2.6, 7, 13);
+        setCardFoilVars(card, finalX, finalY, sweep, tilt);
+    };
+
+    if (reducedMotion) {
+        processCards.forEach((card) => setCardFoilVars(card, 0, 0, 0, 10));
+    } else {
+        const renderFoil = () => {
+            currentScrollY += (targetScrollY - currentScrollY) * 0.18;
+            processCards.forEach((card, index) => {
+                applyCardFoil(card, index);
+            });
+            requestAnimationFrame(renderFoil);
+        };
+
+        window.addEventListener('scroll', () => {
+            targetScrollY = window.scrollY;
+        }, { passive: true });
+        window.addEventListener('resize', () => {
+            targetScrollY = window.scrollY;
+        });
+
+        processCards.forEach((card, index) => {
+            card.dataset.foilPointerX = '0';
+            card.dataset.foilPointerY = '0';
+
+            card.addEventListener('mousemove', (event) => {
+                const rect = card.getBoundingClientRect();
+                const xRatio = (event.clientX - rect.left) / rect.width;
+                const yRatio = (event.clientY - rect.top) / rect.height;
+                card.dataset.foilPointerX = `${clamp((xRatio - 0.5) * 28, -14, 14)}`;
+                card.dataset.foilPointerY = `${clamp((yRatio - 0.5) * 18, -9, 9)}`;
+                applyCardFoil(card, index);
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.dataset.foilPointerX = '0';
+                card.dataset.foilPointerY = '0';
+            });
+        });
+
+        renderFoil();
+    }
+}
 
 // ===================================
 // Back to Top Button
