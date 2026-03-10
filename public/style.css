@@ -3655,9 +3655,13 @@ img {
 }
 
 .tool-item img {
-    width: 24px;
-    height: 24px;
+    width: 36px;
+    height: 36px;
     border-radius: 6px;
+    object-fit: contain;
+    display: block;
+    padding: 0;
+    box-sizing: border-box;
     flex-shrink: 0;
 }
 
@@ -3684,7 +3688,7 @@ img {
         gap: 24px;
     }
 
-    .tool-item img { width: 22px; height: 22px; }
+    .tool-item img { width: 32px; height: 32px; }
 }
 
 @media (max-width: 640px) {
@@ -3694,8 +3698,8 @@ img {
     }
 
     .tool-item img {
-        width: 18px;
-        height: 18px;
+        width: 28px;
+        height: 28px;
     }
 }
 
@@ -3851,3 +3855,5 @@ img {
 .process-card::after {
     inset: -40% -56%;
 }
+
+
