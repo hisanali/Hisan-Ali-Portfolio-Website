@@ -3665,6 +3665,13 @@ img {
     flex-shrink: 0;
 }
 
+.tool-item img.icon-wordpress,
+.tool-item img.icon-snapchat,
+.tool-item img.icon-antigravity {
+    transform: scale(1.12);
+    transform-origin: center;
+}
+
 .tool-item span {
     display: none;
 }

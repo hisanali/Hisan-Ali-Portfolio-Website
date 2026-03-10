@@ -1,0 +1,16 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Antigravity icon">
+  <defs>
+    <linearGradient id="agGradient" x1="22" y1="103" x2="95" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2D8CFF"/>
+      <stop offset="0.43" stop-color="#42D1F0"/>
+      <stop offset="0.74" stop-color="#F5D83D"/>
+      <stop offset="1" stop-color="#F36A4B"/>
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(64 44) rotate(90) scale(86)">
+      <stop stop-color="#10162A"/>
+      <stop offset="1" stop-color="#050813"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bgGlow)"/>
+  <path d="M21.8 106.2c-4 0-6.6-4.3-4.6-7.8l16.2-28.8c5.2-9.3 7.2-13.1 10.1-22.1 4.1-12.8 13.1-20.1 25.4-20.1 12.5 0 21.1 7.2 25.2 19.9 2.9 9 5 13 10.2 22.3l16.4 29.1c2 3.5-.6 7.9-4.6 7.9-2 0-3.9-1-5-2.7L96.1 80.9c-5.8-9.2-8.5-13.1-11.9-16-3.8-3.3-8.3-5-14.2-5-5.8 0-10.3 1.7-14.1 4.9-3.4 2.9-6.2 6.8-12 16.1L26.8 103.5c-1.1 1.7-2.9 2.7-5 2.7z" fill="url(#agGradient)"/>
+</svg>
