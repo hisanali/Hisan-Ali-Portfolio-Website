@@ -372,33 +372,32 @@
             gap: 32px;
         }
         .process-card {
-            text-align: center;
+            text-align: left;
             position: relative;
+            background: white;
+            border: 1px solid rgba(101, 40, 247, 0.12);
+            border-radius: 18px;
+            padding: 24px 22px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
-        .process-card::after {
-            content: '';
-            position: absolute;
-            top: 50px;
-            right: -50%;
-            width: 100%;
-            height: 2px;
-            background: var(--gradient-primary);
-        }
-        .process-card:last-child::after {
-            display: none;
+        .process-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(101, 40, 247, 0.22);
         }
         .process-number {
-            width: 100px;
-            height: 100px;
+            width: 38px;
+            height: 38px;
             background: var(--gradient-primary);
-            border-radius: 50%;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
+            font-size: 14px;
             font-weight: 700;
             color: white;
-            margin: 0 auto 24px;
+            margin: 0 0 14px;
             position: relative;
             z-index: 1;
         }
@@ -414,100 +413,194 @@
 
         /* FAQ Section */
         .faq-section {
-            padding: 100px 0;
-            background: var(--bg-light);
+            padding: 110px 0;
+            background: linear-gradient(180deg, #f8f9fc 0%, #ffffff 100%);
+        }
+        .faq-shell {
+            position: relative;
+            padding: 0;
         }
         .faq-layout {
             display: grid;
-            grid-template-columns: minmax(240px, 0.9fr) minmax(320px, 1.1fr);
-            gap: 32px;
+            grid-template-columns: minmax(290px, 0.85fr) minmax(420px, 1.15fr);
+            gap: 34px;
             align-items: start;
+            margin-top: 30px;
         }
         .faq-side {
-            background: white;
-            border-radius: 20px;
+            background: linear-gradient(160deg, #0f172a 0%, #111827 60%, #1f2937 100%);
+            border-radius: 22px;
             padding: 28px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(101, 40, 247, 0.08);
+            position: sticky;
+            top: 96px;
+            box-shadow: 0 24px 48px rgba(2, 6, 23, 0.22);
         }
         .faq-side h3 {
-            font-size: 22px;
-            margin-bottom: 12px;
-            color: var(--dark);
+            font-size: 28px;
+            margin-bottom: 14px;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
         }
         .faq-side p {
-            color: var(--text);
+            color: rgba(226, 232, 240, 0.88);
             line-height: 1.7;
+            margin-bottom: 0;
         }
         .faq-pill {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(101, 40, 247, 0.1);
-            color: var(--primary);
+            background: rgba(167, 139, 250, 0.16);
+            color: #ddd6fe;
             font-weight: 600;
             font-size: 12px;
-            padding: 6px 12px;
+            padding: 7px 12px;
             border-radius: 999px;
             margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .faq-side-points {
+            list-style: none;
+            margin: 18px 0 0;
+            padding: 0;
+            display: grid;
+            gap: 10px;
+        }
+        .faq-side-points li {
+            color: rgba(226, 232, 240, 0.9);
+            font-size: 14px;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .faq-side-points li::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #a78bfa;
+            flex-shrink: 0;
         }
         .faq-list {
             display: grid;
-            gap: 14px;
+            gap: 12px;
+            margin-top: 20px;
         }
         .faq-item {
-            background: white;
-            border-radius: 18px;
-            overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            background: #ffffff;
+            border-radius: 16px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .faq-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.35);
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+        }
+        body.theme-dark .faq-shell {
+            background: transparent;
         }
         body.theme-dark .faq-item,
         body.theme-dark .faq-side {
-            background: #0F172A;
-            border-color: #1F2937;
+            border-color: #334155;
+        }
+        body.theme-dark .faq-section {
+            background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+        }
+        body.theme-dark .faq-item {
+            background: #0f172a;
+            border-color: #334155;
             box-shadow: none;
         }
+        body.theme-dark .faq-item.active {
+            background: #111c33;
+            border-color: #475569;
+        }
+        body.theme-dark .faq-question h3 {
+            color: #e2e8f0;
+        }
+        body.theme-dark .faq-answer p {
+            color: #cbd5e1;
+            border-left-color: rgba(167, 139, 250, 0.55);
+        }
+        body.theme-dark .faq-question i {
+            background: #1e293b;
+            border-color: #475569;
+            color: #c4b5fd;
+        }
+        body.theme-dark .faq-item.active .faq-question i {
+            background: #312e81;
+            border-color: #6366f1;
+            color: #e0e7ff;
+        }
+        body.theme-dark .faq-side-points li {
+            color: rgba(226, 232, 240, 0.92);
+        }
         .faq-question {
-            padding: 20px 24px;
+            padding: 20px 22px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
             cursor: pointer;
             transition: var(--transition);
+            min-height: 80px;
         }
         .faq-question:hover {
-            background: rgba(101, 40, 247, 0.05);
+            background: transparent;
         }
-        body.theme-dark .faq-question:hover {
-            background: rgba(255, 255, 255, 0.04);
+        .faq-question-main {
+            display: block;
+            min-width: 0;
+        }
+        .faq-index {
+            display: none;
         }
         .faq-question h3 {
-            font-size: 17px;
+            font-size: 18px;
             color: var(--dark);
             margin: 0;
+            line-height: 1.4;
+            font-weight: 600;
         }
         .faq-question i {
-            color: var(--primary);
+            color: #4f46e5;
             transition: transform 0.3s ease;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid rgba(99, 102, 241, 0.26);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            background: #f5f3ff;
         }
         .faq-item.active .faq-question i {
             transform: rotate(180deg);
+            background: #ede9fe;
+            border-color: rgba(99, 102, 241, 0.5);
         }
         .faq-answer {
-            padding: 0 24px;
+            padding: 0 22px;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.35s ease, padding 0.35s ease;
         }
         .faq-item.active .faq-answer {
-            padding: 0 24px 20px;
+            padding: 0 22px 22px;
             max-height: 800px;
         }
         .faq-answer p {
             color: var(--text);
             line-height: 1.7;
+            font-size: 15px;
+            border-left: 2px solid rgba(99, 102, 241, 0.3);
+            padding-left: 14px;
         }
 
         @media (max-width: 1024px) {
@@ -532,11 +625,12 @@
             .process-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
-            .process-card::after {
-                display: none;
-            }
             .faq-layout {
                 grid-template-columns: 1fr;
+                gap: 26px;
+            }
+            .faq-side {
+                position: static;
             }
         }
 
@@ -575,6 +669,12 @@
             .process-grid {
                 grid-template-columns: 1fr;
             }
+            .faq-shell {
+                padding: 0;
+            }
+            .faq-question h3 { font-size: 16px; }
+            .faq-answer,
+            .faq-item.active .faq-answer { padding-left: 22px; }
             .pricing-card {
                 padding: 32px 24px;
             }
@@ -662,8 +762,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <i class="fas fa-chevron-right"></i>
                     <span>Services</span>
                 </div>
-                <h1>My <span class="gradient-text">Services</span></h1>
-                <p>Comprehensive digital marketing solutions tailored to elevate your brand and drive measurable business growth.</p>
+                <h1>Digital Marketing <span class="gradient-text">Services</span> in Oman</h1>
+                <p>SEO, paid ads, content strategy, and digital growth services built to help brands improve visibility, attract better leads, and grow with clearer direction.</p>
             </div>
         </div>
     </section>
@@ -672,14 +772,137 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <section class="services-overview">
         <div class="container">
             <div class="services-intro">
-                <p>I offer a full suite of digital marketing services designed to help businesses of all sizes achieve their online goals. From increasing your search visibility to managing high-performing ad campaigns, every strategy is customized to deliver real results.</p>
-                <p style="margin-top: 14px;">
-                    Looking for specific expertise?
-                    <a href="/best-digital-marketer-oman/">Best Digital Marketer in Oman</a> |
-                    <a href="/freelance-digital-marketer-oman/">Freelance Digital Marketer in Oman</a> |
-                    <a href="/seo-expert-oman/">SEO Expert in Oman</a>
-                </p>
+                <h2 class="section-title">Core Services I Offer</h2>
+                <p class="section-subtitle">Focused digital marketing support across search, paid media, social media, content, and strategy.</p>
             </div>
+
+            <!-- Tools Marquee Section -->
+            <section class="tools-marquee-section" aria-label="Tools I work with">
+                <div class="tools-marquee">
+                    <div class="tools-track">
+                        <div class="tools-group" aria-hidden="false">
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/search_console_96dp.png" alt="Search Console icon"><span>Search Console</span></div>
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/ads_96dp.png" alt="Google Ads icon"><span>Google Ads</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=shopping.google.com&sz=64" alt="Google Merchant icon"><span>Google Merchant</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googleanalytics" alt="Google Analytics icon"><span>Google Analytics</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googletagmanager" alt="Tag Manager icon"><span>Tag Manager</span></div>
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/data_studio_96dp.png" alt="Looker Studio icon"><span>Looker Studio</span></div>
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/business_messages_96dp.png" alt="Google Business Profile icon"><span>Google Business Profile</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googlemaps" alt="Google Maps icon"><span>Google Maps</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googlesheets" alt="Google Sheets icon"><span>Google Sheets</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googledocs" alt="Google Docs icon"><span>Google Docs</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googleforms" alt="Google Forms icon"><span>Google Forms</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/google-logo.png" alt="Google icon"><span>Google</span></div>
+                            <div class="tool-item"><img src="/favicon.png" alt="Hisan favicon icon"><span>Hisan Favicon</span></div>
+                            <div class="tool-item"><img src="/icons/ahrefs.ico" alt="Ahrefs icon"><span>Ahrefs</span></div>
+                            <div class="tool-item"><img src="https://moz.com/favicon.ico" alt="Moz icon"><span>Moz</span></div>
+                            <div class="tool-item"><img src="https://www.semrush.com/favicon.ico" alt="SEMrush icon"><span>SEMrush</span></div>
+                            <div class="tool-item"><img src="https://www.screamingfrog.co.uk/wp-content/themes/screamingfrog/public/images/apple-touch-icon-144x144.png" alt="Screaming Frog icon"><span>Screaming Frog</span></div>
+                            <div class="tool-item"><img src="https://www.hotjar.com/favicon.ico" alt="Hotjar icon"><span>Hotjar</span></div>
+                            <div class="tool-item"><img class="icon-wordpress" src="https://cdn.simpleicons.org/wordpress/21759B" alt="WordPress icon"><span>WordPress</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=hostinger.com&sz=64" alt="Hostinger icon"><span>Hostinger</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=vercel.com&sz=64" alt="Vercel icon"><span>Vercel</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="GitHub icon"><span>GitHub</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/zapier" alt="Zapier icon"><span>Zapier</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=photoshop.adobe.com&sz=64" alt="Adobe Photoshop icon"><span>Adobe Photoshop</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/adobe-illustrator--v2.png" alt="Adobe Illustrator icon"><span>Adobe Illustrator</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/adobe-creative-cloud.png" alt="Adobe Creative Cloud icon"><span>Adobe Creative Cloud</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/adobe-acrobat--v1.png" alt="Adobe Acrobat icon"><span>Adobe Acrobat</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=canva.com&sz=64" alt="Canva icon"><span>Canva</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=freepik.com&sz=64" alt="Freepik icon"><span>Freepik</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=lightroom.adobe.com&sz=64" alt="Lightroom icon"><span>Lightroom</span></div>
+                            <div class="tool-item"><img class="icon-antigravity" src="/icons/antigravity.svg" alt="Antigravity icon"><span>Antigravity</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=seedream.ai&sz=64" alt="Seedream icon"><span>Seedream</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=klingai.com&sz=64" alt="Kling icon"><span>Kling</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=chatgpt.com&sz=64" alt="ChatGPT icon"><span>ChatGPT</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=64" alt="Claude icon"><span>Claude</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64" alt="Gemini icon"><span>Gemini</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=copilot.microsoft.com&sz=64" alt="Microsoft Copilot icon"><span>Microsoft Copilot</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/notebooklm" alt="NotebookLM icon"><span>NotebookLM</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=perplexity.ai&sz=64" alt="Perplexity icon"><span>Perplexity</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/microsoft-word-2019--v1.png" alt="Microsoft Word icon"><span>Microsoft Word</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019--v1.png" alt="Microsoft PowerPoint icon"><span>Microsoft PowerPoint</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/microsoft-excel-2019--v1.png" alt="Microsoft Excel icon"><span>Microsoft Excel</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/youtube" alt="YouTube icon"><span>YouTube</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/youtubestudio" alt="YouTube Studio icon"><span>YouTube Studio</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt="TikTok icon"><span>TikTok</span></div>
+                            <div class="tool-item"><img class="icon-snapchat" src="https://cdn.simpleicons.org/snapchat/FFFC00" alt="Snapchat icon"><span>Snapchat</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=x.com&sz=64" alt="X icon"><span>X</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=facebook.com&sz=64" alt="Facebook icon"><span>Facebook</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=instagram.com&sz=64" alt="Instagram icon"><span>Instagram</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=messenger.com&sz=64" alt="Messenger icon"><span>Messenger</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=threads.net&sz=64" alt="Threads icon"><span>Threads</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=linkedin.com&sz=64" alt="LinkedIn icon"><span>LinkedIn</span></div>
+                            <div class="tool-item"><img src="https://business.facebook.com/favicon.ico" alt="Meta Business Manager icon"><span>Meta Business Manager</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=business.facebook.com&sz=64" alt="Business Suite icon"><span>Business Suite</span></div>
+                            <div class="tool-item"><img src="https://upload.wikimedia.org/wikipedia/commons/8/85/WhatsApp_Business_icon.png" alt="WhatsApp Business icon"><span>WhatsApp Business</span></div>
+                            <div class="tool-item"><img src="https://mailchimp.com/favicon.ico" alt="Mailchimp icon"><span>Mailchimp</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/reddit" alt="Reddit icon"><span>Reddit</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/quora" alt="Quora icon"><span>Quora</span></div>
+                        </div>
+                        <div class="tools-group" aria-hidden="true">
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/search_console_96dp.png" alt=""><span>Search Console</span></div>
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/ads_96dp.png" alt=""><span>Google Ads</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=shopping.google.com&sz=64" alt=""><span>Google Merchant</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googleanalytics" alt=""><span>Google Analytics</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googletagmanager" alt=""><span>Tag Manager</span></div>
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/data_studio_96dp.png" alt=""><span>Looker Studio</span></div>
+                            <div class="tool-item"><img src="https://www.gstatic.com/images/branding/product/2x/business_messages_96dp.png" alt=""><span>Google Business Profile</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googlemaps" alt=""><span>Google Maps</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googlesheets" alt=""><span>Google Sheets</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googledocs" alt=""><span>Google Docs</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/googleforms" alt=""><span>Google Forms</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/google-logo.png" alt=""><span>Google</span></div>
+                            <div class="tool-item"><img src="/favicon.png" alt=""><span>Hisan Favicon</span></div>
+                            <div class="tool-item"><img src="/icons/ahrefs.ico" alt=""><span>Ahrefs</span></div>
+                            <div class="tool-item"><img src="https://moz.com/favicon.ico" alt=""><span>Moz</span></div>
+                            <div class="tool-item"><img src="https://www.semrush.com/favicon.ico" alt=""><span>SEMrush</span></div>
+                            <div class="tool-item"><img src="https://www.screamingfrog.co.uk/wp-content/themes/screamingfrog/public/images/apple-touch-icon-144x144.png" alt=""><span>Screaming Frog</span></div>
+                            <div class="tool-item"><img src="https://www.hotjar.com/favicon.ico" alt=""><span>Hotjar</span></div>
+                            <div class="tool-item"><img class="icon-wordpress" src="https://cdn.simpleicons.org/wordpress/21759B" alt=""><span>WordPress</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=hostinger.com&sz=64" alt=""><span>Hostinger</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=vercel.com&sz=64" alt=""><span>Vercel</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt=""><span>GitHub</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/zapier" alt=""><span>Zapier</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=photoshop.adobe.com&sz=64" alt=""><span>Adobe Photoshop</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/adobe-illustrator--v2.png" alt=""><span>Adobe Illustrator</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/adobe-creative-cloud.png" alt=""><span>Adobe Creative Cloud</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/adobe-acrobat--v1.png" alt=""><span>Adobe Acrobat</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=canva.com&sz=64" alt=""><span>Canva</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=freepik.com&sz=64" alt=""><span>Freepik</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=lightroom.adobe.com&sz=64" alt=""><span>Lightroom</span></div>
+                            <div class="tool-item"><img class="icon-antigravity" src="/icons/antigravity.svg" alt=""><span>Antigravity</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=seedream.ai&sz=64" alt=""><span>Seedream</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=klingai.com&sz=64" alt=""><span>Kling</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=chatgpt.com&sz=64" alt=""><span>ChatGPT</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=64" alt=""><span>Claude</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64" alt=""><span>Gemini</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=copilot.microsoft.com&sz=64" alt=""><span>Microsoft Copilot</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/notebooklm" alt=""><span>NotebookLM</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=perplexity.ai&sz=64" alt=""><span>Perplexity</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/microsoft-word-2019--v1.png" alt=""><span>Microsoft Word</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019--v1.png" alt=""><span>Microsoft PowerPoint</span></div>
+                            <div class="tool-item"><img src="https://img.icons8.com/color/48/microsoft-excel-2019--v1.png" alt=""><span>Microsoft Excel</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/youtube" alt=""><span>YouTube</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/youtubestudio" alt=""><span>YouTube Studio</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt=""><span>TikTok</span></div>
+                            <div class="tool-item"><img class="icon-snapchat" src="https://cdn.simpleicons.org/snapchat/FFFC00" alt=""><span>Snapchat</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=x.com&sz=64" alt=""><span>X</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=facebook.com&sz=64" alt=""><span>Facebook</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=instagram.com&sz=64" alt=""><span>Instagram</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=messenger.com&sz=64" alt=""><span>Messenger</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=threads.net&sz=64" alt=""><span>Threads</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=linkedin.com&sz=64" alt=""><span>LinkedIn</span></div>
+                            <div class="tool-item"><img src="https://business.facebook.com/favicon.ico" alt=""><span>Meta Business Manager</span></div>
+                            <div class="tool-item"><img src="https://www.google.com/s2/favicons?domain=business.facebook.com&sz=64" alt=""><span>Business Suite</span></div>
+                            <div class="tool-item"><img src="https://upload.wikimedia.org/wikipedia/commons/8/85/WhatsApp_Business_icon.png" alt=""><span>WhatsApp Business</span></div>
+                            <div class="tool-item"><img src="https://mailchimp.com/favicon.ico" alt=""><span>Mailchimp</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/reddit" alt=""><span>Reddit</span></div>
+                            <div class="tool-item"><img src="https://cdn.simpleicons.org/quora" alt=""><span>Quora</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <!-- SEO Service -->
             <div class="service-detail">
@@ -690,16 +913,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
                     <div class="service-detail-content">
-                        <h2>Search Engine Optimization</h2>
-                        <p class="service-desc">Dominate search results and drive organic traffic that converts. My comprehensive SEO strategies are designed to improve your website's visibility, attract qualified leads, and establish your brand as an authority in your industry.</p>
+                        <h2>SEO Services</h2>
+                        <p class="service-desc">Improve search visibility through on-page SEO, technical fixes, keyword research, and content optimization built around search intent.</p>
                         <div class="service-benefits">
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Keyword Research & Strategy</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>On-Page Optimization</span>
+                                <span>On-Page SEO</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
@@ -707,15 +926,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Link Building</span>
+                                <span>Keyword Research</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Local SEO</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Monthly Reporting</span>
+                                <span>Content Optimization</span>
                             </div>
                         </div>
                         <a href="/contact/" class="btn-primary">
@@ -736,31 +951,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </div>
                     <div class="service-detail-content">
                         <h2>Google Ads Management</h2>
-                        <p class="service-desc">Maximize your advertising ROI with expertly managed Google Ads campaigns. I create data-driven campaigns that target your ideal customers, optimize for conversions, and deliver measurable results.</p>
+                        <p class="service-desc">Run smarter paid campaigns with stronger targeting, cleaner structure, and better performance tracking.</p>
                         <div class="service-benefits">
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Campaign Strategy & Setup</span>
+                                <span>Campaign Setup</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Keyword Research & Bidding</span>
+                                <span>Keyword & Bid Strategy</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Ad Copy Creation</span>
+                                <span>Ad Copy Testing</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Landing Page Optimization</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>A/B Testing</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Conversion Tracking</span>
+                                <span>Performance Reporting</span>
                             </div>
                         </div>
                         <a href="/contact/" class="btn-primary">
@@ -776,36 +983,65 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="service-detail-grid">
                     <div class="service-visual">
                         <div class="service-icon-large gradient-3">
+                            <i class="fab fa-meta"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Meta Ads Management</h2>
+                        <p class="service-desc">Reach the right audience on Facebook and Instagram with campaigns designed for visibility, engagement, and conversion.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Audience Targeting</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Campaign Setup</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Creative Direction</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Performance Tracking</span>
+                            </div>
+                        </div>
+                        <a href="/contact/" class="btn-primary">
+                            <span>Launch Meta Ads</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-4">
                             <i class="fas fa-bullhorn"></i>
                         </div>
                     </div>
                     <div class="service-detail-content">
                         <h2>Social Media Marketing</h2>
-                        <p class="service-desc">Build a powerful social media presence that engages your audience and drives real business results. From strategy development to content creation, I help you connect with your audience on the platforms that matter most.</p>
+                        <p class="service-desc">Build a more consistent and relevant social presence through content planning, audience engagement, and platform-focused execution.</p>
                         <div class="service-benefits">
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Social Media Strategy</span>
+                                <span>Content Planning</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Content Creation</span>
+                                <span>Platform Management</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Community Management</span>
+                                <span>Community Engagement</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Paid Social Campaigns</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Influencer Outreach</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Analytics & Insights</span>
+                                <span>Paid Social Support</span>
                             </div>
                         </div>
                         <a href="/contact/" class="btn-primary">
@@ -816,25 +1052,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </div>
 
-            <!-- Graphic Design Service -->
+            <!-- Content Strategy Service -->
             <div class="service-detail">
                 <div class="service-detail-grid">
                     <div class="service-visual">
                         <div class="service-icon-large gradient-5">
-                            <i class="fas fa-palette"></i>
+                            <i class="fas fa-pen-fancy"></i>
                         </div>
                     </div>
                     <div class="service-detail-content">
-                        <h2>Graphic Design</h2>
-                        <p class="service-desc">Professional graphic design that brings your brand to life. From social media graphics to marketing materials, I create visually compelling designs that capture attention and communicate your brand message effectively.</p>
+                        <h2>Content Strategy & Creative Support</h2>
+                        <p class="service-desc">Create stronger communication through better content direction, campaign messaging, and digital creatives.</p>
                         <div class="service-benefits">
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Brand Identity Design</span>
+                                <span>Content Planning</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Social Media Graphics</span>
+                                <span>Campaign Messaging</span>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
@@ -842,19 +1078,85 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </div>
                             <div class="benefit-item">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Marketing Collateral</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Presentation Design</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Infographics</span>
+                                <span>Social Media Visuals</span>
                             </div>
                         </div>
                         <a href="/contact/" class="btn-primary">
-                            <span>Get Design Quote</span>
+                            <span>Build Better Content</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-1">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Analytics & Reporting</h2>
+                        <p class="service-desc">Turn campaign and website data into clearer decisions through reporting that tracks what actually matters.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Performance Tracking</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Campaign Reporting</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Traffic Insights</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Conversion Review</span>
+                            </div>
+                        </div>
+                        <a href="/contact/" class="btn-primary">
+                            <span>Track Performance</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Digital Marketing Strategy Service -->
+            <div class="service-detail">
+                <div class="service-detail-grid">
+                    <div class="service-visual">
+                        <div class="service-icon-large gradient-2">
+                            <i class="fas fa-chess"></i>
+                        </div>
+                    </div>
+                    <div class="service-detail-content">
+                        <h2>Digital Marketing Strategy</h2>
+                        <p class="service-desc">Build a clearer digital direction based on business goals, audience needs, and practical channel priorities.</p>
+                        <div class="service-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Competitor Review</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Market Direction</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Channel Planning</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Growth Recommendations</span>
+                            </div>
+                        </div>
+                        <a href="/contact/" class="btn-primary">
+                            <span>Plan Your Strategy</span>
                             <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -868,29 +1170,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="container">
             <div class="section-header">
                 <span class="section-badge">How I Work</span>
-                <h2 class="section-title">My Process</h2>
-                <p class="section-subtitle">A systematic approach to delivering results</p>
+                <h2 class="section-title">A Clear Process, Built Around Results</h2>
+                <p class="section-subtitle">From understanding the business to improving performance, each step is designed to keep the work focused and useful.</p>
             </div>
             <div class="process-grid">
                 <div class="process-card">
                     <div class="process-number">1</div>
                     <h3>Discovery</h3>
-                    <p>Understanding your business, goals, target audience, and current marketing efforts.</p>
+                    <p>Understanding the business, audience, goals, and current digital direction before making decisions.</p>
                 </div>
                 <div class="process-card">
                     <div class="process-number">2</div>
-                    <h3>Strategy</h3>
-                    <p>Developing a customized strategy aligned with your objectives and budget.</p>
+                    <h3>Planning</h3>
+                    <p>Building a strategy around search visibility, paid campaigns, content direction, and business priorities.</p>
                 </div>
                 <div class="process-card">
                     <div class="process-number">3</div>
                     <h3>Execution</h3>
-                    <p>Implementing the strategy with precision and continuous optimization.</p>
+                    <p>Turning the plan into action through structured implementation, creative support, and performance-focused work.</p>
                 </div>
                 <div class="process-card">
                     <div class="process-number">4</div>
-                    <h3>Results</h3>
-                    <p>Measuring success with detailed reporting and ongoing improvements.</p>
+                    <h3>Optimization</h3>
+                    <p>Tracking what matters, refining what needs improvement, and keeping the work aligned with results.</p>
                 </div>
             </div>
         </div>
@@ -898,69 +1200,96 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- FAQ Section -->
     <section class="faq-section">
-    <div class="container">
-        <div class="section-header">
-            <span class="section-badge">FAQ</span>
-            <h2 class="section-title">Frequently Asked Questions</h2>
-            <p class="section-subtitle">Common questions about my services</p>
-        </div>
-        <div class="faq-layout">
-            <div class="faq-side">
-                <span class="faq-pill"><i class="fas fa-life-ring"></i> Support</span>
-                <h3>Clear answers before we start</h3>
-                <p>Every strategy is customized. Here are quick answers to the most common questions about timelines, budgets, and reporting.</p>
-                <p>If you have a specific goal, I will map a plan that fits your budget and timeline.</p>
+        <div class="container">
+            <div class="faq-shell">
+                <div class="section-header">
+                    <span class="section-badge">FAQ</span>
+                    <h2 class="section-title">Questions Businesses in Oman Usually Ask</h2>
+                    <p class="section-subtitle">Clear answers about digital marketing services, timelines, and how the work is handled</p>
+                </div>
+                <div class="faq-layout">
+                    <div class="faq-side">
+                        <span class="faq-pill"><i class="fas fa-life-ring"></i> Support</span>
+                        <h3>Clear Answers Before We Start</h3>
+                        <p>If you have questions about services, timelines, ads, SEO, or reporting, this section covers the basics. If your business needs something more specific, I can help you find the right direction.</p>
+                        <ul class="faq-side-points">
+                            <li>Oman-focused digital execution</li>
+                            <li>SEO, paid ads, and content support</li>
+                            <li>Clear reporting and optimization</li>
+                        </ul>
+                    </div>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <div class="faq-question-main">
+                                    <h3>Do you offer digital marketing services for businesses in Oman?</h3>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Yes. I work with businesses in Oman that want stronger online visibility through SEO, paid ads, content strategy, and digital growth support tailored to their goals.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <div class="faq-question-main">
+                                    <h3>Which service is best for my business: SEO, Google Ads, or social media marketing?</h3>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>It depends on your goal. SEO supports long-term visibility, Google Ads helps with faster lead generation, and social media marketing improves brand presence and engagement. In many cases, a mix works best.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <div class="faq-question-main">
+                                    <h3>How long does SEO take to show results?</h3>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>SEO is a long-term strategy. Early improvements may appear within a few months, while stronger results usually take longer depending on competition, website condition, and the keywords being targeted.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <div class="faq-question-main">
+                                    <h3>Do you manage Google Ads and Meta Ads?</h3>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Yes. I help plan, set up, and manage campaigns across Google Ads and Meta Ads with a focus on targeting, relevance, and better performance.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <div class="faq-question-main">
+                                    <h3>Can you help local businesses in Muscat and across Oman?</h3>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Yes. I support local businesses that want to improve visibility, attract nearby customers, and build a stronger digital presence through more relevant marketing.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <div class="faq-question-main">
+                                    <h3>Do you provide reporting and performance updates?</h3>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Yes. Reporting is part of the process, so you can clearly see what is being done, what is improving, and where optimization is needed.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="faq-list">
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How long does it take to see results from SEO?</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>SEO is a long-term strategy. Typically, you can start seeing improvements within 3-6 months, with more significant results appearing after 6-12 months. The timeline depends on your website's current state, competition, and keywords.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>What's the minimum budget for Google Ads?</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>The minimum budget varies by industry. I recommend starting at $500/month to collect useful data, then scaling once we see consistent conversions.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Do you offer monthly reporting?</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Yes. You receive a monthly performance report plus clear action items for the next cycle. Weekly updates are available for active campaigns.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Can you work with small businesses?</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Absolutely. I work with startups and SMEs and adapt strategies to your budget while focusing on fast, measurable wins.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>What makes your approach different?</h3>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>I focus on measurable results, not vanity metrics. You get direct communication, transparent reporting, and strategies tied to your business goals.</p>
-                    </div>
-                </div>
-            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- CTA Section -->
     <section class="cta-section">
