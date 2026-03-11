@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
+    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -170,10 +170,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <p>Google Ads remains one of the most powerful tools for businesses to reach their target audience and drive immediate results. However, without proper strategy and optimization, advertising budgets can quickly drain without delivering meaningful returns. This comprehensive guide will help you maximize your ROI and get the most out of your Google Ads investment.</p>
 
                         <h2>Understanding Google Ads ROI</h2>
-                        <p>Return on Investment (ROI) in Google Ads isn't just about getting clicks—it's about converting those clicks into profitable actions. Whether that's sales, leads, or sign-ups, every campaign should tie back to measurable business outcomes.</p>
+                        <p>Return on Investment (ROI) in Google Ads isn't just about getting clicksâ€”it's about converting those clicks into profitable actions. Whether that's sales, leads, or sign-ups, every campaign should tie back to measurable business outcomes.</p>
 
                         <div class="highlight">
-                            <p><strong>ROI Formula:</strong> ROI = (Revenue from Ads - Cost of Ads) / Cost of Ads × 100</p>
+                            <p><strong>ROI Formula:</strong> ROI = (Revenue from Ads - Cost of Ads) / Cost of Ads Ã— 100</p>
                         </div>
 
                         <h2>Campaign Structure Best Practices</h2>
@@ -384,7 +384,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </footer>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
-    <script src="../../script.js"></script></body>
+    <script src="../../script.js"></script>
+</body>
 </html>
 
 

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
+    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -167,7 +167,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                     <div class="blog-featured-image">
                 <img src="/SEO%20Best%20Practices%20for%20Businesses%20in%20Oman%202026.jpg" alt="SEO best practices for businesses in Oman 2026 article thumbnail" loading="eager" decoding="async">
             </div>
-<p>In the rapidly evolving digital landscape of Oman, having a strong online presence is no longer optional—it's essential. As we navigate through 2026, businesses in Muscat and across Oman need to adapt their SEO strategies to stay competitive in local search results.</p>
+<p>In the rapidly evolving digital landscape of Oman, having a strong online presence is no longer optionalâ€”it's essential. As we navigate through 2026, businesses in Muscat and across Oman need to adapt their SEO strategies to stay competitive in local search results.</p>
 
                         <h2>Understanding the Omani Digital Market</h2>
                         <p>The Sultanate of Oman has witnessed remarkable digital transformation over the past few years. With increasing internet penetration and smartphone usage, Omani consumers are actively searching for local businesses online. This presents an unprecedented opportunity for businesses to capture their target audience through strategic SEO.</p>
@@ -325,7 +325,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </footer>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
-    <script src="../../script.js"></script></body>
+    <script src="../../script.js"></script>
+</body>
 </html>
 
 

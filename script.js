@@ -5,9 +5,8 @@
 // Theme Toggle
 document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
-
+    const storageKey = 'preferred-theme';
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    let manualOverride = false;
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
@@ -23,22 +22,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const applySystemTheme = () => {
-        if (manualOverride) return;
-        applyTheme(prefersDark.matches ? 'dark' : 'light');
+    const getStoredTheme = () => {
+        try {
+            const value = localStorage.getItem(storageKey);
+            return value === 'dark' || value === 'light' ? value : null;
+        } catch (e) {
+            return null;
+        }
     };
 
-    applySystemTheme();
+    const setStoredTheme = (theme) => {
+        try {
+            localStorage.setItem(storageKey, theme);
+        } catch (e) {
+            // Ignore storage errors (private mode / blocked storage).
+        }
+    };
+
+    const resolveTheme = () => {
+        const stored = getStoredTheme();
+        if (stored) return stored;
+        return prefersDark.matches ? 'dark' : 'light';
+    };
+
+    const syncTheme = () => {
+        applyTheme(resolveTheme());
+    };
+
+    syncTheme();
 
     if (toggle) {
         toggle.addEventListener('click', () => {
-            manualOverride = true;
             const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+            setStoredTheme(nextTheme);
             applyTheme(nextTheme);
         });
     }
 
-    const handleSchemeChange = () => applySystemTheme();
+    const handleSchemeChange = () => {
+        // Only follow system preference when user has not made a manual choice.
+        if (!getStoredTheme()) {
+            syncTheme();
+        }
+    };
 
     if (typeof prefersDark.addEventListener === 'function') {
         prefersDark.addEventListener('change', handleSchemeChange);
@@ -47,18 +73,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Re-sync theme when the tab/page regains focus or visibility.
-    window.addEventListener('pageshow', applySystemTheme);
-    window.addEventListener('focus', applySystemTheme);
+    window.addEventListener('pageshow', syncTheme);
+    window.addEventListener('focus', syncTheme);
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) applySystemTheme();
+        if (!document.hidden) syncTheme();
+    });
+
+    // Sync across tabs/windows when theme preference changes.
+    window.addEventListener('storage', (event) => {
+        if (event.key === storageKey) {
+            syncTheme();
+        }
     });
 
     // Extra guard for browsers that delay media query updates.
     let syncAttempts = 0;
     const syncInterval = window.setInterval(() => {
-        applySystemTheme();
+        syncTheme();
         syncAttempts += 1;
-        if (syncAttempts >= 8 || manualOverride) {
+        if (syncAttempts >= 8) {
             window.clearInterval(syncInterval);
         }
     }, 500);

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
+    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -291,7 +291,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="container">
           <div class="cta-content">
             <h2>Ready to grow in Kuwait?</h2>
-            <p>Let�s build a measurable plan for your market.</p>
+            <p>Let’s build a measurable plan for your market.</p>
             <a href="/contact/" class="btn primary">Start a Project</a>
           </div>
         </div>

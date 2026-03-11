@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
+    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -25,6 +25,7 @@
     <meta name="twitter:image" content="https://hisanali.com/Hisan.jpg">
 
     <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="/styles/legal-modern-policy.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,7 +46,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
 <!-- End Google Tag Manager -->
 </head>
-<body>
+<body class="privacy-modern">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -86,54 +87,131 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="legal-hero">
         <div class="container">
-            <div class="legal-hero-content">
-                <h1>Privacy Policy</h1>
-                <p>Your privacy matters. This page explains what data this website collects, how it is used, and the choices you have.</p>
-                <div class="legal-meta">Last updated: January 26, 2026</div>
+            <div class="privacy-hero-grid">
+                <div class="privacy-hero-copy">
+                    <h1>Privacy Policy</h1>
+                    <p>Your privacy matters. This Privacy Policy explains what information may be collected when you use this website, how it is used, and what choices you have.</p>
+                    <div class="legal-meta">Last updated: March 11, 2026</div>
+                    <div class="policy-search">
+                        <input type="text" id="policySearchInput" placeholder="Search any section...">
+                        <button type="button" id="policySearchBtn">Search</button>
+                    </div>
+                </div>
+                <div class="privacy-hero-collage" aria-hidden="true">
+                    <figure class="primary"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                    <figure class="secondary"><img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                    <figure class="tertiary"><img src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                </div>
             </div>
         </div>
     </section>
 
     <section class="legal-content">
         <div class="container">
-            <div class="legal-card">
-                <h2>Overview</h2>
-                <p>This website provides information about digital marketing services, blog content, and tools such as the page speed test. We collect only the data needed to operate the site, respond to inquiries, and improve performance.</p>
+            <div class="policy-layout">
+                <div class="legal-card" id="policyContent">
+                <h2 id="who-we-are">1. Who We Are</h2>
+                <p>This website is operated by Hisan Ali and provides information about digital marketing services, blog content, and tools such as the page speed test.</p>
+                <p>If you have any questions about this Privacy Policy, you can contact: <strong>workhisan@gmail.com</strong></p>
 
-                <h2>Information We Collect</h2>
+                <h2 id="information-we-collect">2. Information We Collect</h2>
+                <p>Depending on how you use the website, we may collect:</p>
                 <ul>
-                    <li>Contact details you submit through forms (name, email, message content).</li>
-                    <li>Usage data such as pages viewed, device type, and approximate location.</li>
-                    <li>Performance metrics from the speed test tool (page URL and timing data).</li>
+                    <li>Contact information submitted through forms, such as your name, email address, and message content.</li>
+                    <li>Usage data such as pages viewed, browser type, device type, and approximate location.</li>
+                    <li>Technical data related to website access, performance, and security.</li>
+                    <li>URLs submitted through the page speed test tool, along with related performance and timing results.</li>
                 </ul>
 
-                <h2>How We Use Information</h2>
+                <h2 id="how-we-use-information">3. How We Use Information</h2>
+                <p>We may use collected information to:</p>
                 <ul>
-                    <li>To respond to messages and provide requested services.</li>
-                    <li>To analyze site usage and improve content and performance.</li>
-                    <li>To maintain security and prevent abuse.</li>
+                    <li>Respond to inquiries and form submissions.</li>
+                    <li>Improve website content, performance, and user experience.</li>
+                    <li>Monitor site traffic and visitor behavior.</li>
+                    <li>Maintain security and prevent abuse.</li>
+                    <li>Generate performance reports through the page speed test tool.</li>
                 </ul>
 
-                <h2>Cookies and Analytics</h2>
-                <p>We use cookies and similar technologies to understand how visitors use the site and to measure performance. You can manage cookies through your browser settings.</p>
+                <h2 id="contact-forms">4. Contact Forms</h2>
+                <p>When you submit information through a contact form, the details you provide may be stored and processed through Google Sheets for inquiry handling and follow-up.</p>
+                <p>Please avoid sending sensitive personal information through general contact forms unless specifically requested.</p>
 
-                <h2>Sharing and Third Parties</h2>
-                <p>We do not sell your personal data. Limited data may be processed by trusted service providers (hosting, analytics, or form delivery) strictly to operate the website.</p>
+                <h2 id="analytics">5. Analytics</h2>
+                <p>This website uses Vercel Analytics to understand how visitors interact with the site and to measure performance. This may include data such as:</p>
+                <ul>
+                    <li>Pages visited.</li>
+                    <li>Device and browser type.</li>
+                    <li>General usage patterns.</li>
+                    <li>Approximate location data.</li>
+                    <li>Referring pages or sources.</li>
+                </ul>
+                <p>This information helps improve the website and understand visitor behavior.</p>
 
-                <h2>Data Retention</h2>
-                <p>We keep data only as long as needed to fulfill the purposes above or to meet legal obligations.</p>
+                <h2 id="page-speed-test-tool">6. Page Speed Test Tool</h2>
+                <p>This website may include a page speed test feature powered by the Google PageSpeed Insights API. When you use this tool, the URL you submit is processed in order to generate performance-related results.</p>
+                <p>Submitted URLs and related performance data may be handled temporarily for tool functionality and result display.</p>
 
-                <h2>Security</h2>
-                <p>We use reasonable safeguards to protect information, but no online service can guarantee absolute security.</p>
+                <h2 id="hosting-and-infrastructure">7. Hosting and Infrastructure</h2>
+                <p>This website is hosted on Vercel. As part of hosting, delivery, analytics, and security, Vercel may process technical information such as IP address, request logs, browser details, and device-related data.</p>
 
-                <h2>External Links</h2>
-                <p>Pages may link to third-party websites. Their privacy practices are independent and are not covered by this policy.</p>
+                <h2 id="cookies-and-similar-technologies">8. Cookies and Similar Technologies</h2>
+                <p>This website may use cookies and similar technologies to support analytics, performance measurement, and general site functionality.</p>
+                <p>You can manage or disable cookies through your browser settings, although some parts of the website may not function as expected if cookies are restricted.</p>
 
-                <h2>Changes to This Policy</h2>
-                <p>We may update this policy from time to time. The latest version will be posted on this page with an updated date.</p>
+                <h2 id="third-party-services">9. Third-Party Services</h2>
+                <p>We do not sell personal information.</p>
+                <p>However, limited data may be processed by third-party services used to operate the website, including:</p>
+                <ul>
+                    <li>Vercel for hosting and analytics.</li>
+                    <li>Google Sheets for handling contact form submissions.</li>
+                    <li>Google PageSpeed Insights API for page speed testing.</li>
+                </ul>
+                <p>These services process information only as needed to support website functionality, analytics, communication, or performance testing.</p>
 
-                <h2>Contact</h2>
-                <p>If you have any questions about privacy, email <strong>workhisan@gmail.com</strong>.</p>
+                <h2 id="data-retention">10. Data Retention</h2>
+                <p>Information is kept only for as long as reasonably necessary to:</p>
+                <ul>
+                    <li>respond to inquiries.</li>
+                    <li>operate and improve the website.</li>
+                    <li>maintain records where needed.</li>
+                    <li>meet legal, technical, or operational obligations.</li>
+                </ul>
+
+                <h2 id="data-security">11. Data Security</h2>
+                <p>Reasonable safeguards are used to protect information handled through the website. However, no website or online service can guarantee absolute security.</p>
+
+                <h2 id="your-rights-and-choices">12. Your Rights and Choices</h2>
+                <p>Depending on your location and applicable law, you may have the right to request access to, correction of, or deletion of personal information submitted through this website.</p>
+                <p>To make a privacy-related request, contact: <strong>workhisan@gmail.com</strong></p>
+
+                <h2 id="external-links">13. External Links</h2>
+                <p>This website may contain links to third-party websites. Their privacy practices are independent and are not covered by this Privacy Policy.</p>
+
+                <h2 id="changes-to-this-policy">14. Changes to This Policy</h2>
+                <p>This Privacy Policy may be updated from time to time. The latest version will always be posted on this page with the updated date.</p>
+
+                <h2 id="contact">15. Contact</h2>
+                <p>If you have any questions about this Privacy Policy, contact: <strong>workhisan@gmail.com</strong></p>
+                </div>
+                <aside class="policy-toc" id="policyToc" aria-label="Policy section navigation">
+                    <h3>On This Page</h3>
+                    <a href="#who-we-are">1. Who We Are</a>
+                    <a href="#information-we-collect">2. Information We Collect</a>
+                    <a href="#how-we-use-information">3. How We Use Information</a>
+                    <a href="#contact-forms">4. Contact Forms</a>
+                    <a href="#analytics">5. Analytics</a>
+                    <a href="#page-speed-test-tool">6. Page Speed Test Tool</a>
+                    <a href="#hosting-and-infrastructure">7. Hosting and Infrastructure</a>
+                    <a href="#cookies-and-similar-technologies">8. Cookies and Similar Technologies</a>
+                    <a href="#third-party-services">9. Third-Party Services</a>
+                    <a href="#data-retention">10. Data Retention</a>
+                    <a href="#data-security">11. Data Security</a>
+                    <a href="#your-rights-and-choices">12. Your Rights and Choices</a>
+                    <a href="#external-links">13. External Links</a>
+                    <a href="#changes-to-this-policy">14. Changes to This Policy</a>
+                    <a href="#contact">15. Contact</a>
+                </aside>
             </div>
         </div>
     </section>
@@ -205,6 +283,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <script src="/scripts/legal-policy.js"></script>
     <script src="../../script.js"></script>
 </body>
 </html>

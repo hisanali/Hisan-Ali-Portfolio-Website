@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
+    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -25,6 +25,7 @@
     <meta name="twitter:image" content="https://hisanali.com/Hisan.jpg">
 
     <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="/styles/legal-modern-policy.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,7 +46,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
 <!-- End Google Tag Manager -->
 </head>
-<body>
+<body class="privacy-modern">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -86,38 +87,82 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="legal-hero">
         <div class="container">
-            <div class="legal-hero-content">
-                <h1>Cookie Policy</h1>
-                <p>This page explains what cookies are and how they are used to improve your experience.</p>
-                <div class="legal-meta">Last updated: January 26, 2026</div>
+            <div class="privacy-hero-grid">
+                <div class="privacy-hero-copy">
+                    <h1>Cookie Policy</h1>
+                    <p>This Cookie Policy explains what cookies are, how they may be used on this website, and what choices you have.</p>
+                    <div class="legal-meta">Last updated: March 11, 2026</div>
+                    <div class="policy-search">
+                        <input type="text" id="policySearchInput" placeholder="Search any section...">
+                        <button type="button" id="policySearchBtn">Search</button>
+                    </div>
+                </div>
+                <div class="privacy-hero-collage" aria-hidden="true">
+                    <figure class="primary"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                    <figure class="secondary"><img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                    <figure class="tertiary"><img src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                </div>
             </div>
         </div>
     </section>
 
     <section class="legal-content">
         <div class="container">
-            <div class="legal-card">
-                <h2>What Are Cookies?</h2>
-                <p>Cookies are small text files stored on your device when you visit a website. They help websites remember preferences and understand usage patterns.</p>
+            <div class="policy-layout">
+                <div class="legal-card" id="policyContent">
+                <h2 id="what-are-cookies">1. What Are Cookies?</h2>
+                <p>Cookies are small text files stored on your device when you visit a website. They help websites function properly, remember certain preferences, and understand how visitors use the site.</p>
 
-                <h2>How We Use Cookies</h2>
+                <h2 id="how-cookies-may-be-used">2. How Cookies May Be Used</h2>
+                <p>This website may use cookies and similar technologies for the following purposes:</p>
                 <ul>
-                    <li>Analytics: to measure traffic and improve site content.</li>
-                    <li>Performance: to understand how the site and tools like the speed test are used.</li>
-                    <li>Preferences: to remember basic settings when applicable.</li>
+                    <li>Essential functionality: to support basic website operation and security.</li>
+                    <li>Analytics: to understand how visitors use the website and which pages or features perform best.</li>
+                    <li>Performance measurement: to evaluate site speed, usability, and general visitor experience.</li>
+                    <li>Preferences: to remember basic settings or improve how the website behaves where applicable.</li>
                 </ul>
 
-                <h2>Third-Party Cookies</h2>
-                <p>We may use third-party services (such as analytics providers) that set their own cookies. These providers process data according to their policies.</p>
+                <h2 id="analytics-and-performance-tools">3. Analytics and Performance Tools</h2>
+                <p>This website uses Vercel Analytics to better understand visitor behavior and site performance. This may involve cookies or similar technologies that help measure:</p>
+                <ul>
+                    <li>pages visited.</li>
+                    <li>browser and device type.</li>
+                    <li>traffic sources.</li>
+                    <li>general usage patterns.</li>
+                    <li>approximate location data.</li>
+                </ul>
+                <p>This information is used to improve website content, usability, and performance.</p>
 
-                <h2>Managing Cookies</h2>
-                <p>You can block or delete cookies in your browser settings. Note that some site functionality may not work as intended if cookies are disabled.</p>
+                <h2 id="third-party-cookies-and-technologies">4. Third-Party Cookies and Technologies</h2>
+                <p>Some third-party services used by this website may set or rely on their own cookies or similar technologies. These services may include analytics, hosting-related tools, or performance features.</p>
+                <p>Any data handled by these third-party services is processed according to their own policies.</p>
 
-                <h2>Updates</h2>
-                <p>We may update this policy to reflect changes in how cookies are used. The latest version will always be available here.</p>
+                <h2 id="managing-cookies">5. Managing Cookies</h2>
+                <p>You can control, block, or delete cookies through your browser settings. Please note that disabling cookies may affect how some parts of the website function.</p>
+                <p>Browser settings usually allow you to:</p>
+                <ul>
+                    <li>view stored cookies.</li>
+                    <li>block all cookies.</li>
+                    <li>delete existing cookies.</li>
+                    <li>limit cookies from specific websites.</li>
+                </ul>
 
-                <h2>Contact</h2>
-                <p>For questions about cookies, email <strong>workhisan@gmail.com</strong>.</p>
+                <h2 id="changes-to-this-policy">6. Changes to This Policy</h2>
+                <p>This Cookie Policy may be updated from time to time to reflect changes in website functionality, analytics, or legal requirements. The latest version will always be posted on this page with the updated date.</p>
+
+                <h2 id="contact">7. Contact</h2>
+                <p>If you have any questions about this Cookie Policy, contact: <strong>workhisan@gmail.com</strong></p>
+                </div>
+                <aside class="policy-toc" id="policyToc" aria-label="Policy section navigation">
+                    <h3>On This Page</h3>
+                    <a href="#what-are-cookies">1. What Are Cookies?</a>
+                    <a href="#how-cookies-may-be-used">2. How Cookies May Be Used</a>
+                    <a href="#analytics-and-performance-tools">3. Analytics and Performance Tools</a>
+                    <a href="#third-party-cookies-and-technologies">4. Third-Party Cookies and Technologies</a>
+                    <a href="#managing-cookies">5. Managing Cookies</a>
+                    <a href="#changes-to-this-policy">6. Changes to This Policy</a>
+                    <a href="#contact">7. Contact</a>
+                </aside>
             </div>
         </div>
     </section>
@@ -189,6 +234,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <script src="/scripts/legal-policy.js"></script>
     <script src="../../script.js"></script>
 </body>
 </html>

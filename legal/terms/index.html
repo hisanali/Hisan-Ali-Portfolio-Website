@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}catch(e){}})();</script>
+    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -25,6 +25,7 @@
     <meta name="twitter:image" content="https://hisanali.com/Hisan.jpg">
 
     <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="/styles/legal-modern-policy.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,7 +46,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
 <!-- End Google Tag Manager -->
 </head>
-<body>
+<body class="privacy-modern">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -86,48 +87,117 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="legal-hero">
         <div class="container">
-            <div class="legal-hero-content">
-                <h1>Terms of Service</h1>
-                <p>By using this website, you agree to the terms outlined below. Please read them carefully.</p>
-                <div class="legal-meta">Last updated: January 26, 2026</div>
+            <div class="privacy-hero-grid">
+                <div class="privacy-hero-copy">
+                    <h1>Terms of Service</h1>
+                    <p>By accessing or using this website, you agree to the terms outlined below. Please read them carefully.</p>
+                    <div class="legal-meta">Last updated: March 11, 2026</div>
+                    <div class="policy-search">
+                        <input type="text" id="policySearchInput" placeholder="Search any section...">
+                        <button type="button" id="policySearchBtn">Search</button>
+                    </div>
+                </div>
+                <div class="privacy-hero-collage" aria-hidden="true">
+                    <figure class="primary"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                    <figure class="secondary"><img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                    <figure class="tertiary"><img src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=900&q=80" alt=""></figure>
+                </div>
             </div>
         </div>
     </section>
 
     <section class="legal-content">
         <div class="container">
-            <div class="legal-card">
-                <h2>Acceptance of Terms</h2>
-                <p>By accessing or using this website, you agree to be bound by these terms and all applicable laws and regulations.</p>
+            <div class="policy-layout">
+                <div class="legal-card" id="policyContent">
+                <h2 id="acceptance-of-terms">1. Acceptance of Terms</h2>
+                <p>By accessing or using this website, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with these terms, please do not use the website.</p>
 
-                <h2>Use of Content</h2>
+                <h2 id="website-purpose">2. Website Purpose</h2>
+                <p>This website provides information about digital marketing services, blog content, and certain online tools, including the page speed test. All content is provided for general informational and business purposes unless stated otherwise.</p>
+
+                <h2 id="use-of-website-content">3. Use of Website Content</h2>
+                <p>All content on this website, including text, graphics, visuals, branding elements, and other materials, is owned by or used with permission by Hisan Ali, unless otherwise stated.</p>
+                <p>You may not:</p>
                 <ul>
-                    <li>All content is provided for informational purposes only.</li>
-                    <li>You may not reproduce, distribute, or republish content without written permission.</li>
-                    <li>Brand assets, logos, and graphics remain the property of Hisan Ali.</li>
+                    <li>reproduce, republish, or distribute website content without prior written permission.</li>
+                    <li>copy, modify, or reuse branding elements, graphics, or original written content for commercial purposes.</li>
+                    <li>present website content as your own work.</li>
+                </ul>
+                <p>Reasonable personal viewing and non-commercial use are permitted.</p>
+
+                <h2 id="services-and-tools">4. Services and Tools</h2>
+                <p>Any services, tools, calculators, or interactive features provided on this website - including the page speed test - are offered for general use and information only.</p>
+                <p>They are provided as is and as available, without guarantees of:</p>
+                <ul>
+                    <li>uninterrupted availability.</li>
+                    <li>complete accuracy.</li>
+                    <li>suitability for a specific purpose.</li>
+                    <li>error-free performance.</li>
+                </ul>
+                <p>Tool results may vary based on third-party systems, external APIs, technical limitations, or changes outside this website's control.</p>
+
+                <h2 id="no-professional-guarantee">5. No Professional Guarantee</h2>
+                <p>Information on this website is intended to describe services, share insights, and provide general guidance. It should not be treated as a guaranteed outcome, formal business advice, legal advice, or professional assurance of results.</p>
+                <p>Any digital marketing results depend on multiple factors, including competition, market conditions, timing, platform changes, and implementation quality.</p>
+
+                <h2 id="user-responsibilities">6. User Responsibilities</h2>
+                <p>By using this website, you agree not to:</p>
+                <ul>
+                    <li>interfere with the website's operation, security, or performance.</li>
+                    <li>attempt unauthorized access to any part of the website or related systems.</li>
+                    <li>submit unlawful, abusive, misleading, or harmful content through forms or tools.</li>
+                    <li>misuse any website feature, tool, or form for spam, scraping, testing abuse, or malicious activity.</li>
+                    <li>provide false or misleading information when making inquiries.</li>
                 </ul>
 
-                <h2>Services and Tools</h2>
-                <p>Any tools, including the page speed test, are provided as-is without guarantees of accuracy or availability. Results may vary based on external factors.</p>
+                <h2 id="third-party-services-and-links">7. Third-Party Services and Links</h2>
+                <p>This website may use or link to third-party platforms, tools, or websites. These may include hosting, analytics, form handling, and external APIs.</p>
+                <p>We are not responsible for the content, availability, policies, or practices of third-party websites or services. Your use of those services is subject to their own terms and policies.</p>
 
-                <h2>User Responsibilities</h2>
+                <h2 id="intellectual-property">8. Intellectual Property</h2>
+                <p>All website branding, written content, layout elements, graphics, and original materials are protected by applicable intellectual property laws.</p>
+                <p>Unauthorized use, copying, imitation, or redistribution of original website materials is not permitted without prior written consent.</p>
+
+                <h2 id="limitation-of-liability">9. Limitation of Liability</h2>
+                <p>To the fullest extent permitted by law, Hisan Ali is not liable for any direct, indirect, incidental, consequential, or special damages arising from:</p>
                 <ul>
-                    <li>Do not attempt to disrupt or interfere with the website.</li>
-                    <li>Do not upload or submit unlawful or harmful content.</li>
-                    <li>Provide accurate information when contacting us.</li>
+                    <li>use of or inability to use the website.</li>
+                    <li>reliance on website content.</li>
+                    <li>use of tools or outputs generated by website features.</li>
+                    <li>interruptions, errors, or external service failures.</li>
                 </ul>
+                <p>Use of this website is at your own risk.</p>
 
-                <h2>Third-Party Links</h2>
-                <p>This website may link to third-party sites. We are not responsible for their content, policies, or practices.</p>
+                <h2 id="availability-and-changes">10. Availability and Changes</h2>
+                <p>Website content, tools, pages, and services may be updated, changed, suspended, or removed at any time without notice.</p>
+                <p>We may also revise these Terms of Service at any time. Continued use of the website after updates means you accept the latest version.</p>
 
-                <h2>Limitation of Liability</h2>
-                <p>Hisan Ali is not liable for any direct or indirect damages resulting from your use of this website or reliance on its content.</p>
+                <h2 id="privacy">11. Privacy</h2>
+                <p>Your use of this website is also subject to the Privacy Policy. Please review that page to understand how information may be collected and used.</p>
 
-                <h2>Changes to Terms</h2>
-                <p>We may update these terms at any time. Continued use of the site means you accept the latest version.</p>
+                <h2 id="governing-use">12. Governing Use</h2>
+                <p>These terms are intended to apply to the use of this website and its publicly available content and features. Use of the website must comply with applicable laws and regulations.</p>
 
-                <h2>Contact</h2>
-                <p>Questions about these terms? Email <strong>workhisan@gmail.com</strong>.</p>
+                <h2 id="contact">13. Contact</h2>
+                <p>If you have any questions about these Terms of Service, contact: <strong>workhisan@gmail.com</strong></p>
+                </div>
+                <aside class="policy-toc" id="policyToc" aria-label="Policy section navigation">
+                    <h3>On This Page</h3>
+                    <a href="#acceptance-of-terms">1. Acceptance of Terms</a>
+                    <a href="#website-purpose">2. Website Purpose</a>
+                    <a href="#use-of-website-content">3. Use of Website Content</a>
+                    <a href="#services-and-tools">4. Services and Tools</a>
+                    <a href="#no-professional-guarantee">5. No Professional Guarantee</a>
+                    <a href="#user-responsibilities">6. User Responsibilities</a>
+                    <a href="#third-party-services-and-links">7. Third-Party Services and Links</a>
+                    <a href="#intellectual-property">8. Intellectual Property</a>
+                    <a href="#limitation-of-liability">9. Limitation of Liability</a>
+                    <a href="#availability-and-changes">10. Availability and Changes</a>
+                    <a href="#privacy">11. Privacy</a>
+                    <a href="#governing-use">12. Governing Use</a>
+                    <a href="#contact">13. Contact</a>
+                </aside>
             </div>
         </div>
     </section>
@@ -199,6 +269,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <script src="/scripts/legal-policy.js"></script>
     <script src="../../script.js"></script>
 </body>
 </html>

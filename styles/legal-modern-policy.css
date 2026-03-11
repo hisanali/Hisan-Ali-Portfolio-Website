@@ -1,0 +1,309 @@
+﻿body.privacy-modern {
+            background:
+                radial-gradient(rgba(148, 163, 184, 0.2) 0.8px, transparent 0.8px),
+                linear-gradient(180deg, #f3f4f6 0%, #eceff3 100%);
+            background-size: 5px 5px, 100% 100%;
+        }
+
+        .privacy-modern .legal-hero {
+            background: transparent;
+            padding: 150px 0 76px;
+        }
+
+        .privacy-modern .legal-hero::before {
+            display: none;
+        }
+
+        .privacy-hero-grid {
+            display: grid;
+            grid-template-columns: minmax(340px, 1fr) minmax(320px, 460px);
+            gap: 48px;
+            align-items: center;
+        }
+
+        .privacy-hero-copy h1 {
+            font-size: clamp(36px, 4.3vw, 58px);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+
+        .privacy-hero-copy p {
+            color: #4b5563;
+            font-size: 18px;
+            line-height: 1.75;
+            max-width: 640px;
+            margin-bottom: 16px;
+        }
+
+        .privacy-modern .legal-meta {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 0;
+            margin-bottom: 26px;
+            font-weight: 500;
+        }
+
+        .policy-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 430px;
+        }
+
+        .policy-search input {
+            flex: 1;
+            height: 48px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            padding: 0 14px;
+            font-size: 15px;
+            color: #111827;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .policy-search button {
+            height: 48px;
+            border: 0;
+            border-radius: 12px;
+            padding: 0 18px;
+            font-weight: 600;
+            color: #fff;
+            background: #f97316;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .policy-search button:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.95);
+        }
+
+        .privacy-hero-collage {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .privacy-hero-collage figure {
+            margin: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            background: #e5e7eb;
+        }
+
+        .privacy-hero-collage img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .privacy-hero-collage .primary {
+            grid-row: span 2;
+            min-height: 328px;
+        }
+
+        .privacy-hero-collage .secondary {
+            min-height: 156px;
+        }
+
+        .privacy-hero-collage .tertiary {
+            min-height: 156px;
+        }
+
+        .privacy-modern .legal-content {
+            padding: 30px 0 100px;
+            background: transparent;
+        }
+
+        .policy-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 280px;
+            gap: 42px;
+            align-items: start;
+        }
+
+        .privacy-modern .legal-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
+            padding: 42px;
+        }
+
+        .privacy-modern .legal-card h2 {
+            font-size: 30px;
+            letter-spacing: -0.02em;
+            margin: 38px 0 14px;
+            color: #111827;
+            scroll-margin-top: 120px;
+        }
+
+        .privacy-modern .legal-card h2:first-child {
+            margin-top: 0;
+        }
+
+        .privacy-modern .legal-card p,
+        .privacy-modern .legal-card li {
+            color: #374151;
+            line-height: 1.82;
+            font-size: 17px;
+        }
+
+        .privacy-modern .legal-card ul {
+            margin-bottom: 18px;
+            padding-left: 22px;
+        }
+
+        .privacy-modern .legal-card strong {
+            color: #111827;
+        }
+
+        .policy-toc {
+            position: sticky;
+            top: 104px;
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid #dbe0e8;
+            border-radius: 16px;
+            padding: 18px 16px;
+            backdrop-filter: blur(6px);
+        }
+
+        .policy-toc h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin: 0 0 10px;
+        }
+
+        .policy-toc a {
+            display: block;
+            font-size: 14px;
+            color: #475569;
+            padding: 7px 8px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .policy-toc a:hover,
+        .policy-toc a.active {
+            background: rgba(99, 102, 241, 0.12);
+            color: #3730a3;
+        }
+
+        @media (max-width: 1024px) {
+            .privacy-hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .privacy-hero-collage {
+                max-width: 520px;
+            }
+
+            .policy-layout {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+
+            .policy-toc {
+                position: static;
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .privacy-modern .legal-hero {
+                padding: 122px 0 54px;
+            }
+
+            .policy-search {
+                max-width: none;
+            }
+
+            .privacy-hero-collage {
+                grid-template-columns: 1fr;
+            }
+
+            .privacy-hero-collage .primary,
+            .privacy-hero-collage .secondary,
+            .privacy-hero-collage .tertiary {
+                grid-column: auto;
+                grid-row: auto;
+                min-height: 170px;
+            }
+
+            .privacy-modern .legal-card {
+                padding: 26px 20px;
+                border-radius: 14px;
+            }
+
+            .privacy-modern .legal-card h2 {
+                font-size: 24px;
+                margin-top: 30px;
+            }
+
+            .privacy-modern .legal-card p,
+            .privacy-modern .legal-card li {
+                font-size: 16px;
+            }
+        }
+
+        body.theme-dark.privacy-modern {
+            background:
+                radial-gradient(rgba(71, 85, 105, 0.2) 0.8px, transparent 0.8px),
+                linear-gradient(180deg, #111827 0%, #0b1220 100%);
+            background-size: 5px 5px, 100% 100%;
+        }
+
+        body.theme-dark.privacy-modern .privacy-hero-copy h1 {
+            color: #f8fafc;
+        }
+
+        body.theme-dark.privacy-modern .privacy-hero-copy p,
+        body.theme-dark.privacy-modern .legal-meta {
+            color: #cbd5e1;
+        }
+
+        body.theme-dark.privacy-modern .policy-search input {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        body.theme-dark.privacy-modern .legal-card {
+            background: #0f172a;
+            border-color: #334155;
+            box-shadow: none;
+        }
+
+        body.theme-dark.privacy-modern .legal-card h2,
+        body.theme-dark.privacy-modern .legal-card strong {
+            color: #f8fafc;
+        }
+
+        body.theme-dark.privacy-modern .legal-card p,
+        body.theme-dark.privacy-modern .legal-card li {
+            color: #cbd5e1;
+        }
+
+        body.theme-dark.privacy-modern .policy-toc {
+            background: rgba(15, 23, 42, 0.85);
+            border-color: #334155;
+        }
+
+        body.theme-dark.privacy-modern .policy-toc h3,
+        body.theme-dark.privacy-modern .policy-toc a {
+            color: #cbd5e1;
+        }
+
+        body.theme-dark.privacy-modern .policy-toc a:hover,
+        body.theme-dark.privacy-modern .policy-toc a.active {
+            background: rgba(129, 140, 248, 0.2);
+            color: #e0e7ff;
+        }
