@@ -181,6 +181,75 @@
     box-shadow: 0 6px 14px rgba(29, 78, 216, 0.28);
 }
 
+.blog-visibility-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.blog-visibility-switch {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.92);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 0 12px;
+    height: 36px;
+    border-radius: 999px;
+    transition: all 0.2s ease;
+}
+
+.blog-visibility-switch:hover {
+    border-color: rgba(14, 165, 164, 0.6);
+    transform: translateY(-1px);
+}
+
+.blog-visibility-switch-track {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #0F766E 0%, #0EA5A4 100%);
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.22);
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.blog-visibility-switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 21px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+    transition: left 0.2s ease;
+}
+
+.blog-visibility-switch-text {
+    min-width: 22px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0F766E;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.blog-visibility-switch.is-off .blog-visibility-switch-track {
+    background: #CBD5E1;
+}
+
+.blog-visibility-switch.is-off .blog-visibility-switch-thumb {
+    left: 3px;
+}
+
+.blog-visibility-switch.is-off .blog-visibility-switch-text {
+    color: #475569;
+}
+
 .blog-search-box input::placeholder {
     color: #64748B;
     opacity: 0.9;
@@ -841,6 +910,31 @@
     color: #ffffff;
 }
 
+.theme-dark .blog-visibility-label {
+    color: #E5E7EB;
+}
+
+.theme-dark .blog-visibility-switch {
+    background: rgba(11, 18, 32, 0.88);
+    border-color: #1F2937;
+}
+
+.theme-dark .blog-visibility-switch:hover {
+    border-color: #14B8A6;
+}
+
+.theme-dark .blog-visibility-switch-text {
+    color: #5EEAD4;
+}
+
+.theme-dark .blog-visibility-switch.is-off .blog-visibility-switch-track {
+    background: #334155;
+}
+
+.theme-dark .blog-visibility-switch.is-off .blog-visibility-switch-text {
+    color: #94A3B8;
+}
+
 .theme-dark .author-card,
 .theme-dark .related-posts {
     background: #0F172A;
@@ -909,6 +1003,13 @@
 
     .blog-search-tags {
         gap: 7px;
+    }
+
+    .blog-visibility-switch {
+        width: 100%;
+        justify-content: center;
+        max-width: 190px;
+        flex-wrap: wrap;
     }
 
     .blog-search-tag {

@@ -185,6 +185,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <button type="button" class="blog-search-tag" data-tag="content"><i class="fas fa-pen-nib"></i>Content</button>
                     <button type="button" class="blog-search-tag" data-tag="e-commerce"><i class="fas fa-cart-shopping"></i>E-commerce</button>
                     <button type="button" class="blog-search-tag" data-tag="social media"><i class="fas fa-hashtag"></i>Social Media</button>
+                    <button type="button" class="blog-visibility-switch" id="omanToggle" aria-pressed="true" aria-label="Show Oman-focused posts">
+                        <span class="blog-visibility-label">Oman articles</span>
+                        <span class="blog-visibility-switch-track">
+                            <span class="blog-visibility-switch-thumb"></span>
+                        </span>
+                        <span class="blog-visibility-switch-text">On</span>
+                    </button>
                 </div>
                 <p class="blog-search-meta" id="blogSearchMeta">Showing all articles</p>
             </div>
@@ -1084,19 +1091,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const emptyState = document.getElementById('blogEmptyState');
             const clearButton = document.getElementById('blogSearchClear');
             const tagButtons = Array.from(document.querySelectorAll('.blog-search-tag'));
-            if (!input || !grid || !meta || !emptyState || !clearButton) return;
+            const omanToggle = document.getElementById('omanToggle');
+            const omanToggleText = omanToggle ? omanToggle.querySelector('.blog-visibility-switch-text') : null;
+            if (!input || !grid || !meta || !emptyState || !clearButton || !omanToggle || !omanToggleText) return;
 
             const cards = Array.from(grid.querySelectorAll('.blog-card'));
             const total = cards.length;
+            let omanVisible = true;
 
             const normalize = (value) => (value || '').toLowerCase().trim();
+            const isOmanFocused = (text, href) => {
+                const normalizedHref = normalize(href);
+                return normalizedHref.includes('oman') || text.includes(' oman ') || text.includes(' muscat ');
+            };
 
             const updateMeta = (shown, query) => {
+                const omanLabel = omanVisible ? '' : ' with Oman-focused posts hidden';
                 if (!query) {
-                    meta.textContent = 'Showing all articles';
+                    meta.textContent = shown === total && omanVisible
+                        ? 'Showing all articles'
+                        : 'Showing ' + shown + ' of ' + total + ' articles' + omanLabel;
                     return;
                 }
-                meta.textContent = 'Showing ' + shown + ' of ' + total + ' articles for "' + query + '"';
+                meta.textContent = 'Showing ' + shown + ' of ' + total + ' articles for "' + query + '"' + omanLabel;
             };
 
             const filterCards = () => {
@@ -1105,7 +1122,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 cards.forEach((card) => {
                     const searchText = normalize(card.textContent);
-                    const isMatch = !query || searchText.includes(query);
+                    const href = card.getAttribute('href') || '';
+                    const matchesQuery = !query || searchText.includes(query);
+                    const matchesOmanToggle = omanVisible || !isOmanFocused(searchText, href);
+                    const isMatch = matchesQuery && matchesOmanToggle;
                     card.style.display = isMatch ? '' : 'none';
                     if (isMatch) visibleCount += 1;
                 });
@@ -1116,25 +1136,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             };
 
             input.addEventListener('input', () => {
-                tagButtons.forEach((item) => item.classList.remove('active'));
+                tagButtons.forEach((item) => {
+                    if (item !== omanToggle) item.classList.remove('active');
+                });
                 filterCards();
             });
             tagButtons.forEach((button) => {
+                if (button === omanToggle) return;
                 button.addEventListener('click', () => {
                     const tag = button.getAttribute('data-tag') || '';
                     input.value = tag;
                     filterCards();
                     input.focus();
-                    tagButtons.forEach((item) => item.classList.remove('active'));
+                    tagButtons.forEach((item) => {
+                        if (item !== omanToggle) item.classList.remove('active');
+                    });
                     button.classList.add('active');
                 });
+            });
+
+            omanToggle.addEventListener('click', () => {
+                omanVisible = !omanVisible;
+                omanToggle.classList.toggle('is-off', !omanVisible);
+                omanToggle.setAttribute('aria-pressed', String(omanVisible));
+                omanToggleText.textContent = omanVisible ? 'On' : 'Off';
+                filterCards();
             });
 
             clearButton.addEventListener('click', () => {
                 input.value = '';
                 filterCards();
                 input.focus();
-                tagButtons.forEach((item) => item.classList.remove('active'));
+                tagButtons.forEach((item) => {
+                    if (item !== omanToggle) item.classList.remove('active');
+                });
             });
         })();
     </script>
