@@ -68,12 +68,27 @@
       "permanent": true
     },
     {
+      "source": "/blog/best-digital-marketer-oman/",
+      "destination": "/best-digital-marketer-oman/",
+      "permanent": true
+    },
+    {
       "source": "/blog/freelance-digital-marketer-oman",
       "destination": "/freelance-digital-marketer-oman/",
       "permanent": true
     },
     {
+      "source": "/blog/freelance-digital-marketer-oman/",
+      "destination": "/freelance-digital-marketer-oman/",
+      "permanent": true
+    },
+    {
       "source": "/blog/seo-expert-oman",
+      "destination": "/seo-expert-oman/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/seo-expert-oman/",
       "destination": "/seo-expert-oman/",
       "permanent": true
     },
