@@ -192,11 +192,13 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');
     if (!hero) return;
-    if (window.matchMedia('(max-width: 768px)').matches) return;
+    const isMobilePeeker = window.matchMedia('(max-width: 768px)').matches;
 
-    // Create the sneaky character peeking from the right side
     const peeker = document.createElement('div');
-    peeker.className = 'sneaky-peeker';
+    peeker.className = `sneaky-peeker ${isMobilePeeker ? 'sneaky-peeker-mobile' : 'sneaky-peeker-desktop'}`;
+    peeker.setAttribute('role', 'button');
+    peeker.setAttribute('tabindex', '0');
+    peeker.setAttribute('aria-label', 'Jump to contact section');
     peeker.innerHTML = `
         <div class="thought-bubble"><span class="typing-text"></span></div>
         <div class="peeker-face">
@@ -212,18 +214,23 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     hero.appendChild(peeker);
 
-    // Click to scroll to contact section
-    peeker.addEventListener('click', () => {
+    const goToContact = () => {
         document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    peeker.addEventListener('click', goToContact);
+    peeker.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            goToContact();
+        }
     });
 
-    // Typing effect for thought bubble
     const typingText = peeker.querySelector('.typing-text');
     const messages = ["Hi, I'm watching you", "Click me to contact Hisan"];
     let messageIndex = 0;
     let charIndex = 0;
     let isDeleting = false;
-    let isPaused = false;
 
     function typeEffect() {
         const currentMessage = messages[messageIndex];
@@ -249,9 +256,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    typeEffect();
+    if (isMobilePeeker) {
+        typingText.textContent = 'Tap me to contact Hisan';
+    } else {
+        typeEffect();
+    }
 
-    // Show the peeker on first load for a short intro
     setTimeout(() => {
         peeker.classList.add('intro');
         setTimeout(() => {
@@ -259,37 +269,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3200);
     }, 400);
 
-    // Add styles for the peeker
-    const peekerStyles = document.createElement('style');
-    peekerStyles.textContent = `
+    if (!document.getElementById('sneaky-peeker-styles')) {
+        const peekerStyles = document.createElement('style');
+        peekerStyles.id = 'sneaky-peeker-styles';
+        peekerStyles.textContent = `
         .sneaky-peeker {
             position: absolute;
-            right: -30px;
-            bottom: 20%;
-            width: 80px;
-            height: 100px;
             z-index: 10;
             transition: transform 0.3s ease;
             cursor: pointer;
         }
-        .sneaky-peeker.intro {
+        .sneaky-peeker:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.8);
+            outline-offset: 4px;
+        }
+        .sneaky-peeker-desktop {
+            right: -30px;
+            bottom: 20%;
+            width: 80px;
+            height: 100px;
+        }
+        .sneaky-peeker-desktop.intro {
             transform: translateX(-15px);
         }
+        .sneaky-peeker-mobile {
+            right: 16px;
+            bottom: -8px;
+            width: 104px;
+            height: 116px;
+        }
+        .sneaky-peeker-mobile.intro {
+            transform: translateY(-10px);
+        }
         .peeker-face {
+            background: linear-gradient(135deg, #6528F7, #A855F7);
+            position: relative;
+        }
+        .sneaky-peeker-desktop .peeker-face {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #6528F7, #A855F7);
             border-radius: 50% 0 0 50%;
-            position: relative;
             box-shadow: -5px 0 20px rgba(101, 40, 247, 0.3);
+        }
+        .sneaky-peeker-mobile .peeker-face {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 104px;
+            height: 62px;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -8px 24px rgba(101, 40, 247, 0.35);
         }
         .peeker-eyes {
             position: absolute;
+            display: flex;
+            gap: 12px;
+        }
+        .sneaky-peeker-desktop .peeker-eyes {
             top: 50%;
             left: 50%;
             transform: translate(-70%, -50%);
-            display: flex;
-            gap: 12px;
+        }
+        .sneaky-peeker-mobile .peeker-eyes {
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
         }
         .peeker-eye {
             width: 18px;
@@ -310,10 +354,15 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: translate(-50%, -50%);
             transition: transform 0.1s ease;
         }
-        .sneaky-peeker:hover {
+        .sneaky-peeker-desktop:hover {
             transform: translateX(-20px);
         }
-        .sneaky-peeker:hover .peeker-face {
+        .sneaky-peeker-mobile:hover,
+        .sneaky-peeker-mobile:focus-visible {
+            transform: translateY(-10px);
+        }
+        .sneaky-peeker:hover .peeker-face,
+        .sneaky-peeker:focus-visible .peeker-face {
             animation: wiggle 0.5s ease;
         }
         @keyframes wiggle {
@@ -322,23 +371,38 @@ document.addEventListener('DOMContentLoaded', () => {
             75% { transform: rotate(5deg); }
         }
         .thought-bubble {
+            background: white;
+            color: #1a1a2e;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+        .sneaky-peeker-desktop .thought-bubble {
             position: absolute;
             right: 90px;
             top: -10px;
-            background: white;
-            color: #1a1a2e;
             padding: 10px 15px;
             border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
             white-space: nowrap;
             opacity: 0;
             transform: scale(0.8) translateX(20px);
             transition: all 0.3s ease;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            pointer-events: none;
         }
-        .sneaky-peeker.intro .thought-bubble {
+        .sneaky-peeker-mobile .thought-bubble {
+            position: absolute;
+            right: 28px;
+            bottom: 56px;
+            width: 190px;
+            max-width: min(52vw, 190px);
+            padding: 12px 16px;
+            border-radius: 22px;
+            white-space: normal;
+            line-height: 1.25;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .sneaky-peeker-desktop.intro .thought-bubble {
             opacity: 1;
             transform: scale(1) translateX(0);
             animation: popIn 0.35s ease;
@@ -346,18 +410,26 @@ document.addEventListener('DOMContentLoaded', () => {
         .thought-bubble::after {
             content: '';
             position: absolute;
+            border: 8px solid transparent;
+        }
+        .sneaky-peeker-desktop .thought-bubble::after {
             right: -8px;
             top: 50%;
             transform: translateY(-50%);
-            border: 8px solid transparent;
             border-left-color: white;
         }
-        .sneaky-peeker:hover .thought-bubble {
+        .sneaky-peeker-mobile .thought-bubble::after {
+            right: 26px;
+            bottom: -14px;
+            border-top-color: white;
+        }
+        .sneaky-peeker-desktop:hover .thought-bubble,
+        .sneaky-peeker-desktop:focus-visible .thought-bubble {
             opacity: 1;
             transform: scale(1) translateX(0);
         }
-        .thought-bubble.pop {
-            animation: popIn 0.3s ease;
+        .sneaky-peeker-mobile.intro .thought-bubble {
+            animation: popIn 0.35s ease;
         }
         @keyframes popIn {
             0% { transform: scale(1); }
@@ -365,26 +437,28 @@ document.addEventListener('DOMContentLoaded', () => {
             100% { transform: scale(1); }
         }
     `;
-    document.head.appendChild(peekerStyles);
+        document.head.appendChild(peekerStyles);
+    }
 
-    // Make eyes follow cursor
     const leftPupil = peeker.querySelector('.left-eye .pupil');
     const rightPupil = peeker.querySelector('.right-eye .pupil');
 
-    document.addEventListener('mousemove', (e) => {
-        const peekerRect = peeker.getBoundingClientRect();
-        const peekerCenterX = peekerRect.left + peekerRect.width / 2;
-        const peekerCenterY = peekerRect.top + peekerRect.height / 2;
+    if (!isMobilePeeker) {
+        document.addEventListener('mousemove', (e) => {
+            const peekerRect = peeker.getBoundingClientRect();
+            const peekerCenterX = peekerRect.left + peekerRect.width / 2;
+            const peekerCenterY = peekerRect.top + peekerRect.height / 2;
 
-        const angle = Math.atan2(e.clientY - peekerCenterY, e.clientX - peekerCenterX);
-        const distance = 3;
+            const angle = Math.atan2(e.clientY - peekerCenterY, e.clientX - peekerCenterX);
+            const distance = 3;
 
-        const pupilX = Math.cos(angle) * distance;
-        const pupilY = Math.sin(angle) * distance;
+            const pupilX = Math.cos(angle) * distance;
+            const pupilY = Math.sin(angle) * distance;
 
-        leftPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
-        rightPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
-    });
+            leftPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+            rightPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+        });
+    }
 });
 
 // Hero Background Effect - Cursor-following Orbs

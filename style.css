@@ -2470,8 +2470,8 @@ img {
     /* Hero Section Mobile - More Attractive */
     .hero {
         min-height: 100svh;
-        align-items: center;
-        padding: 84px 0 26px;
+        align-items: flex-start;
+        padding: 72px 0 24px;
         overflow: visible;
     }
 
@@ -2495,7 +2495,7 @@ img {
     }
 
     .hero-title {
-        font-size: 37px;
+        font-size: 39px;
         line-height: 1.12;
         margin-bottom: 12px;
         letter-spacing: -0.03em;
@@ -2519,19 +2519,19 @@ img {
     }
 
     .hero-buttons {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
         margin-bottom: 16px;
     }
 
     .btn-large {
         width: 100%;
         justify-content: center;
-        padding: 13px 14px;
-        font-size: 14px;
-        gap: 6px;
-        white-space: nowrap;
+        padding: 14px 20px;
+        font-size: 15px;
+        gap: 8px;
+        white-space: normal;
     }
 
     .hero-buttons .btn-large i {
@@ -3003,11 +3003,11 @@ img {
     /* Hero Section */
     .hero {
         min-height: 100svh;
-        padding: 80px 0 24px;
+        padding: 72px 0 22px;
     }
 
     .hero-title {
-        font-size: 34px;
+        font-size: 36px;
         line-height: 1.12;
     }
 
@@ -3022,7 +3022,7 @@ img {
     }
 
     .btn-large {
-        padding: 12px 12px;
+        padding: 13px 18px;
         font-size: 14px;
     }
 
@@ -3036,8 +3036,8 @@ img {
     }
 
     .hero-buttons .btn-large {
-        font-size: 13px;
-        gap: 5px;
+        font-size: 14px;
+        gap: 7px;
     }
 
     .hero-buttons .btn-large i {
