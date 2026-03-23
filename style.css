@@ -2482,6 +2482,7 @@ img {
 
     .hero-content {
         width: 100%;
+        padding-top: 26px;
     }
 
     .about-image {
@@ -3030,6 +3031,10 @@ img {
     .btn-large {
         padding: 13px 18px;
         font-size: 14px;
+    }
+
+    .hero-content {
+        padding-top: 22px;
     }
 
     .about-image {
