@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');
     if (!hero) return;
-    if (window.matchMedia('(max-width: 768px)').matches) return;
+    if (window.matchMedia('(max-width: 768px), (pointer: coarse) and (orientation: landscape) and (max-height: 500px)').matches) return;
 
     const peeker = document.createElement('div');
     peeker.className = 'sneaky-peeker sneaky-peeker-desktop';
@@ -713,7 +713,7 @@ const fadeInObserver = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+const isMobileView = window.matchMedia('(max-width: 768px), (pointer: coarse) and (orientation: landscape) and (max-height: 500px)').matches;
 const hasHomeHero = !!document.querySelector('.hero');
 
 // Observe sections on the homepage only (disable on mobile to avoid blank content)
