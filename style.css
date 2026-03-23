@@ -2470,7 +2470,6 @@ img {
     /* Hero Section Mobile - More Attractive */
     .hero {
         min-height: 100svh;
-        min-height: 100dvh;
         align-items: flex-start;
         padding: 104px 0 28px;
         overflow: visible;
@@ -2989,7 +2988,6 @@ img {
     /* Hero Section */
     .hero {
         min-height: 100svh;
-        min-height: 100dvh;
         padding: 96px 0 24px;
     }
 
