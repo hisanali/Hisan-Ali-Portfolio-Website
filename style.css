@@ -2469,7 +2469,8 @@ img {
 
     /* Hero Section Mobile - More Attractive */
     .hero {
-        min-height: auto;
+        min-height: 100svh;
+        min-height: 100dvh;
         align-items: flex-start;
         padding: 104px 0 28px;
         overflow: visible;
@@ -2529,6 +2530,7 @@ img {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
         padding: 0;
+        margin-top: 18px;
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 22px;
@@ -2986,7 +2988,8 @@ img {
 
     /* Hero Section */
     .hero {
-        min-height: auto;
+        min-height: 100svh;
+        min-height: 100dvh;
         padding: 96px 0 24px;
     }
 
