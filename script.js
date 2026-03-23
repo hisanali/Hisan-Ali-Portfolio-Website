@@ -192,10 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');
     if (!hero) return;
-    const isMobilePeeker = window.matchMedia('(max-width: 768px)').matches;
+    if (window.matchMedia('(max-width: 768px)').matches) return;
 
     const peeker = document.createElement('div');
-    peeker.className = `sneaky-peeker ${isMobilePeeker ? 'sneaky-peeker-mobile' : 'sneaky-peeker-desktop'}`;
+    peeker.className = 'sneaky-peeker sneaky-peeker-desktop';
     peeker.setAttribute('role', 'button');
     peeker.setAttribute('tabindex', '0');
     peeker.setAttribute('aria-label', 'Jump to contact section');
@@ -256,11 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (isMobilePeeker) {
-        typingText.textContent = 'Tap me to contact Hisan';
-    } else {
-        typeEffect();
-    }
+    typeEffect();
 
     setTimeout(() => {
         peeker.classList.add('intro');
@@ -292,15 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .sneaky-peeker-desktop.intro {
             transform: translateX(-15px);
         }
-        .sneaky-peeker-mobile {
-            right: 16px;
-            bottom: -8px;
-            width: 104px;
-            height: 116px;
-        }
-        .sneaky-peeker-mobile.intro {
-            transform: translateY(-10px);
-        }
         .peeker-face {
             background: linear-gradient(135deg, #6528F7, #A855F7);
             position: relative;
@@ -311,15 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
             border-radius: 50% 0 0 50%;
             box-shadow: -5px 0 20px rgba(101, 40, 247, 0.3);
         }
-        .sneaky-peeker-mobile .peeker-face {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            width: 104px;
-            height: 62px;
-            border-radius: 30px 30px 0 0;
-            box-shadow: 0 -8px 24px rgba(101, 40, 247, 0.35);
-        }
         .peeker-eyes {
             position: absolute;
             display: flex;
@@ -329,11 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
             top: 50%;
             left: 50%;
             transform: translate(-70%, -50%);
-        }
-        .sneaky-peeker-mobile .peeker-eyes {
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
         }
         .peeker-eye {
             width: 18px;
@@ -356,10 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         .sneaky-peeker-desktop:hover {
             transform: translateX(-20px);
-        }
-        .sneaky-peeker-mobile:hover,
-        .sneaky-peeker-mobile:focus-visible {
-            transform: translateY(-10px);
         }
         .sneaky-peeker:hover .peeker-face,
         .sneaky-peeker:focus-visible .peeker-face {
@@ -389,19 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: scale(0.8) translateX(20px);
             transition: all 0.3s ease;
         }
-        .sneaky-peeker-mobile .thought-bubble {
-            position: absolute;
-            right: 28px;
-            bottom: 56px;
-            width: 190px;
-            max-width: min(52vw, 190px);
-            padding: 12px 16px;
-            border-radius: 22px;
-            white-space: normal;
-            line-height: 1.25;
-            opacity: 1;
-            transform: translateY(0);
-        }
         .sneaky-peeker-desktop.intro .thought-bubble {
             opacity: 1;
             transform: scale(1) translateX(0);
@@ -418,18 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: translateY(-50%);
             border-left-color: white;
         }
-        .sneaky-peeker-mobile .thought-bubble::after {
-            right: 26px;
-            bottom: -14px;
-            border-top-color: white;
-        }
         .sneaky-peeker-desktop:hover .thought-bubble,
         .sneaky-peeker-desktop:focus-visible .thought-bubble {
             opacity: 1;
             transform: scale(1) translateX(0);
-        }
-        .sneaky-peeker-mobile.intro .thought-bubble {
-            animation: popIn 0.35s ease;
         }
         @keyframes popIn {
             0% { transform: scale(1); }
@@ -443,22 +391,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftPupil = peeker.querySelector('.left-eye .pupil');
     const rightPupil = peeker.querySelector('.right-eye .pupil');
 
-    if (!isMobilePeeker) {
-        document.addEventListener('mousemove', (e) => {
-            const peekerRect = peeker.getBoundingClientRect();
-            const peekerCenterX = peekerRect.left + peekerRect.width / 2;
-            const peekerCenterY = peekerRect.top + peekerRect.height / 2;
+    document.addEventListener('mousemove', (e) => {
+        const peekerRect = peeker.getBoundingClientRect();
+        const peekerCenterX = peekerRect.left + peekerRect.width / 2;
+        const peekerCenterY = peekerRect.top + peekerRect.height / 2;
 
-            const angle = Math.atan2(e.clientY - peekerCenterY, e.clientX - peekerCenterX);
-            const distance = 3;
+        const angle = Math.atan2(e.clientY - peekerCenterY, e.clientX - peekerCenterX);
+        const distance = 3;
 
-            const pupilX = Math.cos(angle) * distance;
-            const pupilY = Math.sin(angle) * distance;
+        const pupilX = Math.cos(angle) * distance;
+        const pupilY = Math.sin(angle) * distance;
 
-            leftPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
-            rightPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
-        });
-    }
+        leftPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+        rightPupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+    });
 });
 
 // Hero Background Effect - Cursor-following Orbs
