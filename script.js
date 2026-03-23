@@ -603,17 +603,31 @@ window.addEventListener('scroll', () => {
 // Smooth Scrolling
 // ===================================
 
+const getAnchorScrollOffset = () => {
+    const headerHeight = header?.getBoundingClientRect().height || 0;
+    return Math.max(headerHeight + 12, 80);
+};
+
+const smoothScrollToTarget = (target) => {
+    const targetTop = window.scrollY + target.getBoundingClientRect().top - getAnchorScrollOffset();
+    window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: 'smooth'
+    });
+};
+
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
+        const href = this.getAttribute('href');
+        if (!href || href === '#') {
+            return;
+        }
+
+        const target = document.querySelector(href);
 
         if (target) {
-            const offsetTop = target.offsetTop - 80;
-            window.scrollTo({
-                top: offsetTop,
-                behavior: 'smooth'
-            });
+            e.preventDefault();
+            smoothScrollToTarget(target);
         }
     });
 });
