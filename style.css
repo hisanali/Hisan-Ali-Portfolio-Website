@@ -2469,14 +2469,14 @@ img {
 
     /* Hero Section Mobile - More Attractive */
     .hero {
-        min-height: auto;
+        min-height: 620px;
         align-items: flex-start;
-        padding: 78px 0 34px;
+        padding: 82px 0 34px;
         overflow: visible;
     }
 
     .hero-container {
-        gap: 18px;
+        gap: 22px;
         align-items: start;
     }
 
@@ -2503,7 +2503,7 @@ img {
 
     .hero-description {
         font-size: 15px;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
         line-height: 1.6;
     }
 
@@ -2522,7 +2522,7 @@ img {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
     }
 
     .btn-large {
@@ -3002,26 +3002,26 @@ img {
 
     /* Hero Section */
     .hero {
-        min-height: auto;
-        padding: 66px 0 24px;
+        min-height: 580px;
+        padding: 74px 0 24px;
     }
 
     .hero-title {
-        font-size: 35px;
+        font-size: 36px;
         line-height: 1.08;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
     .hero-description {
-        font-size: 13.5px;
-        margin-bottom: 12px;
-        line-height: 1.52;
+        font-size: 14px;
+        margin-bottom: 16px;
+        line-height: 1.56;
     }
 
     .hero-badge {
         font-size: 12px;
         padding: 7px 13px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
     .btn-large {
