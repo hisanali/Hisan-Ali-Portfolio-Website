@@ -2470,8 +2470,8 @@ img {
     /* Hero Section Mobile - More Attractive */
     .hero {
         min-height: 100svh;
-        align-items: flex-start;
-        padding: 104px 0 28px;
+        align-items: center;
+        padding: 84px 0 26px;
         overflow: visible;
     }
 
@@ -2482,6 +2482,16 @@ img {
 
     .hero-content {
         width: 100%;
+    }
+
+    .about-image {
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    .profile-image {
+        aspect-ratio: 5 / 6;
+        object-position: center 16%;
     }
 
     .hero-title {
@@ -2993,7 +3003,7 @@ img {
     /* Hero Section */
     .hero {
         min-height: 100svh;
-        padding: 96px 0 24px;
+        padding: 80px 0 24px;
     }
 
     .hero-title {
@@ -3014,6 +3024,15 @@ img {
     .btn-large {
         padding: 12px 12px;
         font-size: 14px;
+    }
+
+    .about-image {
+        max-width: 292px;
+    }
+
+    .profile-image {
+        aspect-ratio: 1 / 1;
+        object-position: center 14%;
     }
 
     .hero-buttons .btn-large {
