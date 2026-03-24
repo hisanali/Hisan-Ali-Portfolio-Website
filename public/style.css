@@ -73,6 +73,7 @@ body.theme-dark {
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
@@ -860,6 +861,10 @@ img {
     background-clip: text;
 }
 
+.gradient-word {
+    display: inline-block;
+}
+
 .hero-description {
     font-size: 18px;
     color: rgba(255, 255, 255, 0.8);
@@ -893,8 +898,18 @@ img {
     margin-bottom: 4px;
 }
 
+.stat-unit {
+    font-size: 0.36em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+    vertical-align: middle;
+}
+
 .stat-label {
     font-size: 14px;
+    line-height: 1.35;
     color: rgba(255, 255, 255, 0.7);
 }
 
@@ -978,40 +993,166 @@ img {
 
 .scroll-indicator {
     position: absolute;
-    bottom: 40px;
+    bottom: 32px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.72);
     animation: fadeIn 1s ease 1.5s both;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.scroll-indicator p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-shadow: 0 10px 24px rgba(7, 10, 25, 0.4);
+    animation: scrollLabelGlow 2.8s ease-in-out infinite;
 }
 
 .mouse {
-    width: 24px;
-    height: 40px;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 12px;
+    width: 32px;
+    height: 54px;
+    border: 1.5px solid rgba(255, 255, 255, 0.48);
+    border-radius: 18px;
     position: relative;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+    box-shadow: 0 14px 30px rgba(4, 6, 20, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: mouseFloat 3.2s ease-in-out infinite;
+}
+
+.mouse::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.18), rgba(255, 255, 255, 0));
+    opacity: 0.9;
+}
+
+.mouse::after {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border: 1px solid rgba(168, 85, 247, 0.28);
+    border-radius: 24px;
+    opacity: 0;
+    animation: mousePulse 2.6s ease-out infinite;
 }
 
 .wheel {
-    width: 4px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 2px;
+    width: 5px;
+    height: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(196, 181, 253, 0.85));
+    border-radius: 999px;
     position: absolute;
-    top: 8px;
+    top: 9px;
     left: 50%;
     transform: translateX(-50%);
-    animation: scroll 1.5s ease-in-out infinite;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.36);
+    animation: scrollWheel 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    z-index: 1;
 }
 
-@keyframes scroll {
-    0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(12px); }
+.scroll-arrows {
+    position: relative;
+    width: 18px;
+    height: 22px;
+    animation: arrowsDrift 2.4s ease-in-out infinite;
+}
+
+.scroll-arrows::before,
+.scroll-arrows::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid rgba(255, 255, 255, 0.74);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.74);
+    transform: translateX(-50%) rotate(45deg);
+    filter: drop-shadow(0 6px 12px rgba(5, 8, 22, 0.35));
+}
+
+.scroll-arrows::before {
+    top: 0;
+    animation: arrowCascade 1.8s ease-in-out infinite;
+}
+
+.scroll-arrows::after {
+    top: 8px;
+    opacity: 0.62;
+    animation: arrowCascade 1.8s ease-in-out 0.18s infinite;
+}
+
+@keyframes mouseFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+}
+
+@keyframes mousePulse {
+    0% {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+    20% {
+        opacity: 0.4;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.12);
+    }
+}
+
+@keyframes scrollWheel {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(0);
+    }
+    18% {
+        opacity: 1;
+    }
+    62% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(16px);
+    }
+}
+
+@keyframes arrowCascade {
+    0%, 100% {
+        opacity: 0.2;
+        transform: translateX(-50%) translateY(-2px) rotate(45deg);
+    }
+    45% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(3px) rotate(45deg);
+    }
+}
+
+@keyframes arrowsDrift {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+}
+
+@keyframes scrollLabelGlow {
+    0%, 100% {
+        opacity: 0.78;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(1px);
+    }
 }
 
 @keyframes fadeIn {
@@ -3640,8 +3781,9 @@ img {
 }
 
 .tools-marquee {
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
     overflow: hidden;
 }
 
@@ -3728,6 +3870,17 @@ img {
 @media (prefers-reduced-motion: reduce) {
     .tools-track {
         animation-duration: 120s;
+    }
+
+    .scroll-indicator,
+    .scroll-indicator p,
+    .mouse,
+    .mouse::after,
+    .wheel,
+    .scroll-arrows,
+    .scroll-arrows::before,
+    .scroll-arrows::after {
+        animation: none !important;
     }
 }
 

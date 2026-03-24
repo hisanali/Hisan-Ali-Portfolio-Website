@@ -188,6 +188,85 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Auto-highlight hero title words on blog and tool pages
+document.addEventListener('DOMContentLoaded', () => {
+    const headlineSelectors = [
+        '.blog-hero h1',
+        '.blog-post-header h1',
+        '.tools-hero-content h1',
+        '.tool-hero h1'
+    ];
+    const stopWords = new Set([
+        'a', 'an', 'and', 'are', 'as', 'at', 'before', 'but', 'by', 'for', 'from',
+        'how', 'in', 'into', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'their',
+        'this', 'to', 'what', 'when', 'where', 'which', 'with', 'you', 'your'
+    ]);
+
+    const normalizeToken = (token) => token.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
+
+    const getHighlightIndexes = (tokens) => {
+        const wordEntries = tokens
+            .map((token, index) => ({
+                index,
+                normalized: normalizeToken(token)
+            }))
+            .filter((entry) => entry.normalized);
+
+        if (!wordEntries.length) {
+            return [];
+        }
+
+        const desiredCount = wordEntries.length <= 4 ? 1 : 2;
+        const picks = [];
+
+        for (let i = wordEntries.length - 1; i >= 0 && picks.length < desiredCount; i -= 1) {
+            const entry = wordEntries[i];
+            if (!stopWords.has(entry.normalized.toLowerCase())) {
+                picks.push(entry.index);
+            }
+        }
+
+        for (let i = wordEntries.length - 1; i >= 0 && picks.length < desiredCount; i -= 1) {
+            const entry = wordEntries[i];
+            if (!picks.includes(entry.index)) {
+                picks.push(entry.index);
+            }
+        }
+
+        return picks.sort((left, right) => left - right);
+    };
+
+    document.querySelectorAll(headlineSelectors.join(', ')).forEach((heading) => {
+        if (heading.dataset.autoGradient === 'off' || heading.querySelector('.gradient-text') || heading.childElementCount > 0) {
+            return;
+        }
+
+        const text = heading.textContent.replace(/\s+/g, ' ').trim();
+        if (!text) {
+            return;
+        }
+
+        const tokens = text.split(/(\s+)/);
+        const highlightIndexes = getHighlightIndexes(tokens);
+
+        if (!highlightIndexes.length) {
+            return;
+        }
+
+        heading.innerHTML = tokens
+            .map((token, index) => {
+                if (!highlightIndexes.includes(index)) {
+                    return token;
+                }
+
+                return `<span class="gradient-text gradient-word">${token}</span>`;
+            })
+            .join('');
+
+        heading.dataset.autoGradient = 'applied';
+    });
+});
+
 // Sneaky Peeker Character in Hero Section
 document.addEventListener('DOMContentLoaded', () => {
     const hero = document.querySelector('.hero');

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync:footer": "node scripts/sync-footer.js"
   },
   "dependencies": {
     "clsx": "^2.0.0",
