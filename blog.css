@@ -300,7 +300,9 @@
 .blog-image {
     position: relative;
     overflow: hidden;
-    height: 240px;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    background: #f3f4f6;
 }
 
 .blog-placeholder {
@@ -473,12 +475,15 @@
     overflow: hidden;
     border: 1px solid rgba(15, 23, 42, 0.08);
     box-shadow: var(--shadow-sm);
+    aspect-ratio: 16 / 9;
+    background: #f3f4f6;
 }
 
 .blog-featured-image img {
     display: block;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
 }
 
 .blog-post-content h2 {
@@ -1028,7 +1033,8 @@
     }
 
     .blog-image {
-        height: 200px;
+        aspect-ratio: 16 / 9;
+        height: auto;
     }
 
     .blog-placeholder {
