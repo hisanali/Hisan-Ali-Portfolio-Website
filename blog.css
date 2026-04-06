@@ -2,6 +2,18 @@
    Blog Page Styles
    ================================== */
 
+html.blog-post-page,
+body.blog-post-page {
+    overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+    html.blog-post-page,
+    body.blog-post-page {
+        overflow-x: visible;
+    }
+}
+
 /* Blog Hero */
 .blog-hero {
     padding: 140px 0 80px;
@@ -455,6 +467,7 @@
 .blog-post-container {
     display: grid;
     grid-template-columns: 1fr 320px;
+    align-items: start;
     gap: 60px;
     max-width: 1200px;
     margin: 0 auto;
@@ -542,6 +555,7 @@
 .blog-sidebar {
     position: sticky;
     top: 100px;
+    align-self: start;
     height: fit-content;
 }
 

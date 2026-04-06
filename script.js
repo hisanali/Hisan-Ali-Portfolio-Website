@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
     const storageKey = 'preferred-theme';
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const isBlogPostPage = !!document.querySelector('.blog-post-section');
+
+    if (isBlogPostPage) {
+        document.documentElement.classList.add('blog-post-page');
+        document.body.classList.add('blog-post-page');
+    }
 
     const applyTheme = (theme) => {
         const isDark = theme === 'dark';
@@ -783,21 +789,45 @@ const observerOptions = {
     rootMargin: '0px 0px -100px 0px'
 };
 
-const fadeInObserver = new IntersectionObserver((entries) => {
+const fadeInObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+            entry.target.style.removeProperty('transform');
+            entry.target.style.removeProperty('will-change');
+            observer.unobserve(entry.target);
         }
     });
 }, observerOptions);
 
 const isMobileView = window.matchMedia('(max-width: 768px), (pointer: coarse) and (orientation: landscape) and (max-height: 500px)').matches;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const shouldDisableReveal = isMobileView || prefersReducedMotion;
 const hasHomeHero = !!document.querySelector('.hero');
+const revealCurve = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const clampValue = (value, min, max) => Math.min(max, Math.max(min, value));
+const easeOutCubic = (value) => 1 - Math.pow(1 - value, 3);
+
+const primeReveal = (element, { offsetX = 0, offsetY = 30, duration = 0.8, delay = 0 } = {}) => {
+    if (!element) return;
+
+    if (shouldDisableReveal) {
+        element.style.opacity = '1';
+        element.style.transform = 'none';
+        element.style.transition = 'none';
+        return;
+    }
+
+    element.style.opacity = '0';
+    element.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+    element.style.transition = `opacity ${duration}s ${revealCurve} ${delay}s, transform ${duration}s ${revealCurve} ${delay}s`;
+    element.style.willChange = 'opacity, transform';
+    fadeInObserver.observe(element);
+};
 
 // Observe sections on the homepage only (disable on mobile to avoid blank content)
-document.querySelectorAll('section:not(.hero)').forEach(section => {
-    if (!hasHomeHero || isMobileView) {
+document.querySelectorAll('section:not(.hero):not(#portfolio)').forEach(section => {
+    if (!hasHomeHero || shouldDisableReveal) {
         section.style.opacity = '1';
         section.style.transform = 'none';
         section.style.transition = 'none';
@@ -805,36 +835,96 @@ document.querySelectorAll('section:not(.hero)').forEach(section => {
     }
     section.style.opacity = '0';
     section.style.transform = 'translateY(30px)';
-    section.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    section.style.transition = `opacity 0.8s ${revealCurve}, transform 0.8s ${revealCurve}`;
     fadeInObserver.observe(section);
 });
 
+// Portfolio intro and cards use scroll-linked motion instead of one-time reveal
+const portfolioIntro = document.querySelector('.portfolio-intro');
+const portfolioMotionItems = Array.from(document.querySelectorAll('.portfolio-item'));
+
+const setPortfolioMotionState = (element, { x = 0, y = 0, opacity = 1, intro = false } = {}) => {
+    if (!element) return;
+
+    const prefix = intro ? '--portfolio-intro' : '--portfolio-scroll';
+    element.style.setProperty(`${prefix}-x`, `${x.toFixed(2)}px`);
+    element.style.setProperty(`${prefix}-y`, `${y.toFixed(2)}px`);
+    element.style.setProperty(`${prefix}-opacity`, opacity.toFixed(3));
+};
+
+const portfolioMotionSequence = [
+    ...(portfolioIntro ? [{
+        element: portfolioIntro,
+        intro: true,
+        offsetX: 0,
+        offsetY: 36,
+        start: 0.9,
+        end: 0.46,
+        minOpacity: 0
+    }] : []),
+    ...portfolioMotionItems.map((item, index) => ({
+        element: item,
+        intro: false,
+        offsetX: index % 2 === 0 ? 88 : -88,
+        offsetY: 0,
+        start: 0.92,
+        end: 0.44,
+        minOpacity: 0.12
+    }))
+];
+
+const updatePortfolioScrollMotion = () => {
+    if (!portfolioMotionSequence.length) return;
+
+    if (!hasHomeHero || shouldDisableReveal) {
+        portfolioMotionSequence.forEach((config) => {
+            setPortfolioMotionState(config.element, {
+                intro: config.intro
+            });
+        });
+        return;
+    }
+
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    portfolioMotionSequence.forEach((config) => {
+        const rect = config.element.getBoundingClientRect();
+        const start = viewportHeight * config.start;
+        const end = viewportHeight * config.end;
+        const progress = clampValue((start - rect.top) / Math.max(start - end, 1), 0, 1);
+        const eased = easeOutCubic(progress);
+
+        setPortfolioMotionState(config.element, {
+            intro: config.intro,
+            x: config.offsetX * (1 - eased),
+            y: config.offsetY * (1 - eased),
+            opacity: config.minOpacity + ((1 - config.minOpacity) * eased)
+        });
+    });
+};
+
+let portfolioMotionFrame = null;
+const requestPortfolioMotionUpdate = () => {
+    if (portfolioMotionFrame !== null) return;
+
+    portfolioMotionFrame = requestAnimationFrame(() => {
+        portfolioMotionFrame = null;
+        updatePortfolioScrollMotion();
+    });
+};
+
+requestPortfolioMotionUpdate();
+window.addEventListener('load', requestPortfolioMotionUpdate);
+window.addEventListener('resize', requestPortfolioMotionUpdate);
+window.addEventListener('scroll', requestPortfolioMotionUpdate, { passive: true });
+
 // Observe service cards
 document.querySelectorAll('.service-card').forEach((card, index) => {
-    if (isMobileView) {
-        card.style.opacity = '1';
-        card.style.transform = 'none';
-        card.style.transition = 'none';
-        return;
-    }
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(30px)';
-    card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
-    fadeInObserver.observe(card);
-});
-
-// Observe portfolio items
-document.querySelectorAll('.portfolio-item').forEach((item, index) => {
-    if (isMobileView) {
-        item.style.opacity = '1';
-        item.style.transform = 'none';
-        item.style.transition = 'none';
-        return;
-    }
-    item.style.opacity = '0';
-    item.style.transform = 'translateY(30px)';
-    item.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
-    fadeInObserver.observe(item);
+    primeReveal(card, {
+        offsetY: 30,
+        duration: 0.6,
+        delay: index * 0.1
+    });
 });
 
 // Observe process cards
@@ -1082,11 +1172,11 @@ if (portfolioFilters.length > 0) {
                     item.style.display = 'block';
                     setTimeout(() => {
                         item.style.opacity = '1';
-                        item.style.transform = 'translateY(0)';
+                        item.style.removeProperty('transform');
                     }, 10);
                 } else {
                     item.style.opacity = '0';
-                    item.style.transform = 'translateY(30px)';
+                    item.style.transform = 'translate3d(0, 30px, 0)';
                     setTimeout(() => {
                         item.style.display = 'none';
                     }, 300);
@@ -1368,6 +1458,59 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// ===================================
+// Desktop Viewport for Portfolio Iframes
+// ===================================
+
+const setupPortfolioDesktopViewport = () => {
+    const frames = document.querySelectorAll('.portfolio-preview-frame');
+    if (!frames.length) return;
+
+    const applyViewportScale = (frame) => {
+        const canvas = frame.querySelector('.portfolio-preview-canvas');
+        if (!canvas) return;
+
+        const desktopWidth = Number(canvas.dataset.desktopWidth || 1280);
+        const desktopHeight = Number(canvas.dataset.desktopHeight || 800);
+        const frameWidth = frame.clientWidth;
+
+        if (!desktopWidth || !desktopHeight || !frameWidth) return;
+
+        const scale = frameWidth / desktopWidth;
+        canvas.style.width = `${desktopWidth}px`;
+        canvas.style.height = `${desktopHeight}px`;
+        canvas.style.transform = `scale(${scale})`;
+    };
+
+    frames.forEach((frame) => {
+        applyViewportScale(frame);
+
+        const iframe = frame.querySelector('iframe');
+        if (iframe) {
+            iframe.addEventListener('load', () => applyViewportScale(frame));
+        }
+    });
+
+    const refreshFrames = debounce(() => {
+        frames.forEach((frame) => applyViewportScale(frame));
+    }, 80);
+
+    if (typeof ResizeObserver === 'function') {
+        const observer = new ResizeObserver((entries) => {
+            entries.forEach((entry) => applyViewportScale(entry.target));
+        });
+
+        frames.forEach((frame) => observer.observe(frame));
+    } else {
+        window.addEventListener('resize', refreshFrames);
+    }
+
+    window.addEventListener('load', refreshFrames);
+    window.addEventListener('resize', refreshFrames);
+};
+
+setupPortfolioDesktopViewport();
 
 // Use debounce for expensive scroll operations
 window.addEventListener('scroll', debounce(() => {
