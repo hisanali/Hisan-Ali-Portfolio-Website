@@ -45,7 +45,7 @@
     </url>
     <url>
         <loc>https://hisanali.com/blog/</loc>
-        <lastmod>2026-03-24</lastmod>
+        <lastmod>2026-04-28</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
@@ -159,6 +159,24 @@
     </url>
     <!-- Blog Posts -->
     <url>
+        <loc>https://hisanali.com/blog/performance-max-oman-2026/</loc>
+        <lastmod>2026-04-28</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/blog/ai-search-clicks-leads-oman/</loc>
+        <lastmod>2026-04-28</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/blog/conversion-tracking-oman-businesses/</loc>
+        <lastmod>2026-04-28</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
         <loc>https://hisanali.com/blog/ai-seo-content-2026/</loc>
         <lastmod>2026-03-24</lastmod>
         <changefreq>monthly</changefreq>
@@ -166,7 +184,7 @@
     </url>
     <url>
         <loc>https://hisanali.com/blog/google-business-profile-oman/</loc>
-        <lastmod>2026-03-24</lastmod>
+        <lastmod>2026-04-28</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
