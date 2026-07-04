@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1420"/>
+      <stop offset="1" stop-color="#1d2f47"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="340" y1="100" x2="990" y2="540" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8BD3FF"/>
+      <stop offset="1" stop-color="#C9FF4A"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="370" y1="180" x2="1040" y2="510" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C9FF4A"/>
+      <stop offset="1" stop-color="#8BD3FF"/>
+    </linearGradient>
+    <filter id="blur" x="0" y="0" width="1200" height="630" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <circle cx="110" cy="110" r="140" fill="#8BD3FF" opacity="0.12" filter="url(#blur)"/>
+  <circle cx="1040" cy="110" r="180" fill="#C9FF4A" opacity="0.10" filter="url(#blur)"/>
+  <circle cx="1060" cy="560" r="220" fill="#8BD3FF" opacity="0.08" filter="url(#blur)"/>
+  <path d="M0 530C220 480 352 584 600 540C848 496 982 382 1200 420V630H0V530Z" fill="rgba(255,255,255,0.03)"/>
+  <g opacity="0.28">
+    <path d="M0 96H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 210H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 324H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 438H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M160 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M360 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M560 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M760 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M960 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+  </g>
+  <g transform="translate(86 104)">
+    <rect x="0" y="0" width="430" height="62" rx="18" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+    <text x="26" y="40" fill="#dfe8f4" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="700">TOOLS</text>
+  </g>
+  <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">SMALL STACK</text>
+  <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
+
+    <g transform="translate(748 238)">
+      <rect x="24" y="30" width="80" height="80" rx="20" fill="rgba(255,255,255,0.09)"/>
+      <rect x="118" y="30" width="80" height="80" rx="20" fill="rgba(255,255,255,0.15)"/>
+      <rect x="212" y="30" width="80" height="80" rx="20" fill="rgba(255,255,255,0.09)"/>
+      <rect x="24" y="124" width="80" height="80" rx="20" fill="rgba(255,255,255,0.15)"/>
+      <rect x="118" y="124" width="80" height="80" rx="20" fill="url(#accentGrad)"/>
+      <rect x="212" y="124" width="80" height="80" rx="20" fill="rgba(255,255,255,0.15)"/>
+      <rect x="24" y="218" width="80" height="80" rx="20" fill="rgba(255,255,255,0.09)"/>
+      <rect x="118" y="218" width="80" height="80" rx="20" fill="rgba(255,255,255,0.15)"/>
+      <rect x="212" y="218" width="80" height="80" rx="20" fill="rgba(255,255,255,0.09)"/>
+      <path d="M145 154h26M158 141v26M44 64h40M138 64h40M232 64h40" stroke="#08111f" stroke-width="8" stroke-linecap="round"/>
+    </g>
+</svg>
