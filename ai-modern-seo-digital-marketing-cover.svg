@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10101a"/>
+      <stop offset="1" stop-color="#291b47"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="340" y1="100" x2="990" y2="540" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B794F4"/>
+      <stop offset="1" stop-color="#6EE7FF"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="370" y1="180" x2="1040" y2="510" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6EE7FF"/>
+      <stop offset="1" stop-color="#B794F4"/>
+    </linearGradient>
+    <filter id="blur" x="0" y="0" width="1200" height="630" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <circle cx="110" cy="110" r="140" fill="#B794F4" opacity="0.12" filter="url(#blur)"/>
+  <circle cx="1040" cy="110" r="180" fill="#6EE7FF" opacity="0.10" filter="url(#blur)"/>
+  <circle cx="1060" cy="560" r="220" fill="#B794F4" opacity="0.08" filter="url(#blur)"/>
+  <path d="M0 530C220 480 352 584 600 540C848 496 982 382 1200 420V630H0V530Z" fill="rgba(255,255,255,0.03)"/>
+  <g opacity="0.28">
+    <path d="M0 96H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 210H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 324H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 438H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M160 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M360 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M560 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M760 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M960 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+  </g>
+  <g transform="translate(86 104)">
+    <rect x="0" y="0" width="430" height="62" rx="18" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+    <text x="26" y="40" fill="#dfe8f4" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="700">AI + SEO</text>
+  </g>
+  <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">WORK FASTER</text>
+  <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
+
+    <g transform="translate(755 235)">
+      <rect x="32" y="34" width="210" height="210" rx="38" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+      <rect x="78" y="80" width="118" height="118" rx="28" fill="url(#accentGrad)" opacity="0.9"/>
+      <circle cx="48" cy="48" r="10" fill="#fff" opacity="0.75"/>
+      <circle cx="226" cy="48" r="10" fill="#fff" opacity="0.75"/>
+      <circle cx="48" cy="226" r="10" fill="#fff" opacity="0.75"/>
+      <circle cx="226" cy="226" r="10" fill="#fff" opacity="0.75"/>
+      <path d="M108 120h64M108 150h64M108 180h64" stroke="#08111f" stroke-width="10" stroke-linecap="round"/>
+      <path d="M282 72l40 40M282 192l40-40" stroke="url(#lineGrad)" stroke-width="12" stroke-linecap="round"/>
+    </g>
+</svg>
