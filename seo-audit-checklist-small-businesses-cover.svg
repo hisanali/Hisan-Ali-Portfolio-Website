@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#081715"/>
+      <stop offset="1" stop-color="#123534"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="340" y1="100" x2="990" y2="540" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9BE15D"/>
+      <stop offset="1" stop-color="#F9A826"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="370" y1="180" x2="1040" y2="510" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F9A826"/>
+      <stop offset="1" stop-color="#9BE15D"/>
+    </linearGradient>
+    <filter id="blur" x="0" y="0" width="1200" height="630" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <circle cx="110" cy="110" r="140" fill="#9BE15D" opacity="0.12" filter="url(#blur)"/>
+  <circle cx="1040" cy="110" r="180" fill="#F9A826" opacity="0.10" filter="url(#blur)"/>
+  <circle cx="1060" cy="560" r="220" fill="#9BE15D" opacity="0.08" filter="url(#blur)"/>
+  <path d="M0 530C220 480 352 584 600 540C848 496 982 382 1200 420V630H0V530Z" fill="rgba(255,255,255,0.03)"/>
+  <g opacity="0.28">
+    <path d="M0 96H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 210H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 324H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M0 438H1200" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M160 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M360 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M560 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M760 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+    <path d="M960 0V630" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 14"/>
+  </g>
+  <g transform="translate(86 104)">
+    <rect x="0" y="0" width="430" height="62" rx="18" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+    <text x="26" y="40" fill="#dfe8f4" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="700">SEO AUDIT</text>
+  </g>
+  <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">FIX THE BASICS</text>
+  <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
+
+    <g transform="translate(770 250)">
+      <rect x="20" y="0" width="250" height="320" rx="28" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.12)"/>
+      <rect x="58" y="38" width="174" height="14" rx="7" fill="rgba(255,255,255,0.28)"/>
+      <rect x="58" y="84" width="152" height="14" rx="7" fill="rgba(255,255,255,0.22)"/>
+      <rect x="58" y="132" width="166" height="14" rx="7" fill="rgba(255,255,255,0.22)"/>
+      <rect x="58" y="180" width="128" height="14" rx="7" fill="rgba(255,255,255,0.22)"/>
+      <rect x="58" y="228" width="184" height="14" rx="7" fill="rgba(255,255,255,0.22)"/>
+      <circle cx="40" cy="45" r="12" fill="url(#accentGrad)"/>
+      <path d="M34 45l4 5l9-11" fill="none" stroke="#0b1511" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="40" cy="93" r="12" fill="url(#accentGrad)" opacity="0.82"/>
+      <circle cx="40" cy="141" r="12" fill="url(#accentGrad)" opacity="0.72"/>
+      <circle cx="40" cy="189" r="12" fill="url(#accentGrad)" opacity="0.62"/>
+      <circle cx="40" cy="237" r="12" fill="url(#accentGrad)" opacity="0.52"/>
+    </g>
+</svg>
