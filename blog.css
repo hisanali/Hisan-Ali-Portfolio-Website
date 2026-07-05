@@ -1870,6 +1870,15 @@ body.blog-post-page {
         padding: 28px 20px;
     }
 
+    .blog-featured-image--contain {
+        background: #0f172a;
+    }
+
+    .blog-featured-image--contain img {
+        object-fit: contain;
+        object-position: center center;
+    }
+
     .blog-post-content h2 {
         font-size: 26px;
     }
