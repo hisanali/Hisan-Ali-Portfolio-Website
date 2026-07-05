@@ -39,7 +39,7 @@
   </g>
   <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">SMALL STACK</text>
   <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
-
+  
     <g transform="translate(748 238)">
       <rect x="24" y="30" width="80" height="80" rx="20" fill="rgba(255,255,255,0.09)"/>
       <rect x="118" y="30" width="80" height="80" rx="20" fill="rgba(255,255,255,0.15)"/>

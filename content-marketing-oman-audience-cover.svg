@@ -39,7 +39,7 @@
   </g>
   <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">WRITE FOR PEOPLE</text>
   <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
-
+  
     <g transform="translate(754 240)">
       <rect x="20" y="26" width="250" height="220" rx="30" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
       <rect x="48" y="56" width="160" height="18" rx="9" fill="rgba(255,255,255,0.35)"/>

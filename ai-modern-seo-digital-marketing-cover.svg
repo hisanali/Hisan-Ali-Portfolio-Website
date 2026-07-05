@@ -39,7 +39,7 @@
   </g>
   <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">WORK FASTER</text>
   <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
-
+  
     <g transform="translate(755 235)">
       <rect x="32" y="34" width="210" height="210" rx="38" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
       <rect x="78" y="80" width="118" height="118" rx="28" fill="url(#accentGrad)" opacity="0.9"/>

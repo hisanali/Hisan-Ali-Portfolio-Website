@@ -39,7 +39,7 @@
   </g>
   <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">SHOW UP NEARBY</text>
   <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
-
+  
     <g transform="translate(770 235)">
       <path d="M140 300C140 300 40 196 40 122a100 100 0 0 1 200 0c0 74-100 178-100 178Z" fill="url(#accentGrad)"/>
       <circle cx="140" cy="122" r="46" fill="rgba(11,21,17,0.9)"/>

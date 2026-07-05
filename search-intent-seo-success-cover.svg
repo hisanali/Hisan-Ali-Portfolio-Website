@@ -39,7 +39,7 @@
   </g>
   <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">MATCH THE QUERY</text>
   <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
-
+  
     <g transform="translate(740 250)">
       <circle cx="120" cy="120" r="95" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="16"/>
       <circle cx="120" cy="120" r="55" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="16"/>

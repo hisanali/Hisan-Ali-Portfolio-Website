@@ -39,7 +39,7 @@
   </g>
   <text x="90" y="258" fill="#ffffff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="2">WATCH THE SHIFT</text>
   <text x="90" y="320" fill="rgba(255,255,255,0.78)" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="500">Fresh cover art for the new article</text>
-
+  
     <g transform="translate(760 255)">
       <path d="M10 240H270" stroke="rgba(255,255,255,0.22)" stroke-width="10" stroke-linecap="round"/>
       <path d="M20 220C64 196 92 206 126 172S191 95 235 74S256 60 280 38" fill="none" stroke="url(#lineGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
