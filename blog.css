@@ -1872,11 +1872,13 @@ body.blog-post-page {
 
     .blog-featured-image--contain {
         background: #0f172a;
+        aspect-ratio: auto;
     }
 
     .blog-featured-image--contain img {
         object-fit: contain;
         object-position: center center;
+        height: auto;
     }
 
     .blog-post-content h2 {
