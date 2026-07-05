@@ -133,7 +133,10 @@
   <div class="blog-post-container">
     <article class="blog-post-content" id="blog-content">
       <div class="blog-featured-image blog-featured-image--contain">
-        <img src="/blog-helpful-content-google-people-first-main.webp" alt="Helpful, people-first content article cover image" loading="eager" decoding="async" fetchpriority="high">
+        <picture>
+          <source media="(max-width: 768px)" srcset="/blog-helpful-content-google-people-first-mobile.webp">
+          <img src="/blog-helpful-content-google-people-first-main.webp" alt="Helpful, people-first content article cover image" loading="eager" decoding="async" fetchpriority="high">
+        </picture>
       </div>
       <p>Google's guidance on helpful content is not really about a trick or a toggle. It is about whether the page genuinely helps a real person solve a real problem. If the page feels written to satisfy a search engine first, readers usually sense that immediately. If the page feels written to help them make progress, trust usually follows.</p>
       <p>The practical test is simple: would someone still be glad they opened this page if they arrived from a bookmarked link, a referral, or a social share instead of Google? If the answer is no, the content is probably too shallow, too generic, or too self-focused.</p>
