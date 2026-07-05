@@ -75,6 +75,19 @@
       .inline-figure{margin:1.8rem 0 2rem}
       .inline-figure img{display:block;width:100%;border-radius:22px}
       .inline-figure figcaption{margin-top:.75rem;font-size:.95rem;opacity:.82}
+      @media (max-width: 768px){
+        .blog-featured-image.blog-featured-image--contain{
+          aspect-ratio:auto !important;
+          background:#0f172a !important;
+        }
+        .blog-featured-image.blog-featured-image--contain img{
+          display:block;
+          width:100% !important;
+          height:auto !important;
+          object-fit:contain !important;
+          object-position:center center !important;
+        }
+      }
     </style>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
