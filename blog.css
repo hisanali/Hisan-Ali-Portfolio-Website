@@ -1914,17 +1914,6 @@ body.blog-post-page {
         margin-right: -20px;
     }
 
-    .blog-featured-image--contain {
-        background: #0f172a;
-    }
-
-    .blog-featured-image--contain img {
-        object-fit: contain;
-        object-position: center center;
-        width: 100%;
-        height: 100%;
-    }
-
     .blog-post-content h2 {
         font-size: 26px;
     }

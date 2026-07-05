@@ -75,19 +75,6 @@
       .inline-figure{margin:1.8rem 0 2rem}
       .inline-figure img{display:block;width:100%;border-radius:22px}
       .inline-figure figcaption{margin-top:.75rem;font-size:.95rem;opacity:.82}
-      @media (max-width: 768px){
-        .blog-featured-image.blog-featured-image--contain{
-          aspect-ratio:auto !important;
-          background:#0f172a !important;
-        }
-        .blog-featured-image.blog-featured-image--contain img{
-          display:block;
-          width:100% !important;
-          height:auto !important;
-          object-fit:contain !important;
-          object-position:center center !important;
-        }
-      }
     </style>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
@@ -132,11 +119,8 @@
 <section class="blog-post-section">
   <div class="blog-post-container">
     <article class="blog-post-content" id="blog-content">
-      <div class="blog-featured-image blog-featured-image--contain">
-        <picture>
-          <source media="(max-width: 768px)" srcset="/blog-topic-hub-seo-structure-mobile.webp">
-          <img src="/blog-topic-hub-seo-structure-main.webp" alt="Topic hub article cover image" loading="eager" decoding="async" fetchpriority="high">
-        </picture>
+      <div class="blog-featured-image">
+        <img src="/blog-topic-hub-seo-structure-main.webp" alt="Topic hub article cover image" loading="eager" decoding="async" fetchpriority="high">
       </div>
       <p>A topic hub is just a clean way to organise related content around one main subject. The benefit is bigger than neatness. It helps readers find the right page faster, and it helps search engines understand which page is the pillar and which pages support it.</p>
       <p>If your site has a lot of articles but no clear map, Google can still crawl it, but the structure becomes harder to read. A good hub turns scattered posts into a system.</p>
