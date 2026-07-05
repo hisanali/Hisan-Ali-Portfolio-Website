@@ -79,13 +79,23 @@
         .blog-featured-image.blog-featured-image--contain{
           aspect-ratio:auto !important;
           background:#0f172a !important;
+          padding: 16px 14px !important;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+        .blog-featured-image.blog-featured-image--contain picture{
+          width:100%;
+          display:flex;
+          justify-content:center;
         }
         .blog-featured-image.blog-featured-image--contain img{
           display:block;
-          width:100% !important;
+          width:min(100%, 330px) !important;
           height:auto !important;
           object-fit:contain !important;
           object-position:center center !important;
+          margin:0 auto;
         }
       }
     </style>
