@@ -1908,6 +1908,12 @@ body.blog-post-page {
         padding: 28px 20px;
     }
 
+    .blog-post-content .blog-featured-image {
+        width: calc(100% + 40px);
+        margin-left: -20px;
+        margin-right: -20px;
+    }
+
     .blog-featured-image--contain {
         background: #0f172a;
     }
