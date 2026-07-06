@@ -2087,6 +2087,15 @@ img {
     background: #ffffff;
 }
 
+.portfolio-preview-canvas img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: top center;
+    background: #ffffff;
+}
+
 .theme-dark .portfolio {
     background:
         radial-gradient(circle at 12% 16%, rgba(249, 115, 22, 0.18), transparent 20%),
@@ -5584,6 +5593,5 @@ img {
         font-size: 11px;
     }
 }
-
 
 
