@@ -1,6 +1,6 @@
 # Blog Thumbnail Audit
 
-Total blog pages scanned: 68
+Total blog pages scanned: 70
 
 ## Duplicate thumbnails
 - `blog-seo-best-practices-oman-2026-laptop.png` used by 5 pages
@@ -12,6 +12,7 @@ Total blog pages scanned: 68
 |---|---|---|---|
 | `ai-modern-seo-digital-marketing` | The Role of AI in Modern SEO and Digital Marketing | `blog-ai-modern-seo-digital-marketing-chip.png` | yes |
 | `ai-max-search-campaigns-oman` | AI Max for Search Campaigns: What Oman Businesses Should Know Before Turning It On | `blog-ai-max-search-campaigns-oman.webp` | yes |
+| `ai-search-visibility-2026` | How to Make Your Website Visible in ChatGPT, Gemini, Perplexity, and Google AI Overviews | `blog-ai-search-visibility-2026.webp` | yes |
 | `ai-overviews-seo-oman` | AI Overviews in Google: What Oman Businesses Need to Change in Their SEO Strategy | `ai-overviews-seo-oman.webp` | yes |
 | `ai-overviews-seo-playbook` | AI Overviews SEO Playbook: How to Stay Visible in AI-Led Search Results | `ai-overviews-seo-playbook-thumbnail.webp` | yes |
 | `ai-search-clicks-leads-oman` | How AI Search Is Changing Clicks, Leads, and Website Strategy for Oman Businesses | `ai-search-clicks-leads-oman.webp` | yes |
@@ -33,6 +34,7 @@ Total blog pages scanned: 68
 | `email-marketing-automation-playbook` | Email Marketing Automation Playbook: Welcome, Nurture, and Win-Back | `blog-email-marketing-automation-playbook.webp` | yes |
 | `facebook-marketing-oman-2026` | Facebook Marketing Guide for Oman Businesses 2026 | `blog-facebook-marketing-oman-2026.webp` | yes |
 | `first-party-data-marketing-playbook` | First-Party Data Marketing Playbook: Better Targeting in a Privacy-First Era | `blog-first-party-data-marketing-playbook.webp` | yes |
+| `fifa-world-cup-2026-marketing-gcc` | FIFA World Cup 2026 Marketing Playbook for GCC Brands: How to Ride the Trend Without Wasting Budget | `blog-fifa-world-cup-2026-marketing-gcc.webp` | yes |
 | `freelance-digital-marketer-oman` | Freelance Digital Marketer in Oman: When It Is the Right Choice | `blog-freelance-digital-marketer-oman-main.webp` | yes |
 | `ga4-dashboard-for-ceos` | GA4 Dashboard Setup for CEOs: Metrics That Drive Decisions | `blog-ga4-dashboard-for-ceos.webp` | yes |
 | `gcc-digital-marketing-playbook` | Digital Marketing Playbook for GCC Growth in 2026 | `blog-gcc-digital-marketing-playbook.webp` | yes |
