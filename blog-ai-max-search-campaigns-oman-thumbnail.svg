@@ -1,0 +1,48 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="118" y1="71" x2="1057" y2="576" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="0.46" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="314" y1="146" x2="896" y2="515" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="28" flood-color="#020617" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" rx="48" fill="url(#bg)"/>
+  <circle cx="1028" cy="120" r="160" fill="#FFFFFF" fill-opacity="0.08"/>
+  <circle cx="180" cy="530" r="200" fill="#F59E0B" fill-opacity="0.09"/>
+  <g filter="url(#shadow)">
+    <rect x="80" y="78" width="1040" height="474" rx="34" fill="#0B1120" fill-opacity="0.36" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  </g>
+  <rect x="126" y="120" width="126" height="34" rx="17" fill="#F8FAFC" fill-opacity="0.16"/>
+  <text x="145" y="143" fill="#E2E8F0" font-size="16" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="1.4">GOOGLE ADS TREND</text>
+  <text x="126" y="242" fill="#FFFFFF" font-size="54" font-family="Poppins, Inter, Arial, sans-serif" font-weight="800">AI Max for Search</text>
+  <text x="126" y="304" fill="#FFFFFF" font-size="54" font-family="Poppins, Inter, Arial, sans-serif" font-weight="800">Campaigns</text>
+  <text x="126" y="360" fill="#D1FAE5" font-size="26" font-family="Inter, Arial, sans-serif" font-weight="500">What Oman businesses should know before turning it on</text>
+  <g transform="translate(126 410)">
+    <rect width="214" height="94" rx="22" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="22" y="36" fill="#FFFFFF" font-size="18" font-family="Inter, Arial, sans-serif" font-weight="700">Search term matching</text>
+    <text x="22" y="62" fill="#BFDBFE" font-size="14" font-family="Inter, Arial, sans-serif">Test with guardrails</text>
+  </g>
+  <g transform="translate(356 410)">
+    <rect width="214" height="94" rx="22" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="22" y="36" fill="#FFFFFF" font-size="18" font-family="Inter, Arial, sans-serif" font-weight="700">Text customization</text>
+    <text x="22" y="62" fill="#BFDBFE" font-size="14" font-family="Inter, Arial, sans-serif">Keep copy quality high</text>
+  </g>
+  <g transform="translate(586 410)">
+    <rect width="214" height="94" rx="22" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="22" y="36" fill="#FFFFFF" font-size="18" font-family="Inter, Arial, sans-serif" font-weight="700">Final URL expansion</text>
+    <text x="22" y="62" fill="#BFDBFE" font-size="14" font-family="Inter, Arial, sans-serif">Match page to intent</text>
+  </g>
+  <g transform="translate(854 155)">
+    <circle cx="92" cy="92" r="78" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-opacity="0.20" stroke-width="2"/>
+    <circle cx="92" cy="92" r="38" fill="url(#accent)"/>
+    <path d="M92 35L102 72H140L109 94L121 130L92 108L63 130L75 94L44 72H82L92 35Z" fill="#FFFFFF" fill-opacity="0.88"/>
+    <path d="M43 183C61 164 82 152 92 152C102 152 123 164 141 183" stroke="#E0F2FE" stroke-opacity="0.8" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

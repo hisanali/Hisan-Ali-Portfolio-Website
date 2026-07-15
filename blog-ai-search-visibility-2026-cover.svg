@@ -1,0 +1,77 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="70" x2="1120" y2="580" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="0.46" stop-color="#1E1B4B"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="accent1" x1="170" y1="118" x2="1040" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#A78BFA"/>
+    </linearGradient>
+    <linearGradient id="accent2" x1="400" y1="140" x2="820" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" rx="36" fill="url(#bg)"/>
+  <circle cx="160" cy="130" r="92" fill="#60A5FA" fill-opacity="0.15" filter="url(#blur)"/>
+  <circle cx="1030" cy="130" r="112" fill="#A78BFA" fill-opacity="0.16" filter="url(#blur)"/>
+  <circle cx="980" cy="490" r="140" fill="#22C55E" fill-opacity="0.10" filter="url(#blur)"/>
+
+  <rect x="64" y="64" width="1072" height="502" rx="28" fill="white" fill-opacity="0.06" stroke="white" stroke-opacity="0.10"/>
+
+  <rect x="88" y="88" width="250" height="36" rx="18" fill="url(#accent1)" fill-opacity="0.96"/>
+  <text x="108" y="113" fill="white" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">AI SEARCH VISIBILITY</text>
+
+  <text x="88" y="202" fill="white" font-family="Poppins, Inter, Arial, sans-serif" font-size="50" font-weight="800">
+    <tspan x="88" dy="0">How to Make Your Website</tspan>
+    <tspan x="88" dy="60">Visible in ChatGPT, Gemini,</tspan>
+    <tspan x="88" dy="60">Perplexity, and Google AI</tspan>
+  </text>
+  <text x="88" y="428" fill="#D7E3FF" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500" opacity="0.95">
+    <tspan x="88" dy="0">Helpful pages, clear structure, proof signals, and internal</tspan>
+    <tspan x="88" dy="34">links that make your site easier for AI to trust and cite.</tspan>
+  </text>
+
+  <g transform="translate(742 118)">
+    <rect x="0" y="0" width="306" height="232" rx="30" fill="#0B1220" fill-opacity="0.72" stroke="white" stroke-opacity="0.13"/>
+    <rect x="22" y="22" width="140" height="28" rx="14" fill="#60A5FA" fill-opacity="0.92"/>
+    <circle cx="38" cy="36" r="6" fill="white"/>
+    <rect x="52" y="30" width="72" height="10" rx="5" fill="white" fill-opacity="0.82"/>
+    <rect x="22" y="66" width="260" height="18" rx="9" fill="#E2E8F0" fill-opacity="0.92"/>
+    <rect x="22" y="94" width="218" height="12" rx="6" fill="#E2E8F0" fill-opacity="0.66"/>
+    <rect x="22" y="114" width="168" height="12" rx="6" fill="#E2E8F0" fill-opacity="0.46"/>
+    <rect x="22" y="144" width="126" height="18" rx="9" fill="#A78BFA" fill-opacity="0.92"/>
+    <rect x="22" y="170" width="226" height="12" rx="6" fill="#E2E8F0" fill-opacity="0.56"/>
+    <rect x="22" y="190" width="182" height="12" rx="6" fill="#E2E8F0" fill-opacity="0.42"/>
+    <circle cx="246" cy="154" r="46" fill="url(#accent2)" fill-opacity="0.22" stroke="#22C55E" stroke-opacity="0.36" stroke-width="2"/>
+    <path d="M226 154c0-11 9-20 20-20s20 9 20 20-9 20-20 20-20-9-20-20Z" fill="#F8FAFC"/>
+    <path d="M258 186 276 204" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="246" cy="154" r="11" fill="#0F172A"/>
+  </g>
+
+  <g transform="translate(112 470)">
+    <rect width="160" height="56" rx="16" fill="white" fill-opacity="0.10"/>
+    <text x="18" y="36" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Clear pages</text>
+  </g>
+  <g transform="translate(286 470)">
+    <rect width="170" height="56" rx="16" fill="white" fill-opacity="0.10"/>
+    <text x="18" y="36" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Proof signals</text>
+  </g>
+  <g transform="translate(470 470)">
+    <rect width="180" height="56" rx="16" fill="white" fill-opacity="0.10"/>
+    <text x="18" y="36" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Indexed content</text>
+  </g>
+  <g transform="translate(664 470)">
+    <rect width="228" height="56" rx="16" fill="white" fill-opacity="0.10"/>
+    <text x="18" y="36" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Internal linking</text>
+  </g>
+  <g transform="translate(906 470)">
+    <rect width="160" height="56" rx="16" fill="white" fill-opacity="0.10"/>
+    <text x="18" y="36" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Helpful</text>
+  </g>
+</svg>
