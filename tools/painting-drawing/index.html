@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#181a1f">
     <link rel="icon" href="/favicon.png">
     <link rel="preload" href="/tools/painting-drawing/assets/material-symbols-rounded.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/style.css">
     <title>Canvas Studio</title>
     <style>
         @font-face {
@@ -44,9 +45,10 @@
 
         html, body {
             width: 100%;
-            height: 100%;
+            min-height: 100%;
             margin: 0;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             background: var(--chrome);
             color: var(--text);
         }
@@ -88,6 +90,20 @@
             -webkit-font-smoothing: antialiased;
             pointer-events: none;
             flex: 0 0 auto;
+        }
+
+        .plain-svg-icon {
+            width: 22px;
+            height: 22px;
+            display: block;
+            flex: 0 0 22px;
+            overflow: visible;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
         }
 
         .skeuo-tool-icon {
@@ -152,6 +168,14 @@
             min-height: 0;
             overflow: hidden;
             background: var(--chrome);
+        }
+
+        .footer {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            touch-action: pan-y;
+            user-select: text;
         }
 
         .sitebar {
@@ -1912,6 +1936,32 @@
             object-fit: contain;
         }
 
+        .studio-section { padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.72); margin-top: 12px; }
+        .studio-section h3 { margin: 0 0 9px; font-size: 12px; }
+        .studio-section p { margin: -4px 0 10px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+        .studio-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+        .studio-row + .studio-row { margin-top: 8px; }
+        .studio-row .action-button { min-height: 34px; }
+        .studio-slider { display: grid; grid-template-columns: 72px 1fr 42px; gap: 8px; align-items: center; font-size: 10px; margin-top: 7px; }
+        .studio-slider output { text-align: right; color: var(--muted); }
+        .palette-card { display: flex; gap: 3px; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: white; cursor: pointer; }
+        .palette-card.active { outline: 2px solid var(--accent); }
+        .palette-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--dot); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+        .brush-card { position: relative; }
+        .brush-card > .brush-favorite { position: absolute; right: 9px; top: 8px; display: grid; place-items: center; width: 18px; height: 18px; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; color: #737d8b; font: 700 18px/1 system-ui, sans-serif; cursor: pointer; z-index: 2; text-shadow: 0 1px 2px rgba(255,255,255,.95); transition: color .15s ease, transform .15s ease; }
+        .brush-card > .brush-favorite:hover { color: #b37b00; transform: scale(1.12); }
+        .brush-card > .brush-favorite.active { color: #e3a008; text-shadow: 0 1px 2px rgba(72,42,0,.25); }
+        .reference-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 7; display: grid; place-items: center; overflow: hidden; }
+        .reference-overlay[hidden] { display: none; }
+        .reference-overlay img { width: 100%; height: 100%; object-fit: contain; opacity: var(--reference-opacity,.45); filter: var(--reference-filter,none); }
+        .artboard.mirror-view .canvas-stack, .artboard.mirror-view .stroke-canvas { transform: scaleX(-1); }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 12px; max-height: 55vh; overflow: auto; }
+        .project-card { border: 1px solid var(--border); border-radius: 12px; padding: 8px; background: white; text-align: left; cursor: pointer; }
+        .project-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; background: #eee; }
+        .project-card strong, .project-card small { display:block; margin-top:5px; }
+        .project-card small { color:var(--muted); }
+        #projectsDialog { width:min(760px,92vw); }
+
         .import-modes {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -2040,6 +2090,10 @@
                 display: none;
             }
 
+            .site-navigation a.site-footer-link {
+                display: inline-flex;
+            }
+
             .sitebar-context {
                 display: none;
             }
@@ -2125,6 +2179,7 @@
                 <a class="active" href="/tools/">Tools</a>
                 <a href="/blog/">Blogs</a>
                 <a href="/contact/">Contact</a>
+                <a class="site-footer-link" href="#siteFooter">Footer</a>
             </nav>
             <span class="sitebar-context">Free browser-based creative tool</span>
         </div>
@@ -2155,6 +2210,14 @@
                 <button class="action-button" id="layersButton" aria-label="Layers">
                     <svg class="icon"><use href="#i-layers"></use></svg>
                     <span class="button-label">Layers</span>
+                </button>
+                <button class="action-button" id="projectsButton" aria-label="Saved projects">
+                    <svg class="icon"><use href="#i-image"></use></svg>
+                    <span class="button-label">Projects</span>
+                </button>
+                <button class="action-button" id="resetDrawingButton" aria-label="Reset drawing" title="Clear the current artboard">
+                    <svg class="icon"><use href="#i-trash"></use></svg>
+                    <span class="button-label">Reset</span>
                 </button>
                 <button class="action-button" id="newButton" aria-label="New document">
                     <svg class="icon"><use href="#i-plus"></use></svg>
@@ -2230,8 +2293,9 @@
             <div class="context-bar" id="contextBar" aria-label="Tool options"></div>
             <section class="stage" id="stage" aria-label="Drawing canvas">
                 <div class="artboard" id="artboard">
-                    <div class="canvas-stack" id="canvasStack"></div>
-                    <canvas class="stroke-canvas" id="strokeCanvas"></canvas>
+                <div class="canvas-stack" id="canvasStack"></div>
+                <canvas class="stroke-canvas" id="strokeCanvas"></canvas>
+                    <div class="reference-overlay" id="referenceOverlay" hidden><img id="referenceOverlayImage" alt="Drawing reference"></div>
                     <div class="grid-overlay" id="gridOverlay"></div>
                     <canvas class="interaction-canvas" id="interactionCanvas"></canvas>
                 </div>
@@ -2272,6 +2336,14 @@
         <div class="panel-body">
             <div class="category-tabs" id="brushCategories"></div>
             <div class="brush-grid" id="brushGrid"></div>
+            <div class="studio-section">
+                <h3>Brush settings</h3>
+                <p>Adjust this brush without changing the others.</p>
+                <label class="studio-slider"><span>Spacing</span><input id="brushSpacing" type="range" min="10" max="240" value="100"><output id="brushSpacingValue">100%</output></label>
+                <label class="studio-slider"><span>Rotation</span><input id="brushRotation" type="range" min="-180" max="180" value="0"><output id="brushRotationValue">0°</output></label>
+                <label class="studio-slider"><span>Scatter</span><input id="brushScatter" type="range" min="0" max="100" value="0"><output id="brushScatterValue">0%</output></label>
+                <div class="studio-row"><button class="action-button" id="resetBrushSettings">Reset brush</button></div>
+            </div>
         </div>
     </aside>
 
@@ -2359,6 +2431,24 @@
                 <button class="more-tool" data-tool="text"><svg class="icon"><use href="#i-type"></use></svg><span><strong>Text</strong><span>Add editable text</span></span></button>
                 <button class="more-tool" id="moreImportButton"><svg class="icon"><use href="#i-image"></use></svg><span><strong>Place image</strong><span>Import from Photos or Files</span></span></button>
             </div>
+            <div class="studio-section">
+                <h3>Symmetry & guides</h3>
+                <div class="studio-row" id="symmetryControls">
+                    <button class="action-button active" data-symmetry="none">Off</button><button class="action-button" data-symmetry="vertical">Mirror</button><button class="action-button" data-symmetry="horizontal">Horizontal</button><button class="action-button" data-symmetry="quad">Four-way</button>
+                </div>
+                <div class="studio-row" id="guideControls">
+                    <button class="action-button active" data-guide="none">No guide</button><button class="action-button" data-guide="thirds">Thirds</button><button class="action-button" data-guide="perspective1">1-point</button><button class="action-button" data-guide="perspective2">2-point</button>
+                </div>
+                <div class="studio-row"><button class="action-button" id="mirrorViewButton">Mirror canvas view</button></div>
+            </div>
+            <div class="studio-section">
+                <h3>Reference & tracing</h3>
+                <div class="studio-row"><button class="action-button" id="referenceModeButton">Choose reference</button><button class="action-button" id="hideReferenceButton">Hide</button><button class="action-button" id="traceReferenceButton">Tracing look</button></div>
+                <label class="studio-slider"><span>Opacity</span><input id="referenceOpacity" type="range" min="5" max="100" value="45"><output id="referenceOpacityValue">45%</output></label>
+            </div>
+            <div class="studio-section">
+                <h3>Color palettes</h3><div class="studio-row" id="paletteLibrary"></div>
+            </div>
         </div>
     </aside>
 
@@ -2366,6 +2456,7 @@
     <div class="toast" id="toast" role="status"></div>
     <input type="file" id="imageInput" accept="image/*" hidden>
     <input type="file" id="referenceImageInput" accept="image/*" hidden>
+    <input type="file" id="overlayImageInput" accept="image/*" hidden>
 
     <dialog id="newDocumentDialog">
         <div class="dialog-header">
@@ -2401,6 +2492,7 @@
                 <button class="action-button" data-import-mode="fill">Fill canvas</button>
                 <button class="action-button" data-import-mode="original">Original size</button>
             </div>
+            <div class="studio-row"><button class="action-button" id="removeBackgroundButton">Remove simple background</button></div>
             <div class="import-details">
                 <span>Scale</span><strong id="importScaleValue">100%</strong>
                 <input id="importScaleControl" type="range" min="5" max="400" value="100" aria-label="Imported image scale">
@@ -2411,6 +2503,11 @@
             <button class="action-button" id="cancelImportButton">Cancel</button>
             <button class="action-button primary" id="placeImportButton">Place on new layer</button>
         </div>
+    </dialog>
+
+    <dialog id="projectsDialog">
+        <div class="dialog-header"><strong>Projects</strong><button class="icon-button" id="closeProjectsDialog" aria-label="Close"><svg class="icon"><use href="#i-x"></use></svg></button></div>
+        <div class="dialog-body"><div class="studio-row" style="margin-bottom:12px"><button class="action-button primary" id="saveProjectButton">Save current project</button><span id="autosaveStatus" style="font-size:11px;color:var(--muted)">Autosave is on</span></div><div class="project-grid" id="projectGrid"></div></div>
     </dialog>
 
     <script>
@@ -2464,9 +2561,15 @@
             edit: "edit",
             drag: "drag_indicator",
             up: "arrow_upward",
-            down: "arrow_downward"
+            down: "arrow_downward",
+            check: "check_circle",
+            "view-unlocked": "lock_open",
+            "view-locked": "lock"
         };
         var icon = function (name) {
+            if (name === "check") return "<svg class=\"plain-svg-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"></circle><path d=\"m8 12 2.7 2.7L16.5 9\"></path></svg>";
+            if (name === "view-unlocked") return "<svg class=\"plain-svg-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"2\"></rect><path d=\"M8 10V7.5a4 4 0 0 1 7.5-2\"></path><path d=\"M12 14v3\"></path></svg>";
+            if (name === "view-locked") return "<svg class=\"plain-svg-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"2\"></rect><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"></path><path d=\"M12 14v3\"></path></svg>";
             return "<span class=\"icon\" aria-hidden=\"true\">" + (materialIcons[name] || name) + "</span>";
         };
         // Official Phosphor Icons 2.1.1 duotone paths, imported from the MIT-licensed core package.
@@ -2525,37 +2628,60 @@
             { id: "dry-brush", name: "Dry Bristle", category: "Paint", engine: "dry-brush", size: 64, opacity: 72, flow: 58, smoothing: 22, pressure: 68, bristles: 11, texture: .78, description: "Separated paint-loaded bristles" },
 
             { id: "airbrush", name: "Soft Airbrush", category: "Effects", engine: "airbrush", size: 110, opacity: 24, flow: 38, smoothing: 64, pressure: 36, description: "Feathered continuous spray" },
-            { id: "rake", name: "Five-Line Rake", category: "Effects", engine: "rake", size: 54, opacity: 88, flow: 90, smoothing: 42, pressure: 54, rake: 5, roll: true, angle: 90, description: "Five parallel rotating tines" },
+            { id: "rake", name: "Five-Line Rake", category: "Effects", engine: "rake", size: 54, opacity: 88, flow: 90, smoothing: 42, pressure: 54, rake: 5, roll: true, angle: 90, description: "Five clean parallel tines" },
             { id: "splatter", name: "Paint Splatter", category: "Effects", engine: "splatter", size: 72, opacity: 72, flow: 76, smoothing: 8, pressure: 48, scatter: .9, description: "Purposeful scattered paint drops" },
             { id: "stipple", name: "Fine Stipple", category: "Effects", engine: "stipple", size: 30, opacity: 76, flow: 84, smoothing: 12, pressure: 46, scatter: .46, description: "Controlled illustration stippling" },
+            { id: "sparkle-trail", name: "Sparkle Trail", category: "Effects", engine: "sparkles", size: 54, flow: 100, smoothing: 22, pressure: 52, spacing: .36, jitter: .22, sizeJitter: .45, palette: ["#ffffff", "#fff0a8", "#c8dfff"], description: "Bright stars with fine glints" },
 
-            { id: "leaf-scatter", name: "Leaf Scatter", category: "Nature", engine: "leaves", size: 48, flow: 92, smoothing: 18, pressure: 64, spacing: .42, palette: ["#235f38", "#3f8f45", "#78ad45", "#b1c65b"], description: "Layered multicolor foliage stamps" },
-            { id: "autumn-leaves", name: "Autumn Leaves", category: "Nature", engine: "leaves", size: 54, flow: 94, smoothing: 16, pressure: 58, spacing: .46, palette: ["#9b3b24", "#d66b2b", "#e7a12d", "#7b5126"], description: "Warm rotating leaf scatter" },
-            { id: "fern-frond", name: "Fern Frond", category: "Nature", engine: "fern", size: 72, flow: 94, smoothing: 38, pressure: 52, spacing: .58, palette: ["#205b39", "#2f7b43", "#5f9f50"], description: "Directional stems with paired leaflets" },
-            { id: "meadow-grass", name: "Meadow Grass", category: "Nature", engine: "grass", size: 64, flow: 88, smoothing: 20, pressure: 74, spacing: .34, palette: ["#285f37", "#447b35", "#779647", "#b19a42"], description: "Pressure-varied grass tufts" },
-            { id: "flower-petals", name: "Flower Petals", category: "Nature", engine: "petals", size: 50, flow: 90, smoothing: 16, pressure: 62, spacing: .5, palette: ["#f06a9d", "#f6a0ba", "#d84d7e", "#ffd1dc"], description: "Soft rotating petal clusters" },
+            { id: "leaf-scatter", name: "Leaf Scatter", category: "Nature", engine: "leaves", size: 48, flow: 92, smoothing: 18, pressure: 64, spacing: .42, jitter: .4, sizeJitter: .35, rotationJitter: .7, palette: ["#235f38", "#3f8f45", "#78ad45", "#b1c65b"], description: "Natural layered foliage" },
+            { id: "maple-leaf", name: "Maple Leaves", category: "Nature", engine: "maple", size: 58, flow: 96, smoothing: 22, pressure: 58, spacing: .55, jitter: .16, sizeJitter: .2, rotationJitter: .28, palette: ["#2e6b3d", "#4f8a45", "#8cab4f"], description: "Recognizable five-point maple leaves" },
+            { id: "autumn-maple", name: "Autumn Maple", category: "Nature", engine: "maple", size: 62, flow: 96, smoothing: 20, pressure: 56, spacing: .56, jitter: .2, sizeJitter: .24, rotationJitter: .35, palette: ["#9b2f1f", "#d35424", "#e58b24", "#f2b134"], description: "Warm red and gold maple leaves" },
+            { id: "oak-leaf", name: "Oak Leaves", category: "Nature", engine: "oak", size: 58, flow: 94, smoothing: 24, pressure: 58, spacing: .52, jitter: .12, sizeJitter: .18, rotationJitter: .22, palette: ["#315f35", "#527b3b", "#7f9446"], description: "Lobed woodland oak leaves" },
+            { id: "eucalyptus", name: "Eucalyptus", category: "Nature", engine: "eucalyptus", size: 64, flow: 92, smoothing: 40, pressure: 48, spacing: .48, palette: ["#557c6d", "#74998a", "#9eb5a7"], description: "Ordered round leaves on stems" },
+            { id: "leafy-vine", name: "Leafy Vine Roll", category: "Nature", engine: "vine", size: 58, flow: 96, smoothing: 58, pressure: 46, spacing: .38, palette: ["#245b35", "#3f7a43", "#78a65a"], description: "Continuous curling stem and leaves" },
+            { id: "ivy-trail", name: "Ivy Trail", category: "Nature", engine: "vine", size: 68, flow: 96, smoothing: 54, pressure: 44, spacing: .34, palette: ["#164b2e", "#2f6b3c", "#5a914d"], description: "Dense climbing ivy ribbon" },
+            { id: "fern-frond", name: "Fern Frond", category: "Nature", engine: "fern", size: 72, flow: 94, smoothing: 38, pressure: 52, spacing: .58, palette: ["#205b39", "#2f7b43", "#5f9f50"], description: "Directional paired leaflets" },
+            { id: "dense-foliage", name: "Dense Foliage", category: "Nature", engine: "foliage", size: 82, flow: 100, smoothing: 16, pressure: 58, spacing: .34, jitter: .2, sizeJitter: .24, rotationJitter: .25, palette: ["#173c2b", "#286044", "#438054", "#79a45b"], description: "Tree and hedge clusters" },
+            { id: "meadow-grass", name: "Meadow Grass", category: "Nature", engine: "grass", size: 64, flow: 88, smoothing: 20, pressure: 74, spacing: .34, palette: ["#285f37", "#447b35", "#779647", "#b19a42"], description: "Full natural grass tufts" },
+            { id: "fine-grass", name: "Fine Grass", category: "Nature", engine: "grass", size: 42, flow: 90, smoothing: 26, pressure: 72, spacing: .28, palette: ["#2c6238", "#4d7d3d", "#7c9d4b"], description: "Short clean grass edge" },
+            { id: "tall-grass", name: "Tall Grass", category: "Nature", engine: "grass", size: 92, flow: 88, smoothing: 34, pressure: 68, spacing: .3, palette: ["#315f35", "#5d7c3d", "#9b944c"], description: "Long flowing field grass" },
+            { id: "reeds", name: "River Reeds", category: "Nature", engine: "reeds", size: 96, flow: 94, smoothing: 34, pressure: 58, spacing: .42, palette: ["#456b38", "#78904a", "#a88646"], description: "Tall stems with seed heads" },
+            { id: "wheat", name: "Wheat Stalks", category: "Nature", engine: "wheat", size: 88, flow: 96, smoothing: 38, pressure: 54, spacing: .48, palette: ["#9a7132", "#c19443", "#ddb965"], description: "Ordered golden grain stalks" },
             { id: "pine-needles", name: "Pine Needles", category: "Nature", engine: "pine", size: 68, flow: 92, smoothing: 26, pressure: 64, spacing: .4, palette: ["#153f31", "#286049", "#4b7854"], description: "Fine evergreen needle sprays" },
-            { id: "bark-texture", name: "Bark Texture", category: "Nature", engine: "bark", size: 58, flow: 86, smoothing: 12, pressure: 58, spacing: .28, palette: ["#4a3024", "#6d4630", "#8d684c", "#34251f"], description: "Broken fibrous tree-bark grain" },
+            { id: "tree-branches", name: "Tree Branches", category: "Nature", engine: "branches", size: 82, flow: 96, smoothing: 32, pressure: 62, spacing: .54, palette: ["#3e2b22", "#684735", "#8a6548"], description: "Forked natural branch forms" },
+            { id: "wildflowers", name: "Wildflowers", category: "Nature", engine: "flowers", size: 56, flow: 92, smoothing: 18, pressure: 54, spacing: .5, jitter: .12, sizeJitter: .22, palette: ["#f15b86", "#ffb03a", "#7d67d9", "#f6e56d", "#ffffff"], description: "Varied stems and flower heads" },
+            { id: "lavender", name: "Lavender Stems", category: "Nature", engine: "lavender", size: 66, flow: 94, smoothing: 32, pressure: 52, spacing: .46, palette: ["#6d4da3", "#8a68bf", "#b59ad9"], description: "Ordered purple flower stems" },
+            { id: "clover", name: "Clover Ground", category: "Nature", engine: "clover", size: 46, flow: 94, smoothing: 18, pressure: 54, spacing: .42, jitter: .12, palette: ["#24633b", "#3f854c", "#6aa658"], description: "Three-leaf clover cover" },
+            { id: "sakura", name: "Cherry Blossoms", category: "Nature", engine: "blossom", size: 48, flow: 94, smoothing: 20, pressure: 52, spacing: .5, jitter: .14, sizeJitter: .2, palette: ["#f58fb1", "#ffc1d3", "#e76f9a", "#fff0f5"], description: "Soft five-petal blossoms" },
+            { id: "flower-petals", name: "Loose Petals", category: "Nature", engine: "petals", size: 50, flow: 90, smoothing: 16, pressure: 62, spacing: .5, jitter: .28, sizeJitter: .3, rotationJitter: .7, palette: ["#f06a9d", "#f6a0ba", "#d84d7e", "#ffd1dc"], description: "Falling flower petals" },
+            { id: "bark-texture", name: "Bark Texture", category: "Nature", engine: "bark", size: 58, flow: 86, smoothing: 12, pressure: 58, spacing: .28, palette: ["#4a3024", "#6d4630", "#8d684c", "#34251f"], description: "Directional tree-bark grain" },
             { id: "fur-strands", name: "Fur Strands", category: "Nature", engine: "fur", size: 46, flow: 82, smoothing: 34, pressure: 82, spacing: .24, description: "Fine tapered directional strands" },
 
-            { id: "pebble-trail", name: "Pebble Trail", category: "Scenery", engine: "pebbles", size: 62, flow: 94, smoothing: 12, pressure: 46, spacing: .54, palette: ["#736c65", "#9a9187", "#b7aa98", "#565b60"], description: "Rounded stones with highlights" },
-            { id: "rock-cluster", name: "Rock Cluster", category: "Scenery", engine: "rocks", size: 86, flow: 96, smoothing: 10, pressure: 50, spacing: .66, palette: ["#4e5459", "#72777a", "#9a958b", "#5f554b"], description: "Irregular shaded rock forms" },
-            { id: "cloud-builder", name: "Cloud Builder", category: "Scenery", engine: "clouds", size: 120, flow: 48, smoothing: 52, pressure: 54, spacing: .22, palette: ["#dfe9f4", "#f8fbff", "#b9cadb"], description: "Soft overlapping cloud masses" },
-            { id: "rain-shower", name: "Rain Shower", category: "Scenery", engine: "rain", size: 76, flow: 76, smoothing: 18, pressure: 44, spacing: .3, palette: ["#73a9ce", "#a7cde5", "#4b82aa"], description: "Layered slanted rain streaks" },
-            { id: "star-field", name: "Star Field", category: "Scenery", engine: "stars", size: 50, flow: 94, smoothing: 10, pressure: 56, spacing: .52, palette: ["#fff2a8", "#ffffff", "#a9d8ff", "#ffd27e"], description: "Mixed glowing stars and points" },
-            { id: "ocean-foam", name: "Ocean Foam", category: "Scenery", engine: "foam", size: 82, flow: 62, smoothing: 46, pressure: 60, spacing: .26, palette: ["#f7ffff", "#c6eff1", "#8fd1dc"], description: "Broken foamy wave edges" },
-            { id: "water-ripples", name: "Water Ripples", category: "Scenery", engine: "waves", size: 72, flow: 76, smoothing: 58, pressure: 44, spacing: .28, palette: ["#2d7ca6", "#55a9c8", "#9bd6df", "#effcff"], description: "Layered reflective water lines" },
-            { id: "distant-birds", name: "Distant Birds", category: "Scenery", engine: "birds", size: 52, flow: 94, smoothing: 20, pressure: 42, spacing: .62, palette: ["#222b35", "#485461", "#78828d"], description: "Natural flying bird silhouettes" },
-            { id: "sky-haze", name: "Sky Haze", category: "Scenery", engine: "airbrush", size: 160, opacity: 100, flow: 24, smoothing: 72, pressure: 18, description: "Broad atmospheric sky gradients" },
-            { id: "wildflowers", name: "Wildflowers", category: "Nature", engine: "flowers", size: 56, flow: 92, smoothing: 18, pressure: 54, spacing: .5, palette: ["#f15b86", "#ffb03a", "#7d67d9", "#f6e56d", "#ffffff"], description: "Stems with varied flower heads" },
-            { id: "canvas-grain", name: "Canvas Grain", category: "Texture", engine: "grain", size: 74, flow: 62, smoothing: 12, pressure: 38, spacing: .2, description: "Fine painterly canvas texture" },
-            { id: "paper-fibers", name: "Paper Fibers", category: "Texture", engine: "fibers", size: 84, flow: 58, smoothing: 12, pressure: 34, spacing: .22, description: "Loose directional paper fibers" },
-            { id: "dense-foliage", name: "Dense Foliage", category: "Nature", engine: "foliage", size: 82, flow: 100, smoothing: 16, pressure: 58, spacing: .34, palette: ["#173c2b", "#286044", "#438054", "#79a45b"], description: "Layered clusters for trees and hedges" },
-            { id: "smoke-plume", name: "Smoke Plume", category: "Scenery", engine: "smoke", size: 128, flow: 100, smoothing: 56, pressure: 44, spacing: .22, palette: ["#66707d", "#89919b", "#b3b9c0"], description: "Soft directional smoke curls" },
-            { id: "snowfall", name: "Snowfall", category: "Scenery", engine: "snow", size: 68, flow: 100, smoothing: 10, pressure: 42, spacing: .42, palette: ["#ffffff", "#dcecff", "#b9d8ef"], description: "Mixed soft flakes and crisp snow" },
-            { id: "sparkle-trail", name: "Sparkle Trail", category: "Effects", engine: "sparkles", size: 54, flow: 100, smoothing: 22, pressure: 52, spacing: .36, palette: ["#ffffff", "#fff0a8", "#c8dfff"], description: "Bright stars with fine glints" },
-            { id: "brick-texture", name: "Brick Texture", category: "Texture", engine: "brick", size: 92, flow: 100, smoothing: 8, pressure: 24, spacing: .7, palette: ["#8b4335", "#a85643", "#6e352d"], description: "Offset masonry texture stamp" },
-            { id: "water-light", name: "Water Light", category: "Scenery", engine: "shimmer", size: 76, flow: 100, smoothing: 44, pressure: 38, spacing: .25, palette: ["#ffffff", "#c9f4ff", "#82d6ec"], description: "Reflective broken highlights on water" }
+            { id: "blue-sky", name: "Blue Sky", category: "Scenery", engine: "sky", size: 180, opacity: 72, flow: 42, smoothing: 78, pressure: 14, palette: ["#4b9fe1", "#83c5ed", "#d7effb"], description: "Layered daylight sky gradient" },
+            { id: "sunset-sky", name: "Sunset Sky", category: "Scenery", engine: "sky", size: 190, opacity: 74, flow: 44, smoothing: 78, pressure: 14, palette: ["#5e4fa2", "#ef709b", "#f9a35b", "#ffd27a"], description: "Warm evening gradient" },
+            { id: "sky-haze", name: "Sky Haze", category: "Scenery", engine: "airbrush", size: 160, opacity: 100, flow: 24, smoothing: 72, pressure: 18, description: "Broad atmospheric blending" },
+            { id: "cloud-builder", name: "Cumulus Clouds", category: "Scenery", engine: "clouds", size: 120, flow: 48, smoothing: 52, pressure: 54, spacing: .2, palette: ["#dfe9f4", "#f8fbff", "#b9cadb"], description: "Soft connected cloud masses" },
+            { id: "wispy-clouds", name: "Wispy Clouds", category: "Scenery", engine: "wispy-clouds", size: 142, flow: 46, smoothing: 64, pressure: 40, spacing: .24, palette: ["#ffffff", "#dbe8f2", "#b9cadb"], description: "Long feathered cirrus clouds" },
+            { id: "morning-mist", name: "Morning Mist", category: "Scenery", engine: "airbrush", size: 210, opacity: 24, flow: 22, smoothing: 78, pressure: 12, description: "Low soft landscape fog" },
+            { id: "sun-flare", name: "Sun Flare", category: "Scenery", engine: "flare", size: 130, flow: 86, smoothing: 18, pressure: 54, spacing: .9, fixedAngle: 0, singleStamp: true, palette: ["#fff8c5", "#ffd166", "#ff9f43"], description: "Soft photographic sun bloom" },
+            { id: "lens-flare", name: "Lens Flare", category: "Scenery", engine: "lens-flare", size: 150, flow: 78, smoothing: 18, pressure: 44, spacing: 1, fixedAngle: 0, singleStamp: true, palette: ["#ffffff", "#90e0ef", "#ffd6ff"], description: "Subtle optical rings and streak" },
+            { id: "rain-shower", name: "Rain Shower", category: "Scenery", engine: "rain", size: 76, flow: 76, smoothing: 18, pressure: 44, spacing: .3, fixedAngle: 56, palette: ["#73a9ce", "#a7cde5", "#4b82aa"], description: "Even slanted rain streaks" },
+            { id: "star-field", name: "Star Field", category: "Scenery", engine: "stars", size: 50, flow: 94, smoothing: 10, pressure: 56, spacing: .52, jitter: .32, sizeJitter: .5, palette: ["#fff2a8", "#ffffff", "#a9d8ff", "#ffd27e"], description: "Mixed glowing stars" },
+            { id: "distant-birds", name: "Distant Birds", category: "Scenery", engine: "birds", size: 52, flow: 94, smoothing: 20, pressure: 42, spacing: .62, jitter: .08, sizeJitter: .2, palette: ["#222b35", "#485461", "#78828d"], description: "Flying bird silhouettes" },
+            { id: "pebble-trail", name: "Pebble Trail", category: "Scenery", engine: "pebbles", size: 62, flow: 94, smoothing: 12, pressure: 46, spacing: .54, jitter: .12, sizeJitter: .22, palette: ["#736c65", "#9a9187", "#b7aa98", "#565b60"], description: "Rounded highlighted stones" },
+            { id: "rock-cluster", name: "Rock Cluster", category: "Scenery", engine: "rocks", size: 86, flow: 96, smoothing: 10, pressure: 50, spacing: .66, jitter: .1, sizeJitter: .2, palette: ["#4e5459", "#72777a", "#9a958b", "#5f554b"], description: "Irregular shaded rocks" },
+            { id: "ocean-foam", name: "Ocean Foam", category: "Scenery", engine: "foam", size: 82, flow: 62, smoothing: 46, pressure: 60, spacing: .26, palette: ["#f7ffff", "#c6eff1", "#8fd1dc"], description: "Foamy wave edges" },
+            { id: "water-ripples", name: "Water Ripples", category: "Scenery", engine: "waves", size: 72, flow: 76, smoothing: 58, pressure: 44, spacing: .28, fixedAngle: 0, palette: ["#2d7ca6", "#55a9c8", "#9bd6df", "#effcff"], description: "Even reflective water lines" },
+            { id: "water-light", name: "Water Light", category: "Scenery", engine: "shimmer", size: 76, flow: 100, smoothing: 44, pressure: 38, spacing: .25, fixedAngle: 0, palette: ["#ffffff", "#c9f4ff", "#82d6ec"], description: "Broken highlights on water" },
+            { id: "smoke-plume", name: "Smoke Plume", category: "Scenery", engine: "smoke", size: 128, flow: 100, smoothing: 56, pressure: 44, spacing: .22, palette: ["#66707d", "#89919b", "#b3b9c0"], description: "Soft directional smoke" },
+            { id: "snowfall", name: "Snowfall", category: "Scenery", engine: "snow", size: 68, flow: 100, smoothing: 10, pressure: 42, spacing: .42, jitter: .3, sizeJitter: .5, palette: ["#ffffff", "#dcecff", "#b9d8ef"], description: "Soft and crisp snowflakes" },
+
+            { id: "golden-cord", name: "Golden Cord", category: "Decorative", engine: "cord", size: 28, opacity: 100, flow: 100, smoothing: 72, pressure: 28, palette: ["#8a5b16", "#d69a2d", "#ffe08a"], description: "Smooth braided gold trim" },
+            { id: "natural-rope", name: "Natural Rope", category: "Decorative", engine: "cord", size: 34, opacity: 96, flow: 98, smoothing: 66, pressure: 32, palette: ["#6f4b2c", "#a57a4b", "#d1ad78"], description: "Ordered woven rope line" },
+
+            { id: "canvas-grain", name: "Canvas Grain", category: "Texture", engine: "grain", size: 74, flow: 62, smoothing: 12, pressure: 38, spacing: .2, jitter: .22, description: "Fine painterly canvas texture" },
+            { id: "paper-fibers", name: "Paper Fibers", category: "Texture", engine: "fibers", size: 84, flow: 58, smoothing: 12, pressure: 34, spacing: .22, jitter: .18, description: "Loose directional paper fibers" },
+            { id: "brick-texture", name: "Brick Texture", category: "Texture", engine: "brick", size: 92, flow: 100, smoothing: 8, pressure: 24, spacing: .62, fixedAngle: 90, sizeJitter: 0, palette: ["#8b4335", "#a85643", "#6e352d"], description: "Straight vertical masonry rows" }
         ];
 
         var toolNames = {
@@ -2619,6 +2745,8 @@
             layersPanel: $("#layersPanel"),
             settingsPanel: $("#settingsPanel"),
             moreToolsPanel: $("#moreToolsPanel"),
+            referenceOverlay: $("#referenceOverlay"),
+            referenceOverlayImage: $("#referenceOverlayImage"),
             brushGrid: $("#brushGrid"),
             brushCategories: $("#brushCategories"),
             layerList: $("#layerList"),
@@ -2636,6 +2764,15 @@
             tool: "brush",
             brushId: "graphite",
             brushCategory: "All",
+            favorites: new Set(JSON.parse(localStorage.getItem("canvas-studio-favorites") || "[]")),
+            recentBrushes: JSON.parse(localStorage.getItem("canvas-studio-recents") || "[]"),
+            brushOverrides: {},
+            activePalette: 0,
+            symmetry: "none",
+            guide: "none",
+            mirrorView: false,
+            referenceTracing: false,
+            touchChord: null,
             color: "#000000",
             colorCustomized: false,
             params: { size: 12, opacity: 100, flow: 100, smoothing: 48, pressure: 88 },
@@ -2688,11 +2825,32 @@
             toastTimer: null
         };
 
+        var palettes = [
+            { name: "Classic", colors: ["#000000", "#6528f7", "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#ffffff"] },
+            { name: "Landscape", colors: ["#17324d", "#4f86a6", "#9cc5d5", "#52734d", "#8fa66a", "#c99553", "#f4ead5"] },
+            { name: "Botanical", colors: ["#263d2b", "#496b3a", "#7c9a4d", "#a9bf65", "#8b4b35", "#d07a48", "#f0d8aa"] },
+            { name: "Sunset", colors: ["#392f5a", "#735d9d", "#d66b91", "#ef8354", "#f6bd60", "#fff0cf", "#2f243a"] }
+        ];
+
         var smudgeCanvas = document.createElement("canvas");
         var smudgeCtx = smudgeCanvas.getContext("2d");
 
         function activeBrush() {
-            return brushes.find(function (brush) { return brush.id === state.brushId; }) || brushes[0];
+            var brush = brushes.find(function (item) { return item.id === state.brushId; }) || brushes[0];
+            return Object.assign({}, brush, state.brushOverrides[brush.id] || {});
+        }
+
+        function effectivePalette() { return palettes[state.activePalette] || palettes[0]; }
+
+        function renderPaletteLibrary() {
+            var root = $("#paletteLibrary");
+            if (!root) return;
+            root.innerHTML = palettes.map(function (palette, index) {
+                return "<button class=\"palette-card" + (index === state.activePalette ? " active" : "") + "\" data-palette=\"" + index + "\" title=\"" + palette.name + "\">" + palette.colors.slice(0, 5).map(function (color) { return "<i class=\"palette-dot\" style=\"--dot:" + color + "\"></i>"; }).join("") + "</button>";
+            }).join("");
+            $$("[data-palette]", root).forEach(function (button) { button.addEventListener("click", function () {
+                state.activePalette = Number(button.dataset.palette); colors = effectivePalette().colors.slice(); renderPaletteLibrary(); renderContextBar(); showToast(effectivePalette().name + " palette selected");
+            }); });
         }
 
         function activeArtboard() {
@@ -2909,10 +3067,12 @@
             var ry = (x * sin + y * cos) / state.view.zoom;
             var displayW = state.document.width * state.view.fitScale;
             var displayH = state.document.height * state.view.fitScale;
-            return {
+            var result = {
                 x: (rx - artboardOffset(artboardId) * state.view.fitScale + displayW / 2) / state.view.fitScale,
                 y: (ry + displayH / 2) / state.view.fitScale
             };
+            if (state.mirrorView) result.x = state.document.width - result.x;
+            return result;
         }
 
         function documentToScreen(point, artboardId) {
@@ -3019,6 +3179,28 @@
                 point.tiltY = Math.atan(Math.sin(point.azimuthAngle) / tanAltitude) * 180 / Math.PI;
             }
             return point;
+        }
+
+        function symmetryPoint(point, mode) {
+            var result = Object.assign({}, point);
+            if (mode === "vertical" || mode === "quad") result.x = state.document.width - result.x;
+            if (mode === "horizontal" || mode === "quad") result.y = state.document.height - result.y;
+            return result;
+        }
+
+        function symmetryModes() {
+            if (state.symmetry === "vertical") return ["none", "vertical"];
+            if (state.symmetry === "horizontal") return ["none", "horizontal"];
+            if (state.symmetry === "quad") return ["none", "vertical", "horizontal", "quad"];
+            return ["none"];
+        }
+
+        function drawSymmetrySegment(ctx, from, to, brush, erase) {
+            symmetryModes().forEach(function (mode) { drawEngineSegment(ctx, symmetryPoint(from, mode), symmetryPoint(to, mode), brush, erase); });
+        }
+
+        function drawSymmetryTap(ctx, point, brush, erase) {
+            symmetryModes().forEach(function (mode) { drawTap(ctx, symmetryPoint(point, mode), brush, erase); });
         }
 
         function tiltAmount(point) {
@@ -3143,30 +3325,52 @@
             var dy = to.y - from.y;
             var length = Math.max(.001, Math.hypot(dx, dy));
             var spacing = Math.max(4, width * (brush.spacing || .4));
-            var slots = Math.floor(length / spacing);
             var seedBase = from.x * .173 + from.y * .271 + to.x * .113 + to.y * .071;
-            if (slots < 1) {
-                if (noise(seedBase + 4.7) > length / spacing) return;
-                slots = 1;
-            }
             var direction = Math.atan2(dy, dx);
             var normalX = -Math.sin(direction);
             var normalY = Math.cos(direction);
-            for (var index = 0; index < slots; index += 1) {
-                var seed = seedBase + index * 19.37;
-                var t = (index + .35 + noise(seed) * .3) / slots;
-                var spread = (noise(seed + 2.3) - .5) * width * .62;
+            var activeStroke = state.pointer && state.pointer.brush === brush && state.tool === "brush";
+            var positions = [];
+            if (activeStroke) {
+                if (brush.singleStamp && state.pointer.stampIndex > 0) return;
+                var nextDistance = Number.isFinite(state.pointer.stampDistanceToNext) ? state.pointer.stampDistanceToNext : 0;
+                while (nextDistance <= length) {
+                    positions.push(nextDistance / length);
+                    nextDistance += spacing;
+                }
+                state.pointer.stampDistanceToNext = nextDistance - length;
+            } else {
+                var slots = Math.max(1, Math.floor(length / spacing));
+                for (var slot = 0; slot < slots; slot += 1) positions.push((slot + .5) / slots);
+            }
+            positions.forEach(function (t, index) {
+                var stampIndex = activeStroke ? (state.pointer.stampIndex || 0) : index;
+                if (activeStroke) state.pointer.stampIndex = stampIndex + 1;
+                var seed = seedBase + stampIndex * 19.37;
+                var spread = (noise(seed + 2.3) - .5) * width * (brush.jitter || 0);
+                var stylusPoint = t < .5 ? from : to;
+                var orientation = direction;
+                if (Number.isFinite(brush.fixedAngle)) {
+                    orientation = brush.fixedAngle * Math.PI / 180;
+                } else if (brush.followPencil && stylusPoint && Math.abs(stylusPoint.twist || 0) > .01) {
+                    orientation = stylusPoint.twist * Math.PI / 180;
+                } else if (brush.followPencil && stylusPoint && tiltAmount(stylusPoint) > .01) {
+                    orientation = tiltDirection(stylusPoint);
+                }
+                orientation += (noise(seed + 4.1) - .5) * (brush.rotationJitter || 0);
+                var sizeVariation = brush.sizeJitter === 0 ? 0 : (brush.sizeJitter || .08);
                 callback({
                     x: from.x + dx * t + normalX * spread,
                     y: from.y + dy * t + normalY * spread,
-                    direction: direction,
+                    direction: orientation,
+                    pathDirection: direction,
                     normalX: normalX,
                     normalY: normalY,
                     seed: seed,
-                    size: width * (.62 + noise(seed + 5.1) * .56),
-                    side: noise(seed + 7.9) > .5 ? 1 : -1
+                    size: width * (1 + (noise(seed + 5.1) - .5) * sizeVariation),
+                    side: brush.jitter ? (noise(seed + 7.9) > .5 ? 1 : -1) : (stampIndex % 2 ? 1 : -1)
                 });
-            }
+            });
         }
 
         function drawLeafStamp(ctx, stamp, color, alpha, petal) {
@@ -3218,10 +3422,304 @@
             ctx.restore();
         }
 
+        function drawCreativeStamp(ctx, stamp, brush, color, alpha) {
+            var engine = brush.engine;
+            var size = stamp.size;
+            var seed = stamp.seed;
+            var angle = stamp.direction + (noise(seed + 2) - .5) * .35;
+            ctx.save();
+            ctx.translate(stamp.x, stamp.y);
+            ctx.rotate(angle);
+            ctx.globalAlpha = clamp(alpha * (.68 + noise(seed + 5) * .3), 0, 1);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+
+            if (engine === "halftone") {
+                var dot = size * (.055 + stamp.size / Math.max(1, state.params.size) * .035);
+                for (var hx = -1; hx <= 1; hx += 1) for (var hy = -1; hy <= 1; hy += 1) {
+                    ctx.beginPath();
+                    ctx.arc(hx * size * .19 + (hy % 2) * size * .09, hy * size * .19, dot, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (engine === "crosshatch") {
+                ctx.lineWidth = Math.max(.65, size * .018);
+                [-1, 0, 1].forEach(function (offset) {
+                    ctx.beginPath();
+                    ctx.moveTo(-size * .3, offset * size * .13 - size * .18);
+                    ctx.lineTo(size * .3, offset * size * .13 + size * .18);
+                    ctx.moveTo(-size * .3, offset * size * .13 + size * .18);
+                    ctx.lineTo(size * .3, offset * size * .13 - size * .18);
+                    ctx.stroke();
+                });
+            } else if (engine === "honeycomb") {
+                ctx.lineWidth = Math.max(1, size * .028);
+                ctx.beginPath();
+                for (var hex = 0; hex < 6; hex += 1) {
+                    var hexAngle = hex * Math.PI / 3;
+                    var hexX = Math.cos(hexAngle) * size * .29;
+                    var hexY = Math.sin(hexAngle) * size * .29;
+                    if (!hex) ctx.moveTo(hexX, hexY); else ctx.lineTo(hexX, hexY);
+                }
+                ctx.closePath(); ctx.stroke();
+            } else if (engine === "mosaic" || engine === "glitch") {
+                var tileW = engine === "glitch" ? size * (.26 + noise(seed + 8) * .44) : size * .38;
+                var tileH = engine === "glitch" ? size * (.07 + noise(seed + 9) * .13) : size * .3;
+                ctx.rotate((noise(seed + 6) - .5) * (engine === "glitch" ? .12 : .45));
+                ctx.fillRect(-tileW / 2, -tileH / 2, tileW, tileH);
+                ctx.globalAlpha *= .6;
+                ctx.fillRect(-tileW * .15, tileH * .7, tileW * .72, tileH * .45);
+            } else if (engine === "chain") {
+                ctx.lineWidth = Math.max(1.4, size * .055);
+                ctx.beginPath(); ctx.ellipse(0, 0, size * .3, size * .17, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.strokeStyle = "rgba(255,255,255,.55)";
+                ctx.lineWidth = Math.max(.6, size * .015);
+                ctx.beginPath(); ctx.ellipse(-size * .02, -size * .025, size * .27, size * .14, 0, Math.PI * 1.05, Math.PI * 1.85); ctx.stroke();
+            } else if (engine === "stitches") {
+                ctx.lineWidth = Math.max(1, size * .04);
+                ctx.beginPath(); ctx.moveTo(-size * .34, 0); ctx.lineTo(size * .34, 0); ctx.stroke();
+                [-1, 1].forEach(function (side) { ctx.beginPath(); ctx.arc(side * size * .39, 0, Math.max(.8, size * .035), 0, Math.PI * 2); ctx.fill(); });
+            } else if (engine === "scales") {
+                ctx.lineWidth = Math.max(1, size * .025);
+                ctx.globalAlpha *= .86;
+                ctx.beginPath(); ctx.arc(0, -size * .1, size * .3, .08 * Math.PI, .92 * Math.PI); ctx.stroke();
+                ctx.beginPath(); ctx.arc(-size * .3, -size * .1, size * .3, .08 * Math.PI, .92 * Math.PI); ctx.stroke();
+                ctx.beginPath(); ctx.arc(size * .3, -size * .1, size * .3, .08 * Math.PI, .92 * Math.PI); ctx.stroke();
+            } else if (engine === "lace") {
+                ctx.lineWidth = Math.max(1, size * .026);
+                ctx.beginPath(); ctx.moveTo(-size * .42, 0); ctx.bezierCurveTo(-size * .22, -size * .36, -size * .08, size * .36, size * .08, 0); ctx.bezierCurveTo(size * .22, -size * .36, size * .36, size * .34, size * .45, 0); ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, 0, size * .055, 0, Math.PI * 2); ctx.fill();
+            } else if (engine === "circuit") {
+                ctx.lineWidth = Math.max(1, size * .035);
+                ctx.beginPath(); ctx.moveTo(-size * .42, -size * .18); ctx.lineTo(-size * .08, -size * .18); ctx.lineTo(size * .08, size * .16); ctx.lineTo(size * .42, size * .16); ctx.stroke();
+                [-1, 1].forEach(function (side) { ctx.beginPath(); ctx.arc(side * size * .43, side * size * .17, size * .07, 0, Math.PI * 2); ctx.fill(); });
+            } else if (engine === "confetti") {
+                ctx.rotate(noise(seed + 7) * Math.PI);
+                if (noise(seed + 9) > .5) ctx.fillRect(-size * .16, -size * .07, size * .32, size * .14);
+                else { ctx.beginPath(); ctx.arc(0, 0, size * .11, 0, Math.PI * 2); ctx.fill(); }
+            } else if (engine === "bubbles") {
+                var bubble = size * (.15 + noise(seed + 7) * .18);
+                ctx.globalAlpha *= .62; ctx.lineWidth = Math.max(1, size * .025);
+                ctx.beginPath(); ctx.arc(0, 0, bubble, 0, Math.PI * 2); ctx.stroke();
+                ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = Math.max(.8, size * .018);
+                ctx.beginPath(); ctx.arc(-bubble * .22, -bubble * .2, bubble * .48, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+            } else if (engine === "hearts") {
+                var heart = size * .22;
+                ctx.beginPath(); ctx.moveTo(0, heart * .85); ctx.bezierCurveTo(-heart * 1.25, .05, -heart * .9, -heart, 0, -heart * .35); ctx.bezierCurveTo(heart * .9, -heart, heart * 1.25, .05, 0, heart * .85); ctx.fill();
+            } else if (engine === "planets") {
+                var planet = size * .18;
+                ctx.beginPath(); ctx.arc(0, 0, planet, 0, Math.PI * 2); ctx.fill();
+                ctx.lineWidth = Math.max(1, size * .028); ctx.beginPath(); ctx.ellipse(0, 0, planet * 1.9, planet * .55, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(size * .38, -size * .24, size * .025, 0, Math.PI * 2); ctx.fill();
+            } else if (engine === "runes") {
+                ctx.shadowColor = color; ctx.shadowBlur = size * .14; ctx.lineWidth = Math.max(1, size * .032);
+                ctx.beginPath(); ctx.arc(0, 0, size * .28, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath();
+                var runeSides = 3 + Math.floor(noise(seed + 10) * 3);
+                for (var rune = 0; rune <= runeSides; rune += 1) {
+                    var runeAngle = rune * Math.PI * 2 / runeSides - Math.PI / 2;
+                    if (!rune) ctx.moveTo(Math.cos(runeAngle) * size * .2, Math.sin(runeAngle) * size * .2); else ctx.lineTo(Math.cos(runeAngle) * size * .2, Math.sin(runeAngle) * size * .2);
+                }
+                ctx.stroke();
+            } else if (engine === "embers") {
+                var ember = size * (.025 + noise(seed + 8) * .055);
+                ctx.shadowColor = color; ctx.shadowBlur = size * .18; ctx.beginPath(); ctx.arc(0, 0, ember, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha *= .5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-size * .08, size * .16, -size * .02, size * .3); ctx.stroke();
+            } else if (engine === "orbits") {
+                ctx.lineWidth = Math.max(.8, size * .018); ctx.globalAlpha *= .62;
+                for (var orbit = 0; orbit < 3; orbit += 1) { ctx.rotate(Math.PI / 3); ctx.beginPath(); ctx.ellipse(0, 0, size * .36, size * (.09 + orbit * .025), 0, 0, Math.PI * 2); ctx.stroke(); }
+            } else {
+                ctx.restore(); return false;
+            }
+            ctx.restore();
+            return true;
+        }
+
         function drawNatureSegment(ctx, from, to, width, brush, alpha) {
             var engine = brush.engine;
             stampAlong(from, to, width, brush, function (stamp) {
                 var color = stampColor(brush, stamp.seed);
+                if (drawCreativeStamp(ctx, stamp, brush, color, alpha)) return;
+                if (engine === "maple") {
+                    ctx.save();
+                    ctx.translate(stamp.x, stamp.y);
+                    ctx.rotate(stamp.direction);
+                    ctx.fillStyle = color;
+                    ctx.strokeStyle = "rgba(55,72,37,.42)";
+                    ctx.globalAlpha = alpha * .92;
+                    ctx.lineWidth = Math.max(.7, stamp.size * .018);
+                    var mapleShape = [
+                        [0, -.5], [.075, -.255], [.27, -.365], [.205, -.13], [.455, -.105], [.255, .055],
+                        [.34, .25], [.095, .165], [0, .39], [-.095, .165], [-.34, .25], [-.255, .055],
+                        [-.455, -.105], [-.205, -.13], [-.27, -.365], [-.075, -.255]
+                    ];
+                    ctx.beginPath();
+                    mapleShape.forEach(function (maplePoint, mapleIndex) {
+                        var mapleX = maplePoint[0] * stamp.size;
+                        var mapleY = maplePoint[1] * stamp.size;
+                        if (!mapleIndex) ctx.moveTo(mapleX, mapleY); else ctx.lineTo(mapleX, mapleY);
+                    });
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                    ctx.save();
+                    ctx.globalCompositeOperation = "source-atop";
+                    var mapleShade = ctx.createLinearGradient(0, -stamp.size * .5, 0, stamp.size * .38);
+                    mapleShade.addColorStop(0, "rgba(255,255,255,.24)");
+                    mapleShade.addColorStop(.48, "rgba(255,255,255,0)");
+                    mapleShade.addColorStop(1, "rgba(23,45,20,.2)");
+                    ctx.fillStyle = mapleShade;
+                    ctx.fillRect(-stamp.size * .5, -stamp.size * .52, stamp.size, stamp.size);
+                    ctx.restore();
+                    ctx.strokeStyle = "rgba(245,255,231,.48)";
+                    ctx.lineWidth = Math.max(.55, stamp.size * .012);
+                    [[0, -.43], [.24, -.31], [.38, -.08], [-.24, -.31], [-.38, -.08]].forEach(function (vein) {
+                        ctx.beginPath(); ctx.moveTo(0, stamp.size * .12); ctx.lineTo(vein[0] * stamp.size, vein[1] * stamp.size); ctx.stroke();
+                    });
+                    ctx.strokeStyle = "rgba(74,72,34,.55)";
+                    ctx.lineWidth = Math.max(.7, stamp.size * .017);
+                    ctx.beginPath(); ctx.moveTo(0, stamp.size * .08); ctx.quadraticCurveTo(stamp.size * .025, stamp.size * .33, stamp.size * .04, stamp.size * .55); ctx.stroke();
+                    ctx.restore();
+                    return;
+                }
+                if (engine === "oak") {
+                    ctx.save();
+                    ctx.translate(stamp.x, stamp.y);
+                    ctx.rotate(stamp.direction);
+                    ctx.fillStyle = color;
+                    ctx.strokeStyle = "rgba(48,70,35,.42)";
+                    ctx.globalAlpha = alpha * .9;
+                    ctx.lineWidth = Math.max(.7, stamp.size * .018);
+                    ctx.beginPath();
+                    ctx.moveTo(-stamp.size * .42, 0);
+                    ctx.bezierCurveTo(-stamp.size * .34, -stamp.size * .26, -stamp.size * .2, -stamp.size * .08, -stamp.size * .12, -stamp.size * .3);
+                    ctx.bezierCurveTo(stamp.size * .02, -stamp.size * .12, stamp.size * .2, -stamp.size * .28, stamp.size * .4, 0);
+                    ctx.bezierCurveTo(stamp.size * .2, stamp.size * .28, stamp.size * .02, stamp.size * .12, -stamp.size * .12, stamp.size * .3);
+                    ctx.bezierCurveTo(-stamp.size * .2, stamp.size * .08, -stamp.size * .34, stamp.size * .26, -stamp.size * .42, 0);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(-stamp.size * .48, 0); ctx.lineTo(stamp.size * .32, 0); ctx.stroke();
+                    ctx.restore();
+                    return;
+                }
+                if (engine === "eucalyptus" || engine === "vine") {
+                    ctx.save();
+                    ctx.translate(stamp.x, stamp.y);
+                    ctx.rotate(stamp.direction);
+                    ctx.strokeStyle = engine === "vine" ? "rgba(42,91,49,.88)" : "rgba(72,105,82,.78)";
+                    ctx.lineWidth = Math.max(1, stamp.size * .032);
+                    ctx.beginPath();
+                    ctx.moveTo(-stamp.size * .52, 0);
+                    ctx.bezierCurveTo(-stamp.size * .18, -stamp.size * .12, stamp.size * .18, stamp.size * .12, stamp.size * .52, 0);
+                    ctx.stroke();
+                    for (var vineLeaf = -2; vineLeaf <= 2; vineLeaf += 1) {
+                        var vineSide = vineLeaf % 2 ? 1 : -1;
+                        var vineX = vineLeaf * stamp.size * .18;
+                        drawLeafStamp(ctx, { x: vineX, y: vineSide * stamp.size * .025, direction: 0, side: vineSide, size: stamp.size * (engine === "vine" ? .42 : .34), seed: stamp.seed + vineLeaf * 8 }, stampColor(brush, stamp.seed + vineLeaf * 8), alpha, false);
+                    }
+                    ctx.restore();
+                    return;
+                }
+                if (engine === "reeds" || engine === "wheat" || engine === "lavender") {
+                    ctx.save();
+                    ctx.translate(stamp.x, stamp.y);
+                    ctx.rotate(stamp.direction);
+                    ctx.globalAlpha = alpha * .9;
+                    for (var stalk = -1; stalk <= 1; stalk += 1) {
+                        var stalkX = stalk * stamp.size * .16;
+                        var stalkHeight = stamp.size * (.58 + noise(stamp.seed + stalk * 9) * .24);
+                        ctx.strokeStyle = engine === "lavender" ? "#52704a" : color;
+                        ctx.lineWidth = Math.max(.8, stamp.size * .018);
+                        ctx.beginPath(); ctx.moveTo(stalkX, stamp.size * .35); ctx.quadraticCurveTo(stalkX + stamp.size * .05, 0, stalkX, -stalkHeight * .52); ctx.stroke();
+                        if (engine === "reeds") {
+                            ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(stalkX, -stalkHeight * .55, stamp.size * .045, stamp.size * .17, 0, 0, Math.PI * 2); ctx.fill();
+                        } else {
+                            for (var grain = 0; grain < 5; grain += 1) {
+                                var grainY = -stalkHeight * (.25 + grain * .075);
+                                ctx.fillStyle = color;
+                                ctx.beginPath(); ctx.ellipse(stalkX + (grain % 2 ? 1 : -1) * stamp.size * .04, grainY, stamp.size * .035, stamp.size * .075, (grain % 2 ? 1 : -1) * .45, 0, Math.PI * 2); ctx.fill();
+                            }
+                        }
+                    }
+                    ctx.restore();
+                    return;
+                }
+                if (engine === "branches") {
+                    ctx.save(); ctx.translate(stamp.x, stamp.y); ctx.rotate(stamp.direction); ctx.strokeStyle = color; ctx.globalAlpha = alpha * .9; ctx.lineCap = "round";
+                    ctx.lineWidth = Math.max(1.2, stamp.size * .055); ctx.beginPath(); ctx.moveTo(-stamp.size * .48, 0); ctx.quadraticCurveTo(0, stamp.size * .05, stamp.size * .48, 0); ctx.stroke();
+                    ctx.lineWidth = Math.max(.8, stamp.size * .028);
+                    [-.2, .05, .26].forEach(function (branchX, branchIndex) { var branchSide = branchIndex % 2 ? 1 : -1; ctx.beginPath(); ctx.moveTo(branchX * stamp.size, 0); ctx.quadraticCurveTo((branchX + .1) * stamp.size, branchSide * stamp.size * .18, (branchX + .22) * stamp.size, branchSide * stamp.size * .3); ctx.stroke(); });
+                    ctx.restore(); return;
+                }
+                if (engine === "clover" || engine === "blossom") {
+                    ctx.save(); ctx.translate(stamp.x, stamp.y); ctx.rotate(stamp.direction); ctx.fillStyle = color; ctx.globalAlpha = alpha * .92;
+                    var petalCount = engine === "clover" ? 3 : 5;
+                    var petalRadius = stamp.size * (engine === "clover" ? .12 : .1);
+                    for (var bloomPetal = 0; bloomPetal < petalCount; bloomPetal += 1) {
+                        var bloomAngle = -Math.PI / 2 + bloomPetal * Math.PI * 2 / petalCount;
+                        ctx.beginPath(); ctx.ellipse(Math.cos(bloomAngle) * petalRadius, Math.sin(bloomAngle) * petalRadius, petalRadius, petalRadius * .78, bloomAngle, 0, Math.PI * 2); ctx.fill();
+                    }
+                    ctx.beginPath(); ctx.arc(0, 0, petalRadius * .42, 0, Math.PI * 2); ctx.fillStyle = engine === "blossom" ? "#f1b84b" : "#d8edb2"; ctx.fill();
+                    if (engine === "clover") { ctx.strokeStyle = "rgba(40,95,49,.75)"; ctx.lineWidth = Math.max(.7, stamp.size * .018); ctx.beginPath(); ctx.moveTo(0, petalRadius); ctx.lineTo(stamp.size * .05, stamp.size * .42); ctx.stroke(); }
+                    ctx.restore(); return;
+                }
+                if (engine === "wispy-clouds") {
+                    ctx.save(); ctx.translate(stamp.x, stamp.y); ctx.rotate(stamp.direction); ctx.strokeStyle = color; ctx.globalAlpha = alpha * .2; ctx.lineCap = "round"; ctx.filter = "blur(" + Math.max(2, stamp.size * .045) + "px)";
+                    for (var wisp = -1; wisp <= 1; wisp += 1) { ctx.lineWidth = stamp.size * (.08 + (wisp + 1) * .025); ctx.beginPath(); ctx.moveTo(-stamp.size * .5, wisp * stamp.size * .1); ctx.bezierCurveTo(-stamp.size * .15, -stamp.size * .12, stamp.size * .15, stamp.size * .12, stamp.size * .5, wisp * stamp.size * .04); ctx.stroke(); }
+                    ctx.restore(); return;
+                }
+                if (engine === "flare" || engine === "lens-flare") {
+                    ctx.save();
+                    ctx.translate(stamp.x, stamp.y);
+                    ctx.globalCompositeOperation = "lighter";
+                    var flareSize = stamp.size;
+                    var halo = ctx.createRadialGradient(0, 0, 0, 0, 0, flareSize * .52);
+                    halo.addColorStop(0, "rgba(255,255,255,.92)");
+                    halo.addColorStop(.07, rgba(color, .72));
+                    halo.addColorStop(.28, rgba(color, .22));
+                    halo.addColorStop(1, rgba(color, 0));
+                    ctx.globalAlpha = alpha * (engine === "flare" ? .82 : .56);
+                    ctx.fillStyle = halo;
+                    ctx.fillRect(-flareSize * .55, -flareSize * .55, flareSize * 1.1, flareSize * 1.1);
+
+                    var streak = ctx.createLinearGradient(-flareSize * .62, 0, flareSize * .62, 0);
+                    streak.addColorStop(0, rgba(color, 0));
+                    streak.addColorStop(.42, rgba(color, .08));
+                    streak.addColorStop(.5, "rgba(255,255,255,.62)");
+                    streak.addColorStop(.58, rgba(color, .08));
+                    streak.addColorStop(1, rgba(color, 0));
+                    ctx.globalAlpha = alpha * .68;
+                    ctx.fillStyle = streak;
+                    ctx.filter = "blur(" + Math.max(1, flareSize * .018) + "px)";
+                    ctx.fillRect(-flareSize * .62, -Math.max(1, flareSize * .018), flareSize * 1.24, Math.max(2, flareSize * .036));
+
+                    if (engine === "flare") {
+                        ctx.filter = "blur(" + Math.max(1, flareSize * .028) + "px)";
+                        ctx.strokeStyle = rgba(color, .22);
+                        ctx.lineWidth = Math.max(1, flareSize * .018);
+                        [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4].forEach(function (rayAngle, rayIndex) {
+                            var rayLength = flareSize * (rayIndex < 2 ? .46 : .3);
+                            ctx.globalAlpha = alpha * (rayIndex < 2 ? .34 : .18);
+                            ctx.beginPath();
+                            ctx.moveTo(-Math.cos(rayAngle) * rayLength, -Math.sin(rayAngle) * rayLength);
+                            ctx.lineTo(Math.cos(rayAngle) * rayLength, Math.sin(rayAngle) * rayLength);
+                            ctx.stroke();
+                        });
+                    } else {
+                        ctx.filter = "blur(" + Math.max(.5, flareSize * .009) + "px)";
+                        var artifacts = [{ x: -.34, r: .13, a: .2 }, { x: .28, r: .08, a: .25 }, { x: .47, r: .16, a: .12 }];
+                        artifacts.forEach(function (artifact, artifactIndex) {
+                            var artifactColor = brush.palette && brush.palette[artifactIndex % brush.palette.length] || color;
+                            var ring = ctx.createRadialGradient(flareSize * artifact.x, 0, flareSize * artifact.r * .55, flareSize * artifact.x, 0, flareSize * artifact.r);
+                            ring.addColorStop(0, rgba(artifactColor, 0));
+                            ring.addColorStop(.72, rgba(artifactColor, artifact.a));
+                            ring.addColorStop(1, rgba(artifactColor, 0));
+                            ctx.globalAlpha = alpha;
+                            ctx.fillStyle = ring;
+                            ctx.fillRect(flareSize * (artifact.x - artifact.r), -flareSize * artifact.r, flareSize * artifact.r * 2, flareSize * artifact.r * 2);
+                        });
+                    }
+                    ctx.restore();
+                    return;
+                }
                 if (engine === "leaves" || engine === "petals") {
                     drawLeafStamp(ctx, stamp, color, alpha, engine === "petals");
                     return;
@@ -3567,14 +4065,14 @@
         }
 
         function isStampBrush(brush) {
-            return ["leaves", "foliage", "fern", "grass", "petals", "pine", "bark", "fur", "pebbles", "rocks", "clouds", "smoke", "rain", "stars", "snow", "sparkles", "foam", "waves", "shimmer", "birds", "flowers", "grain", "fibers", "brick"].includes(brush.engine);
+            return ["leaves", "maple", "oak", "eucalyptus", "vine", "foliage", "fern", "grass", "reeds", "wheat", "branches", "lavender", "clover", "blossom", "petals", "pine", "bark", "fur", "pebbles", "rocks", "clouds", "wispy-clouds", "flare", "lens-flare", "smoke", "rain", "stars", "snow", "sparkles", "foam", "waves", "shimmer", "birds", "flowers", "grain", "fibers", "brick"].includes(brush.engine);
         }
 
         function usesContinuousStroke(brush) {
             return [
                 "pencil", "pencil-soft", "pencil-hard", "colored-pencil", "chalk",
                 "ink", "fountain", "brush-ink", "marker", "chisel", "felt", "highlighter",
-                "watercolor", "watercolor-wash", "gouache", "charcoal", "pastel", "crayon", "airbrush"
+                "watercolor", "watercolor-wash", "gouache", "charcoal", "pastel", "crayon", "airbrush", "sky", "cord"
             ].includes(brush.engine);
         }
 
@@ -3607,6 +4105,37 @@
             ctx.closePath();
             ctx.fill();
             ctx.restore();
+        }
+
+        function offsetStrokePoints(points, offsetAt) {
+            return points.map(function (point, index) {
+                var previous = points[Math.max(0, index - 1)];
+                var next = points[Math.min(points.length - 1, index + 1)];
+                var dx = next.x - previous.x;
+                var dy = next.y - previous.y;
+                var distance = Math.max(.001, Math.hypot(dx, dy));
+                var offset = offsetAt(point, index);
+                return Object.assign({}, point, { x: point.x - dy / distance * offset, y: point.y + dx / distance * offset });
+            });
+        }
+
+        function drawBraidedCord(ctx, points, widthAt, palette, alpha) {
+            var colors = palette && palette.length ? palette : ["#6f4b2c", "#b8874f", "#ead09a"];
+            var travelled = 0;
+            var strandA = [], strandB = [];
+            points.forEach(function (point, index) {
+                if (index) travelled += Math.hypot(point.x - points[index - 1].x, point.y - points[index - 1].y);
+                var previous = points[Math.max(0, index - 1)], next = points[Math.min(points.length - 1, index + 1)];
+                var dx = next.x - previous.x, dy = next.y - previous.y, length = Math.max(.001, Math.hypot(dx, dy));
+                var wave = Math.sin(travelled / Math.max(8, widthAt(point) * .72) * Math.PI * 2) * widthAt(point) * .19;
+                strandA.push(Object.assign({}, point, { x: point.x - dy / length * wave, y: point.y + dx / length * wave }));
+                strandB.push(Object.assign({}, point, { x: point.x + dy / length * wave, y: point.y - dx / length * wave }));
+            });
+            drawRibbon(ctx, offsetStrokePoints(points, function (point) { return widthAt(point) * .1; }), function (point) { return widthAt(point) * .9; }, "rgba(35,22,12,.35)", alpha * .72, 1.1);
+            drawRibbon(ctx, points, function (point) { return widthAt(point) * .76; }, colors[0], alpha, 0);
+            drawRibbon(ctx, strandB, function (point) { return widthAt(point) * .38; }, colors[0], alpha, 0);
+            drawRibbon(ctx, strandA, function (point) { return widthAt(point) * .38; }, colors[1] || colors[0], alpha, 0);
+            drawRibbon(ctx, offsetStrokePoints(strandA, function (point) { return -widthAt(point) * .08; }), function (point) { return widthAt(point) * .09; }, colors[2] || "#fff5cf", alpha * .68, Math.max(.2, widthAt(points[0]) * .012));
         }
 
         function renderContinuousStroke(pointer) {
@@ -3666,6 +4195,15 @@
                 drawRibbon(ctx, points, scaled(.72), color, baseAlpha * .78, 0);
             } else if (brush.engine === "airbrush") {
                 drawRibbon(ctx, points, scaled(.9), color, baseAlpha * .18, Math.max(2, pointer.params.size * .12));
+            } else if (brush.engine === "sky") {
+                var skyPalette = pointer.colorCustomized || !brush.palette ? [color] : brush.palette;
+                skyPalette.forEach(function (skyColor, skyIndex) {
+                    var skyScale = 1 - skyIndex / Math.max(1, skyPalette.length) * .62;
+                    drawRibbon(ctx, points, scaled(skyScale), skyColor, baseAlpha * (.12 + skyIndex * .025), Math.max(4, pointer.params.size * .15));
+                });
+            } else if (brush.engine === "cord") {
+                var cordPalette = pointer.colorCustomized || !brush.palette ? [color, color, "#ffffff"] : brush.palette;
+                drawBraidedCord(ctx, points, width, cordPalette, baseAlpha);
             }
             state.params = savedParams;
         }
@@ -3841,6 +4379,88 @@
 
             if (brush.engine === "airbrush") {
                 line(ctx, from, to, width * .9, color, baseAlpha * .18, composite, "butt", Math.max(2, width * .12));
+                return;
+            }
+
+            if (brush.engine === "sky") {
+                var skyColors = state.colorCustomized || !brush.palette ? [color] : brush.palette;
+                skyColors.forEach(function (skyColor, skyIndex) {
+                    var skyWidth = width * (1 - skyIndex / Math.max(1, skyColors.length) * .62);
+                    line(ctx, from, to, skyWidth, skyColor, baseAlpha * (.12 + skyIndex * .025), composite, "round", Math.max(3, width * .15));
+                });
+                return;
+            }
+
+            if (brush.engine === "cord") {
+                var cordColors = state.colorCustomized || !brush.palette ? [color, color, "#ffffff"] : brush.palette;
+                line(ctx, { x: from.x + nx * width * .08, y: from.y + ny * width * .08 }, { x: to.x + nx * width * .08, y: to.y + ny * width * .08 }, width * .88, "rgba(38,24,13,.42)", baseAlpha * .7, composite, "round", 1.2);
+                line(ctx, from, to, width * .78, cordColors[0], baseAlpha, composite, "round", 0);
+                line(ctx, { x: from.x - nx * width * .05, y: from.y - ny * width * .05 }, { x: to.x - nx * width * .05, y: to.y - ny * width * .05 }, width * .58, cordColors[1] || color, baseAlpha, composite, "round", 0);
+                line(ctx, { x: from.x - nx * width * .18, y: from.y - ny * width * .18 }, { x: to.x - nx * width * .18, y: to.y - ny * width * .18 }, width * .13, cordColors[2] || "#ffffff", baseAlpha * .8, composite, "round", Math.max(.25, width * .018));
+                var cordMidX = (from.x + to.x) / 2;
+                var cordMidY = (from.y + to.y) / 2;
+                var cordSlant = width * .16;
+                var cordEdge = width * .31;
+                line(ctx, { x: cordMidX - nx * cordEdge - dx / length * cordSlant, y: cordMidY - ny * cordEdge - dy / length * cordSlant }, { x: cordMidX + nx * cordEdge + dx / length * cordSlant, y: cordMidY + ny * cordEdge + dy / length * cordSlant }, Math.max(.7, width * .07), "rgba(48,29,12,.5)", baseAlpha, composite, "round", 0);
+                return;
+            }
+
+            if (brush.engine === "neon") {
+                line(ctx, from, to, width * 1.45, color, baseAlpha * .24, "lighter", "round", Math.max(2, width * .22));
+                line(ctx, from, to, width * .48, color, baseAlpha, "lighter", "round", Math.max(.5, width * .04));
+                line(ctx, from, to, Math.max(1, width * .14), "#ffffff", baseAlpha * .92, "source-over", "round", 0);
+                return;
+            }
+
+            if (brush.engine === "pixel") {
+                var pixelSize = Math.max(2, Math.round(width * .48));
+                var pixelSteps = Math.max(1, Math.ceil(length / pixelSize));
+                ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = baseAlpha;
+                for (var pixelIndex = 0; pixelIndex <= pixelSteps; pixelIndex += 1) {
+                    var pixelT = pixelIndex / pixelSteps;
+                    var pixelX = Math.round((from.x + dx * pixelT) / pixelSize) * pixelSize;
+                    var pixelY = Math.round((from.y + dy * pixelT) / pixelSize) * pixelSize;
+                    ctx.fillRect(pixelX - pixelSize / 2, pixelY - pixelSize / 2, pixelSize, pixelSize);
+                }
+                ctx.restore(); return;
+            }
+
+            if (brush.engine === "double-ribbon") {
+                var ribbonGap = width * .32;
+                line(ctx, { x: from.x + nx * ribbonGap, y: from.y + ny * ribbonGap }, { x: to.x + nx * ribbonGap, y: to.y + ny * ribbonGap }, width * .2, color, baseAlpha, composite, "round", 0);
+                line(ctx, { x: from.x - nx * ribbonGap, y: from.y - ny * ribbonGap }, { x: to.x - nx * ribbonGap, y: to.y - ny * ribbonGap }, width * .2, color, baseAlpha * .7, composite, "round", 0);
+                return;
+            }
+
+            if (brush.engine === "zigzag") {
+                var zigCount = Math.max(1, Math.ceil(length / Math.max(4, width * .22)));
+                ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = baseAlpha; ctx.lineWidth = Math.max(1, width * .13); ctx.lineCap = "round"; ctx.lineJoin = "miter"; ctx.beginPath(); ctx.moveTo(from.x, from.y);
+                for (var zig = 1; zig <= zigCount; zig += 1) {
+                    var zigT = zig / zigCount;
+                    var zigOffset = (zig % 2 ? 1 : -1) * width * .28;
+                    ctx.lineTo(from.x + dx * zigT + nx * zigOffset, from.y + dy * zigT + ny * zigOffset);
+                }
+                ctx.stroke(); ctx.restore(); return;
+            }
+
+            if (brush.engine === "rainbow") {
+                var rainbowColors = brush.palette || [color];
+                rainbowColors.forEach(function (rainbowColor, rainbowIndex) {
+                    var rainbowRatio = rainbowIndex / Math.max(1, rainbowColors.length - 1) - .5;
+                    var rainbowOffset = rainbowRatio * width * .82;
+                    line(ctx, { x: from.x + nx * rainbowOffset, y: from.y + ny * rainbowOffset }, { x: to.x + nx * rainbowOffset, y: to.y + ny * rainbowOffset }, Math.max(1, width / rainbowColors.length * .9), state.colorCustomized ? color : rainbowColor, baseAlpha * .9, composite, "round", 0);
+                });
+                return;
+            }
+
+            if (brush.engine === "speed-lines") {
+                var speedCount = 5;
+                for (var speed = 0; speed < speedCount; speed += 1) {
+                    var speedRatio = speed / (speedCount - 1) - .5;
+                    var speedOffset = speedRatio * width;
+                    var speedInset = length * noise(seed + speed * 7) * .32;
+                    line(ctx, { x: from.x + nx * speedOffset + dx / length * speedInset, y: from.y + ny * speedOffset + dy / length * speedInset }, { x: to.x + nx * speedOffset, y: to.y + ny * speedOffset }, Math.max(.7, width * (.018 + noise(seed + speed * 3) * .025)), color, baseAlpha * (.45 + noise(seed + speed) * .5), composite, "round", 0);
+                }
                 return;
             }
 
@@ -4034,6 +4654,7 @@
             });
             var board = activeArtboard();
             var ctx = board && board.interactionCtx ? board.interactionCtx : els.interactionCtx;
+            drawGuides(ctx);
             var rect = null;
             if (state.pointer && (state.tool === "select" || state.tool === "shape")) {
                 var a = state.pointer.start;
@@ -4080,6 +4701,18 @@
                 });
             }
             ctx.restore();
+        }
+
+        function drawGuides(ctx) {
+            if (state.guide === "none" && state.symmetry === "none") return;
+            var w = state.document.width, h = state.document.height;
+            ctx.save(); ctx.lineWidth = Math.max(1.5, 1.5 / state.view.fitScale / state.view.zoom); ctx.strokeStyle = "rgba(80,62,190,.62)"; ctx.setLineDash([14,10]); ctx.beginPath();
+            if (state.symmetry === "vertical" || state.symmetry === "quad") { ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); }
+            if (state.symmetry === "horizontal" || state.symmetry === "quad") { ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); }
+            if (state.guide === "thirds") { [1/3,2/3].forEach(function (v) { ctx.moveTo(w*v,0); ctx.lineTo(w*v,h); ctx.moveTo(0,h*v); ctx.lineTo(w,h*v); }); }
+            if (state.guide === "perspective1") { [[0,0],[w,0],[0,h],[w,h]].forEach(function (p) { ctx.moveTo(p[0],p[1]); ctx.lineTo(w/2,h/2); }); }
+            if (state.guide === "perspective2") { [[0,h/2],[w,h/2]].forEach(function (v) { [[0,0],[w,0],[0,h],[w,h]].forEach(function (p) { ctx.moveTo(p[0],p[1]); ctx.lineTo(v[0],v[1]); }); }); }
+            ctx.stroke(); ctx.restore();
         }
 
         function traceShapePath(ctx, shape, start, end) {
@@ -4294,15 +4927,99 @@
             return snapshotLayer(activeLayer());
         }
 
+        function snapshotArtboard(artboardId) {
+            var id = artboardId || state.activeArtboardId;
+            var board = id === "main" ? null : state.referenceBoards.find(function (item) { return item.id === id; });
+            var layers = board ? board.layers : state.layers;
+            var selectedLayerId = board ? board.activeLayerId : state.activeLayerId;
+            return {
+                type: "artboard",
+                artboardId: id,
+                activeLayerId: selectedLayerId,
+                layers: layers.map(function (layer) {
+                    var canvas = document.createElement("canvas");
+                    canvas.width = state.document.width;
+                    canvas.height = state.document.height;
+                    canvas.getContext("2d", { alpha: true, desynchronized: true }).drawImage(layer.canvas, 0, 0);
+                    return { id: layer.id, name: layer.name, canvas: canvas, visible: layer.visible, opacity: layer.opacity };
+                })
+            };
+        }
+
         function commitHistory(snapshot) {
             if (!snapshot) return;
             state.history.push(snapshot);
             if (state.history.length > 8) state.history.shift();
             state.redo = [];
             updateHistoryButtons();
+            scheduleAutosave();
+        }
+
+        var autosaveTimer = 0;
+        function studioDb() {
+            return new Promise(function (resolve, reject) {
+                var request = indexedDB.open("canvas-studio-projects", 1);
+                request.onupgradeneeded = function () { request.result.createObjectStore("projects", { keyPath: "id" }); };
+                request.onsuccess = function () { resolve(request.result); }; request.onerror = function () { reject(request.error); };
+            });
+        }
+
+        function canvasBlob(canvas) { return new Promise(function (resolve) { canvas.toBlob(resolve, "image/webp", .9); }); }
+
+        async function saveStudioProject(id, quiet) {
+            try {
+                var image = await canvasBlob(renderExportCanvas());
+                var record = { id: id || "project-" + Date.now(), name: state.document.name || "Untitled artwork", width: state.document.width, height: state.document.height, background: state.background, updated: Date.now(), image: image };
+                var db = await studioDb(); var tx = db.transaction("projects", "readwrite"); tx.objectStore("projects").put(record);
+                if (!quiet) { showToast("Project saved"); renderProjectGallery(); }
+                var status = $("#autosaveStatus"); if (status) status.textContent = "Saved " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            } catch (error) { if (!quiet) showToast("Could not save this project"); }
+        }
+
+        function scheduleAutosave() { clearTimeout(autosaveTimer); autosaveTimer = setTimeout(function () { saveStudioProject("autosave", true); }, 900); }
+
+        async function projectRecords() {
+            var db = await studioDb(); return new Promise(function (resolve) { var request = db.transaction("projects").objectStore("projects").getAll(); request.onsuccess = function () { resolve(request.result.sort(function (a,b) { return b.updated-a.updated; })); }; });
+        }
+
+        async function renderProjectGallery() {
+            var root = $("#projectGrid"); if (!root) return; var records = await projectRecords();
+            root.innerHTML = records.length ? records.map(function (record) { var url = URL.createObjectURL(record.image); return "<button class=\"project-card\" data-project=\"" + record.id + "\"><img src=\"" + url + "\"><strong>" + escapeHtml(record.id === "autosave" ? "Autosave · " + record.name : record.name) + "</strong><small>" + new Date(record.updated).toLocaleString() + "</small></button>"; }).join("") : "<p>No saved projects yet.</p>";
+            $$("[data-project]", root).forEach(function (button) { button.addEventListener("click", function () { loadStudioProject(button.dataset.project); }); });
+        }
+
+        async function loadStudioProject(id, quiet) {
+            var db = await studioDb(); var record = await new Promise(function (resolve) { var request = db.transaction("projects").objectStore("projects").get(id); request.onsuccess = function () { resolve(request.result); }; });
+            if (!record) return; var bitmap = await createImageBitmap(record.image); initializeDocument(record.width, record.height, record.name); activeLayer().ctx.drawImage(bitmap, 0, 0); applyCanvasSurface(record.background || "paper"); if ($("#projectsDialog").open) $("#projectsDialog").close(); if (!quiet) showToast("Project opened");
         }
 
         function restoreSnapshot(snapshot) {
+            if (snapshot && snapshot.type === "artboard") {
+                var restoredLayers = snapshot.layers.map(function (savedLayer) {
+                    var canvas = document.createElement("canvas");
+                    canvas.className = "layer-canvas";
+                    canvas.width = state.document.width;
+                    canvas.height = state.document.height;
+                    var ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+                    ctx.drawImage(savedLayer.canvas, 0, 0);
+                    return { id: savedLayer.id, name: savedLayer.name, canvas: canvas, ctx: ctx, visible: savedLayer.visible, opacity: savedLayer.opacity };
+                });
+                if (snapshot.artboardId === "main") {
+                    state.layers = restoredLayers;
+                    state.activeLayerId = snapshot.activeLayerId;
+                } else {
+                    var board = state.referenceBoards.find(function (item) { return item.id === snapshot.artboardId; });
+                    if (!board) return Promise.resolve();
+                    board.layers = restoredLayers;
+                    board.activeLayerId = snapshot.activeLayerId;
+                }
+                if (state.activeArtboardId === snapshot.artboardId) {
+                    syncLayerStack();
+                    renderLayers();
+                    renderOverlay();
+                }
+                return Promise.resolve();
+            }
             var layer = findLayerById(snapshot.layerId);
             if (!layer || !snapshot.canvas) return Promise.resolve();
             layer.ctx.clearRect(0, 0, state.document.width, state.document.height);
@@ -4314,8 +5031,11 @@
             if (state.historyBusy || !state.history.length) return;
             state.historyBusy = true;
             var snapshot = state.history.pop();
-            var currentLayer = findLayerById(snapshot.layerId);
-            if (currentLayer) state.redo.push(snapshotLayer(currentLayer));
+            if (snapshot.type === "artboard") state.redo.push(snapshotArtboard(snapshot.artboardId));
+            else {
+                var currentLayer = findLayerById(snapshot.layerId);
+                if (currentLayer) state.redo.push(snapshotLayer(currentLayer));
+            }
             await restoreSnapshot(snapshot);
             state.historyBusy = false;
             updateHistoryButtons();
@@ -4325,11 +5045,34 @@
             if (state.historyBusy || !state.redo.length) return;
             state.historyBusy = true;
             var snapshot = state.redo.pop();
-            var currentLayer = findLayerById(snapshot.layerId);
-            if (currentLayer) state.history.push(snapshotLayer(currentLayer));
+            if (snapshot.type === "artboard") state.history.push(snapshotArtboard(snapshot.artboardId));
+            else {
+                var currentLayer = findLayerById(snapshot.layerId);
+                if (currentLayer) state.history.push(snapshotLayer(currentLayer));
+            }
             await restoreSnapshot(snapshot);
             state.historyBusy = false;
             updateHistoryButtons();
+        }
+
+        function resetDrawing() {
+            if (!window.confirm("Clear every layer on this artboard? You can undo this action.")) return;
+            var before = snapshotArtboard();
+            var blankLayer = createLayer("Paint layer 1");
+            var board = activeArtboard();
+            if (board) {
+                board.layers = [blankLayer];
+                board.activeLayerId = blankLayer.id;
+            } else {
+                state.layers = [blankLayer];
+                state.activeLayerId = blankLayer.id;
+            }
+            state.selection = null;
+            syncLayerStack();
+            renderLayers();
+            renderOverlay();
+            commitHistory(before);
+            showToast("Artboard cleared · Undo is available");
         }
 
         function updateHistoryButtons() {
@@ -4366,6 +5109,8 @@
             var brush = brushes.find(function (item) { return item.id === id; });
             if (!brush) return;
             state.brushId = id;
+            state.recentBrushes = [id].concat(state.recentBrushes.filter(function (item) { return item !== id; })).slice(0, 12);
+            localStorage.setItem("canvas-studio-recents", JSON.stringify(state.recentBrushes));
             state.params = { size: brush.size, opacity: 100, flow: 100, smoothing: brush.smoothing, pressure: brush.pressure };
             state.previousPaintTool = "brush";
             renderBrushLibrary();
@@ -4567,21 +5312,38 @@
         }
 
         function renderBrushLibrary() {
-            var categories = ["All"].concat(Array.from(new Set(brushes.map(function (brush) { return brush.category; }))));
+            var categories = ["All", "Favorites", "Recent"].concat(Array.from(new Set(brushes.map(function (brush) { return brush.category; }))));
             els.brushCategories.innerHTML = categories.map(function (category) {
                 return "<button class=\"category-button" + (state.brushCategory === category ? " active" : "") + "\" data-category=\"" + category + "\">" + category + "</button>";
             }).join("");
-            var filtered = state.brushCategory === "All" ? brushes : brushes.filter(function (brush) { return brush.category === state.brushCategory; });
+            var filtered = state.brushCategory === "All" ? brushes : state.brushCategory === "Favorites" ? brushes.filter(function (brush) { return state.favorites.has(brush.id); }) : state.brushCategory === "Recent" ? state.recentBrushes.map(function (id) { return brushes.find(function (brush) { return brush.id === id; }); }).filter(Boolean) : brushes.filter(function (brush) { return brush.category === state.brushCategory; });
             els.brushGrid.innerHTML = filtered.map(function (brush) {
-                return "<button class=\"brush-card" + (brush.id === state.brushId ? " active" : "") + "\" data-brush=\"" + brush.id + "\"><canvas class=\"brush-preview\" width=\"240\" height=\"58\" data-preview=\"" + brush.id + "\"></canvas><strong>" + brush.name + "</strong><span>" + brush.description + "</span></button>";
+                var favorite = state.favorites.has(brush.id);
+                return "<button class=\"brush-card" + (brush.id === state.brushId ? " active" : "") + "\" data-brush=\"" + brush.id + "\"><span class=\"brush-favorite" + (favorite ? " active" : "") + "\" data-favorite=\"" + brush.id + "\" role=\"button\" aria-label=\"" + (favorite ? "Remove from favorites" : "Add to favorites") + "\">" + (favorite ? "★" : "☆") + "</span><canvas class=\"brush-preview\" width=\"240\" height=\"58\" data-preview=\"" + brush.id + "\"></canvas><strong>" + brush.name + "</strong><span>" + brush.description + "</span></button>";
             }).join("");
             $$(".category-button", els.brushCategories).forEach(function (button) {
                 button.addEventListener("click", function () { state.brushCategory = button.dataset.category; renderBrushLibrary(); });
             });
             $$(".brush-card", els.brushGrid).forEach(function (button) {
-                button.addEventListener("click", function () { selectBrush(button.dataset.brush); });
+                button.addEventListener("click", function (event) { if (!event.target.closest("[data-favorite]")) selectBrush(button.dataset.brush); });
             });
+            $$("[data-favorite]", els.brushGrid).forEach(function (button) { button.addEventListener("click", function (event) {
+                event.stopPropagation(); var id = button.dataset.favorite; if (state.favorites.has(id)) state.favorites.delete(id); else state.favorites.add(id);
+                localStorage.setItem("canvas-studio-favorites", JSON.stringify(Array.from(state.favorites))); renderBrushLibrary();
+            }); });
             $$("[data-preview]", els.brushGrid).forEach(drawBrushPreview);
+            syncBrushSettings();
+        }
+
+        function syncBrushSettings() {
+            var base = brushes.find(function (item) { return item.id === state.brushId; }) || brushes[0];
+            var custom = state.brushOverrides[state.brushId] || {};
+            var spacing = Math.round((custom.spacing || base.spacing || .4) / (base.spacing || .4) * 100);
+            var rotation = custom.angle !== undefined ? custom.angle : base.angle || 0;
+            var scatter = Math.round((custom.jitter !== undefined ? custom.jitter : base.jitter || 0) * 100);
+            $("#brushSpacing").value = clamp(spacing, 10, 240); $("#brushSpacingValue").value = spacing + "%";
+            $("#brushRotation").value = rotation; $("#brushRotationValue").value = rotation + "°";
+            $("#brushScatter").value = scatter; $("#brushScatterValue").value = scatter + "%";
         }
 
         function drawBrushPreview(canvas) {
@@ -4601,7 +5363,11 @@
             for (var x = 18; x <= 222; x += 5) {
                 points.push({ x: x, y: 31 + Math.sin(x / 28) * 8, pressure: .2 + .8 * ((x - 18) / 204), tiltX: 0, tiltY: 0, twist: 30 });
             }
-            for (var i = 1; i < points.length; i += 1) drawEngineSegment(ctx, points[i - 1], points[i], brush, false);
+            if (brush.singleStamp) {
+                drawNatureSegment(ctx, { x: 105, y: 29, pressure: .8, tiltX: 0, tiltY: 0, twist: 0 }, { x: 135, y: 29, pressure: .8, tiltX: 0, tiltY: 0, twist: 0 }, Math.min(brush.size, 52), brush, 1);
+            } else {
+                for (var i = 1; i < points.length; i += 1) drawEngineSegment(ctx, points[i - 1], points[i], brush, false);
+            }
             state.color = saved.color;
             state.colorCustomized = saved.colorCustomized;
             state.params = saved.params;
@@ -4875,6 +5641,10 @@
                 button.setAttribute("aria-label", state.viewLocked ? "Unlock finger zoom and rotation" : "Lock finger zoom and rotation");
                 var lockUse = $("use", button);
                 if (lockUse) lockUse.setAttribute("href", state.viewLocked ? "#i-view-locked" : "#i-view-unlocked");
+                var lockIcon = $(".icon", button);
+                if (lockIcon && !lockUse) lockIcon.textContent = state.viewLocked ? materialIcons["view-locked"] : materialIcons["view-unlocked"];
+                var lockSvg = $(".plain-svg-icon", button);
+                if (lockSvg) lockSvg.outerHTML = icon(state.viewLocked ? "view-locked" : "view-unlocked");
             }
             showToast(state.viewLocked ? "Canvas view locked" : "Canvas view unlocked");
         }
@@ -5059,12 +5829,14 @@
                 return;
             }
             if (event.pointerType === "touch") {
-                state.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                state.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY });
                 if (state.touchPoints.size === 2) {
+                    state.touchChord = { count: 2, started: performance.now(), moved: false };
                     if (state.pointer) finishPointer(null, true, false);
                     if (!state.viewLocked) startGesture();
                     return;
                 }
+                if (state.touchPoints.size === 3 && state.touchChord) { state.touchChord.count = 3; state.gesture = null; return; }
                 if (!state.drawWithTouch && state.tool !== "hand") return;
                 if (state.viewLocked && state.tool === "hand") {
                     showToast("Unlock canvas view to pan with fingers");
@@ -5137,10 +5909,12 @@
                 transformHandle: transformHandle,
                 transformMode: transformMode,
                 panStart: { x: event.clientX, y: event.clientY, panX: state.view.panX, panY: state.view.panY },
-                continuous: state.tool === "brush" && !state.shortcutHeld && !state.shortcutLocked && usesContinuousStroke(activeBrush()),
+                continuous: state.tool === "brush" && state.symmetry === "none" && !event.shiftKey && !state.shortcutHeld && !state.shortcutLocked && usesContinuousStroke(activeBrush()),
+                straightLine: Boolean(event.shiftKey && event.pointerType !== "touch"),
                 brush: activeBrush(),
                 params: Object.assign({}, state.params),
                 color: state.color,
+                colorCustomized: state.colorCustomized,
                 strokePoints: [point],
                 renderFrame: 0,
                 lastSampleTime: Number(event.timeStamp) || 0,
@@ -5180,7 +5954,9 @@
                 return;
             }
             if (event.pointerType === "touch" && state.touchPoints.has(event.pointerId)) {
-                state.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                var trackedTouch = state.touchPoints.get(event.pointerId);
+                state.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY, startX: trackedTouch.startX, startY: trackedTouch.startY });
+                if (state.touchChord && Math.hypot(event.clientX - trackedTouch.startX, event.clientY - trackedTouch.startY) > 14) state.touchChord.moved = true;
                 if (state.gesture) {
                     updateGesture();
                     return;
@@ -5192,6 +5968,16 @@
             if (!state.pointer) updateBrushCursor(event, point);
             if (!state.pointer || state.pointer.id !== event.pointerId) return;
             event.preventDefault();
+
+            if (state.pointer.straightLine && (state.tool === "brush" || state.tool === "eraser")) {
+                var straightPoint = pointerPoint(event, state.pointer.artboardId);
+                if (!pointInside(straightPoint)) return;
+                restoreSnapshot(state.pointer.before);
+                var straightLayer = findLayerById(state.pointer.layerId) || activeLayer();
+                drawSymmetrySegment(straightLayer.ctx, state.pointer.start, straightPoint, state.pointer.brush, state.tool === "eraser");
+                state.pointer.current = straightPoint; state.pointer.lastSmooth = straightPoint; state.pointer.moved = true;
+                return;
+            }
 
             if (state.tool === "hand" || state.spaceHeld) {
                 state.view.panX = state.pointer.panStart.panX + event.clientX - state.pointer.panStart.x;
@@ -5226,7 +6012,7 @@
                         }
                     } else {
                         var drawingLayer = findLayerById(state.pointer.layerId) || activeLayer();
-                        drawEngineSegment(drawingLayer.ctx, state.pointer.lastSmooth, smooth, state.pointer.brush, erase);
+                        drawSymmetrySegment(drawingLayer.ctx, state.pointer.lastSmooth, smooth, state.pointer.brush, erase);
                     }
                 } else if (state.tool === "smudge") {
                     smudgeSegment(state.pointer.lastSmooth, smooth);
@@ -5242,6 +6028,10 @@
             if (event && event.pointerType === "touch") {
                 state.touchPoints.delete(event.pointerId);
                 if (state.touchPoints.size < 2) state.gesture = null;
+                if (!state.touchPoints.size && state.touchChord) {
+                    var chord = state.touchChord; state.touchChord = null;
+                    if (!chord.moved && performance.now() - chord.started < 420) { if (chord.count === 2) { undo(); showToast("Two-finger undo"); } else if (chord.count === 3) { redo(); showToast("Three-finger redo"); } }
+                }
             }
             if (!state.pointer || (event && state.pointer.id !== event.pointerId)) return;
             var pointer = state.pointer;
@@ -5255,14 +6045,14 @@
                         commitContinuousStroke(pointer);
                     } else {
                         var drawingLayer = findLayerById(pointer.layerId) || activeLayer();
-                        drawEngineSegment(drawingLayer.ctx, pointer.lastSmooth, finalPoint, pointer.brush, erase);
+                        if (!pointer.straightLine) drawSymmetrySegment(drawingLayer.ctx, pointer.lastSmooth, finalPoint, pointer.brush, erase);
                     }
                 } else if (!cancelled && (state.tool === "brush" || state.tool === "eraser")) {
                     var tapErase = state.tool === "eraser" || state.shortcutHeld || state.shortcutLocked;
                     pointer.skipHistory = queuePencilTipTap(pointer, finalPoint, tapErase);
                     if (pointer.pointerType !== "pen" || !state.pencilDoubleTap) {
                         var tapLayer = findLayerById(pointer.layerId) || activeLayer();
-                        drawTap(tapLayer.ctx, finalPoint, pointer.brush, tapErase);
+                        drawSymmetryTap(tapLayer.ctx, finalPoint, pointer.brush, tapErase);
                     }
                 } else if (state.tool === "select") {
                     state.selection = {
@@ -5439,6 +6229,19 @@
                 image.src = reader.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        function loadOverlayReference(file) {
+            if (!file) return; var reader = new FileReader(); reader.onload = function () { els.referenceOverlayImage.src = reader.result; els.referenceOverlay.hidden = false; showToast("Reference image shown above the canvas"); }; reader.readAsDataURL(file);
+        }
+
+        function removeSimpleBackground() {
+            var pending = state.pendingImport; if (!pending) return;
+            var canvas = document.createElement("canvas"), ctx = canvas.getContext("2d", { willReadFrequently: true }); canvas.width = pending.image.width; canvas.height = pending.image.height; ctx.drawImage(pending.image, 0, 0);
+            var image = ctx.getImageData(0, 0, canvas.width, canvas.height), data = image.data;
+            var corners = [[0,0],[canvas.width-1,0],[0,canvas.height-1],[canvas.width-1,canvas.height-1]].map(function (p) { var i=(p[1]*canvas.width+p[0])*4; return [data[i],data[i+1],data[i+2]]; });
+            for (var i=0;i<data.length;i+=4) { var near = corners.some(function (c) { return Math.hypot(data[i]-c[0],data[i+1]-c[1],data[i+2]-c[2]) < 48; }); if (near) data[i+3]=0; }
+            ctx.putImageData(image,0,0); var converted = new Image(); converted.onload = function () { pending.image=converted; $("#importPreview").src=canvas.toDataURL(); updateImportPlacement(); showToast("Simple background removed"); }; converted.src=canvas.toDataURL();
         }
 
         function updateImportPlacement() {
@@ -5655,11 +6458,20 @@
             $("#layersButton").addEventListener("click", function () { togglePanel("layersPanel"); });
             $("#settingsButton").addEventListener("click", function () { togglePanel("settingsPanel"); });
             $("#moreToolsButton").addEventListener("click", function () { togglePanel("moreToolsPanel"); });
+            $("#projectsButton").addEventListener("click", function () { renderProjectGallery(); $("#projectsDialog").showModal(); });
+            $("#closeProjectsDialog").addEventListener("click", function () { $("#projectsDialog").close(); });
+            $("#saveProjectButton").addEventListener("click", function () { saveStudioProject(); });
             $("#addArtboardButton").addEventListener("click", addReferenceArtboard);
             $("#moreImportButton").addEventListener("click", function () { els.imageInput.click(); });
             $("#importButton").addEventListener("click", function () { els.imageInput.click(); });
             els.imageInput.addEventListener("change", function () { importImage(els.imageInput.files[0]); els.imageInput.value = ""; });
             els.referenceImageInput.addEventListener("change", function () { loadReferenceImage(els.referenceImageInput.files[0]); els.referenceImageInput.value = ""; });
+            $("#overlayImageInput").addEventListener("change", function () { loadOverlayReference(this.files[0]); this.value = ""; });
+            $("#referenceModeButton").addEventListener("click", function () { $("#overlayImageInput").click(); });
+            $("#hideReferenceButton").addEventListener("click", function () { els.referenceOverlay.hidden = !els.referenceOverlay.hidden; this.textContent = els.referenceOverlay.hidden ? "Show" : "Hide"; });
+            $("#traceReferenceButton").addEventListener("click", function () { state.referenceTracing = !state.referenceTracing; els.referenceOverlay.style.setProperty("--reference-filter", state.referenceTracing ? "grayscale(1) contrast(1.8)" : "none"); this.classList.toggle("active", state.referenceTracing); });
+            $("#referenceOpacity").addEventListener("input", function () { els.referenceOverlay.style.setProperty("--reference-opacity", this.value / 100); $("#referenceOpacityValue").value = this.value + "%"; });
+            $("#removeBackgroundButton").addEventListener("click", removeSimpleBackground);
             $("#closeImportDialog").addEventListener("click", closeImportDialog);
             $("#cancelImportButton").addEventListener("click", closeImportDialog);
             $("#placeImportButton").addEventListener("click", placeImportedImage);
@@ -5670,6 +6482,15 @@
             $$("[data-import-mode]").forEach(function (button) {
                 button.addEventListener("click", function () { setImportMode(button.dataset.importMode); });
             });
+            $$("[data-symmetry]").forEach(function (button) { button.addEventListener("click", function () { state.symmetry = button.dataset.symmetry; $$("[data-symmetry]").forEach(function (item) { item.classList.toggle("active", item === button); }); renderOverlay(); showToast(button.textContent + " symmetry"); }); });
+            $$("[data-guide]").forEach(function (button) { button.addEventListener("click", function () { state.guide = button.dataset.guide; $$("[data-guide]").forEach(function (item) { item.classList.toggle("active", item === button); }); renderOverlay(); }); });
+            $("#mirrorViewButton").addEventListener("click", function () { state.mirrorView = !state.mirrorView; els.artboard.classList.toggle("mirror-view", state.mirrorView); this.classList.toggle("active", state.mirrorView); showToast(state.mirrorView ? "Canvas view mirrored" : "Normal canvas view"); });
+            renderPaletteLibrary();
+            function updateBrushOverride(key, value) { var base = brushes.find(function (brush) { return brush.id === state.brushId; }) || brushes[0]; var custom = state.brushOverrides[state.brushId] || (state.brushOverrides[state.brushId] = {}); if (key === "spacing") custom.spacing = (base.spacing || .4) * value / 100; else custom[key] = value; }
+            $("#brushSpacing").addEventListener("input", function () { updateBrushOverride("spacing", Number(this.value)); $("#brushSpacingValue").value = this.value + "%"; });
+            $("#brushRotation").addEventListener("input", function () { updateBrushOverride("angle", Number(this.value)); $("#brushRotationValue").value = this.value + "°"; });
+            $("#brushScatter").addEventListener("input", function () { updateBrushOverride("jitter", Number(this.value) / 100); $("#brushScatterValue").value = this.value + "%"; });
+            $("#resetBrushSettings").addEventListener("click", function () { delete state.brushOverrides[state.brushId]; renderBrushLibrary(); showToast("Brush settings reset"); });
             $("#exportButton").addEventListener("click", function (event) {
                 event.stopPropagation();
                 var menu = $("#exportMenu");
@@ -5691,6 +6512,7 @@
             });
             $("#undoButton").addEventListener("click", undo);
             $("#redoButton").addEventListener("click", redo);
+            $("#resetDrawingButton").addEventListener("click", resetDrawing);
             $("#addLayerButton").addEventListener("click", addLayer);
             $("#duplicateLayerButton").addEventListener("click", duplicateLayer);
             $("#moveLayerUpButton").addEventListener("click", moveLayerUp);
@@ -5937,7 +6759,29 @@
         bindEvents();
         renderBrushLibrary();
         initializeDocument(2048, 1536, "Untitled artwork");
+        setTimeout(function () { loadStudioProject("autosave", true).catch(function () { /* First visit has no autosave. */ }); }, 250);
     }());
     </script>
+<footer class="footer" id="siteFooter">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-text">Hisan</span>
+                        <span class="logo-dot">.</span>
+                    </div>
+                    <p>Digital Marketing Expert helping businesses grow through strategic SEO, Google Ads, and Social Media Marketing.</p>
+                </div>
+                <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="/">Home</a></li><li><a href="/about/">About</a></li><li><a href="/services/">Services</a></li><li><a href="/tools/">Tools</a></li><li><a href="/blog/">Blogs</a></li><li><a href="/contact/">Contact</a></li></ul></div>
+                <div class="footer-links"><h4>Services</h4><ul><li><a href="/services/">SEO</a></li><li><a href="/services/">Google Ads</a></li><li><a href="/services/">Social Media</a></li><li><a href="/services/">Consultation</a></li></ul></div>
+                <div class="footer-links"><h4>Tools</h4><ul><li><a href="/tools/pdf-merger/">PDF Merger</a></li><li><a href="/tools/image-to-pdf/">Image to PDF</a></li><li><a href="/tools/pdf-to-image/">PDF to Image</a></li><li><a href="/tools/pdf-compressor/">PDF Compressor</a></li><li><a href="/tools/image-converter/">Image Converter</a></li><li><a href="/tools/favicon-generator/">Favicon Generator</a></li><li><a href="/tools/qr-code-generator/">QR Code Generator</a></li><li><a href="/tools/utm-builder/">UTM Builder</a></li><li><a href="/tools/painting-drawing/">Painting and Drawing</a></li></ul></div>
+                <div class="footer-links"><h4>Legal</h4><ul><li><a href="/legal/privacy-policy/">Privacy Policy</a></li><li><a href="/legal/terms/">Terms of Service</a></li><li><a href="/legal/cookie-policy/">Cookie Policy</a></li></ul></div>
+                <div class="footer-contact"><h4>Contact</h4><p><i class="fas fa-envelope"></i> workhisan@gmail.com</p><p><i class="fas fa-map-marker-alt"></i> Muscat, Oman</p></div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Hisan Ali. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
