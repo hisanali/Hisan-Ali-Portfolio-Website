@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 9 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "المقالات ذات الصلة",
       "availableTitles": [
         "دليل تشغيل Trendjacking لمدة 72 ساعة للعلامات التجارية العمانية (إصدار 2026)",
@@ -59,9 +56,6 @@ window.blogLanguagePage = {
         null,
         "ഹിസാൻ അലി"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "p><p data-key=": "ഒമാൻ ബ്രാൻഡുകൾക്കായുള്ള 72-മണിക്കൂർ ട്രെൻഡ്‌ജാക്കിംഗ് പ്ലേബുക്ക് (2026 പതിപ്പ്)",
       "relatedTitles": [
         null,
@@ -92,9 +86,6 @@ window.blogLanguagePage = {
         "<i class=\"far fa-clock\"></i> 9 min read",
         "<i class=\"far fa-user\"></i> Hisan Ali"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Posts",
       "relatedTitles": [
         "72-Hour Trendjacking Playbook for Oman Brands (2026 Edition)",

@@ -144,6 +144,36 @@ const overrides = {
       category: "एनालिटिक्स और मेज़रमेंट",
     },
   },
+  "helpful-content-google-people-first": {
+    ar: { heading: "كيف تكتب محتوى مفيداً يضع الناس أولاً وتثق به Google", category: "استراتيجية المحتوى" },
+    ml: { heading: "Google വിശ്വസിക്കുന്ന People-First Helpful Content എങ്ങനെ എഴുതാം", category: "Content Strategy" },
+    hi: { heading: "Google के भरोसे लायक उपयोगी, People-First Content कैसे लिखें", category: "कंटेंट स्ट्रैटेजी" },
+  },
+  "topic-hub-seo-structure": {
+    ar: { heading: "كيف تنشئ Topic Hubs تساعد Google على فهم موقعك", category: "هيكلة SEO" },
+    ml: { heading: "നിങ്ങളുടെ Website Google-ന് വ്യക്തമായി മനസ്സിലാക്കാൻ സഹായിക്കുന്ന Topic Hubs എങ്ങനെ നിർമ്മിക്കാം", category: "SEO Structure" },
+    hi: { heading: "ऐसे Topic Hubs कैसे बनाएँ जो Google को आपकी वेबसाइट समझने में मदद करें", category: "SEO स्ट्रक्चर" },
+  },
+  "analytics-growth-oman": {
+    ar: { heading: "كيف تستخدم بيانات التحليلات لدفع النمو الرقمي في عُمان", category: "التحليلات والنمو" },
+    ml: { heading: "ഒമാനിൽ Digital Growth നേടാൻ Analytics Data എങ്ങനെ ഉപയോഗിക്കാം", category: "Analytics & Growth" },
+    hi: { heading: "ओमान में डिजिटल ग्रोथ बढ़ाने के लिए Analytics Data का उपयोग कैसे करें", category: "एनालिटिक्स और ग्रोथ" },
+  },
+  "google-ads-roi-campaigns-oman": {
+    ar: { heading: "كيف تحقق أقصى ROI من حملات Google Ads في عُمان", category: "إعلانات Google" },
+    ml: { heading: "ഒമാനിലെ Google Ads Campaigns-ൽ നിന്ന് പരമാവധി ROI എങ്ങനെ നേടാം", category: "Google Ads" },
+    hi: { heading: "ओमान में Google Ads Campaigns से अधिकतम ROI कैसे पाएँ", category: "Google Ads" },
+  },
+  "seo-audit-checklist-small-businesses": {
+    ar: { heading: "قائمة تدقيق SEO خطوة بخطوة للشركات الصغيرة", category: "تدقيق SEO" },
+    ml: { heading: "Small Businesses-നുള്ള Step-by-Step SEO Audit Checklist", category: "SEO Audit" },
+    hi: { heading: "छोटे बिज़नेस के लिए Step-by-Step SEO Audit Checklist", category: "SEO ऑडिट" },
+  },
+  "search-intent-seo-success": {
+    ar: { heading: "فهم Search Intent: مفتاح تحقيق نتائج SEO أفضل", category: "استراتيجية SEO" },
+    ml: { heading: "Search Intent മനസ്സിലാക്കാം: മികച്ച SEO Results-ന്റെ പ്രധാന താക്കോൽ", category: "SEO Strategy" },
+    hi: { heading: "Search Intent को समझना: बेहतर SEO Results की अहम कुंजी", category: "SEO स्ट्रैटेजी" },
+  },
 };
 
 const authorSuffix = {
@@ -165,6 +195,29 @@ for (const [slug, localizedOverrides] of Object.entries(overrides)) {
       title: values.heading + authorSuffix[locale],
       breadcrumb: values.category,
     });
+    if (locale === "ml") {
+      const copy = config.translations[locale];
+      copy.article = copy.article
+        .replaceAll(" ലോഡ് ചെയ്യുന്നു decoding=", ' loading="lazy" decoding=')
+        .replaceAll("</5QLZXZ0", "</li>")
+        .replaceAll("ZXQ0-യെ കുറിച്ച് സംസാരിക്കുമ്പോൾ ഇത് ഉപയോഗിക്കുക", "conversion measurement വിശദീകരിക്കുമ്പോൾ ഇത് ഉപയോഗിക്കുക.</li>")
+        .replaceAll("അടുത്ത നടപടി ZXQ സെറ്റ് ആണ് ഏറ്റവും മികച്ചത് ZXZv എന്നതാണ് അടുത്ത നടപടി. ഏറ്റവും കൂടുതൽ ചാർട്ടുകളുള്ള ഒന്നല്ല.", "ഏറ്റവും മികച്ച analytics report കൂടുതൽ charts ഉള്ളതല്ല; വ്യക്തമായ next action നൽകുന്നതാണ്.")
+        .replace(/ZXQ[A-Za-z0-9]*|ZXZ[A-Za-z0-9]*/g, "");
+      copy.relatedMeta = (copy.relatedMeta || []).map((value) =>
+        /ZXQ|ZXZ/.test(value) ? "5 min read" : value,
+      );
+    }
+    const copy = config.translations[locale];
+    for (const key of ["description", "authorName", "authorTitle", "authorBio", "relatedHeading", "ctaHeading", "ctaText", "ctaButton"]) {
+      if (!copy[key] || /data-key=|ZXQ|ZXZ/.test(copy[key])) delete copy[key];
+    }
+    for (const key of ["meta", "relatedTitles", "relatedMeta"]) {
+      if (Array.isArray(copy[key])) {
+        copy[key] = copy[key].map((value) =>
+          value && !/data-key=|ZXQ|ZXZ/.test(value) ? value : null,
+        );
+      }
+    }
   }
 
   await fs.writeFile(

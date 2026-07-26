@@ -124,6 +124,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    if (navActions && !navActions.querySelector('.nav-paint-tool')) {
+        const paintTool = document.createElement('a');
+        paintTool.className = 'nav-tool nav-paint-tool';
+        paintTool.href = '/tools/painting-drawing/';
+        paintTool.setAttribute('aria-label', 'Open painting studio');
+        paintTool.setAttribute('title', 'Painting Studio');
+        paintTool.style.background = 'linear-gradient(135deg, #7c3aed 0%, #db2777 55%, #fb7185 100%)';
+        paintTool.style.boxShadow = '0 8px 20px rgba(219, 39, 119, 0.34)';
+        paintTool.innerHTML = '<i class="fa-solid fa-paintbrush" aria-hidden="true"></i>';
+        const speedTool = navActions.querySelector('.nav-tool:not(.nav-paint-tool)');
+        const themeToggle = navActions.querySelector('.theme-toggle');
+        if (speedTool) {
+            navActions.insertBefore(paintTool, speedTool);
+        } else if (themeToggle) {
+            navActions.insertBefore(paintTool, themeToggle);
+        } else {
+            navActions.prepend(paintTool);
+        }
+    }
+
     const navMenu = document.querySelector('.nav-menu');
     const speedTestLinks = navMenu
         ? [...navMenu.querySelectorAll('a')].filter((anchor) => {
@@ -160,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '/tools': 'fa-screwdriver-wrench',
         '/blog': 'fa-pen-nib',
         '/contact': 'fa-envelope',
+        '/tools/painting-drawing': 'fa-palette',
         '/speed-test': 'fa-gauge-high'
     };
 

@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة 8 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "الأدلة ذات الصلة",
       "availableTitles": [
         "تتبع التحويل للشركات العمانية",
@@ -55,13 +52,10 @@ window.blogLanguagePage = {
         null,
         "ഹിസാൻ അലി"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedTitles": [
         null,
         "സിഇഒമാർക്കുള്ള GA4 ഡാഷ്‌ബോർഡ് സജ്ജീകരണം",
-        "ഡ്രൈവ് ഡിജിറ്റൽ Gp-ൽ എങ്ങനെ അനലിറ്റിക്‌സ് ഡാറ്റ ഉപയോഗിക്കാം data-key=\"relatedMeta-0\">9 മിനിറ്റ് റീഡ്"
+        null
       ],
       "relatedMeta": [
         null,
@@ -88,9 +82,6 @@ window.blogLanguagePage = {
       "breadcrumb": "एनालिटिक्स और मेज़रमेंट",
       "category": "एनालिटिक्स और मेज़रमेंट",
       "heading": "GA4 के लिए सर्वर-साइड ट्रैकिंग: ओमान के बिज़नेस के लिए ज़रूरी प्राइवेसी-फ़र्स्ट मेज़रमेंट अपग्रेड",
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Guides",
       "relatedTitles": [
         "Conversion Tracking for Oman Businesses",

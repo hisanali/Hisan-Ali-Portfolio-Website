@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const slugs = [
+const defaultSlugs = [
   "oman-business-launch-checklist",
   "oman-e-invoicing-2026-guide",
   "oman-data-privacy-marketing-guide",
@@ -14,6 +14,8 @@ const slugs = [
   "ai-max-search-campaigns-oman",
   "server-side-tracking-ga4-oman",
 ];
+const requestedSlugs = process.argv.slice(2);
+const slugs = requestedSlugs.length ? requestedSlugs : defaultSlugs;
 const locales = ["ar", "ml", "hi"];
 const localeNames = { ar: "العربية", ml: "മലയാളം", hi: "हिन्दी" };
 const endpoint = "https://translate.googleapis.com/translate_a/single";
@@ -84,7 +86,7 @@ function captureShell(html) {
   };
 }
 
-function protectTerms(value) {
+function protectTerms(value, target) {
   const terms = [
     "Google Analytics 4",
     "Google Tag Manager",
@@ -106,6 +108,25 @@ function protectTerms(value) {
     "CRM",
     "API",
   ];
+  if (target === "ml") {
+    terms.push(
+      "Helpful Content",
+      "Topic Hub",
+      "Search Intent",
+      "Google Search",
+      "content strategy",
+      "landing page",
+      "conversion tracking",
+      "conversion",
+      "tracking",
+      "analytics",
+      "content",
+      "keywords",
+      "ranking",
+      "campaign",
+      "audit",
+    );
+  }
   const replacements = [];
   let output = value;
   terms.forEach((term) => {
@@ -127,53 +148,94 @@ function restoreTerms(value, replacements) {
   return output;
 }
 
-async function translateHtml(html, target) {
-  if (!stripTags(html)) return html;
-  const { output, replacements } = protectTerms(html);
-  const body = new URLSearchParams({
-    client: "gtx",
-    sl: "en",
-    tl: target,
-    dt: "t",
-    q: output,
-  });
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded;charset=UTF-8" },
-    body,
-  });
-  if (!response.ok) throw new Error(`Translation request failed: ${response.status}`);
-  const data = await response.json();
-  const translated = (data[0] || []).map((part) => part[0] || "").join("");
-  return restoreTerms(translated, replacements);
+async function requestTranslation(html, target) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const body = new URLSearchParams({
+      client: "gtx",
+      sl: "en",
+      tl: target,
+      dt: "t",
+      q: html,
+    });
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body,
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return (data[0] || []).map((part) => part[0] || "").join("");
+    }
+    if (response.status !== 429 || attempt === 5) {
+      throw new Error(`Translation request failed: ${response.status}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2500 * (attempt + 1)));
+  }
+  throw new Error("Translation request exhausted retries");
 }
 
-function splitHtml(html, maxLength = 6500) {
-  if (html.length <= maxLength) return [html];
-  const parts = [];
-  let rest = html;
-  while (rest.length > maxLength) {
-    const window = rest.slice(0, maxLength);
-    const candidates = ["</p>", "</li>", "</h2>", "</h3>", "</div>", "</section>"];
-    let cut = -1;
-    for (const marker of candidates) cut = Math.max(cut, window.lastIndexOf(marker));
-    cut = cut > maxLength * 0.45 ? cut + window.slice(cut).match(/^<\/[^>]+>/)?.[0].length : window.lastIndexOf(">");
-    if (!cut || cut < 1) cut = maxLength;
-    parts.push(rest.slice(0, cut));
-    rest = rest.slice(cut);
-  }
-  if (rest) parts.push(rest);
-  return parts;
+function applyMalayalamEditorialStyle(value) {
+  return value
+    .replaceAll("ലാൻഡിംഗ് പേജുകൾ", "landing pages")
+    .replaceAll("ലാൻഡിംഗ് പേജ്", "landing page")
+    .replaceAll("ഗൂഗിൾ പരസ്യങ്ങൾ", "Google Ads")
+    .replaceAll("സെർച്ച് എഞ്ചിൻ ഒപ്റ്റിമൈസേഷൻ", "SEO")
+    .replaceAll("കൺവേർഷൻ ട്രാക്കിംഗ്", "conversion tracking")
+    .replaceAll("പരിവർത്തന ട്രാക്കിംഗ്", "conversion tracking")
+    .replaceAll("കീവേഡുകൾ", "keywords")
+    .replaceAll("കീവേഡ്", "keyword")
+    .replaceAll("കാമ്പെയ്‌നുകൾ", "campaigns")
+    .replaceAll("കാമ്പെയ്ൻ", "campaign")
+    .replaceAll("അനലിറ്റിക്സ്", "analytics");
 }
 
-async function translateLongHtml(html, target) {
-  const chunks = splitHtml(html);
-  const translated = [];
-  for (const chunk of chunks) {
-    translated.push(await translateHtml(chunk, target));
-    await new Promise((resolve) => setTimeout(resolve, 180));
+async function translateTextNodes(html, target) {
+  const parts = html.split(/(<[^>]+>)/g);
+  const nodes = [];
+  parts.forEach((part, partIndex) => {
+    if (part.startsWith("<") || !part.trim()) return;
+    nodes.push({ partIndex, source: part });
+  });
+  if (!nodes.length) return html;
+
+  const batches = [];
+  let batch = [];
+  let length = 0;
+  for (const [nodeIndex, node] of nodes.entries()) {
+    const wrapper = `<p data-i="${nodeIndex}">${node.source}</p>`;
+    if (batch.length && length + wrapper.length > 4800) {
+      batches.push(batch);
+      batch = [];
+      length = 0;
+    }
+    batch.push({ nodeIndex, wrapper });
+    length += wrapper.length;
   }
-  return translated.join("");
+  if (batch.length) batches.push(batch);
+
+  const translatedNodes = new Map();
+  for (const currentBatch of batches) {
+    const payload = `<div>${currentBatch.map((item) => item.wrapper).join("")}</div>`;
+    const translated = await requestTranslation(payload, target);
+    for (const match of translated.matchAll(/<p\s+data-i="(\d+)"[^>]*>([\s\S]*?)<\/p>/gi)) {
+      let value = match[2];
+      if (target === "ml") value = applyMalayalamEditorialStyle(value);
+      translatedNodes.set(Number(match[1]), value);
+    }
+    for (const item of currentBatch) {
+      if (!translatedNodes.has(item.nodeIndex)) {
+        let fallback = await requestTranslation(nodes[item.nodeIndex].source, target);
+        if (target === "ml") fallback = applyMalayalamEditorialStyle(fallback);
+        translatedNodes.set(item.nodeIndex, fallback);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  nodes.forEach((node, nodeIndex) => {
+    parts[node.partIndex] = translatedNodes.get(nodeIndex);
+  });
+  return parts.join("");
 }
 
 function shellToMarkup(shell) {
@@ -267,8 +329,8 @@ for (const [slugIndex, slug] of slugs.entries()) {
       `[${slugIndex + 1}/${slugs.length}] ${slug} → ${localeNames[locale]}... `,
     );
     const [translatedShellMarkup, translatedArticle] = await Promise.all([
-      translateHtml(shellToMarkup(shell), locale),
-      translateLongHtml(article, locale),
+      translateTextNodes(shellToMarkup(shell), locale),
+      translateTextNodes(article, locale),
     ]);
     translations[locale] = normalizeLocale(
       {

@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة 10 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "المقالات ذات الصلة",
       "availableTitles": [
         "دليل التشغيل الممتد على مدار 72 ساعة للعلامات التجارية العمانية (إصدار 2026)",
@@ -47,7 +44,6 @@ window.blogLanguagePage = {
     },
     "ml": {
       "title": "GCC ബ്രാൻഡുകൾക്കുള്ള FIFA World Cup 2026 മാർക്കറ്റിംഗ് പ്ലേബുക്ക്: ബജറ്റ് പാഴാക്കാതെ ട്രെൻഡ് പ്രയോജനപ്പെടുത്താം | ഹിസാൻ അലി",
-      "description": "Fan-first content, ലോക്കൽ ടൈമിംഗ്, ഷോർട്ട് വീഡിയോ, ലാൻഡിംഗ് പേജുകൾ, ട്രെൻഡ്-സേഫ് കാമ്പെയ്‌നുകൾ എന്നിവ ഉൾക്കൊള്ളുന്ന GCC ബ്രാൻഡുകൾക്കായുള്ള ഒരു പ്രായോഗിക FIFA World Cup 2026 മാർക്കറ്റിംഗ് പ്ലേബുക്ക്. data-key=\"heading\">GCC ബ്രാൻഡുകൾക്കായുള്ള FIFA World Cup 2026 മാർക്കറ്റിംഗ് പ്ലേബുക്ക്: ബജറ്റ് പാഴാക്കാതെ ട്രെൻഡ് എങ്ങനെ ഓടിക്കാം",
       "meta": [
         "Jul 9, 2026",
         null,
@@ -55,9 +51,6 @@ window.blogLanguagePage = {
       ],
       " 1": "class>",
       ">1": "class വായിക്കുക",
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       " ബന്ധപ്പെട്ട ഈയടുത്ത പോസ്റ്റുകൾ. data-key=": "ഒമാൻ ബ്രാൻഡുകൾക്കായുള്ള 72-മണിക്കൂർ ട്രെൻഡ്‌ജാക്കിംഗ് പ്ലേബുക്ക് (2026 പതിപ്പ്)",
       "relatedTitles": [
         null,
@@ -90,9 +83,6 @@ window.blogLanguagePage = {
       "breadcrumb": "स्पोर्ट्स मार्केटिंग",
       "category": "स्पोर्ट्स मार्केटिंग",
       "heading": "GCC ब्रांड्स के लिए FIFA World Cup 2026 मार्केटिंग प्लेबुक: बजट बर्बाद किए बिना ट्रेंड का लाभ कैसे लें",
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Posts",
       "relatedTitles": [
         "72-Hour Trendjacking Playbook for Oman Brands (2026 Edition)",

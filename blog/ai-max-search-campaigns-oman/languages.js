@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 8 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "الأدلة ذات الصلة",
       "availableTitles": [
         "الأداء الأقصى في عام 2026: هل هو مناسب للشركات في عُمان؟",
@@ -46,19 +43,15 @@ window.blogLanguagePage = {
     },
     "ml": {
       "title": "AI Max for Search Campaigns: പ്രവർത്തനക്ഷമമാക്കുന്നതിന് മുമ്പ് ഒമാൻ ബിസിനസുകൾ അറിയേണ്ടത് | ഹിസാൻ അലി",
-      "description": "തിരയൽ കാമ്പെയ്‌നുകൾക്കായുള്ള Google-ൻ്റെ AI Max-ൻ്റെ ഒരു പ്രായോഗിക ഗൈഡ്, അത് എപ്പോൾ പരിശോധിക്കണം, എന്ത് കാണണം, ഒമാൻ ബിസിനസുകൾക്ക് ബജറ്റ് പാഴാക്കുന്നത് എങ്ങനെ ഒഴിവാക്കാം. data-key=\"heading\">AI Max സെർച്ച് കാമ്പെയ്‌നുകൾക്കായി: ഒമാൻ ബിസിനസുകൾ ഓണാക്കുന്നതിന് മുമ്പ് അറിഞ്ഞിരിക്കേണ്ട കാര്യങ്ങൾ",
       "meta": [
         "ജൂലൈ 8, 2026",
-        "read class data-key=\"meta-2\"> ഹിസാൻ അലി"
+        null
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "related Guides": "അറിയപ്പെട്ടിരിക്കുന്നു. data-key=\"relatedTitles-0\">2026-ലെ പരമാവധി പ്രകടനം: ഒമാൻ ബിസിനസുകൾക്ക് ഇത് ശരിയാണോ?",
       "relatedTitles": [
         null,
         "Google Ads ഒമാൻ ബിസിനസുകൾക്കായുള്ള ബജറ്റ് ഫ്രെയിംവർക്ക്",
-        "Oman ബിസിനസ്സിനായുള്ള Conversion Track data-key=\"relatedMeta-0\">12 മിനിറ്റ് റീഡ്"
+        null
       ],
       "relatedMeta": [
         null,
@@ -89,9 +82,6 @@ window.blogLanguagePage = {
         "<i class=\"far fa-clock\"></i> 8 min read",
         "<i class=\"far fa-user\"></i> Hisan Ali"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Guides",
       "relatedTitles": [
         "Performance Max in 2026: Is It Right for Oman Businesses?",

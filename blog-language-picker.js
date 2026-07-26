@@ -54,7 +54,9 @@
 
     function setText(selector, value) {
         var element = document.querySelector(selector);
-        if (element && value != null) element.textContent = value;
+        if (element && value != null && !/data-key|[<>]|ZXQ|ZXZ/i.test(String(value))) {
+            element.textContent = value;
+        }
     }
 
     function setMeta(selector, value) {
@@ -63,8 +65,12 @@
     }
 
     function setList(selector, values) {
+        if (!Array.isArray(values)) return;
         document.querySelectorAll(selector).forEach(function (element, index) {
-            if (values[index] != null) element.textContent = values[index];
+            var value = values[index];
+            if (value != null && !/data-key|[<>]|ZXQ|ZXZ/i.test(String(value))) {
+                element.textContent = value;
+            }
         });
     }
 
@@ -90,7 +96,10 @@
         setText(".blog-post-header .blog-category", copy.category);
         setText(".blog-post-header h1", copy.heading);
         metaRow.querySelectorAll("span").forEach(function (item, index) {
-            if (copy.meta[index] != null) item.innerHTML = copy.meta[index];
+            var value = copy.meta[index];
+            if (value != null && !/data-key|[<>]|ZXQ|ZXZ/i.test(String(value))) {
+                item.innerHTML = value;
+            }
         });
         article.innerHTML = copy.article;
         setText(".author-card h3", copy.authorName);

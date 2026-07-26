@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 9 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "مقالات ذات صلة",
       "relatedTitles": [
         "دليل تركيبات FIFA World Cup 2026 للعلامات التجارية في دول مجلس التعاون الخليجي",
@@ -46,11 +43,10 @@ window.blogLanguagePage = {
       "description": "റഫറി തീരുമാനങ്ങൾ, അവലോകനങ്ങൾ, IFAB പ്രോട്ടോക്കോൾ എന്നിവ യഥാർത്ഥത്തിൽ എങ്ങനെ പ്രവർത്തിക്കുന്നുവെന്ന് കാണിക്കുന്ന വ്യക്തമായ, കാലികമായ VAR വിശദീകരണവും വിശ്വാസത്തെയും തെറ്റായ വിവരങ്ങളെയും കുറിച്ചുള്ള മാർക്കറ്റിംഗ് പാഠവും. നിയമങ്ങൾ",
       "heading": "ഫുട്ബോളിൽ VAR യഥാർത്ഥത്തിൽ എങ്ങനെ പ്രവർത്തിക്കുന്നു: അന്തിമ തീരുമാനം റഫറി എടുക്കുന്നതെന്തുകൊണ്ട്, വിവാദങ്ങളിൽ നിന്ന് ബ്രാൻഡുകൾക്ക് എന്ത് പഠിക്കാം",
       "meta": [
-        "Jul 6, 202 data-key=\"meta-1\"> 9 മിനിറ്റ് വായിച്ചു",
+        null,
         null,
         "ഹിസാൻ അലി"
       ],
-      "authorName": "",
       "authorTitle-orB>": "അനുബന്ധ പോസ്റ്റുകൾ",
       "relatedTitles": [
         "FIFA World Cup 2026 GCC ബ്രാൻഡുകൾക്കുള്ള ഫിക്‌ചേഴ്സ് ഗൈഡ്",
@@ -62,8 +58,6 @@ window.blogLanguagePage = {
       ],
       "breadcrumb": "ഫുട്ബോൾ നിയമങ്ങൾ",
       "category": "ഫുട്ബോൾ നിയമങ്ങൾ",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Posts",
       "ctaHeading": "Want your site to show up better in search and AI answers?",
       "ctaText": "I can help you shape pages that are clear, credible, and easier for both search engines and AI tools to understand.",
@@ -81,9 +75,6 @@ window.blogLanguagePage = {
       "breadcrumb": "फ़ुटबॉल नियम",
       "category": "फ़ुटबॉल नियम",
       "heading": "फ़ुटबॉल में VAR वास्तव में कैसे काम करता है: अंतिम फ़ैसला रेफ़री क्यों करता है और विवाद से ब्रांड क्या सीख सकते हैं",
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Posts",
       "relatedTitles": [
         "FIFA World Cup 2026 Fixtures Guide for GCC Brands",

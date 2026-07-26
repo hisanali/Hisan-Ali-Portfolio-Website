@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 7 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "الأدلة ذات الصلة",
       "availableTitles": [
         "تسويق التجارة الإلكترونية في عمان",
@@ -44,14 +41,10 @@ window.blogLanguagePage = {
     },
     "ml": {
       "title": "ഒമാനിലെ ഇ-ഇൻവോയ്സിംഗ് 2026: ഫവ്തറ സമയക്രമവും ബിസിനസ് തയ്യാറെടുപ്പ് ഗൈഡും | ഹിസാൻ അലി",
-      "description": "Fawtara റോൾഔട്ട് ടൈംലൈൻ, ഫൈവ്-കോണർ മോഡൽ, സിസ്റ്റം തയ്യാറാക്കൽ, ഡാറ്റ പരിശോധനകൾ, ഒരു SME റെഡിനസ് ചെക്ക്‌ലിസ്റ്റ് എന്നിവ ഉൾക്കൊള്ളുന്ന ഒരു പ്രായോഗിക ഒമാൻ ഇ-ഇൻവോയ്‌സിംഗ് ഗൈഡ്. data-key=\"heading\">ഒമാൻ ഇ-ഇൻവോയ്‌സിംഗ് 2026: ഫവ്‌താര ടൈംലൈനും ബിസിനസ്സ് റെഡിനസ് ഗൈഡും",
       "meta": [
         "ജൂലൈ 25, 2026",
-        "data-key=\"meta-2\"> ഹിസാൻ അലി"
+        null
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "related Guides": "അറിയപ്പെട്ടിരിക്കുന്നു. data-key=\"relatedTitles-0\">ഒമാനിലെ ഇ-കൊമേഴ്‌സ് മാർക്കറ്റിംഗ്",
       "relatedTitles": [
         null,
@@ -84,9 +77,6 @@ window.blogLanguagePage = {
         "<i class=\"far fa-clock\"></i> 7 min read",
         "<i class=\"far fa-user\"></i> Hisan Ali"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Guides",
       "relatedTitles": [
         "E-commerce Marketing in Oman",

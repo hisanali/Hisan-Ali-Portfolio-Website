@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 10 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "المقالات ذات الصلة",
       "availableTitles": [
         "كيف يغير بحث الذكاء الاصطناعي النقرات والعملاء المحتملين وإستراتيجية موقع الويب للشركات في سلطنة عمان",
@@ -53,9 +50,6 @@ window.blogLanguagePage = {
         "ജൂലൈ 9, 2026",
         "ഡാറ്റ വായിക്കുക. class=\"far fa-user\"> ഹിസാൻ അലി"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "തുടർന്നുള്ള തിരയലുകൾ",
       "relatedTitles": [
         null,
@@ -87,9 +81,6 @@ window.blogLanguagePage = {
         "<i class=\"far fa-clock\"></i> 10 min read",
         "<i class=\"far fa-user\"></i> Hisan Ali"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Posts",
       "relatedTitles": [
         "How AI Search Is Changing Clicks, Leads, and Website Strategy for Oman Businesses",

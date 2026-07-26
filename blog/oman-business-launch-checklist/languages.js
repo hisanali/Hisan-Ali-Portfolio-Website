@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 10 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "مواصلة السلسلة",
       "availableTitles": [
         "بدء مشروع تجاري في عمان",
@@ -44,14 +41,10 @@ window.blogLanguagePage = {
     },
     "ml": {
       "title": "ഒമാനിൽ ബിസിനസ് ആരംഭിക്കാനുള്ള ചെക്ക്‌ലിസ്റ്റ്: ആദ്യ 90 ദിവസങ്ങളിൽ ചെയ്യേണ്ടത് | ഹിസാൻ അലി",
-      "description": "പുതുതായി രജിസ്റ്റർ ചെയ്ത ഒമാൻ ബിസിനസ്സിനായുള്ള പ്രായോഗികമായ ആദ്യ 90 ദിവസത്തെ ചെക്ക്‌ലിസ്റ്റ്: കംപ്ലയിൻസ്, ഫിനാൻസ്, ഓപ്പറേഷൻസ്, ബ്രാൻഡിംഗ്, വെബ്‌സൈറ്റ്, സെയിൽസ്, മാർക്കറ്റിംഗ്, കെപിഐകൾ. data-key=\"heading\">ഒമാൻ ബിസിനസ് ലോഞ്ച് ചെക്ക്‌ലിസ്റ്റ്: നിങ്ങളുടെ ആദ്യ 90 ദിവസങ്ങളിൽ എന്തുചെയ്യണം",
       "meta": [
         "ജൂലൈ 25, 2026",
-        "data-key=\"meta-2\"> ഹിസാൻ അലി"
+        null
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading S</ptin><p": "സി. data-key=\"relatedTitles-0\">ഒമാനിൽ ഒരു ബിസിനസ്സ് ആരംഭിക്കുക",
       "relatedTitles": [
         null,
@@ -59,7 +52,7 @@ window.blogLanguagePage = {
         "Google ബിസിനസ് പ്രൊഫൈൽ ഒമാൻ"
       ],
       "relatedMeta": [
-        "സജ്ജമാക്കുക data-key=\"relatedMeta-1\">അവസര ഗൈഡ്",
+        null,
         null,
         "പ്രാദേശിക ദൃശ്യപരത"
       ],
@@ -85,9 +78,6 @@ window.blogLanguagePage = {
         "<i class=\"far fa-clock\"></i> 10 min read",
         "<i class=\"far fa-user\"></i> Hisan Ali"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Continue the Series",
       "relatedTitles": [
         "Start a Business in Oman",

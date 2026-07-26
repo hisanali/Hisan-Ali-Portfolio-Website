@@ -11,9 +11,6 @@ window.blogLanguagePage = {
         "قراءة لمدة 7 دقائق",
         "هيسان علي"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "availableHeading": "الأدلة ذات الصلة",
       "availableTitles": [
         "WhatsApp Business استراتيجيات العلامات التجارية في دول مجلس التعاون الخليجي",
@@ -50,8 +47,6 @@ window.blogLanguagePage = {
         null,
         "ഹിസാൻ അലി"
       ],
-      "authorName": "",
-      "authorTitle": "",
       "authorBio": "ഗൈഡുകൾ",
       "relatedTitles": [
         "WhatsApp Business GCC ബ്രാൻഡുകൾക്കായുള്ള തന്ത്രങ്ങൾ",
@@ -83,9 +78,6 @@ window.blogLanguagePage = {
         "<i class=\"far fa-clock\"></i> 7 min read",
         "<i class=\"far fa-user\"></i> Hisan Ali"
       ],
-      "authorName": "",
-      "authorTitle": "",
-      "authorBio": "",
       "relatedHeading": "Related Guides",
       "relatedTitles": [
         "WhatsApp Business Strategies for GCC Brands",
