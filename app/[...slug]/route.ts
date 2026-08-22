@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { applySharedShell } from '../site-shell';
 
 type Params = {
   params: {
@@ -31,7 +32,7 @@ function contentTypeFor(filePath: string): string {
   return 'application/octet-stream';
 }
 
-export async function GET(_: Request, { params }: Params) {
+export async function GET(request: Request, { params }: Params) {
   const root = process.cwd();
   const cleanSegments = params.slug.filter(Boolean);
 
@@ -47,6 +48,19 @@ export async function GET(_: Request, { params }: Params) {
     }
 
     try {
+      if (path.extname(normalized).toLowerCase() === '.html') {
+        const html = await readFile(normalized, 'utf8');
+        const prepared = html
+          .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260820-interior3')
+          .replace('</head>', '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=28"></head>')
+          .replace('</body>', '<script src="/interior-redesign.js?v=20"></script></body>');
+        const enhanced = applySharedShell(prepared, new URL(request.url).pathname);
+
+        return new Response(enhanced, {
+          headers: { 'content-type': 'text/html; charset=utf-8' }
+        });
+      }
+
       const content = await readFile(normalized);
       return new Response(content, {
         headers: { 'content-type': contentTypeFor(normalized) }

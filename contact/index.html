@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
+    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -57,7 +57,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=20260726-theme2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -550,8 +550,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <i class="fas fa-chevron-right"></i>
                     <span>Contact</span>
                 </div>
-                <h1>Get In <span class="gradient-text">Touch</span></h1>
-                <p>Ready to transform your digital presence? Let's discuss how I can help your business grow.</p>
+                <span class="section-badge">Start a conversation</span>
+                <div class="contact-hero-copy">
+                    <h1>Let&apos;s talk about what&apos;s next.</h1>
+                    <p>Share the goal, the challenge, and the context. I&apos;ll respond with a useful next step—not a generic sales pitch.</p>
+                </div>
+                <aside class="contact-hero-note" aria-label="Availability">
+                    <span><i></i> Available for selected projects</span>
+                    <strong>A clear response within one business day.</strong>
+                    <div>
+                        <span>Muscat · Oman</span>
+                        <span>Local &amp; international</span>
+                    </div>
+                </aside>
             </div>
         </div>
     </section>
@@ -563,8 +574,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <!-- Contact Info Side -->
                 <div class="contact-info-side">
                     <div class="contact-intro">
-                        <h2>Let's Start a Conversation</h2>
-                        <p>Whether you have a question about my services, want to discuss a project, or just want to say hello, I'd love to hear from you. Fill out the form or reach out directly using the contact information below.</p>
+                        <span class="contact-kicker">A useful first message</span>
+                        <h2>Give me the context. I&apos;ll bring the next step.</h2>
+                        <p>You do not need a polished brief. Three details are enough to begin:</p>
+                        <ul class="contact-brief-list">
+                            <li><span>01</span><div><strong>Your goal</strong><small>What should improve?</small></div></li>
+                            <li><span>02</span><div><strong>The challenge</strong><small>What is getting in the way?</small></div></li>
+                            <li><span>03</span><div><strong>Your timing</strong><small>When do you want to move?</small></div></li>
+                        </ul>
                     </div>
 
                     <div class="contact-info-cards">
@@ -573,9 +590,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <div class="info-content">
-                                <h3>Email Me</h3>
+                                <h3>Email</h3>
                                 <a href="mailto:workhisan@gmail.com">workhisan@gmail.com</a>
-                                <p>I'll respond within 24 hours</p>
+                                <p>Best for detailed project context</p>
                             </div>
                         </div>
 
@@ -584,9 +601,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-phone"></i>
                             </div>
                             <div class="info-content">
-                                <h3>Call / WhatsApp</h3>
-                                <a href="tel:+96896497228">+968 9649 7228</a>
-                                <p>Muscat, Oman</p>
+                                <h3>Call or WhatsApp</h3>
+                                <a href="https://wa.me/96896497228" target="_blank" rel="noopener">+968 9649 7228</a>
+                                <p>Best for a quick conversation</p>
                             </div>
                         </div>
 
@@ -595,8 +612,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-map-marker-alt"></i>
                             </div>
                             <div class="info-content">
-                                <h3>Location</h3>
-                                <p>Mabelah, Muscat<br>Sultanate of Oman</p>
+                                <h3>Based in</h3>
+                                <p>Muscat, Oman<br>Working internationally</p>
                             </div>
                         </div>
 
@@ -605,8 +622,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="info-content">
-                                <h3>Working Hours</h3>
-                                <p>Sunday - Thursday<br>9:00 AM - 6:00 PM (GST)</p>
+                                <h3>Availability</h3>
+                                <p>Sunday–Thursday<br>9:00 AM–6:00 PM GST</p>
                             </div>
                         </div>
                     </div>
@@ -614,13 +631,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="contact-social">
                         <h3>Connect With Me</h3>
                         <div class="social-links-large">
-                            <a href="https://www.linkedin.com/in/hisanali/" target="_blank" class="social-link-large">
+                            <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener" class="social-link-large" aria-label="Connect with Hisan on LinkedIn">
                                 <i class="fab fa-linkedin-in"></i>
                             </a>
-                            <a href="https://www.instagram.com/_hisxnnn_?igsh=MXNod3MyaWlvemh5bw==" target="_blank" class="social-link-large">
+                            <a href="https://www.instagram.com/_hisxnnn_?igsh=MXNod3MyaWlvemh5bw==" target="_blank" rel="noopener" class="social-link-large" aria-label="Connect with Hisan on Instagram">
                                 <i class="fab fa-instagram"></i>
                             </a>
-                            <a href="https://www.facebook.com/hisan.ali.714/" target="_blank" class="social-link-large">
+                            <a href="https://www.facebook.com/hisan.ali.714/" target="_blank" rel="noopener" class="social-link-large" aria-label="Connect with Hisan on Facebook">
                                 <i class="fab fa-facebook-f"></i>
                             </a>
                         </div>
@@ -630,8 +647,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <!-- Contact Form Side -->
                 <div class="contact-form-side">
                     <div class="form-header">
-                        <h2>Send Me a Message</h2>
-                        <p>Fill out the form below and I'll get back to you as soon as possible.</p>
+                        <div><span>Project enquiry · 2 minutes</span><h2>Tell me about the work.</h2></div>
+                        <p>The more context you share, the more useful my first response can be.</p>
                     </div>
 
                     <form class="contact-form-full" id="contactForm">
@@ -666,11 +683,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
 
                         <div class="form-group-full">
-                            <label for="subject">Subject <span>*</span></label>
-                            <input type="text" id="subject" name="subject" placeholder="What is this about?" required>
-                        </div>
-
-                        <div class="form-group-full">
                             <label for="budget">Estimated Budget</label>
                             <select id="budget" name="budget">
                                 <option value="">Select your budget range</option>
@@ -684,7 +696,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                         <div class="form-group-full">
                             <label for="message">Your Message <span>*</span></label>
-                            <textarea id="message" name="message" placeholder="Tell me about your project, goals, and how I can help..." required></textarea>
+                            <textarea id="message" name="message" placeholder="What are you trying to achieve, what is not working yet, and when would you like to start?" required></textarea>
                         </div>
 
                         <button type="submit" class="btn-primary submit-btn">
@@ -694,8 +706,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </form>
 
                     <div class="response-badge">
-                        <i class="fas fa-bolt"></i>
-                        <p><strong>Quick Response Guaranteed!</strong> I typically respond to all inquiries within 24 hours.</p>
+                        <i class="fas fa-lock"></i>
+                        <p><strong>Your details stay private.</strong> Expect a personal response within one business day.</p>
                     </div>
                 </div>
             </div>
@@ -707,8 +719,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="map-container">
             <div class="map-placeholder">
                 <i class="fas fa-map-marker-alt"></i>
-                <h3>Muscat, Oman</h3>
-                <p>Serving businesses locally and internationally</p>
+                <span class="map-kicker">Based in Muscat · Working beyond borders</span>
+                <h3>Local context.<br>Wider perspective.</h3>
+                <p>Available for businesses in Oman, across the GCC, and internationally.</p>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=Muscat%2C%20Oman" target="_blank" rel="noopener" class="map-link">View on Google Maps <i class="fas fa-arrow-up-right-from-square"></i></a>
             </div>
         </div>
     </section>
@@ -717,31 +731,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <section class="why-contact">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">Why Work With Me</span>
-                <h2 class="section-title">What You Can Expect</h2>
-                <p class="section-subtitle">When you reach out, here's what happens next</p>
+                <span class="section-badge">What happens next</span>
+                <h2 class="section-title">From message to momentum.</h2>
+                <p class="section-subtitle">A simple process with no pressure and no vague promises.</p>
             </div>
             <div class="why-grid">
                 <div class="why-card">
                     <div class="why-icon">
                         <i class="fas fa-comments"></i>
                     </div>
-                    <h3>Free Consultation</h3>
-                    <p>We'll start with a free discovery call to understand your business, goals, and challenges. No commitment required.</p>
+                    <h3>I read the context</h3>
+                    <p>I review the goal, constraints, current activity, and the information you share before responding.</p>
                 </div>
                 <div class="why-card">
                     <div class="why-icon">
                         <i class="fas fa-file-alt"></i>
                     </div>
-                    <h3>Custom Proposal</h3>
-                    <p>I'll prepare a tailored proposal with strategies specifically designed to achieve your unique objectives.</p>
+                    <h3>We align on focus</h3>
+                    <p>If there is a strong fit, we clarify priorities, scope, timing, and what success should look like.</p>
                 </div>
                 <div class="why-card">
                     <div class="why-icon">
                         <i class="fas fa-rocket"></i>
                     </div>
-                    <h3>Results-Driven Execution</h3>
-                    <p>Once we agree on the plan, I'll get to work delivering measurable results for your business.</p>
+                    <h3>We start clearly</h3>
+                    <p>You receive a practical plan with defined deliverables, ownership, reporting, and next actions.</p>
                 </div>
             </div>
         </div>
@@ -772,12 +786,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260726-theme2"></script>
 </body>
 </html>
-
-
-
 
 
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){}})();</script>
+    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
     <link rel="icon" href="/favicon.png">
     <title>Oman E-Invoicing 2026: Fawtara Timeline & Business Readiness Guide | Hisan Ali</title>
     <meta name="description" content="A practical Oman e-invoicing guide covering the Fawtara rollout timeline, five-corner model, system preparation, data checks, and an SME readiness checklist.">
@@ -46,7 +46,7 @@
       {"@type":"Question","name":"What should an Oman business do first?","acceptedAnswer":{"@type":"Answer","text":"Map every system that creates or changes invoice data, clean customer and tax records, identify your ERP or accounting integration owner, and follow current OTA Fawtara guidance for your assigned phase."}}
     ]}
     </script>
-    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../style.css?v=20260726-theme2">
     <link rel="stylesheet" href="../../blog.css"><link rel="stylesheet" href="/blog-language-picker.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -186,6 +186,6 @@
             </div>
         </div>
     </footer>
-<button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button><script src="../../script.js"></script><script src="/blog/oman-e-invoicing-2026-guide/languages.js"></script><script src="/blog-language-picker.js"></script>
+<button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button><script src="../../script.js?v=20260726-theme2"></script><script src="/blog/oman-e-invoicing-2026-guide/languages.js"></script><script src="/blog-language-picker.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');document.documentElement.classList.toggle('theme-dark',t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches)}catch(e){}})();</script>
+    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
     <link rel="icon" href="/favicon.png">
     <title>Oman Data Privacy for Marketing: Consent, CRM, Email & WhatsApp Guide | Hisan Ali</title>
     <meta name="description" content="A plain-English guide to Oman’s Personal Data Protection rules for marketers, covering written consent, privacy notices, opt-outs, CRM lists, forms, email and WhatsApp.">
@@ -31,7 +31,7 @@
       {"@type":"Question","name":"Is this article legal advice?","acceptedAnswer":{"@type":"Answer","text":"No. It is a practical marketing checklist based on published official material. Businesses should obtain qualified legal advice for their specific processing and compliance obligations."}}
     ]}
     </script>
-    <link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../blog.css"><link rel="stylesheet" href="/blog-language-picker.css">
+    <link rel="stylesheet" href="../../style.css?v=20260726-theme2"><link rel="stylesheet" href="../../blog.css"><link rel="stylesheet" href="/blog-language-picker.css">
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -164,6 +164,6 @@
             </div>
         </div>
     </footer>
-<button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button><script src="../../script.js"></script><script src="/blog/oman-data-privacy-marketing-guide/languages.js"></script><script src="/blog-language-picker.js"></script>
+<button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button><script src="../../script.js?v=20260726-theme2"></script><script src="/blog/oman-data-privacy-marketing-guide/languages.js"></script><script src="/blog-language-picker.js"></script>
 </body>
 </html>

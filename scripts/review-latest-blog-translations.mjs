@@ -181,6 +181,15 @@ const authorSuffix = {
   ml: " | ഹിസാൻ അലി",
   hi: " | हिसान अली",
 };
+const publishedKeys = new Set([
+  "title",
+  "description",
+  "breadcrumb",
+  "category",
+  "heading",
+  "article",
+  "changed",
+]);
 
 for (const [slug, localizedOverrides] of Object.entries(overrides)) {
   const file = path.join(root, "blog", slug, "languages.js");
@@ -189,6 +198,10 @@ for (const [slug, localizedOverrides] of Object.entries(overrides)) {
   const context = { window: {} };
   vm.runInNewContext(source, context);
   const config = context.window.blogLanguagePage;
+  const englishDescription =
+    /<meta\s+name="description"\s+content="([^"]*)"/i.exec(
+      await fs.readFile(htmlFile, "utf8"),
+    )?.[1] || "";
 
   for (const [locale, values] of Object.entries(localizedOverrides)) {
     Object.assign(config.translations[locale], values, {
@@ -208,6 +221,7 @@ for (const [slug, localizedOverrides] of Object.entries(overrides)) {
       );
     }
     const copy = config.translations[locale];
+    if (!copy.description) copy.description = englishDescription;
     for (const key of ["description", "authorName", "authorTitle", "authorBio", "relatedHeading", "ctaHeading", "ctaText", "ctaButton"]) {
       if (!copy[key] || /data-key=|ZXQ|ZXZ/.test(copy[key])) delete copy[key];
     }
@@ -217,6 +231,9 @@ for (const [slug, localizedOverrides] of Object.entries(overrides)) {
           value && !/data-key=|ZXQ|ZXZ/.test(value) ? value : null,
         );
       }
+    }
+    for (const key of Object.keys(copy)) {
+      if (!publishedKeys.has(key)) delete copy[key];
     }
   }
 

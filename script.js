@@ -28,13 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const getSystemTheme = () => prefersDark.matches ? 'dark' : 'light';
+
     const getStoredTheme = () => {
         try {
             const value = localStorage.getItem(storageKey);
-            return value === 'dark' || value === 'light' ? value : null;
+            if (value === 'dark' || value === 'light') return value;
         } catch (e) {
-            return null;
+            // Ignore storage errors (private mode / blocked storage).
         }
+        return null;
     };
 
     const setStoredTheme = (theme) => {
@@ -48,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resolveTheme = () => {
         const stored = getStoredTheme();
         if (stored) return stored;
-        return prefersDark.matches ? 'dark' : 'light';
+        return 'dark';
     };
 
     const syncTheme = () => {
@@ -57,8 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     syncTheme();
 
-    if (toggle) {
+    // Interior pages use the route-injected, single-click theme handler so
+    // legacy templates cannot register duplicate toggle actions.
+    if (toggle && !document.body.classList.contains('redesign-interior')) {
         toggle.addEventListener('click', () => {
+            if (document.body.classList.contains('redesign-interior')) return;
             const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
             setStoredTheme(nextTheme);
             applyTheme(nextTheme);
@@ -66,41 +72,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const handleSchemeChange = () => {
-        // Only follow system preference when user has not made a manual choice.
-        if (!getStoredTheme()) {
-            syncTheme();
-        }
+        if (!getStoredTheme()) applyTheme('dark');
     };
 
-    if (typeof prefersDark.addEventListener === 'function') {
-        prefersDark.addEventListener('change', handleSchemeChange);
-    } else if (typeof prefersDark.addListener === 'function') {
-        prefersDark.addListener(handleSchemeChange);
-    }
+    if (!document.body.classList.contains('redesign-interior')) {
+        if (typeof prefersDark.addEventListener === 'function') {
+            prefersDark.addEventListener('change', handleSchemeChange);
+        } else if (typeof prefersDark.addListener === 'function') {
+            prefersDark.addListener(handleSchemeChange);
+        }
 
-    // Re-sync theme when the tab/page regains focus or visibility.
-    window.addEventListener('pageshow', syncTheme);
-    window.addEventListener('focus', syncTheme);
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) syncTheme();
-    });
+        window.addEventListener('pageshow', syncTheme);
+        window.addEventListener('focus', syncTheme);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) syncTheme();
+        });
+        window.addEventListener('storage', (event) => {
+            if (event.key === storageKey) syncTheme();
+        });
 
-    // Sync across tabs/windows when theme preference changes.
-    window.addEventListener('storage', (event) => {
-        if (event.key === storageKey) {
+        let syncAttempts = 0;
+        const syncInterval = window.setInterval(() => {
             syncTheme();
-        }
-    });
-
-    // Extra guard for browsers that delay media query updates.
-    let syncAttempts = 0;
-    const syncInterval = window.setInterval(() => {
-        syncTheme();
-        syncAttempts += 1;
-        if (syncAttempts >= 8) {
-            window.clearInterval(syncInterval);
-        }
-    }, 500);
+            syncAttempts += 1;
+            if (syncAttempts >= 8) window.clearInterval(syncInterval);
+        }, 500);
+    }
 });
 
 // Ensure speed test nav icon + mobile link are present on every page

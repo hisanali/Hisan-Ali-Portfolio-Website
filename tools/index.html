@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
+    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -39,7 +39,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=20260726-theme2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -366,15 +366,133 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <i class="fas fa-chevron-right"></i>
                 <span>Tools</span>
             </div>
-            <h1>Simple, Fast Online Tools</h1>
-            <p>Convert files in seconds. Everything runs in your browser.</p>
+            <h1>Useful tools, without the clutter.</h1>
+            <p>Free browser-based utilities for documents, images, marketing, writing, and website checks.</p>
         </div>
     </section>
 
-    <section class="tools-section">
+    <section class="tools-launcher-section" aria-labelledby="toolLauncherTitle">
         <div class="container">
+            <header class="launcher-intro">
+                <div>
+                    <span class="launcher-eyebrow">11 useful shortcuts</span>
+                    <h2 id="toolLauncherTitle">Pick a task.<br><em>Start instantly.</em></h2>
+                </div>
+                <div class="launcher-intro-copy">
+                    <p>No downloads, accounts, or complicated dashboards. Choose what you want to do and open the workspace.</p>
+                    <div class="launcher-promises">
+                        <span><i class="fas fa-shield-halved"></i> Private</span>
+                        <span><i class="fas fa-bolt"></i> Fast</span>
+                        <span><i class="fas fa-globe"></i> Browser-based</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="tool-launcher">
+                <div class="launcher-index" aria-label="Available tools">
+                    <section class="launcher-group" aria-labelledby="launcherFiles">
+                        <header><span>01</span><h3 id="launcherFiles">Files &amp; images</h3><small>6 tools</small></header>
+                        <a class="launcher-item is-active" href="/tools/image-to-pdf/" data-icon="fas fa-file-pdf" data-title="Image to PDF" data-description="Turn JPG, PNG, and WebP images into one clean, downloadable PDF directly in your browser." data-tags="JPG|PNG|WebP">
+                            <span class="launcher-number">01</span><strong>Image to PDF</strong><small>Images → document</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/pdf-to-image/" data-icon="fas fa-image" data-title="PDF to Image" data-description="Export every PDF page as a crisp PNG or JPEG image without uploading your document." data-tags="PDF|PNG|JPEG">
+                            <span class="launcher-number">02</span><strong>PDF to Image</strong><small>Document → images</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/image-converter/" data-icon="fas fa-retweet" data-title="Image Converter" data-description="Convert images between PNG, JPEG, WebP, and SVG formats with a simple browser workflow." data-tags="PNG|JPEG|WebP|SVG">
+                            <span class="launcher-number">03</span><strong>Image Converter</strong><small>Change image format</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/pdf-compressor/" data-icon="fas fa-compress-alt" data-title="PDF Compressor" data-description="Make PDF files smaller while controlling the balance between file size and visual quality." data-tags="PDF|Compress|Quality">
+                            <span class="launcher-number">04</span><strong>PDF Compressor</strong><small>Reduce file size</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/pdf-merger/" data-icon="fas fa-layer-group" data-title="PDF Merger" data-description="Arrange and combine multiple PDF documents into one correctly ordered file." data-tags="PDF|Merge|Arrange">
+                            <span class="launcher-number">05</span><strong>PDF Merger</strong><small>Combine documents</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/favicon-generator/" data-icon="fas fa-icons" data-title="Favicon Generator" data-description="Create all essential favicon sizes from one image and copy the ready-to-use HTML snippet." data-tags="PNG|ICO|HTML">
+                            <span class="launcher-number">06</span><strong>Favicon Generator</strong><small>Create site icons</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                    </section>
+
+                    <section class="launcher-group" aria-labelledby="launcherGrowth">
+                        <header><span>02</span><h3 id="launcherGrowth">Marketing &amp; web</h3><small>4 tools</small></header>
+                        <a class="launcher-item" href="/tools/qr-code-generator/" data-icon="fas fa-qrcode" data-title="QR Code Generator" data-description="Create downloadable QR codes for websites, WhatsApp, phone numbers, and email addresses." data-tags="QR|PNG|SVG">
+                            <span class="launcher-number">07</span><strong>QR Code Generator</strong><small>Share anything quickly</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/utm-builder/" data-icon="fas fa-link" data-title="UTM Builder" data-description="Build consistent campaign tracking URLs for Google Analytics and marketing reports." data-tags="UTM|GA4|Campaigns">
+                            <span class="launcher-number">08</span><strong>UTM Builder</strong><small>Track campaign links</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/speed-test/" data-icon="fas fa-gauge-high" data-title="Page Speed Test" data-description="Check Core Web Vitals and quickly understand where a web page needs performance work." data-tags="Speed|Web|SEO">
+                            <span class="launcher-number">09</span><strong>Page Speed Test</strong><small>Check web performance</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/tools/content-analyzer/" data-icon="fas fa-align-left" data-title="Content Analyzer" data-description="Measure word count, reading time, and repeated keywords while improving your writing." data-tags="Writing|SEO|Live">
+                            <span class="launcher-number">10</span><strong>Content Analyzer</strong><small>Review your writing</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                    </section>
+
+                    <section class="launcher-group" aria-labelledby="launcherCreate">
+                        <header><span>03</span><h3 id="launcherCreate">Create &amp; play</h3><small>2 spaces</small></header>
+                        <a class="launcher-item" href="/tools/painting-drawing/" data-icon="fas fa-pen-nib" data-title="Painting &amp; Drawing" data-description="A capable browser sketch studio with pressure-aware brushes, layers, and iPad-friendly controls." data-tags="Canvas|Layers|iPad">
+                            <span class="launcher-number">11</span><strong>Painting &amp; Drawing</strong><small>Open a blank canvas</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                        <a class="launcher-item" href="/games/" data-icon="fas fa-gamepad" data-title="Browser Playground" data-description="Take a quick break with six polished browser games for reflexes, memory, strategy, words, and focus." data-tags="Games|Focus|Instant">
+                            <span class="launcher-number">12</span><strong>Browser Playground</strong><small>Six instant games</small><i class="fas fa-arrow-up-right"></i>
+                        </a>
+                    </section>
+                </div>
+
+                <aside class="launcher-preview" aria-live="polite">
+                    <div class="launcher-preview-top"><span>Selected tool</span><b>01 / 12</b></div>
+                    <div class="launcher-preview-icon"><i class="fas fa-file-pdf"></i></div>
+                    <div class="launcher-preview-content">
+                        <p class="launcher-preview-label">Ready when you are</p>
+                        <h3>Image to PDF</h3>
+                        <p class="launcher-preview-description">Turn JPG, PNG, and WebP images into one clean, downloadable PDF directly in your browser.</p>
+                        <div class="launcher-preview-tags"><span>JPG</span><span>PNG</span><span>WebP</span></div>
+                    </div>
+                    <a class="launcher-preview-link" href="/tools/image-to-pdf/"><span>Open this tool</span><i class="fas fa-arrow-up-right"></i></a>
+                </aside>
+            </div>
+
+            <div class="launcher-footnote"><i class="fas fa-lock"></i><span>Your files stay on your device. Processing happens in your browser.</span></div>
+        </div>
+    </section>
+
+    <section class="tools-section tools-section-legacy" hidden aria-hidden="true">
+        <div class="container">
+            <div class="tools-toolbar">
+                <div>
+                    <span class="tools-kicker">Your browser toolkit</span>
+                    <h2>What do you need to do?</h2>
+                </div>
+                <div class="tools-toolbar-copy">
+                    <p>Search by task or narrow the library by category. Every tool opens instantly and keeps your files on your device.</p>
+                    <div class="tools-facts" aria-label="Tool benefits">
+                        <span><i class="fas fa-layer-group"></i> 11 focused tools</span>
+                        <span><i class="fas fa-bolt"></i> No sign-up</span>
+                        <span><i class="fas fa-lock"></i> Browser-based</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tools-discovery" aria-label="Find a tool">
+                <label class="tools-search" for="toolSearch">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input id="toolSearch" type="search" placeholder="Search tools — PDF, image, SEO..." autocomplete="off">
+                    <kbd>/</kbd>
+                </label>
+                <div class="tools-filters" role="group" aria-label="Filter tools by category">
+                    <button class="is-active" type="button" data-filter="all" aria-pressed="true">All <span>11</span></button>
+                    <button type="button" data-filter="files" aria-pressed="false">Files &amp; images <span>6</span></button>
+                    <button type="button" data-filter="growth" aria-pressed="false">Marketing &amp; web <span>4</span></button>
+                    <button type="button" data-filter="creative" aria-pressed="false">Creative <span>1</span></button>
+                </div>
+                <p class="tools-result-count" aria-live="polite">Showing all 11 tools</p>
+            </div>
             <div class="tools-grid">
-                <a class="tool-card" href="/tools/image-to-pdf/" data-theme="sunset">
+                <div class="tools-group-heading">
+                    <span>01 / Files</span>
+                    <h3>Convert &amp; prepare</h3>
+                    <p>PDF and image utilities</p>
+                </div>
+                <a class="tool-card" href="/tools/image-to-pdf/" data-theme="sunset" data-category="files">
                     <div class="tool-card-hero">
                         <div class="tool-visual">
                             <span class="icon-badge"><i class="fas fa-image"></i></span>
@@ -393,7 +511,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/pdf-to-image/" data-theme="ocean">
+                <a class="tool-card" href="/tools/pdf-to-image/" data-theme="ocean" data-category="files">
                     <div class="tool-card-hero">
                         <div class="tool-visual">
                             <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
@@ -411,7 +529,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/image-converter/" data-theme="forest">
+                <a class="tool-card" href="/tools/image-converter/" data-theme="forest" data-category="files">
                     <div class="tool-card-hero">
                         <div class="tool-visual">
                             <span class="icon-badge"><i class="fas fa-image"></i></span>
@@ -431,7 +549,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/pdf-compressor/" data-theme="ember">
+                <a class="tool-card" href="/tools/pdf-compressor/" data-theme="ember" data-category="files">
                     <div class="tool-card-hero">
                         <div class="tool-visual">
                             <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
@@ -449,7 +567,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/pdf-merger/" data-theme="cosmos">
+                <a class="tool-card" href="/tools/pdf-merger/" data-theme="cosmos" data-category="files">
                     <div class="tool-card-hero">
                         <div class="tool-visual">
                             <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
@@ -468,7 +586,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/favicon-generator/" data-theme="mint">
+                <a class="tool-card" href="/tools/favicon-generator/" data-theme="mint" data-category="files">
                     <div class="tool-card-hero">
                         <div class="tool-visual">
                             <span class="icon-badge"><i class="fas fa-image"></i></span>
@@ -486,7 +604,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/qr-code-generator/" data-theme="cosmos">
+                <div class="tools-group-heading">
+                    <span>02 / Growth</span>
+                    <h3>Market &amp; measure</h3>
+                    <p>Campaign, content, and website tools</p>
+                </div>
+                <a class="tool-card" href="/tools/qr-code-generator/" data-theme="cosmos" data-category="growth">
                     <div class="tool-card-hero">
                         <div class="tool-visual single">
                             <span class="icon-badge"><i class="fas fa-qrcode"></i></span>
@@ -503,7 +626,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/utm-builder/" data-theme="fire">
+                <a class="tool-card" href="/tools/utm-builder/" data-theme="fire" data-category="growth">
                     <div class="tool-card-hero">
                         <div class="tool-visual single">
                             <span class="icon-badge"><i class="fas fa-link"></i></span>
@@ -520,26 +643,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
-                <a class="tool-card" href="/tools/painting-drawing/" data-theme="sunset">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-pen-nib"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-tablet-screen-button"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Painting & Drawing</h3>
-                        <p class="tool-summary">A browser sketch studio with layers, pressure-aware brushes, and iPad-friendly controls.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">Canvas</span>
-                            <span class="tool-tag">Layers</span>
-                            <span class="tool-tag">iPad</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/speed-test/" data-theme="fire">
+                <a class="tool-card" href="/speed-test/" data-theme="fire" data-category="growth">
                     <div class="tool-card-hero">
                         <div class="tool-visual single">
                             <span class="icon-badge"><i class="fas fa-gauge-high"></i></span>
@@ -555,6 +659,55 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <span class="tool-link">Open tool</span>
                     </div>
                 </a>
+                <a class="tool-card" href="/tools/content-analyzer/" data-theme="mint" data-category="growth">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-align-left"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-chart-simple"></i></span>
+                        </div>
+                    </div>
+                    <div class="tool-body">
+                        <h3>Content Analyzer</h3>
+                        <p class="tool-summary">Count words, estimate reading time, and find repeated keywords while you write.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">Writing</span>
+                            <span class="tool-tag">SEO</span>
+                            <span class="tool-tag">Live</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
+                </a>
+                <div class="tools-group-heading">
+                    <span>03 / Create</span>
+                    <h3>Sketch &amp; explore</h3>
+                    <p>A focused creative workspace</p>
+                </div>
+                <a class="tool-card" href="/tools/painting-drawing/" data-theme="sunset" data-category="creative">
+                    <div class="tool-card-hero">
+                        <div class="tool-visual">
+                            <span class="icon-badge"><i class="fas fa-pen-nib"></i></span>
+                            <span class="tool-connector"></span>
+                            <span class="icon-badge alt"><i class="fas fa-tablet-screen-button"></i></span>
+                        </div>
+                    </div>
+                    <div class="tool-body">
+                        <h3>Painting &amp; Drawing</h3>
+                        <p class="tool-summary">A browser sketch studio with layers, pressure-aware brushes, and iPad-friendly controls.</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag">Canvas</span>
+                            <span class="tool-tag">Layers</span>
+                            <span class="tool-tag">iPad</span>
+                        </div>
+                        <span class="tool-link">Open tool</span>
+                    </div>
+                </a>
+                <div class="tools-empty" hidden>
+                    <i class="fas fa-search"></i>
+                    <h3>No matching tool</h3>
+                    <p>Try another keyword or view all tools.</p>
+                    <button type="button">Reset search</button>
+                </div>
             </div>
             <p class="tools-note">All tools run directly in your browser. Your files stay on your device.</p>
         </div>
@@ -585,15 +738,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260726-theme2"></script>
 </body>
 </html>
-
-
-
-
-
-
 
 
 

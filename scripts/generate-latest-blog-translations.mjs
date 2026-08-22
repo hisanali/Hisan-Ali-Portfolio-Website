@@ -130,7 +130,7 @@ function protectTerms(value, target) {
   const replacements = [];
   let output = value;
   terms.forEach((term) => {
-    const token = `ZXQ${String(replacements.length).padStart(3, "0")}QXZ`;
+    const token = `\uE000${replacements.length}\uE001`;
     const pattern = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
     if (pattern.test(output)) {
       output = output.replace(pattern, token);
@@ -143,13 +143,13 @@ function protectTerms(value, target) {
 function restoreTerms(value, replacements) {
   let output = value;
   replacements.forEach(([token, term]) => {
-    output = output.replaceAll(token, term).replaceAll(token.toLowerCase(), term);
+    output = output.replaceAll(token, term);
   });
   return output;
 }
 
 async function requestTranslation(html, target) {
-  for (let attempt = 0; attempt < 6; attempt += 1) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
     const body = new URLSearchParams({
       client: "gtx",
       sl: "en",
@@ -166,10 +166,12 @@ async function requestTranslation(html, target) {
       const data = await response.json();
       return (data[0] || []).map((part) => part[0] || "").join("");
     }
-    if (response.status !== 429 || attempt === 5) {
+    if (response.status !== 429 || attempt === 9) {
       throw new Error(`Translation request failed: ${response.status}`);
     }
-    await new Promise((resolve) => setTimeout(resolve, 2500 * (attempt + 1)));
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(30000, 5000 * (attempt + 1))),
+    );
   }
   throw new Error("Translation request exhausted retries");
 }
@@ -202,8 +204,10 @@ async function translateTextNodes(html, target) {
   let batch = [];
   let length = 0;
   for (const [nodeIndex, node] of nodes.entries()) {
-    const wrapper = `<p data-i="${nodeIndex}">${node.source}</p>`;
-    if (batch.length && length + wrapper.length > 4800) {
+    const protectedNode = protectTerms(node.source, target);
+    node.replacements = protectedNode.replacements;
+    const wrapper = `<p data-i="${nodeIndex}">${protectedNode.output}</p>`;
+    if (batch.length && length + wrapper.length > 1800) {
       batches.push(batch);
       batch = [];
       length = 0;
@@ -218,18 +222,21 @@ async function translateTextNodes(html, target) {
     const payload = `<div>${currentBatch.map((item) => item.wrapper).join("")}</div>`;
     const translated = await requestTranslation(payload, target);
     for (const match of translated.matchAll(/<p\s+data-i="(\d+)"[^>]*>([\s\S]*?)<\/p>/gi)) {
-      let value = match[2];
+      const nodeIndex = Number(match[1]);
+      let value = restoreTerms(match[2], nodes[nodeIndex].replacements || []);
       if (target === "ml") value = applyMalayalamEditorialStyle(value);
-      translatedNodes.set(Number(match[1]), value);
+      translatedNodes.set(nodeIndex, value);
     }
     for (const item of currentBatch) {
       if (!translatedNodes.has(item.nodeIndex)) {
-        let fallback = await requestTranslation(nodes[item.nodeIndex].source, target);
+        const protectedNode = protectTerms(nodes[item.nodeIndex].source, target);
+        let fallback = await requestTranslation(protectedNode.output, target);
+        fallback = restoreTerms(fallback, protectedNode.replacements);
         if (target === "ml") fallback = applyMalayalamEditorialStyle(fallback);
         translatedNodes.set(item.nodeIndex, fallback);
       }
     }
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 1800));
   }
 
   nodes.forEach((node, nodeIndex) => {
@@ -273,6 +280,7 @@ function markupToShell(markup, original) {
 
 function normalizeLocale(copy, locale) {
   const localized = { ...copy };
+  localized.authorName = "Hisan Ali";
   localized.title = localized.title.replace(/\s*\|\s*Hisan Ali\s*$/i, " | Hisan Ali");
   localized.changed =
     locale === "ar"
@@ -328,10 +336,9 @@ for (const [slugIndex, slug] of slugs.entries()) {
     process.stdout.write(
       `[${slugIndex + 1}/${slugs.length}] ${slug} → ${localeNames[locale]}... `,
     );
-    const [translatedShellMarkup, translatedArticle] = await Promise.all([
-      translateTextNodes(shellToMarkup(shell), locale),
-      translateTextNodes(article, locale),
-    ]);
+    const translatedArticle = await translateTextNodes(article, locale);
+    await new Promise((resolve) => setTimeout(resolve, 2200));
+    const translatedShellMarkup = await translateTextNodes(shellToMarkup(shell), locale);
     translations[locale] = normalizeLocale(
       {
         ...markupToShell(translatedShellMarkup, shell),

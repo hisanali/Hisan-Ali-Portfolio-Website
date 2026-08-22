@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
+    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -65,7 +65,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=20260726-theme2">
     <link rel="stylesheet" href="../blog.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,17 +158,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <i class="fas fa-chevron-right"></i>
                     <span>Blogs</span>
                 </div>
-                <span class="section-badge">Digital Marketing Blog</span>
-                <h1>Digital Marketing Blogs That Help You Rank, Convert, and Grow</h1>
-                <p>Practical insights on SEO, Google Ads, content, and analytics for businesses that want better traffic, stronger leads, and measurable growth.</p>
+                <span class="section-badge">The Growth Journal</span>
+                <h1>Useful thinking for <em>smarter growth.</em></h1>
+                <div class="blog-hero-aside">
+                    <p>Practical field notes on search, advertising, content, analytics, and building stronger businesses in Oman.</p>
+                    <div class="blog-hero-stats" aria-label="Journal overview">
+                        <span><strong>75</strong> articles</span>
+                        <span><strong>03</strong> topic maps</span>
+                        <span><strong>100%</strong> practical</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
+
+    <div class="journal-ticker" aria-hidden="true">
+        <div>
+            <span>SEO strategy</span><i></i><span>Paid media</span><i></i><span>AI search</span><i></i><span>Content systems</span><i></i><span>Oman business</span><i></i><span>Analytics</span><i></i>
+            <span>SEO strategy</span><i></i><span>Paid media</span><i></i><span>AI search</span><i></i><span>Content systems</span><i></i><span>Oman business</span><i></i><span>Analytics</span><i></i>
+        </div>
+    </div>
 
     <!-- Blog Grid -->
     <section class="blog-section">
         <div class="container">
             <section class="topic-paths-section" aria-labelledby="topicPathsTitle">
+                <header class="topic-paths-header">
+                    <div><span>Start with a path</span><h2 id="topicPathsTitle">Explore by discipline.</h2></div>
+                    <p>Follow a structured learning path instead of jumping between unrelated articles.</p>
+                </header>
                 <div class="topic-paths-grid">
                     <a href="/blog/seo-strategy-hub/" class="topic-path-card topic-path-card--seo">
                         <span class="topic-path-label">SEO Hub</span>
@@ -191,32 +209,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </section>
 
+            <header class="blog-directory-head">
+                <div><span>All field notes</span><h2>Latest ideas &amp; practical guides.</h2></div>
+                <p>Search the complete journal or choose a subject to narrow the reading list.</p>
+            </header>
+
             <div class="blog-search-wrap">
-                <div class="blog-search-box" role="search">
-                    <span class="blog-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
-                    <input
-                        id="blogSearchInput"
-                        type="search"
-                        placeholder="Search articles..."
-                        autocomplete="off"
-                    >
-                    <button type="button" class="blog-search-clear" id="blogSearchClear" aria-label="Clear search" hidden>Clear</button>
+                <div class="blog-search-intro">
+                    <span>Browse the journal</span>
+                    <h2>What do you want to learn?</h2>
+                    <p class="blog-search-meta" id="blogSearchMeta">Showing all articles</p>
                 </div>
-                <div class="blog-search-tags" aria-label="Quick filters">
-                    <button type="button" class="blog-search-tag" data-tag="seo"><i class="fas fa-search"></i>SEO</button>
-                    <button type="button" class="blog-search-tag" data-tag="google ads"><i class="fab fa-google"></i>Google Ads</button>
-                    <button type="button" class="blog-search-tag" data-tag="content"><i class="fas fa-pen-nib"></i>Content</button>
-                    <button type="button" class="blog-search-tag" data-tag="e-commerce"><i class="fas fa-cart-shopping"></i>E-commerce</button>
-                    <button type="button" class="blog-search-tag" data-tag="social media"><i class="fas fa-hashtag"></i>Social Media</button>
-                    <button type="button" class="blog-visibility-switch" id="omanToggle" aria-pressed="true" aria-label="Show Oman-focused posts">
-                        <span class="blog-visibility-label">Oman articles</span>
-                        <span class="blog-visibility-switch-track">
-                            <span class="blog-visibility-switch-thumb"></span>
-                        </span>
-                        <span class="blog-visibility-switch-text">On</span>
-                    </button>
+                <div class="blog-search-controls">
+                    <div class="blog-search-box" role="search">
+                        <span class="blog-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
+                        <input
+                            id="blogSearchInput"
+                            type="search"
+                            placeholder="Search by topic, channel, or challenge..."
+                            autocomplete="off"
+                        >
+                        <button type="button" class="blog-search-clear" id="blogSearchClear" aria-label="Clear search" hidden>Clear</button>
+                    </div>
+                    <div class="blog-search-tags" aria-label="Quick filters">
+                        <button type="button" class="blog-search-tag" data-tag="seo"><i class="fas fa-search"></i>SEO</button>
+                        <button type="button" class="blog-search-tag" data-tag="google ads"><i class="fab fa-google"></i>Google Ads</button>
+                        <button type="button" class="blog-search-tag" data-tag="content"><i class="fas fa-pen-nib"></i>Content</button>
+                        <button type="button" class="blog-search-tag" data-tag="e-commerce"><i class="fas fa-cart-shopping"></i>E-commerce</button>
+                        <button type="button" class="blog-search-tag" data-tag="social media"><i class="fas fa-hashtag"></i>Social Media</button>
+                        <button type="button" class="blog-visibility-switch" id="omanToggle" aria-pressed="true" aria-label="Show Oman-focused posts">
+                            <span class="blog-visibility-label">Oman articles</span>
+                            <span class="blog-visibility-switch-track">
+                                <span class="blog-visibility-switch-thumb"></span>
+                            </span>
+                            <span class="blog-visibility-switch-text">On</span>
+                        </button>
+                    </div>
                 </div>
-                <p class="blog-search-meta" id="blogSearchMeta">Showing all articles</p>
             </div>
 
             <div class="blog-grid">
@@ -1592,6 +1621,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </a>
 
             </div>
+            <nav class="blog-pagination" id="blogPagination" aria-label="Blog pagination">
+                <button type="button" class="blog-page-nav blog-page-prev" id="blogPagePrev" aria-label="Previous page">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i><span>Previous</span>
+                </button>
+                <div class="blog-page-numbers" id="blogPageNumbers"></div>
+                <button type="button" class="blog-page-nav blog-page-next" id="blogPageNext" aria-label="Next page">
+                    <span>Next</span><i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </button>
+                <p class="blog-page-status" id="blogPageStatus" aria-live="polite">Showing 1–9 of 75 articles</p>
+            </nav>
         </div>
     </section>
 
@@ -1649,11 +1688,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const tagButtons = Array.from(document.querySelectorAll('.blog-search-tag'));
             const omanToggle = document.getElementById('omanToggle');
             const omanToggleText = omanToggle ? omanToggle.querySelector('.blog-visibility-switch-text') : null;
-            if (!input || !grid || !meta || !emptyState || !clearButton || !omanToggle || !omanToggleText) return;
+            const pagination = document.getElementById('blogPagination');
+            const pageNumbers = document.getElementById('blogPageNumbers');
+            const previousPage = document.getElementById('blogPagePrev');
+            const nextPage = document.getElementById('blogPageNext');
+            const pageStatus = document.getElementById('blogPageStatus');
+            if (!input || !grid || !meta || !emptyState || !clearButton || !omanToggle || !omanToggleText || !pagination || !pageNumbers || !previousPage || !nextPage || !pageStatus) return;
 
             const cards = Array.from(grid.querySelectorAll('.blog-card'));
             const total = cards.length;
+            const pageSize = 9;
             let omanVisible = true;
+            let currentPage = 1;
 
             const normalize = (value) => (value || '').toLowerCase().trim();
             const isOmanFocused = (text, href) => {
@@ -1672,26 +1718,103 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 meta.textContent = 'Showing ' + shown + ' of ' + total + ' articles for "' + query + '"' + omanLabel;
             };
 
+            const getPageItems = (totalPages) => {
+                if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
+
+                const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+                if (currentPage <= 3) [2, 3, 4].forEach((page) => pages.add(page));
+                if (currentPage >= totalPages - 2) [totalPages - 3, totalPages - 2, totalPages - 1].forEach((page) => pages.add(page));
+
+                const sortedPages = Array.from(pages)
+                    .filter((page) => page > 0 && page <= totalPages)
+                    .sort((a, b) => a - b);
+                const items = [];
+                sortedPages.forEach((page, index) => {
+                    if (index > 0 && page - sortedPages[index - 1] > 1) items.push('ellipsis-' + page);
+                    items.push(page);
+                });
+                return items;
+            };
+
+            const renderPagination = (totalPages) => {
+                pageNumbers.innerHTML = '';
+                pagination.classList.toggle('is-single-page', totalPages <= 1);
+                previousPage.disabled = currentPage === 1;
+                nextPage.disabled = currentPage === totalPages;
+
+                getPageItems(totalPages).forEach((item) => {
+                    if (typeof item === 'string') {
+                        const ellipsis = document.createElement('span');
+                        ellipsis.className = 'blog-page-ellipsis';
+                        ellipsis.textContent = '…';
+                        ellipsis.setAttribute('aria-hidden', 'true');
+                        pageNumbers.appendChild(ellipsis);
+                        return;
+                    }
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'blog-page-number';
+                    button.textContent = item;
+                    button.setAttribute('aria-label', 'Go to page ' + item);
+                    if (item === currentPage) button.setAttribute('aria-current', 'page');
+                    button.addEventListener('click', () => goToPage(item));
+                    pageNumbers.appendChild(button);
+                });
+            };
+
+            const scrollToArticles = () => {
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const target = document.querySelector('.blog-search-wrap') || grid;
+                target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+            };
+
             const filterCards = () => {
                 const query = normalize(input.value);
-                let visibleCount = 0;
-
-                cards.forEach((card) => {
+                const matchingCards = cards.filter((card) => {
                     const searchText = normalize(card.textContent);
                     const href = card.getAttribute('href') || '';
-                    const matchesQuery = !query || searchText.includes(query);
-                    const matchesOmanToggle = omanVisible || !isOmanFocused(searchText, href);
-                    const isMatch = matchesQuery && matchesOmanToggle;
-                    card.style.display = isMatch ? '' : 'none';
-                    if (isMatch) visibleCount += 1;
+                    return (!query || searchText.includes(query)) && (omanVisible || !isOmanFocused(searchText, href));
+                });
+                const totalPages = Math.max(1, Math.ceil(matchingCards.length / pageSize));
+                currentPage = Math.min(currentPage, totalPages);
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = Math.min(startIndex + pageSize, matchingCards.length);
+
+                cards.forEach((card) => {
+                    const matchIndex = matchingCards.indexOf(card);
+                    const shouldShow = matchIndex >= startIndex && matchIndex < endIndex;
+                    card.style.display = shouldShow ? '' : 'none';
+                    if (shouldShow) card.classList.add('interior-visible');
                 });
 
-                emptyState.hidden = visibleCount !== 0;
+                emptyState.hidden = matchingCards.length !== 0;
                 clearButton.hidden = query.length === 0;
-                updateMeta(visibleCount, query);
+                updateMeta(matchingCards.length, query);
+                pagination.hidden = matchingCards.length === 0;
+                pageStatus.textContent = matchingCards.length
+                    ? 'Showing ' + (startIndex + 1) + '–' + endIndex + ' of ' + matchingCards.length + ' articles'
+                    : 'No articles found';
+                renderPagination(totalPages);
+            };
+
+            const goToPage = (page) => {
+                const totalMatches = cards.filter((card) => {
+                    const query = normalize(input.value);
+                    const searchText = normalize(card.textContent);
+                    const href = card.getAttribute('href') || '';
+                    return (!query || searchText.includes(query)) && (omanVisible || !isOmanFocused(searchText, href));
+                }).length;
+                const totalPages = Math.max(1, Math.ceil(totalMatches / pageSize));
+                const nextPageNumber = Math.max(1, Math.min(page, totalPages));
+                if (nextPageNumber === currentPage) return;
+                currentPage = nextPageNumber;
+                filterCards();
+                scrollToArticles();
             };
 
             input.addEventListener('input', () => {
+                currentPage = 1;
                 tagButtons.forEach((item) => {
                     if (item !== omanToggle) item.classList.remove('active');
                 });
@@ -1702,6 +1825,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 button.addEventListener('click', () => {
                     const tag = button.getAttribute('data-tag') || '';
                     input.value = tag;
+                    currentPage = 1;
                     filterCards();
                     input.focus();
                     tagButtons.forEach((item) => {
@@ -1713,6 +1837,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             omanToggle.addEventListener('click', () => {
                 omanVisible = !omanVisible;
+                currentPage = 1;
                 omanToggle.classList.toggle('is-off', !omanVisible);
                 omanToggle.setAttribute('aria-pressed', String(omanVisible));
                 omanToggleText.textContent = omanVisible ? 'On' : 'Off';
@@ -1721,21 +1846,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             clearButton.addEventListener('click', () => {
                 input.value = '';
+                currentPage = 1;
                 filterCards();
                 input.focus();
                 tagButtons.forEach((item) => {
                     if (item !== omanToggle) item.classList.remove('active');
                 });
             });
+
+            previousPage.addEventListener('click', () => goToPage(currentPage - 1));
+            nextPage.addEventListener('click', () => goToPage(currentPage + 1));
+
+            filterCards();
         })();
     </script>
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260726-theme2"></script>
 </body>
 </html>
-
-
-
-
 
 
 

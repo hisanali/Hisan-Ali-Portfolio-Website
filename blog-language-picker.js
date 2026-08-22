@@ -51,6 +51,30 @@
         ctaText: document.querySelector(".cta-content > p")?.textContent || "",
         ctaButton: document.querySelector(".cta-content .btn-primary span")?.textContent || ""
     };
+    var originalArticleSignature = articleSignature(original.article);
+
+    function articleSignature(html) {
+        if (typeof html !== "string" || /data-key|ZXQ|ZXZ/i.test(html)) return "";
+        var template = document.createElement("template");
+        template.innerHTML = html;
+        return Array.from(template.content.querySelectorAll("*")).map(function (element) {
+            return [
+                element.tagName.toLowerCase(),
+                element.getAttribute("class") || "",
+                element.getAttribute("href") || "",
+                element.getAttribute("src") || "",
+                element.getAttribute("target") || "",
+                element.getAttribute("rel") || ""
+            ].join("~");
+        }).join("|");
+    }
+
+    function safeArticle(value) {
+        return typeof value === "string" &&
+            articleSignature(value) === originalArticleSignature
+            ? value
+            : original.article;
+    }
 
     function setText(selector, value) {
         var element = document.querySelector(selector);
@@ -96,21 +120,21 @@
         setText(".blog-post-header .blog-category", copy.category);
         setText(".blog-post-header h1", copy.heading);
         metaRow.querySelectorAll("span").forEach(function (item, index) {
-            var value = copy.meta[index];
+            var value = original.meta[index];
             if (value != null && !/data-key|[<>]|ZXQ|ZXZ/i.test(String(value))) {
                 item.innerHTML = value;
             }
         });
-        article.innerHTML = copy.article;
-        setText(".author-card h3", copy.authorName);
-        setText(".author-card .author-title", copy.authorTitle);
-        setText(".author-card > p:last-of-type", copy.authorBio);
-        setText(".related-posts h3", copy.relatedHeading);
-        setList(".related-post-item h4", copy.relatedTitles);
-        setList(".related-post-item .meta", copy.relatedMeta);
-        setText(".cta-content h2", copy.ctaHeading);
-        setText(".cta-content > p", copy.ctaText);
-        setText(".cta-content .btn-primary span", copy.ctaButton);
+        article.innerHTML = safeArticle(copy.article);
+        setText(".author-card h3", original.authorName);
+        setText(".author-card .author-title", original.authorTitle);
+        setText(".author-card > p:last-of-type", original.authorBio);
+        setText(".related-posts h3", original.relatedHeading);
+        setList(".related-post-item h4", original.relatedTitles);
+        setList(".related-post-item .meta", original.relatedMeta);
+        setText(".cta-content h2", original.ctaHeading);
+        setText(".cta-content > p", original.ctaText);
+        setText(".cta-content .btn-primary span", original.ctaButton);
 
         var url = new URL(window.location.href);
         if (language === "en") url.searchParams.delete("lang");

@@ -74,6 +74,7 @@ body.theme-dark {
 html {
     scroll-behavior: smooth;
     overflow-x: hidden;
+    color-scheme: light;
 }
 
 body {
@@ -410,8 +411,10 @@ img {
     top: 0;
     left: 0;
     width: 100%;
-    background: var(--bg);
+    background: rgba(255, 255, 255, 0.97);
+    color: #334155;
     backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     z-index: 1000;
@@ -419,17 +422,49 @@ img {
 }
 
 .theme-dark .header {
-    background: rgba(15, 23, 42, 0.9);
-    border-bottom-color: var(--border);
+    background: rgba(11, 18, 32, 0.97);
+    color: #CBD5E1;
+    border-bottom-color: #1F2937;
+}
+
+.header .nav-link {
+    color: #334155;
+}
+
+.header .nav-link:hover,
+.header .nav-link.active {
+    color: var(--primary);
+}
+
+.theme-dark .header .nav-link {
+    color: #CBD5E1;
+}
+
+.theme-dark .header .nav-link:hover,
+.theme-dark .header .nav-link.active {
+    color: #A78BFA;
+}
+
+.header .theme-toggle,
+.header .hamburger {
+    background: #FFFFFF;
+    color: #334155;
+    border-color: #E2E8F0;
 }
 
 .theme-dark .hamburger {
-    background: var(--bg);
-    border-color: var(--border);
+    background: #111827;
+    border-color: #334155;
 }
 
 .theme-dark .hamburger span {
-    background: var(--text);
+    background: #F8FAFC;
+}
+
+.theme-dark .header .theme-toggle {
+    background: #111827;
+    color: #F8FAFC;
+    border-color: #334155;
 }
 
 .header.scrolled {
@@ -3161,7 +3196,7 @@ img {
         list-style: none;
         border: 1px solid var(--border);
         border-radius: 16px;
-        background: var(--bg-light);
+        background: #F8FAFC;
         overflow: hidden;
         max-height: 0;
         opacity: 0;
@@ -3192,9 +3227,9 @@ img {
         gap: 10px;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: var(--bg);
+        background: #FFFFFF;
         padding: 12px 16px;
-        color: var(--text);
+        color: #334155;
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.04em;
@@ -3219,6 +3254,23 @@ img {
     .nav-menu .nav-link.active {
         color: var(--primary);
         border-color: var(--primary);
+    }
+
+    .theme-dark .nav-menu {
+        background: #111827;
+        border-color: #334155;
+    }
+
+    .theme-dark .nav-menu .nav-link {
+        background: #0B1220;
+        color: #E2E8F0;
+        border-color: #334155;
+    }
+
+    .theme-dark .nav-menu .nav-link:hover,
+    .theme-dark .nav-menu .nav-link.active {
+        color: #C4B5FD;
+        border-color: #8B5CF6;
     }
 
 
@@ -5584,6 +5636,5 @@ img {
         font-size: 11px;
     }
 }
-
 
 

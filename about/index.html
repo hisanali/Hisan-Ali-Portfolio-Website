@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{try{const t=localStorage.getItem('preferred-theme');const d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('theme-dark',d);}catch(e){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('theme-dark');}}})();</script>
+    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -57,7 +57,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=20260726-theme2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -438,8 +438,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <i class="fas fa-chevron-right"></i>
                     <span>About</span>
                 </div>
-                <h1>About <span class="gradient-text">Me</span></h1>
-                <p>Passionate about transforming businesses through strategic digital marketing and delivering measurable results that matter.</p>
+                <h1>Strategy with <span class="gradient-text">a human point of view.</span></h1>
+                <p>I’m Hisan Ali, a digital marketer based in Muscat. I help businesses turn complex growth problems into focused, measurable action.</p>
+                <div class="about-hero-meta" aria-label="Profile highlights">
+                    <span>Muscat, Oman</span>
+                    <span>SEO + Paid Media</span>
+                    <span>Available for select projects</span>
+                </div>
             </div>
         </div>
     </section>
@@ -469,11 +474,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </div>
                 </div>
                 <div class="about-text-section">
-                    <h2>Hi, I'm Hisan Ali</h2>
-                    <p class="lead">I'm a certified digital marketer in Oman focused on helping businesses improve visibility, attract the right audience, and grow through SEO, paid ads, and digital strategy.</p>
-                    <p>As a best freelance digital marketer in Oman, my work is built around practical execution - from search visibility and campaign planning to clearer messaging and performance-focused decisions that support real business goals.</p>
-                    <p>I've worked across digital marketing, creative support, and content-led growth, with a strong focus on building strategies that are relevant, measurable, and easier for brands to act on.</p>
-                    <p>Whether the goal is stronger rankings, better ad performance, or a more consistent digital presence, I aim to make the work clear, useful, and growth-focused.</p>
+                    <span class="about-story-label">The person behind the work</span>
+                    <h2>Hi, I’m Hisan.</h2>
+                    <p class="lead">I combine search, paid media, content, and clear thinking to help businesses grow with more confidence.</p>
+                    <div class="about-story-copy">
+                        <p>My work is built around practical execution—from search visibility and campaign planning to clearer messaging and performance-focused decisions that support real business goals.</p>
+                        <p>I’ve worked across digital marketing, creative support, and content-led growth. That range helps me see the whole picture, then focus attention on the few actions most likely to matter.</p>
+                        <p>Whether the goal is stronger rankings, better ad performance, or a more consistent digital presence, I keep the process useful, transparent, and easy to act on.</p>
+                    </div>
                     <a href="/contact/" class="btn-primary btn-large" style="margin-top: 24px;">
                         <span>Let's Work Together</span>
                         <i class="fas fa-arrow-right"></i>
@@ -488,8 +496,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="container">
             <div class="section-header">
                 <span class="section-badge">Expertise</span>
-                <h2 class="section-title">Core Skills I Work With</h2>
-                <p class="section-subtitle">Focused strengths across SEO, paid ads, content, analytics, and digital growth</p>
+                <h2 class="section-title">Where strategy becomes useful.</h2>
+                <p class="section-subtitle">Six connected capabilities, shaped into one focused growth system.</p>
             </div>
             <div class="skills-grid">
                 <div class="skill-card">
@@ -531,8 +539,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="container">
             <div class="section-header">
                 <span class="section-badge" style="background: rgba(255,255,255,0.2); color: white;">My Values</span>
-                <h2 class="section-title" style="color: white;">How I Approach the Work</h2>
-                <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">The standards I follow in strategy, execution, and communication</p>
+                <h2 class="section-title" style="color: white;">The principles behind every project.</h2>
+                <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">Good work should feel considered before it ever feels complicated.</p>
             </div>
             <div class="values-grid">
                 <div class="value-card">
@@ -563,8 +571,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <section class="cta-section">
         <div class="container">
             <div class="cta-content">
-                <h2>Ready to Transform Your Digital Presence?</h2>
-                <p>Let's discuss how I can help you achieve your marketing goals and drive real results for your business.</p>
+                <h2>Good growth starts with a clear conversation.</h2>
+                <p>Tell me where the business is now, what is getting in the way, and where you want it to go next.</p>
                 <a href="/contact/" class="btn-primary btn-large">
                     <span>Get In Touch</span>
                     <i class="fas fa-arrow-right"></i>
@@ -598,10 +606,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260726-theme2"></script>
 </body>
 </html>
-
 
 
 
