@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/generate-static-home.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "sync:footer": "node scripts/sync-footer.js"
