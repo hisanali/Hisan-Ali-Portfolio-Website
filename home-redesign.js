@@ -65,6 +65,7 @@ document.querySelectorAll('.reveal').forEach((element) => observer.observe(eleme
 
 const progress = document.querySelector('[data-scroll-progress]');
 const parallaxItems = [...document.querySelectorAll('[data-parallax]')];
+const heroVisual = document.querySelector('.hero-visual');
 let motionFrame = 0;
 
 const updateScrollMotion = () => {
@@ -80,6 +81,13 @@ const updateScrollMotion = () => {
       const offset = ((rect.top + rect.height / 2 - viewportCenter) / window.innerHeight) * strength;
       item.style.setProperty('--parallax-y', `${offset.toFixed(2)}px`);
     });
+
+    if (heroVisual) {
+      const heroRect = heroVisual.getBoundingClientRect();
+      const heroProgress = Math.max(0, Math.min(1, (window.innerHeight - heroRect.top) / (window.innerHeight + heroRect.height * .55)));
+      heroVisual.style.setProperty('--hero-sat', (.7 + heroProgress * .48).toFixed(2));
+      heroVisual.style.setProperty('--tone-opacity', Math.max(0, .28 - heroProgress * .34).toFixed(2));
+    }
   }
   motionFrame = 0;
 };
@@ -91,6 +99,20 @@ const requestScrollMotion = () => {
 window.addEventListener('scroll', requestScrollMotion, { passive: true });
 window.addEventListener('resize', requestScrollMotion, { passive: true });
 updateScrollMotion();
+
+const heroWord = document.querySelector('[data-hero-word]');
+if (heroWord && !reduceMotion) {
+  const heroWords = ['business growth', 'qualified demand', 'market momentum', 'measurable revenue'];
+  let heroWordIndex = 0;
+  window.setInterval(() => {
+    heroWord.classList.add('is-changing');
+    window.setTimeout(() => {
+      heroWordIndex = (heroWordIndex + 1) % heroWords.length;
+      heroWord.textContent = heroWords[heroWordIndex];
+      heroWord.classList.remove('is-changing');
+    }, 300);
+  }, 3400);
+}
 
 if (window.location.hash) {
   const deepLinkTarget = document.querySelector(window.location.hash);
@@ -108,6 +130,29 @@ if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
   }, { passive: true });
   document.documentElement.addEventListener('mouseleave', () => {
     if (glow) glow.style.opacity = '0';
+  });
+
+  const growthStage = document.querySelector('[data-growth-stage]');
+  const reactiveCards = [...document.querySelectorAll('.availability-card, .strategy-card')];
+  growthStage?.addEventListener('pointermove', (event) => {
+    const rect = growthStage.getBoundingClientRect();
+    const x = Math.max(14, Math.min(86, ((event.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(14, Math.min(86, ((event.clientY - rect.top) / rect.height) * 100));
+    growthStage.style.setProperty('--lens-x', `${x.toFixed(1)}%`);
+    growthStage.style.setProperty('--lens-y', `${y.toFixed(1)}%`);
+    growthStage.classList.add('is-exploring');
+    reactiveCards.forEach((card, index) => {
+      const force = index ? -1 : 1;
+      card.style.setProperty('--react-x', `${((x - 50) * .08 * force).toFixed(1)}px`);
+      card.style.setProperty('--react-y', `${((y - 50) * .05 * force).toFixed(1)}px`);
+    });
+  });
+  growthStage?.addEventListener('pointerleave', () => {
+    growthStage.classList.remove('is-exploring');
+    reactiveCards.forEach((card) => {
+      card.style.setProperty('--react-x', '0px');
+      card.style.setProperty('--react-y', '0px');
+    });
   });
 
   document.querySelectorAll('[data-tilt]').forEach((card) => {
