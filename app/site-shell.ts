@@ -84,8 +84,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260822-6"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260822-6"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260822-9"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260822-9"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
