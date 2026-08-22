@@ -4,11 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
     <meta name="theme-color" content="#181a1f">
-    <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>
+    
     <link rel="icon" href="/favicon.png">
     <link rel="preload" href="/tools/painting-drawing/assets/material-symbols-rounded.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/style.css?v=20260726-theme2">
@@ -2189,7 +2187,7 @@
             }
         }
     </style>
-</head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=29"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260822-6"></head>
 <body>
     <svg width="0" height="0" aria-hidden="true" style="position:absolute">
         <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></symbol>
@@ -2229,45 +2227,18 @@
     </svg>
 
     <div class="app" id="app">
-        <header class="header">
-            <nav class="navbar">
-                <div class="nav-container">
-                    <div class="logo">
-                        <a href="/" aria-label="Hisan Ali home">
-                            <span class="logo-text">Hisan</span>
-                            <span class="logo-dot">.</span>
-                        </a>
-                    </div>
-                    <ul class="nav-menu">
-                        <li><a href="/" class="nav-link">Home</a></li>
-                        <li><a href="/about/" class="nav-link">About</a></li>
-                        <li><a href="/services/" class="nav-link">Services</a></li>
-                        <li><a href="/tools/" class="nav-link active">Tools</a></li>
-                        <li><a href="/blog/" class="nav-link">Blogs</a></li>
-                        <li><a href="/contact/" class="nav-link">Contact</a></li>
-                        <li class="mobile-only"><a href="/speed-test/" class="nav-link">Page Speed Test</a></li>
-                    </ul>
-                    <div class="nav-actions">
-                        <a class="nav-tool" href="/speed-test/" aria-label="Page speed test">
-                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <path fill="currentColor" d="M12 3a9 9 0 0 0-9 9c0 2.46 1 4.68 2.62 6.3.2.2.48.31.77.31h11.22c.29 0 .57-.12.77-.31A8.96 8.96 0 0 0 21 12a9 9 0 0 0-9-9zm5.66 14H6.34A6.96 6.96 0 0 1 5 12a7 7 0 1 1 14 0c0 1.86-.72 3.55-1.34 5zM12 7a1 1 0 0 0-1 1v4.59l-2.3 2.3a1 1 0 1 0 1.41 1.41l2.6-2.6a1 1 0 0 0 .29-.71V8a1 1 0 0 0-1-1z"/>
-                            </svg>
-                        </a>
-                        <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
-                            <i class="fas fa-moon"></i>
-                        </button>
-                        <div class="nav-cta">
-                            <a href="/contact/" class="btn-primary">Let&apos;s Talk</a>
-                        </div>
-                    </div>
-                    <div class="hamburger" aria-label="Open navigation menu" role="button" tabindex="0">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            </nav>
-        </header>
+        <header class="ua-header" data-ua-header>
+    <div class="ua-nav-shell">
+      <a class="ua-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
+      <nav class="ua-desktop-nav" aria-label="Primary navigation"><a class="ua-nav-link" href="/">Home</a><a class="ua-nav-link" href="/about/">About</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link is-active" href="/tools/" aria-current="page">Tools</a><a class="ua-nav-link" href="/games/">Games</a><a class="ua-nav-link" href="/blog/">Blog</a><a class="ua-nav-link" href="/contact/">Contact</a></nav>
+      <div class="ua-nav-actions">
+        <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
+        <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗︎</span></a>
+        <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
+      </div>
+    </div>
+    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav><a class="ua-nav-link" href="/">Home</a><a class="ua-nav-link" href="/about/">About</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link is-active" href="/tools/" aria-current="page">Tools</a><a class="ua-nav-link" href="/games/">Games</a><a class="ua-nav-link" href="/blog/">Blog</a><a class="ua-nav-link" href="/contact/">Contact</a><a class="ua-mobile-cta" href="/contact/">Start a project <span aria-hidden="true">↗︎</span></a></nav>
+  </header>
         <header class="appbar">
             <div class="appbar-left">
                 <div class="brand">
@@ -6939,27 +6910,37 @@
         setTimeout(function () { loadStudioProject("autosave", true).catch(function () { /* First visit has no autosave. */ }); }, 250);
     }());
     </script>
-<footer class="footer" id="siteFooter">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <div class="logo">
-                        <span class="logo-text">Hisan</span>
-                        <span class="logo-dot">.</span>
-                    </div>
-                    <p>Digital Marketing Expert helping businesses grow through strategic SEO, Google Ads, and Social Media Marketing.</p>
-                </div>
-                <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="/">Home</a></li><li><a href="/about/">About</a></li><li><a href="/services/">Services</a></li><li><a href="/tools/">Tools</a></li><li><a href="/blog/">Blogs</a></li><li><a href="/contact/">Contact</a></li></ul></div>
-                <div class="footer-links"><h4>Services</h4><ul><li><a href="/services/">SEO</a></li><li><a href="/services/">Google Ads</a></li><li><a href="/services/">Social Media</a></li><li><a href="/services/">Consultation</a></li></ul></div>
-                <div class="footer-links"><h4>Tools</h4><ul><li><a href="/tools/pdf-merger/">PDF Merger</a></li><li><a href="/tools/image-to-pdf/">Image to PDF</a></li><li><a href="/tools/pdf-to-image/">PDF to Image</a></li><li><a href="/tools/pdf-compressor/">PDF Compressor</a></li><li><a href="/tools/image-converter/">Image Converter</a></li><li><a href="/tools/favicon-generator/">Favicon Generator</a></li><li><a href="/tools/qr-code-generator/">QR Code Generator</a></li><li><a href="/tools/utm-builder/">UTM Builder</a></li><li><a href="/tools/painting-drawing/">Painting and Drawing</a></li></ul></div>
-                <div class="footer-links"><h4>Legal</h4><ul><li><a href="/legal/privacy-policy/">Privacy Policy</a></li><li><a href="/legal/terms/">Terms of Service</a></li><li><a href="/legal/cookie-policy/">Cookie Policy</a></li></ul></div>
-                <div class="footer-contact"><h4>Contact</h4><p><i class="fas fa-envelope"></i> workhisan@gmail.com</p><p><i class="fas fa-map-marker-alt"></i> Muscat, Oman</p></div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Hisan Ali. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-    <script src="/script.js?v=20260726-theme2"></script>
-</body>
+<footer class="ua-footer" data-ua-footer>
+  <div class="ua-footer-shell">
+    <div class="ua-footer-intro">
+      <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
+      <p>Clear digital strategy and focused execution for businesses ready to grow across Oman and the GCC.</p>
+      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span aria-hidden="true">↗︎</span></a>
+    </div>
+    <nav class="ua-footer-group" aria-label="Footer navigation">
+      <h2>Explore</h2>
+      <a href="/about/">About</a><a href="/services/">Services</a><a href="/tools/">Tools</a><a href="/games/">Games</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a>
+    </nav>
+    <nav class="ua-footer-group" aria-label="Services">
+      <h2>Services</h2>
+      <a href="/services/">SEO strategy</a><a href="/services/">Google Ads</a><a href="/services/">Social media</a><a href="/services/">Content & analytics</a>
+    </nav>
+    <nav class="ua-footer-group" aria-label="Useful tools">
+      <h2>Useful tools</h2>
+      <a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/image-converter/">Image Converter</a><a href="/tools/qr-code-generator/">QR Generator</a><a href="/tools/utm-builder/">UTM Builder</a><a href="/speed-test/">Page Speed Test</a>
+    </nav>
+    <div class="ua-footer-group ua-footer-social">
+      <h2>Connect</h2>
+      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗︎</span></a>
+      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span aria-hidden="true">↗︎</span></a>
+      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗︎</span></a>
+    </div>
+  </div>
+  <div class="ua-footer-lower">
+    <span>© 2026 Hisan Ali</span><span>Muscat · Oman</span>
+    <div><a href="/legal/privacy-policy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/cookie-policy/">Cookies</a></div>
+  </div>
+</footer>
+    <script src="/script.js?v=20260822-shell2"></script>
+<script src="/interior-redesign.js?v=21"></script><script src="/site-shell.js?v=20260822-6"></script></body>
 </html>

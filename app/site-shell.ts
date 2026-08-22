@@ -68,13 +68,32 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
 </footer>`;
 
 export function applySharedShell(html: string, pathname: string, home = false) {
+  const header = sharedHeader(pathname);
   let enhanced = html
-    .replace(/<script id="theme-init">[\s\S]*?<\/script>/, sharedThemeInit)
-    .replace(/<header\b[\s\S]*?<\/header>/i, sharedHeader(pathname))
-    .replace(/<footer\b[\s\S]*?<\/footer>/i, sharedFooter)
-    .replace('</head>', '<link rel="stylesheet" href="/site-shell.css?v=20260822-5"></head>')
-    .replace('</body>', '<script src="/site-shell.js?v=20260822-5"></script></body>');
+    .replace(/<script id="theme-init">[\s\S]*?<\/script>/gi, '')
+    .replace(/<link\b[^>]*href=["']\/site-shell\.css[^>]*>\s*/gi, '')
+    .replace(/<script\b[^>]*src=["']\/site-shell\.js[^>]*><\/script>\s*/gi, '')
+    .replace(/<header\b[\s\S]*?<\/header>/i, header)
+    .replace(/<footer\b[\s\S]*?<\/footer>/i, sharedFooter);
 
-  if (home) enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, '<body class="page-home-redesign"$1>');
+  if (!/<header\b/i.test(enhanced)) {
+    enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match) => `${match}${header}`);
+  }
+  if (!/<footer\b/i.test(enhanced)) {
+    enhanced = enhanced.replace('</body>', `${sharedFooter}</body>`);
+  }
+
+  enhanced = enhanced
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260822-6"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260822-6"></script></body>');
+
+  if (home) {
+    enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
+      if (/\bclass=/i.test(attributes)) {
+        return match.replace(/class=(["'])(.*?)\1/i, (_full, quote, classes) => `class=${quote}${classes} page-home-redesign${quote}`);
+      }
+      return `<body class="page-home-redesign"${attributes}>`;
+    });
+  }
   return enhanced;
 }

@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { applySharedShell } from '../site-shell';
+import { prepareInteriorPage } from '../page-renderer';
 
 type Params = {
   params: {
@@ -50,11 +50,7 @@ export async function GET(request: Request, { params }: Params) {
     try {
       if (path.extname(normalized).toLowerCase() === '.html') {
         const html = await readFile(normalized, 'utf8');
-        const prepared = html
-          .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260820-interior3')
-          .replace('</head>', '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=28"></head>')
-          .replace('</body>', '<script src="/interior-redesign.js?v=20"></script></body>');
-        const enhanced = applySharedShell(prepared, new URL(request.url).pathname);
+        const enhanced = prepareInteriorPage(html, new URL(request.url).pathname);
 
         return new Response(enhanced, {
           headers: { 'content-type': 'text/html; charset=utf-8' }
