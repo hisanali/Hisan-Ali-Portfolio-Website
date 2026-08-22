@@ -137,56 +137,6 @@ if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
   });
 }
 
-const heroWatcher = document.querySelector('[data-hero-watcher]');
-const watcherPupils = [...document.querySelectorAll('[data-watcher-pupil]')];
-const watcherText = document.querySelector('[data-watcher-text]');
-if (heroWatcher) {
-  const visitContact = () => document.querySelector('#contact')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-  const touchLayout = window.matchMedia('(max-width: 720px), (pointer: coarse)').matches;
-  heroWatcher.addEventListener('click', () => {
-    if (touchLayout && !heroWatcher.classList.contains('is-curious')) {
-      heroWatcher.classList.add('is-curious');
-      window.setTimeout(() => heroWatcher.classList.remove('is-curious'), 4800);
-      return;
-    }
-    visitContact();
-  });
-
-  if (touchLayout && 'IntersectionObserver' in window) {
-    const watcherObserver = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return;
-      heroWatcher.classList.add('is-curious');
-      window.setTimeout(() => heroWatcher.classList.remove('is-curious'), 4800);
-      watcherObserver.disconnect();
-    }, { threshold: .7 });
-    watcherObserver.observe(heroWatcher);
-  } else {
-    window.setTimeout(() => heroWatcher.classList.add('is-curious'), 700);
-    window.setTimeout(() => heroWatcher.classList.remove('is-curious'), 4600);
-  }
-
-  const watcherMessages = ['I see growth potential here.', 'Your next opportunity is closer than it looks.'];
-  let watcherMessageIndex = 0;
-  window.setInterval(() => {
-    if (!watcherText) return;
-    watcherMessageIndex = (watcherMessageIndex + 1) % watcherMessages.length;
-    watcherText.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 360, easing: 'ease-out' });
-    watcherText.textContent = watcherMessages[watcherMessageIndex];
-  }, 4200);
-
-  if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
-    window.addEventListener('pointermove', (event) => {
-      const rect = heroWatcher.getBoundingClientRect();
-      const angle = Math.atan2(event.clientY - (rect.top + rect.height / 2), event.clientX - (rect.left + rect.width / 2));
-      const pupilX = Math.cos(angle) * 3.5;
-      const pupilY = Math.sin(angle) * 3.5;
-      watcherPupils.forEach((pupil) => {
-        pupil.style.transform = `translate(calc(-50% + ${pupilX.toFixed(2)}px), calc(-50% + ${pupilY.toFixed(2)}px))`;
-      });
-    }, { passive: true });
-  }
-}
-
 document.querySelector('#contactForm')?.addEventListener('submit', (event) => {
   event.preventDefault();
   const data = new FormData(event.currentTarget);
