@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
+    <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>
     <link rel="icon" href="/favicon.png">
     <title>Oman E-Invoicing 2026: Fawtara Timeline & Business Readiness Guide | Hisan Ali</title>
     <meta name="description" content="A practical Oman e-invoicing guide covering the Fawtara rollout timeline, five-corner model, system preparation, data checks, and an SME readiness checklist.">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script id="theme-init">(()=>{try{document.documentElement.classList.toggle('theme-dark',localStorage.getItem('preferred-theme')!=='light')}catch(e){document.documentElement.classList.add('theme-dark')}})();</script>
+  <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>
   <link rel="icon" href="/favicon.png">
   <title>Content Analyzer | Word Count, Reading Time & Keywords</title>
   <meta name="description" content="Analyze word count, character count, reading time, sentences, paragraphs and repeated keywords instantly in your browser.">

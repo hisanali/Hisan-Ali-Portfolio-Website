@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resolveTheme = () => {
         const stored = getStoredTheme();
         if (stored) return stored;
-        return 'dark';
+        return 'light';
     };
 
     const syncTheme = () => {
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const handleSchemeChange = () => {
-        if (!getStoredTheme()) applyTheme('dark');
+        if (!getStoredTheme()) applyTheme('light');
     };
 
     if (!document.body.classList.contains('redesign-interior')) {

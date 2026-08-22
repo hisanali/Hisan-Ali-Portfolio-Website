@@ -22,14 +22,14 @@ const savedTheme = () => {
   }
 };
 
-applyTheme(savedTheme() || 'dark');
+applyTheme(savedTheme() || 'light');
 themeToggle?.addEventListener('click', () => {
   const next = document.documentElement.classList.contains('theme-dark') ? 'light' : 'dark';
   try { localStorage.setItem('preferred-theme', next); } catch (_) {}
   applyTheme(next);
 });
 systemTheme.addEventListener?.('change', (event) => {
-  if (!savedTheme()) applyTheme('dark');
+  if (!savedTheme()) applyTheme('light');
 });
 
 if (!reduceMotion) document.documentElement.classList.add('motion-ready');

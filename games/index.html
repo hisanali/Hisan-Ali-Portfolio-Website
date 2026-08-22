@@ -6,7 +6,7 @@
   <title>Playground — Free Browser Games | Hisan Ali</title>
   <meta name="description" content="Play eight quick browser games including Snake Circuit, Tic-Tac-Toe, Memory Match, Four in a Row, Math Sprint, and more.">
   <meta name="theme-color" content="#17382d">
-  <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');document.documentElement.classList.toggle('theme-dark',saved!=='light')}catch(e){document.documentElement.classList.add('theme-dark')}})();</script>
+  <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>
   <link rel="icon" href="/favicon.png">
   <link rel="stylesheet" href="/games/games.css?v=11">
 </head>
@@ -21,7 +21,7 @@
           <div class="games-kicker"><span></span> The browser playground</div>
           <h1>Pause the work.<br><em>Play a little.</em></h1>
           <p>Eight quick games built for strategy, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
-          <a class="games-primary-link" href="#game-library">Choose a game <span aria-hidden="true">↓</span></a>
+          <a class="games-primary-link" href="#game-library">Choose a game <span aria-hidden="true">↓︎</span></a>
         </div>
         <div class="games-hero-art" aria-hidden="true">
           <div class="game-orbit orbit-one"><span>✦</span></div>
@@ -47,28 +47,28 @@
 
         <div class="game-picker" role="tablist" aria-label="Choose a game">
           <button class="game-pick is-active" type="button" role="tab" aria-selected="true" aria-controls="game-snake" data-game="snake">
-            <span class="game-pick-top"><span class="game-pick-icon icon-snake" aria-hidden="true">〰</span><span class="game-pick-number">01</span></span><b>Snake Circuit</b><small>Arcade · Endless</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon icon-snake" aria-hidden="true">〰</span><span class="game-pick-number">01</span></span><b>Snake Circuit</b><small>Arcade · Endless</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-tic" data-game="tic">
-            <span class="game-pick-top"><span class="game-pick-icon" aria-hidden="true">×○</span><span class="game-pick-number">02</span></span><b>Tic-Tac-Toe</b><small>Strategy · 1–3 min</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon" aria-hidden="true">×○</span><span class="game-pick-number">02</span></span><b>Tic-Tac-Toe</b><small>Strategy · 1–3 min</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-memory" data-game="memory">
-            <span class="game-pick-top"><span class="game-pick-icon" aria-hidden="true">◇◆</span><span class="game-pick-number">03</span></span><b>Memory Match</b><small>Memory · 2–4 min</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon" aria-hidden="true">◇◆</span><span class="game-pick-number">03</span></span><b>Memory Match</b><small>Memory · 2–4 min</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-reaction" data-game="reaction">
-            <span class="game-pick-top"><span class="game-pick-icon icon-bolt" aria-hidden="true">ϟ</span><span class="game-pick-number">04</span></span><b>Reaction Rush</b><small>Speed · 30 sec</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon icon-bolt" aria-hidden="true">ϟ</span><span class="game-pick-number">04</span></span><b>Reaction Rush</b><small>Speed · 30 sec</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-word" data-game="word">
-            <span class="game-pick-top"><span class="game-pick-icon icon-type" aria-hidden="true">Aa</span><span class="game-pick-number">05</span></span><b>Word Scramble</b><small>Words · 10 rounds</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon icon-type" aria-hidden="true">Aa</span><span class="game-pick-number">05</span></span><b>Word Scramble</b><small>Words · 10 rounds</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-color" data-game="color">
-            <span class="game-pick-top"><span class="game-pick-icon icon-color" aria-hidden="true">●</span><span class="game-pick-number">06</span></span><b>Color Focus</b><small>Focus · 10 rounds</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon icon-color" aria-hidden="true">●</span><span class="game-pick-number">06</span></span><b>Color Focus</b><small>Focus · 10 rounds</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-connect" data-game="connect">
-            <span class="game-pick-top"><span class="game-pick-icon icon-dots" aria-hidden="true">●●</span><span class="game-pick-number">07</span></span><b>Four in a Row</b><small>Strategy · Place anywhere</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon icon-dots" aria-hidden="true">●●</span><span class="game-pick-number">07</span></span><b>Four in a Row</b><small>Strategy · Place anywhere</small><i aria-hidden="true">↗︎</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-math" data-game="math">
-            <span class="game-pick-top"><span class="game-pick-icon icon-math" aria-hidden="true">7+5</span><span class="game-pick-number">08</span></span><b>Math Sprint</b><small>Numbers · 10 questions</small><i aria-hidden="true">↗</i>
+            <span class="game-pick-top"><span class="game-pick-icon icon-math" aria-hidden="true">7+5</span><span class="game-pick-number">08</span></span><b>Math Sprint</b><small>Numbers · 10 questions</small><i aria-hidden="true">↗︎</i>
           </button>
         </div>
 
@@ -93,7 +93,7 @@
 
           <article class="game-panel is-active" id="game-snake" role="tabpanel" data-game-panel="snake">
             <div class="game-panel-info"><span>Arcade lane / 01</span><h3>Snake Circuit</h3><p>Collect the signals, avoid the walls, and do not cross your own path. Use arrow keys or the controls.</p><div class="game-score-line"><span>Score</span><strong data-snake-score>0</strong></div><button class="game-small-button" type="button" data-snake-start>Start game</button></div>
-            <div class="snake-wrap"><canvas width="360" height="360" data-snake-canvas aria-label="Snake game board"></canvas><div class="snake-controls" aria-label="Snake direction controls"><button type="button" data-direction="up" aria-label="Move up">↑</button><button type="button" data-direction="left" aria-label="Move left">←</button><button type="button" data-direction="down" aria-label="Move down">↓</button><button type="button" data-direction="right" aria-label="Move right">→</button></div><p class="game-status" data-snake-status>Press start to enter the circuit.</p></div>
+            <div class="snake-wrap"><canvas width="360" height="360" data-snake-canvas aria-label="Snake game board"></canvas><div class="snake-controls" aria-label="Snake direction controls"><button type="button" data-direction="up" aria-label="Move up">↑︎</button><button type="button" data-direction="left" aria-label="Move left">←</button><button type="button" data-direction="down" aria-label="Move down">↓︎</button><button type="button" data-direction="right" aria-label="Move right">→︎</button></div><p class="game-status" data-snake-status>Press start to enter the circuit.</p></div>
           </article>
 
           <article class="game-panel" id="game-connect" role="tabpanel" data-game-panel="connect" hidden>
@@ -108,7 +108,7 @@
 
           <article class="game-panel" id="game-word" role="tabpanel" data-game-panel="word" hidden>
             <div class="game-panel-info"><span>Word lab / 05</span><h3>Word Scramble</h3><p>Rearrange the letters using the clue. Build a streak across ten rounds.</p><div class="game-score-line"><span>Score</span><strong data-word-score>0</strong></div></div>
-            <div class="word-board"><span class="word-round" data-word-round>Round 1 / 10</span><strong class="scrambled-word" data-scrambled-word>—</strong><p data-word-hint>Loading clue…</p><form data-word-form><label for="word-answer">Your answer</label><div><input id="word-answer" data-word-input autocomplete="off" spellcheck="false"><button type="submit">Check</button></div></form><button class="word-skip" type="button" data-word-skip>Skip word →</button><p class="game-status" data-word-status></p></div>
+            <div class="word-board"><span class="word-round" data-word-round>Round 1 / 10</span><strong class="scrambled-word" data-scrambled-word>—</strong><p data-word-hint>Loading clue…</p><form data-word-form><label for="word-answer">Your answer</label><div><input id="word-answer" data-word-input autocomplete="off" spellcheck="false"><button type="submit">Check</button></div></form><button class="word-skip" type="button" data-word-skip>Skip word →︎</button><p class="game-status" data-word-status></p></div>
           </article>
 
           <article class="game-panel" id="game-color" role="tabpanel" data-game-panel="color" hidden>
@@ -120,7 +120,7 @@
     </section>
 
     <section class="games-break">
-      <div class="games-shell games-break-grid"><span>02 / Why play?</span><h2>A short reset can sharpen the next idea.</h2><p>These games are intentionally quick: enough time to change gears, reset your attention, and return with a clearer head.</p><a href="/tools/">Back to useful tools <i aria-hidden="true">↗</i></a></div>
+      <div class="games-shell games-break-grid"><span>02 / Why play?</span><h2>A short reset can sharpen the next idea.</h2><p>These games are intentionally quick: enough time to change gears, reset your attention, and return with a clearer head.</p><a href="/tools/">Back to useful tools <i aria-hidden="true">↗︎</i></a></div>
     </section>
   </main>
 

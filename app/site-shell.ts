@@ -1,4 +1,4 @@
-export const sharedThemeInit = `<script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved!=='light';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.add('theme-dark');document.documentElement.style.colorScheme='dark'}})();</script>`;
+export const sharedThemeInit = `<script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>`;
 
 const links = [
   ['/', 'Home'],
@@ -27,11 +27,11 @@ export function sharedHeader(pathname: string) {
       <nav class="ua-desktop-nav" aria-label="Primary navigation">${navigation}</nav>
       <div class="ua-nav-actions">
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
-        <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗</span></a>
+        <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗︎</span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
       </div>
     </div>
-    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${navigation}<a class="ua-mobile-cta" href="/contact/">Start a project <span aria-hidden="true">↗</span></a></nav>
+    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${navigation}<a class="ua-mobile-cta" href="/contact/">Start a project <span aria-hidden="true">↗︎</span></a></nav>
   </header>`;
 }
 
@@ -40,7 +40,7 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     <div class="ua-footer-intro">
       <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <p>Clear digital strategy and focused execution for businesses ready to grow across Oman and the GCC.</p>
-      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span aria-hidden="true">↗</span></a>
+      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span aria-hidden="true">↗︎</span></a>
     </div>
     <nav class="ua-footer-group" aria-label="Footer navigation">
       <h2>Explore</h2>
@@ -56,9 +56,9 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     </nav>
     <div class="ua-footer-group ua-footer-social">
       <h2>Connect</h2>
-      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a>
-      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span aria-hidden="true">↗</span></a>
-      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗</span></a>
+      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗︎</span></a>
+      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span aria-hidden="true">↗︎</span></a>
+      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗︎</span></a>
     </div>
   </div>
   <div class="ua-footer-lower">

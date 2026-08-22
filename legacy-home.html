@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
+    <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>
 <meta name="theme-color" content="#0f172a">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">

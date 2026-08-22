@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script id="theme-init">(()=>{const m=window.matchMedia('(prefers-color-scheme: dark)');try{const s=m.matches?'dark':'light';const t=localStorage.getItem('preferred-theme');const b=localStorage.getItem('preferred-theme-system');const v=(t==='dark'||t==='light')&&b===s;if(!v){localStorage.removeItem('preferred-theme');localStorage.removeItem('preferred-theme-system');}document.documentElement.classList.toggle('theme-dark',v?t==='dark':m.matches);}catch(e){document.documentElement.classList.toggle('theme-dark',m.matches);}})();</script>
+    <script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>
     <link rel="icon" href="/favicon.png">
     <title>How to Start a Business in Oman in 2026: Complete Guide | Hisan Ali</title>
     <meta name="description" content="A practical step-by-step guide to starting a business in Oman in 2026: idea validation, activity selection, legal structure, CR, licences, tax, banking and launch.">
