@@ -102,7 +102,7 @@ updateScrollMotion();
 
 const heroWord = document.querySelector('[data-hero-word]');
 if (heroWord && !reduceMotion) {
-  const heroWords = ['business growth', 'qualified demand', 'market momentum', 'measurable revenue'];
+  const heroWords = ['business growth.', 'qualified demand.', 'market momentum.', 'measurable revenue.'];
   let heroWordIndex = 0;
   window.setInterval(() => {
     heroWord.classList.add('is-changing');
