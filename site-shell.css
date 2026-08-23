@@ -9,6 +9,11 @@
   --ua-lime: #dfff63;
   --ua-display: "DM Serif Display", Georgia, serif;
   --ua-sans: "Manrope", Arial, sans-serif;
+
+  /* Retire the legacy purple theme tokens used by older page templates. */
+  --primary: var(--ua-orange);
+  --primary-dark: var(--ua-orange-surface);
+  --gradient-primary: linear-gradient(135deg, var(--ua-orange) 0%, #f47a52 100%);
 }
 
 html.theme-dark {
@@ -94,6 +99,13 @@ html.theme-dark .ua-nav-cta { color: var(--ua-green) !important; border-color: v
 }
 
 /* Cross-page theme repairs: readable text on strong colour surfaces. */
+.breadcrumb span { color: var(--ua-orange) !important; }
+.breadcrumb i { color: var(--ua-orange) !important; }
+.scroll-progress,
+.interior-progress span { background: var(--ua-orange) !important; }
+body :focus-visible { outline-color: var(--ua-orange); }
+::selection { color: var(--ua-green); background: var(--ua-lime); }
+
 html.theme-dark body.redesign-interior .breadcrumb,
 html.theme-dark body.redesign-interior .breadcrumb a { color: #c8d2cd !important; }
 html:not(.theme-dark) body.redesign-interior .breadcrumb,
@@ -150,7 +162,10 @@ body.redesign-interior.page-about .value-card:nth-child(3) :is(h3,p,.value-icon)
 body.redesign-interior.page-blog .topic-path-card:nth-child(3) :is(h2,h3,p,span) { color: #17382d !important; }
 body.redesign-interior :is(.icon-badge.alt,.submit-btn:hover,.contact-info-card:hover .info-icon,.why-card:hover .why-icon),
 body.redesign-interior :is(.icon-badge.alt,.submit-btn:hover,.contact-info-card:hover .info-icon,.why-card:hover .why-icon) * { color: #fff !important; }
-body.redesign-interior.page-blog .blog-card:nth-child(3) > .blog-category { color: #fff !important; }
+body.redesign-interior.page-blog .blog-card:nth-child(3) > .blog-category {
+  color: #17382d !important;
+  -webkit-text-fill-color: #17382d !important;
+}
 body.page-home-redesign :is(.button-accent,.strategy-card,.about-stamp,.project-card-lime,.contact-panel,.work-note),
 body.page-home-redesign :is(.button-accent,.strategy-card,.about-stamp,.project-card-lime,.contact-panel,.work-note) * { color: #17382d; }
 body.page-home-redesign :is(.project-card-orange,.contact-intro) :is(h2,h3,p,span,strong) { color: #fff; }

@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         paintTool.href = '/tools/painting-drawing/';
         paintTool.setAttribute('aria-label', 'Open painting studio');
         paintTool.setAttribute('title', 'Painting Studio');
-        paintTool.style.background = 'linear-gradient(135deg, #7c3aed 0%, #db2777 55%, #fb7185 100%)';
+        paintTool.style.background = 'linear-gradient(135deg, #D9522D 0%, #db2777 55%, #fb7185 100%)';
         paintTool.style.boxShadow = '0 8px 20px rgba(219, 39, 119, 0.34)';
         paintTool.innerHTML = '<i class="fa-solid fa-paintbrush" aria-hidden="true"></i>';
         const speedTool = navActions.querySelector('.nav-tool:not(.nav-paint-tool)');
@@ -392,14 +392,14 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: translateX(-15px);
         }
         .peeker-face {
-            background: linear-gradient(135deg, #6528F7, #A855F7);
+            background: linear-gradient(135deg, #D9522D, #F47A52);
             position: relative;
         }
         .sneaky-peeker-desktop .peeker-face {
             width: 80px;
             height: 80px;
             border-radius: 50% 0 0 50%;
-            box-shadow: -5px 0 20px rgba(101, 40, 247, 0.3);
+            box-shadow: -5px 0 20px rgba(217, 82, 45, 0.3);
         }
         .peeker-eyes {
             position: absolute;
@@ -1138,12 +1138,12 @@ const interactiveElements = document.querySelectorAll('a, button, .service-card,
 interactiveElements.forEach(el => {
     el.addEventListener('mouseenter', () => {
         cursor.style.transform = 'scale(2)';
-        cursor.style.backgroundColor = 'rgba(101, 40, 247, 0.3)';
+        cursor.style.backgroundColor = 'rgba(217, 82, 45, 0.3)';
     });
 
     el.addEventListener('mouseleave', () => {
         cursor.style.transform = 'scale(1)';
-        cursor.style.backgroundColor = 'rgba(101, 40, 247, 0.5)';
+        cursor.style.backgroundColor = 'rgba(217, 82, 45, 0.5)';
     });
 });
 
@@ -1154,7 +1154,7 @@ style.textContent = `
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background-color: rgba(101, 40, 247, 0.5);
+        background-color: rgba(217, 82, 45, 0.5);
         position: fixed;
         pointer-events: none;
         z-index: 9999;
@@ -1423,7 +1423,7 @@ const createScrollProgress = () => {
             top: 0;
             left: 0;
             height: 3px;
-            background: linear-gradient(90deg, #6528F7, #A855F7);
+            background: linear-gradient(90deg, #D9522D, #F47A52);
             z-index: 10001;
             transition: width 0.1s ease;
         }
@@ -1458,8 +1458,8 @@ if (lazyImages.length > 0) {
 // Console Message
 // ===================================
 
-console.log('%c👋 Hello! Thanks for checking out my portfolio!', 'color: #6528F7; font-size: 20px; font-weight: bold;');
-console.log('%cInterested in working together? Let\'s connect!', 'color: #A855F7; font-size: 14px;');
+console.log('%c👋 Hello! Thanks for checking out my portfolio!', 'color: #D9522D; font-size: 20px; font-weight: bold;');
+console.log('%cInterested in working together? Let\'s connect!', 'color: #F47A52; font-size: 14px;');
 console.log('%cEmail: workhisan@gmail.com', 'color: #4ECDC4; font-size: 12px;');
 
 // ===================================

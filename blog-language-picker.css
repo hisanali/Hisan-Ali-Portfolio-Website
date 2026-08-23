@@ -29,7 +29,7 @@
 }
 
 .language-picker-kicker i {
-    color: #a78bfa;
+    color: #F47A52;
     font-size: 1rem;
 }
 
@@ -60,12 +60,12 @@
 }
 
 .language-picker-button:focus-visible {
-    outline: 3px solid rgba(167, 139, 250, .45);
+    outline: 3px solid rgba(244, 122, 82, .45);
     outline-offset: 2px;
 }
 
 .language-picker-button .fa-globe {
-    color: #6d28d9;
+    color: #B84224;
 }
 
 .language-current {
@@ -118,12 +118,12 @@
 
 .language-option:hover,
 .language-option:focus-visible {
-    background: rgba(124, 58, 237, .18);
+    background: rgba(217, 82, 45, .18);
     outline: none;
 }
 
 .language-option[aria-selected="true"] {
-    background: linear-gradient(135deg, rgba(124, 58, 237, .3), rgba(37, 99, 235, .17));
+    background: linear-gradient(135deg, rgba(217, 82, 45, .3), rgba(37, 99, 235, .17));
 }
 
 .language-option-copy {
@@ -147,7 +147,7 @@
     width: 23px;
     height: 23px;
     border-radius: 50%;
-    background: #7c3aed;
+    background: #D9522D;
     color: #fff;
     font-size: .68rem;
     opacity: 0;
