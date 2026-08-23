@@ -44,15 +44,19 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     </div>
     <nav class="ua-footer-group" aria-label="Footer navigation">
       <h2>Explore</h2>
-      <a href="/about/">About</a><a href="/services/">Services</a><a href="/tools/">Tools</a><a href="/games/">Games</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a>
+      <a href="/">Home</a><a href="/about/">About</a><a href="/services/">Services</a><a href="/tools/">Tools</a><a href="/games/">Game Center</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a>
     </nav>
     <nav class="ua-footer-group" aria-label="Services">
       <h2>Services</h2>
       <a href="/services/">SEO strategy</a><a href="/services/">Google Ads</a><a href="/services/">Social media</a><a href="/services/">Content & analytics</a>
     </nav>
     <nav class="ua-footer-group" aria-label="Useful tools">
-      <h2>Useful tools</h2>
-      <a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/image-converter/">Image Converter</a><a href="/tools/qr-code-generator/">QR Generator</a><a href="/tools/utm-builder/">UTM Builder</a><a href="/speed-test/">Page Speed Test</a>
+      <h2>Tools & play</h2>
+      <a href="/tools/">All tools</a><a href="/games/">All games</a><a href="/tools/painting-drawing/">Painting Studio</a><a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/image-converter/">Image Converter</a><a href="/tools/qr-code-generator/">QR Generator</a><a href="/tools/utm-builder/">UTM Builder</a><a href="/speed-test/">Page Speed Test</a>
+    </nav>
+    <nav class="ua-footer-group" aria-label="Regional pages">
+      <h2>Across the GCC</h2>
+      <a href="/gcc/oman/">Oman</a><a href="/gcc/uae/">UAE</a><a href="/gcc/ksa/">Saudi Arabia</a><a href="/gcc/qatar/">Qatar</a><a href="/gcc/kuwait/">Kuwait</a><a href="/gcc/bahrain/">Bahrain</a>
     </nav>
     <div class="ua-footer-group ua-footer-social">
       <h2>Connect</h2>
@@ -84,8 +88,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260823-11"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260822-9"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260824-12"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260824-10"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

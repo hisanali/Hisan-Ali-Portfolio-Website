@@ -7139,3 +7139,41 @@ body.redesign-interior.page-contact .map-section .map-location-marker {
     will-change: auto;
   }
 }
+
+/* About mobile portrait: the image is the media element, not a nested wrapper. */
+.redesign-interior.page-about .about-image-section {
+  background: var(--ix-paper-deep) url('/Hisan-Ali.jpeg') 50% 32% / cover no-repeat;
+}
+
+.redesign-interior.page-about img.about-main-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0;
+  object-fit: cover !important;
+  object-position: 50% 32%;
+  opacity: 1;
+}
+
+@media (max-width: 680px) {
+  .redesign-interior.page-about .about-detail {
+    padding-top: 0 !important;
+  }
+
+  .redesign-interior.page-about .about-detail-grid {
+    gap: 12px !important;
+  }
+
+  .redesign-interior.page-about .about-image-section {
+    width: 100%;
+    min-height: 420px;
+    aspect-ratio: auto;
+    background-position: 50% 30%;
+  }
+
+  .redesign-interior.page-about img.about-main-image {
+    object-position: 50% 30%;
+  }
+}

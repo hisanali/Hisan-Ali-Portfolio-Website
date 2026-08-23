@@ -22,7 +22,7 @@
     header.classList.toggle('is-open', open);
     document.body.classList.toggle('ua-menu-open', open);
     pageSiblings.forEach((node) => open ? node.setAttribute('inert', '') : node.removeAttribute('inert'));
-    if (open) mobileNav.querySelector('a')?.focus();
+    if (open) (mobileNav.querySelector('[aria-current="page"]') || mobileNav.querySelector('a'))?.focus();
     else if (returnFocus) menuButton.focus();
   };
 
