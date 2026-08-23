@@ -171,14 +171,23 @@ html:not(.theme-dark) body.redesign-interior.page-legal .legal-meta { color: #52
 
 /* Strong-colour surfaces always keep an intentional foreground colour. */
 body.redesign-interior :is(.about-text-section,.values-section,.faq-side,.contact-hero-note,.map-container,.cta-section) :is(h1,h2,h3,h4,p,li) { color: #f5f2eb !important; }
-body.redesign-interior.page-services :is(.service-detail:nth-child(3),.service-detail:nth-child(5),.service-detail:nth-child(8),.service-detail:nth-child(9)) .service-detail-content :is(h2,h3,p,li,span) { color: #f5f2eb !important; }
+body.redesign-interior.page-services :is(.service-detail:nth-child(3),.service-detail:nth-child(5),.service-detail:nth-child(8),.service-detail:nth-child(9)) .service-detail-content :is(h2,h3,p,li,.benefit-item span) { color: #f5f2eb !important; }
 body.redesign-interior :is(.section-badge,.faq-pill,.icon-badge,.step-num,.author-avatar,.back-to-top,.blog-category,.blog-search-clear,.submit-btn,.info-icon,.why-icon),
 body.redesign-interior :is(.section-badge,.faq-pill,.icon-badge,.step-num,.author-avatar,.back-to-top,.blog-category,.blog-search-clear,.submit-btn,.info-icon,.why-icon) * { color: #17382d !important; }
-body.redesign-interior.page-services .service-detail:nth-child(6) .service-detail-content :is(h2,h3,p,li,span),
+body.redesign-interior.page-services .service-detail:nth-child(6) .service-detail-content :is(h2,h3,p,li,.benefit-item span),
 body.redesign-interior.page-about .value-card:nth-child(3) :is(h3,p,.value-icon),
 body.redesign-interior.page-blog .topic-path-card:nth-child(3) :is(h2,h3,p,span) { color: #17382d !important; }
-body.redesign-interior :is(.icon-badge.alt,.submit-btn:hover,.contact-info-card:hover .info-icon,.why-card:hover .why-icon),
-body.redesign-interior :is(.icon-badge.alt,.submit-btn:hover,.contact-info-card:hover .info-icon,.why-card:hover .why-icon) * { color: #fff !important; }
+body.redesign-interior.page-services .service-detail .service-detail-content .btn-primary :is(span,i) {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+body.redesign-interior :is(.icon-badge.alt,.submit-btn:hover,.why-card:hover .why-icon),
+body.redesign-interior :is(.icon-badge.alt,.submit-btn:hover,.why-card:hover .why-icon) * { color: #fff !important; }
+body.redesign-interior.page-contact .contact-info-card:hover .info-icon,
+body.redesign-interior.page-contact .contact-info-card:hover .info-icon * {
+  color: var(--ua-orange-surface) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
 body.redesign-interior.page-blog .blog-card:nth-child(3) > .blog-category {
   color: #17382d !important;
   -webkit-text-fill-color: #17382d !important;
