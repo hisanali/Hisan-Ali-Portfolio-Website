@@ -545,6 +545,7 @@ html.theme-dark .redesign-interior.page-about .value-card:nth-child(3) p { color
 .redesign-interior.page-services .benefit-item i { display: none; }
 .redesign-interior.page-services .benefit-item span { color: inherit !important; font-size: 8px !important; font-weight: 700; }
 .redesign-interior.page-services .service-detail-content .btn-primary { min-height: 38px; width: auto !important; padding-inline: 16px !important; }
+.redesign-interior.page-services .service-detail-content .btn-primary :is(span,i) { color: inherit !important; -webkit-text-fill-color: currentColor !important; }
 
 .redesign-interior.page-services .service-detail:nth-child(3) .service-detail-grid, .redesign-interior.page-services .service-detail:nth-child(8) .service-detail-grid { color: white; background: var(--ix-green) !important; }
 .redesign-interior.page-services .service-detail:nth-child(3) .service-icon-large, .redesign-interior.page-services .service-detail:nth-child(8) .service-icon-large { color: var(--ix-lime) !important; }
@@ -554,6 +555,10 @@ html.theme-dark .redesign-interior.page-about .value-card:nth-child(3) p { color
 .redesign-interior.page-services .service-detail:nth-child(5) .btn-primary, .redesign-interior.page-services .service-detail:nth-child(9) .btn-primary { color: var(--ix-green) !important; border-color: white !important; background: white !important; }
 .redesign-interior.page-services .service-detail:nth-child(6) .service-detail-grid { color: var(--ix-green); background: var(--ix-lime) !important; }
 .redesign-interior.page-services .service-detail:nth-child(6) .service-icon-large { color: var(--ix-green) !important; }
+.redesign-interior.page-services :is(.service-detail:nth-child(3),.service-detail:nth-child(5),.service-detail:nth-child(8),.service-detail:nth-child(9)) .service-desc { color: rgba(255,255,255,.88) !important; opacity: 1; }
+.redesign-interior.page-services :is(.service-detail:nth-child(3),.service-detail:nth-child(5),.service-detail:nth-child(8),.service-detail:nth-child(9)) .benefit-item { color: #fff !important; border-color: rgba(255,255,255,.58); opacity: 1; }
+.redesign-interior.page-services .service-detail:nth-child(6) .service-desc { color: rgba(23,56,45,.82) !important; opacity: 1; }
+.redesign-interior.page-services .service-detail:nth-child(6) .benefit-item { color: var(--ix-green) !important; border-color: rgba(23,56,45,.48); opacity: 1; }
 .redesign-interior.page-services .service-detail:nth-child(9) .service-detail-grid { display: grid !important; grid-template-columns: 120px minmax(0,1fr); align-items: center; min-height: 330px; gap: 40px !important; }
 .redesign-interior.page-services .service-detail:nth-child(9) .service-visual { margin: 0; }
 .redesign-interior.page-services .service-detail:nth-child(9) .service-detail-content { padding: 0 !important; }

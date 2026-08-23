@@ -30,6 +30,8 @@ html:not(.theme-dark) body.page-home-redesign .service-number { color: #59665f; 
 body.page-home-redesign .portrait-caption { padding: 7px 10px; color: #fff; background: rgba(16,24,20,.78); }
 body.page-home-redesign :is(.project-card-orange,.contact-section) { background: var(--ua-orange-surface); }
 html:not(.theme-dark) body.page-home-redesign :is(.eyebrow,.hero-lead,.hero-proof span,.section-heading > p,.about-heading > p,.service-row p,.service-row ul,.process-title p,.process-list p,.insights-head > p,.editors-copy p,.index-label,.journal-all span) { color: #526159; }
+body.page-home-redesign .service-row:hover :is(p,ul,.service-number) { color: #ff8a63 !important; opacity: 1; }
+body.page-home-redesign .service-row:hover ul li { color: #ff8a63 !important; border-color: rgba(255,138,99,.72); background: rgba(255,138,99,.08); }
 
 body.ua-menu-open { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }
 html { scroll-padding-top: 96px; }
