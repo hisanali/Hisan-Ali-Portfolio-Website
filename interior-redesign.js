@@ -246,7 +246,7 @@
     });
   }
 
-  const journalCount = document.querySelector('.page-blog .blog-orbit-core [data-count-to]');
+  const journalCount = document.querySelector('.page-blog .blog-journal-count [data-count-to]');
   if (journalCount) {
     const targetCount = Number(journalCount.dataset.countTo) || 0;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

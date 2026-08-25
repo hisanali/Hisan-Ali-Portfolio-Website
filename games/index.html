@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Playground — Free Browser Games | Hisan Ali</title>
-  <meta name="description" content="Play eight quick browser games including Snake Circuit, Tic-Tac-Toe, Memory Match, Four in a Row, Math Sprint, and more.">
+  <meta name="description" content="Play twelve quick browser games including Snake Circuit, Gravity Flip, Signal Flight, Mini Pong, Memory Match, and more.">
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=12">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=71"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
+  <link rel="stylesheet" href="/games/games.css?v=23">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
 <body>
   <a class="game-skip" href="#game-library">Skip to games</a>
   <header class="ua-header" data-ua-header>
@@ -31,7 +31,7 @@
         <div class="games-hero-copy">
           <div class="games-kicker"><span></span> The browser playground</div>
           <h1>Pause the work.<br><em>Play a little.</em></h1>
-          <p>Eight quick games built for strategy, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
+          <p>Twelve quick games built for strategy, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
           <a class="games-primary-link" href="#game-library">Choose a game <span aria-hidden="true">↓︎</span></a>
         </div>
         <div class="games-hero-art" aria-hidden="true">
@@ -42,7 +42,7 @@
           <div class="pixel-cluster"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="games-hero-stats">
-          <div><strong>08</strong><span>instant games</span></div>
+          <div><strong>12</strong><span>instant games</span></div>
           <div><strong>100%</strong><span>browser based</span></div>
           <div><strong>0</strong><span>downloads needed</span></div>
         </div>
@@ -58,28 +58,40 @@
 
         <div class="game-picker" role="tablist" aria-label="Choose a game">
           <button class="game-pick is-active" type="button" role="tab" aria-selected="true" aria-controls="game-snake" data-game="snake">
-            <span class="game-pick-top"><span class="game-pick-icon icon-snake" aria-hidden="true">〰</span><span class="game-pick-number">01</span></span><b>Snake Circuit</b><small>Arcade · Endless</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-snake" aria-hidden="true">∿</span><b>Snake Circuit</b><small>Arcade · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-tic" data-game="tic">
-            <span class="game-pick-top"><span class="game-pick-icon" aria-hidden="true">×○</span><span class="game-pick-number">02</span></span><b>Tic-Tac-Toe</b><small>Strategy · 1–3 min</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-tic" aria-hidden="true">×○</span><b>Tic-Tac-Toe</b><small>Strategy · 1–3 min</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-memory" data-game="memory">
-            <span class="game-pick-top"><span class="game-pick-icon" aria-hidden="true">◇◆</span><span class="game-pick-number">03</span></span><b>Memory Match</b><small>Memory · 2–4 min</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-memory" aria-hidden="true">◇◆</span><b>Memory Match</b><small>Memory · 2–4 min</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-reaction" data-game="reaction">
-            <span class="game-pick-top"><span class="game-pick-icon icon-bolt" aria-hidden="true">ϟ</span><span class="game-pick-number">04</span></span><b>Reaction Rush</b><small>Speed · 30 sec</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-reaction" aria-hidden="true">ϟ</span><b>Reaction Rush</b><small>Speed · 30 sec</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-stack" data-game="stack">
+            <span class="game-pick-icon icon-stack" aria-hidden="true">▰</span><b>Stack Drop</b><small>Timing · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-orbit" data-game="orbit">
+            <span class="game-pick-icon icon-orbit" aria-hidden="true">●</span><b>Orbit Dodge</b><small>Arcade · Survival</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-flight" data-game="flight">
+            <span class="game-pick-icon icon-flight" aria-hidden="true">➤</span><b>Signal Flight</b><small>Arcade · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-pong" data-game="pong">
+            <span class="game-pick-icon icon-pong" aria-hidden="true">●│</span><b>Mini Pong</b><small>Arcade · Score chase</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-word" data-game="word">
-            <span class="game-pick-top"><span class="game-pick-icon icon-type" aria-hidden="true">Aa</span><span class="game-pick-number">05</span></span><b>Word Scramble</b><small>Words · 10 rounds</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-word" aria-hidden="true">Aa</span><b>Word Scramble</b><small>Words · 10 rounds</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-color" data-game="color">
-            <span class="game-pick-top"><span class="game-pick-icon icon-color" aria-hidden="true">●</span><span class="game-pick-number">06</span></span><b>Color Focus</b><small>Focus · 10 rounds</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-color" aria-hidden="true">●</span><b>Color Focus</b><small>Focus · 10 rounds</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-connect" data-game="connect">
-            <span class="game-pick-top"><span class="game-pick-icon icon-dots" aria-hidden="true">●●</span><span class="game-pick-number">07</span></span><b>Four in a Row</b><small>Strategy · Place anywhere</small><i aria-hidden="true">↗︎</i>
+            <span class="game-pick-icon icon-connect" aria-hidden="true">●●</span><b>Four in a Row</b><small>Strategy · Place anywhere</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-math" data-game="math">
-            <span class="game-pick-top"><span class="game-pick-icon icon-math" aria-hidden="true">7+5</span><span class="game-pick-number">08</span></span><b>Math Sprint</b><small>Numbers · 10 questions</small><i aria-hidden="true">↗︎</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-gravity" data-game="gravity">
+            <span class="game-pick-icon icon-gravity" aria-hidden="true">↕</span><b>Gravity Flip</b><small>Arcade · One-tap runner</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
         </div>
 
@@ -98,8 +110,26 @@
           </article>
 
           <article class="game-panel" id="game-tic" role="tabpanel" data-game-panel="tic" hidden>
-            <div class="game-panel-info"><span>Strategy grid / 02</span><h3>Tic-Tac-Toe</h3><p>You are X. The computer plays O and looks for the strongest move.</p><div class="game-score-line"><span>Round</span><strong data-tic-status>Your turn</strong></div><button class="game-small-button" type="button" data-tic-reset>Play again</button></div>
-            <div class="tic-board" data-tic-board aria-label="Tic-tac-toe board"></div>
+            <div class="game-panel-info">
+              <span>Strategy grid / 02</span><h3>Tic-Tac-Toe</h3><p data-tic-description>You are X. The computer plays O and looks for the strongest move.</p>
+              <div class="tic-mode-switch" role="group" aria-label="Choose Tic-Tac-Toe mode"><button class="is-active" type="button" data-tic-mode="solo">Computer</button><button type="button" data-tic-mode="online">Online</button></div>
+              <div class="game-score-line"><span>Round</span><strong data-tic-status>Your turn</strong></div><button class="game-small-button" type="button" data-tic-reset>Play again</button>
+            </div>
+            <div class="tic-arena">
+              <section class="tic-online-lobby" data-tic-online-lobby hidden aria-label="Online game lobby">
+                <div><span>Live two-player match</span><h4>Play someone, anywhere.</h4><p>Create a private room or enter the six-character code a friend shared with you.</p></div>
+                <label class="tic-field"><span>Your name</span><input type="text" maxlength="24" autocomplete="nickname" placeholder="Player name" data-tic-player-name></label>
+                <button class="tic-primary-action" type="button" data-tic-create-room>Create a room <span aria-hidden="true">↗</span></button>
+                <div class="tic-join-row"><label class="tic-field"><span>Have a room code?</span><input type="text" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABC123" data-tic-room-input></label><button type="button" data-tic-join-room>Join room</button></div>
+                <p class="tic-lobby-status" data-tic-lobby-status aria-live="polite">No account needed.</p>
+              </section>
+              <section class="tic-online-room" data-tic-online-room hidden aria-label="Online Tic-Tac-Toe room">
+                <div class="tic-room-top"><div><span>Private room</span><strong data-tic-room-code>——————</strong></div><div><button type="button" data-tic-copy-room>Copy code</button><button type="button" data-tic-share-room>Share link</button><button type="button" data-tic-leave-room>Leave</button></div></div>
+                <div class="tic-players"><div data-tic-player="X"><b>X</b><span><strong>Waiting…</strong><small>Room host</small></span></div><div data-tic-player="O"><b>O</b><span><strong>Waiting…</strong><small>Opponent</small></span></div><em data-tic-connection>Connecting…</em></div>
+              </section>
+              <div class="tic-board" data-tic-board aria-label="Tic-tac-toe board"></div>
+              <p class="tic-network-note" data-tic-network-note hidden aria-live="polite">Connecting to the room…</p>
+            </div>
           </article>
 
           <article class="game-panel is-active" id="game-snake" role="tabpanel" data-game-panel="snake">
@@ -107,25 +137,46 @@
             <div class="snake-wrap"><canvas width="360" height="360" data-snake-canvas aria-label="Snake game board"></canvas><div class="snake-controls" aria-label="Snake direction controls"><button type="button" data-direction="up" aria-label="Move up">↑︎</button><button type="button" data-direction="left" aria-label="Move left">←</button><button type="button" data-direction="down" aria-label="Move down">↓︎</button><button type="button" data-direction="right" aria-label="Move right">→︎</button></div><p class="game-status" data-snake-status>Press start to enter the circuit.</p></div>
           </article>
 
+          <article class="game-panel" id="game-stack" role="tabpanel" data-game-panel="stack" hidden>
+            <div class="game-panel-info"><span>Timing tower / 05</span><h3>Stack Drop</h3><p>Stop each moving block above the tower. Only the overlapping section survives, so every imperfect drop makes the next one harder.</p><div class="game-score-line"><span>Height</span><strong data-stack-score>0</strong></div><button class="game-small-button" type="button" data-stack-action>Start stacking</button></div>
+            <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-stack-canvas aria-label="Stack Drop game board"></canvas><p class="game-status" data-stack-status>Press start, then tap the board or button to drop.</p></div>
+          </article>
+
+          <article class="game-panel" id="game-orbit" role="tabpanel" data-game-panel="orbit" hidden>
+            <div class="game-panel-info"><span>Orbit lab / 06</span><h3>Orbit Dodge</h3><p>Your lime signal travels around the ring. Tap to reverse direction and avoid the orange hazards as the orbit becomes faster.</p><div class="game-score-line"><span>Survival</span><strong data-orbit-score>0.0s</strong></div><button class="game-small-button" type="button" data-orbit-action>Start orbit</button></div>
+            <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-orbit-canvas aria-label="Orbit Dodge game board"></canvas><p class="game-status" data-orbit-status>Tap the board, button, or Space to reverse.</p></div>
+          </article>
+
+          <article class="game-panel" id="game-flight" role="tabpanel" data-game-panel="flight" hidden>
+            <div class="game-panel-info"><span>Signal airspace / 07</span><h3>Signal Flight</h3><p>Tap to lift the lime signal through moving gates. Gravity never stops, the gaps become tighter, and every clean pass adds a point.</p><div class="game-score-line"><span>Gates cleared</span><strong data-flight-score>0</strong></div><button class="game-small-button" type="button" data-flight-action>Start flight</button></div>
+            <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-flight-canvas aria-label="Signal Flight game board"></canvas><p class="game-status" data-flight-status>Tap the board, button, or Space to lift.</p></div>
+          </article>
+
+          <article class="game-panel" id="game-pong" role="tabpanel" data-game-panel="pong" hidden>
+            <div class="game-panel-info"><span>Arcade table / 08</span><h3>Mini Pong</h3><p>Keep the ball in play with your paddle. Move with touch, mouse, or the arrow keys and chase a longer rally.</p><div class="game-score-line"><span>Rally</span><strong data-pong-score>0</strong></div><button class="game-small-button" type="button" data-pong-action>Start rally</button></div>
+            <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-pong-canvas aria-label="Mini Pong game board"></canvas><div class="pong-controls" aria-label="Pong paddle controls"><button type="button" data-pong-move="left">←</button><button type="button" data-pong-move="right">→</button></div><p class="game-status" data-pong-status>Move the paddle and keep the ball alive.</p></div>
+          </article>
+
           <article class="game-panel" id="game-connect" role="tabpanel" data-game-panel="connect" hidden>
-            <div class="game-panel-info"><span>Strategy board / 07</span><h3>Four in a Row</h3><p>Tap any empty circle and your lime piece appears exactly there. Connect four horizontally, vertically, or diagonally before the computer.</p><div class="game-score-line"><span>Round</span><strong data-connect-status>Choose any circle</strong></div><button class="game-small-button" type="button" data-connect-reset>New round</button></div>
+            <div class="game-panel-info"><span>Strategy board / 11</span><h3>Four in a Row</h3><p>Tap any empty circle and your lime piece appears exactly there. Connect four horizontally, vertically, or diagonally before the computer.</p><div class="game-score-line"><span>Round</span><strong data-connect-status>Choose any circle</strong></div><button class="game-small-button" type="button" data-connect-reset>New round</button></div>
             <div class="connect-wrap"><div class="connect-legend"><span><i></i>You</span><span><i></i>Computer</span></div><div class="connect-board" data-connect-board aria-label="Four in a Row board"></div><p class="game-status">Tap the exact circle where you want to place your piece.</p></div>
           </article>
 
-          <article class="game-panel" id="game-math" role="tabpanel" data-game-panel="math" hidden>
-            <div class="game-panel-info"><span>Number lab / 08</span><h3>Math Sprint</h3><p>Solve the equation and tap the correct answer. Complete ten questions and see how many you get right.</p><div class="game-score-line"><span>Score</span><strong data-math-score>0 / 10</strong></div><button class="game-small-button" type="button" data-math-start>Start sprint</button></div>
-            <div class="math-board"><span class="math-round" data-math-round>Ready for 10 questions</span><strong class="math-question" data-math-question>7 + 5</strong><div class="math-options" data-math-options><button type="button" disabled>10</button><button type="button" disabled>11</button><button type="button" disabled>12</button><button type="button" disabled>13</button></div><p class="game-status" data-math-status>Press “Start sprint,” then tap the answer.</p></div>
-          </article>
-
           <article class="game-panel" id="game-word" role="tabpanel" data-game-panel="word" hidden>
-            <div class="game-panel-info"><span>Word lab / 05</span><h3>Word Scramble</h3><p>Rearrange the letters using the clue. Build a streak across ten rounds.</p><div class="game-score-line"><span>Score</span><strong data-word-score>0</strong></div></div>
+            <div class="game-panel-info"><span>Word lab / 09</span><h3>Word Scramble</h3><p>Rearrange the letters using the clue. Build a streak across ten rounds.</p><div class="game-score-line"><span>Score</span><strong data-word-score>0</strong></div></div>
             <div class="word-board"><span class="word-round" data-word-round>Round 1 / 10</span><strong class="scrambled-word" data-scrambled-word>—</strong><p data-word-hint>Loading clue…</p><form data-word-form><label for="word-answer">Your answer</label><div><input id="word-answer" data-word-input autocomplete="off" spellcheck="false"><button type="submit">Check</button></div></form><button class="word-skip" type="button" data-word-skip>Skip word →︎</button><p class="game-status" data-word-status></p></div>
           </article>
 
           <article class="game-panel" id="game-color" role="tabpanel" data-game-panel="color" hidden>
-            <div class="game-panel-info"><span>Focus test / 06</span><h3>Color Focus</h3><p>Ignore the written word. Choose the actual ink colour before the timer runs out.</p><div class="game-score-line"><span>Score</span><strong data-color-score>0 / 10</strong></div><button class="game-small-button" type="button" data-color-start>Start challenge</button></div>
+            <div class="game-panel-info"><span>Focus test / 10</span><h3>Color Focus</h3><p>Ignore the written word. Choose the actual ink colour before the timer runs out.</p><div class="game-score-line"><span>Score</span><strong data-color-score>0 / 10</strong></div><button class="game-small-button" type="button" data-color-start>Start challenge</button></div>
             <div class="color-board"><span class="color-round" data-color-round>Round 0 / 10</span><strong class="color-prompt" data-color-prompt>READY</strong><div class="color-options" data-color-options></div><p class="game-status" data-color-status>Ten quick decisions. Stay focused.</p></div>
           </article>
+
+          <article class="game-panel" id="game-gravity" role="tabpanel" data-game-panel="gravity" hidden>
+            <div class="game-panel-info"><span>Inverted corridor</span><h3>Gravity Flip</h3><p>Your runner never stops. Tap to switch between floor and ceiling, pass the barriers, and keep the run alive.</p><div class="game-score-line"><span>Barriers passed</span><strong data-gravity-score>0</strong></div><button class="game-small-button" type="button" data-gravity-action>Start run</button></div>
+            <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-gravity-canvas aria-label="Gravity Flip game board"></canvas><p class="game-status" data-gravity-status>Tap the board, button, or Space to flip gravity.</p></div>
+          </article>
+
         </div>
       </div>
     </section>
@@ -166,6 +217,7 @@
     <div><a href="/legal/privacy-policy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/cookie-policy/">Cookies</a></div>
   </div>
 </footer>
-  <script src="/games/games.js?v=7"></script>
+  <script src="/games/games.js?v=15"></script>
+  <script src="/games/tic-online.bundle.js?v=1"></script>
 <script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
 </html>
