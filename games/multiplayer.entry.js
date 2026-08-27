@@ -6,6 +6,13 @@ import { createClient } from '@supabase/supabase-js';
     connect: 'Four in a Row', reaction: 'Reaction Rush', memory: 'Memory Match',
     word: 'Word Scramble', color: 'Color Focus'
   };
+  const onlineDescriptions = {
+    connect: 'Use real gravity-drop rules in a live two-player match. Choose a column, connect four, and request a rematch without leaving the room.',
+    reaction: 'Share one unpredictable signal and discover who reacts first. Every round adds a point to the faster player.',
+    memory: 'Take turns revealing two cards on one shared board. A matching pair earns a point and keeps the turn.',
+    word: 'Solve the same ten scrambled words together. Answers lock privately, then both players advance at the same time.',
+    color: 'Face the same ten colour prompts together. Choose the ink colour—not the written word—and chase the higher score.'
+  };
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const symbols = ['✦', '●', '▲', '■', '◆', '☀', '☾', '✚'];
   const words = [
@@ -110,8 +117,10 @@ import { createClient } from '@supabase/supabase-js';
     const rematch = $('[data-multi-rematch]', root); rematch.hidden = !state.over;
     if (game === 'connect') {
       arena.className = 'multi-game multi-connect';
-      arena.innerHTML = `<div class="multi-connect-columns">${Array.from({length:7},(_,i)=>`<button type="button" data-column="${i}" ${!both||state.over||state.turn!==role?'disabled':''}><span>${i+1}</span><i>↓</i></button>`).join('')}</div><div class="connect-board">${state.board.map(value=>`<span class="connect-cell${value ? ` is-${value==='A'?'p':'c'}` : ''}"></span>`).join('')}</div>`;
-      arena.querySelectorAll('[data-column]').forEach(button => button.addEventListener('click', () => session.action({type:'column', column:Number(button.dataset.column)})));
+      const canPlay = both && !state.over && state.turn === role;
+      const columnOpen = column => !state.board[column];
+      arena.innerHTML = `<div class="multi-connect-columns">${Array.from({length:7},(_,i)=>`<button type="button" data-column="${i}" ${!canPlay||!columnOpen(i)?'disabled':''}><span>${i+1}</span><i>↓</i></button>`).join('')}</div><div class="connect-board">${state.board.map((value,index)=>`<button type="button" class="connect-cell${value ? ` is-${value==='A'?'p':'c'}` : ''}" data-board-column="${index%7}" aria-label="Drop a piece in column ${(index%7)+1}" ${!canPlay||!columnOpen(index%7)?'disabled':''}></button>`).join('')}</div>`;
+      arena.querySelectorAll('[data-column],[data-board-column]').forEach(button => button.addEventListener('click', () => session.action({type:'column', column:Number(button.dataset.column ?? button.dataset.boardColumn)})));
       status.textContent = !both ? 'Share the room code with your opponent.' : state.result === 'draw' ? 'The board is full — draw.' : state.result ? `${session.players[state.result]?.name || 'Player'} connected four!` : state.turn === role ? 'Your turn — choose a column.' : `${session.players[state.turn]?.name || 'Opponent'} is choosing a column…`;
     } else if (game === 'memory') {
       arena.className = 'multi-game multi-memory';
@@ -200,6 +209,10 @@ import { createClient } from '@supabase/supabase-js';
 
   function showLobby(game, inviteCode='') {
     if(active)active.leave(false);const panel=$(`[data-game-panel="${game}"]`),native=panel.querySelector(':scope > :last-child');native.hidden=true;
+    panel.classList.add('is-multi-online');
+    const description = $('.game-panel-info > p', panel);
+    if (!description.dataset.soloCopy) description.dataset.soloCopy = description.textContent;
+    description.textContent = onlineDescriptions[game];
     const root=document.createElement('div');root.className='multi-root';root.innerHTML=lobbyMarkup(game);panel.append(root);
     const modeButtons=panel.querySelectorAll('[data-multi-mode]');modeButtons.forEach(button=>button.classList.toggle('is-active',button.dataset.multiMode==='online'));
     const code=$('[data-multi-code]',root);code.value=inviteCode;
@@ -213,7 +226,7 @@ import { createClient } from '@supabase/supabase-js';
   supported.forEach(game=>{
     const panel=$(`[data-game-panel="${game}"]`);const info=$('.game-panel-info',panel);info.insertAdjacentHTML('beforeend',modeMarkup(game));
     info.querySelectorAll('[data-multi-mode]').forEach(button=>button.addEventListener('click',()=>{
-      if(button.dataset.multiMode==='online')showLobby(game);else{if(active?.game===game)active.leave();panel.querySelector('.multi-root')?.remove();panel.querySelector(':scope > :last-child').hidden=false;info.querySelectorAll('[data-multi-mode]').forEach(item=>item.classList.toggle('is-active',item.dataset.multiMode==='solo'));}
+      if(button.dataset.multiMode==='online')showLobby(game);else{if(active?.game===game)active.leave();panel.querySelector('.multi-root')?.remove();panel.querySelector(':scope > :last-child').hidden=false;panel.classList.remove('is-multi-online');const description=$('.game-panel-info > p',panel);if(description.dataset.soloCopy)description.textContent=description.dataset.soloCopy;info.querySelectorAll('[data-multi-mode]').forEach(item=>item.classList.toggle('is-active',item.dataset.multiMode==='solo'));}
     }));
   });
   const invite=parseInvite();if(invite){document.querySelector(`[data-game="${invite.game}"]`)?.click();showLobby(invite.game,invite.code);}
