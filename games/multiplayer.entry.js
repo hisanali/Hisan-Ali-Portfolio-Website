@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
     word: 'Word Scramble', color: 'Color Focus'
   };
   const onlineDescriptions = {
-    connect: 'Use real gravity-drop rules in a live two-player match. Choose a column, connect four, and request a rematch without leaving the room.',
+    connect: 'Play a live two-player match with exact-circle placement. Tap any empty circle, connect four, and request a rematch without leaving the room.',
     reaction: 'Share one unpredictable signal and discover who reacts first. Every round adds a point to the faster player.',
     memory: 'Take turns revealing two cards on one shared board. A matching pair earns a point and keeps the turn.',
     word: 'Solve the same ten scrambled words together. Answers lock privately, then both players advance at the same time.',
@@ -118,10 +118,9 @@ import { createClient } from '@supabase/supabase-js';
     if (game === 'connect') {
       arena.className = 'multi-game multi-connect';
       const canPlay = both && !state.over && state.turn === role;
-      const columnOpen = column => !state.board[column];
-      arena.innerHTML = `<div class="multi-connect-columns">${Array.from({length:7},(_,i)=>`<button type="button" data-column="${i}" ${!canPlay||!columnOpen(i)?'disabled':''}><span>${i+1}</span><i>↓</i></button>`).join('')}</div><div class="connect-board">${state.board.map((value,index)=>`<button type="button" class="connect-cell${value ? ` is-${value==='A'?'p':'c'}` : ''}" data-board-column="${index%7}" aria-label="Drop a piece in column ${(index%7)+1}" ${!canPlay||!columnOpen(index%7)?'disabled':''}></button>`).join('')}</div>`;
-      arena.querySelectorAll('[data-column],[data-board-column]').forEach(button => button.addEventListener('click', () => session.action({type:'column', column:Number(button.dataset.column ?? button.dataset.boardColumn)})));
-      status.textContent = !both ? 'Share the room code with your opponent.' : state.result === 'draw' ? 'The board is full — draw.' : state.result ? `${session.players[state.result]?.name || 'Player'} connected four!` : state.turn === role ? 'Your turn — choose a column.' : `${session.players[state.turn]?.name || 'Opponent'} is choosing a column…`;
+      arena.innerHTML = `<div class="connect-board">${state.board.map((value,index)=>`<button type="button" class="connect-cell${value ? ` is-${value==='A'?'p':'c'}` : ''}" data-board-index="${index}" aria-label="${value ? 'Occupied' : 'Place a piece'} at row ${Math.floor(index/7)+1}, column ${(index%7)+1}" ${!canPlay||Boolean(value)?'disabled':''}></button>`).join('')}</div>`;
+      arena.querySelectorAll('[data-board-index]').forEach(button => button.addEventListener('click', () => session.action({type:'cell', index:Number(button.dataset.boardIndex)})));
+      status.textContent = !both ? 'Share the room code with your opponent.' : state.result === 'draw' ? 'The board is full — draw.' : state.result ? `${session.players[state.result]?.name || 'Player'} connected four!` : state.turn === role ? 'Your turn — choose any empty circle.' : `${session.players[state.turn]?.name || 'Opponent'} is choosing a circle…`;
     } else if (game === 'memory') {
       arena.className = 'multi-game multi-memory';
       arena.innerHTML = `<div class="memory-board">${state.cards.map((symbol,index)=>`<button type="button" class="memory-card${state.flipped.includes(index)||cardDone(state,index)?' is-flipped':''}${cardDone(state,index)?' is-matched':''}" data-card="${index}" ${!both||state.over||state.turn!==role||state.flipped.includes(index)||cardDone(state,index)||state.flipped.length>=2?'disabled':''}>${symbol}</button>`).join('')}</div>`;
@@ -157,8 +156,8 @@ import { createClient } from '@supabase/supabase-js';
   function hostAction(session, action, actor) {
     const state = session.state; if (state.over && action.type !== 'rematch') return;
     if (action.type === 'rematch') { const fresh=initialState(session.game); fresh.score={...state.score};fresh.revision=state.revision+1;session.state=fresh;session.publish();return; }
-    if (session.game === 'connect' && action.type === 'column' && state.turn === actor) {
-      for (let row=5;row>=0;row--) {const index=row*7+action.column;if(!state.board[index]){state.board[index]=actor;state.turn=actor==='A'?'B':'A';const result=connectWinner(state.board);if(result){state.result=result;state.over=true;if(result!=='draw')state.score[result]+=1;}break;}}
+    if (session.game === 'connect' && action.type === 'cell' && state.turn === actor && Number.isInteger(action.index) && action.index >= 0 && action.index < state.board.length && !state.board[action.index]) {
+      state.board[action.index]=actor;state.turn=actor==='A'?'B':'A';const result=connectWinner(state.board);if(result){state.result=result;state.over=true;if(result!=='draw')state.score[result]+=1;}
     } else if (session.game === 'memory' && action.type === 'card' && state.turn === actor && state.flipped.length < 2 && !state.flipped.includes(action.index) && !state.matched.includes(action.index)) {
       state.flipped.push(action.index);
       if (state.flipped.length === 2) {
