@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build:games": "esbuild games/tic-online.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/tic-online.bundle.js",
+    "build:games": "esbuild games/tic-online.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/tic-online.bundle.js && esbuild games/multiplayer.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/multiplayer.bundle.js",
     "dev": "npm run build:games && next dev",
     "build": "npm run build:games && node scripts/generate-static-site.mjs && next build",
     "start": "next start",
