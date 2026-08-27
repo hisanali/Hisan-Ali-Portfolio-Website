@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Playground — Free Browser Games | Hisan Ali</title>
-  <meta name="description" content="Play twelve quick browser games including Snake Circuit, Gravity Flip, Signal Flight, Mini Pong, Memory Match, and more.">
+  <meta name="description" content="Play thirteen quick browser games including Snake Circuit, Dots & Boxes, Gravity Flip, Memory Match, and more.">
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=24">
+  <link rel="stylesheet" href="/games/games.css?v=25">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
 <body>
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -31,7 +31,7 @@
         <div class="games-hero-copy">
           <div class="games-kicker"><span></span> The browser playground</div>
           <h1>Pause the work.<br><em>Play a little.</em></h1>
-          <p>Twelve quick games built for strategy, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
+          <p>Thirteen quick games built for strategy, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
           <a class="games-primary-link" href="#game-library">Choose a game <span aria-hidden="true">↓︎</span></a>
         </div>
         <div class="games-hero-art" aria-hidden="true">
@@ -42,7 +42,7 @@
           <div class="pixel-cluster"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="games-hero-stats">
-          <div><strong>12</strong><span>instant games</span></div>
+          <div><strong>13</strong><span>instant games</span></div>
           <div><strong>100%</strong><span>browser based</span></div>
           <div><strong>0</strong><span>downloads needed</span></div>
         </div>
@@ -67,7 +67,7 @@
             <span class="game-pick-icon icon-memory" aria-hidden="true">◇◆</span><b>Memory Match</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-reaction" data-game="reaction">
-            <span class="game-pick-icon icon-reaction" aria-hidden="true">ϟ</span><b>Reaction Rush</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+            <span class="game-pick-icon icon-reaction" aria-hidden="true">ϟ</span><b>Reaction Rush</b><small>Solo reflex</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-stack" data-game="stack">
             <span class="game-pick-icon icon-stack" aria-hidden="true">▰</span><b>Stack Drop</b><small>Timing · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
@@ -89,6 +89,9 @@
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-connect" data-game="connect">
             <span class="game-pick-icon icon-connect" aria-hidden="true">●●</span><b>Four in a Row</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-dots" data-game="dots">
+            <span class="game-pick-icon icon-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Dots &amp; Boxes</b><small>Online strategy</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-gravity" data-game="gravity">
             <span class="game-pick-icon icon-gravity" aria-hidden="true">↕</span><b>Gravity Flip</b><small>Arcade · One-tap runner</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
@@ -162,6 +165,15 @@
             <div class="connect-wrap"><div class="connect-legend"><span><i></i>You</span><span><i></i>Computer</span></div><div class="connect-board" data-connect-board aria-label="Four in a Row board"></div><p class="game-status">Tap the exact circle where you want to place your piece.</p></div>
           </article>
 
+          <article class="game-panel" id="game-dots" role="tabpanel" data-game-panel="dots" hidden>
+            <div class="game-panel-info"><span>Live strategy / 12</span><h3>Dots &amp; Boxes</h3><p>Take turns drawing one line. Complete the fourth side of a square to claim it—and keep your turn.</p></div>
+            <div class="dots-intro">
+              <div class="dots-intro-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span><span></span><span></span><span></span><b>A</b></div>
+              <strong>One line can change the board.</strong>
+              <p>Create a private room, invite a friend, and claim more squares than they do.</p>
+            </div>
+          </article>
+
           <article class="game-panel" id="game-word" role="tabpanel" data-game-panel="word" hidden>
             <div class="game-panel-info"><span>Word lab / 09</span><h3>Word Scramble</h3><p>Rearrange the letters using the clue. Build a streak across ten rounds.</p><div class="game-score-line"><span>Score</span><strong data-word-score>0</strong></div></div>
             <div class="word-board"><span class="word-round" data-word-round>Round 1 / 10</span><strong class="scrambled-word" data-scrambled-word>—</strong><p data-word-hint>Loading clue…</p><form data-word-form><label for="word-answer">Your answer</label><div><input id="word-answer" data-word-input autocomplete="off" spellcheck="false"><button type="submit">Check</button></div></form><button class="word-skip" type="button" data-word-skip>Skip word →︎</button><p class="game-status" data-word-status></p></div>
@@ -219,6 +231,6 @@
 </footer>
   <script src="/games/games.js?v=15"></script>
   <script src="/games/tic-online.bundle.js?v=1"></script>
-  <script src="/games/multiplayer.bundle.js?v=1"></script>
+  <script src="/games/multiplayer.bundle.js?v=2"></script>
 <script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
 </html>
