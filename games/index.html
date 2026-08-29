@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=25">
+  <link rel="stylesheet" href="/games/games.css?v=57">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
 <body>
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -56,47 +56,61 @@
           <p>Start with something quick or settle in for a longer score chase. Every game works with touch, mouse, and keyboard.</p>
         </header>
 
+        <div class="game-toolbar">
+          <div class="game-filters" role="group" aria-label="Filter games">
+            <button class="is-active" type="button" aria-pressed="true" data-game-filter="all">All games</button>
+            <button type="button" aria-pressed="false" data-game-filter="online"><span></span>Online</button>
+            <button type="button" aria-pressed="false" data-game-filter="strategy">Strategy</button>
+            <button type="button" aria-pressed="false" data-game-filter="arcade">Arcade</button>
+            <button type="button" aria-pressed="false" data-game-filter="focus">Focus</button>
+          </div>
+          <p data-game-filter-count>12 games</p>
+        </div>
+
         <div class="game-picker" role="tablist" aria-label="Choose a game">
-          <button class="game-pick is-active" type="button" role="tab" aria-selected="true" aria-controls="game-snake" data-game="snake">
-            <span class="game-pick-icon icon-snake" aria-hidden="true">∿</span><b>Snake Circuit</b><small>Arcade · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick is-active" type="button" role="tab" aria-selected="true" aria-controls="game-snake" data-game="snake" data-category="arcade" data-online="false" data-tone="orange">
+            <span class="game-pick-top"><span class="game-card-visual visual-snake" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-arena" x="4" y="5" width="112" height="80" rx="13"/><path class="v-arena-grid" d="M4 25h112M4 45h112M4 65h112M24 5v80M44 5v80M64 5v80M84 5v80M104 5v80"/><g class="v-snake"><circle class="v-body v-tail" cx="22" cy="66" r="5"/><circle class="v-body" cx="33" cy="66" r="6"/><circle class="v-body" cx="44" cy="63" r="7"/><circle class="v-body" cx="54" cy="57" r="7.5"/><circle class="v-body" cx="62" cy="48" r="8"/><circle class="v-body" cx="69" cy="39" r="8.5"/><ellipse class="v-snake-head" cx="79" cy="30" rx="13" ry="10"/><circle class="v-snake-eye" cx="83" cy="26" r="2.2"/><path class="v-mouth" d="m89 30 6-4v8Z"/></g><g class="v-apple"><circle cx="104" cy="30" r="7"/><path class="v-stem" d="M103 22c0-4 2-6 5-7"/><path class="v-leaf" d="M105 20c4-4 8-3 9 0-4 2-7 2-9 0Z"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Snake Circuit</b><small>Collect signals and avoid your own trail.</small><span class="game-pick-footer"><em>Arcade · Endless</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-tic" data-game="tic">
-            <span class="game-pick-icon icon-tic" aria-hidden="true">×○</span><b>Tic-Tac-Toe</b><small>Strategy · 1–3 min</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-tic" data-game="tic" data-category="strategy" data-online="true" data-tone="coral">
+            <span class="game-pick-top"><span class="game-card-visual visual-tic" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-tic-board" x="13" y="3" width="94" height="84" rx="14"/><g class="v-tic-cells"><rect x="20" y="10" width="24" height="20" rx="5"/><rect x="48" y="10" width="24" height="20" rx="5"/><rect x="76" y="10" width="24" height="20" rx="5"/><rect x="20" y="35" width="24" height="20" rx="5"/><rect x="48" y="35" width="24" height="20" rx="5"/><rect x="76" y="35" width="24" height="20" rx="5"/><rect x="20" y="60" width="24" height="20" rx="5"/><rect x="48" y="60" width="24" height="20" rx="5"/><rect x="76" y="60" width="24" height="20" rx="5"/></g><g class="v-tic-piece v-tic-move-1 v-tic-x"><path d="m26 15 12 10m0-10-12 10"/></g><g class="v-tic-piece v-tic-move-2 v-tic-o"><circle cx="60" cy="20" r="6"/></g><g class="v-tic-piece v-tic-move-3 v-tic-x"><path d="m54 40 12 10m0-10-12 10"/></g><g class="v-tic-piece v-tic-move-4 v-tic-o"><circle cx="88" cy="45" r="6"/></g><g class="v-tic-piece v-tic-move-5 v-tic-x"><path d="m82 65 12 10m0-10-12 10"/></g><path class="v-tic-win" d="M26 14 94 76"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Tic-Tac-Toe</b><small>Classic three-in-a-row strategy.</small><span class="game-pick-footer"><em>Strategy · Quick</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-memory" data-game="memory">
-            <span class="game-pick-icon icon-memory" aria-hidden="true">◇◆</span><b>Memory Match</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-memory" data-game="memory" data-category="focus" data-online="true" data-tone="purple">
+            <span class="game-pick-top"><span class="game-card-visual visual-memory" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-memory-table" x="5" y="4" width="110" height="82" rx="14"/><g class="v-memory-card v-memory-match v-memory-card-1"><rect x="13" y="12" width="27" height="28" rx="6"/><path class="v-memory-star" d="m26.5 18 2.6 5.2 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.8Z"/></g><g class="v-memory-card v-memory-closed"><rect x="46.5" y="12" width="27" height="28" rx="6"/><path d="M53 19h14M53 26h14M53 33h8"/></g><g class="v-memory-card v-memory-closed"><rect x="80" y="12" width="27" height="28" rx="6"/><circle cx="87" cy="20" r="1.7"/><circle cx="100" cy="20" r="1.7"/><circle cx="87" cy="32" r="1.7"/><circle cx="100" cy="32" r="1.7"/></g><g class="v-memory-card v-memory-closed"><rect x="13" y="49" width="27" height="28" rx="6"/><circle cx="26.5" cy="63" r="6"/><path d="M23 63h7M26.5 59.5v7"/></g><g class="v-memory-card v-memory-closed"><rect x="46.5" y="49" width="27" height="28" rx="6"/><path d="m60 56 7 7-7 7-7-7Z"/></g><g class="v-memory-card v-memory-match v-memory-card-6"><rect x="80" y="49" width="27" height="28" rx="6"/><path class="v-memory-star" d="m93.5 55 2.6 5.2 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.8Z"/></g><path class="v-memory-link" d="M34 34c13 17 34 23 51 28"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Memory Match</b><small>Reveal cards and find every matching pair.</small><span class="game-pick-footer"><em>Focus · 2–4 min</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-reaction" data-game="reaction">
-            <span class="game-pick-icon icon-reaction" aria-hidden="true">ϟ</span><b>Reaction Rush</b><small>Solo reflex</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-reaction" data-game="reaction" data-category="focus" data-online="false" data-tone="yellow">
+            <span class="game-pick-top"><span class="game-card-visual visual-reaction" aria-hidden="true"><svg viewBox="0 0 120 90"><g class="v-reaction-lights"><circle class="v-light-red" cx="17" cy="15" r="4"/><circle class="v-light-yellow" cx="29" cy="15" r="4"/><circle class="v-light-green" cx="41" cy="15" r="4"/></g><circle class="v-reaction-orbit v-reaction-orbit-outer" cx="60" cy="47" r="35"/><circle class="v-reaction-orbit v-reaction-orbit-inner" cx="60" cy="47" r="28"/><circle class="v-reaction-wave v-wave-one" cx="60" cy="47" r="22"/><circle class="v-reaction-wave v-wave-two" cx="60" cy="47" r="22"/><circle class="v-reaction-button" cx="60" cy="47" r="22"/><path class="v-reaction-bolt" d="m65 29-17 21h11l-5 17 19-24H61Z"/><g class="v-reaction-sparks"><circle cx="60" cy="7" r="2"/><circle cx="99" cy="47" r="2"/><circle cx="21" cy="47" r="2"/><circle cx="60" cy="87" r="2"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Reaction Rush</b><small>Wait, watch, then tap at the signal.</small><span class="game-pick-footer"><em>Reflex · 30 sec</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-stack" data-game="stack">
-            <span class="game-pick-icon icon-stack" aria-hidden="true">▰</span><b>Stack Drop</b><small>Timing · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-stack" data-game="stack" data-category="arcade" data-online="false" data-tone="mint">
+            <span class="game-pick-top"><span class="game-card-visual visual-stack" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-stack-panel" x="5" y="4" width="110" height="82" rx="14"/><path class="v-stack-rail" d="M15 14h90"/><g class="v-stack-trolley"><rect x="51" y="9" width="18" height="10" rx="4"/><circle cx="55" cy="14" r="2"/><circle cx="65" cy="14" r="2"/></g><path class="v-stack-cable" d="M60 19v9"/><rect class="v-stack-falling" x="43" y="27" width="34" height="10" rx="3"/><g class="v-stack-tower"><rect x="19" y="69" width="82" height="10" rx="3"/><rect x="27" y="57" width="66" height="10" rx="3"/><rect x="35" y="45" width="50" height="10" rx="3"/></g><path class="v-stack-floor" d="M14 81h92"/><g class="v-stack-impact"><path d="M32 42l-6-4M88 42l6-4M60 29v-6"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Stack Drop</b><small>Time each drop and build higher.</small><span class="game-pick-footer"><em>Timing · Endless</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-orbit" data-game="orbit">
-            <span class="game-pick-icon icon-orbit" aria-hidden="true">●</span><b>Orbit Dodge</b><small>Arcade · Survival</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-flight" data-game="flight" data-category="arcade" data-online="false" data-tone="lime">
+            <span class="game-pick-top"><span class="game-card-visual visual-flight" aria-hidden="true"><svg viewBox="0 0 120 90"><path class="v-flight-route" d="M7 57c18 0 20-16 36-16s19 13 33 13 20-17 42-17"/><g class="v-obstacle v-obstacle-near"><rect x="69" y="1" width="18" height="36" rx="3"/><rect x="69" y="62" width="18" height="27" rx="3"/><path d="M66 37h24M66 62h24"/></g><g class="v-obstacle v-obstacle-far"><rect x="103" y="1" width="12" height="25" rx="3"/><rect x="103" y="50" width="12" height="39" rx="3"/><path d="M99 26h20M99 50h20"/></g><g class="v-signal-pilot"><circle class="v-signal-wave" cx="39" cy="47" r="15"/><circle class="v-signal-core" cx="39" cy="47" r="8"/><path class="v-signal-lift" d="m39 39 5 7h-10Z"/></g><g class="v-flight-speed"><path d="M5 66h31M10 73h21"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Signal Flight</b><small>Guide the signal through moving gates.</small><span class="game-pick-footer"><em>Arcade · Endless</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-flight" data-game="flight">
-            <span class="game-pick-icon icon-flight" aria-hidden="true">➤</span><b>Signal Flight</b><small>Arcade · Endless</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-pong" data-game="pong" data-category="arcade" data-online="false" data-tone="blue">
+            <span class="game-pick-top"><span class="game-card-visual visual-pong" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-pong-panel" x="6" y="5" width="108" height="80" rx="14"/><path class="v-pong-wall" d="M15 15h90M15 15v59M105 15v59"/><path class="v-pong-trajectory" d="M61 31 92 52 62 70 27 42"/><circle class="v-pong-ball" cx="61" cy="31" r="6"/><rect class="v-pong-paddle" x="44" y="72" width="34" height="7" rx="3.5"/><path class="v-pong-shadow" d="M38 82h46"/><g class="v-pong-impact"><path d="M57 65l-4-5M62 64v-7M67 65l4-5"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Mini Pong</b><small>Move the paddle and keep the rally alive.</small><span class="game-pick-footer"><em>Arcade · Score chase</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-pong" data-game="pong">
-            <span class="game-pick-icon icon-pong" aria-hidden="true">●│</span><b>Mini Pong</b><small>Arcade · Score chase</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-word" data-game="word" data-category="focus" data-online="true" data-tone="orange">
+            <span class="game-pick-top"><span class="game-card-visual visual-word" aria-hidden="true"><svg viewBox="0 0 120 90"><g class="v-scramble-row"><g class="v-scramble-tile v-tile-m"><rect x="8" y="29" width="24" height="31" rx="6"/><text x="20" y="50">M</text></g><g class="v-scramble-tile v-tile-a"><rect x="35" y="29" width="24" height="31" rx="6"/><text x="47" y="50">A</text></g><g class="v-scramble-tile v-tile-g"><rect x="62" y="29" width="24" height="31" rx="6"/><text x="74" y="50">G</text></g><g class="v-scramble-tile v-tile-e"><rect x="89" y="29" width="24" height="31" rx="6"/><text x="101" y="50">E</text></g></g></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Word Scramble</b><small>Unscramble ten clue-based words.</small><span class="game-pick-footer"><em>Words · 10 rounds</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-word" data-game="word">
-            <span class="game-pick-icon icon-word" aria-hidden="true">Aa</span><b>Word Scramble</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-color" data-game="color" data-category="focus" data-online="true" data-tone="split">
+            <span class="game-pick-top"><span class="game-card-visual visual-color" aria-hidden="true"><svg viewBox="0 0 120 90"><text class="v-color-word-simple" x="60" y="49">BLUE</text><g class="v-color-dots"><circle class="v-dot-red" cx="43" cy="67" r="6"/><circle class="v-dot-lime" cx="60" cy="67" r="6"/><circle class="v-dot-purple" cx="77" cy="67" r="6"/></g><path class="v-color-underline" d="M28 56h64"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Color Focus</b><small>Pick the ink colour, not the word.</small><span class="game-pick-footer"><em>Focus · 10 rounds</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-color" data-game="color">
-            <span class="game-pick-icon icon-color" aria-hidden="true">●</span><b>Color Focus</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-connect" data-game="connect" data-category="strategy" data-online="true" data-tone="coral">
+            <span class="game-pick-top"><span class="game-card-visual visual-connect" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-connect-board" x="8" y="19" width="104" height="64" rx="8"/><g class="v-connect-holes"><circle cx="18" cy="31" r="5.5"/><circle cx="32" cy="31" r="5.5"/><circle cx="46" cy="31" r="5.5"/><circle cx="60" cy="31" r="5.5"/><circle cx="74" cy="31" r="5.5"/><circle cx="88" cy="31" r="5.5"/><circle cx="102" cy="31" r="5.5"/><circle cx="18" cy="45" r="5.5"/><circle cx="32" cy="45" r="5.5"/><circle cx="46" cy="45" r="5.5"/><circle cx="60" cy="45" r="5.5"/><circle cx="74" cy="45" r="5.5"/><circle cx="88" cy="45" r="5.5"/><circle cx="102" cy="45" r="5.5"/><circle cx="18" cy="59" r="5.5"/><circle cx="32" cy="59" r="5.5"/><circle cx="46" cy="59" r="5.5"/><circle cx="60" cy="59" r="5.5"/><circle cx="74" cy="59" r="5.5"/><circle cx="88" cy="59" r="5.5"/><circle cx="102" cy="59" r="5.5"/><circle cx="18" cy="73" r="5.5"/><circle cx="32" cy="73" r="5.5"/><circle cx="46" cy="73" r="5.5"/><circle cx="60" cy="73" r="5.5"/><circle cx="74" cy="73" r="5.5"/><circle cx="88" cy="73" r="5.5"/><circle cx="102" cy="73" r="5.5"/></g><g class="v-connect-red"><circle cx="32" cy="59" r="5"/><circle cx="46" cy="59" r="5"/><circle cx="74" cy="73" r="5"/></g><g class="v-connect-lime"><circle cx="18" cy="73" r="5"/><circle cx="32" cy="73" r="5"/><circle cx="46" cy="73" r="5"/></g><circle class="v-connect-drop" cx="60" cy="8" r="5"/><path class="v-connect-win" d="M18 73h42"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Four in a Row</b><small>Claim any circle and connect four.</small><span class="game-pick-footer"><em>Strategy · Turn based</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-connect" data-game="connect">
-            <span class="game-pick-icon icon-connect" aria-hidden="true">●●</span><b>Four in a Row</b><small>Solo + online</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-dots" data-game="dots" data-category="strategy" data-online="true" data-tone="purple">
+            <span class="game-pick-top"><span class="game-card-visual visual-dots" aria-hidden="true"><svg viewBox="0 0 120 90"><g class="v-dots-claims"><rect class="v-dots-claim-a" x="25" y="18" width="28" height="25" rx="4"/><rect class="v-dots-claim-b" x="53" y="43" width="28" height="25" rx="4"/></g><g class="v-dots-lines"><path d="M25 18h28M53 18h28M25 43h28M53 43h28M25 68h28M53 68h28M25 18v25M53 18v25M81 18v25M25 43v25M53 43v25"/><path class="v-dots-final-edge" d="M81 43v25"/></g><g class="v-dots-nodes"><circle cx="25" cy="18" r="4"/><circle cx="53" cy="18" r="4"/><circle cx="81" cy="18" r="4"/><circle cx="25" cy="43" r="4"/><circle cx="53" cy="43" r="4"/><circle cx="81" cy="43" r="4"/><circle cx="25" cy="68" r="4"/><circle cx="53" cy="68" r="4"/><circle cx="81" cy="68" r="4"/></g><g class="v-dots-pencil"><path d="m91 54 12-12 5 5-12 12-7 2Z"/><path d="m103 42 2-2 5 5-2 2"/></g></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Dots &amp; Boxes</b><small>Draw lines and capture more squares.</small><span class="game-pick-footer"><em>Strategy · Two players</em><i aria-hidden="true">↗</i></span>
           </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-dots" data-game="dots">
-            <span class="game-pick-icon icon-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Dots &amp; Boxes</b><small>Online strategy</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
-          </button>
-          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-gravity" data-game="gravity">
-            <span class="game-pick-icon icon-gravity" aria-hidden="true">↕</span><b>Gravity Flip</b><small>Arcade · One-tap runner</small><i class="game-pick-arrow" aria-hidden="true">↗</i>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-gravity" data-game="gravity" data-category="arcade" data-online="false" data-tone="lime">
+            <span class="game-pick-top"><span class="game-card-visual visual-gravity" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-gravity-ceiling" x="7" y="8" width="106" height="9" rx="4.5"/><rect class="v-gravity-floor" x="7" y="73" width="106" height="9" rx="4.5"/><g class="v-gravity-spikes"><path d="m88 73 7-13 7 13M21 17l7 13 7-13"/></g><path class="v-gravity-trail" d="M34 58C38 37 49 25 70 22"/><path class="v-gravity-route-head" d="m63 18 9 4-7 7"/><g class="v-gravity-runner"><rect x="17" y="48" width="28" height="25" rx="7"/><circle cx="26" cy="56" r="2.4"/><circle cx="36" cy="56" r="2.4"/><path d="M25 65h12"/></g><g class="v-gravity-particles"><circle cx="51" cy="47" r="2"/><circle cx="60" cy="34" r="1.6"/><circle cx="72" cy="28" r="1.3"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Gravity Flip</b><small>Flip between floor and ceiling.</small><span class="game-pick-footer"><em>Arcade · One tap</em><i aria-hidden="true">↗</i></span>
           </button>
         </div>
+
+        <nav class="game-pagination" data-game-pagination aria-label="Game pages" hidden>
+          <button type="button" data-game-page-prev aria-label="Previous games">← <span>Previous</span></button>
+          <p data-game-page-status aria-live="polite">Page 1 of 1</p>
+          <button type="button" data-game-page-next aria-label="Next games"><span>Next</span> →</button>
+        </nav>
 
         <div class="game-stage" aria-live="polite">
           <article class="game-panel" id="game-reaction" role="tabpanel" data-game-panel="reaction" hidden>
@@ -145,11 +159,6 @@
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-stack-canvas aria-label="Stack Drop game board"></canvas><p class="game-status" data-stack-status>Press start, then tap the board or button to drop.</p></div>
           </article>
 
-          <article class="game-panel" id="game-orbit" role="tabpanel" data-game-panel="orbit" hidden>
-            <div class="game-panel-info"><span>Orbit lab / 06</span><h3>Orbit Dodge</h3><p>Your lime signal travels around the ring. Tap to reverse direction and avoid the orange hazards as the orbit becomes faster.</p><div class="game-score-line"><span>Survival</span><strong data-orbit-score>0.0s</strong></div><button class="game-small-button" type="button" data-orbit-action>Start orbit</button></div>
-            <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-orbit-canvas aria-label="Orbit Dodge game board"></canvas><p class="game-status" data-orbit-status>Tap the board, button, or Space to reverse.</p></div>
-          </article>
-
           <article class="game-panel" id="game-flight" role="tabpanel" data-game-panel="flight" hidden>
             <div class="game-panel-info"><span>Signal airspace / 07</span><h3>Signal Flight</h3><p>Tap to lift the lime signal through moving gates. Gravity never stops, the gaps become tighter, and every clean pass adds a point.</p><div class="game-score-line"><span>Gates cleared</span><strong data-flight-score>0</strong></div><button class="game-small-button" type="button" data-flight-action>Start flight</button></div>
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-flight-canvas aria-label="Signal Flight game board"></canvas><p class="game-status" data-flight-status>Tap the board, button, or Space to lift.</p></div>
@@ -166,11 +175,11 @@
           </article>
 
           <article class="game-panel" id="game-dots" role="tabpanel" data-game-panel="dots" hidden>
-            <div class="game-panel-info"><span>Live strategy / 12</span><h3>Dots &amp; Boxes</h3><p>Take turns drawing one line. Complete the fourth side of a square to claim it—and keep your turn.</p></div>
-            <div class="dots-intro">
-              <div class="dots-intro-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span><span></span><span></span><span></span><b>A</b></div>
-              <strong>One line can change the board.</strong>
-              <p>Create a private room, invite a friend, and claim more squares than they do.</p>
+            <div class="game-panel-info"><span>Strategy board / 12</span><h3>Dots &amp; Boxes</h3><p>Draw one line at a time against the computer. Complete a square to claim it and keep your turn.</p><div class="game-score-line"><span>Boxes</span><strong data-dots-score>0 — 0</strong></div><button class="game-small-button" type="button" data-dots-reset>New board</button></div>
+            <div class="dots-intro dots-solo" data-dots-solo>
+              <div class="dots-solo-head"><div><span class="is-player"></span>You</div><strong>VS</strong><div><span class="is-computer"></span>Computer</div></div>
+              <div class="dots-live-board" data-dots-solo-board role="grid" aria-label="Dots and Boxes board against the computer"></div>
+              <p class="game-status" data-dots-solo-status>Your turn — draw any line.</p>
             </div>
           </article>
 
@@ -229,8 +238,8 @@
     <div><a href="/legal/privacy-policy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/cookie-policy/">Cookies</a></div>
   </div>
 </footer>
-  <script src="/games/games.js?v=15"></script>
+  <script src="/games/games.js?v=17"></script>
   <script src="/games/tic-online.bundle.js?v=1"></script>
-  <script src="/games/multiplayer.bundle.js?v=2"></script>
+  <script src="/games/multiplayer.bundle.js?v=3"></script>
 <script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
 </html>

@@ -62,7 +62,7 @@ import { createClient } from '@supabase/supabase-js';
 
   function modeMarkup(game) {
     return `<div class="multi-mode" role="group" aria-label="Choose ${labels[game]} mode">
-      <button class="is-active" type="button" data-multi-mode="solo">${game === 'dots' ? 'How to play' : 'Solo'}</button>
+      <button class="is-active" type="button" data-multi-mode="solo">${game === 'dots' ? 'Vs computer' : 'Solo'}</button>
       <button type="button" data-multi-mode="online"><span></span>${game === 'dots' ? 'Play online' : 'Online'}</button>
     </div>`;
   }

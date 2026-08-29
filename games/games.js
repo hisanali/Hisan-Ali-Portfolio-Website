@@ -6,6 +6,65 @@
 
   const picks = $$('[data-game]');
   const panels = $$('[data-game-panel]');
+  const filterButtons = $$('[data-game-filter]');
+  const filterCount = $('[data-game-filter-count]');
+  const picker = $('.game-picker');
+  const pagination = $('[data-game-pagination]');
+  const pageStatus = $('[data-game-page-status]');
+  const pagePrevious = $('[data-game-page-prev]');
+  const pageNext = $('[data-game-page-next]');
+  const pageSize = 8;
+  const priorityGames = ['snake', 'tic', 'connect', 'dots', 'memory', 'flight', 'word', 'pong'];
+  let activeFilter = 'all';
+  let activePage = 0;
+
+  picks.sort((a, b) => {
+    const aRank = priorityGames.indexOf(a.dataset.game);
+    const bRank = priorityGames.indexOf(b.dataset.game);
+    return (aRank < 0 ? priorityGames.length : aRank) - (bRank < 0 ? priorityGames.length : bRank);
+  });
+  picks.forEach((pick) => picker?.append(pick));
+
+  const matchesFilter = (pick) => activeFilter === 'all'
+    || (activeFilter === 'online' && pick.dataset.online === 'true')
+    || pick.dataset.category === activeFilter;
+
+  const renderGamePage = () => {
+    const matches = picks.filter(matchesFilter);
+    const pageTotal = Math.max(1, Math.ceil(matches.length / pageSize));
+    activePage = Math.min(activePage, pageTotal - 1);
+    const first = activePage * pageSize;
+    const pageGames = new Set(matches.slice(first, first + pageSize));
+
+    picks.forEach((pick) => { pick.hidden = !pageGames.has(pick); });
+    if (filterCount) filterCount.textContent = `${matches.length} game${matches.length === 1 ? '' : 's'} · Page ${activePage + 1}/${pageTotal}`;
+    if (pagination) pagination.hidden = pageTotal <= 1;
+    if (pageStatus) pageStatus.textContent = `Page ${activePage + 1} of ${pageTotal}`;
+    if (pagePrevious) pagePrevious.disabled = activePage === 0;
+    if (pageNext) pageNext.disabled = activePage >= pageTotal - 1;
+  };
+
+  filterButtons.forEach((button) => button.addEventListener('click', () => {
+    activeFilter = button.dataset.gameFilter;
+    activePage = 0;
+
+    filterButtons.forEach((item) => {
+      const active = item === button;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
+    renderGamePage();
+  }));
+
+  const changeGamePage = (direction) => {
+    activePage += direction;
+    renderGamePage();
+    picker?.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+  };
+  pagePrevious?.addEventListener('click', () => changeGamePage(-1));
+  pageNext?.addEventListener('click', () => changeGamePage(1));
+  renderGamePage();
+
   picks.forEach((pick) => pick.addEventListener('click', () => {
     const name = pick.dataset.game;
     picks.forEach((item) => { const active = item === pick; item.classList.toggle('is-active', active); item.setAttribute('aria-selected', String(active)); });
@@ -23,6 +82,134 @@
       });
     });
   }));
+
+  // Dots & Boxes — computer opponent
+  const dotsSoloBoard = $('[data-dots-solo-board]');
+  const dotsSoloStatus = $('[data-dots-solo-status]');
+  const dotsSoloScore = $('[data-dots-score]');
+  const dotsSoloReset = $('[data-dots-reset]');
+  const dotsBoxEdges = (index) => {
+    const row = Math.floor(index / 3);
+    const column = index % 3;
+    return [row * 3 + column, (row + 1) * 3 + column, 12 + row * 4 + column, 12 + row * 4 + column + 1];
+  };
+  const dotsBoxesForEdge = (edge) => Array.from({length: 9}, (_, index) => index)
+    .filter((index) => dotsBoxEdges(index).includes(edge));
+  let dotsEdges = Array(24).fill('');
+  let dotsBoxes = Array(9).fill('');
+  let dotsTurn = 'A';
+  let dotsOver = false;
+  let dotsComputerTimer = 0;
+
+  const dotsScores = () => ({
+    A: dotsBoxes.filter((owner) => owner === 'A').length,
+    B: dotsBoxes.filter((owner) => owner === 'B').length
+  });
+
+  const renderDotsSolo = () => {
+    if (!dotsSoloBoard) return;
+    const cells = [];
+    const canPlay = dotsTurn === 'A' && !dotsOver;
+    for (let row = 0; row < 7; row += 1) for (let column = 0; column < 7; column += 1) {
+      if (row % 2 === 0 && column % 2 === 0) {
+        cells.push('<i class="dots-node" aria-hidden="true"></i>');
+      } else if (row % 2 === 0) {
+        const index = (row / 2) * 3 + Math.floor(column / 2);
+        const owner = dotsEdges[index];
+        cells.push(`<button type="button" class="dots-edge is-horizontal${owner ? ` is-${owner.toLowerCase()}` : ''}" data-dots-solo-edge="${index}" aria-label="${owner ? 'Line already drawn' : `Draw horizontal line ${index + 1}`}" ${!canPlay || owner ? 'disabled' : ''}></button>`);
+      } else if (column % 2 === 0) {
+        const index = 12 + Math.floor(row / 2) * 4 + column / 2;
+        const owner = dotsEdges[index];
+        cells.push(`<button type="button" class="dots-edge is-vertical${owner ? ` is-${owner.toLowerCase()}` : ''}" data-dots-solo-edge="${index}" aria-label="${owner ? 'Line already drawn' : `Draw vertical line ${index - 11}`}" ${!canPlay || owner ? 'disabled' : ''}></button>`);
+      } else {
+        const index = Math.floor(row / 2) * 3 + Math.floor(column / 2);
+        const owner = dotsBoxes[index];
+        cells.push(`<span class="dots-box${owner ? ` is-${owner.toLowerCase()}` : ''}" aria-label="${owner ? `${owner === 'A' ? 'You' : 'Computer'} claimed this box` : 'Unclaimed box'}">${owner === 'A' ? 'Y' : owner === 'B' ? 'C' : ''}</span>`);
+      }
+    }
+    dotsSoloBoard.innerHTML = cells.join('');
+    const score = dotsScores();
+    if (dotsSoloScore) dotsSoloScore.textContent = `${score.A} — ${score.B}`;
+    dotsSoloBoard.querySelectorAll('[data-dots-solo-edge]').forEach((button) => button.addEventListener('click', () => playDotsEdge(Number(button.dataset.dotsSoloEdge), 'A')));
+  };
+
+  const claimDotsBoxes = (player) => {
+    let claimed = 0;
+    dotsBoxes.forEach((owner, index) => {
+      if (!owner && dotsBoxEdges(index).every((edge) => dotsEdges[edge])) {
+        dotsBoxes[index] = player;
+        claimed += 1;
+      }
+    });
+    return claimed;
+  };
+
+  const finishDotsIfNeeded = () => {
+    if (!dotsEdges.every(Boolean)) return false;
+    dotsOver = true;
+    const score = dotsScores();
+    if (dotsSoloStatus) dotsSoloStatus.textContent = score.A === score.B
+      ? `Draw — ${score.A} boxes each.`
+      : score.A > score.B ? `You win ${score.A}–${score.B}!` : `Computer wins ${score.B}–${score.A}. Try another board.`;
+    return true;
+  };
+
+  const chooseDotsComputerEdge = () => {
+    const available = dotsEdges.map((owner, index) => owner ? -1 : index).filter((index) => index >= 0);
+    const winning = available.filter((edge) => dotsBoxesForEdge(edge).some((box) => !dotsBoxes[box]
+      && dotsBoxEdges(box).filter((boxEdge) => dotsEdges[boxEdge]).length === 3));
+    if (winning.length) return winning[Math.floor(Math.random() * winning.length)];
+    const safe = available.filter((edge) => !dotsBoxesForEdge(edge).some((box) => !dotsBoxes[box]
+      && dotsBoxEdges(box).filter((boxEdge) => dotsEdges[boxEdge]).length === 2));
+    const pool = safe.length ? safe : available;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  const scheduleDotsComputer = () => {
+    if (dotsOver) return;
+    dotsTurn = 'B';
+    if (dotsSoloStatus) dotsSoloStatus.textContent = 'Computer is choosing a line…';
+    renderDotsSolo();
+    clearTimeout(dotsComputerTimer);
+    dotsComputerTimer = window.setTimeout(() => {
+      const edge = chooseDotsComputerEdge();
+      if (Number.isInteger(edge)) playDotsEdge(edge, 'B');
+    }, 520);
+  };
+
+  function playDotsEdge(index, player) {
+    if (dotsOver || dotsTurn !== player || !Number.isInteger(index) || index < 0 || index >= dotsEdges.length || dotsEdges[index]) return;
+    dotsEdges[index] = player;
+    const claimed = claimDotsBoxes(player);
+    if (finishDotsIfNeeded()) { renderDotsSolo(); return; }
+    if (claimed) {
+      dotsTurn = player;
+      if (dotsSoloStatus) dotsSoloStatus.textContent = player === 'A'
+        ? `Box claimed — draw another line.`
+        : `Computer claimed ${claimed === 1 ? 'a box' : `${claimed} boxes`} and plays again…`;
+      renderDotsSolo();
+      if (player === 'B') scheduleDotsComputer();
+      return;
+    }
+    if (player === 'A') scheduleDotsComputer();
+    else {
+      dotsTurn = 'A';
+      if (dotsSoloStatus) dotsSoloStatus.textContent = 'Your turn — draw any line.';
+      renderDotsSolo();
+    }
+  }
+
+  const resetDotsSolo = () => {
+    clearTimeout(dotsComputerTimer);
+    dotsEdges = Array(24).fill('');
+    dotsBoxes = Array(9).fill('');
+    dotsTurn = 'A';
+    dotsOver = false;
+    if (dotsSoloStatus) dotsSoloStatus.textContent = 'Your turn — draw any line.';
+    renderDotsSolo();
+  };
+  dotsSoloReset?.addEventListener('click', resetDotsSolo);
+  resetDotsSolo();
 
   // Reaction Rush
   const reactionTarget = $('[data-reaction-target]');
@@ -213,22 +400,6 @@
   const dropStack = () => { if(!stackRunning){startStack();return;}const last=stackBlocks[stackBlocks.length-1],left=Math.max(last.x,stackMoving.x),right=Math.min(last.x+last.w,stackMoving.x+stackMoving.w),width=right-left;if(width<7){endStack();return;}stackBlocks.push({x:left,y:stackMoving.y,w:width});const score=stackBlocks.length-1;stackScore.textContent=String(score);if(stackMoving.y<155)stackBlocks.forEach(block=>{block.y+=24;});const direction=score%2?-1:1;stackMoving={x:direction>0?0:540-width,y:stackBlocks[stackBlocks.length-1].y-24,w:width,vx:direction*(3+Math.min(4,score*.16))};stackStatus.textContent=width>last.w*.88?'Clean drop. Keep going.':'Narrower now — stay precise.'; };
   stackAction.addEventListener('click',dropStack);stackCanvas.addEventListener('pointerdown',dropStack);startStack();stackRunning=false;cancelAnimationFrame(stackFrame);stackMoving=null;stackAction.textContent='Start stacking';drawStack();
 
-  // Orbit Dodge
-  const orbitCanvas = $('[data-orbit-canvas]');
-  const orbitCtx = orbitCanvas.getContext('2d');
-  const orbitScore = $('[data-orbit-score]');
-  const orbitStatus = $('[data-orbit-status]');
-  const orbitAction = $('[data-orbit-action]');
-  let orbitRunning=false,orbitFrame=0,orbitLast=0,orbitStarted=0,orbitAngle=-Math.PI/2,orbitDirection=1;
-  let orbitHazards=[1.05,3.45];
-  const angleDistance=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
-  const drawOrbit=()=>{const cx=270,cy=230,r=142;orbitCtx.fillStyle='#10261f';orbitCtx.fillRect(0,0,540,460);orbitCtx.strokeStyle='rgba(223,255,99,.07)';orbitCtx.lineWidth=1;for(let radius=58;radius<=190;radius+=44){orbitCtx.beginPath();orbitCtx.arc(cx,cy,radius,0,Math.PI*2);orbitCtx.stroke();}orbitCtx.strokeStyle='rgba(255,255,255,.28)';orbitCtx.lineWidth=2;orbitCtx.beginPath();orbitCtx.arc(cx,cy,r,0,Math.PI*2);orbitCtx.stroke();orbitCtx.strokeStyle='#f47a52';orbitCtx.lineWidth=18;orbitCtx.lineCap='round';orbitHazards.forEach(angle=>{orbitCtx.beginPath();orbitCtx.arc(cx,cy,r,angle-.17,angle+.17);orbitCtx.stroke();});const px=cx+Math.cos(orbitAngle)*r,py=cy+Math.sin(orbitAngle)*r;orbitCtx.fillStyle='#dfff63';orbitCtx.beginPath();orbitCtx.arc(px,py,10,0,Math.PI*2);orbitCtx.fill();orbitCtx.strokeStyle='rgba(223,255,99,.2)';orbitCtx.lineWidth=9;orbitCtx.beginPath();orbitCtx.arc(px,py,17,0,Math.PI*2);orbitCtx.stroke();orbitCtx.fillStyle='rgba(255,255,255,.7)';orbitCtx.font='800 10px Manrope';orbitCtx.textAlign='center';orbitCtx.fillText(orbitRunning?'TAP TO REVERSE':'READY',cx,cy+4);};
-  const stopOrbit=()=>{orbitRunning=false;cancelAnimationFrame(orbitFrame);orbitAction.textContent='Play again';orbitStatus.textContent=`Signal lost after ${orbitScore.textContent}. Reverse earlier and try again.`;drawOrbit();};
-  const orbitLoop=(time)=>{if(!orbitRunning)return;const dt=Math.min(34,time-orbitLast||16)/1000;orbitLast=time;const elapsed=(time-orbitStarted)/1000;orbitAngle+=orbitDirection*(1.55+Math.min(1.7,elapsed*.055))*dt;orbitHazards=orbitHazards.map((angle,index)=>angle+(index?-.23:.2)*dt);orbitScore.textContent=`${elapsed.toFixed(1)}s`;if(orbitHazards.some(angle=>angleDistance(orbitAngle,angle)<.135)){stopOrbit();return;}drawOrbit();orbitFrame=requestAnimationFrame(orbitLoop);};
-  const startOrbit=()=>{cancelAnimationFrame(orbitFrame);orbitAngle=-Math.PI/2;orbitDirection=1;orbitHazards=[.75,3.25];orbitRunning=true;orbitLast=0;orbitStarted=performance.now();orbitScore.textContent='0.0s';orbitStatus.textContent='Orbit live. Tap to reverse direction.';orbitAction.textContent='Reverse direction';orbitFrame=requestAnimationFrame(orbitLoop);};
-  const toggleOrbit=()=>{if(!orbitRunning){startOrbit();return;}orbitDirection*=-1;orbitStatus.textContent=orbitDirection>0?'Moving clockwise.':'Moving counter-clockwise.';};
-  orbitAction.addEventListener('click',toggleOrbit);orbitCanvas.addEventListener('pointerdown',toggleOrbit);drawOrbit();
-
   // Signal Flight
   const flightCanvas=$('[data-flight-canvas]'),flightCtx=flightCanvas.getContext('2d'),flightScore=$('[data-flight-score]'),flightStatus=$('[data-flight-status]'),flightAction=$('[data-flight-action]');
   let flightRunning=false,flightFrame=0,flightLast=0,flightY=230,flightVelocity=0,flightPoints=0,flightGates=[];
@@ -260,8 +431,8 @@
   const flipGravity=()=>{if(!gravityRunning){startGravity();return;}gravityTarget=gravityTarget>200?52:382;gravityStatus.textContent=gravityTarget<200?'Running on the ceiling.':'Back on the floor.';};
   gravityAction.addEventListener('click',flipGravity);gravityCanvas.addEventListener('pointerdown',flipGravity);drawGravity();
 
-  document.addEventListener('keydown',(event)=>{const selected=$('[data-game][aria-selected="true"]')?.dataset.game;if(event.code==='Space'&&selected==='orbit'){event.preventDefault();toggleOrbit();}if(event.code==='Space'&&selected==='flight'){event.preventDefault();liftFlight();}if(event.code==='Space'&&selected==='gravity'){event.preventDefault();flipGravity();}if(selected==='pong'&&(event.key==='ArrowLeft'||event.key==='ArrowRight')){event.preventDefault();pongPaddle=Math.max(0,Math.min(420,pongPaddle+(event.key==='ArrowLeft'?-34:34)));drawPong();}});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;stackRunning=false;cancelAnimationFrame(stackFrame);orbitRunning=false;cancelAnimationFrame(orbitFrame);flightRunning=false;cancelAnimationFrame(flightFrame);pongRunning=false;cancelAnimationFrame(pongFrame);gravityRunning=false;cancelAnimationFrame(gravityFrame);});
+  document.addEventListener('keydown',(event)=>{const selected=$('[data-game][aria-selected="true"]')?.dataset.game;if(event.code==='Space'&&selected==='flight'){event.preventDefault();liftFlight();}if(event.code==='Space'&&selected==='gravity'){event.preventDefault();flipGravity();}if(selected==='pong'&&(event.key==='ArrowLeft'||event.key==='ArrowRight')){event.preventDefault();pongPaddle=Math.max(0,Math.min(420,pongPaddle+(event.key==='ArrowLeft'?-34:34)));drawPong();}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;stackRunning=false;cancelAnimationFrame(stackFrame);flightRunning=false;cancelAnimationFrame(flightFrame);pongRunning=false;cancelAnimationFrame(pongFrame);gravityRunning=false;cancelAnimationFrame(gravityFrame);});
 
   // Word Scramble
   const words = [
