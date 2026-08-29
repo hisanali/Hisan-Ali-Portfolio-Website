@@ -1,17 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
 (() => {
-  const supported = ['connect', 'memory', 'word', 'color', 'dots'];
+  const supported = ['connect', 'memory', 'word', 'color', 'dots', 'draw'];
   const labels = {
     connect: 'Four in a Row', memory: 'Memory Match', word: 'Word Scramble',
-    color: 'Color Focus', dots: 'Dots & Boxes'
+    color: 'Color Focus', dots: 'Dots & Boxes', draw: 'Draw & Guess'
   };
   const onlineDescriptions = {
     connect: 'Play a live two-player match with exact-circle placement. Tap any empty circle, connect four, and request a rematch without leaving the room.',
     memory: 'Take turns revealing two cards on one shared board. A matching pair earns a point and keeps the turn.',
     word: 'Solve the same ten scrambled words together. Answers lock privately, then both players advance at the same time.',
     color: 'Face the same ten colour prompts together. Choose the ink colour—not the written word—and chase the higher score.',
-    dots: 'Draw one line per turn. Complete a square to claim it and play again—the player with the most boxes wins.'
+    dots: 'Draw one line per turn. Complete a square to claim it and play again—the player with the most boxes wins.',
+    draw: 'Sketch a secret prompt live while your friend guesses. Roles switch each round across one shared, touch-friendly canvas.'
   };
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const symbols = ['✦', '●', '▲', '■', '◆', '☀', '☾', '✚'];
@@ -23,6 +24,7 @@ import { createClient } from '@supabase/supabase-js';
     ['search','Looking for an answer online'],['convert','Turn interest into action']
   ];
   const colors = [['RED','#f47a52'],['LIME','#dfff63'],['BLUE','#66a6ff'],['WHITE','#f2efe7']];
+  const drawWords = ['rocket', 'bicycle', 'palm tree', 'camera', 'coffee cup', 'mountain', 'umbrella', 'cat', 'castle', 'airplane', 'fish', 'birthday cake', 'lighthouse', 'sailboat', 'guitar', 'sunflower', 'backpack', 'crown'];
   const clientId = sessionStorage.getItem('multi-client-id') || crypto.randomUUID();
   sessionStorage.setItem('multi-client-id', clientId);
   let supabase = null;
@@ -55,15 +57,15 @@ import { createClient } from '@supabase/supabase-js';
     const config = await response.json();
     supabase = createClient(config.url, config.publishableKey, {
       auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
-      realtime: {params: {eventsPerSecond: 10}}
+      realtime: {params: {eventsPerSecond: 40}}
     });
     return supabase;
   }
 
   function modeMarkup(game) {
     return `<div class="multi-mode" role="group" aria-label="Choose ${labels[game]} mode">
-      <button class="is-active" type="button" data-multi-mode="solo">${game === 'dots' ? 'Vs computer' : 'Solo'}</button>
-      <button type="button" data-multi-mode="online"><span></span>${game === 'dots' ? 'Play online' : 'Online'}</button>
+      <button class="is-active" type="button" data-multi-mode="solo">${game === 'dots' ? 'Vs computer' : game === 'draw' ? 'How it works' : 'Solo'}</button>
+      <button type="button" data-multi-mode="online"><span></span>${game === 'dots' || game === 'draw' ? 'Play online' : 'Online'}</button>
     </div>`;
   }
   function lobbyMarkup(game) {
@@ -93,6 +95,7 @@ import { createClient } from '@supabase/supabase-js';
     if (game === 'reaction') return {...base, phase: 'ready', goAt: 0, results: {A: null, B: null}, round: 0, result: ''};
     if (game === 'word') return {...base, order: shuffle(words.map((_, index) => index)), round: 0, answers: {}, result: ''};
     if (game === 'dots') return {...base, edges: Array(24).fill(''), boxes: Array(9).fill(''), turn: 'A', result: ''};
+    if (game === 'draw') return {...base, order: shuffle(drawWords.map((_, index) => index)).slice(0, 5), round: 0, drawer: 'A', phase: 'drawing', guesses: [], result: ''};
     return {...base, prompts: Array.from({length: 10}, () => [Math.floor(Math.random()*4), Math.floor(Math.random()*4)]), round: 0, answers: {}, result: ''};
   }
   function connectWinner(board) {
@@ -126,6 +129,33 @@ import { createClient } from '@supabase/supabase-js';
       }
     }
     return cells.join('');
+  }
+
+  const escapeText = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+  function paintDrawLine(canvas, line) {
+    const context = canvas?.getContext('2d'); if (!context || !line) return;
+    context.lineCap = 'round'; context.lineJoin = 'round'; context.strokeStyle = line.color || '#17382d';
+    context.lineWidth = Math.max(2, Number(line.size) || 8); context.beginPath();
+    context.moveTo(line.x1 * canvas.width, line.y1 * canvas.height); context.lineTo(line.x2 * canvas.width, line.y2 * canvas.height); context.stroke();
+  }
+  function redrawCanvas(session, canvas) {
+    const context = canvas?.getContext('2d'); if (!context) return;
+    context.fillStyle = '#fffdf7'; context.fillRect(0, 0, canvas.width, canvas.height);
+    session.drawLines.forEach(line => paintDrawLine(canvas, line));
+  }
+  function bindDrawCanvas(session, canvas, enabled) {
+    redrawCanvas(session, canvas); if (!enabled) return;
+    let previous = null;
+    const point = event => { const box=canvas.getBoundingClientRect(); return {x:Math.max(0,Math.min(1,(event.clientX-box.left)/box.width)),y:Math.max(0,Math.min(1,(event.clientY-box.top)/box.height))}; };
+    canvas.addEventListener('pointerdown', event => {event.preventDefault();canvas.setPointerCapture(event.pointerId);previous=point(event);});
+    canvas.addEventListener('pointermove', event => {
+      if (!previous || !canvas.hasPointerCapture(event.pointerId)) return; event.preventDefault();
+      const next=point(event); if(Math.hypot(next.x-previous.x,next.y-previous.y)<.003)return;
+      const line={x1:previous.x,y1:previous.y,x2:next.x,y2:next.y,color:session.brushColor,size:session.brushSize};
+      session.drawLines.push(line);paintDrawLine(canvas,line);session.send('draw-stroke',{line,actor:session.role,clientId});previous=next;
+    });
+    const stop = event => {if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);previous=null;};
+    canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
   }
 
   function renderGame(session) {
@@ -174,6 +204,26 @@ import { createClient } from '@supabase/supabase-js';
       arena.innerHTML = `<span class="word-round">${completed?'Match complete':`Round ${state.round+1} / 10`}</span><strong class="scrambled-word">${scramble}</strong><p>${item?item[1]:'Final scores are in.'}</p>${completed?'':`<form data-live-word><label>Your answer</label><div><input autocomplete="off" spellcheck="false" ${answered?'disabled':''}><button ${answered?'disabled':''}>${answered?'Locked':'Check'}</button></div></form>`}`;
       const form = $('[data-live-word]', arena); if (form) form.addEventListener('submit', event => {event.preventDefault(); const input=$('input',form);session.action({type:'answer', answer:input.value.trim().toLowerCase()});});
       status.textContent = !both ? 'Waiting for your opponent.' : completed ? (state.result==='draw'?'The word duel ends level.':`${session.players[state.result]?.name || 'Player'} wins the word duel!`) : answered ? 'Answer locked — waiting for opponent.' : 'Solve it before your opponent.';
+    } else if (game === 'draw') {
+      arena.className = 'multi-game multi-draw';
+      const word = drawWords[state.order[state.round]] || '';
+      const isDrawer = state.drawer === role; const canDraw = both && !state.over && state.phase === 'drawing' && isDrawer;
+      const hiddenWord = word.split('').map(character => character === ' ' ? '<i></i>' : '<b>_</b>').join('');
+      const guesses = state.guesses.slice(-4).map(item => `<span><b>${escapeText(session.players[item.actor]?.name || 'Player')}</b>${escapeText(item.text)}</span>`).join('');
+      arena.innerHTML = `<div class="draw-game-head"><div><span>Round ${Math.min(state.round + 1, 5)} / 5</span><strong>${state.over ? 'Match complete' : isDrawer ? `Draw: ${escapeText(word)}` : hiddenWord}</strong></div><em>${state.over ? 'Finished' : isDrawer ? 'You are drawing' : 'You are guessing'}</em></div>
+        <div class="draw-canvas-shell"><canvas width="900" height="560" data-draw-canvas aria-label="Shared drawing canvas"></canvas>${!both?'<div class="draw-canvas-wait"><b>Invite a friend</b><span>The canvas opens when both players join.</span></div>':''}</div>
+        <div class="draw-controls" ${canDraw?'':'hidden'}><div class="draw-colors" aria-label="Brush colours">${['#17382d','#b84224','#6659cb','#278f70','#f0b83f'].map((color,index)=>`<button type="button" data-draw-color="${color}" class="${session.brushColor===color?'is-active':''}" style="--swatch:${color}" aria-label="${['Ink','Orange','Purple','Green','Yellow'][index]}"></button>`).join('')}</div><div class="draw-sizes" aria-label="Brush size"><button type="button" data-draw-size="6" class="${session.brushSize===6?'is-active':''}">Fine</button><button type="button" data-draw-size="13" class="${session.brushSize===13?'is-active':''}">Bold</button></div><button class="draw-clear" type="button" data-draw-clear>Clear</button><button class="draw-skip" type="button" data-draw-skip>Skip</button></div>
+        ${!state.over && state.phase==='drawing' && !isDrawer ? `<form class="draw-guess" data-draw-guess><input maxlength="40" autocomplete="off" placeholder="Type your guess…" aria-label="Your guess"><button>Guess</button></form>` : ''}
+        ${state.phase==='round-over' && !state.over ? `<button class="draw-next" type="button" data-draw-next>Next round <span>→</span></button>` : ''}
+        <div class="draw-guesses" aria-live="polite">${guesses || '<span class="is-empty">Guesses will appear here.</span>'}</div>`;
+      const canvas=$('[data-draw-canvas]',arena);bindDrawCanvas(session,canvas,canDraw);
+      arena.querySelectorAll('[data-draw-color]').forEach(button=>button.addEventListener('click',()=>{session.brushColor=button.dataset.drawColor;renderGame(session);}));
+      arena.querySelectorAll('[data-draw-size]').forEach(button=>button.addEventListener('click',()=>{session.brushSize=Number(button.dataset.drawSize);renderGame(session);}));
+      $('[data-draw-clear]',arena)?.addEventListener('click',()=>session.clearDrawing());
+      $('[data-draw-skip]',arena)?.addEventListener('click',()=>session.action({type:'skip'}));
+      $('[data-draw-guess]',arena)?.addEventListener('submit',event=>{event.preventDefault();const input=$('input',event.currentTarget);const guess=input.value.trim();if(guess){session.action({type:'guess',guess});input.value='';}});
+      $('[data-draw-next]',arena)?.addEventListener('click',()=>session.action({type:'next-round'}));
+      status.textContent = !both ? 'Share the room code to start drawing.' : state.over ? (state.result==='draw'?'Five rounds, perfectly tied.':`${session.players[state.result]?.name || 'Player'} wins the sketch match!`) : state.phase==='round-over' ? 'Correct! Ready for the next prompt.' : isDrawer ? 'Draw the prompt without writing the word.' : `Watch the canvas — ${session.players[state.drawer]?.name || 'Your friend'} is drawing.`;
     } else {
       arena.className = 'multi-game multi-color';
       const completed = state.round >= 10; const prompt = completed ? null : state.prompts[state.round]; const answered = Object.prototype.hasOwnProperty.call(state.answers, role);
@@ -185,7 +235,7 @@ import { createClient } from '@supabase/supabase-js';
 
   function hostAction(session, action, actor) {
     const state = session.state; if (state.over && action.type !== 'rematch') return;
-    if (action.type === 'rematch') { const fresh=initialState(session.game); fresh.score=session.game === 'dots' ? {A:0,B:0} : {...state.score};fresh.revision=state.revision+1;session.state=fresh;session.publish();return; }
+    if (action.type === 'rematch') { const fresh=initialState(session.game); fresh.score=['dots','draw'].includes(session.game) ? {A:0,B:0} : {...state.score};fresh.revision=state.revision+1;session.state=fresh;session.drawLines=[];session.send('draw-clear',{actor});session.publish();return; }
     if (session.game === 'connect' && action.type === 'cell' && state.turn === actor && Number.isInteger(action.index) && action.index >= 0 && action.index < state.board.length && !state.board[action.index]) {
       state.board[action.index]=actor;state.turn=actor==='A'?'B':'A';const result=connectWinner(state.board);if(result){state.result=result;state.over=true;if(result!=='draw')state.score[result]+=1;}
     } else if (session.game === 'memory' && action.type === 'card' && state.turn === actor && state.flipped.length < 2 && !state.flipped.includes(action.index) && !state.matched.includes(action.index)) {
@@ -208,6 +258,16 @@ import { createClient } from '@supabase/supabase-js';
       else if (action.type === 'go' && actor === 'A' && state.phase === 'waiting') state.phase='go';
       else if (action.type === 'tap' && state.phase === 'go' && state.results[actor] == null) {state.results[actor]=Math.max(0,action.tappedAt-state.goAt);if(state.results.A!=null&&state.results.B!=null){state.phase='done';state.result=state.results.A===state.results.B?'draw':state.results.A<state.results.B?'A':'B';if(state.result!=='draw')state.score[state.result]+=1;}}
       else return;
+    } else if (session.game === 'draw') {
+      if (action.type === 'guess' && state.phase === 'drawing' && actor !== state.drawer) {
+        const guess=String(action.guess||'').trim().toLowerCase().replace(/\s+/g,' ');if(!guess)return;
+        state.guesses.push({actor,text:guess});state.guesses=state.guesses.slice(-6);
+        if(guess===drawWords[state.order[state.round]]){state.score[actor]+=2;state.score[state.drawer]+=1;state.phase='round-over';if(state.round===4){state.over=true;state.result=state.score.A===state.score.B?'draw':state.score.A>state.score.B?'A':'B';}}
+      } else if (action.type === 'skip' && state.phase === 'drawing' && actor === state.drawer) {
+        state.phase='round-over';state.guesses.push({actor,text:'skipped the prompt'});if(state.round===4){state.over=true;state.result=state.score.A===state.score.B?'draw':state.score.A>state.score.B?'A':'B';}
+      } else if (action.type === 'next-round' && state.phase === 'round-over' && !state.over) {
+        state.round+=1;state.drawer=state.drawer==='A'?'B':'A';state.phase='drawing';state.guesses=[];session.drawLines=[];session.send('draw-clear',{actor});
+      } else return;
     } else if ((session.game === 'word'||session.game === 'color') && action.type === 'answer' && !Object.prototype.hasOwnProperty.call(state.answers,actor)) {
       const correct = session.game==='word' ? action.answer===words[state.order[state.round]][0] : action.answer===colors[state.prompts[state.round][1]][0];
       state.answers[actor]=correct;if(correct)state.score[actor]+=1;
@@ -220,12 +280,13 @@ import { createClient } from '@supabase/supabase-js';
     if (active) await active.leave(false);
     const service = await client(); const panel=$(`[data-game-panel="${game}"]`); const native=nativeArena(panel);
     panel.querySelectorAll(':scope > .multi-root').forEach(node => node.remove());
-    const root=document.createElement('div');root.className='multi-root';root.innerHTML=roomShell(game,code);native.hidden=true;panel.append(root);
-    const session={game,code,role,name,root,native,channel:null,connected:false,players:{A:null,B:null},state:initialState(game),reactionTimer:0,
+    const root=document.createElement('div');root.className=`multi-root multi-root-${game}`;root.innerHTML=roomShell(game,code);native.hidden=true;panel.append(root);
+    const session={game,code,role,name,root,native,channel:null,connected:false,players:{A:null,B:null},state:initialState(game),reactionTimer:0,drawLines:[],brushColor:'#17382d',brushSize:6,
       async send(event,payload){if(this.channel&&this.connected)await this.channel.send({type:'broadcast',event,payload});},
       async publish(){renderGame(this);await this.send('state',{state:this.state,hostId:clientId});},
       bumpAndPublish(){this.state.revision+=1;this.publish();},
       action(action){if(!this.players.A||!this.players.B)return;if(this.role==='A')hostAction(this,action,'A');else this.send('action',{action,clientId});},
+      clearDrawing(){if(this.game!=='draw'||this.state.drawer!==this.role||this.state.phase!=='drawing')return;this.drawLines=[];redrawCanvas(this,$('[data-draw-canvas]',this.root));this.send('draw-clear',{actor:this.role,clientId});},
       armReaction(){clearTimeout(this.reactionTimer);if(this.role==='A'&&this.state.phase==='waiting'){const wait=Math.max(0,this.state.goAt-Date.now());this.reactionTimer=setTimeout(()=>hostAction(this,{type:'go'},'A'),wait);}},
       async leave(clear=true){clearTimeout(this.reactionTimer);if(this.channel)await service.removeChannel(this.channel);this.channel=null;this.connected=false;this.root.remove();this.native.hidden=false;if(clear)setUrl();active=null;},
     };active=session;
@@ -233,8 +294,11 @@ import { createClient } from '@supabase/supabase-js';
     session.channel=service.channel(`game:${game}:${code}`,{config:{broadcast:{ack:true,self:false},presence:{key:clientId},private:false}})
       .on('presence',{event:'sync'},()=>{const all=Object.values(session.channel.presenceState()).flat().filter(Boolean);session.players={A:all.find(p=>p.role==='A')||null,B:all.find(p=>p.role==='B')||null};const duplicate=all.find(p=>p.role===role&&p.clientId!==clientId);if(duplicate){$('[data-multi-status]',root).textContent=role==='A'?'That room already has a host.':'That room already has two players.';return;}renderGame(session);if(role==='A')session.publish();else session.send('request-state',{clientId});})
       .on('broadcast',{event:'state'},({payload})=>{if(role==='B'&&payload?.state&&payload.state.game===game&&Number(payload.state.revision)>=session.state.revision){session.state=payload.state;renderGame(session);session.armReaction();}})
-      .on('broadcast',{event:'request-state'},()=>{if(role==='A')session.publish();})
-      .on('broadcast',{event:'action'},({payload})=>{if(role==='A'&&payload?.clientId===session.players.B?.clientId)hostAction(session,payload.action,'B');});
+      .on('broadcast',{event:'request-state'},()=>{if(role==='A'){session.publish();if(game==='draw')session.send('draw-sync',{lines:session.drawLines});}})
+      .on('broadcast',{event:'action'},({payload})=>{if(role==='A'&&payload?.clientId===session.players.B?.clientId)hostAction(session,payload.action,'B');})
+      .on('broadcast',{event:'draw-stroke'},({payload})=>{if(game!=='draw'||!payload?.line||payload.actor!==session.state.drawer||payload.clientId!==session.players[payload.actor]?.clientId)return;session.drawLines.push(payload.line);paintDrawLine($('[data-draw-canvas]',root),payload.line);})
+      .on('broadcast',{event:'draw-clear'},()=>{if(game==='draw'){session.drawLines=[];redrawCanvas(session,$('[data-draw-canvas]',root));}})
+      .on('broadcast',{event:'draw-sync'},({payload})=>{if(game==='draw'&&role==='B'&&Array.isArray(payload?.lines)){session.drawLines=payload.lines.slice(-4000);redrawCanvas(session,$('[data-draw-canvas]',root));}});
     session.channel.subscribe(async status=>{if(status==='SUBSCRIBED'){session.connected=true;await session.channel.track({clientId,role,name,joinedAt:new Date().toISOString()});renderGame(session);}else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){session.connected=false;renderGame(session);}});
     const persist=()=>{if(role==='A')localStorage.setItem(`multi-state:${game}:${code}`,JSON.stringify(session.state));};
     const originalPublish=session.publish.bind(session);session.publish=async()=>{persist();return originalPublish();};

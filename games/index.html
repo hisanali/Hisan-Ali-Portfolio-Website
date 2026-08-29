@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=57">
+  <link rel="stylesheet" href="/games/games.css?v=58">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
 <body>
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -63,8 +63,9 @@
             <button type="button" aria-pressed="false" data-game-filter="strategy">Strategy</button>
             <button type="button" aria-pressed="false" data-game-filter="arcade">Arcade</button>
             <button type="button" aria-pressed="false" data-game-filter="focus">Focus</button>
+            <button type="button" aria-pressed="false" data-game-filter="creative">Creative</button>
           </div>
-          <p data-game-filter-count>12 games</p>
+          <p data-game-filter-count>13 games</p>
         </div>
 
         <div class="game-picker" role="tablist" aria-label="Choose a game">
@@ -103,6 +104,9 @@
           </button>
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-gravity" data-game="gravity" data-category="arcade" data-online="false" data-tone="lime">
             <span class="game-pick-top"><span class="game-card-visual visual-gravity" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-gravity-ceiling" x="7" y="8" width="106" height="9" rx="4.5"/><rect class="v-gravity-floor" x="7" y="73" width="106" height="9" rx="4.5"/><g class="v-gravity-spikes"><path d="m88 73 7-13 7 13M21 17l7 13 7-13"/></g><path class="v-gravity-trail" d="M34 58C38 37 49 25 70 22"/><path class="v-gravity-route-head" d="m63 18 9 4-7 7"/><g class="v-gravity-runner"><rect x="17" y="48" width="28" height="25" rx="7"/><circle cx="26" cy="56" r="2.4"/><circle cx="36" cy="56" r="2.4"/><path d="M25 65h12"/></g><g class="v-gravity-particles"><circle cx="51" cy="47" r="2"/><circle cx="60" cy="34" r="1.6"/><circle cx="72" cy="28" r="1.3"/></g></svg></span><span class="game-pick-badge is-solo">Solo</span></span><b>Gravity Flip</b><small>Flip between floor and ceiling.</small><span class="game-pick-footer"><em>Arcade · One tap</em><i aria-hidden="true">↗</i></span>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-draw" data-game="draw" data-category="creative" data-online="true" data-tone="purple">
+            <span class="game-pick-top"><span class="game-card-visual visual-draw" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-draw-paper" x="13" y="8" width="94" height="72" rx="12"/><path class="v-draw-sketch" d="M29 59c8-19 18-30 30-31 11-1 13 17 23 16 7-1 10-9 12-16M31 64c15 5 35 6 57 2"/><g class="v-draw-pencil"><path d="m76 20 18 18-38 38-22 5 5-22Z"/><path d="m39 59 17 17M76 20l7-7c3-3 7-3 10 0l8 8c3 3 3 7 0 10l-7 7"/><path class="v-draw-tip" d="m34 81 5-22 17 17Z"/></g><circle class="v-draw-dot" cx="29" cy="59" r="4"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Draw &amp; Guess</b><small>Sketch the prompt while your friend guesses.</small><span class="game-pick-footer"><em>Creative · Two players</em><i aria-hidden="true">↗</i></span>
           </button>
         </div>
 
@@ -198,6 +202,11 @@
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-gravity-canvas aria-label="Gravity Flip game board"></canvas><p class="game-status" data-gravity-status>Tap the board, button, or Space to flip gravity.</p></div>
           </article>
 
+          <article class="game-panel" id="game-draw" role="tabpanel" data-game-panel="draw" hidden>
+            <div class="game-panel-info"><span>Creative room / 13</span><h3>Draw &amp; Guess</h3><p>Create a private room, sketch a secret prompt in real time, and race your friend to the answer. Drawing roles switch every round.</p><div class="game-score-line"><span>Format</span><strong>5 rounds</strong></div></div>
+            <div class="draw-intro"><div class="draw-intro-art" aria-hidden="true"><span></span><i></i><b>?</b></div><strong>One draws. One guesses.</strong><p>Use touch, mouse, or Apple Pencil. No account or download needed.</p></div>
+          </article>
+
         </div>
       </div>
     </section>
@@ -240,6 +249,6 @@
 </footer>
   <script src="/games/games.js?v=17"></script>
   <script src="/games/tic-online.bundle.js?v=1"></script>
-  <script src="/games/multiplayer.bundle.js?v=3"></script>
+  <script src="/games/multiplayer.bundle.js?v=4"></script>
 <script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
 </html>
