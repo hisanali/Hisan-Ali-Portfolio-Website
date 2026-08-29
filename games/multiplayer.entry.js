@@ -24,7 +24,15 @@ import { createClient } from '@supabase/supabase-js';
     ['search','Looking for an answer online'],['convert','Turn interest into action']
   ];
   const colors = [['RED','#f47a52'],['LIME','#dfff63'],['BLUE','#66a6ff'],['WHITE','#f2efe7']];
-  const drawWords = ['rocket', 'bicycle', 'palm tree', 'camera', 'coffee cup', 'mountain', 'umbrella', 'cat', 'castle', 'airplane', 'fish', 'birthday cake', 'lighthouse', 'sailboat', 'guitar', 'sunflower', 'backpack', 'crown'];
+  const drawPrompts = [
+    ...['rocket','bicycle','camera','umbrella','backpack','crown','key','clock','lamp','chair','glasses','scissors','toothbrush','suitcase','headphones','kite','balloon','book','candle','ladder','magnet','trophy','paintbrush','telephone','door','window','hammer','anchor','robot','gift box'].map(word=>({word,category:'Objects'})),
+    ...['cat','dog','fish','elephant','giraffe','penguin','turtle','butterfly','owl','rabbit','dolphin','octopus','lion','monkey','snail','crab','flamingo','crocodile','horse','bee','shark','camel','peacock','frog'].map(word=>({word,category:'Animals'})),
+    ...['palm tree','mountain','sunflower','rainbow','volcano','waterfall','island','moon','cloud','lightning','snowman','river','desert','forest','wave','cactus','mushroom','flower','star','sun'].map(word=>({word,category:'Nature'})),
+    ...['coffee cup','birthday cake','ice cream','pizza','watermelon','burger','cupcake','pineapple','donut','popcorn','banana','carrot','apple','sandwich','fried egg','cookie','strawberry','lemon'].map(word=>({word,category:'Food'})),
+    ...['castle','lighthouse','sailboat','airplane','train','school bus','hot air balloon','tent','igloo','windmill','bridge','skyscraper','spaceship','submarine','helicopter','house','ferris wheel','traffic light'].map(word=>({word,category:'Places & travel'})),
+    ...['guitar','football','basketball','skateboard','drum','microphone','chess piece','medal','tennis racket','bowling ball','surfboard','video game','piano','roller skate','baseball cap'].map(word=>({word,category:'Fun & sports'})),
+    ...['sleeping','dancing','running','swimming','fishing','cooking','reading','painting','singing','climbing','waving','juggling','flying','laughing','diving'].map(word=>({word,category:'Actions'}))
+  ];
   const clientId = sessionStorage.getItem('multi-client-id') || crypto.randomUUID();
   sessionStorage.setItem('multi-client-id', clientId);
   let supabase = null;
@@ -80,7 +88,7 @@ import { createClient } from '@supabase/supabase-js';
   function roomShell(game, code) {
     return `<section class="multi-room">
       <div class="multi-room-top"><div><span>Live room</span><strong>${code}</strong></div><div><button type="button" data-multi-copy>Copy code</button><button type="button" data-multi-share>Share</button><button type="button" data-multi-leave>Leave</button></div></div>
-      <div class="multi-scoreboard"><div data-multi-player="A"><b>A</b><span><strong>Waiting…</strong><small>Host · 0</small></span></div><em>VS</em><div data-multi-player="B"><b>B</b><span><strong>Waiting…</strong><small>Guest · 0</small></span></div></div>
+      <div class="multi-scoreboard" aria-label="Live score"><div data-multi-player="A"><b>A</b><span class="multi-player-copy"><strong data-multi-name>Waiting…</strong><small data-multi-role>Room host</small></span><span class="multi-points"><small>Score</small><strong data-multi-score>0</strong></span></div><em><b>VS</b><small>Live</small></em><div data-multi-player="B"><b>B</b><span class="multi-player-copy"><strong data-multi-name>Waiting…</strong><small data-multi-role>Opponent</small></span><span class="multi-points"><small>Score</small><strong data-multi-score>0</strong></span></div></div>
       <p class="multi-connection" data-multi-connection>Connecting…</p>
       <div class="multi-game" data-multi-game></div>
       <p class="multi-status" data-multi-status>Opening the room…</p>
@@ -88,14 +96,18 @@ import { createClient } from '@supabase/supabase-js';
     </section>`;
   }
 
-  function initialState(game) {
+  function initialState(game, excludedDrawPrompts = []) {
     const base = {game, revision: 0, score: {A: 0, B: 0}, over: false};
     if (game === 'connect') return {...base, board: Array(42).fill(''), turn: 'A', result: ''};
     if (game === 'memory') return {...base, cards: shuffle([...symbols, ...symbols]), flipped: [], matched: [], turn: 'A', result: ''};
     if (game === 'reaction') return {...base, phase: 'ready', goAt: 0, results: {A: null, B: null}, round: 0, result: ''};
     if (game === 'word') return {...base, order: shuffle(words.map((_, index) => index)), round: 0, answers: {}, result: ''};
     if (game === 'dots') return {...base, edges: Array(24).fill(''), boxes: Array(9).fill(''), turn: 'A', result: ''};
-    if (game === 'draw') return {...base, order: shuffle(drawWords.map((_, index) => index)).slice(0, 5), round: 0, drawer: 'A', phase: 'drawing', guesses: [], result: ''};
+    if (game === 'draw') {
+      const excluded = new Set(excludedDrawPrompts);
+      const available = drawPrompts.map((_, index) => index).filter(index => !excluded.has(index));
+      return {...base, order: shuffle(available.length >= 5 ? available : drawPrompts.map((_, index) => index)).slice(0, 5), round: 0, drawer: 'A', phase: 'drawing', guesses: [], result: ''};
+    }
     return {...base, prompts: Array.from({length: 10}, () => [Math.floor(Math.random()*4), Math.floor(Math.random()*4)]), round: 0, answers: {}, result: ''};
   }
   function connectWinner(board) {
@@ -165,8 +177,13 @@ import { createClient } from '@supabase/supabase-js';
     $('[data-multi-connection]', root).textContent = session.connected ? (both ? 'Both players live' : 'Waiting for opponent') : 'Reconnecting…';
     for (const key of ['A','B']) {
       const item = $(`[data-multi-player="${key}"]`, root); const player = session.players[key];
-      $('strong', item).textContent = player ? `${player.name}${player.clientId === clientId ? ' (you)' : ''}` : 'Waiting…';
-      $('small', item).textContent = `${key === 'A' ? 'Host' : 'Guest'} · ${state.score[key] || 0}`;
+      $('[data-multi-name]', item).textContent = player ? `${player.name}${player.clientId === clientId ? ' (you)' : ''}` : 'Waiting…';
+      $('[data-multi-role]', item).textContent = key === 'A' ? 'Room host' : 'Opponent';
+      $('[data-multi-score]', item).textContent = state.score[key] || 0;
+      const activePlayer = ['connect','memory','dots'].includes(game) ? state.turn : game === 'draw' ? state.drawer : '';
+      item.classList.toggle('is-your-card', player?.clientId === clientId);
+      item.classList.toggle('is-active-turn', both && !state.over && (activePlayer ? activePlayer === key : true));
+      item.classList.toggle('is-winner', state.over && state.result === key);
     }
     const rematch = $('[data-multi-rematch]', root); rematch.hidden = !state.over;
     if (game === 'connect') {
@@ -206,11 +223,11 @@ import { createClient } from '@supabase/supabase-js';
       status.textContent = !both ? 'Waiting for your opponent.' : completed ? (state.result==='draw'?'The word duel ends level.':`${session.players[state.result]?.name || 'Player'} wins the word duel!`) : answered ? 'Answer locked — waiting for opponent.' : 'Solve it before your opponent.';
     } else if (game === 'draw') {
       arena.className = 'multi-game multi-draw';
-      const word = drawWords[state.order[state.round]] || '';
+      const prompt = drawPrompts[state.order[state.round]] || {word:'',category:'Surprise'}; const word = prompt.word;
       const isDrawer = state.drawer === role; const canDraw = both && !state.over && state.phase === 'drawing' && isDrawer;
       const hiddenWord = word.split('').map(character => character === ' ' ? '<i></i>' : '<b>_</b>').join('');
       const guesses = state.guesses.slice(-4).map(item => `<span><b>${escapeText(session.players[item.actor]?.name || 'Player')}</b>${escapeText(item.text)}</span>`).join('');
-      arena.innerHTML = `<div class="draw-game-head"><div><span>Round ${Math.min(state.round + 1, 5)} / 5</span><strong>${state.over ? 'Match complete' : isDrawer ? `Draw: ${escapeText(word)}` : hiddenWord}</strong></div><em>${state.over ? 'Finished' : isDrawer ? 'You are drawing' : 'You are guessing'}</em></div>
+      arena.innerHTML = `<div class="draw-game-head"><div><span>Round ${Math.min(state.round + 1, 5)} / 5 · ${escapeText(prompt.category)}</span><strong>${state.over ? 'Match complete' : isDrawer ? `Draw: ${escapeText(word)}` : hiddenWord}</strong></div><em>${state.over ? 'Finished' : isDrawer ? 'You are drawing' : 'You are guessing'}</em></div>
         <div class="draw-canvas-shell"><canvas width="900" height="560" data-draw-canvas aria-label="Shared drawing canvas"></canvas>${!both?'<div class="draw-canvas-wait"><b>Invite a friend</b><span>The canvas opens when both players join.</span></div>':''}</div>
         <div class="draw-controls" ${canDraw?'':'hidden'}><div class="draw-colors" aria-label="Brush colours">${['#17382d','#b84224','#6659cb','#278f70','#f0b83f'].map((color,index)=>`<button type="button" data-draw-color="${color}" class="${session.brushColor===color?'is-active':''}" style="--swatch:${color}" aria-label="${['Ink','Orange','Purple','Green','Yellow'][index]}"></button>`).join('')}</div><div class="draw-sizes" aria-label="Brush size"><button type="button" data-draw-size="6" class="${session.brushSize===6?'is-active':''}">Fine</button><button type="button" data-draw-size="13" class="${session.brushSize===13?'is-active':''}">Bold</button></div><button class="draw-clear" type="button" data-draw-clear>Clear</button><button class="draw-skip" type="button" data-draw-skip>Skip</button></div>
         ${!state.over && state.phase==='drawing' && !isDrawer ? `<form class="draw-guess" data-draw-guess><input maxlength="40" autocomplete="off" placeholder="Type your guess…" aria-label="Your guess"><button>Guess</button></form>` : ''}
@@ -235,7 +252,7 @@ import { createClient } from '@supabase/supabase-js';
 
   function hostAction(session, action, actor) {
     const state = session.state; if (state.over && action.type !== 'rematch') return;
-    if (action.type === 'rematch') { const fresh=initialState(session.game); fresh.score=['dots','draw'].includes(session.game) ? {A:0,B:0} : {...state.score};fresh.revision=state.revision+1;session.state=fresh;session.drawLines=[];session.send('draw-clear',{actor});session.publish();return; }
+    if (action.type === 'rematch') { const fresh=initialState(session.game,session.game==='draw'?state.order:[]); fresh.score=['dots','draw'].includes(session.game) ? {A:0,B:0} : {...state.score};fresh.revision=state.revision+1;session.state=fresh;session.drawLines=[];session.send('draw-clear',{actor});session.publish();return; }
     if (session.game === 'connect' && action.type === 'cell' && state.turn === actor && Number.isInteger(action.index) && action.index >= 0 && action.index < state.board.length && !state.board[action.index]) {
       state.board[action.index]=actor;state.turn=actor==='A'?'B':'A';const result=connectWinner(state.board);if(result){state.result=result;state.over=true;if(result!=='draw')state.score[result]+=1;}
     } else if (session.game === 'memory' && action.type === 'card' && state.turn === actor && state.flipped.length < 2 && !state.flipped.includes(action.index) && !state.matched.includes(action.index)) {
@@ -262,7 +279,8 @@ import { createClient } from '@supabase/supabase-js';
       if (action.type === 'guess' && state.phase === 'drawing' && actor !== state.drawer) {
         const guess=String(action.guess||'').trim().toLowerCase().replace(/\s+/g,' ');if(!guess)return;
         state.guesses.push({actor,text:guess});state.guesses=state.guesses.slice(-6);
-        if(guess===drawWords[state.order[state.round]]){state.score[actor]+=2;state.score[state.drawer]+=1;state.phase='round-over';if(state.round===4){state.over=true;state.result=state.score.A===state.score.B?'draw':state.score.A>state.score.B?'A':'B';}}
+        const normalize=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        if(normalize(guess)===normalize(drawPrompts[state.order[state.round]]?.word)){state.score[actor]+=2;state.score[state.drawer]+=1;state.phase='round-over';if(state.round===4){state.over=true;state.result=state.score.A===state.score.B?'draw':state.score.A>state.score.B?'A':'B';}}
       } else if (action.type === 'skip' && state.phase === 'drawing' && actor === state.drawer) {
         state.phase='round-over';state.guesses.push({actor,text:'skipped the prompt'});if(state.round===4){state.over=true;state.result=state.score.A===state.score.B?'draw':state.score.A>state.score.B?'A':'B';}
       } else if (action.type === 'next-round' && state.phase === 'round-over' && !state.over) {

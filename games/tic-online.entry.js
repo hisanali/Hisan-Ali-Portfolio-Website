@@ -35,8 +35,8 @@ import { createClient } from '@supabase/supabase-js';
 
   nameInput.value = playerName;
 
-  function freshGame() {
-    return { board: Array(9).fill(''), turn: 'X', result: '', revision: 0 };
+  function freshGame(score = { X: 0, O: 0 }) {
+    return { board: Array(9).fill(''), turn: 'X', result: '', score: { X: Number(score.X) || 0, O: Number(score.O) || 0 }, revision: 0 };
   }
 
   function getWinner(board) {
@@ -87,7 +87,7 @@ import { createClient } from '@supabase/supabase-js';
     try {
       const stored = JSON.parse(localStorage.getItem(`tic-room-state:${code}`) || 'null');
       if (stored && Array.isArray(stored.board) && stored.board.length === 9) {
-        return { board: stored.board, turn: stored.turn === 'O' ? 'O' : 'X', result: stored.result || '', revision: Number(stored.revision) || 0 };
+        return { board: stored.board, turn: stored.turn === 'O' ? 'O' : 'X', result: stored.result || '', score: { X: Number(stored.score?.X) || 0, O: Number(stored.score?.O) || 0 }, revision: Number(stored.revision) || 0 };
       }
     } catch (_) {}
     return freshGame();
@@ -109,10 +109,12 @@ import { createClient } from '@supabase/supabase-js';
   function updatePlayers() {
     for (const mark of ['X', 'O']) {
       const player = playerFor(mark);
-      const strong = playerEls[mark].querySelector('strong');
-      const small = playerEls[mark].querySelector('small');
+      const strong = playerEls[mark].querySelector('[data-tic-name]');
+      const small = playerEls[mark].querySelector('.tic-player-copy small');
       strong.textContent = player ? `${player.name}${player.clientId === clientId ? ' (you)' : ''}` : 'Waiting…';
       small.textContent = mark === 'X' ? 'Room host' : 'Opponent';
+      playerEls[mark].querySelector('[data-tic-score]').textContent = game.score?.[mark] || 0;
+      playerEls[mark].classList.toggle('is-your-card', player?.clientId === clientId);
     }
     const opponentReady = Boolean(playerFor(role === 'X' ? 'O' : 'X'));
     connectionEl.textContent = connected ? (opponentReady ? 'Both players live' : 'Waiting for player') : 'Connecting…';
@@ -128,6 +130,11 @@ import { createClient } from '@supabase/supabase-js';
     let status = message;
     let canPlay = false;
     let over = Boolean(game.result);
+    for (const mark of ['X','O']) {
+      playerEls[mark].classList.toggle('is-active-turn', bothPlayers && !game.result && game.turn === mark);
+      playerEls[mark].classList.toggle('is-winner', Boolean(game.result && game.result === mark));
+      playerEls[mark].querySelector('[data-tic-score]').textContent = game.score?.[mark] || 0;
+    }
 
     if (!status) {
       if (!bothPlayers) status = role === 'X' ? 'Waiting for opponent' : 'Waiting for room host';
@@ -158,7 +165,9 @@ import { createClient } from '@supabase/supabase-js';
     const next = [...game.board];
     next[index] = mark;
     const result = getWinner(next);
-    game = { board: next, turn: mark === 'X' ? 'O' : 'X', result, revision: game.revision + 1 };
+    const score = { X: Number(game.score?.X) || 0, O: Number(game.score?.O) || 0 };
+    if (result === 'X' || result === 'O') score[result] += 1;
+    game = { board: next, turn: mark === 'X' ? 'O' : 'X', result, score, revision: game.revision + 1 };
     renderGame();
     sendState();
   }
@@ -212,7 +221,7 @@ import { createClient } from '@supabase/supabase-js';
         .on('broadcast', { event: 'state' }, ({ payload }) => {
           if (role !== 'O' || !payload || !Array.isArray(payload.board) || payload.board.length !== 9) return;
           if (Number(payload.revision) < game.revision) return;
-          game = { board: payload.board, turn: payload.turn, result: payload.result || '', revision: Number(payload.revision) || 0 };
+          game = { board: payload.board, turn: payload.turn, result: payload.result || '', score: { X: Number(payload.score?.X) || 0, O: Number(payload.score?.O) || 0 }, revision: Number(payload.revision) || 0 };
           renderGame();
         })
         .on('broadcast', { event: 'request-state' }, () => { if (role === 'X') sendState(); })
@@ -251,7 +260,7 @@ import { createClient } from '@supabase/supabase-js';
 
   function resetOnlineGame() {
     if (role !== 'X') return;
-    game = { ...freshGame(), revision: game.revision + 1 };
+    game = { ...freshGame(game.score), revision: game.revision + 1 };
     renderGame();
     sendState();
   }

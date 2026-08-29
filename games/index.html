@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=58">
+  <link rel="stylesheet" href="/games/games.css?v=59">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
 <body>
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -146,7 +146,7 @@
               </section>
               <section class="tic-online-room" data-tic-online-room hidden aria-label="Online Tic-Tac-Toe room">
                 <div class="tic-room-top"><div><span>Private room</span><strong data-tic-room-code>——————</strong></div><div><button type="button" data-tic-copy-room>Copy code</button><button type="button" data-tic-share-room>Share link</button><button type="button" data-tic-leave-room>Leave</button></div></div>
-                <div class="tic-players"><div data-tic-player="X"><b>X</b><span><strong>Waiting…</strong><small>Room host</small></span></div><div data-tic-player="O"><b>O</b><span><strong>Waiting…</strong><small>Opponent</small></span></div><em data-tic-connection>Connecting…</em></div>
+                <div class="tic-players" aria-label="Tic-Tac-Toe live score"><div data-tic-player="X"><b>X</b><span class="tic-player-copy"><strong data-tic-name>Waiting…</strong><small>Room host</small></span><span class="tic-points"><small>Wins</small><strong data-tic-score>0</strong></span></div><div data-tic-player="O"><b>O</b><span class="tic-player-copy"><strong data-tic-name>Waiting…</strong><small>Opponent</small></span><span class="tic-points"><small>Wins</small><strong data-tic-score>0</strong></span></div><em data-tic-connection>Connecting…</em></div>
               </section>
               <div class="tic-board" data-tic-board aria-label="Tic-tac-toe board"></div>
               <p class="tic-network-note" data-tic-network-note hidden aria-live="polite">Connecting to the room…</p>
@@ -248,7 +248,7 @@
   </div>
 </footer>
   <script src="/games/games.js?v=17"></script>
-  <script src="/games/tic-online.bundle.js?v=1"></script>
-  <script src="/games/multiplayer.bundle.js?v=4"></script>
+  <script src="/games/tic-online.bundle.js?v=2"></script>
+  <script src="/games/multiplayer.bundle.js?v=6"></script>
 <script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
 </html>
