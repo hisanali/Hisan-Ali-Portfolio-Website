@@ -28,13 +28,12 @@ import { createClient } from '@supabase/supabase-js';
   ];
   const colors = [['RED','#f47a52'],['LIME','#dfff63'],['BLUE','#66a6ff'],['WHITE','#f2efe7']];
   const drawPrompts = [
-    ...['rocket','bicycle','camera','umbrella','backpack','crown','key','clock','lamp','chair','glasses','scissors','toothbrush','suitcase','headphones','kite','balloon','book','candle','ladder','magnet','trophy','paintbrush','telephone','door','window','hammer','anchor','robot','gift box'].map(word=>({word,category:'Objects'})),
-    ...['cat','dog','fish','elephant','giraffe','penguin','turtle','butterfly','owl','rabbit','dolphin','octopus','lion','monkey','snail','crab','flamingo','crocodile','horse','bee','shark','camel','peacock','frog'].map(word=>({word,category:'Animals'})),
-    ...['palm tree','mountain','sunflower','rainbow','volcano','waterfall','island','moon','cloud','lightning','snowman','river','desert','forest','wave','cactus','mushroom','flower','star','sun'].map(word=>({word,category:'Nature'})),
-    ...['coffee cup','birthday cake','ice cream','pizza','watermelon','burger','cupcake','pineapple','donut','popcorn','banana','carrot','apple','sandwich','fried egg','cookie','strawberry','lemon'].map(word=>({word,category:'Food'})),
-    ...['castle','lighthouse','sailboat','airplane','train','school bus','hot air balloon','tent','igloo','windmill','bridge','skyscraper','spaceship','submarine','helicopter','house','ferris wheel','traffic light'].map(word=>({word,category:'Places & travel'})),
-    ...['guitar','football','basketball','skateboard','drum','microphone','chess piece','medal','tennis racket','bowling ball','surfboard','video game','piano','roller skate','baseball cap'].map(word=>({word,category:'Fun & sports'})),
-    ...['sleeping','dancing','running','swimming','fishing','cooking','reading','painting','singing','climbing','waving','juggling','flying','laughing','diving'].map(word=>({word,category:'Actions'}))
+    ...['cup','mug','spoon','fork','plate','bowl','bottle','box','bag','hat','cap','shoe','sock','shirt','pants','bed','table','chair','door','window','key','lock','clock','book','pencil','pen','brush','comb','phone','television','fan','lamp','candle','ball','kite','balloon','gift','umbrella','glasses','toothbrush','camera','envelope','scissors','ruler'].map(word=>({word,category:'Everyday things'})),
+    ...['apple','banana','orange','lemon','grapes','cherry','pear','carrot','egg','bread','pizza','burger','donut','cookie','cake','cupcake','ice cream','lollipop','popcorn','sandwich','watermelon','strawberry','corn','cheese','hot dog','mushroom'].map(word=>({word,category:'Easy food'})),
+    ...['cat','dog','fish','bird','duck','chicken','rabbit','turtle','snail','bee','butterfly','spider','ant','crab','whale','frog','mouse','pig','cow','sheep','worm','ladybug'].map(word=>({word,category:'Easy animals'})),
+    ...['sun','moon','star','cloud','rain','rainbow','flower','tree','leaf','grass','mountain','wave','snowman','snowflake','puddle','rock','fire','cactus','palm tree','planet'].map(word=>({word,category:'Nature'})),
+    ...['house','school','shop','road','bridge','tent','car','bus','train','boat','airplane','bicycle','rocket','traffic light','stop sign','mailbox','fence','castle','igloo','playground'].map(word=>({word,category:'Places & travel'})),
+    ...['happy face','sad face','heart','circle','square','triangle','smile','crown','robot','football','basketball','tennis ball','baseball','guitar','drum','music note','puzzle piece','dice','toy car','teddy bear','yo-yo','magic wand','party hat','birthday cake'].map(word=>({word,category:'Fun & simple'}))
   ];
   const relayThemes = [
     'A city on another planet','The world’s strangest restaurant','A robot on holiday','An underwater music festival',
@@ -207,6 +206,25 @@ import { createClient } from '@supabase/supabase-js';
     canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
   }
 
+  const canvasColor = '#fffdf7';
+  const brushColors = [
+    {value:'#17382d', label:'Ink'}, {value:'#b84224', label:'Orange'}, {value:'#6659cb', label:'Purple'},
+    {value:'#278f70', label:'Green'}, {value:'#f0b83f', label:'Yellow'}
+  ];
+  const brushSizes = [
+    {value:4, label:'Thin'}, {value:8, label:'Medium'}, {value:14, label:'Thick'}, {value:22, label:'Extra thick'}
+  ];
+  function drawToolsMarkup(session) {
+    return `<div class="draw-tool-group"><span class="draw-tool-label">Colour</span><div class="draw-colors" aria-label="Brush colours">${brushColors.map(({value,label})=>`<button type="button" data-draw-color="${value}" class="${session.brushColor===value?'is-active':''}" style="--swatch:${value}" aria-label="${label}" title="${label}"></button>`).join('')}</div></div>
+      <div class="draw-tool-group"><span class="draw-tool-label">Thickness</span><div class="draw-sizes" aria-label="Stroke thickness">${brushSizes.map(({value,label})=>`<button type="button" data-draw-size="${value}" class="${session.brushSize===value?'is-active':''}" aria-label="${label} stroke" title="${label}"><i style="--brush-dot:${Math.max(4,Math.round(value*.55))}px"></i></button>`).join('')}</div></div>
+      <button class="draw-eraser ${session.brushColor===canvasColor?'is-active':''}" type="button" data-draw-eraser aria-pressed="${session.brushColor===canvasColor}" title="Erase part of the drawing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 15 8-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-6 7H8l-4-4a1 1 0 0 1 0-1Z"/><path d="m9 19 7-8"/></svg><span>Eraser</span></button>`;
+  }
+  function bindDrawTools(session, arena) {
+    arena.querySelectorAll('[data-draw-color]').forEach(button=>button.addEventListener('click',()=>{session.brushColor=button.dataset.drawColor;renderGame(session);}));
+    arena.querySelectorAll('[data-draw-size]').forEach(button=>button.addEventListener('click',()=>{session.brushSize=Number(button.dataset.drawSize);renderGame(session);}));
+    $('[data-draw-eraser]',arena)?.addEventListener('click',()=>{session.brushColor=canvasColor;renderGame(session);});
+  }
+
   function renderGame(session) {
     const {game, state, role, root} = session;
     const arena = $('[data-multi-game]', root); const status = $('[data-multi-status]', root);
@@ -269,10 +287,9 @@ import { createClient } from '@supabase/supabase-js';
       arena.innerHTML=`<div class="creative-live-head"><div><span>Shared prompt</span><strong>${escapeText(relayThemes[state.themeIndex])}</strong></div><div class="creative-clock ${canDraw?'is-live':''}"><b data-creative-time>${state.phase==='drawing'?remaining:'—'}</b><small>${state.phase==='drawing'?'seconds':'ready'}</small></div></div>
         <div class="relay-progress">${Array.from({length:6},(_,index)=>`<i class="${index<state.turnNumber?'is-done':index===state.turnNumber&&!state.over?'is-current':''}"><span>${index+1}</span></i>`).join('')}</div>
         <div class="draw-canvas-shell creative-canvas"><canvas width="900" height="560" data-draw-canvas aria-label="Doodle Relay shared canvas"></canvas>${state.phase==='ready'?`<div class="draw-canvas-wait"><b>One canvas. Six handoffs.</b><span>${role==='A'?'Start when your teammate is ready.':'The host starts the first turn.'}</span>${role==='A'&&both?'<button type="button" data-relay-start>Start relay</button>':''}</div>`:''}</div>
-        <div class="draw-controls" ${canDraw?'':'hidden'}><div class="draw-colors">${['#17382d','#b84224','#6659cb','#278f70','#f0b83f'].map(color=>`<button type="button" data-draw-color="${color}" class="${session.brushColor===color?'is-active':''}" style="--swatch:${color}"></button>`).join('')}</div><div class="draw-sizes"><button type="button" data-draw-size="6" class="${session.brushSize===6?'is-active':''}">Fine</button><button type="button" data-draw-size="13" class="${session.brushSize===13?'is-active':''}">Bold</button></div><button class="relay-pass" type="button" data-relay-pass>Hand off →</button></div>`;
+        <div class="draw-controls" ${canDraw?'':'hidden'}>${drawToolsMarkup(session)}<button class="relay-pass" type="button" data-relay-pass>Hand off →</button></div>`;
       const canvas=$('[data-draw-canvas]',arena);bindDrawCanvas(session,canvas,canDraw);
-      arena.querySelectorAll('[data-draw-color]').forEach(button=>button.addEventListener('click',()=>{session.brushColor=button.dataset.drawColor;renderGame(session);}));
-      arena.querySelectorAll('[data-draw-size]').forEach(button=>button.addEventListener('click',()=>{session.brushSize=Number(button.dataset.drawSize);renderGame(session);}));
+      bindDrawTools(session,arena);
       $('[data-relay-start]',arena)?.addEventListener('click',()=>session.action({type:'relay-start'}));
       $('[data-relay-pass]',arena)?.addEventListener('click',()=>session.action({type:'relay-next'}));
       status.textContent=!both?'Share the room code with your creative partner.':state.over?'The shared artwork is ready!':state.phase==='ready'?'Both players are here — begin when ready.':state.turn===role?'Your turn — add something surprising.':`${session.players[state.turn]?.name||'Your friend'} is drawing. Your turn is next.`;
@@ -285,12 +302,11 @@ import { createClient } from '@supabase/supabase-js';
       const remaining=state.endsAt?Math.max(0,Math.ceil((state.endsAt-Date.now())/1000)):state.phase==='preview'?5:40;
       arena.innerHTML=`<div class="creative-live-head"><div><span>Round ${Math.min(state.round+1,4)} / 4 · ${isArtist?'Artist':'Judge'}</span><strong>${state.phase==='preview'?`Memorise “${escapeText(prompt.name)}”`:state.over?'Gallery complete':state.phase==='judging'?'Score the redraw':isArtist?'Draw it from memory':`Watch ${escapeText(session.players[state.artist]?.name||'the artist')} draw`}</strong></div><div class="creative-clock ${state.phase==='preview'||state.phase==='drawing'?'is-live':''}"><b data-creative-time>${state.over?'—':remaining}</b><small>${state.phase==='preview'?'memorise':state.phase==='drawing'?'seconds':'stars'}</small></div></div>
         <div class="logo-studio ${showReference?'has-reference':''}"><section class="logo-reference" ${showReference?'':'hidden'}><span>Reference mark</span><div>${logoMark(prompt.mark)}</div><strong>${escapeText(prompt.name)}</strong><small>${escapeText(prompt.hint)}</small></section><section class="logo-drawing"><div class="draw-canvas-shell creative-canvas"><canvas width="900" height="560" data-draw-canvas aria-label="Logo From Memory drawing canvas"></canvas>${state.phase==='preview'?'<div class="logo-preview-shield"><span>Look closely</span><b>The reference disappears in 5 seconds.</b></div>':''}</div></section></div>
-        <div class="draw-controls" ${canDraw?'':'hidden'}><div class="draw-colors">${['#17382d','#b84224','#6659cb','#278f70','#f0b83f'].map(color=>`<button type="button" data-draw-color="${color}" class="${session.brushColor===color?'is-active':''}" style="--swatch:${color}"></button>`).join('')}</div><div class="draw-sizes"><button type="button" data-draw-size="6">Fine</button><button type="button" data-draw-size="13">Bold</button></div><button class="draw-clear" type="button" data-draw-clear>Clear</button><button class="relay-pass" type="button" data-logo-submit>Submit drawing</button></div>
+        <div class="draw-controls" ${canDraw?'':'hidden'}>${drawToolsMarkup(session)}<button class="draw-clear" type="button" data-draw-clear>Clear all</button><button class="relay-pass" type="button" data-logo-submit>Submit drawing</button></div>
         ${state.phase==='judging'&&!isArtist?`<div class="logo-rating"><span>How close was it?</span><div>${[1,2,3].map(stars=>`<button type="button" data-logo-rate="${stars}">${'★'.repeat(stars)}<small>${['Brave try','Very close','Nailed it'][stars-1]}</small></button>`).join('')}</div></div>`:''}
         ${state.phase==='round-over'&&!state.over?`<div class="logo-round-result"><b>${state.rating} star${state.rating===1?'':'s'} awarded</b><span>${session.players[state.artist]?.name||'The artist'} adds ${state.rating} to the score.</span><button type="button" data-logo-next>Next memory mark →</button></div>`:''}`;
       const canvas=$('[data-draw-canvas]',arena);bindDrawCanvas(session,canvas,canDraw);
-      arena.querySelectorAll('[data-draw-color]').forEach(button=>button.addEventListener('click',()=>{session.brushColor=button.dataset.drawColor;renderGame(session);}));
-      arena.querySelectorAll('[data-draw-size]').forEach(button=>button.addEventListener('click',()=>{session.brushSize=Number(button.dataset.drawSize);renderGame(session);}));
+      bindDrawTools(session,arena);
       $('[data-draw-clear]',arena)?.addEventListener('click',()=>session.clearDrawing());
       $('[data-logo-submit]',arena)?.addEventListener('click',()=>session.action({type:'logo-submit'}));
       arena.querySelectorAll('[data-logo-rate]').forEach(button=>button.addEventListener('click',()=>session.action({type:'logo-rate',rating:Number(button.dataset.logoRate)})));
@@ -305,13 +321,12 @@ import { createClient } from '@supabase/supabase-js';
       const guesses = state.guesses.slice(-4).map(item => `<span><b>${escapeText(session.players[item.actor]?.name || 'Player')}</b>${escapeText(item.text)}</span>`).join('');
       arena.innerHTML = `<div class="draw-game-head"><div><span>Round ${Math.min(state.round + 1, 5)} / 5 · ${escapeText(prompt.category)}</span><strong>${state.over ? 'Match complete' : isDrawer ? `Draw: ${escapeText(word)}` : hiddenWord}</strong></div><em>${state.over ? 'Finished' : isDrawer ? 'You are drawing' : 'You are guessing'}</em></div>
         <div class="draw-canvas-shell"><canvas width="900" height="560" data-draw-canvas aria-label="Shared drawing canvas"></canvas>${!both?'<div class="draw-canvas-wait"><b>Invite a friend</b><span>The canvas opens when both players join.</span></div>':''}</div>
-        <div class="draw-controls" ${canDraw?'':'hidden'}><div class="draw-colors" aria-label="Brush colours">${['#17382d','#b84224','#6659cb','#278f70','#f0b83f'].map((color,index)=>`<button type="button" data-draw-color="${color}" class="${session.brushColor===color?'is-active':''}" style="--swatch:${color}" aria-label="${['Ink','Orange','Purple','Green','Yellow'][index]}"></button>`).join('')}</div><div class="draw-sizes" aria-label="Brush size"><button type="button" data-draw-size="6" class="${session.brushSize===6?'is-active':''}">Fine</button><button type="button" data-draw-size="13" class="${session.brushSize===13?'is-active':''}">Bold</button></div><button class="draw-clear" type="button" data-draw-clear>Clear</button><button class="draw-skip" type="button" data-draw-skip>Skip</button></div>
+        <div class="draw-controls" ${canDraw?'':'hidden'}>${drawToolsMarkup(session)}<button class="draw-clear" type="button" data-draw-clear>Clear all</button><button class="draw-skip" type="button" data-draw-skip>Skip word</button></div>
         ${!state.over && state.phase==='drawing' && !isDrawer ? `<form class="draw-guess" data-draw-guess><input maxlength="40" autocomplete="off" placeholder="Type your guess…" aria-label="Your guess"><button>Guess</button></form>` : ''}
         ${state.phase==='round-over' && !state.over ? `<button class="draw-next" type="button" data-draw-next>Next round <span>→</span></button>` : ''}
         <div class="draw-guesses" aria-live="polite">${guesses || '<span class="is-empty">Guesses will appear here.</span>'}</div>`;
       const canvas=$('[data-draw-canvas]',arena);bindDrawCanvas(session,canvas,canDraw);
-      arena.querySelectorAll('[data-draw-color]').forEach(button=>button.addEventListener('click',()=>{session.brushColor=button.dataset.drawColor;renderGame(session);}));
-      arena.querySelectorAll('[data-draw-size]').forEach(button=>button.addEventListener('click',()=>{session.brushSize=Number(button.dataset.drawSize);renderGame(session);}));
+      bindDrawTools(session,arena);
       $('[data-draw-clear]',arena)?.addEventListener('click',()=>session.clearDrawing());
       $('[data-draw-skip]',arena)?.addEventListener('click',()=>session.action({type:'skip'}));
       $('[data-draw-guess]',arena)?.addEventListener('submit',event=>{event.preventDefault();const input=$('input',event.currentTarget);const guess=input.value.trim();if(guess){session.action({type:'guess',guess});input.value='';}});
@@ -385,7 +400,7 @@ import { createClient } from '@supabase/supabase-js';
     const service = await client(); const panel=$(`[data-game-panel="${game}"]`); const native=nativeArena(panel);
     panel.querySelectorAll(':scope > .multi-root').forEach(node => node.remove());
     const root=document.createElement('div');root.className=`multi-root multi-root-${game}`;root.innerHTML=roomShell(game,code);native.hidden=true;panel.append(root);
-    const session={game,code,role,name,root,native,channel:null,connected:false,players:{A:null,B:null},state:initialState(game),reactionTimer:0,creativeTimer:0,creativeTicker:0,drawLines:[],brushColor:'#17382d',brushSize:6,renderedScores:{A:0,B:0},
+    const session={game,code,role,name,root,native,channel:null,connected:false,players:{A:null,B:null},state:initialState(game),reactionTimer:0,creativeTimer:0,creativeTicker:0,drawLines:[],brushColor:'#17382d',brushSize:8,renderedScores:{A:0,B:0},
       async send(event,payload){if(this.channel&&this.connected)await this.channel.send({type:'broadcast',event,payload});},
       async publish(){renderGame(this);await this.send('state',{state:this.state,hostId:clientId});},
       bumpAndPublish(){this.state.revision+=1;this.publish();},
