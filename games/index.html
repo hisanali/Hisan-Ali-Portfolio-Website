@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Playground — Free Browser Games | Hisan Ali</title>
-  <meta name="description" content="Play thirteen quick browser games including Snake Circuit, Dots & Boxes, Gravity Flip, Memory Match, and more.">
+  <meta name="description" content="Play fifteen quick browser games including Snake Circuit, Doodle Relay, Logo From Memory, Dots & Boxes, and more.">
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=60">
+  <link rel="stylesheet" href="/games/games.css?v=63">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
 <body>
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -31,7 +31,7 @@
         <div class="games-hero-copy">
           <div class="games-kicker"><span></span> The browser playground</div>
           <h1>Pause the work.<br><em>Play a little.</em></h1>
-          <p>Thirteen quick games built for strategy, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
+          <p>Fifteen quick games built for strategy, creativity, focus, reflexes, memory, and fun. No accounts, no downloads, and no interruptions.</p>
           <a class="games-primary-link" href="#game-library">Choose a game <span aria-hidden="true">↓︎</span></a>
         </div>
         <div class="games-hero-art" aria-hidden="true">
@@ -42,7 +42,7 @@
           <div class="pixel-cluster"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="games-hero-stats">
-          <div><strong>13</strong><span>instant games</span></div>
+          <div><strong>15</strong><span>instant games</span></div>
           <div><strong>100%</strong><span>browser based</span></div>
           <div><strong>0</strong><span>downloads needed</span></div>
         </div>
@@ -65,7 +65,7 @@
             <button type="button" aria-pressed="false" data-game-filter="focus">Focus</button>
             <button type="button" aria-pressed="false" data-game-filter="creative">Creative</button>
           </div>
-          <p data-game-filter-count>13 games</p>
+          <p data-game-filter-count>15 games</p>
         </div>
 
         <div class="game-picker" role="tablist" aria-label="Choose a game">
@@ -108,12 +108,23 @@
           <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-draw" data-game="draw" data-category="creative" data-online="true" data-tone="purple">
             <span class="game-pick-top"><span class="game-card-visual visual-draw" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="v-draw-paper" x="13" y="8" width="94" height="72" rx="12"/><path class="v-draw-sketch" d="M29 59c8-19 18-30 30-31 11-1 13 17 23 16 7-1 10-9 12-16M31 64c15 5 35 6 57 2"/><g class="v-draw-pencil"><path d="m76 20 18 18-38 38-22 5 5-22Z"/><path d="m39 59 17 17M76 20l7-7c3-3 7-3 10 0l8 8c3 3 3 7 0 10l-7 7"/><path class="v-draw-tip" d="m34 81 5-22 17 17Z"/></g><circle class="v-draw-dot" cx="29" cy="59" r="4"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Draw &amp; Guess</b><small>Sketch the prompt while your friend guesses.</small><span class="game-pick-footer"><em>Creative · Two players</em><i aria-hidden="true">↗</i></span>
           </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-relay" data-game="relay" data-category="creative" data-online="true" data-tone="lime">
+            <span class="game-pick-top"><span class="game-card-visual visual-relay" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="relay-board" x="7" y="7" width="106" height="76" rx="13"/><path class="relay-grid" d="M20 20h80M20 33h80M20 46h80M20 59h80M20 72h80M27 15v60M43 15v60M59 15v60M75 15v60M91 15v60"/><g class="relay-player relay-player-a"><circle cx="21" cy="21" r="9"/><path d="M18 24h6M21 18v6"/></g><g class="relay-player relay-player-b"><circle cx="99" cy="69" r="9"/><path d="m95 69 3 3 6-7"/></g><path class="relay-stroke relay-stroke-a" d="M25 48c10-20 21-23 31-8 5 8 8 9 13 2"/><path class="relay-stroke relay-stroke-b" d="M69 42c7-8 15-6 17 3 2 8 7 10 13 3"/><g class="relay-pencil relay-pencil-a"><path d="m65 36 8 8-7 3-5-5Z"/><path d="m61 42-2 7 7-2Z"/></g><g class="relay-pencil relay-pencil-b"><path d="m95 43 7 7-7 3-5-5Z"/><path d="m90 48-2 7 7-2Z"/></g><path class="relay-handoff" d="M48 66h24m-5-5 5 5-5 5"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Doodle Relay</b><small>Continue one shared drawing, turn by turn.</small><span class="game-pick-footer"><em>Creative · 6 handoffs</em><i aria-hidden="true">↗</i></span>
+          </button>
+          <button class="game-pick" type="button" role="tab" aria-selected="false" aria-controls="game-logo" data-game="logo" data-category="creative" data-online="true" data-tone="coral">
+            <span class="game-pick-top"><span class="game-card-visual visual-logo" aria-hidden="true"><svg viewBox="0 0 120 90"><rect class="logo-card logo-reference-card" x="6" y="14" width="45" height="62" rx="10"/><rect class="logo-card logo-sketch-card" x="69" y="14" width="45" height="62" rx="10"/><g class="logo-original"><circle cx="28.5" cy="42" r="13"/><path d="m28.5 28 4 10 10 4-10 4-4 10-4-10-10-4 10-4Z"/></g><g class="logo-redraw"><circle cx="91.5" cy="42" r="13"/><path d="m91 30 3 9 9 3-9 4-3 9-4-9-9-4 9-3Z"/></g><path class="logo-transfer" d="M54 45h12m-4-4 4 4-4 4"/><g class="logo-timer"><circle cx="60" cy="17" r="11"/><path d="M60 17v-6M60 17l5 3"/></g><path class="logo-pencil" d="m99 64 9-9 4 4-9 9-6 2Z"/><path class="logo-memory-dash" d="M78 64h13"/></svg></span><span class="game-pick-badge"><span></span>Online</span></span><b>Logo From Memory</b><small>Memorise a mark, redraw it, earn stars.</small><span class="game-pick-footer"><em>Creative · 4 rounds</em><i aria-hidden="true">↗</i></span>
+          </button>
         </div>
 
         <nav class="game-pagination" data-game-pagination aria-label="Game pages" hidden>
-          <button type="button" data-game-page-prev aria-label="Previous games">← <span>Previous</span></button>
-          <p data-game-page-status aria-live="polite">Page 1 of 1</p>
-          <button type="button" data-game-page-next aria-label="Next games"><span>Next</span> →</button>
+          <div class="game-pagination-summary"><span>Game library</span><strong data-game-page-heading>15 games</strong></div>
+          <div class="game-pagination-actions">
+            <button class="is-arrow is-previous" type="button" data-game-page-prev aria-label="Previous page">←</button>
+            <button class="is-page" type="button" data-game-page="0" aria-label="Page 1">1</button>
+            <button class="is-page" type="button" data-game-page="1" aria-label="Page 2">2</button>
+            <button class="is-arrow is-next" type="button" data-game-page-next aria-label="Next page">→</button>
+          </div>
+          <p data-game-page-status aria-live="polite">Showing 1–8 of 15</p>
         </nav>
 
         <div class="game-stage" aria-live="polite">
@@ -208,6 +219,16 @@
             <div class="draw-intro"><div class="draw-intro-art" aria-hidden="true"><span></span><i></i><b>?</b></div><strong>One draws. One guesses.</strong><p>Use touch, mouse, or Apple Pencil. No account or download needed.</p></div>
           </article>
 
+          <article class="game-panel" id="game-relay" role="tabpanel" data-game-panel="relay" hidden>
+            <div class="game-panel-info"><span>Creative room / 14</span><h3>Doodle Relay</h3><p>Build one unexpected artwork together. Each player gets three quick turns to add to the same canvas before the final reveal.</p><div class="game-score-line"><span>Format</span><strong>6 handoffs</strong></div></div>
+            <div class="creative-intro relay-intro"><div class="creative-intro-art" aria-hidden="true"><span></span><i></i><b>→</b></div><strong>One canvas. Two imaginations.</strong><p>Draw, hand it over, and watch the idea transform with every turn.</p><ol><li>20 sec</li><li>Switch</li><li>Reveal</li></ol></div>
+          </article>
+
+          <article class="game-panel" id="game-logo" role="tabpanel" data-game-panel="logo" hidden>
+            <div class="game-panel-info"><span>Memory studio / 15</span><h3>Logo From Memory</h3><p>Study an original symbol for five seconds, redraw it from memory, and let your friend judge the result. Roles switch every round.</p><div class="game-score-line"><span>Format</span><strong>4 rounds</strong></div></div>
+            <div class="creative-intro logo-intro"><div class="creative-intro-art" aria-hidden="true"><span>5</span><i></i><b>★</b></div><strong>Look. Hide. Redraw.</strong><p>A fast visual-memory duel where imperfect sketches are part of the fun.</p><ol><li>Memorise</li><li>Sketch</li><li>Judge</li></ol></div>
+          </article>
+
         </div>
       </div>
     </section>
@@ -248,8 +269,8 @@
     <div><a href="/legal/privacy-policy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/cookie-policy/">Cookies</a></div>
   </div>
 </footer>
-  <script src="/games/games.js?v=17"></script>
+  <script src="/games/games.js?v=20"></script>
   <script src="/games/tic-online.bundle.js?v=3"></script>
-  <script src="/games/multiplayer.bundle.js?v=7"></script>
+  <script src="/games/multiplayer.bundle.js?v=8"></script>
 <script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
 </html>

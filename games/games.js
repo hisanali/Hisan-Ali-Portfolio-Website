@@ -11,10 +11,12 @@
   const picker = $('.game-picker');
   const pagination = $('[data-game-pagination]');
   const pageStatus = $('[data-game-page-status]');
+  const pageHeading = $('[data-game-page-heading]');
+  const pageButtons = $$('[data-game-page]');
   const pagePrevious = $('[data-game-page-prev]');
   const pageNext = $('[data-game-page-next]');
   const pageSize = 8;
-  const priorityGames = ['snake', 'tic', 'connect', 'dots', 'memory', 'flight', 'word', 'pong'];
+  const priorityGames = ['draw', 'snake', 'tic', 'connect', 'dots', 'memory', 'flight', 'word', 'pong'];
   let activeFilter = 'all';
   let activePage = 0;
 
@@ -38,8 +40,12 @@
 
     picks.forEach((pick) => { pick.hidden = !pageGames.has(pick); });
     if (filterCount) filterCount.textContent = `${matches.length} game${matches.length === 1 ? '' : 's'} · Page ${activePage + 1}/${pageTotal}`;
-    if (pagination) pagination.hidden = pageTotal <= 1;
-    if (pageStatus) pageStatus.textContent = `Page ${activePage + 1} of ${pageTotal}`;
+    if (pagination) {
+      pagination.hidden = pageTotal <= 1;
+    }
+    if (pageHeading) pageHeading.textContent = `Page ${activePage + 1} of ${pageTotal}`;
+    if (pageStatus) pageStatus.textContent = activePage === 0 ? `Showing 1–${Math.min(pageSize, matches.length)} of ${matches.length}` : `Showing ${first + 1}–${Math.min(first + pageSize, matches.length)} of ${matches.length}`;
+    pageButtons.forEach((button,index)=>{const available=index<pageTotal;const current=index===activePage;button.hidden=!available;button.classList.toggle('is-current',current);button.setAttribute('aria-current',current?'page':'false');});
     if (pagePrevious) pagePrevious.disabled = activePage === 0;
     if (pageNext) pageNext.disabled = activePage >= pageTotal - 1;
   };
@@ -63,6 +69,7 @@
   };
   pagePrevious?.addEventListener('click', () => changeGamePage(-1));
   pageNext?.addEventListener('click', () => changeGamePage(1));
+  pageButtons.forEach(button=>button.addEventListener('click',()=>{activePage=Number(button.dataset.gamePage)||0;renderGamePage();picker?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}));
   renderGamePage();
 
   picks.forEach((pick) => pick.addEventListener('click', () => {
