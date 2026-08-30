@@ -89,6 +89,7 @@ import { createClient } from '@supabase/supabase-js';
     return `<section class="multi-room">
       <div class="multi-room-top"><div><span>Live room</span><strong>${code}</strong></div><div><button type="button" data-multi-copy>Copy code</button><button type="button" data-multi-share>Share</button><button type="button" data-multi-leave>Leave</button></div></div>
       <div class="multi-scoreboard" aria-label="Live score"><div data-multi-player="A"><b>A</b><span class="multi-player-copy"><strong data-multi-name>Waiting…</strong><small data-multi-role>Room host</small></span><span class="multi-points"><small>Score</small><strong data-multi-score>0</strong></span></div><em><b>VS</b><small>Live</small></em><div data-multi-player="B"><b>B</b><span class="multi-player-copy"><strong data-multi-name>Waiting…</strong><small data-multi-role>Opponent</small></span><span class="multi-points"><small>Score</small><strong data-multi-score>0</strong></span></div></div>
+      <div class="match-celebration" data-multi-celebration hidden aria-live="assertive"><div class="match-confetti" aria-hidden="true">${'<i></i>'.repeat(14)}</div><span data-celebration-label>Match complete</span><strong data-celebration-title>Winner!</strong><small data-celebration-score></small></div>
       <p class="multi-connection" data-multi-connection>Connecting…</p>
       <div class="multi-game" data-multi-game></div>
       <p class="multi-status" data-multi-status>Opening the room…</p>
@@ -179,12 +180,16 @@ import { createClient } from '@supabase/supabase-js';
       const item = $(`[data-multi-player="${key}"]`, root); const player = session.players[key];
       $('[data-multi-name]', item).textContent = player ? `${player.name}${player.clientId === clientId ? ' (you)' : ''}` : 'Waiting…';
       $('[data-multi-role]', item).textContent = key === 'A' ? 'Room host' : 'Opponent';
-      $('[data-multi-score]', item).textContent = state.score[key] || 0;
+      const score = state.score[key] || 0; $('[data-multi-score]', item).textContent = score;
       const activePlayer = ['connect','memory','dots'].includes(game) ? state.turn : game === 'draw' ? state.drawer : '';
       item.classList.toggle('is-your-card', player?.clientId === clientId);
       item.classList.toggle('is-active-turn', both && !state.over && (activePlayer ? activePlayer === key : true));
       item.classList.toggle('is-winner', state.over && state.result === key);
+      if (score > (session.renderedScores[key] || 0)) { item.classList.remove('is-score-bump');void item.offsetWidth;item.classList.add('is-score-bump');window.setTimeout(()=>item.classList.remove('is-score-bump'),700); }
+      session.renderedScores[key] = score;
     }
+    const celebration=$('[data-multi-celebration]',root);celebration.hidden=!state.over;
+    if(state.over){const winner=state.result==='draw'?null:session.players[state.result];$('[data-celebration-label]',celebration).textContent=winner?.clientId===clientId?'You won the match':winner?'Match winner':'Match complete';$('[data-celebration-title]',celebration).textContent=winner?`${winner.name} wins!`:'Perfectly tied!';$('[data-celebration-score]',celebration).textContent=`Final score · ${state.score.A||0} — ${state.score.B||0}`;}
     const rematch = $('[data-multi-rematch]', root); rematch.hidden = !state.over;
     if (game === 'connect') {
       arena.className = 'multi-game multi-connect';
@@ -299,7 +304,7 @@ import { createClient } from '@supabase/supabase-js';
     const service = await client(); const panel=$(`[data-game-panel="${game}"]`); const native=nativeArena(panel);
     panel.querySelectorAll(':scope > .multi-root').forEach(node => node.remove());
     const root=document.createElement('div');root.className=`multi-root multi-root-${game}`;root.innerHTML=roomShell(game,code);native.hidden=true;panel.append(root);
-    const session={game,code,role,name,root,native,channel:null,connected:false,players:{A:null,B:null},state:initialState(game),reactionTimer:0,drawLines:[],brushColor:'#17382d',brushSize:6,
+    const session={game,code,role,name,root,native,channel:null,connected:false,players:{A:null,B:null},state:initialState(game),reactionTimer:0,drawLines:[],brushColor:'#17382d',brushSize:6,renderedScores:{A:0,B:0},
       async send(event,payload){if(this.channel&&this.connected)await this.channel.send({type:'broadcast',event,payload});},
       async publish(){renderGame(this);await this.send('state',{state:this.state,hostId:clientId});},
       bumpAndPublish(){this.state.revision+=1;this.publish();},

@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
   const lobbyStatus = $('[data-tic-lobby-status]');
   const roomCodeEl = $('[data-tic-room-code]');
   const connectionEl = $('[data-tic-connection]');
+  const victoryEl = $('[data-tic-victory]');
   const networkNote = $('[data-tic-network-note]');
   const createButton = $('[data-tic-create-room]');
   const joinButton = $('[data-tic-join-room]');
@@ -32,6 +33,7 @@ import { createClient } from '@supabase/supabase-js';
   let presences = [];
   let roomCheckTimer = 0;
   let game = freshGame();
+  let renderedScores = { X: 0, O: 0 };
 
   nameInput.value = playerName;
 
@@ -133,8 +135,11 @@ import { createClient } from '@supabase/supabase-js';
     for (const mark of ['X','O']) {
       playerEls[mark].classList.toggle('is-active-turn', bothPlayers && !game.result && game.turn === mark);
       playerEls[mark].classList.toggle('is-winner', Boolean(game.result && game.result === mark));
-      playerEls[mark].querySelector('[data-tic-score]').textContent = game.score?.[mark] || 0;
+      const score = game.score?.[mark] || 0; playerEls[mark].querySelector('[data-tic-score]').textContent = score;
+      if(score>renderedScores[mark]){playerEls[mark].classList.remove('is-score-bump');void playerEls[mark].offsetWidth;playerEls[mark].classList.add('is-score-bump');window.setTimeout(()=>playerEls[mark].classList.remove('is-score-bump'),700);}renderedScores[mark]=score;
     }
+    victoryEl.hidden=!game.result;
+    if(game.result){const winner=game.result==='draw'?null:playerFor(game.result);$('[data-tic-victory-label]').textContent=winner?.clientId===clientId?'You won the round':winner?'Round winner':'Round complete';$('[data-tic-victory-title]').textContent=winner?`${winner.name} wins!`:'Perfectly tied!';$('[data-tic-victory-score]').textContent=`Match wins · ${game.score?.X||0} — ${game.score?.O||0}`;}
 
     if (!status) {
       if (!bothPlayers) status = role === 'X' ? 'Waiting for opponent' : 'Waiting for room host';
@@ -274,6 +279,7 @@ import { createClient } from '@supabase/supabase-js';
     roomCode = '';
     role = '';
     game = freshGame();
+    renderedScores = { X: 0, O: 0 };
     sessionStorage.removeItem('tic-room-session');
     if (clearUrl) updateUrl();
     bridge.showOnlineLobby();

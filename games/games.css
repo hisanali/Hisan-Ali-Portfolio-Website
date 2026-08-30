@@ -1072,6 +1072,41 @@ html.theme-dark .game-pagination p { color:#f2efe7; }
   .dots-intro.dots-solo { min-height:430px; padding:22px 14px; }
 }
 
+/* Premium multiplayer match header and result celebration. */
+.multi-room { position:relative; }.multi-scoreboard { padding:7px; border:1px solid rgba(255,255,255,.14); border-radius:22px; background:#0d271f; box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 38px rgba(4,18,13,.18); }
+.multi-scoreboard > div,.tic-players > div { min-height:88px; grid-template-columns:48px minmax(0,1fr) 58px; gap:12px; padding:13px 14px; border:0; border-radius:16px; background:#193d31; box-shadow:none; }
+.multi-scoreboard > div::before,.tic-players > div::before { width:5px; }.multi-scoreboard > div.is-your-card,.tic-players > div.is-your-card { background:#20493b; }
+.multi-scoreboard > div.is-active-turn,.tic-players > div.is-active-turn { border:0; background:linear-gradient(135deg,#2d5c4c,#1d4638); box-shadow:inset 0 0 0 1px var(--game-lime),0 0 24px rgba(223,255,99,.12); transform:none; }
+.multi-scoreboard > div.is-active-turn::after,.tic-players > div.is-active-turn::after { content:"Your turn"; right:12px; top:9px; padding:4px 6px; color:var(--game-green); border-radius:99px; background:var(--game-lime); font-size:5px; }
+.multi-scoreboard > div.is-active-turn:not(.is-your-card)::after,.tic-players > div.is-active-turn:not(.is-your-card)::after { content:"Playing"; }
+.multi-scoreboard > div > b,.tic-players > div > b { width:46px; height:46px; font-size:25px; }
+.multi-player-copy strong,.tic-player-copy strong { font-size:12px; }.multi-player-copy small,.tic-player-copy small { margin-top:6px; }
+.multi-points,.tic-points { min-width:52px; padding-left:12px; }.multi-points strong,.tic-points strong { font-size:42px!important; }.multi-points small,.tic-points small { margin-bottom:5px!important; }
+.multi-scoreboard > em { align-self:stretch; align-content:center; border-radius:14px; background:#132f26; }.multi-scoreboard > em b { font-size:19px; }.multi-scoreboard > em small { color:var(--game-lime); }
+.multi-scoreboard > div.is-score-bump .multi-points strong,.tic-players > div.is-score-bump .tic-points strong { animation:score-pop .7s cubic-bezier(.2,.8,.25,1); }
+.multi-scoreboard > div.is-score-bump,.tic-players > div.is-score-bump { animation:score-card-flash .7s ease-out; }
+@keyframes score-pop { 0%{transform:scale(.65);color:#fff} 35%{transform:scale(1.42);color:var(--game-lime)} 68%{transform:scale(.92)} 100%{transform:scale(1);color:#fff} }
+@keyframes score-card-flash { 0%,100%{box-shadow:inset 0 0 0 1px transparent} 35%{box-shadow:inset 0 0 0 2px var(--game-lime),0 0 34px rgba(223,255,99,.28)} }
+
+.match-celebration { position:absolute; z-index:20; left:50%; top:50%; width:min(86%,430px); min-height:210px; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; padding:30px; color:#fff; border:1px solid rgba(255,255,255,.38); border-radius:25px; background:linear-gradient(145deg,#17382d 0 58%,#b84224 58% 100%); box-shadow:0 28px 75px rgba(4,18,13,.5),10px 10px 0 var(--game-lime); text-align:center; transform:translate(-50%,-36%); animation:victory-arrive .55s cubic-bezier(.2,.85,.25,1) both; }
+.match-celebration[hidden] { display:none!important; }.match-celebration > span { position:relative; z-index:2; color:var(--game-lime); font-size:8px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }.match-celebration > strong { position:relative; z-index:2; max-width:100%; margin:12px 0 10px; font:400 clamp(38px,6vw,58px)/.92 var(--game-display); letter-spacing:-.035em; }.match-celebration > small { position:relative; z-index:2; padding:7px 12px; color:var(--game-green); border-radius:99px; background:#fff; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.match-confetti { position:absolute; inset:0; pointer-events:none; }.match-confetti i { --x:10%; --delay:0s; position:absolute; left:var(--x); top:-20px; width:8px; height:15px; border-radius:2px; background:var(--game-lime); opacity:0; animation:confetti-fall 1.65s var(--delay) ease-in 2; }.match-confetti i:nth-child(2){--x:18%;--delay:.2s;background:#f47a52;transform:rotate(24deg)}.match-confetti i:nth-child(3){--x:27%;--delay:.05s;background:#fff}.match-confetti i:nth-child(4){--x:36%;--delay:.34s;background:#6659cb}.match-confetti i:nth-child(5){--x:45%;--delay:.13s;background:#f4c35b}.match-confetti i:nth-child(6){--x:54%;--delay:.28s;background:#fff}.match-confetti i:nth-child(7){--x:63%;--delay:.08s;background:#f47a52}.match-confetti i:nth-child(8){--x:72%;--delay:.4s;background:var(--game-lime)}.match-confetti i:nth-child(9){--x:81%;--delay:.17s;background:#6659cb}.match-confetti i:nth-child(10){--x:90%;--delay:.31s;background:#fff}.match-confetti i:nth-child(11){--x:14%;--delay:.52s;background:#f4c35b}.match-confetti i:nth-child(12){--x:42%;--delay:.48s;background:#f47a52}.match-confetti i:nth-child(13){--x:68%;--delay:.58s;background:#fff}.match-confetti i:nth-child(14){--x:86%;--delay:.49s;background:var(--game-lime)}
+@keyframes victory-arrive { from{opacity:0;transform:translate(-50%,-25%) scale(.82) rotate(-2deg)} to{opacity:1;transform:translate(-50%,-36%) scale(1) rotate(0)} }
+@keyframes confetti-fall { 0%{opacity:0;translate:0 -10px;rotate:0deg} 12%{opacity:1} 100%{opacity:.9;translate:18px 255px;rotate:420deg} }
+.tic-arena { position:relative; }.tic-match-celebration { top:58%; }
+@media (max-width:680px) {
+  .multi-scoreboard { grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr); gap:4px; padding:5px; border-radius:17px; }
+  .multi-scoreboard > em { display:grid; border-radius:10px; }.multi-scoreboard > em b { font-size:13px; }.multi-scoreboard > em small { display:none; }
+  .multi-scoreboard > div,.tic-players > div { min-height:84px; grid-template-columns:32px minmax(0,1fr) 32px; gap:6px; padding:10px 8px; border-radius:12px; }
+  .multi-scoreboard > div > b,.tic-players > div > b { width:31px; height:31px; font-size:18px; }
+  .multi-player-copy strong,.tic-player-copy strong { font-size:9px; }.multi-player-copy small,.tic-player-copy small { font-size:5px; }
+  .multi-points,.tic-points { min-width:29px; padding-left:5px; }.multi-points strong,.tic-points strong { font-size:29px!important; }.multi-points small,.tic-points small { font-size:4.5px!important; }
+  .multi-scoreboard > div.is-active-turn::after,.tic-players > div.is-active-turn::after { right:6px; top:5px; padding:3px 4px; font-size:4px; }
+  .tic-players { padding:5px; border:1px solid rgba(255,255,255,.14); border-radius:17px; background:#0d271f; }
+  .match-celebration { width:calc(100% - 36px); min-height:190px; padding:25px 18px; border-radius:20px; box-shadow:0 22px 60px rgba(4,18,13,.52),7px 7px 0 var(--game-lime); }.match-celebration > strong { font-size:40px; }
+}
+@media (prefers-reduced-motion:reduce) { .match-celebration,.match-confetti i,.is-score-bump { animation:none!important; } }
+
 /* Multiplayer scoreboards: prominent scores, clear ownership and live-turn state. */
 .multi-scoreboard { grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr); gap:10px; margin:14px 0 0; }
 .multi-scoreboard > div,.tic-players > div { position:relative; min-height:78px; display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:11px; overflow:hidden; padding:11px 12px; border:1px solid rgba(255,255,255,.17); border-radius:16px; background:linear-gradient(135deg,#20483b,#153329); box-shadow:0 10px 25px rgba(5,20,15,.16); transition:border-color .2s,box-shadow .2s,transform .2s; }
