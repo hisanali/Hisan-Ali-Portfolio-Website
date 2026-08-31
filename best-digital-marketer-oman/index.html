@@ -97,7 +97,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
 <!-- End Google Tag Manager -->
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme==='dark';const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.remove('theme-dark','reading-mode');root.dataset.palette='forest';root.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260831-4"></head>
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5"
@@ -108,6 +108,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a class="ua-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <nav class="ua-desktop-nav" aria-label="Primary navigation"><a class="ua-nav-link" href="/">Home</a><a class="ua-nav-link" href="/about/">About</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link" href="/tools/">Tools</a><a class="ua-nav-link" href="/games/">Games</a><a class="ua-nav-link" href="/blog/">Blog</a><a class="ua-nav-link" href="/contact/">Contact</a></nav>
       <div class="ua-nav-actions">
+        
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
         <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗︎</span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
@@ -258,7 +259,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </footer>
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
     <script src="../script.js?v=20260822-shell2"></script>
-<script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
+<script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260831-4"></script></body>
 </html>
 
 

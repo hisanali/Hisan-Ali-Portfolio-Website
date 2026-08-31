@@ -1,4 +1,4 @@
-export const sharedThemeInit = `<script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script>`;
+export const sharedThemeInit = `<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme==='dark';const path=location.pathname.replace(/\\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.remove('theme-dark','reading-mode');root.dataset.palette='forest';root.style.colorScheme='light'}})();</script>`;
 
 const links = [
   ['/', 'Home'],
@@ -16,16 +16,24 @@ function isActive(pathname: string, href: string) {
 }
 
 export function sharedHeader(pathname: string) {
+  const readingEligible = pathname.startsWith('/blog/') && pathname !== '/blog/';
   const navigation = links.map(([href, label]) => {
     const active = isActive(pathname, href);
     return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
   }).join('');
+  const readingControl = readingEligible ? `<button class="ua-reading-toggle" type="button" aria-label="Enable reading mode" aria-pressed="false" data-ua-reading-toggle>
+          <span class="ua-reading-glyph" aria-hidden="true">Aa</span>
+          <span class="ua-reading-label">Reading</span>
+          <span class="ua-reading-track" aria-hidden="true"><i></i></span>
+        </button>
+        <span class="ua-sr-only" aria-live="polite" data-ua-reading-status></span>` : '';
 
   return `<header class="ua-header" data-ua-header>
     <div class="ua-nav-shell">
       <a class="ua-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <nav class="ua-desktop-nav" aria-label="Primary navigation">${navigation}</nav>
       <div class="ua-nav-actions">
+        ${readingControl}
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
         <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗︎</span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
@@ -84,8 +92,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260824-10"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260831-4"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260831-4"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

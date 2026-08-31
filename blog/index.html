@@ -92,7 +92,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
 <!-- End Google Tag Manager -->
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{try{const saved=localStorage.getItem('preferred-theme');const dark=saved==='dark';document.documentElement.classList.toggle('theme-dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){document.documentElement.classList.remove('theme-dark');document.documentElement.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260824-16"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=78"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme==='dark';const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.remove('theme-dark','reading-mode');root.dataset.palette='forest';root.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260831-4"></head>
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5"
@@ -104,6 +104,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a class="ua-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <nav class="ua-desktop-nav" aria-label="Primary navigation"><a class="ua-nav-link" href="/">Home</a><a class="ua-nav-link" href="/about/">About</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link" href="/tools/">Tools</a><a class="ua-nav-link" href="/games/">Games</a><a class="ua-nav-link is-active" href="/blog/" aria-current="page">Blog</a><a class="ua-nav-link" href="/contact/">Contact</a></nav>
       <div class="ua-nav-actions">
+        
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
         <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗︎</span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
@@ -127,7 +128,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="blog-journal-card">
                         <div class="blog-journal-head">
                             <span>Independent journal · Oman</span>
-                            <div class="blog-journal-count"><strong data-count-to="75">75</strong><small>field notes</small></div>
+                            <div class="blog-journal-count"><strong data-count-to="77">77</strong><small>field notes</small></div>
                         </div>
                         <div class="blog-journal-copy">
                             <span>Ideas worth using</span>
@@ -223,8 +224,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <div class="blog-grid">
-                <!-- Blog Post 72 -->
-                <a href="/blog/start-business-oman-2026-guide/" class="blog-card">
+                <!-- Pinned main blog: keep this first -->
+                <a href="/blog/start-business-oman-2026-guide/" class="blog-card blog-card--pinned" data-pinned="true">
                     <div class="blog-image">
                         <img class="blog-thumbnail" src="/blog-start-business-oman-2026.jpg" alt="Entrepreneur planning how to start a business in Oman" width="1200" height="675" loading="eager" decoding="async">
                         <video class="blog-hover-video" autoplay muted loop playsinline preload="metadata" poster="/blog-start-business-oman-2026.jpg" aria-hidden="true">
@@ -232,14 +233,48 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </video>
                     </div>
                     <div class="blog-content">
-                        <div class="blog-category">Oman Business Guide</div>
+                        <div class="blog-category">Main Guide · Oman Business</div>
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="far fa-clock"></i> 10 min read</span>
                         </div>
                         <h2>How to Start a Business in Oman in 2026: Complete Step-by-Step Guide</h2>
                         <p>Validate your idea, choose the right activity and legal form, complete registration and licences, prepare tax records and launch.</p>
-                        <span class="blog-link">Read More <i class="fas fa-arrow-right"></i></span>
+                        <span class="blog-link">Read the Main Guide <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+
+                <!-- Blog Post 77 -->
+                <a href="/blog/oman-buyer-journey-maps-instagram-whatsapp/" class="blog-card">
+                    <div class="blog-image">
+                        <img class="blog-thumbnail" src="/blog-oman-buyer-journey-poster-v2.jpg" alt="Poster reading The Clicks Between the Sale for the Oman buyer journey guide" width="1672" height="941" loading="eager" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-category">Oman Field Guide</div>
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> Aug 30, 2026</span>
+                            <span><i class="far fa-clock"></i> 8 min guide</span>
+                        </div>
+                        <h2>The Oman Buyer Journey: From Google Maps to Instagram to WhatsApp</h2>
+                        <p>Follow one customer across discovery, proof, website and conversation—with diagrams, notes, scripts and a 20-minute audit.</p>
+                        <span class="blog-link">Open the Field Guide <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+
+                <!-- Blog Post 76 -->
+                <a href="/blog/lead-response-system-oman/" class="blog-card">
+                    <div class="blog-image">
+                        <img class="blog-thumbnail" src="/blog-lead-response-system-poster-v2.jpg" alt="Poster reading Your Leads Aren't Cold, Your Reply Is for the lead response system" width="1672" height="941" loading="eager" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-category">Sales Operations</div>
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> Aug 30, 2026</span>
+                            <span><i class="far fa-clock"></i> 9 min playbook</span>
+                        </div>
+                        <h2>The Lead Response System: Turn Oman Enquiries Into Clear Next Steps</h2>
+                        <p>Use practical scripts, triage rules, handoff notes, follow-up ideas and a lead scoreboard to make every reply more useful.</p>
+                        <span class="blog-link">Use the Playbook <i class="fas fa-arrow-right"></i></span>
                     </div>
                 </a>
 
@@ -1682,6 +1717,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const pageStatus = document.getElementById('blogPageStatus');
             if (!input || !grid || !meta || !emptyState || !clearButton || !omanToggle || !omanToggleText || !pagination || !pageNumbers || !previousPage || !nextPage || !pageStatus) return;
 
+            const pinnedMainGuide = grid.querySelector('[data-pinned="true"]');
+            if (pinnedMainGuide && grid.firstElementChild !== pinnedMainGuide) grid.prepend(pinnedMainGuide);
             const cards = Array.from(grid.querySelectorAll('.blog-card'));
             const total = cards.length;
             const pageSize = 9;
@@ -1848,7 +1885,5 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         })();
     </script>
     <script src="../script.js?v=20260822-shell2"></script>
-<script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260824-10"></script></body>
+<script src="/interior-redesign.js?v=33"></script><script src="/site-shell.js?v=20260831-4"></script></body>
 </html>
-
-

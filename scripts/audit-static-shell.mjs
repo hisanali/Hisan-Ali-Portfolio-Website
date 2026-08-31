@@ -27,17 +27,21 @@ for (const pagePath of pages) {
   const relative = path.relative(projectRoot, pagePath);
   const source = await readFile(pagePath, 'utf8');
   const isHome = relative === 'index.html';
+  const isBlogArticle = relative.startsWith(`blog${path.sep}`) && relative !== path.join('blog', 'index.html');
   const checks = [
     ['shared header', count(source, /class="ua-header"/g) === 1],
     ['shared footer', count(source, /class="ua-footer"/g) === 1],
     ['theme initializer', count(source, /id="theme-init"/g) === 1],
-    ['light default', source.includes("const dark=saved==='dark'")],
+    ['light default', source.includes("const dark=savedTheme==='dark'")],
+    ['reading initializer', source.includes("localStorage.getItem('preferred-reading-mode')")],
+    ['reading control scope', count(source, /data-ua-reading-toggle/g) === (isBlogArticle ? 1 : 0)],
+    ['single reading switch', count(source, /class="ua-reading-toggle"/g) === (isBlogArticle ? 1 : 0) && !source.includes('data-palette-value=')],
     ['site-shell stylesheet', count(source, /href="\/site-shell\.css/g) === 1],
     ['site-shell script', count(source, /src="\/site-shell\.js/g) === 1],
     ['mobile menu control', count(source, /data-ua-menu-button/g) === 1],
     ['Games navigation', source.includes('href="/games/"')],
     ['Contact navigation', source.includes('href="/contact/"')],
-    ['no emoji theme glyphs', !/[☀☾]/u.test(source)]
+    ['no emoji theme glyphs', !/<button[^>]*theme-toggle[^>]*>[^<]*[☀☾]/u.test(source)]
   ];
 
   if (!isHome) {
