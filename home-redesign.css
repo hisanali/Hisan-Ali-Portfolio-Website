@@ -521,3 +521,9 @@ html.theme-dark .reason-paper { background: #1a2821; }
   .cursor-glow { display: none; }
   [data-tilt] { transform: none !important; }
 }
+
+.work-directory-link { display: flex; justify-content: flex-end; margin-top: 28px; }
+.work-directory-link a { display: inline-flex; align-items: center; gap: 24px; padding: 15px 0; color: #f5f2eb; border-top: 1px solid rgba(255,255,255,.3); font: 800 10px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.work-directory-link a span { color: var(--lime); }
+.hero-proof-link { display: inline-flex; gap: 12px; margin-top: 16px; color: var(--green); border-bottom: 1px solid rgba(23,56,45,.25); font: 800 8px/1.5 var(--sans); letter-spacing: .09em; text-transform: uppercase; }
+.hero-proof-link span { color: var(--orange); }

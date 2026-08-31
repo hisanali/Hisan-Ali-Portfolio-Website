@@ -1,7 +1,7 @@
 (() => {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   const root = path.split('/')[0] || 'home';
-  const known = ['about', 'services', 'tools', 'games', 'blog', 'contact', 'speed-test', 'gcc', 'legal'];
+  const known = ['about', 'services', 'tools', 'games', 'blog', 'contact', 'speed-test', 'gcc', 'legal', 'work', 'lab', 'growth-diagnostic'];
   const family = known.includes(root) ? root : 'landing';
   document.body.classList.add('redesign-interior', `page-${family}`);
   if (root === 'blog' && path.split('/').length > 1) document.body.classList.add('page-blog-article');
@@ -135,6 +135,49 @@
   const articleSidebar = document.querySelector('.page-blog-article .blog-sidebar');
   if (article && articleSidebar) {
     const headings = [...article.querySelectorAll('h2')];
+    const articleWords = (article.textContent || '').trim().split(/\s+/).filter(Boolean).length;
+    const articleMinutes = Math.max(1, Math.ceil(articleWords / 220));
+    const articleTitle = document.querySelector('.blog-post-hero h1')?.textContent?.trim() || document.title;
+    const featuredImage = article.querySelector('.blog-featured-image');
+    const readerTools = document.createElement('div');
+    readerTools.className = 'article-reader-tools';
+    readerTools.setAttribute('aria-label', 'Article reading tools');
+    readerTools.innerHTML = `<span data-reading-remaining>${articleMinutes} min remaining</span><button type="button" data-copy-article>Copy link</button><button type="button" data-share-article>Share</button><a href="mailto:?subject=${encodeURIComponent(articleTitle)}&body=${encodeURIComponent(location.href)}">Email</a>`;
+    if (featuredImage) featuredImage.insertAdjacentElement('afterend', readerTools);
+    else article.prepend(readerTools);
+
+    const readingProgress = document.createElement('div');
+    readingProgress.className = 'article-reading-progress';
+    readingProgress.setAttribute('aria-hidden', 'true');
+    readingProgress.innerHTML = '<span></span>';
+    document.body.append(readingProgress);
+    const readingProgressBar = readingProgress.firstElementChild;
+    const remainingLabel = readerTools.querySelector('[data-reading-remaining]');
+    const updateArticleReading = () => {
+      const rect = article.getBoundingClientRect();
+      const total = Math.max(article.offsetHeight - innerHeight * .35, 1);
+      const consumed = Math.max(0, Math.min(-rect.top + innerHeight * .22, total));
+      const ratio = consumed / total;
+      readingProgressBar.style.transform = `scaleX(${ratio})`;
+      remainingLabel.textContent = ratio >= .98 ? 'Finished' : `${Math.max(1, Math.ceil(articleMinutes * (1 - ratio)))} min remaining`;
+    };
+    addEventListener('scroll', updateArticleReading, { passive: true });
+    addEventListener('resize', updateArticleReading, { passive: true });
+    updateArticleReading();
+
+    readerTools.querySelector('[data-copy-article]').addEventListener('click', async (event) => {
+      try { await navigator.clipboard.writeText(location.href); event.currentTarget.textContent = 'Link copied'; }
+      catch { event.currentTarget.textContent = 'Copy unavailable'; }
+    });
+    readerTools.querySelector('[data-share-article]').addEventListener('click', async (event) => {
+      if (navigator.share) {
+        try { await navigator.share({ title: articleTitle, url: location.href }); }
+        catch (_) {}
+      } else {
+        try { await navigator.clipboard.writeText(location.href); event.currentTarget.textContent = 'Link copied'; }
+        catch { event.currentTarget.textContent = 'Copy unavailable'; }
+      }
+    });
     const usedIds = new Set([...document.querySelectorAll('[id]')].map((element) => element.id));
     const slugify = (value) => value.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
@@ -187,6 +230,14 @@
         }, { rootMargin: '-18% 0px -70% 0px', threshold: 0 });
         links.forEach(({ heading }) => tocObserver.observe(heading));
       }
+    }
+
+    const relatedLinks = [...articleSidebar.querySelectorAll('.related-post-item')].slice(0, 3);
+    if (relatedLinks.length) {
+      const continueSection = document.createElement('section');
+      continueSection.className = 'article-continue';
+      continueSection.innerHTML = `<span>Continue reading</span><h2>Stay with the topic.</h2><div class="article-continue-grid">${relatedLinks.map((link) => `<a href="${link.getAttribute('href')}"><b>${link.querySelector('h4')?.textContent || link.textContent}</b><small>${link.querySelector('.meta')?.textContent || 'Related guide'} ↗</small></a>`).join('')}</div>`;
+      article.append(continueSection);
     }
   }
 

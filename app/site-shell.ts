@@ -1,12 +1,11 @@
 export const sharedThemeInit = `<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme==='dark';const path=location.pathname.replace(/\\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.remove('theme-dark','reading-mode');root.dataset.palette='forest';root.style.colorScheme='light'}})();</script>`;
 
 const links = [
-  ['/', 'Home'],
-  ['/about/', 'About'],
+  ['/work/', 'Work'],
   ['/services/', 'Services'],
-  ['/tools/', 'Tools'],
-  ['/games/', 'Games'],
-  ['/blog/', 'Blog'],
+  ['/blog/', 'Insights'],
+  ['/about/', 'About'],
+  ['/lab/', 'Lab'],
   ['/contact/', 'Contact']
 ] as const;
 
@@ -33,13 +32,13 @@ export function sharedHeader(pathname: string) {
       <a class="ua-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <nav class="ua-desktop-nav" aria-label="Primary navigation">${navigation}</nav>
       <div class="ua-nav-actions">
-        ${readingControl}
+${readingControl}
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
-        <a class="ua-nav-cta" href="/contact/">Let’s talk <span aria-hidden="true">↗︎</span></a>
+        <a class="ua-nav-cta" href="/growth-diagnostic/">Growth diagnostic <span aria-hidden="true">↗︎</span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
       </div>
     </div>
-    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${navigation}<a class="ua-mobile-cta" href="/contact/">Start a project <span aria-hidden="true">↗︎</span></a></nav>
+    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${navigation}<a class="ua-mobile-cta" href="/growth-diagnostic/">Start the free diagnostic <span aria-hidden="true">↗︎</span></a></nav>
   </header>`;
 }
 
@@ -52,15 +51,15 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     </div>
     <nav class="ua-footer-group" aria-label="Footer navigation">
       <h2>Explore</h2>
-      <a href="/">Home</a><a href="/about/">About</a><a href="/services/">Services</a><a href="/tools/">Tools</a><a href="/games/">Game Center</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a>
+      <a href="/work/">Work</a><a href="/services/">Services</a><a href="/blog/">Insights</a><a href="/about/">About</a><a href="/lab/">Lab</a><a href="/contact/">Contact</a>
     </nav>
     <nav class="ua-footer-group" aria-label="Services">
       <h2>Services</h2>
-      <a href="/services/">SEO strategy</a><a href="/services/">Google Ads</a><a href="/services/">Social media</a><a href="/services/">Content & analytics</a>
+      <a href="/services/#seo">SEO strategy</a><a href="/services/#google-ads">Google Ads</a><a href="/services/#social-media">Social media</a><a href="/services/#analytics">Content & analytics</a>
     </nav>
     <nav class="ua-footer-group" aria-label="Useful tools">
-      <h2>Tools & play</h2>
-      <a href="/tools/">All tools</a><a href="/games/">All games</a><a href="/tools/painting-drawing/">Painting Studio</a><a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/image-converter/">Image Converter</a><a href="/tools/qr-code-generator/">QR Generator</a><a href="/tools/utm-builder/">UTM Builder</a><a href="/speed-test/">Page Speed Test</a>
+      <h2>Lab</h2>
+      <a href="/growth-diagnostic/">Growth Diagnostic</a><a href="/tools/">Browser tools</a><a href="/games/">Game Center</a><a href="/tools/painting-drawing/">Painting Studio</a><a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/utm-builder/">UTM Builder</a>
     </nav>
     <div class="ua-footer-group ua-footer-social">
       <h2>Connect</h2>
@@ -80,20 +79,32 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   let enhanced = html
     .replace(/<script id="theme-init">[\s\S]*?<\/script>/gi, '')
     .replace(/<link\b[^>]*href=["']\/site-shell\.css[^>]*>\s*/gi, '')
-    .replace(/<script\b[^>]*src=["']\/site-shell\.js[^>]*><\/script>\s*/gi, '')
-    .replace(/<header\b[\s\S]*?<\/header>/i, header)
-    .replace(/<footer\b[\s\S]*?<\/footer>/i, sharedFooter);
+    .replace(/<script\b[^>]*src=["']\/site-shell\.js[^>]*><\/script>\s*/gi, '');
 
-  if (!/<header\b/i.test(enhanced)) {
+  const sharedHeaderPattern = /<header\b[^>]*class=["'][^"']*\bua-header\b[^"']*["'][^>]*>[\s\S]*?<\/header>/i;
+  const legacyHomeHeaderPattern = /<header\b[^>]*class=["'][^"']*\bsite-header\b[^"']*["'][^>]*>[\s\S]*?<\/header>/i;
+  const sharedFooterPattern = /<footer\b[^>]*class=["'][^"']*\bua-footer\b[^"']*["'][^>]*>[\s\S]*?<\/footer>/i;
+  const legacyHomeFooterPattern = /<footer\b[^>]*class=["'][^"']*\bfooter\b[^"']*["'][^>]*>[\s\S]*?<\/footer>/i;
+
+  if (sharedHeaderPattern.test(enhanced)) {
+    enhanced = enhanced.replace(sharedHeaderPattern, header);
+  } else if (home && legacyHomeHeaderPattern.test(enhanced)) {
+    enhanced = enhanced.replace(legacyHomeHeaderPattern, header);
+  } else {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match) => `${match}${header}`);
   }
-  if (!/<footer\b/i.test(enhanced)) {
+
+  if (sharedFooterPattern.test(enhanced)) {
+    enhanced = enhanced.replace(sharedFooterPattern, sharedFooter);
+  } else if (home && legacyHomeFooterPattern.test(enhanced)) {
+    enhanced = enhanced.replace(legacyHomeFooterPattern, sharedFooter);
+  } else {
     enhanced = enhanced.replace('</body>', `${sharedFooter}</body>`);
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260831-4"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260831-4"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260831-5"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260831-5"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

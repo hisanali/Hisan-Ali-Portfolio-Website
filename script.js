@@ -1213,6 +1213,24 @@ if (portfolioFilters.length > 0) {
 const contactForm = document.getElementById('contactForm');
 
 if (contactForm) {
+    const params = new URLSearchParams(window.location.search);
+    const serviceParam = params.get('service');
+    const goalParam = params.get('goal');
+    const websiteParam = params.get('website');
+    const diagnosticParam = params.get('diagnostic');
+    const serviceField = contactForm.querySelector('#service');
+    const goalField = contactForm.querySelector('#goal');
+    const websiteField = contactForm.querySelector('#website');
+    const messageField = contactForm.querySelector('#message');
+    if (serviceParam && serviceField?.querySelector(`option[value="${CSS.escape(serviceParam)}"]`)) serviceField.value = serviceParam;
+    if (goalParam && goalField?.querySelector(`option[value="${CSS.escape(goalParam)}"]`)) goalField.value = goalParam;
+    if (websiteParam && websiteField) websiteField.value = websiteParam;
+    if (diagnosticParam && messageField) {
+        messageField.value = `I completed the Growth Diagnostic. Result: ${diagnosticParam}\n\nI would like help deciding what to prioritize first.`;
+        const contextNote = document.querySelector('[data-contact-context]');
+        if (contextNote) contextNote.hidden = false;
+    }
+
     contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -1226,6 +1244,8 @@ if (contactForm) {
         const phone = isContactPage ? (contactForm.querySelector('#phone').value.trim() || '') : '';
         const service = isContactPage ? (contactForm.querySelector('#service').value || '') : '';
         const budget = isContactPage ? (contactForm.querySelector('#budget').value || '') : '';
+        const website = isContactPage ? (contactForm.querySelector('#website')?.value.trim() || '') : '';
+        const goal = isContactPage ? (contactForm.querySelector('#goal')?.value || '') : '';
 
         // Basic validation
         if (!name || !email || !message) {
@@ -1260,13 +1280,17 @@ if (contactForm) {
             formData.append('entry.1031713771', phone);    // Phone Number
             formData.append('entry.406911209', subject);   // Subject
             formData.append('entry.1629603893', budget);   // Estimated Budget
-            formData.append('entry.1936083772', message);  // Your Message
+            const enrichedMessage = [message, website ? `Website: ${website}` : '', goal ? `Primary goal: ${goal}` : ''].filter(Boolean).join('\n\n');
+            formData.append('entry.1936083772', enrichedMessage);  // Your Message
             // Map service dropdown values to Google Form radio options
             const serviceMap = {
                 'seo': 'SEO Optimization',
                 'google-ads': 'Google ADS management',
+                'meta-ads': 'Social Media Marketing',
                 'social-media': 'Social Media Marketing',
-                'graphic-design': 'Graphic Design',
+                'content': 'Graphic Design',
+                'analytics': 'Consultation',
+                'strategy': 'Consultation',
                 'consultation': 'Consultation',
                 'other': 'Other'
             };
@@ -1291,6 +1315,14 @@ if (contactForm) {
 
             // Show success message (no-cors mode doesn't return response, but submission works)
             showNotification('Thank you for your message! I will get back to you soon.', 'success');
+
+            const successPanel = document.querySelector('[data-contact-success]');
+            if (successPanel) {
+                const successName = successPanel.querySelector('[data-contact-success-name]');
+                if (successName) successName.textContent = `Thank you, ${name.split(/\s+/)[0]}`;
+                successPanel.classList.add('is-visible');
+                successPanel.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+            }
 
             // Reset form
             contactForm.reset();

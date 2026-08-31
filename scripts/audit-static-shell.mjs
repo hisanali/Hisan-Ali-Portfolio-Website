@@ -39,7 +39,9 @@ for (const pagePath of pages) {
     ['site-shell stylesheet', count(source, /href="\/site-shell\.css/g) === 1],
     ['site-shell script', count(source, /src="\/site-shell\.js/g) === 1],
     ['mobile menu control', count(source, /data-ua-menu-button/g) === 1],
-    ['Games navigation', source.includes('href="/games/"')],
+    ['Work navigation', source.includes('href="/work/"')],
+    ['Lab navigation', source.includes('href="/lab/"')],
+    ['Growth diagnostic path', source.includes('href="/growth-diagnostic/"')],
     ['Contact navigation', source.includes('href="/contact/"')],
     ['no emoji theme glyphs', !/<button[^>]*theme-toggle[^>]*>[^<]*[☀☾]/u.test(source)]
   ];
