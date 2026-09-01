@@ -41,6 +41,7 @@ for (const pagePath of pages) {
     ['mobile menu control', count(source, /data-ua-menu-button/g) === 1],
     ['Work navigation', source.includes('href="/work/"')],
     ['Lab navigation', source.includes('href="/lab/"')],
+    ['Lab submenu', source.includes('class="ua-lab-popover"') && source.includes('class="ua-mobile-lab"')],
     ['Growth diagnostic path', source.includes('href="/growth-diagnostic/"')],
     ['Contact navigation', source.includes('href="/contact/"')],
     ['no emoji theme glyphs', !/<button[^>]*theme-toggle[^>]*>[^<]*[☀☾]/u.test(source)]
@@ -49,6 +50,7 @@ for (const pagePath of pages) {
   if (!isHome) {
     checks.push(
       ['interior stylesheet', count(source, /href="\/interior-redesign\.css/g) === 1],
+      ['quality repair stylesheet', count(source, /href="\/quality-repairs\.css/g) === 1],
       ['interior script', count(source, /src="\/interior-redesign\.js/g) === 1]
     );
   }

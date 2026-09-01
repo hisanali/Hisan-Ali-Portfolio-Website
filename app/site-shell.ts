@@ -18,7 +18,19 @@ export function sharedHeader(pathname: string) {
   const readingEligible = pathname.startsWith('/blog/') && pathname !== '/blog/';
   const navigation = links.map(([href, label]) => {
     const active = isActive(pathname, href);
-    return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
+    const link = `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
+    if (href !== '/lab/') return link;
+    return `<div class="ua-lab-menu">${link}<div class="ua-lab-popover" aria-label="Lab sections">
+      <a href="/growth-diagnostic/"><span class="ua-lab-icon ua-lab-icon-diagnostic" aria-hidden="true"></span><b>Growth Diagnostic</b><small>Find the gaps worth fixing</small></a>
+      <a href="/tools/"><span class="ua-lab-icon ua-lab-icon-tools" aria-hidden="true"></span><b>Browser Tools</b><small>Private everyday utilities</small></a>
+      <a href="/games/"><span class="ua-lab-icon ua-lab-icon-games" aria-hidden="true"></span><b>Game Center</b><small>Thirteen quick challenges</small></a>
+      <a class="ua-lab-all" href="/lab/">Explore the complete Lab <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+    </div></div>`;
+  }).join('');
+  const mobileNavigation = links.map(([href, label]) => {
+    const active = isActive(pathname, href);
+    if (href !== '/lab/') return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
+    return `<div class="ua-mobile-lab"><a class="ua-nav-link${active ? ' is-active' : ''}" href="/lab/"${active ? ' aria-current="page"' : ''}>Lab</a><div><a href="/growth-diagnostic/">Diagnostic</a><a href="/tools/">Tools</a><a href="/games/">Games</a></div></div>`;
   }).join('');
   const readingControl = readingEligible ? `<button class="ua-reading-toggle" type="button" aria-label="Enable reading mode" aria-pressed="false" data-ua-reading-toggle>
           <span class="ua-reading-glyph" aria-hidden="true">Aa</span>
@@ -34,11 +46,11 @@ export function sharedHeader(pathname: string) {
       <div class="ua-nav-actions">
 ${readingControl}
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
-        <a class="ua-nav-cta" href="/growth-diagnostic/">Growth diagnostic <span aria-hidden="true">↗︎</span></a>
+        <a class="ua-nav-cta" href="/growth-diagnostic/">Growth diagnostic <span class="ua-icon-arrow" aria-hidden="true"></span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
       </div>
     </div>
-    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${navigation}<a class="ua-mobile-cta" href="/growth-diagnostic/">Start the free diagnostic <span aria-hidden="true">↗︎</span></a></nav>
+    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${mobileNavigation}<a class="ua-mobile-cta" href="/growth-diagnostic/">Start the free diagnostic <span class="ua-icon-arrow" aria-hidden="true"></span></a></nav>
   </header>`;
 }
 
@@ -47,7 +59,7 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     <div class="ua-footer-intro">
       <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <p>Clear digital strategy and focused execution for businesses ready to grow across Oman and the GCC.</p>
-      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span aria-hidden="true">↗︎</span></a>
+      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div>
     <nav class="ua-footer-group" aria-label="Footer navigation">
       <h2>Explore</h2>
@@ -63,9 +75,9 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     </nav>
     <div class="ua-footer-group ua-footer-social">
       <h2>Connect</h2>
-      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗︎</span></a>
-      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span aria-hidden="true">↗︎</span></a>
-      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗︎</span></a>
+      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div>
   </div>
   <div class="ua-footer-lower">
@@ -103,8 +115,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260831-5"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260831-5"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260901-6"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260901-6"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

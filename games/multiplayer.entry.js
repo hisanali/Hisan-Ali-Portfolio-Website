@@ -15,7 +15,7 @@ import { createClient } from '@supabase/supabase-js';
     draw: 'Sketch a secret prompt live while your friend guesses. Roles switch each round across one shared, touch-friendly canvas.'
   };
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const symbols = ['✦', '●', '▲', '■', '◆', '☀', '☾', '✚'];
+  const symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   const words = [
     ['strategy','A clear plan for reaching a goal'],['campaign','A coordinated marketing effort'],
     ['creative','Original thinking or expressive work'],['insight','A useful understanding'],

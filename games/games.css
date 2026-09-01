@@ -46,6 +46,8 @@ button { color: inherit; }
 .hero-controller small { position: absolute; left: 50%; bottom: 26px; color: var(--game-green); font-size: 8px; font-weight: 900; letter-spacing: .18em; transform: translateX(-50%); }
 .game-orbit { position: absolute; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; animation: gameFloat 7s ease-in-out infinite; }
 .game-orbit span { position: absolute; display: grid; place-items: center; color: var(--game-green); border-radius: 50%; background: var(--game-lime); }
+.orbit-spark::before,.orbit-spark::after,.orbit-cross::before,.orbit-cross::after,.controller-cross::before,.controller-cross::after{content:"";position:absolute;left:50%;top:50%;border-radius:9px;background:currentColor;transform:translate(-50%,-50%)}
+.orbit-spark::before{width:17px;height:3px}.orbit-spark::after{width:3px;height:17px}.orbit-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}.orbit-cross::before,.controller-cross::before{width:25px;height:6px}.orbit-cross::after,.controller-cross::after{width:6px;height:25px}.controller-cross{width:52px;height:52px;font-size:0}
 .orbit-one { inset: 25px 25px 25px 0; }.orbit-one span { right: 25px; top: 32px; width: 42px; height: 42px; }
 .orbit-two { inset: 78px 80px 72px 50px; animation-delay: -2s; }.orbit-two span { left: -16px; bottom: 78px; width: 32px; height: 32px; }
 .orbit-three { inset: 130px 130px 120px 105px; animation-delay: -4s; }.orbit-three span { right: -15px; bottom: 20px; width: 30px; height: 30px; }

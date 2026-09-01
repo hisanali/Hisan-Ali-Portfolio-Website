@@ -7,42 +7,65 @@
   <meta name="description" content="Explore Hisan Lab: practical browser tools, creative games, and interactive marketing experiments built by Hisan Ali.">
   <link rel="canonical" href="https://hisanali.com/lab/">
   <link rel="icon" href="/favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=79"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme==='dark';const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.remove('theme-dark','reading-mode');root.dataset.palette='forest';root.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260831-5"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=79"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=1"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme==='dark';const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.remove('theme-dark','reading-mode');root.dataset.palette='forest';root.style.colorScheme='light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260901-6"></head>
 <body class="redesign-interior page-lab"><header class="ua-header" data-ua-header>
     <div class="ua-nav-shell">
       <a class="ua-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
-      <nav class="ua-desktop-nav" aria-label="Primary navigation"><a class="ua-nav-link" href="/work/">Work</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link" href="/blog/">Insights</a><a class="ua-nav-link" href="/about/">About</a><a class="ua-nav-link is-active" href="/lab/" aria-current="page">Lab</a><a class="ua-nav-link" href="/contact/">Contact</a></nav>
+      <nav class="ua-desktop-nav" aria-label="Primary navigation"><a class="ua-nav-link" href="/work/">Work</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link" href="/blog/">Insights</a><a class="ua-nav-link" href="/about/">About</a><div class="ua-lab-menu"><a class="ua-nav-link is-active" href="/lab/" aria-current="page">Lab</a><div class="ua-lab-popover" aria-label="Lab sections">
+      <a href="/growth-diagnostic/"><span class="ua-lab-icon ua-lab-icon-diagnostic" aria-hidden="true"></span><b>Growth Diagnostic</b><small>Find the gaps worth fixing</small></a>
+      <a href="/tools/"><span class="ua-lab-icon ua-lab-icon-tools" aria-hidden="true"></span><b>Browser Tools</b><small>Private everyday utilities</small></a>
+      <a href="/games/"><span class="ua-lab-icon ua-lab-icon-games" aria-hidden="true"></span><b>Game Center</b><small>Thirteen quick challenges</small></a>
+      <a class="ua-lab-all" href="/lab/">Explore the complete Lab <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+    </div></div><a class="ua-nav-link" href="/contact/">Contact</a></nav>
       <div class="ua-nav-actions">
 
         <button class="ua-theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true" data-ua-theme-toggle><span aria-hidden="true"></span></button>
-        <a class="ua-nav-cta" href="/growth-diagnostic/">Growth diagnostic <span aria-hidden="true">↗︎</span></a>
+        <a class="ua-nav-cta" href="/growth-diagnostic/">Growth diagnostic <span class="ua-icon-arrow" aria-hidden="true"></span></a>
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
       </div>
     </div>
-    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav><a class="ua-nav-link" href="/work/">Work</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link" href="/blog/">Insights</a><a class="ua-nav-link" href="/about/">About</a><a class="ua-nav-link is-active" href="/lab/" aria-current="page">Lab</a><a class="ua-nav-link" href="/contact/">Contact</a><a class="ua-mobile-cta" href="/growth-diagnostic/">Start the free diagnostic <span aria-hidden="true">↗︎</span></a></nav>
+    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav><a class="ua-nav-link" href="/work/">Work</a><a class="ua-nav-link" href="/services/">Services</a><a class="ua-nav-link" href="/blog/">Insights</a><a class="ua-nav-link" href="/about/">About</a><div class="ua-mobile-lab"><a class="ua-nav-link is-active" href="/lab/" aria-current="page">Lab</a><div><a href="/growth-diagnostic/">Diagnostic</a><a href="/tools/">Tools</a><a href="/games/">Games</a></div></div><a class="ua-nav-link" href="/contact/">Contact</a><a class="ua-mobile-cta" href="/growth-diagnostic/">Start the free diagnostic <span class="ua-icon-arrow" aria-hidden="true"></span></a></nav>
   </header>
   <main class="lab-page" id="main">
     <section class="lab-hero">
       <div class="proof-shell">
         <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><span>Lab</span></nav>
-        <div class="lab-heading"><span>Useful things · playful thinking</span><h1>Serious craft.<br><em>Room to experiment.</em></h1><p>The Lab keeps utilities, games, and new interactive ideas together—so the professional work stays focused while the curiosity stays visible.</p></div>
+        <div class="lab-heading"><div><span>Tools · games · experiments</span><h1>A working lab for <em>useful ideas.</em></h1></div><p>Practical utilities sit beside playful browser experiments. Everything here is designed to be opened, used, and understood—not displayed as decoration.</p></div>
       </div>
     </section>
-    <section class="lab-directory">
-      <div class="proof-shell lab-grid">
-        <a class="lab-card lab-card-diagnostic" href="/growth-diagnostic/"><span>01 · Strategy tool</span><h2>Growth Diagnostic</h2><p>Answer eight focused questions and receive scores, your three biggest gaps, and a personalized 30-day plan.</p><strong>Start the diagnostic ↗</strong><i aria-hidden="true">+</i></a>
-        <a class="lab-card lab-card-tools" href="/tools/"><span>02 · Utility desk</span><h2>Browser Tools</h2><p>Fast, private utilities for images, PDFs, links, writing, marketing, and website checks—with no account required.</p><strong>Open the tools ↗</strong><i aria-hidden="true">11</i></a>
-        <a class="lab-card lab-card-games" href="/games/"><span>03 · Browser playground</span><h2>Game Center</h2><p>Quick games for focus, creativity, strategy, memory, and a little breathing room between serious tasks.</p><strong>Choose a game ↗</strong><i aria-hidden="true">13</i></a>
+
+    <section class="lab-directory" aria-labelledby="lab-directory-title">
+      <div class="proof-shell">
+        <header class="lab-directory-head"><div><span>Choose a direction</span><h2 id="lab-directory-title">Three ways into the Lab.</h2></div><p>Start with a business diagnosis, solve a small task, or take a deliberate break.</p></header>
+        <div class="lab-grid">
+          <a class="lab-card lab-card-diagnostic" href="/growth-diagnostic/">
+            <div class="lab-card-top"><span>01 · Strategy tool</span><span class="lab-card-mark lab-icon-pulse" aria-hidden="true"></span></div>
+            <div class="lab-diagnostic-visual" aria-hidden="true"><div><strong>4</strong><small>growth scores</small></div><span></span><span></span><span></span><span></span></div>
+            <div class="lab-card-copy"><h3>Growth Diagnostic</h3><p>Eight focused questions reveal your SEO, advertising, content, and analytics gaps—then turn them into a personalized 30-day plan.</p><strong>Start the diagnostic <i class="lab-icon-arrow" aria-hidden="true"></i></strong></div>
+          </a>
+
+          <a class="lab-card lab-card-tools" href="/tools/">
+            <div class="lab-card-top"><span>02 · Utility desk</span><span class="lab-card-count">11</span></div>
+            <div class="lab-card-copy"><h3>Browser Tools</h3><p>Private, focused tools for PDFs, images, campaign links, writing, and website checks. No account required.</p><strong>Browse the tools <i class="lab-icon-arrow" aria-hidden="true"></i></strong></div>
+          </a>
+
+          <a class="lab-card lab-card-games" href="/games/">
+            <div class="lab-card-top"><span>03 · Browser playground</span><span class="lab-card-count">13</span></div>
+            <div class="lab-game-visual" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+            <div class="lab-card-copy"><h3>Game Center</h3><p>Touch-friendly games for strategy, creativity, memory, reflexes, and short breaks between serious tasks.</p><strong>Choose a game <i class="lab-icon-arrow" aria-hidden="true"></i></strong></div>
+          </a>
+        </div>
       </div>
     </section>
-    <section class="lab-principle"><div class="proof-shell"><span>Why this exists</span><blockquote>“A useful portfolio should show how someone thinks—not only what they sell.”</blockquote><p>Every experiment is built to be usable, understandable, and connected to the wider craft of digital growth.</p></div></section>
+
+    <section class="lab-principle"><div class="proof-shell"><span>Built with a point of view</span><blockquote>Useful enough to keep.<br>Playful enough to remember.</blockquote><p>The Lab is where strategic thinking, interface craft, and curiosity meet. Each release should either save time, reveal something useful, or make the web feel a little more alive.</p></div></section>
   </main>
 <footer class="ua-footer" data-ua-footer>
   <div class="ua-footer-shell">
     <div class="ua-footer-intro">
       <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <p>Clear digital strategy and focused execution for businesses ready to grow across Oman and the GCC.</p>
-      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span aria-hidden="true">↗︎</span></a>
+      <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div>
     <nav class="ua-footer-group" aria-label="Footer navigation">
       <h2>Explore</h2>
@@ -58,14 +81,14 @@
     </nav>
     <div class="ua-footer-group ua-footer-social">
       <h2>Connect</h2>
-      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗︎</span></a>
-      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span aria-hidden="true">↗︎</span></a>
-      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗︎</span></a>
+      <a href="https://www.linkedin.com/in/hisanali/" target="_blank" rel="noopener">LinkedIn <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <a href="https://www.instagram.com/_hisxnnn_/" target="_blank" rel="noopener">Instagram <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <a href="https://wa.me/96896497228" target="_blank" rel="noopener">WhatsApp <span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div>
   </div>
   <div class="ua-footer-lower">
     <span>© 2026 Hisan Ali</span><span>Muscat · Oman</span>
     <div><a href="/legal/privacy-policy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/cookie-policy/">Cookies</a></div>
   </div>
-</footer><script src="/interior-redesign.js?v=34"></script><script src="/site-shell.js?v=20260831-5"></script></body>
+</footer><script src="/interior-redesign.js?v=34"></script><script src="/site-shell.js?v=20260901-6"></script></body>
 </html>

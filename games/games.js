@@ -246,7 +246,7 @@
   // Memory Match
   const memoryBoard = $('[data-memory-board]');
   const memoryMoves = $('[data-memory-moves]');
-  const memorySymbols = ['✦','●','▲','■','◆','☀','☾','✚'];
+  const memorySymbols = ['A','B','C','D','E','F','G','H'];
   let memoryOpen = [];
   let memoryLocked = false;
   let matchedPairs = 0;
