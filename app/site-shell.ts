@@ -20,11 +20,11 @@ export function sharedHeader(pathname: string) {
     const active = isActive(pathname, href);
     const link = `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
     if (href !== '/lab/') return link;
-    return `<div class="ua-lab-menu">${link}<div class="ua-lab-popover" aria-label="Lab sections">
-      <a href="/growth-diagnostic/"><span class="ua-lab-icon ua-lab-icon-diagnostic" aria-hidden="true"></span><b>Growth Diagnostic</b><small>Find the gaps worth fixing</small></a>
-      <a href="/tools/"><span class="ua-lab-icon ua-lab-icon-tools" aria-hidden="true"></span><b>Browser Tools</b><small>Private everyday utilities</small></a>
-      <a href="/games/"><span class="ua-lab-icon ua-lab-icon-games" aria-hidden="true"></span><b>Game Center</b><small>Thirteen quick challenges</small></a>
-      <a class="ua-lab-all" href="/lab/">Explore the complete Lab <span class="ua-icon-arrow" aria-hidden="true"></span></a>
+    return `<div class="ua-lab-menu">${link}<div class="ua-lab-popover" role="group" aria-label="Lab sections">
+      <div class="ua-lab-popover-head"><span>Inside the Lab</span><small>03 destinations</small></div>
+      <a class="ua-lab-item" href="/growth-diagnostic/"><span class="ua-lab-index" aria-hidden="true">01</span><span class="ua-lab-copy"><b>Growth Diagnostic</b><small>A focused business assessment</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <a class="ua-lab-item" href="/tools/"><span class="ua-lab-index" aria-hidden="true">02</span><span class="ua-lab-copy"><b>Browser Tools</b><small>Private, practical utilities</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <a class="ua-lab-item" href="/games/"><span class="ua-lab-index" aria-hidden="true">03</span><span class="ua-lab-copy"><b>Game Center</b><small>Short, polished challenges</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div></div>`;
   }).join('');
   const mobileNavigation = links.map(([href, label]) => {
@@ -115,8 +115,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260901-6"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260901-6"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260901-7"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260901-7"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
