@@ -27,10 +27,15 @@ export function sharedHeader(pathname: string) {
       <a class="ua-lab-item" href="/games/"><span class="ua-lab-index" aria-hidden="true">03</span><span class="ua-lab-copy"><b>Game Center</b><small>Short, polished challenges</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div></div>`;
   }).join('');
-  const mobileNavigation = links.map(([href, label]) => {
+  const mobileNavigation = links.map(([href, label], index) => {
     const active = isActive(pathname, href);
-    if (href !== '/lab/') return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
-    return `<div class="ua-mobile-lab"><a class="ua-nav-link${active ? ' is-active' : ''}" href="/lab/"${active ? ' aria-current="page"' : ''}>Lab</a><div><a href="/growth-diagnostic/">Diagnostic</a><a href="/tools/">Tools</a><a href="/games/">Games</a></div></div>`;
+    const number = String(index + 1).padStart(2, '0');
+    if (href !== '/lab/') return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}><span class="ua-mobile-index" aria-hidden="true">${number}</span><b>${label}</b><span class="ua-icon-arrow" aria-hidden="true"></span></a>`;
+    return `<div class="ua-mobile-lab"><a class="ua-nav-link${active ? ' is-active' : ''}" href="/lab/"${active ? ' aria-current="page"' : ''}><span class="ua-mobile-index" aria-hidden="true">${number}</span><b>Lab</b><small>Explore all</small><span class="ua-icon-arrow" aria-hidden="true"></span></a><div class="ua-mobile-lab-list">
+      <a href="/growth-diagnostic/"><span aria-hidden="true">01</span><b>Growth diagnostic</b><small>Find the gaps worth fixing</small></a>
+      <a href="/tools/"><span aria-hidden="true">02</span><b>Browser tools</b><small>Private everyday utilities</small></a>
+      <a href="/games/"><span aria-hidden="true">03</span><b>Game Center</b><small>Short polished challenges</small></a>
+    </div></div>`;
   }).join('');
   const readingControl = readingEligible ? `<button class="ua-reading-toggle" type="button" aria-label="Enable reading mode" aria-pressed="false" data-ua-reading-toggle>
           <span class="ua-reading-glyph" aria-hidden="true">Aa</span>
@@ -50,7 +55,7 @@ ${readingControl}
         <button class="ua-menu-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="ua-mobile-menu" data-ua-menu-button><span></span><span></span></button>
       </div>
     </div>
-    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav>${mobileNavigation}<a class="ua-mobile-cta" href="/growth-diagnostic/">Start the free diagnostic <span class="ua-icon-arrow" aria-hidden="true"></span></a></nav>
+    <nav class="ua-mobile-nav" id="ua-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-ua-mobile-nav><div class="ua-mobile-menu-head"><span>Navigate</span><small>Muscat · Oman</small></div>${mobileNavigation}<a class="ua-mobile-cta" href="/contact/"><span>Start a conversation</span><span class="ua-icon-arrow" aria-hidden="true"></span></a></nav>
   </header>`;
 }
 
@@ -115,8 +120,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260901-7"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260901-7"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260903-3"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260903-3"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

@@ -11,7 +11,7 @@
   --svc-ink: #17241f;
   --svc-muted: #65716b;
   --svc-line: rgba(23, 56, 45, 0.18);
-  --svc-coral: #ef6a4a;
+  --svc-coral: #a43f29;
   --svc-lime: #d9f36a;
   overflow: clip;
   color: var(--svc-ink);
@@ -328,6 +328,7 @@
 
 .svc-card-lime {
   border-color: var(--svc-lime);
+  color: var(--svc-forest-deep);
   background: var(--svc-lime);
 }
 
@@ -379,6 +380,12 @@
   margin: 0 0 26px;
   color: var(--svc-muted);
   line-height: 1.63;
+}
+
+.svc-card-lime .svc-index,
+.svc-card-lime > p:not(.svc-card-kicker),
+.svc-card-lime li {
+  color: var(--svc-forest-deep);
 }
 
 .svc-card-ink > p:not(.svc-card-kicker),
@@ -691,6 +698,7 @@ html.theme-dark .svc-page {
   --svc-paper-soft: #132720;
   --svc-ink: #f5f0e6;
   --svc-muted: #a9b6af;
+  --svc-coral: #ff8a63;
   --svc-line: rgba(242, 238, 227, 0.17);
   color: var(--svc-ink);
 }

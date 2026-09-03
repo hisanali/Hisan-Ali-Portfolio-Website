@@ -1490,7 +1490,7 @@ if (lazyImages.length > 0) {
 // Console Message
 // ===================================
 
-console.log('%c👋 Hello! Thanks for checking out my portfolio!', 'color: #D9522D; font-size: 20px; font-weight: bold;');
+console.log('%cHello! Thanks for checking out my portfolio.', 'color: #D9522D; font-size: 20px; font-weight: bold;');
 console.log('%cInterested in working together? Let\'s connect!', 'color: #F47A52; font-size: 14px;');
 console.log('%cEmail: workhisan@gmail.com', 'color: #4ECDC4; font-size: 12px;');
 

@@ -12,7 +12,8 @@ html.theme-dark body.redesign-interior.page-services :is(#google-ads,#analytics)
 html.theme-dark body.redesign-interior.page-work :is(.proof-hero-note a,.case-links a,.platform-map>a){color:var(--qr-lime)!important}
 html.theme-dark body.redesign-interior.page-blog-article .article-reader-tools :is(button,a){color:var(--qr-lime)!important;border-color:color-mix(in srgb,var(--qr-lime) 32%,transparent)}
 html.theme-dark .game-skip{color:#17382d!important}
-html.theme-dark :is(.games-index,.game-library .game-pick-badge,.game-library .game-pick em){color:#f47a52}
+html.theme-dark :is(.games-index,.game-library .game-pick em){color:#f47a52}
+html.theme-dark .game-library .game-pick-badge:not(.is-solo){color:#17382d}
 
 /* Lab: content-driven composition with explicit contrast. */
 body.page-lab .lab-hero{padding:72px 0 82px;background:radial-gradient(circle at 82% 24%,color-mix(in srgb,var(--qr-lime) 20%,transparent),transparent 30%),var(--qr-paper)}

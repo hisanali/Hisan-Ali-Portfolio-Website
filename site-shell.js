@@ -1,4 +1,66 @@
 (() => {
+  const symbolNames = new Map([
+    ['↗', 'north-east'], ['→', 'east'], ['←', 'west'], ['↓', 'south'], ['↑', 'north'],
+    ['›', 'chevron-right'], ['‹', 'chevron-left'], ['★', 'star-filled'],
+    ['☆', 'star'], ['☀', 'sun'], ['✦', 'sparkle'], ['✓', 'check'], ['×', 'close']
+  ]);
+  const symbolPattern = /([↗→←↓↑›‹★☆☀✦✓×])[\uFE0E\uFE0F]?\s*$/;
+
+  const makeSymbol = (character) => {
+    const icon = document.createElement('span');
+    icon.className = 'ua-symbol-icon';
+    icon.dataset.uaSymbol = symbolNames.get(character);
+    icon.setAttribute('aria-hidden', 'true');
+    return icon;
+  };
+
+  const normalizeControlSymbols = (scope = document) => {
+    const controls = [];
+    if (scope.nodeType === 1 && scope.matches?.('a,button,[role="button"]')) controls.push(scope);
+    controls.push(...(scope.querySelectorAll?.('a,button,[role="button"]') || []));
+    controls.forEach((control) => {
+      const walker = document.createTreeWalker(control, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+      textNodes.forEach((node) => {
+        if (node.parentElement?.closest('.ua-symbol-icon')) return;
+        const match = node.nodeValue?.match(symbolPattern);
+        if (!match) return;
+        const label = node.nodeValue.slice(0, match.index).replace(/\s+$/, '');
+        node.nodeValue = label;
+        const icon = makeSymbol(match[1]);
+        if (!label) icon.classList.add('ua-symbol-solo');
+        node.parentElement?.append(icon);
+      });
+    });
+
+    const storyFaces = [];
+    if (scope.nodeType === 1 && scope.matches?.('.story-face')) storyFaces.push(scope);
+    storyFaces.push(...(scope.querySelectorAll?.('.story-face') || []));
+    storyFaces.forEach((face) => {
+      const character = face.textContent.trim();
+      if (!symbolNames.has(character)) return;
+      face.textContent = '';
+      face.append(makeSymbol(character));
+    });
+  };
+
+  normalizeControlSymbols();
+  let symbolsQueued = false;
+  new MutationObserver((mutations) => {
+    if (symbolsQueued) return;
+    symbolsQueued = true;
+    queueMicrotask(() => {
+      symbolsQueued = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'characterData') normalizeControlSymbols(mutation.target.parentElement || document);
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) normalizeControlSymbols(node);
+        });
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+
   const header = document.querySelector('[data-ua-header]');
   const menuButton = document.querySelector('[data-ua-menu-button]');
   const mobileNav = document.querySelector('[data-ua-mobile-nav]');
