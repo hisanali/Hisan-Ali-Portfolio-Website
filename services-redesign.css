@@ -444,6 +444,10 @@
   background: var(--svc-forest-deep);
 }
 
+.svc-solutions .svc-eyebrow {
+  color: var(--svc-lime);
+}
+
 .svc-section-head-light h2 {
   color: #fff;
 }
@@ -822,16 +826,16 @@ html.theme-dark .svc-proof {
   }
 
   .svc-hero {
-    padding-top: 122px;
-    padding-bottom: 72px;
+    padding-top: 58px;
+    padding-bottom: 62px;
   }
 
   .svc-hero-grid {
-    gap: 44px;
+    gap: 26px;
   }
 
   .svc-breadcrumb {
-    margin-bottom: 25px;
+    display: none;
   }
 
   .svc-hero h1 {
@@ -840,6 +844,10 @@ html.theme-dark .svc-proof {
   }
 
   .svc-actions,
+  .svc-brief-card {
+    display: none;
+  }
+
   .svc-button {
     width: 100%;
   }
@@ -860,7 +868,7 @@ html.theme-dark .svc-proof {
   }
 
   .svc-section {
-    padding: 82px 0;
+    padding: 70px 0;
   }
 
   .svc-grid,
@@ -881,7 +889,7 @@ html.theme-dark .svc-proof {
   }
 
   .svc-card h3 {
-    margin-top: 100px;
+    margin-top: 54px;
     font-size: 2.4rem;
   }
 
@@ -894,7 +902,7 @@ html.theme-dark .svc-proof {
   }
 
   .svc-solution-grid article {
-    min-height: 260px;
+    min-height: 220px;
   }
 
   .svc-solution-grid h3 {
