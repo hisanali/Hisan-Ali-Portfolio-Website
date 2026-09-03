@@ -4,6 +4,7 @@ const mobileNav = document.querySelector('[data-mobile-nav]');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const themeToggle = document.querySelector('[data-theme-toggle]');
 const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+const mobileTheme = window.matchMedia('(max-width: 980px)');
 
 const applyTheme = (theme) => {
   const dark = theme === 'dark';
@@ -22,14 +23,16 @@ const savedTheme = () => {
   }
 };
 
-applyTheme(savedTheme() || 'light');
+const defaultTheme = () => mobileTheme.matches ? 'dark' : 'light';
+
+applyTheme(savedTheme() || defaultTheme());
 themeToggle?.addEventListener('click', () => {
   const next = document.documentElement.classList.contains('theme-dark') ? 'light' : 'dark';
   try { localStorage.setItem('preferred-theme', next); } catch (_) {}
   applyTheme(next);
 });
 systemTheme.addEventListener?.('change', (event) => {
-  if (!savedTheme()) applyTheme('light');
+  if (!savedTheme()) applyTheme(defaultTheme());
 });
 
 if (!reduceMotion) document.documentElement.classList.add('motion-ready');

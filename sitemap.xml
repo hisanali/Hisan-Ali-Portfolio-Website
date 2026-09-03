@@ -45,9 +45,27 @@
     </url>
     <url>
         <loc>https://hisanali.com/blog/</loc>
-        <lastmod>2026-04-28</lastmod>
+        <lastmod>2026-09-03</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/blog/ramadan-2027-marketing-oman/</loc>
+        <lastmod>2026-09-03</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/blog/arabic-english-seo-oman/</loc>
+        <lastmod>2026-09-03</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://hisanali.com/blog/google-reviews-oman/</loc>
+        <lastmod>2026-09-03</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
     </url>
     <url>
         <loc>https://hisanali.com/tools/</loc>

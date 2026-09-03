@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const getSystemTheme = () => prefersDark.matches ? 'dark' : 'light';
+    const getDefaultTheme = () => window.matchMedia('(max-width: 980px)').matches ? 'dark' : 'light';
 
     const getStoredTheme = () => {
         try {
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resolveTheme = () => {
         const stored = getStoredTheme();
         if (stored) return stored;
-        return 'light';
+        return getDefaultTheme();
     };
 
     const syncTheme = () => {
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const handleSchemeChange = () => {
-        if (!getStoredTheme()) applyTheme('light');
+        if (!getStoredTheme()) applyTheme(getDefaultTheme());
     };
 
     if (!document.body.classList.contains('redesign-interior')) {

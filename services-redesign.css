@@ -826,8 +826,13 @@ html.theme-dark .svc-proof {
   }
 
   .svc-hero {
-    padding-top: 58px;
-    padding-bottom: 62px;
+    padding-top: 46px;
+    padding-bottom: 54px;
+    background: var(--svc-paper);
+  }
+
+  .svc-hero::after {
+    display: none;
   }
 
   .svc-hero-grid {
@@ -839,8 +844,17 @@ html.theme-dark .svc-proof {
   }
 
   .svc-hero h1 {
-    font-size: clamp(3.25rem, 16vw, 5.2rem);
-    line-height: 0.91;
+    max-width: 21rem;
+    margin: 16px 0 22px;
+    font-size: clamp(3rem, 13.5vw, 3.55rem);
+    line-height: 0.92;
+    letter-spacing: -0.048em;
+  }
+
+  .svc-lede {
+    max-width: 32rem;
+    font-size: 0.96rem;
+    line-height: 1.66;
   }
 
   .svc-actions,
@@ -868,7 +882,7 @@ html.theme-dark .svc-proof {
   }
 
   .svc-section {
-    padding: 70px 0;
+    padding: 64px 0;
   }
 
   .svc-grid,
@@ -885,12 +899,13 @@ html.theme-dark .svc-proof {
   }
 
   .svc-card {
-    padding: 28px 24px;
+    padding: 26px 22px;
   }
 
   .svc-card h3 {
-    margin-top: 54px;
-    font-size: 2.4rem;
+    margin-top: 46px;
+    font-size: clamp(2.15rem, 10.5vw, 2.4rem);
+    line-height: 0.98;
   }
 
   .svc-card ul {
@@ -902,7 +917,8 @@ html.theme-dark .svc-proof {
   }
 
   .svc-solution-grid article {
-    min-height: 220px;
+    min-height: 205px;
+    padding: 24px 22px;
   }
 
   .svc-solution-grid h3 {

@@ -11,7 +11,7 @@ export function prepareInteriorPage(html: string, pathname: string) {
   const isFieldGuide = /\bfield-guide-page\b/i.test(html);
   const pageStyles = `${interiorStyles}${isFieldGuide ? fieldGuideStyles : ''}${experienceStyles}${qualityRepairStyles}`;
   const prepared = html
-    .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260822-shell2')
+    .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260903-shell3')
     .replace(/<link\b[^>]*href=["']\/interior-redesign\.css[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/experience-upgrades\.css[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/quality-repairs\.css[^>]*>\s*/gi, '')

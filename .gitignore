@@ -24,3 +24,7 @@ node_modules/
 /__test*.webp
 /bella-bathwares-screenshot.*
 /magnific_create-*
+
+# Local Codex agent tooling
+.agents/
+skills-lock.json

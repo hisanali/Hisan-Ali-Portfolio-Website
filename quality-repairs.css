@@ -68,3 +68,73 @@ body.page-games .game-pick-footer i,.game-pick-footer i{display:inline-block;wid
 
 @media(max-width:900px){body.page-lab .lab-heading,body.page-lab .lab-directory-head{grid-template-columns:1fr;gap:24px}body.page-lab .lab-grid{grid-template-columns:1fr}body.page-lab .lab-card-diagnostic{grid-row:auto;min-height:570px}}
 @media(max-width:620px){body.page-lab .lab-hero{padding:48px 0 58px}body.page-lab .lab-heading h1{font-size:clamp(52px,15vw,68px)}body.page-lab .lab-heading p{font-size:13px}body.page-lab .lab-directory{padding:60px 0 70px}body.page-lab .lab-directory-head{margin-bottom:25px}body.page-lab .lab-card{min-height:305px;padding:23px;border-radius:16px}body.page-lab .lab-card-diagnostic{min-height:520px}.lab-diagnostic-visual{margin:38px 0 34px;padding:22px}.lab-diagnostic-visual strong{font-size:72px}body.page-lab .lab-card h3{font-size:43px}.lab-game-visual{right:22px;top:48px;transform:scale(.72) rotate(-7deg);transform-origin:top right}body.page-lab .lab-principle{padding:62px 0}body.redesign-interior.page-contact .contact-call-now{grid-template-columns:42px 1fr 16px;min-height:66px;padding:10px 13px 10px 10px}body.redesign-interior.page-contact .contact-call-now-icon{width:42px;height:42px}}
+
+/* Mobile composition repair: one gutter, one reading direction, no desktop-only hero furniture. */
+@media (max-width: 640px) {
+  html body.redesign-interior.page-tools .tools-hero-content {
+    width: calc(100% - 32px) !important;
+    margin-inline: auto !important;
+  }
+
+  html body.redesign-interior.page-tools .tools-hero {
+    padding: 42px 0 48px !important;
+  }
+
+  html body.redesign-interior.page-tools .tools-hero-content .breadcrumb,
+  html body.redesign-interior.page-tools .tools-minimal-rail {
+    display: none !important;
+  }
+
+  html body.redesign-interior.page-tools .tools-hero .tools-hero-copy h1 {
+    max-width: 21rem !important;
+    margin-top: 0 !important;
+    font-size: clamp(3rem, 13.8vw, 3.5rem) !important;
+    line-height: 0.91 !important;
+  }
+
+  html body.redesign-interior.page-tools .tools-hero-copy > p {
+    margin-top: 22px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-hero {
+    padding: 40px 0 46px !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-hero-content {
+    grid-template-areas: "badge" "title" !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-hero-content .breadcrumb,
+  html body.redesign-interior.page-blog .blog-hero-aside {
+    display: none !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-hero h1 {
+    width: 100% !important;
+    max-width: 21rem !important;
+    margin-top: 18px !important;
+    font-size: clamp(3rem, 13.8vw, 3.5rem) !important;
+    line-height: 0.91 !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-search-wrap,
+  html body.redesign-interior.page-blog .blog-search-intro,
+  html body.redesign-interior.page-blog .blog-search-controls {
+    text-align: left !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-search-controls .blog-search-tags {
+    flex-wrap: wrap !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  html body.redesign-interior.page-contact .page-hero-content {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
