@@ -27,16 +27,15 @@ export function sharedHeader(pathname: string) {
       <a class="ua-lab-item" href="/games/"><span class="ua-lab-index" aria-hidden="true">03</span><span class="ua-lab-copy"><b>Game Center</b><small>Short, polished challenges</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div></div>`;
   }).join('');
-  const mobileNavigation = links.map(([href, label], index) => {
+  const mobileNavigation = links.map(([href, label]) => {
     const active = isActive(pathname, href);
-    const number = String(index + 1).padStart(2, '0');
-    if (href !== '/lab/') return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}><span class="ua-mobile-index" aria-hidden="true">${number}</span><b>${label}</b><span class="ua-icon-arrow" aria-hidden="true"></span></a>`;
+    if (href !== '/lab/') return `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}><b>${label}</b><span class="ua-icon-arrow" aria-hidden="true"></span></a>`;
     return `<section class="ua-mobile-lab${active ? ' is-active' : ''}" aria-label="Explore the Lab">
       <div class="ua-mobile-lab-head"><span><i aria-hidden="true"></i>The Lab</span><a href="/lab/"${active ? ' aria-current="page"' : ''}>View everything <span class="ua-icon-arrow" aria-hidden="true"></span></a></div>
       <div class="ua-mobile-lab-list">
-        <a class="ua-mobile-lab-primary" href="/growth-diagnostic/"><span aria-hidden="true">01</span><b>Growth Diagnostic</b><small>Find the gaps worth fixing</small><i class="ua-icon-arrow" aria-hidden="true"></i></a>
-        <a href="/tools/"><span aria-hidden="true">02</span><b>Browser Tools</b><small>Useful, private utilities</small><i class="ua-icon-arrow" aria-hidden="true"></i></a>
-        <a href="/games/"><span aria-hidden="true">03</span><b>Game Center</b><small>Short browser challenges</small><i class="ua-icon-arrow" aria-hidden="true"></i></a>
+        <a class="ua-mobile-lab-primary" href="/growth-diagnostic/"><b>Growth Diagnostic</b><small>Find the gaps worth fixing</small><i class="ua-icon-arrow" aria-hidden="true"></i></a>
+        <a href="/tools/"><b>Browser Tools</b><small>Useful, private utilities</small><i class="ua-icon-arrow" aria-hidden="true"></i></a>
+        <a href="/games/"><b>Game Center</b><small>Short browser challenges</small><i class="ua-icon-arrow" aria-hidden="true"></i></a>
       </div>
     </section>`;
   }).join('');
@@ -71,7 +70,7 @@ export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
     </div>
     <nav class="ua-footer-group" aria-label="Footer navigation">
       <h2>Explore</h2>
-      <a href="/work/">Work</a><a href="/services/">Services</a><a href="/blog/">Insights</a><a href="/about/">About</a><a href="/lab/">Lab</a><a href="/contact/">Contact</a>
+      <a href="/">Home</a><a href="/work/">Work</a><a href="/services/">Services</a><a href="/blog/">Insights</a><a href="/about/">About</a><a href="/lab/">Lab</a><a href="/contact/">Contact</a>
     </nav>
     <nav class="ua-footer-group" aria-label="Services">
       <h2>Services</h2>
@@ -123,7 +122,7 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260903-4"></head>`)
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260905-1"></head>`)
     .replace('</body>', '<script src="/site-shell.js?v=20260903-4"></script></body>');
 
   if (home) {
