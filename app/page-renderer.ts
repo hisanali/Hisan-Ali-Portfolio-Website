@@ -20,6 +20,7 @@ export function prepareInteriorPage(html: string, pathname: string) {
 
   const prepared = html
     .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260903-shell3')
+    .replace(/services-redesign\.css\?v=[^"']+/g, 'services-redesign.css?v=2')
     .replace(/<link\b[^>]*href=["']\/interior-redesign\.css[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/experience-upgrades\.css[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/quality-repairs\.css[^>]*>\s*/gi, '')

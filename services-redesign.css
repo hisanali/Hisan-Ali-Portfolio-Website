@@ -332,19 +332,50 @@
   background: var(--svc-lime);
 }
 
-.svc-index {
+.svc-icon {
   position: absolute;
-  top: 29px;
-  right: 31px;
-  color: var(--svc-muted);
-  font-size: 0.71rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  top: 24px;
+  right: 25px;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  border: 1px solid color-mix(in srgb, var(--svc-coral) 28%, transparent);
+  border-radius: 50%;
+  place-items: center;
+  color: var(--svc-coral);
+  background: color-mix(in srgb, var(--svc-coral) 8%, transparent);
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
 }
 
-.svc-card-ink .svc-index,
-.svc-card-coral .svc-index {
-  color: rgba(255, 255, 255, 0.55);
+.svc-icon svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.svc-card:hover .svc-icon {
+  transform: translateY(-2px) rotate(-3deg);
+}
+
+.svc-card-ink .svc-icon,
+.svc-card-coral .svc-icon {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.svc-card-ink .svc-icon {
+  color: var(--svc-lime);
+}
+
+.svc-card-lime .svc-icon {
+  border-color: var(--svc-forest);
+  color: var(--svc-lime);
+  background: var(--svc-forest);
 }
 
 .svc-card-ink .svc-card-kicker {
@@ -382,7 +413,6 @@
   line-height: 1.63;
 }
 
-.svc-card-lime .svc-index,
 .svc-card-lime > p:not(.svc-card-kicker),
 .svc-card-lime li {
   color: var(--svc-forest-deep);
