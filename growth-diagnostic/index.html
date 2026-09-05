@@ -7,7 +7,7 @@
   <meta name="description" content="Score your SEO, advertising, content, and analytics, identify your biggest growth gaps, and get a practical 30-day action plan.">
   <link rel="canonical" href="https://hisanali.com/growth-diagnostic/">
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/growth-diagnostic.css?v=1">
+  <link rel="stylesheet" href="/growth-diagnostic.css?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=79"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=1"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const mobileDefault=matchMedia('(max-width: 980px)').matches;const dark=savedTheme?savedTheme==='dark':mobileDefault;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){const dark=matchMedia('(max-width: 980px)').matches;root.classList.toggle('theme-dark',dark);root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme=dark?'dark':'light'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260903-4"></head>
 <body class="redesign-interior page-growth-diagnostic"><header class="ua-header" data-ua-header>
     <div class="ua-nav-shell">
@@ -39,15 +39,33 @@
       <div class="gd-shell">
         <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><span>Growth Diagnostic</span></nav>
         <div class="gd-hero-grid">
-          <div><span class="gd-kicker">Free · private · about 3 minutes</span><h1>Find the growth gaps <em>worth fixing first.</em></h1><p>Eight focused questions turn your current marketing setup into four practical scores and a personalized 30-day action plan.</p><a class="gd-start" href="#diagnostic">Start your diagnostic <span>↓</span></a></div>
-          <aside class="gd-preview" aria-label="Diagnostic output preview"><div class="gd-preview-head"><span><i></i> Your growth picture</span><small>Personalized output</small></div><div class="gd-preview-score"><strong>4</strong><span>connected areas</span></div><ul><li>SEO visibility</li><li>Advertising readiness</li><li>Content strength</li><li>Analytics clarity</li></ul><div class="gd-preview-foot">Your answers stay in your browser.</div></aside>
+          <div class="gd-hero-copy"><span class="gd-kicker"><i></i> Free growth assessment</span><h1>Stop guessing.<br><em>Find the real gap.</em></h1><p>Answer eight focused questions. Get a clear view of what is holding growth back—and a practical 30-day plan to fix it.</p><div class="gd-hero-actions"><a class="gd-start" href="#diagnostic">Run my diagnostic <span>↘</span></a><span>No email. No sales gate. 3 minutes.</span></div></div>
+          <aside class="gd-preview" aria-label="Diagnostic output preview">
+            <div class="gd-preview-head"><span><i></i> Diagnostic preview</span><small>LIVE FRAMEWORK</small></div>
+            <div class="gd-signal-map"><div class="gd-signal-core"><strong>4</strong><span>growth<br>signals</span></div><span class="gd-signal gd-signal-seo">SEO <b>01</b></span><span class="gd-signal gd-signal-ads">ADS <b>02</b></span><span class="gd-signal gd-signal-content">CONTENT <b>03</b></span><span class="gd-signal gd-signal-data">DATA <b>04</b></span></div>
+            <div class="gd-preview-foot"><span>OUTPUT</span><strong>Scores · gaps · 30-day plan</strong></div>
+          </aside>
         </div>
+        <div class="gd-proof-strip" aria-label="What you receive"><span><b>01</b> Four readiness scores</span><span><b>02</b> Three priority gaps</span><span><b>03</b> A sequenced action plan</span></div>
       </div>
     </section>
 
     <section class="gd-diagnostic" id="diagnostic">
       <div class="gd-shell">
         <form id="growthDiagnostic" class="gd-form" novalidate>
+          <aside class="gd-form-rail" aria-label="Assessment sections">
+            <div class="gd-rail-head"><span>Growth diagnostic</span><strong data-gd-current-domain>Set your context</strong></div>
+            <ol class="gd-domain-list">
+              <li class="is-current" data-gd-domain="context"><span>00</span><div><b>Context</b><small>Your goal</small></div></li>
+              <li data-gd-domain="seo"><span>01</span><div><b>Visibility</b><small>SEO signals</small></div></li>
+              <li data-gd-domain="ads"><span>02</span><div><b>Acquisition</b><small>Paid media</small></div></li>
+              <li data-gd-domain="content"><span>03</span><div><b>Message</b><small>Content system</small></div></li>
+              <li data-gd-domain="analytics"><span>04</span><div><b>Evidence</b><small>Analytics</small></div></li>
+            </ol>
+            <div class="gd-privacy"><i>✓</i><span><b>Private by design</b>Your answers stay in this browser.</span></div>
+          </aside>
+
+          <div class="gd-form-main">
           <div class="gd-progress-wrap" aria-label="Diagnostic progress"><div><span data-gd-progress-text>Step 1 of 9</span><span data-gd-progress-percent>11%</span></div><progress max="9" value="1" data-gd-progress></progress></div>
 
           <fieldset class="gd-step is-active" data-step="0">
@@ -68,8 +86,9 @@
           <fieldset class="gd-step" data-step="7" data-domain="analytics"><legend>Do you trust your website and campaign tracking?</legend><p>Good tracking means the important actions are measured once, correctly, and consistently.</p><div class="gd-options"><label><input type="radio" name="q7" value="0" required><span><b>No</b><small>Tracking is missing or unreliable.</small></span></label><label><input type="radio" name="q7" value="1"><span><b>Limited trust</b><small>Basic analytics exists, but gaps remain.</small></span></label><label><input type="radio" name="q7" value="2"><span><b>Mostly reliable</b><small>Key events and campaigns are measured.</small></span></label><label><input type="radio" name="q7" value="3"><span><b>Decision-ready</b><small>Data is checked and used with confidence.</small></span></label></div></fieldset>
           <fieldset class="gd-step" data-step="8" data-domain="analytics"><legend>Does reporting lead to clear next actions?</legend><p>A useful report changes a decision. It should not be a monthly collection of charts.</p><div class="gd-options"><label><input type="radio" name="q8" value="0" required><span><b>No reporting rhythm</b><small>Performance is reviewed only when something goes wrong.</small></span></label><label><input type="radio" name="q8" value="1"><span><b>Mostly numbers</b><small>Reports describe activity without clear decisions.</small></span></label><label><input type="radio" name="q8" value="2"><span><b>Useful reviews</b><small>Reporting identifies priorities and owners.</small></span></label><label><input type="radio" name="q8" value="3"><span><b>Continuous learning</b><small>Insights routinely shape the next action.</small></span></label></div></fieldset>
 
-          <div class="gd-actions"><button type="button" class="gd-back" data-gd-back disabled>Back</button><button type="button" class="gd-next" data-gd-next>Continue <span>→</span></button></div>
+          <div class="gd-actions"><button type="button" class="gd-back" data-gd-back disabled>← Back</button><button type="button" class="gd-next" data-gd-next>Continue <span>→</span></button></div>
           <p class="gd-error" role="alert" aria-live="polite" data-gd-error></p>
+          </div>
         </form>
 
         <section class="gd-results" data-gd-results hidden aria-live="polite">
@@ -83,7 +102,7 @@
       </div>
     </section>
   </main>
-  <script src="/growth-diagnostic.js?v=1"></script>
+  <script src="/growth-diagnostic.js?v=2"></script>
 <footer class="ua-footer" data-ua-footer>
   <div class="ua-footer-shell">
     <div class="ua-footer-intro">
