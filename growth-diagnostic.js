@@ -9,7 +9,6 @@
   const next = form.querySelector('[data-gd-next]');
   const error = form.querySelector('[data-gd-error]');
   const results = document.querySelector('[data-gd-results]');
-  const domainItems = [...form.querySelectorAll('.gd-domain-list [data-gd-domain]')];
   const domainHeading = form.querySelector('[data-gd-current-domain]');
   let current = 0;
   let reportText = '';
@@ -22,7 +21,6 @@
   };
   const sentenceLabel = (domain) => domain === 'seo' ? 'SEO visibility' : domainContent[domain].label.toLowerCase();
   const questionDomains = { q1: 'seo', q2: 'seo', q3: 'ads', q4: 'ads', q5: 'content', q6: 'content', q7: 'analytics', q8: 'analytics' };
-  const domainOrder = ['context', 'seo', 'ads', 'content', 'analytics'];
   const domainHeadings = { context: 'Set your context', seo: 'Review visibility', ads: 'Review acquisition', content: 'Review your message', analytics: 'Review evidence' };
 
   function updateStep() {
@@ -32,13 +30,7 @@
     progressText.textContent = `Step ${value} of ${steps.length}`;
     progressPercent.textContent = `${Math.round((value / steps.length) * 100)}%`;
     const activeDomain = steps[current].dataset.domain || 'context';
-    const activeDomainIndex = domainOrder.indexOf(activeDomain);
     domainHeading.textContent = domainHeadings[activeDomain];
-    domainItems.forEach((item) => {
-      const itemIndex = domainOrder.indexOf(item.dataset.gdDomain);
-      item.classList.toggle('is-current', item.dataset.gdDomain === activeDomain);
-      item.classList.toggle('is-complete', itemIndex < activeDomainIndex);
-    });
     back.disabled = current === 0;
     next.innerHTML = current === steps.length - 1 ? 'Build my plan <span>→</span>' : 'Continue <span>→</span>';
     error.textContent = '';
