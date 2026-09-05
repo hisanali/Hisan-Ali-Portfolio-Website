@@ -26,7 +26,6 @@ export function sharedHeader(pathname: string) {
     const link = `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
     if (href !== '/lab/') return link;
     return `<div class="ua-lab-menu">${link}<div class="ua-lab-popover" role="group" aria-label="Lab sections">
-      <div class="ua-lab-popover-head"><span>Lab</span><a href="/lab/">View all</a></div>
       <div class="ua-lab-popover-list">
         <a class="ua-lab-item" href="/growth-diagnostic/"><b>Growth Diagnostic</b><span class="ua-icon-arrow" aria-hidden="true"></span></a>
         <a class="ua-lab-item" href="/tools/"><b>Browser Tools</b><span class="ua-icon-arrow" aria-hidden="true"></span></a>
@@ -129,7 +128,7 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260905-3"></head>`)
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260905-4"></head>`)
     .replace('</body>', '<script src="/site-shell.js?v=20260903-4"></script></body>');
 
   if (home) {
