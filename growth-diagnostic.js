@@ -10,6 +10,9 @@
   const error = form.querySelector('[data-gd-error]');
   const results = document.querySelector('[data-gd-results]');
   const domainHeading = form.querySelector('[data-gd-current-domain]');
+  const stepNumber = form.querySelector('[data-gd-step-number]');
+  const dots = [...form.querySelectorAll('[data-gd-dot]')];
+  const workspace = document.querySelector('[data-gd-workspace]');
   let current = 0;
   let reportText = '';
 
@@ -21,7 +24,7 @@
   };
   const sentenceLabel = (domain) => domain === 'seo' ? 'SEO visibility' : domainContent[domain].label.toLowerCase();
   const questionDomains = { q1: 'seo', q2: 'seo', q3: 'ads', q4: 'ads', q5: 'content', q6: 'content', q7: 'analytics', q8: 'analytics' };
-  const domainHeadings = { context: 'Set your context', seo: 'Review visibility', ads: 'Review acquisition', content: 'Review your message', analytics: 'Review evidence' };
+  const domainHeadings = { context: 'Getting started', seo: 'Visibility', ads: 'Acquisition', content: 'Content', analytics: 'Analytics' };
 
   function updateStep() {
     steps.forEach((step, index) => step.classList.toggle('is-active', index === current));
@@ -31,6 +34,11 @@
     progressPercent.textContent = `${Math.round((value / steps.length) * 100)}%`;
     const activeDomain = steps[current].dataset.domain || 'context';
     if (domainHeading) domainHeading.textContent = domainHeadings[activeDomain];
+    stepNumber.textContent = String(value).padStart(2, '0');
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('is-active', index === current);
+      dot.classList.toggle('is-complete', index < current);
+    });
     back.disabled = current === 0;
     next.textContent = current === steps.length - 1 ? 'Build my plan' : 'Continue';
     error.textContent = '';
@@ -99,6 +107,7 @@
     document.querySelector('[data-gd-contact]').href = contact.pathname + contact.search;
     form.hidden = true;
     results.hidden = false;
+    workspace?.classList.add('is-results');
     results.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
 
@@ -114,7 +123,7 @@
     catch { event.currentTarget.textContent = 'Select and copy unavailable'; }
   });
   document.querySelector('[data-gd-restart]').addEventListener('click', () => {
-    form.reset(); current = 0; results.hidden = true; form.hidden = false; updateStep(); form.scrollIntoView({ behavior: 'smooth' });
+    form.reset(); current = 0; results.hidden = true; form.hidden = false; workspace?.classList.remove('is-results'); updateStep(); form.scrollIntoView({ behavior: 'smooth' });
   });
   updateStep();
 })();
