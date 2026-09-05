@@ -96,9 +96,22 @@
     document.querySelector('[data-gd-plan]').innerHTML = weeks.map((week) => `<article class="gd-plan-week"><span>${week.label}</span><div><h4>${week.title}</h4><ul>${week.items.map((item) => `<li>${item}</li>`).join('')}</ul></div></article>`).join('');
 
     reportText = [`Growth Diagnostic${business ? ` — ${business}` : ''}`, website ? `Website: ${website}` : '', `Primary goal: ${goal}`, `Overall readiness: ${overall}/100`, '', ...Object.entries(scores).map(([domain, score]) => `${domainContent[domain].label}: ${score}/100`), '', 'Three priority gaps:', ...ordered.slice(0, 3).map((domain, index) => `${index + 1}. ${domainContent[domain].label} — ${domainContent[domain].gap}`), '', '30-day plan:', ...weeks.flatMap((week) => [week.label + ': ' + week.title, ...week.items.map((item) => `- ${item}`)]), '', 'Generated at https://hisanali.com/growth-diagnostic/'].filter(Boolean).join('\n');
-    const encoded = encodeURIComponent(reportText);
-    document.querySelector('[data-gd-email]').href = `mailto:?subject=${encodeURIComponent('My Growth Diagnostic')}&body=${encoded}`;
-    document.querySelector('[data-gd-whatsapp]').href = `https://wa.me/?text=${encoded}`;
+    const shareText = [
+      `Growth Diagnostic${business ? ` — ${business}` : ''}`,
+      `Primary goal: ${goal}`,
+      `Overall readiness: ${overall}/100`,
+      '',
+      ...Object.entries(scores).map(([domain, score]) => `${domainContent[domain].label}: ${score}/100`),
+      '',
+      'Top priorities:',
+      ...ordered.slice(0, 3).map((domain, index) => `${index + 1}. ${domainContent[domain].label}`),
+      '',
+      'View the diagnostic: https://hisanali.com/growth-diagnostic/'
+    ].join('\n');
+    const encodedShare = encodeURIComponent(shareText);
+    const subject = encodeURIComponent(`Growth Diagnostic${business ? ` — ${business}` : ''}`);
+    document.querySelector('[data-gd-email]').href = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodedShare}`;
+    document.querySelector('[data-gd-whatsapp]').href = `https://api.whatsapp.com/send?text=${encodedShare}`;
     const contact = new URL('/contact/', location.origin);
     contact.searchParams.set('service', 'consultation');
     contact.searchParams.set('goal', goal);
