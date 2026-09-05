@@ -10,6 +10,14 @@ const interiorScript = '<script src="/interior-redesign.js?v=34"></script>';
 export function prepareInteriorPage(html: string, pathname: string) {
   const isFieldGuide = /\bfield-guide-page\b/i.test(html);
   const pageStyles = `${interiorStyles}${isFieldGuide ? fieldGuideStyles : ''}${experienceStyles}${qualityRepairStyles}`;
+  const path = pathname.replace(/^\/+|\/+$/g, '');
+  const root = path.split('/')[0] || 'home';
+  const known = ['about', 'services', 'tools', 'games', 'blog', 'contact', 'speed-test', 'gcc', 'legal', 'work', 'lab', 'growth-diagnostic'];
+  const family = known.includes(root) ? root : 'landing';
+  const bodyClasses = ['redesign-interior', `page-${family}`];
+  if (root === 'blog' && path.split('/').length > 1) bodyClasses.push('page-blog-article');
+  if (root === 'tools' && path.split('/').length > 1) bodyClasses.push('page-tool-detail');
+
   const prepared = html
     .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260903-shell3')
     .replace(/<link\b[^>]*href=["']\/interior-redesign\.css[^>]*>\s*/gi, '')
@@ -20,7 +28,16 @@ export function prepareInteriorPage(html: string, pathname: string) {
     .replace(/<link\b[^>]*rel=["']preconnect["'][^>]*href=["']https:\/\/fonts\.(?:googleapis|gstatic)\.com[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']https:\/\/fonts\.googleapis\.com\/css2\?family=DM\+Serif\+Display[^>]*>\s*/gi, '')
     .replace('</head>', `${interiorFonts}${pageStyles}</head>`)
-    .replace('</body>', `${interiorScript}</body>`);
+    .replace('</body>', `${interiorScript}</body>`)
+    .replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
+      if (/\bclass=/i.test(attributes)) {
+        return match.replace(/class=(["'])(.*?)\1/i, (_full, quote, classes) => {
+          const merged = [...new Set(`${classes} ${bodyClasses.join(' ')}`.trim().split(/\s+/))];
+          return `class=${quote}${merged.join(' ')}${quote}`;
+        });
+      }
+      return `<body class="${bodyClasses.join(' ')}"${attributes}>`;
+    });
 
   return applySharedShell(prepared, pathname);
 }

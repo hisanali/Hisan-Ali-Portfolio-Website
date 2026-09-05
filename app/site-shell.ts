@@ -9,6 +9,11 @@ const links = [
   ['/contact/', 'Contact']
 ] as const;
 
+const desktopLinks = [
+  ['/', 'Home'],
+  ...links
+] as const;
+
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   return pathname === href.slice(0, -1) || pathname.startsWith(href);
@@ -16,15 +21,17 @@ function isActive(pathname: string, href: string) {
 
 export function sharedHeader(pathname: string) {
   const readingEligible = pathname.startsWith('/blog/') && pathname !== '/blog/';
-  const navigation = links.map(([href, label]) => {
+  const navigation = desktopLinks.map(([href, label]) => {
     const active = isActive(pathname, href);
     const link = `<a class="ua-nav-link${active ? ' is-active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
     if (href !== '/lab/') return link;
     return `<div class="ua-lab-menu">${link}<div class="ua-lab-popover" role="group" aria-label="Lab sections">
-      <div class="ua-lab-popover-head"><span>Inside the Lab</span><small>03 destinations</small></div>
-      <a class="ua-lab-item" href="/growth-diagnostic/"><span class="ua-lab-index" aria-hidden="true">01</span><span class="ua-lab-copy"><b>Growth Diagnostic</b><small>A focused business assessment</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
-      <a class="ua-lab-item" href="/tools/"><span class="ua-lab-index" aria-hidden="true">02</span><span class="ua-lab-copy"><b>Browser Tools</b><small>Private, practical utilities</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
-      <a class="ua-lab-item" href="/games/"><span class="ua-lab-index" aria-hidden="true">03</span><span class="ua-lab-copy"><b>Game Center</b><small>Short, polished challenges</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      <div class="ua-lab-popover-head"><span>Explore the Lab</span><small>Tools & experiments</small></div>
+      <div class="ua-lab-popover-list">
+        <a class="ua-lab-item" href="/growth-diagnostic/"><span class="ua-lab-copy"><b>Growth Diagnostic</b><small>Reveal the gaps worth fixing first</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
+        <a class="ua-lab-item" href="/tools/"><span class="ua-lab-copy"><b>Browser Tools</b><small>Useful utilities that work privately</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
+        <a class="ua-lab-item" href="/games/"><span class="ua-lab-copy"><b>Game Center</b><small>Short challenges for a quick break</small></span><span class="ua-icon-arrow" aria-hidden="true"></span></a>
+      </div>
     </div></div>`;
   }).join('');
   const mobileNavigation = links.map(([href, label]) => {
@@ -122,7 +129,7 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260905-1"></head>`)
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260905-2"></head>`)
     .replace('</body>', '<script src="/site-shell.js?v=20260903-4"></script></body>');
 
   if (home) {
