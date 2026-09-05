@@ -26,11 +26,8 @@
 .gd-hero-copy > p { max-width: 650px; margin: 21px 0 0; color: var(--gd-muted); font: 500 17px/1.65 var(--gd-sans); }
 
 .gd-diagnostic { padding: 0 0 100px; background: var(--gd-paper); }
-.gd-form { min-height: 570px; margin: 0; background: var(--gd-card); border: 1px solid var(--gd-line); border-radius: 12px; box-shadow: 0 18px 50px rgba(18, 59, 50, .08); overflow: hidden; }
-.gd-form-main { display: flex; flex-direction: column; min-height: 570px; padding: 34px 42px 30px; }
-.gd-form-heading { padding-bottom: 22px; }
-.gd-form-heading span { display: block; margin-bottom: 6px; color: var(--gd-orange); font: 800 11px/1 var(--gd-sans); text-transform: uppercase; letter-spacing: .11em; }
-.gd-form-heading strong { display: block; font: 400 24px/1.1 var(--gd-serif); }
+.gd-form { width: min(860px, 100%); margin: 0 auto; scroll-margin-top: 100px; background: var(--gd-card); border: 1px solid var(--gd-line); border-radius: 12px; box-shadow: 0 14px 40px rgba(18, 59, 50, .07); overflow: hidden; }
+.gd-form-main { padding: 32px 36px 30px; }
 .gd-progress-wrap > div { display: flex; justify-content: space-between; margin-bottom: 9px; color: var(--gd-muted); font: 800 11px/1 var(--gd-sans); text-transform: uppercase; letter-spacing: .06em; }
 .gd-progress-wrap progress,
 .gd-score-card progress { display: block; width: 100%; height: 4px; appearance: none; border: 0; background: #dce2dd; }
@@ -41,11 +38,11 @@
 .gd-progress-wrap progress::-moz-progress-bar,
 .gd-score-card progress::-moz-progress-bar { background: var(--gd-orange); }
 
-.gd-step { display: none; min-width: 0; margin: 0; padding: 45px 0 24px; border: 0; animation: gd-step-in .2s ease both; }
+.gd-step { display: none; min-width: 0; margin: 0; padding: 32px 0 26px; border: 0; animation: gd-step-in .2s ease both; }
 .gd-step.is-active { display: block; }
 @keyframes gd-step-in { from { opacity: 0; transform: translateY(5px); } }
-.gd-step legend { width: 100%; max-width: 720px; margin: 0; padding: 0; font: 400 clamp(35px, 4vw, 49px)/1.06 var(--gd-serif); letter-spacing: -.02em; }
-.gd-step > p { max-width: 670px; margin: 15px 0 27px; color: var(--gd-muted); font: 500 15px/1.6 var(--gd-sans); }
+.gd-step legend { width: 100%; max-width: 720px; margin: 0; padding: 0; font: 400 clamp(32px, 3.6vw, 42px)/1.08 var(--gd-serif); letter-spacing: -.018em; }
+.gd-step > p { max-width: 670px; margin: 12px 0 24px; color: var(--gd-muted); font: 500 15px/1.6 var(--gd-sans); }
 .gd-fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 .gd-fields label > span { display: flex; justify-content: space-between; margin-bottom: 8px; font: 800 12px/1 var(--gd-sans); }
 .gd-fields small { color: #8a9491; font-weight: 600; }
@@ -67,12 +64,12 @@
 .gd-options input:checked + span small { color: rgba(255, 255, 255, .7); }
 .gd-options input:checked + span::after { border-color: var(--gd-lime); background: var(--gd-lime); box-shadow: inset 0 0 0 4px var(--gd-green); }
 
-.gd-actions { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 23px; border-top: 1px solid var(--gd-line); }
+.gd-actions { display: flex; justify-content: space-between; align-items: center; padding-top: 22px; border-top: 1px solid var(--gd-line); }
 .gd-actions button { min-height: 46px; border: 0; border-radius: 6px; cursor: pointer; font: 800 13px/1 var(--gd-sans); }
 .gd-back { padding: 0 8px; color: var(--gd-muted); background: transparent; }
-.gd-back:disabled { opacity: .3; cursor: not-allowed; }
-.gd-next { display: flex; align-items: center; gap: 24px; padding: 0 12px 0 19px; color: #fff; background: var(--gd-orange); }
-.gd-next span { display: grid; place-items: center; width: 25px; height: 25px; color: var(--gd-orange); background: #fff; border-radius: 4px; }
+.gd-back:disabled { visibility: hidden; }
+.gd-next { display: inline-flex; align-items: center; gap: 10px; padding: 0 21px; color: #fff; background: var(--gd-orange); }
+.gd-next::after { content: "→"; color: inherit; font: 800 18px/1 var(--gd-sans); }
 .gd-next:hover { background: #d95d32; }
 .gd-error { min-height: 17px; margin: 9px 0 -9px; color: #b84226; font: 700 12px/1.4 var(--gd-sans); text-align: right; }
 
@@ -142,7 +139,7 @@
   .gd-hero h1 { font-size: clamp(45px, 13vw, 60px); }
   .gd-hero-copy > p { font-size: 16px; }
   .gd-diagnostic { padding-bottom: 70px; }
-  .gd-form-main { min-height: 600px; padding: 24px 19px 23px; }
+  .gd-form-main { padding: 24px 19px 23px; }
   .gd-step { padding-top: 36px; }
   .gd-step legend { font-size: 35px; }
   .gd-fields,

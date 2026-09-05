@@ -30,9 +30,9 @@
     progressText.textContent = `Step ${value} of ${steps.length}`;
     progressPercent.textContent = `${Math.round((value / steps.length) * 100)}%`;
     const activeDomain = steps[current].dataset.domain || 'context';
-    domainHeading.textContent = domainHeadings[activeDomain];
+    if (domainHeading) domainHeading.textContent = domainHeadings[activeDomain];
     back.disabled = current === 0;
-    next.innerHTML = current === steps.length - 1 ? 'Build my plan <span>→</span>' : 'Continue <span>→</span>';
+    next.textContent = current === steps.length - 1 ? 'Build my plan' : 'Continue';
     error.textContent = '';
     steps[current].querySelector('input,select')?.focus({ preventScroll: true });
   }
@@ -47,6 +47,10 @@
       return false;
     }
     return true;
+  }
+
+  function scrollToQuestion() {
+    form.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
 
   function scoresFromAnswers() {
@@ -100,10 +104,10 @@
 
   next.addEventListener('click', () => {
     if (!validCurrentStep()) return;
-    if (current < steps.length - 1) { current += 1; updateStep(); }
+    if (current < steps.length - 1) { current += 1; updateStep(); scrollToQuestion(); }
     else buildReport();
   });
-  back.addEventListener('click', () => { if (current > 0) { current -= 1; updateStep(); } });
+  back.addEventListener('click', () => { if (current > 0) { current -= 1; updateStep(); scrollToQuestion(); } });
   form.addEventListener('change', () => { error.textContent = ''; });
   document.querySelector('[data-gd-copy]').addEventListener('click', async (event) => {
     try { await navigator.clipboard.writeText(reportText); event.currentTarget.textContent = 'Report copied'; }
