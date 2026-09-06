@@ -103,14 +103,22 @@ body.page-games .game-pick-footer i,.game-pick-footer i{display:inline-block;wid
   }
 
   html body.redesign-interior.page-blog .blog-hero-content {
-    grid-template-areas: "badge" "title" !important;
-    width: 100% !important;
-    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: "masthead" "note" !important;
+    gap: 28px !important;
+    width: calc(100% - 32px) !important;
+    margin-inline: auto !important;
   }
 
   html body.redesign-interior.page-blog .blog-hero-content .breadcrumb,
   html body.redesign-interior.page-blog .blog-hero-aside {
     display: none !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-masthead {
+    grid-area: masthead !important;
+    min-width: 0 !important;
   }
 
   html body.redesign-interior.page-blog .blog-hero h1 {
@@ -119,6 +127,24 @@ body.page-games .game-pick-footer i,.game-pick-footer i{display:inline-block;wid
     margin-top: 18px !important;
     font-size: clamp(3rem, 13.8vw, 3.5rem) !important;
     line-height: 0.91 !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-hero-note {
+    grid-area: note !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 24px 20px !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-hero-note h2 {
+    max-width: none !important;
+    font-size: clamp(2rem, 10vw, 2.75rem) !important;
+    line-height: .98 !important;
+  }
+
+  html body.redesign-interior.page-blog .blog-masthead h1 em {
+    display: inline !important;
   }
 
   html body.redesign-interior.page-blog .blog-search-wrap,

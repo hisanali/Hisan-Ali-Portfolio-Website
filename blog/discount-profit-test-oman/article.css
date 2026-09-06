@@ -1,0 +1,40 @@
+.discount-guide { --discount-accent:#b54420; --discount-surface:#f7eee6; --discount-border:#dbc4b6; --discount-ink:#43251d; }
+html.theme-dark .discount-guide { --discount-accent:#ff986b; --discount-surface:#321815; --discount-border:#71473c; --discount-ink:#fff3e8; }
+html.reading-mode .discount-guide { --discount-accent:#9f3519; --discount-surface:#f0e1ce; --discount-border:#c5a98d; --discount-ink:#3a2a20; }
+.discount-guide .discount-deck { max-width:660px; margin:18px auto; font-size:1.2rem; }
+.discount-guide .blog-post-content { min-width:0; }
+.discount-guide .blog-featured-image img { display:block; width:100%; height:auto; }
+.discount-guide .blog-post-content figcaption { padding:12px 2px; font-size:.875rem; line-height:1.6; }
+.discount-guide .discount-toc { display:grid; grid-template-columns:1fr 1fr; gap:12px 18px; padding:24px; margin:30px 0; border:1px solid var(--discount-border); border-radius:16px; }
+.discount-guide .discount-toc strong { grid-column:1/-1; }
+.discount-guide :is(h2,h3,section[id]) { scroll-margin-top:110px; }
+.discount-guide .margin-visual { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:28px 0; }
+.discount-guide .margin-visual > div { padding:22px; border:1px solid var(--discount-border); border-radius:16px; background:var(--discount-surface); color:var(--discount-ink); }
+.discount-guide .margin-visual span,.discount-guide .margin-visual small { display:block; }
+.discount-guide .margin-visual strong { display:block; margin:8px 0 16px; font-size:2rem; }
+.discount-guide .margin-visual i { display:block; height:34px; margin-bottom:12px; border-radius:6px; background:linear-gradient(90deg,var(--discount-accent) 0 var(--cost),#c7d96f var(--cost) 100%); }
+.discount-guide .discount-table-wrap { max-width:100%; overflow-x:auto; margin:26px 0; }
+.discount-guide .discount-table-wrap table { width:100% !important; max-width:none !important; table-layout:fixed; margin:0; }
+.discount-guide .discount-table-wrap :is(th,td) { overflow-wrap:anywhere; }
+.discount-guide .discount-calculator,.discount-guide .discount-message { padding:26px; margin:32px 0; border:1px solid var(--discount-border); border-radius:18px; background:var(--discount-surface); }
+.discount-guide .discount-eyebrow { display:block; color:var(--discount-accent); font-size:.8rem; font-weight:800; letter-spacing:.1em; }
+.discount-guide .discount-input-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:20px 0; }
+.discount-guide .discount-input-grid label { display:flex; flex-direction:column; gap:8px; color:var(--discount-ink); font-weight:700; }
+.discount-guide .discount-input-grid input { width:100%; box-sizing:border-box; min-width:0; padding:12px; border:1px solid var(--discount-border); border-radius:8px; background:transparent; color:var(--discount-ink); font:inherit; font-size:1.1rem; }
+.discount-guide .discount-result-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:25px; padding-top:24px; border-top:1px solid var(--discount-border); }
+.discount-guide .discount-result-grid span { display:block; margin-bottom:6px; color:var(--discount-ink); font-size:.9rem; }
+.discount-guide .discount-result-grid strong { color:var(--discount-accent); font-size:clamp(1.25rem,2.5vw,1.8rem); overflow-wrap:anywhere; }
+.discount-guide .discount-small { font-size:.875rem !important; line-height:1.6 !important; }
+.discount-guide #discount-calc-error { color:var(--discount-accent); font-weight:700; }
+.discount-guide .offer-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:26px 0; }
+.discount-guide .offer-grid article { padding:20px; border:1px solid var(--discount-border); border-radius:14px; background:var(--discount-surface); }
+.discount-guide .offer-grid span { color:var(--discount-accent); font-weight:800; }
+.discount-guide .offer-grid h3 { margin:10px 0 8px; color:var(--discount-ink); }
+.discount-guide .offer-grid p { margin:0; color:var(--discount-ink); font-size:.95rem; }
+.discount-guide .lead-faq details { padding:18px 0; border-bottom:1px solid var(--discount-border); }
+.discount-guide .lead-faq summary { color:var(--discount-ink); font-size:1.05rem; font-weight:700; cursor:pointer; }
+.discount-guide .discount-sources { padding:24px; margin-top:32px; border:1px solid var(--discount-border); border-radius:16px; background:var(--discount-surface); font-size:.95rem; }
+.discount-guide .blog-post-content .discount-sources :is(h2,p,li) { color:var(--discount-ink); }
+.discount-guide .discount-sources li { margin-bottom:14px; overflow-wrap:anywhere; }
+.discount-guide :is(input,button,a,summary,[tabindex]):focus-visible { outline:3px solid var(--discount-accent); outline-offset:4px; }
+@media(max-width:600px) { .discount-guide .discount-toc,.discount-guide .margin-visual,.discount-guide .discount-input-grid,.discount-guide .discount-result-grid,.discount-guide .offer-grid { grid-template-columns:1fr; } .discount-guide .discount-calculator,.discount-guide .discount-message { padding:18px; } .discount-guide .discount-table-wrap table { min-width:620px; table-layout:auto; } }
