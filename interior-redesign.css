@@ -6404,6 +6404,27 @@ html.theme-dark .redesign-interior.page-blog-article .blog-post-content table { 
   background: var(--ix-lime) !important;
 }
 
+/* One category pill system for every journal card, including content-nested cards. */
+.redesign-interior.page-blog .blog-card .blog-category {
+  display: inline-flex !important;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 11px !important;
+  color: var(--ix-on-lime) !important;
+  -webkit-text-fill-color: var(--ix-on-lime) !important;
+  background: var(--ix-lime) !important;
+  border: 1px solid color-mix(in srgb,var(--ix-green) 14%,transparent) !important;
+  border-radius: 99px !important;
+  font: 800 8px/1 var(--ix-sans) !important;
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+
+.redesign-interior.page-blog .blog-card .blog-content > .blog-category {
+  margin: 0 0 14px !important;
+}
+
 .redesign-interior.page-blog .blog-card .blog-content,
 .redesign-interior.page-blog .blog-card:nth-child(-n+3) .blog-content {
   padding-top: 14px !important;
