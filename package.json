@@ -5,10 +5,12 @@
   "scripts": {
     "build:games": "esbuild games/tic-online.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/tic-online.bundle.js && esbuild games/multiplayer.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/multiplayer.bundle.js",
     "dev": "npm run build:games && next dev",
-    "build": "npm run build:games && node scripts/generate-static-site.mjs && next build",
+    "build": "npm run build:games && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
     "start": "next start",
     "lint": "next lint",
-    "sync:footer": "node scripts/sync-footer.js"
+    "sync:footer": "node scripts/sync-footer.js",
+    "seo:sitemap": "node scripts/generate-sitemap.mjs",
+    "seo:audit": "node scripts/audit-seo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
