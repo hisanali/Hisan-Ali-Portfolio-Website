@@ -2519,6 +2519,10 @@ body.redesign-interior.page-tools { overflow-x: clip; }
   max-width: 520px;
   padding: 32px 0 !important;
 }
+.redesign-interior.page-blog .blog-card .blog-content > .blog-category {
+  position: static;
+  margin: 0 0 14px;
+}
 .redesign-interior.page-blog .blog-card > .blog-category,
 .redesign-interior.page-blog .blog-card:nth-child(-n+3) > .blog-category {
   position: absolute;
