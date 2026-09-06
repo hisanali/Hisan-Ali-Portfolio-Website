@@ -1,7 +1,7 @@
 import { applySharedShell } from './site-shell.ts';
 
 const interiorFonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">';
-const interiorStyles = '<link rel="stylesheet" href="/interior-redesign.css?v=81">';
+const interiorStyles = '<link rel="stylesheet" href="/interior-redesign.css?v=86">';
 const experienceStyles = '<link rel="stylesheet" href="/experience-upgrades.css?v=1">';
 const qualityRepairStyles = '<link rel="stylesheet" href="/quality-repairs.css?v=1">';
 const fieldGuideStyles = '<link rel="stylesheet" href="/blog/field-guide.css?v=2">';
@@ -20,7 +20,7 @@ export function prepareInteriorPage(html: string, pathname: string) {
 
   const prepared = html
     .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260903-shell3')
-    .replace(/services-redesign\.css\?v=[^"']+/g, 'services-redesign.css?v=2')
+    .replace(/services-redesign\.css\?v=[^"']+/g, 'services-redesign.css?v=4')
     .replace(/<link\b[^>]*href=["']\/interior-redesign\.css[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/experience-upgrades\.css[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/quality-repairs\.css[^>]*>\s*/gi, '')

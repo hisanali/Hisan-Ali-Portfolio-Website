@@ -67,6 +67,10 @@
   const themeButton = document.querySelector('[data-ua-theme-toggle]');
   const readingButton = document.querySelector('[data-ua-reading-toggle]');
   const readingStatus = document.querySelector('[data-ua-reading-status]');
+  document.querySelectorAll('.back-to-top').forEach((button) => {
+    button.setAttribute('aria-label', 'Back to top');
+    button.removeAttribute('title');
+  });
   if (!header || !menuButton || !mobileNav || !themeButton) return;
 
   const syncBrowserColor = () => {

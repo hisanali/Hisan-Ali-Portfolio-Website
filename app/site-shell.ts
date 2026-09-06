@@ -1,4 +1,4 @@
-export const sharedThemeInit = `<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const mobileDefault=matchMedia('(max-width: 980px)').matches;const dark=savedTheme?savedTheme==='dark':mobileDefault;const path=location.pathname.replace(/\\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){const dark=matchMedia('(max-width: 980px)').matches;root.classList.toggle('theme-dark',dark);root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme=dark?'dark':'light'}})();</script>`;
+export const sharedThemeInit = `<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script>`;
 
 const links = [
   ['/work/', 'Work'],
@@ -128,8 +128,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260905-4"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260903-4"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260906-7"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260906-4"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

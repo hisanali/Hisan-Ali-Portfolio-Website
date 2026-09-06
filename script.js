@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const getDefaultTheme = () => window.matchMedia('(max-width: 980px)').matches ? 'dark' : 'light';
+    const getDefaultTheme = () => 'dark';
 
     const getStoredTheme = () => {
         try {
