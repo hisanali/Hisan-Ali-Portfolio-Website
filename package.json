@@ -5,12 +5,14 @@
   "scripts": {
     "build:games": "esbuild games/tic-online.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/tic-online.bundle.js && esbuild games/multiplayer.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/multiplayer.bundle.js",
     "dev": "npm run build:games && next dev",
-    "build": "npm run build:games && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
+    "build": "npm run build:games && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
     "start": "next start",
     "lint": "next lint",
     "sync:footer": "node scripts/sync-footer.js",
     "seo:sitemap": "node scripts/generate-sitemap.mjs",
-    "seo:audit": "node scripts/audit-seo.mjs"
+    "seo:audit": "node scripts/audit-seo.mjs",
+    "build:cube": "esbuild tools/rubiks-cube/studio.js --bundle --minify --format=iife --target=es2020 --outfile=tools/rubiks-cube/studio.bundle.js && esbuild tools/rubiks-cube/solver.worker.js --bundle --minify --format=iife --target=es2020 --outfile=tools/rubiks-cube/solver.bundle.js",
+    "test:cube": "node scripts/test-cube.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
@@ -19,7 +21,8 @@
     "marked": "^5.1.1",
     "next": "^14.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "three": "0.180.0"
   },
   "devDependencies": {
     "@types/marked": "^5.0.2",
