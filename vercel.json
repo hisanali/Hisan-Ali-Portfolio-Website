@@ -3,6 +3,15 @@
   "trailingSlash": true,
   "headers": [
     {
+      "source": "/tools/rubiks-cube/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    },
+    {
       "source": "/tools/rubiks-cube/:path*",
       "headers": [
         {
