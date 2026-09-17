@@ -38,3 +38,6 @@
 
 /* Fixed centres retain the same saturated colour as editable stickers. */
 .sticker:disabled,.review-grid button:disabled{opacity:1}.review-grid button{color:#fff;text-shadow:0 1px 3px #000b}.review-grid button span,.review-grid button small{background:#101910b8;border-radius:4px;padding:2px 4px}
+
+/* Four-position playback speed switch. */
+.speed{display:block;font-size:10px;color:var(--muted);margin:20px 0}.speed>span{display:block;margin-bottom:9px;letter-spacing:.02em}.speed-switch{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;border:1px solid #414b3d;border-radius:10px;background:#131916}.speed-switch button{min-width:0;padding:8px 2px 7px;border-radius:7px;color:#8e998e;transition:background .18s,color .18s,box-shadow .18s,transform .18s}.speed-switch button:hover{background:#ffffff08}.speed-switch button:active{transform:scale(.96)}.speed-switch button[aria-pressed=true]{background:var(--lime);color:#20271b;box-shadow:0 4px 15px #0a0d0a66}.speed-switch b,.speed-switch small{display:block}.speed-switch b{font-size:12px;font-weight:650}.speed-switch small{font-size:7px;margin-top:2px;letter-spacing:.04em}
