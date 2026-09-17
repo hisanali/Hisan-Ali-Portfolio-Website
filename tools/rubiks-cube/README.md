@@ -20,7 +20,7 @@ The checked-in bundles run without third-party CDN JavaScript. Solver calculatio
 - Worker-based two-phase solver; sequence verified before being shown.
 - Play/pause, forward/back, 0.5×/1×/2×/4× speed switch, restart, next-face highlight and direction guide.
 - Live rear-camera scanning with six-centre calibration, perceptual colour matching, uncertain-sticker indicators and six-frame stability checks. Align one face with the guide, capture and review before applying. Photo upload with zoom/rotation remains available.
-- Desktop “Scan from phone” QR pairing uses a random link and the existing Supabase broadcast service. Reviewed colour letters sync with receipt acknowledgements and retries; images stay on the phone. Links expire after 20 minutes. HTTPS and camera permission are required for live video.
+- Desktop “Scan from phone” QR pairing uses a random link and the existing Supabase broadcast service. Its QR entry is desktop-only; the phone link opens a dedicated full-screen companion with no portfolio, 3D cube, photo controls, manual face selector or review grid. After one Start scanning tap, stable faces are captured and classified automatically in centre-colour order, then all six colour strings are sent with receipt acknowledgements and retries. Only a face obscured by glare is requested again. Images stay on the phone. Links expire after 20 minutes. HTTPS and camera permission are required for live video.
 - `npm run test:cube-scan` checks colour classification, ambiguity, calibration, sampling and stability. Synthetic images and a real relay transfer were tested; physical phone-camera accuracy remains unverified. Recalibrate when lighting changes.
 - Reduced-motion support and written instructions if WebGL is unavailable.
 

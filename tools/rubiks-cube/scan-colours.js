@@ -30,6 +30,11 @@ export function samplePatch(ctx,x,y,size=28){
 }
 export function sampleFace(ctx){return Array.from({length:9},(_,i)=>samplePatch(ctx,48+(i%3+.5)*128,48+(Math.floor(i/3)+.5)*128));}
 export function validFace(face,colours){return SCAN_FACES.includes(face)&&typeof colours==='string'&&/^[URFDLB]{9}$/.test(colours)&&colours[4]===face;}
+export function classifyCapturedFaces(frames,references){
+ const faces={};
+ for(const face of SCAN_FACES){const samples=frames[face],predictions=samples?.map(sample=>{const match=classifySample(sample.rgb,references);return {...match,confident:sample.good&&match.confident};}),colours=predictions?.map(item=>item.face).join('');if(!predictions||predictions.some(item=>!item.confident)||!validFace(face,colours))return {faces:null,retryFace:face};faces[face]=colours;}
+ return {faces,retryFace:null};
+}
 export function stableFrames(history,face){
  if(history.length<6)return false;const recent=history.slice(-6);return recent.every(frame=>frame.every(s=>s.confident)&&frame[4].face===face&&frame.map(s=>s.face).join('')===recent[0].map(s=>s.face).join(''));
 }
