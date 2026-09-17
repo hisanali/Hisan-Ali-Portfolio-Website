@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import Cube from './vendor/cube.js';
-import {FACES,COLORS,NAMES,LABELS,SOLVED,NORMALS,position,inverse,validate} from './cube-core.js';
+import {FACES,COLORS,NAMES,LABELS,SOLVED,NORMALS,position,inverse,validate,correctOrientation} from './cube-core.js';
 const $=id=>document.getElementById(id);
 const hints=Object.fromEntries(FACES.map(f=>[f,`Match the ${NAMES[f].toLowerCase()}-centred face. We check face rotations automatically when solving.`]));
 let state=SOLVED,original=SOLVED,face=2,colour='F',moves=[],step=0,playing=false,busy=false,solving=false,mode='setup',entryView='choice',worker,timeout;
@@ -70,5 +70,6 @@ $('speed').onclick=e=>{const button=e.target.closest('[data-speed]');if(!button)
 $('next').onclick=()=>{playing=false;advance(1);};$('previous').onclick=()=>{playing=false;advance(-1);};$('play').onclick=()=>{playing=!playing;renderSolution();if(playing&&!busy)advance(1);};$('restart').onclick=()=>{if(busy)return;playing=false;state=original;step=0;buildCube();renderSolution();save();status('Back at the beginning. Keep white on top and green in front.');};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){playing=false;renderSolution();}});
 $('help').onclick=()=>$('help-dialog').showModal();document.querySelectorAll('dialog .close').forEach(b=>b.onclick=()=>b.closest('dialog').close());document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
-initScanner({getFace:()=>FACES[face],canEdit:()=>mode==='setup'&&!busy&&!solving,onFace:(f,colours)=>{const i=FACES.indexOf(f);state=state.slice(0,i*9)+colours+state.slice(i*9+9);moves=[];step=0;face=i;showEntry('manual');buildCube();renderSetup();save();status(`${NAMES[f]} face updated from scanner. Review your cube before solving.`);}});
+function applyScannedCube(faces){const scanned=FACES.map(f=>faces[f]).join(''),aligned=correctOrientation(scanned,Cube);state=aligned.error?scanned:aligned.state;moves=[];step=0;face=2;showEntry('manual');buildCube();renderSetup();resetView();save();status(aligned.error?`The scan is complete, but one face could not be aligned safely. ${aligned.error}`:'Scan aligned automatically. The 3D view now uses white on top and green in front.',!!aligned.error);return aligned;}
+initScanner({getFace:()=>FACES[face],canEdit:()=>mode==='setup'&&!busy&&!solving,onFace:(f,colours)=>{const i=FACES.indexOf(f);state=state.slice(0,i*9)+colours+state.slice(i*9+9);moves=[];step=0;face=i;showEntry('manual');buildCube();renderSetup();save();status(`${NAMES[f]} face received. Aligning after all six arrive…`);},onComplete:applyScannedCube});
 init3d();renderSetup();setMode(mode);renderSolution();initEntryUI();if(state!==SOLVED)status('Your saved cube is ready whenever you are.');
