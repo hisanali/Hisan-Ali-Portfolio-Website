@@ -19,7 +19,9 @@ The checked-in bundles run without third-party CDN JavaScript. Solver calculatio
 - Validation for counts, piece combinations, corner twists, edge flips and parity.
 - Worker-based two-phase solver; sequence verified before being shown.
 - Play/pause, forward/back, speed, restart, next-face highlight and direction guide.
-- Photo assist is beta: one user-aligned face at a time, crop/zoom/rotation and local colour classification. It requires manual review. Tested using a controlled six-colour fixture; real-device camera accuracy remains unverified.
+- Live rear-camera scanning with six-centre calibration, perceptual colour matching, uncertain-sticker indicators and six-frame stability checks. Align one face with the guide, capture and review before applying. Photo upload with zoom/rotation remains available.
+- Desktop “Scan from phone” QR pairing uses a random link and the existing Supabase broadcast service. Reviewed colour letters sync with receipt acknowledgements and retries; images stay on the phone. Links expire after 20 minutes. HTTPS and camera permission are required for live video.
+- `npm run test:cube-scan` checks colour classification, ambiguity, calibration, sampling and stability. Synthetic images and a real relay transfer were tested; physical phone-camera accuracy remains unverified. Recalibrate when lighting changes.
 - Reduced-motion support and written instructions if WebGL is unavailable.
 
 Dependencies: Three.js and cube.js, both MIT. Licences are included alongside the bundles.
