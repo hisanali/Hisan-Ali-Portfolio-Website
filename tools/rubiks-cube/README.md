@@ -16,10 +16,11 @@ The checked-in bundles run without third-party CDN JavaScript. Solver calculatio
 
 - Standard 3×3 colour scheme: white top, green front, red right.
 - Six editable faces, fixed centres, direct 3D sticker painting, orbit and zoom.
+- Staged entry flow: choose camera, manual entry or an instant demo before any detailed controls appear. The learning guide is collapsed until requested, and mobile setup keeps the current task ahead of the 3D preview.
 - Validation for counts, piece combinations, corner twists, edge flips and parity. Invalid input is checked against all 4,096 face rotations in the worker; a unique legal arrangement is corrected automatically. Ambiguous arrangements require a rescan, and sticker colours are never changed to force a solution.
 - Worker-based two-phase solver; sequence verified before being shown.
 - Play/pause, forward/back, 0.5×/1×/2×/4× speed switch, restart, next-face highlight and direction guide.
-- Live rear-camera scanning with six-centre calibration, perceptual colour matching, uncertain-sticker indicators and six-frame stability checks. Align one face with the guide, capture and review before applying. Photo upload with zoom/rotation remains available.
+- On phones, live rear-camera scanning uses one Start scanning tap, automatic six-face capture and targeted retry only when glare or uncertainty affects a face. Desktop camera scanning retains photo upload, zoom, rotation and manual review as a fallback.
 - Desktop “Scan from phone” QR pairing uses a random link and the existing Supabase broadcast service. Its QR entry is desktop-only; the phone link opens a dedicated full-screen companion with no portfolio, 3D cube, photo controls, manual face selector or review grid. After one Start scanning tap, stable faces are captured and classified automatically in centre-colour order, then all six colour strings are sent with receipt acknowledgements and retries. Only a face obscured by glare is requested again. Images stay on the phone. Links expire after 20 minutes. HTTPS and camera permission are required for live video.
 - `npm run test:cube-scan` checks colour classification, ambiguity, calibration, sampling and stability. Synthetic images and a real relay transfer were tested; physical phone-camera accuracy remains unverified. Recalibrate when lighting changes.
 - Reduced-motion support and written instructions if WebGL is unavailable.
