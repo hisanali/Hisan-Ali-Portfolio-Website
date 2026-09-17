@@ -59,9 +59,9 @@
 .phone-scanner-page .scan-progress{margin:10px 0}
 .phone-scanner-page .scan-message{min-height:26px;margin:8px 0!important;font-size:10px!important}
 .phone-scanner-page .live-frame{border-radius:10px}
-.phone-scanner-page .calibration-dots{justify-content:center;flex-wrap:nowrap;overflow:hidden;margin:8px 0;padding:4px}
-.phone-scanner-page .calibration-dots>span{width:18px;height:18px;flex:0 0 auto;overflow:hidden;padding:4px;border-radius:50%;font-size:0}
-.phone-scanner-page .calibration-dots i{width:8px;height:8px;flex:0 0 auto}
+.phone-scanner-page .calibration-dots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0;padding:0}
+.phone-scanner-page .calibration-dots>span{width:auto;height:27px;min-width:0;justify-content:center;overflow:hidden;padding:4px 6px;border-radius:7px;font-size:8px;white-space:nowrap}
+.phone-scanner-page .calibration-dots i{width:8px;height:8px;flex:0 0 auto;border-radius:2px}
 .phone-scanner-page .calibration-dots .current{box-shadow:0 0 0 2px #d6ed994d}
 .phone-scanner-page .scan-face-choice,.phone-scanner-page .fine-print,.phone-scanner-page #photo-adjustments{display:none!important}
 .phone-scanner-page .scanner-actions{position:sticky;z-index:4;bottom:0;margin:12px -16px 0;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,#20272000,#202720 18%);flex-direction:column}

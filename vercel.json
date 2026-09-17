@@ -1,6 +1,17 @@
 {
   "cleanUrls": true,
   "trailingSlash": true,
+  "headers": [
+    {
+      "source": "/tools/rubiks-cube/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    }
+  ],
   "redirects": [
     {
       "source": "/home",
