@@ -416,3 +416,16 @@ dialog{background:#202125;border:1px solid #45464d}dialog p,dialog li{color:#c1c
 
 .entry-manual .input-modes,.entry-manual .phone-launch{display:none}
 @media(max-width:850px){.studio-header .outline{font-size:11px;padding:10px 4px}.studio-header .outline span{display:none}}
+
+/* Explicit light-surface states: never inherit dark-theme pastel text. */
+.editor{color-scheme:light}
+.editor .secondary-actions button,.editor .secondary-actions button:first-child,.editor .change-method,.editor .restart,.editor .solution-edit{color:#55515a;font-size:12px;min-height:36px}
+.editor .steps button{color:#625e66}.editor .steps button.active{color:#9d321c}
+.editor .steps b{color:#625e66}.editor .steps .active b{color:#fff}
+.editor .panel-heading p,.editor .orientation,.editor .editor-note{font-size:12px;line-height:1.6;color:#625e66}
+.editor .swatch{font-size:11px;color:#625e66}.editor .swatch.over,.editor .swatch.over[aria-pressed=true]{color:#a52b20;font-weight:700}
+.editor #status{color:#55515a;font-size:13px;line-height:1.6;padding-top:12px}
+.editor #status:empty{display:none}
+.editor #status.error{color:#a52b20;font-weight:500}
+.editor .move-list span{color:#625e66}.editor .move-list span.done{opacity:1;color:#757079}.editor .move-list span.current{color:#fff}
+.editor button:hover:not(:disabled){filter:none}.editor .secondary-actions button:hover,.editor .change-method:hover,.editor .restart:hover{color:#9d321c;text-decoration:underline;text-underline-offset:3px}
