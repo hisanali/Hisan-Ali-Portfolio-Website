@@ -379,3 +379,40 @@ dialog::backdrop{background:#050806e8;backdrop-filter:blur(14px)}
   .knowledge-heading h2{font-size:29px}
   .knowledge-trigger{padding:14px}
 }
+
+/* Focused workspace: one canvas, one control surface, one primary action. */
+:root{--bg:#141517;--line:#37383c;--ink:#f5f2ec;--muted:#acadb3;--lime:#ee9878}
+body{background:var(--bg)}body:before{display:none}
+.header-note,.intro-aside,.live,.stage-watermark,.bottom-strip{display:none}
+.studio-header .outline{margin-left:auto;border:0;background:transparent}
+.intro{min-height:0;padding:38px 0 30px}.intro h1{font-size:clamp(36px,4.4vw,60px);letter-spacing:-2.6px;line-height:1.1;margin:12px 0}.intro p{font-size:14px}.intro .eyebrow{color:#b4b4bc;letter-spacing:2px}
+.workspace{gap:0;min-height:560px;grid-template-columns:minmax(0,1.4fr) minmax(360px,.8fr);align-items:stretch}
+.viewport-panel{min-height:560px;border:0;border-radius:0;box-shadow:none;background:radial-gradient(ellipse at 50% 48%,#30333b 0,transparent 64%)}
+.viewport-panel:before{display:none}.stage-title:before{display:none}.stage-top{left:16px;top:20px;color:#b4b6c1}.stage-bottom>span,.stage-bottom button,.axis-key span{background:transparent;border:0;border-radius:0;backdrop-filter:none}.axis-key{gap:16px}
+.editor{--ink:#26272b;--muted:#62636b;--line:#d9d5ce;--lime:#a63b22;--lime-ink:#fff;--panel:#f3f0e9;color:var(--ink);background:#f3f0e9;border:0;border-radius:18px;box-shadow:none}
+.entry-choice .steps{display:none}.entry-choice #setup-panel{display:flex;align-items:center;padding:40px 32px}.entry-choice #method-chooser{width:100%}
+#method-chooser>.eyebrow{color:#77716a;letter-spacing:1.7px}#method-chooser h2{font-size:32px;margin:16px 0 12px}#method-chooser>p{font-size:14px;line-height:1.65;margin-bottom:28px}
+.method-list{gap:8px}.method-choice,.method-choice.recommended{border:0;box-shadow:none;border-radius:9px;background:transparent;grid-template-columns:28px 1fr 18px;gap:12px;padding:17px 12px;min-height:76px}
+.method-choice.recommended{background:#ad3c23;color:#fff}.method-choice.recommended:hover{background:#92321e}.method-choice:hover{transform:none;background:#e8e3da;border:0}
+.method-icon,.method-choice.recommended .method-icon{width:28px;height:28px;background:transparent;color:inherit;border-radius:0}
+.method-choice strong{font-size:14px}.method-choice small{font-size:11px;color:#62636b;max-width:none}.method-choice.recommended small{color:#ffe1d6}.method-choice>.icon-arrow-right{color:inherit}
+.demo-link{justify-content:flex-start;border-top:1px solid #d9d5ce;padding:22px 12px 0;margin:15px 0 24px;font-size:12px;color:#42434a}.demo-link .studio-icon{color:#767780}.method-privacy{justify-content:flex-start;font-size:10px!important;text-align:left;color:#6b6b70!important}
+.steps{border-bottom:1px solid var(--line)}.steps>span{background:var(--line)}.steps b{border:0;background:#e1ddd5;color:#69655e}.steps .active b{background:#ad3c23;color:white;box-shadow:none}
+.primary{background:#ad3c23;color:white;box-shadow:none}.input-modes button,.phone-launch,.input-modes .active{border:0;border-bottom:1px solid #cbc5bb;background:transparent;color:#55535a;border-radius:0}.phone-launch{color:#a63b22}
+.face-heading #face-number{background:none;color:#62636b}.face-grid{box-shadow:none}.face-switch>button,#face-tabs button{background:transparent;border:0;color:#55535a}#face-tabs button.active{background:#ad3c23;color:white}.editor-note{color:#62636b}
+.hold-guide{background:transparent;border:0;border-left:2px solid #b7afa1;border-radius:0;color:#62636b;padding:0 0 0 12px;font-size:12px}.hold-guide b{color:#28292c}.hold-guide .studio-icon{display:none}
+.move-spotlight>span{font-size:10px}.move-spotlight p{font-size:15px;line-height:1.5}.move-spotlight small{font-size:11px}.playback>button:not(.primary){border-color:#c9c3b8;color:#28292c;min-height:48px}
+.speed-switch{background:#e7e2d9;border:0;box-shadow:none}.speed-switch button{color:#656069}.speed-switch button[aria-pressed=true]{background:#fff;color:#28292c;box-shadow:0 1px 4px #0001}
+.all-moves{border-top:1px solid #d9d5ce;margin-top:18px;padding-top:15px}.all-moves summary{cursor:pointer;font-size:12px;color:#62636b}.all-moves .move-list{margin-top:12px}.move-list span{background:transparent}.move-list span.current{background:#ad3c23;color:white}
+.cube-field-guide{padding-top:56px}.knowledge-heading{padding:25px 0;border:0;border-top:1px solid #37383c;border-bottom:1px solid #37383c;border-radius:0;background:transparent}.knowledge-trigger{background:transparent;border:0;border-radius:0}.knowledge-card,.cube-pocket-guide{background:transparent;border:0;border-radius:0;box-shadow:none}.knowledge-card{border-top:1px solid #44454b}.knowledge-takeaway{background:#25272d;color:#eee;border-radius:0}.knowledge-takeaway p{color:#bbb}.knowledge-takeaway a{color:#ee9878}
+.explain-grid{gap:32px}.explain-grid article{padding:0;border:0;background:transparent;border-radius:0}.explainer{padding:48px 0}.explainer h2{font-size:34px}.knowledge-heading h2{font-size:30px}
+dialog{background:#202125;border:1px solid #45464d}dialog p,dialog li{color:#c1c1c8}dialog .close{border:0;background:#ffffff0b}#phone-banner{background:#292c34}.calibration-dots>span{background:transparent;border-color:transparent}.calibration-dots .saved{border-color:#687d65}
+@media(max-width:850px){
+ .studio{padding:0 16px}.intro{padding:26px 0 22px}.intro h1{font-size:38px;letter-spacing:-1.8px}.intro p{font-size:13px}.workspace{min-height:0;gap:0}.editor{border-radius:14px}.entry-choice #setup-panel{padding:28px 24px}.entry-choice .viewport-panel{height:300px;min-height:300px}.viewport-panel{min-height:320px}.entry-choice .stage-top,.entry-choice .axis-key{display:none}
+ #method-chooser h2{font-size:28px}#method-chooser>p{font-size:13px;margin-bottom:20px}.method-choice small{font-size:11px}.method-choice strong{font-size:14px}.method-choice{grid-template-columns:28px 1fr 18px}
+ .is-solving .viewport-panel{background:#1d1f24;border-radius:0}.is-solving .editor{border-radius:0 0 14px 14px}.is-solving .hold-guide{font-size:12px;padding:0 0 0 12px}.is-solving .intro{display:none}.is-solving .move-spotlight p{font-size:15px}
+ .knowledge-heading{padding:22px 0}.knowledge-trigger{padding-left:0}.explain-grid{gap:25px}.phone-scanner-page #scan-dialog{background:#202125}.phone-scanner-page .scanner-actions{background:linear-gradient(180deg,#20212500,#202125 18%)}
+}
+
+.entry-manual .input-modes,.entry-manual .phone-launch{display:none}
+@media(max-width:850px){.studio-header .outline{font-size:11px;padding:10px 4px}.studio-header .outline span{display:none}}
