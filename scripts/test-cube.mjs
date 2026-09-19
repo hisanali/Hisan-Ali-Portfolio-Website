@@ -32,3 +32,7 @@ assert.deepEqual(correctOrientation(SOLVED,Cube),{state:SOLVED,corrected:false})
 console.log(`PASS: ${recovered} rotated cubes recovered, ambiguous arrangements rejected, impossible cubes preserved as errors.`);
 
 const ambiguous=new Cube().move('R').asString();assert.match(correctOrientation(rotateFace(ambiguous.slice(0,9))+ambiguous.slice(9),Cube).error,/more than one/);
+
+// A valid arrangement is not proof that arbitrary camera rotations are unique.
+assert.match(correctOrientation(ambiguous,Cube,{requireUnique:true}).error,/more than one/);
+assert.deepEqual(correctOrientation(SOLVED,Cube,{requireUnique:true}),{state:SOLVED,corrected:false});

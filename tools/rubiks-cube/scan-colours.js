@@ -60,7 +60,7 @@ export function classifyCapturedFaces(frames,references){
  const slots=SCAN_FACES.flatMap(face=>Array(8).fill(face)),referenceLabs=Object.fromEntries(SCAN_FACES.map(face=>[face,lab(references[face])]));
  const distances=cells.map(({sample})=>Object.fromEntries(SCAN_FACES.map(face=>[face,distance(lab(sample.rgb),referenceLabs[face])])));
  const assignment=assignMinimumCost(distances.map(scores=>slots.map(face=>scores[face]))),faces=Object.fromEntries(SCAN_FACES.map(face=>[face,Array(9).fill(face)])),risk=new Map(SCAN_FACES.map(face=>[face,0]));
- cells.forEach((cell,row)=>{const assigned=slots[assignment[row]],scores=distances[row],ordered=SCAN_FACES.map(face=>({face,d:scores[face]})).sort((a,b)=>a.d-b.d),forced=scores[assigned]-ordered[0].d,bad=!cell.sample.good||scores[assigned]>38||forced>8;faces[cell.face][cell.index]=assigned;if(bad)risk.set(cell.face,risk.get(cell.face)+Math.max(1,scores[assigned]/8+forced));});
+ cells.forEach((cell,row)=>{const assigned=slots[assignment[row]],scores=distances[row],ordered=SCAN_FACES.map(face=>({face,d:scores[face]})).sort((a,b)=>a.d-b.d),forced=scores[assigned]-ordered[0].d,bad=!cell.sample.good||!classifySample(cell.sample.rgb,references).confident||assigned!==ordered[0].face||scores[assigned]>38||forced>8;faces[cell.face][cell.index]=assigned;if(bad)risk.set(cell.face,risk.get(cell.face)+Math.max(1,scores[assigned]/8+forced));});
  const retry=[...risk].sort((a,b)=>b[1]-a[1]).find(([,score])=>score>0)?.[0]||null;if(retry)return {faces:null,retryFace:retry};
  const strings=Object.fromEntries(SCAN_FACES.map(face=>[face,faces[face].join('')]));return {faces:strings,retryFace:null};
 }

@@ -22,15 +22,15 @@ export function validate(state,Cube){
 // A photo can be rotated without changing the physical cube. Search all 4^6
 // face rotations, but never silently choose between different legal cubes.
 export function rotateFace(face){return [6,3,0,7,4,1,8,5,2].map(i=>face[i]).join('');}
-export function correctOrientation(state,Cube){
+export function correctOrientation(state,Cube,{requireUnique=false}={}){
  const error=validate(state,Cube);
- if(!error)return {state,corrected:false};
+ if(!error&&!requireUnique)return {state,corrected:false};
  if(typeof state!=='string'||!/^[URFDLB]{54}$/.test(state)||FACES.some((f,i)=>state.split(f).length!==10||state[i*9+4]!==f))return {error};
  const options=FACES.map((_,i)=>{let face=state.slice(i*9,i*9+9);const choices=new Set();for(let j=0;j<4;j++){choices.add(face);face=rotateFace(face);}return [...choices];});
  const matches=new Set();
  function search(i,prefix){if(matches.size>1)return;if(i===6){if(!validate(prefix,Cube))matches.add(prefix);return;}for(const face of options[i])search(i+1,prefix+face);}
  search(0,'');
- if(matches.size===1)return {state:[...matches][0],corrected:true};
+ if(matches.size===1){const aligned=[...matches][0];return {state:aligned,corrected:aligned!==state};}
  if(matches.size>1)return {error:'These scans fit more than one cube arrangement. Please rescan the faces using the guide so we can identify your cube safely.'};
  return {error:'We checked every face rotation, but some colours still do not fit a possible cube. Compare the scanned stickers with your cube, especially orange/red and yellow/white, then try again.'};
 }
