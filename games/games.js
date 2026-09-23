@@ -459,4 +459,17 @@
   let colorIndex=0,colorPoints=0,colorAnswer='';
   const showColorRound=()=>{if(colorIndex>=10){colorPrompt.textContent='DONE';colorPrompt.style.color='#dfff63';colorOptions.replaceChildren();colorRound.textContent='Challenge complete';colorScore.textContent=`${colorPoints} / 10`;colorStatus.textContent=colorPoints>=8?'Excellent focus.':'Nice effort—try another run.';return;}const ink=colorSet[Math.floor(Math.random()*colorSet.length)],word=colorSet[Math.floor(Math.random()*colorSet.length)];colorAnswer=ink[0];colorPrompt.textContent=word[0];colorPrompt.style.color=ink[1];colorRound.textContent=`Round ${colorIndex+1} / 10`;colorOptions.replaceChildren();shuffle(colorSet).forEach(([name])=>{const button=document.createElement('button');button.type='button';button.textContent=name;button.addEventListener('click',()=>{if(name===colorAnswer){colorPoints+=1;colorStatus.textContent='Correct.';}else colorStatus.textContent=`The ink was ${colorAnswer.toLowerCase()}.`;colorIndex+=1;colorScore.textContent=`${colorPoints} / 10`;setTimeout(showColorRound,300);});colorOptions.append(button);});};
   $('[data-color-start]').addEventListener('click',()=>{colorIndex=0;colorPoints=0;colorScore.textContent='0 / 10';colorStatus.textContent='Challenge started.';showColorRound();});
+
+  // Open a game straight from a link such as /games/#snake (used by the Lab page).
+  const openRequestedGame = () => {
+    const requested = location.hash.slice(1).replace(/^game-/, '');
+    const pick = picks.find((item) => item.dataset.game === requested);
+    if (!pick) return;
+    if (!picks.filter(matchesFilter).includes(pick)) filterButtons.find((button) => button.dataset.gameFilter === 'all')?.click();
+    activePage = Math.floor(picks.filter(matchesFilter).indexOf(pick) / pageSize);
+    renderGamePage();
+    pick.click();
+  };
+  window.addEventListener('hashchange', openRequestedGame);
+  openRequestedGame();
 })();

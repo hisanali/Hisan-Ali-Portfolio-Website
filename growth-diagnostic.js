@@ -138,5 +138,9 @@
   document.querySelector('[data-gd-restart]').addEventListener('click', () => {
     form.reset(); current = 0; results.hidden = true; form.hidden = false; workspace?.classList.remove('is-results'); updateStep(); form.scrollIntoView({ behavior: 'smooth' });
   });
+  // Links such as /growth-diagnostic/?goal=online%20sales (from the Lab) preselect the priority.
+  const requestedGoal = new URLSearchParams(location.search).get('goal');
+  const goalField = form.querySelector('select[name="goal"]');
+  if (requestedGoal && goalField && [...goalField.options].some((option) => option.value && option.value === requestedGoal)) goalField.value = requestedGoal;
   updateStep();
 })();
