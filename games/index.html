@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=70">
+  <link rel="stylesheet" href="/games/games.css?v=71">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"></head>
 <body class="redesign-interior page-games">
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -42,22 +42,58 @@
 
   <main>
     <section class="gc-hero">
-      <div class="gc-hero-glow" aria-hidden="true"></div>
-      <div class="games-shell gc-hero-grid">
-        <div class="gc-hero-copy">
-          <p class="gc-eyebrow"><span aria-hidden="true"></span>Game Center</p>
-          <h1>Quick games.<br><em>Real rivals.</em></h1>
-          <p class="gc-lede">Thirteen games that open instantly in your browser. Play solo against the computer, or send a friend a room code and play live. No account, no download.</p>
-          <div class="gc-hero-actions">
-            <button class="gc-btn gc-btn-primary" type="button" data-open-game="draw"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play Draw &amp; Guess</button>
-            <a class="gc-btn gc-btn-ghost" href="#game-library">Browse all 13 games</a>
-          </div>
-          <dl class="gc-hero-facts"><div><dt>13</dt><dd>games</dd></div><div><dt>7</dt><dd>play online</dd></div><div><dt>0</dt><dd>sign-ups</dd></div></dl>
+      <div class="games-shell">
+        <div class="gc-hero-top">
+          <div><p class="gc-eyebrow"><span aria-hidden="true"></span>Game Center</p><h1>Thirteen browser games. Play solo, or live with a friend.</h1></div>
+          <a class="gc-hero-browse" href="#game-library">Browse all 13 games <span aria-hidden="true">↓</span></a>
         </div>
-        <div class="gc-hero-stack">
-          <button class="gc-hero-card is-left" type="button" data-open-game="connect"><span class="gc-hero-art" data-hero-art="connect"></span><span class="gc-hero-label"><b>Four in a Row</b><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play</i></span></button>
-          <button class="gc-hero-card is-right" type="button" data-open-game="snake"><span class="gc-hero-art" data-hero-art="snake"></span><span class="gc-hero-label"><b>Snake Circuit</b><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play</i></span></button>
-          <button class="gc-hero-card is-front" type="button" data-open-game="draw"><span class="gc-hero-art" data-hero-art="draw"></span><span class="gc-hero-label"><b>Draw &amp; Guess</b><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play</i></span></button>
+        <div class="gc-spot" data-spot aria-roledescription="carousel" aria-label="Featured games">
+          <article class="gc-spot-slide is-active" data-spot-slide="draw" style="--tone:#8b7bff" aria-roledescription="slide" aria-label="Draw &amp; Guess">
+            <div class="gc-spot-art" data-hero-art="draw"></div>
+            <div class="gc-spot-copy">
+              <p class="gc-spot-tag"><span class="gc-spot-live"><i></i>Online</span>Creative · 5 rounds</p>
+              <h2>Draw &amp; Guess</h2>
+              <p class="gc-spot-desc">One player sketches a secret prompt while the other races to guess it. Roles switch every round, over five rounds.</p>
+              <div class="gc-spot-actions"><button class="gc-btn gc-btn-primary" type="button" data-open-game="draw"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play now</button><span>Solo or with a friend</span></div>
+            </div>
+          </article>
+          <article class="gc-spot-slide" data-spot-slide="snake" style="--tone:#5fc36b" aria-roledescription="slide" aria-label="Snake Circuit">
+            <div class="gc-spot-art" data-hero-art="snake"></div>
+            <div class="gc-spot-copy">
+              <p class="gc-spot-tag"><span class="gc-spot-live is-solo">Solo</span>Arcade · Endless</p>
+              <h2>Snake Circuit</h2>
+              <p class="gc-spot-desc">Steer through the circuit, collect signals and grow longer without crossing your own trail.</p>
+              <div class="gc-spot-actions"><button class="gc-btn gc-btn-primary" type="button" data-open-game="snake"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play now</button><span>Single player</span></div>
+            </div>
+          </article>
+          <article class="gc-spot-slide" data-spot-slide="connect" style="--tone:#7b6bff" aria-roledescription="slide" aria-label="Four in a Row">
+            <div class="gc-spot-art" data-hero-art="connect"></div>
+            <div class="gc-spot-copy">
+              <p class="gc-spot-tag"><span class="gc-spot-live"><i></i>Online</span>Strategy · Turn based</p>
+              <h2>Four in a Row</h2>
+              <p class="gc-spot-desc">Drop your pieces and line up four before your rival does. Play the computer or a friend.</p>
+              <div class="gc-spot-actions"><button class="gc-btn gc-btn-primary" type="button" data-open-game="connect"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play now</button><span>Solo or with a friend</span></div>
+            </div>
+          </article>
+          <article class="gc-spot-slide" data-spot-slide="word" style="--tone:#ff9a4d" aria-roledescription="slide" aria-label="Word Scramble">
+            <div class="gc-spot-art" data-hero-art="word"></div>
+            <div class="gc-spot-copy">
+              <p class="gc-spot-tag"><span class="gc-spot-live"><i></i>Online</span>Words · 10 rounds</p>
+              <h2>Word Scramble</h2>
+              <p class="gc-spot-desc">Ten scrambled words with one short clue each. Build a streak alone or race a friend.</p>
+              <div class="gc-spot-actions"><button class="gc-btn gc-btn-primary" type="button" data-open-game="word"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play now</button><span>Solo or with a friend</span></div>
+            </div>
+          </article>
+          <article class="gc-spot-slide" data-spot-slide="flight" style="--tone:#5b7cff" aria-roledescription="slide" aria-label="Signal Flight">
+            <div class="gc-spot-art" data-hero-art="flight"></div>
+            <div class="gc-spot-copy">
+              <p class="gc-spot-tag"><span class="gc-spot-live is-solo">Solo</span>Arcade · Endless</p>
+              <h2>Signal Flight</h2>
+              <p class="gc-spot-desc">Tap to lift the signal through gates that keep getting tighter. One touch ends the run.</p>
+              <div class="gc-spot-actions"><button class="gc-btn gc-btn-primary" type="button" data-open-game="flight"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5Z"/></svg>Play now</button><span>Single player</span></div>
+            </div>
+          </article>
+          <div class="gc-spot-rail" role="tablist" aria-label="Choose a featured game"><button type="button" role="tab" aria-selected="true" class="is-active" data-spot-to="draw" style="--tone:#8b7bff"><span class="gc-spot-thumb" data-hero-art="draw"></span><span class="gc-spot-name"><b>Draw &amp; Guess</b><small>Creative</small></span><i class="gc-spot-bar" aria-hidden="true"></i></button><button type="button" role="tab" aria-selected="false" class="" data-spot-to="snake" style="--tone:#5fc36b"><span class="gc-spot-thumb" data-hero-art="snake"></span><span class="gc-spot-name"><b>Snake Circuit</b><small>Arcade</small></span><i class="gc-spot-bar" aria-hidden="true"></i></button><button type="button" role="tab" aria-selected="false" class="" data-spot-to="connect" style="--tone:#7b6bff"><span class="gc-spot-thumb" data-hero-art="connect"></span><span class="gc-spot-name"><b>Four in a Row</b><small>Strategy</small></span><i class="gc-spot-bar" aria-hidden="true"></i></button><button type="button" role="tab" aria-selected="false" class="" data-spot-to="word" style="--tone:#ff9a4d"><span class="gc-spot-thumb" data-hero-art="word"></span><span class="gc-spot-name"><b>Word Scramble</b><small>Words</small></span><i class="gc-spot-bar" aria-hidden="true"></i></button><button type="button" role="tab" aria-selected="false" class="" data-spot-to="flight" style="--tone:#5b7cff"><span class="gc-spot-thumb" data-hero-art="flight"></span><span class="gc-spot-name"><b>Signal Flight</b><small>Arcade</small></span><i class="gc-spot-bar" aria-hidden="true"></i></button></div>
         </div>
       </div>
     </section>
@@ -449,6 +485,6 @@
   <script src="/games/games.js?v=22"></script>
   <script src="/games/tic-online.bundle.js?v=3"></script>
   <script src="/games/multiplayer.bundle.js?v=10"></script>
-  <script src="/games/launcher.js?v=1"></script>
+  <script src="/games/launcher.js?v=2"></script>
 <script src="/interior-redesign.js?v=34"></script><script src="/site-shell.js?v=20260906-4"></script></body>
 </html>

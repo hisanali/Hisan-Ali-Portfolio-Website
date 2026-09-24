@@ -84,6 +84,40 @@
     if (art) slot.append(art.cloneNode(true));
   });
 
+  // Featured spotlight: each tab's progress bar is a CSS animation; when it ends, advance.
+  const spot = $('[data-spot]');
+  if (spot) {
+    const slides = $$('[data-spot-slide]', spot);
+    const tabs = $$('[data-spot-to]', spot);
+    const show = (key) => {
+      slides.forEach((slide) => {
+        const on = slide.dataset.spotSlide === key;
+        slide.classList.toggle('is-active', on);
+        slide.inert = !on;
+        slide.setAttribute('aria-hidden', String(!on));
+      });
+      tabs.forEach((tab) => {
+        const on = tab.dataset.spotTo === key;
+        tab.classList.toggle('is-active', on);
+        tab.setAttribute('aria-selected', String(on));
+      });
+    };
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => show(tab.dataset.spotTo));
+      tab.querySelector('.gc-spot-bar')?.addEventListener('animationend', () => {
+        if (tab.classList.contains('is-active')) show(tabs[(index + 1) % tabs.length].dataset.spotTo);
+      });
+    });
+    spot.addEventListener('keydown', (event) => {
+      if (!event.target.matches('[data-spot-to]') || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      const index = tabs.indexOf(event.target);
+      const next = tabs[(index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+      show(next.dataset.spotTo);
+      next.focus();
+    });
+    if (tabs[0]) show(tabs[0].dataset.spotTo);
+  }
+
   // Search and filters.
   const search = $('[data-game-search]');
   const empty = $('[data-game-empty]');
