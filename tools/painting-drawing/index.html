@@ -2793,6 +2793,13 @@
             color: inherit;
         }
         #app .brand-copy h1 { color: var(--text) !important; }
+
+        .stage, .stage * {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .stage .text-entry, .stage .text-entry * { -webkit-user-select: text; user-select: text; }
     </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=1"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"></head>
 <body class="redesign-interior page-tools page-tool-detail">
@@ -3074,7 +3081,7 @@
             </div>
             <div class="settings-row">
                 <div><strong>Tip double-tap fallback</strong><small>Tap the canvas twice to toggle brush and eraser</small></div>
-                <label class="switch"><input type="checkbox" id="pencilDoubleTap" checked><span></span></label>
+                <label class="switch"><input type="checkbox" id="pencilDoubleTap"><span></span></label>
             </div>
             <div class="panel-section">
                 <div class="panel-section-title">Light-pressure boost <span id="pressureBoostValue">88%</span></div>
@@ -3547,7 +3554,7 @@
             eraserUsesBrush: false,
             pendingImport: null,
             penSeenAt: 0,
-            pencilDoubleTap: true,
+            pencilDoubleTap: false,
             previousPaintTool: "brush",
             pendingTap: null,
             squeezeActive: false,
@@ -7337,6 +7344,7 @@
         }
 
         var cursorPreviewKey = "";
+        var cursorPreviewFrame = 0;
 
         function updateCursorSize(point) {
             var brush = activeBrush();
@@ -7364,35 +7372,42 @@
             els.brushCursor.style.setProperty("--cursor-color", cursorColor);
             els.brushCursor.classList.toggle("stamp-preview", stampPreview);
 
+            // The nib preview is drawn upright; tilt only reshapes the outline above via CSS. Rendering is
+            // bucketed and deferred to one frame, so a hovering Pencil (constant tilt/roll updates) never
+            // floods the main thread and delays the next touch-down.
             var ratio = Math.min(2, window.devicePixelRatio || 1);
-            var twist = point && Number.isFinite(point.twist) ? point.twist : 0;
-            // Re-render the nib preview only when something that changes its look has changed.
-            var key = [state.tool, brush.id, Math.round(width * ratio), Math.round(height * ratio), state.color, state.colorCustomized, Math.round(tilt * 8), Math.round(angle / 12), Math.round(twist / 15), state.params.pressure].join("|");
+            var previewWidth = Math.max(2, Math.ceil(Math.round(width / 4) * 4 * ratio));
+            var previewHeight = Math.max(2, Math.ceil(Math.round(height / 4) * 4 * ratio));
+            var key = [state.tool, brush.id, previewWidth, previewHeight, state.color, state.colorCustomized, state.params.pressure].join("|");
             if (key === cursorPreviewKey) return;
             cursorPreviewKey = key;
-            var canvas = els.brushCursorPreview;
-            canvas.width = Math.max(2, Math.ceil(width * ratio));
-            canvas.height = Math.max(2, Math.ceil(height * ratio));
-            var ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (state.tool === "eyedropper") {
-                ctx.fillStyle = state.color;
-                ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, Math.max(2, Math.min(canvas.width, canvas.height) * .34), 0, Math.PI * 2);
-                ctx.fill();
-                return;
-            }
-            if (!brushTip) return;
-            var tap = Object.assign({ pressure: 1, tiltX: 0, tiltY: 0, twist: 0, altitudeAngle: null, azimuthAngle: null }, point || {}, { x: canvas.width / 2, y: canvas.height / 2 });
-            ctx.drawImage(renderPaintSample({
-                brush: brush,
-                params: Object.assign({}, state.params, { size: Math.min(display, width * .78) * ratio, opacity: 100, flow: 100 }),
-                color: state.color,
-                colorCustomized: state.colorCustomized,
-                width: canvas.width,
-                height: canvas.height,
-                tap: tap
-            }), 0, 0);
+            if (cursorPreviewFrame) cancelAnimationFrame(cursorPreviewFrame);
+            cursorPreviewFrame = requestAnimationFrame(function () {
+                cursorPreviewFrame = 0;
+                if (state.pointer) return;
+                var canvas = els.brushCursorPreview;
+                canvas.width = previewWidth;
+                canvas.height = previewHeight;
+                var ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (state.tool === "eyedropper") {
+                    ctx.fillStyle = state.color;
+                    ctx.beginPath();
+                    ctx.arc(canvas.width / 2, canvas.height / 2, Math.max(2, Math.min(canvas.width, canvas.height) * .34), 0, Math.PI * 2);
+                    ctx.fill();
+                    return;
+                }
+                if (!brushTip) return;
+                ctx.drawImage(renderPaintSample({
+                    brush: brush,
+                    params: Object.assign({}, state.params, { size: Math.min(display, width * .78) * ratio, opacity: 100, flow: 100 }),
+                    color: state.color,
+                    colorCustomized: state.colorCustomized,
+                    width: canvas.width,
+                    height: canvas.height,
+                    tap: { x: canvas.width / 2, y: canvas.height / 2, pressure: 1, tiltX: 0, tiltY: 0, twist: 0, altitudeAngle: null, azimuthAngle: null }
+                }), 0, 0);
+            });
         }
 
         function enablePencilRange(input) {
@@ -7607,6 +7622,8 @@
             state.penCapabilities.altitude = state.penCapabilities.altitude || (pose.altitudeAngle !== null && pose.altitudeAngle < Math.PI / 2 - .002);
             state.penCapabilities.azimuth = state.penCapabilities.azimuth || (pose.azimuthAngle !== null && Math.abs(pose.azimuthAngle) > .002);
             state.penCapabilities.twist = state.penCapabilities.twist || Math.abs(event.twist || 0) > .1;
+            // Only touch the readout DOM while it is visible; hover fires constantly.
+            if (els.settingsPanel.hidden) return;
             $("#pencilStatus").textContent = hover ? "Pencil hover" : "Pencil drawing";
             $("#pressureReadout").textContent = Math.round((event.pressure || 0) * 100) + "%";
             var tilt = Math.round(tiltAmount(pose) * 90);
@@ -7646,8 +7663,9 @@
             var artboardId = eventArtboardId(event);
             var point = pointerPoint(event, artboardId);
             if (!pointInside(point) && state.tool !== "hand") return;
-            if (state.pointer && state.pointer.id !== event.pointerId) {
-                // The Pencil landing mid-stroke means the finger was a resting palm: drop its mark.
+            if (state.pointer) {
+                // A new contact always starts cleanly: keep the previous stroke (Pencil reuses its pointer id,
+                // so a missed lift must not swallow the next letter), but drop a resting palm's mark.
                 var palm = state.pointer.pointerType === "touch" && event.pointerType === "pen";
                 finishPointer(null, true, !palm);
             }
@@ -7659,7 +7677,7 @@
             var doubleTapCandidate = null;
             if (state.pendingTap) {
                 var pending = state.pendingTap;
-                var nearby = artboardId === pending.artboardId && performance.now() - pending.time < 340 && Math.hypot(point.x - pending.point.x, point.y - pending.point.y) < 56;
+                var nearby = artboardId === pending.artboardId && performance.now() - pending.time < 300 && Math.hypot(point.x - pending.point.x, point.y - pending.point.y) < 18;
                 if (paintTool && event.pointerType === "pen" && nearby) doubleTapCandidate = pending;
                 else materializePendingTap();
             }
@@ -7820,11 +7838,35 @@
                 state.pointer.moved = state.pointer.moved || Math.hypot(raw.x - state.pointer.start.x, raw.y - state.pointer.start.y) > 1;
                 if (paint) paintStrokeInput(paint, raw);
             });
-            if (paint) schedulePaintFrame(paint);
+            if (paint) {
+                schedulePaintFrame(paint);
+                armQuickShape(state.pointer, event);
+            }
             if (["select", "shape", "transform"].includes(state.tool)) renderOverlay();
         }
 
+        // QuickShape (as in Procreate): hold still at the end of a stroke and it snaps to a straight line,
+        // which you can keep adjusting until you lift.
+        function armQuickShape(pointer, event) {
+            if (!pointer || pointer.straightLine || !pointer.moved) return;
+            var anchor = pointer.holdAnchor;
+            if (anchor && Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y) < 5) return;
+            pointer.holdAnchor = { x: event.clientX, y: event.clientY };
+            clearTimeout(pointer.holdTimer);
+            pointer.holdTimer = setTimeout(function () {
+                if (state.pointer !== pointer || !pointer.paint || pointer.paint.profile.kind === "smudge") return;
+                var start = pointer.start;
+                var end = pointer.current;
+                var screenLength = Math.hypot(end.sx - start.sx, end.sy - start.sy);
+                if (!(screenLength > 40)) return;
+                pointer.straightLine = true;
+                paintStraightLine(pointer.paint, start, end);
+                showToast("Line snapped · keep holding to adjust");
+            }, 600);
+        }
+
         function finishPaintPointer(pointer, stroke, shouldFinish, finalPoint) {
+            clearTimeout(pointer.holdTimer);
             if (!shouldFinish) {
                 cancelPaintStroke(stroke);
                 return;
@@ -8710,6 +8752,14 @@
                 });
             });
 
+            // iPadOS runs its own gesture recognisers (double-tap zoom, selection, Scribble) on Pencil and finger
+            // touches unless the touch events are cancelled. Those recognisers hold back the next pointerdown,
+            // which made quick successive Pencil strokes vanish. Pointer events still fire normally.
+            ["touchstart", "touchmove", "touchend"].forEach(function (type) {
+                els.stage.addEventListener(type, function (event) {
+                    if (event.cancelable && !event.target.closest(".pencil-palette, .text-entry, .reference-board-controls")) event.preventDefault();
+                }, { passive: false });
+            });
             els.stage.addEventListener("pointerdown", startPointer, { passive: false });
             els.stage.addEventListener("pointermove", movePointer, { passive: false });
             els.stage.addEventListener("pointerover", function (event) {
