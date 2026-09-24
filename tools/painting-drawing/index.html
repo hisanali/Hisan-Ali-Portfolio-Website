@@ -2784,6 +2784,15 @@
         .context-tool .ui-icon { width: 18px; height: 18px; }
         .more-tool > .ui-icon { width: 24px; height: 24px; color: #ffb59e; }
         .ui-icon circle[r="1"], .ui-icon circle[r="1.2"] { fill: currentColor; }
+
+        /* The studio is always a dark workspace: don't inherit the site's light-theme ink. */
+        #app, .floating-panel, .color-popover, .pencil-palette, .tool-hover-label, .toast, dialog, .export-menu {
+            color: var(--text) !important;
+        }
+        #app :is(h1, h2, h3, h4, strong, label, output), .floating-panel :is(h3, h4, strong, label), dialog :is(strong, label) {
+            color: inherit;
+        }
+        #app .brand-copy h1 { color: var(--text) !important; }
     </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=1"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"></head>
 <body class="redesign-interior page-tools page-tool-detail">
