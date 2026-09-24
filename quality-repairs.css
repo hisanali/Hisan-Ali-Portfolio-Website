@@ -164,3 +164,6 @@ body.page-games .game-pick-footer i,.game-pick-footer i{display:inline-block;wid
     margin: 0 !important;
   }
 }
+
+/* Article column: no side borders or edge shadows in any theme (legacy blog.css drew a 1px frame in dark mode). */
+html body.redesign-interior.page-blog-article .blog-post-content { border: 0 !important; box-shadow: none !important; }
