@@ -872,3 +872,85 @@ html.theme-dark .gc-how { background: #0a1611; }
   .gc-spot-bar::after { animation-name: none !important; }
   .game-pick:hover { transform: none; }
 }
+
+/* Game screen: header with mode choice, status bar, stage, then rules */
+.game-stage .game-panel { --tone: #dfff63; display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto auto auto minmax(0,1fr) auto; grid-template-areas: "label mode" "title mode" "score action" "stage stage" "desc desc"; column-gap: 24px; padding-top: 28px; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 9%, #0e241b), #0c1f17 40%); }
+.game-stage .game-panel[hidden] { display: none; }
+.game-stage .game-panel-info { display: contents; }
+.game-stage .game-panel-info > span { grid-area: label; align-self: end; padding: 0 32px; color: color-mix(in srgb, var(--tone) 70%, #fff); font-size: 11px; letter-spacing: .14em; }
+.game-stage .game-panel-info h3 { grid-area: title; align-self: start; margin: 8px 0 0; padding: 0 32px; font-size: clamp(34px, 3.4vw, 48px); line-height: 1; }
+.game-stage .game-panel-info > p { grid-area: desc; max-width: 80ch; margin: 0; padding: 18px 32px 28px; color: rgba(255,255,255,.62); font-size: 13.5px; line-height: 1.65; }
+.game-stage .game-panel-info > p::before { content: "How to play"; display: block; margin-bottom: 6px; color: rgba(255,255,255,.4); font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.game-stage .game-panel.is-multi-online .game-panel-info > p::before { content: "Online match"; }
+
+.game-stage .game-score-line { grid-area: score; justify-self: start; align-self: center; display: inline-flex; align-items: baseline; gap: 12px; margin: 24px 0 16px 32px; padding: 11px 16px; border: 1px solid rgba(255,255,255,.1); border-top: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(0,0,0,.22); }
+.game-stage .game-score-line span { color: rgba(255,255,255,.5); font-size: 10.5px; letter-spacing: .12em; }
+.game-stage .game-score-line strong { color: var(--gc-lime); font: 800 18px/1.1 var(--gc-sans); font-variant-numeric: tabular-nums; text-shadow: none; }
+.game-stage .game-panel-info > .game-small-button { grid-area: action; justify-self: end; align-self: center; min-height: 46px; margin: 24px 32px 16px 0; padding: 0 24px; border-radius: 99px; font-size: 13px; font-weight: 800; }
+
+.game-stage :is(.tic-mode-switch, .multi-mode) { grid-area: mode; position: relative; align-self: end; justify-self: end; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: min(400px, 100%); margin: 0 32px 0 0; padding: 5px; border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(0,0,0,.3); }
+.game-stage :is(.tic-mode-switch, .multi-mode)::before { content: "Choose how to play"; position: absolute; top: -24px; left: 4px; color: rgba(255,255,255,.55); font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.game-stage :is(.tic-mode-switch, .multi-mode) button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 50px; padding: 0 14px; color: rgba(255,255,255,.78); border: 1px solid transparent; border-radius: 14px; background: transparent; cursor: pointer; font-size: 13.5px; font-weight: 800; letter-spacing: 0; text-transform: none; transition: background .2s, color .2s, border-color .2s; }
+.game-stage :is(.tic-mode-switch, .multi-mode) button::before { content: ""; flex: 0 0 18px; width: 18px; height: 18px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27/%3E%3Cpath%20d%3D%27M4%2021c0-4%203.6-6.5%208-6.5s8%202.5%208%206.5%27/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27/%3E%3Cpath%20d%3D%27M4%2021c0-4%203.6-6.5%208-6.5s8%202.5%208%206.5%27/%3E%3C/svg%3E") center / contain no-repeat; }
+.game-stage :is(.tic-mode-switch, .multi-mode) button:is([data-tic-mode="solo"], [data-game-panel="dots"] *)::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%275%27%20y%3D%275%27%20width%3D%2714%27%20height%3D%2714%27%20rx%3D%273%27/%3E%3Cpath%20d%3D%27M9%201v4M15%201v4M9%2019v4M15%2019v4M1%209h4M1%2015h4M19%209h4M19%2015h4%27/%3E%3Crect%20x%3D%279%27%20y%3D%279%27%20width%3D%276%27%20height%3D%276%27%20rx%3D%271%27/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%275%27%20y%3D%275%27%20width%3D%2714%27%20height%3D%2714%27%20rx%3D%273%27/%3E%3Cpath%20d%3D%27M9%201v4M15%201v4M9%2019v4M15%2019v4M1%209h4M1%2015h4M19%209h4M19%2015h4%27/%3E%3Crect%20x%3D%279%27%20y%3D%279%27%20width%3D%276%27%20height%3D%276%27%20rx%3D%271%27/%3E%3C/svg%3E"); }
+.game-stage :is(.tic-mode-switch, .multi-mode) button:is([data-tic-mode="online"], [data-multi-mode="online"])::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278%27%20r%3D%273.5%27/%3E%3Cpath%20d%3D%27M2%2020.5c0-3.6%202.9-5.8%206.5-5.8s6.5%202.2%206.5%205.8%27/%3E%3Ccircle%20cx%3D%2717%27%20cy%3D%277%27%20r%3D%273%27/%3E%3Cpath%20d%3D%27M16.5%2013.2c3.3%200%205.5%202%205.5%205.3%27/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278%27%20r%3D%273.5%27/%3E%3Cpath%20d%3D%27M2%2020.5c0-3.6%202.9-5.8%206.5-5.8s6.5%202.2%206.5%205.8%27/%3E%3Ccircle%20cx%3D%2717%27%20cy%3D%277%27%20r%3D%273%27/%3E%3Cpath%20d%3D%27M16.5%2013.2c3.3%200%205.5%202%205.5%205.3%27/%3E%3C/svg%3E"); }
+.game-stage [data-game-panel="draw"] .multi-mode button[data-multi-mode="solo"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27/%3E%3Cpath%20d%3D%27M12%2011v6M12%207.6v.4%27/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27/%3E%3Cpath%20d%3D%27M12%2011v6M12%207.6v.4%27/%3E%3C/svg%3E"); }
+.game-stage :is([data-tic-mode="online"], [data-multi-mode="online"]):not(.is-active) { color: #c4ffcb; border-color: rgba(125,255,142,.35); background: rgba(125,255,142,.09); }
+.game-stage :is([data-tic-mode="online"], [data-multi-mode="online"]):not(.is-active)::after { content: "Live"; padding: 3px 7px; color: #10231b; border-radius: 99px; background: #7dff8e; font-size: 9.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.game-stage .multi-mode button span { display: none; }
+.game-stage :is(.tic-mode-switch, .multi-mode) button:hover:not(.is-active) { color: #fff; background: rgba(255,255,255,.08); }
+.game-stage :is(.tic-mode-switch, .multi-mode) button.is-active { color: #10231b; border-color: transparent; background: var(--gc-lime); box-shadow: 0 10px 24px -10px rgba(223,255,99,.6); }
+.game-stage :is(.tic-mode-switch, .multi-mode) button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.game-stage .game-panel.is-multi-online .multi-mode, .game-stage .game-panel[data-game-panel="dots"] .multi-mode { margin-top: 0; }
+
+.game-stage .game-panel > :not(.game-panel-info) { grid-area: stage; position: relative; min-width: 0; min-height: 440px; margin: 0 20px; padding: 32px 28px; border: 1px solid rgba(255,255,255,.07); border-radius: 22px; background: radial-gradient(70% 65% at 50% 0%, color-mix(in srgb, var(--tone) 20%, transparent), transparent 72%), #081912; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.game-stage .game-panel > .memory-board { padding-inline: max(28px, calc((100% - 580px) / 2)); }
+.game-stage .game-status { align-self: center; justify-self: center; min-height: 0; margin: 18px auto 0; padding: 8px 14px; color: rgba(255,255,255,.75); border-radius: 99px; background: rgba(0,0,0,.3); font-size: 12.5px; font-weight: 600; }
+.game-stage .game-status:empty { display: none; }
+
+.game-stage .tic-board { grid-template-columns: repeat(3, minmax(84px, 132px)); grid-template-rows: repeat(3, minmax(84px, 132px)); gap: 10px; }
+.game-stage .tic-cell { border-color: rgba(255,255,255,.1); border-radius: 20px; background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 24px -14px rgba(0,0,0,.7); font-size: 64px; }
+.game-stage .tic-cell:hover:empty:not(:disabled) { border-color: color-mix(in srgb, var(--tone) 55%, transparent); background: color-mix(in srgb, var(--tone) 14%, transparent); }
+.game-stage .memory-card { min-height: 108px; border-color: rgba(255,255,255,.12); border-radius: 16px; background: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 6px, transparent 6px 12px), linear-gradient(160deg, color-mix(in srgb, var(--tone) 30%, #12281f), #0f231b); box-shadow: 0 10px 22px -14px rgba(0,0,0,.8); }
+.game-stage .memory-card:hover { border-color: color-mix(in srgb, var(--tone) 60%, transparent); }
+.game-stage .memory-card.is-flipped, .game-stage .memory-card.is-matched { background: var(--gc-lime); }
+.game-stage :is([data-snake-canvas], .arcade-canvas-wrap canvas) { border: 1px solid rgba(255,255,255,.1); border-radius: 18px; box-shadow: 0 30px 60px -24px rgba(0,0,0,.8); }
+.game-stage .reaction-target { border-color: rgba(255,255,255,.12); background: radial-gradient(circle at 40% 30%, color-mix(in srgb, var(--tone) 35%, #1d4033), #12281f); box-shadow: 0 0 0 20px color-mix(in srgb, var(--tone) 7%, transparent), 0 0 0 44px color-mix(in srgb, var(--tone) 4%, transparent), 0 30px 60px -20px rgba(0,0,0,.7); }
+.game-stage .reaction-target.is-waiting { background: #b84224; }
+.game-stage .reaction-target.is-go { background: var(--gc-lime); }
+.game-stage .connect-board { border-radius: 24px; box-shadow: 0 30px 60px -24px rgba(0,0,0,.8); }
+.game-stage .connect-cell { background: #0a1a13; }
+.game-stage .color-options button { min-height: 58px; border-radius: 14px; }
+.game-stage :is(.multi-lobby, .tic-online-lobby) { border-color: rgba(255,255,255,.1); background: rgba(6,18,13,.85); }
+.game-stage .word-board [data-word-form] > div { overflow: hidden; border-radius: 14px; }
+
+@media (max-width: 760px) {
+  .game-stage .game-panel { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "label label" "title title" "mode mode" "score action" "stage stage" "desc desc"; padding-top: 22px; }
+  .game-stage .game-panel-info > span, .game-stage .game-panel-info h3 { padding: 0 18px; }
+  .game-stage .game-panel-info h3 { font-size: 34px; }
+  .game-stage :is(.tic-mode-switch, .multi-mode) { justify-self: stretch; width: auto; margin: 44px 18px 0; }
+  .game-stage :is(.tic-mode-switch, .multi-mode) button { min-height: 46px; padding: 0 8px; font-size: 12.5px; }
+  .game-stage .game-panel.is-multi-online .multi-mode, .game-stage .game-panel[data-game-panel="dots"] .multi-mode { margin-top: 44px; }
+  .game-stage .game-score-line { margin: 18px 0 12px 18px; padding: 9px 12px; }
+  .game-stage .game-score-line strong { font-size: 16px; }
+  .game-stage .game-panel-info > .game-small-button { min-height: 42px; margin: 18px 18px 12px 0; padding: 0 18px; }
+  .game-stage .game-panel > :not(.game-panel-info) { min-height: 360px; margin: 0 10px; padding: 20px 12px; border-radius: 18px; }
+  .game-stage .game-panel-info > p { padding: 16px 18px 22px; }
+  .game-stage .tic-board { grid-template-columns: repeat(3, minmax(74px, 96px)); grid-template-rows: repeat(3, minmax(74px, 96px)); gap: 8px; }
+  .game-stage .tic-cell { font-size: 46px; border-radius: 16px; }
+  .game-stage .memory-card { min-height: 72px; border-radius: 12px; }
+}
+@media (max-width: 400px) {
+  .game-stage :is(.tic-mode-switch, .multi-mode) button::after { display: none; }
+}
+
+.game-stage .memory-card.is-flipped, .game-stage .memory-card.is-matched { transform: none; }
+.game-stage .memory-card.is-flipped { animation: gc-card-flip .28s ease-out; }
+@keyframes gc-card-flip { from { transform: scaleX(.2); } to { transform: scaleX(1); } }
+.game-stage .game-panel.is-multi-online > .multi-root, .game-stage .tic-arena.is-online-lobby { margin-top: 24px; }
+.game-stage :is(.multi-lobby-heading > span, .multi-field > span, .tic-online-lobby > div:first-child > span, .tic-field > span) { font-size: 10.5px; }
+.game-stage :is(.multi-primary, .tic-primary-action) { min-height: 54px; padding: 0 22px; font-size: 14px; text-transform: none; }
+.game-stage :is(.multi-join > button, .tic-join-row button) { font-size: 13px; text-transform: none; }
+.game-stage :is(.multi-field input, .tic-field input) { min-height: 52px; font-size: 15px; }
+.game-stage :is(.multi-note, .tic-lobby-status) { font-size: 12px; }
+.game-stage .game-panel:has(.tic-arena.is-online-lobby) :is(.game-score-line, .game-panel-info > .game-small-button) { display: none; }

@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=72">
+  <link rel="stylesheet" href="/games/games.css?v=73">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"></head>
 <body class="redesign-interior page-games">
   <a class="game-skip" href="#game-library">Skip to games</a>
@@ -358,22 +358,22 @@
       <div class="player-nav"><button type="button" data-player-prev aria-label="Previous game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" data-player-next aria-label="Next game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
     </div>
     <div class="player-body">
-          <article class="game-panel" id="game-reaction" role="tabpanel" data-game-panel="reaction" hidden>
-            <div class="game-panel-info"><span>Reflex lab / 04</span><h3>Reaction Rush</h3><p>Wait for the signal, then tap as quickly as you can. Tapping early resets the round.</p><div class="game-score-line"><span>Best</span><strong data-reaction-best>—</strong></div></div>
+          <article class="game-panel" id="game-reaction" role="tabpanel" data-game-panel="reaction" style="--tone:#ffb83d" hidden>
+            <div class="game-panel-info"><span>Reflex · Solo</span><h3>Reaction Rush</h3><p>Wait for the signal, then tap as quickly as you can. Tapping early resets the round.</p><div class="game-score-line"><span>Best</span><strong data-reaction-best>—</strong></div></div>
             <div class="reaction-board" data-reaction-board>
               <button class="reaction-target" type="button" data-reaction-target><span>Start round</span><small>Tap to begin</small></button>
               <p class="game-status" data-reaction-status>Ready when you are.</p>
             </div>
           </article>
 
-          <article class="game-panel" id="game-memory" role="tabpanel" data-game-panel="memory" hidden>
-            <div class="game-panel-info"><span>Pattern room / 03</span><h3>Memory Match</h3><p>Find all eight matching pairs. Fewer moves earn a better result.</p><div class="game-score-line"><span>Moves</span><strong data-memory-moves>0</strong></div><button class="game-small-button" type="button" data-memory-reset>New board</button></div>
+          <article class="game-panel" id="game-memory" role="tabpanel" data-game-panel="memory" style="--tone:#7c6ce0" hidden>
+            <div class="game-panel-info"><span>Focus · Solo or online</span><h3>Memory Match</h3><p>Find all eight matching pairs. Fewer moves earn a better result.</p><div class="game-score-line"><span>Moves</span><strong data-memory-moves>0</strong></div><button class="game-small-button" type="button" data-memory-reset>New board</button></div>
             <div class="memory-board" data-memory-board aria-label="Memory match board"></div>
           </article>
 
-          <article class="game-panel" id="game-tic" role="tabpanel" data-game-panel="tic" hidden>
+          <article class="game-panel" id="game-tic" role="tabpanel" data-game-panel="tic" style="--tone:#ff7a55" hidden>
             <div class="game-panel-info">
-              <span>Strategy grid / 02</span><h3>Tic-Tac-Toe</h3><p data-tic-description>You are X. The computer plays O and looks for the strongest move.</p>
+              <span>Strategy · Solo or online</span><h3>Tic-Tac-Toe</h3><p data-tic-description>You are X. The computer plays O and looks for the strongest move.</p>
               <div class="tic-mode-switch" role="group" aria-label="Choose Tic-Tac-Toe mode"><button class="is-active" type="button" data-tic-mode="solo">Computer</button><button type="button" data-tic-mode="online">Online</button></div>
               <div class="game-score-line"><span>Round</span><strong data-tic-status>Your turn</strong></div><button class="game-small-button" type="button" data-tic-reset>Play again</button>
             </div>
@@ -395,33 +395,33 @@
             </div>
           </article>
 
-          <article class="game-panel is-active" id="game-snake" role="tabpanel" data-game-panel="snake">
-            <div class="game-panel-info"><span>Arcade lane / 01</span><h3>Snake Circuit</h3><p>Collect the signals, avoid the walls, and do not cross your own path. Use arrow keys or the controls.</p><div class="game-score-line"><span>Score</span><strong data-snake-score>0</strong></div><button class="game-small-button" type="button" data-snake-start>Start game</button></div>
+          <article class="game-panel is-active" id="game-snake" role="tabpanel" data-game-panel="snake" style="--tone:#5fc36b">
+            <div class="game-panel-info"><span>Arcade · Solo</span><h3>Snake Circuit</h3><p>Collect the signals, avoid the walls, and do not cross your own path. Use arrow keys or the controls.</p><div class="game-score-line"><span>Score</span><strong data-snake-score>0</strong></div><button class="game-small-button" type="button" data-snake-start>Start game</button></div>
             <div class="snake-wrap"><canvas width="360" height="360" data-snake-canvas aria-label="Snake game board"></canvas><div class="snake-controls" aria-label="Snake direction controls"><button type="button" data-direction="up" aria-label="Move up">↑︎</button><button type="button" data-direction="left" aria-label="Move left">←</button><button type="button" data-direction="down" aria-label="Move down">↓︎</button><button type="button" data-direction="right" aria-label="Move right">→︎</button></div><p class="game-status" data-snake-status>Press start to enter the circuit.</p></div>
           </article>
 
-          <article class="game-panel" id="game-stack" role="tabpanel" data-game-panel="stack" hidden>
-            <div class="game-panel-info"><span>Timing tower / 05</span><h3>Stack Drop</h3><p>Stop each moving block above the tower. Only the overlapping section survives, so every imperfect drop makes the next one harder.</p><div class="game-score-line"><span>Height</span><strong data-stack-score>0</strong></div><button class="game-small-button" type="button" data-stack-action>Start stacking</button></div>
+          <article class="game-panel" id="game-stack" role="tabpanel" data-game-panel="stack" style="--tone:#37c3a5" hidden>
+            <div class="game-panel-info"><span>Timing · Solo</span><h3>Stack Drop</h3><p>Stop each moving block above the tower. Only the overlapping section survives, so every imperfect drop makes the next one harder.</p><div class="game-score-line"><span>Height</span><strong data-stack-score>0</strong></div><button class="game-small-button" type="button" data-stack-action>Start stacking</button></div>
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-stack-canvas aria-label="Stack Drop game board"></canvas><p class="game-status" data-stack-status>Press start, then tap the board or button to drop.</p></div>
           </article>
 
-          <article class="game-panel" id="game-flight" role="tabpanel" data-game-panel="flight" hidden>
-            <div class="game-panel-info"><span>Signal airspace / 07</span><h3>Signal Flight</h3><p>Tap to lift the lime signal through moving gates. Gravity never stops, the gaps become tighter, and every clean pass adds a point.</p><div class="game-score-line"><span>Gates cleared</span><strong data-flight-score>0</strong></div><button class="game-small-button" type="button" data-flight-action>Start flight</button></div>
+          <article class="game-panel" id="game-flight" role="tabpanel" data-game-panel="flight" style="--tone:#5b7cff" hidden>
+            <div class="game-panel-info"><span>Arcade · Solo</span><h3>Signal Flight</h3><p>Tap to lift the lime signal through moving gates. Gravity never stops, the gaps become tighter, and every clean pass adds a point.</p><div class="game-score-line"><span>Gates cleared</span><strong data-flight-score>0</strong></div><button class="game-small-button" type="button" data-flight-action>Start flight</button></div>
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-flight-canvas aria-label="Signal Flight game board"></canvas><p class="game-status" data-flight-status>Tap the board, button, or Space to lift.</p></div>
           </article>
 
-          <article class="game-panel" id="game-pong" role="tabpanel" data-game-panel="pong" hidden>
-            <div class="game-panel-info"><span>Arcade table / 08</span><h3>Mini Pong</h3><p>Keep the ball in play with your paddle. Move with touch, mouse, or the arrow keys and chase a longer rally.</p><div class="game-score-line"><span>Rally</span><strong data-pong-score>0</strong></div><button class="game-small-button" type="button" data-pong-action>Start rally</button></div>
+          <article class="game-panel" id="game-pong" role="tabpanel" data-game-panel="pong" style="--tone:#4b8dff" hidden>
+            <div class="game-panel-info"><span>Arcade · Solo</span><h3>Mini Pong</h3><p>Keep the ball in play with your paddle. Move with touch, mouse, or the arrow keys and chase a longer rally.</p><div class="game-score-line"><span>Rally</span><strong data-pong-score>0</strong></div><button class="game-small-button" type="button" data-pong-action>Start rally</button></div>
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-pong-canvas aria-label="Mini Pong game board"></canvas><div class="pong-controls" aria-label="Pong paddle controls"><button type="button" data-pong-move="left">←</button><button type="button" data-pong-move="right">→</button></div><p class="game-status" data-pong-status>Move the paddle and keep the ball alive.</p></div>
           </article>
 
-          <article class="game-panel" id="game-connect" role="tabpanel" data-game-panel="connect" hidden>
-            <div class="game-panel-info"><span>Strategy board / 11</span><h3>Four in a Row</h3><p>Tap any empty circle and your lime piece appears exactly there. Connect four horizontally, vertically, or diagonally before the computer.</p><div class="game-score-line"><span>Round</span><strong data-connect-status>Choose any circle</strong></div><button class="game-small-button" type="button" data-connect-reset>New round</button></div>
+          <article class="game-panel" id="game-connect" role="tabpanel" data-game-panel="connect" style="--tone:#7b6bff" hidden>
+            <div class="game-panel-info"><span>Strategy · Solo or online</span><h3>Four in a Row</h3><p>Tap any empty circle and your lime piece appears exactly there. Connect four horizontally, vertically, or diagonally before the computer.</p><div class="game-score-line"><span>Round</span><strong data-connect-status>Choose any circle</strong></div><button class="game-small-button" type="button" data-connect-reset>New round</button></div>
             <div class="connect-wrap"><div class="connect-legend"><span><i></i>You</span><span><i></i>Computer</span></div><div class="connect-board" data-connect-board aria-label="Four in a Row board"></div><p class="game-status">Tap the exact circle where you want to place your piece.</p></div>
           </article>
 
-          <article class="game-panel" id="game-dots" role="tabpanel" data-game-panel="dots" hidden>
-            <div class="game-panel-info"><span>Strategy board / 12</span><h3>Dots &amp; Boxes</h3><p>Draw one line at a time against the computer. Complete a square to claim it and keep your turn.</p><div class="game-score-line"><span>Boxes</span><strong data-dots-score>0 — 0</strong></div><button class="game-small-button" type="button" data-dots-reset>New board</button></div>
+          <article class="game-panel" id="game-dots" role="tabpanel" data-game-panel="dots" style="--tone:#c0569e" hidden>
+            <div class="game-panel-info"><span>Strategy · Solo or online</span><h3>Dots &amp; Boxes</h3><p>Draw one line at a time against the computer. Complete a square to claim it and keep your turn.</p><div class="game-score-line"><span>Boxes</span><strong data-dots-score>0 — 0</strong></div><button class="game-small-button" type="button" data-dots-reset>New board</button></div>
             <div class="dots-intro dots-solo" data-dots-solo>
               <div class="dots-solo-head"><div><span class="is-player"></span>You</div><strong>VS</strong><div><span class="is-computer"></span>Computer</div></div>
               <div class="dots-live-board" data-dots-solo-board role="grid" aria-label="Dots and Boxes board against the computer"></div>
@@ -429,23 +429,23 @@
             </div>
           </article>
 
-          <article class="game-panel" id="game-word" role="tabpanel" data-game-panel="word" hidden>
-            <div class="game-panel-info"><span>Word lab / 09</span><h3>Word Scramble</h3><p>Rearrange the letters using the clue. Build a streak across ten rounds.</p><div class="game-score-line"><span>Score</span><strong data-word-score>0</strong></div></div>
+          <article class="game-panel" id="game-word" role="tabpanel" data-game-panel="word" style="--tone:#ff9a4d" hidden>
+            <div class="game-panel-info"><span>Words · Solo or online</span><h3>Word Scramble</h3><p>Rearrange the letters using the clue. Build a streak across ten rounds.</p><div class="game-score-line"><span>Score</span><strong data-word-score>0</strong></div></div>
             <div class="word-board"><span class="word-round" data-word-round>Round 1 / 10</span><strong class="scrambled-word" data-scrambled-word>—</strong><p data-word-hint>Loading clue…</p><form data-word-form><label for="word-answer">Your answer</label><div><input id="word-answer" data-word-input autocomplete="off" spellcheck="false"><button type="submit">Check</button></div></form><button class="word-skip" type="button" data-word-skip>Skip word →︎</button><p class="game-status" data-word-status></p></div>
           </article>
 
-          <article class="game-panel" id="game-color" role="tabpanel" data-game-panel="color" hidden>
-            <div class="game-panel-info"><span>Focus test / 10</span><h3>Color Focus</h3><p>Ignore the written word. Choose the actual ink colour before the timer runs out.</p><div class="game-score-line"><span>Score</span><strong data-color-score>0 / 10</strong></div><button class="game-small-button" type="button" data-color-start>Start challenge</button></div>
+          <article class="game-panel" id="game-color" role="tabpanel" data-game-panel="color" style="--tone:#e05aa0" hidden>
+            <div class="game-panel-info"><span>Focus · Solo or online</span><h3>Color Focus</h3><p>Ignore the written word. Choose the actual ink colour before the timer runs out.</p><div class="game-score-line"><span>Score</span><strong data-color-score>0 / 10</strong></div><button class="game-small-button" type="button" data-color-start>Start challenge</button></div>
             <div class="color-board"><span class="color-round" data-color-round>Round 0 / 10</span><strong class="color-prompt" data-color-prompt>READY</strong><div class="color-options" data-color-options></div><p class="game-status" data-color-status>Ten quick decisions. Stay focused.</p></div>
           </article>
 
-          <article class="game-panel" id="game-gravity" role="tabpanel" data-game-panel="gravity" hidden>
-            <div class="game-panel-info"><span>Inverted corridor</span><h3>Gravity Flip</h3><p>Your runner never stops. Tap to switch between floor and ceiling, pass the barriers, and keep the run alive.</p><div class="game-score-line"><span>Barriers passed</span><strong data-gravity-score>0</strong></div><button class="game-small-button" type="button" data-gravity-action>Start run</button></div>
+          <article class="game-panel" id="game-gravity" role="tabpanel" data-game-panel="gravity" style="--tone:#9be15d" hidden>
+            <div class="game-panel-info"><span>Arcade · Solo</span><h3>Gravity Flip</h3><p>Your runner never stops. Tap to switch between floor and ceiling, pass the barriers, and keep the run alive.</p><div class="game-score-line"><span>Barriers passed</span><strong data-gravity-score>0</strong></div><button class="game-small-button" type="button" data-gravity-action>Start run</button></div>
             <div class="arcade-canvas-wrap"><canvas width="540" height="460" data-gravity-canvas aria-label="Gravity Flip game board"></canvas><p class="game-status" data-gravity-status>Tap the board, button, or Space to flip gravity.</p></div>
           </article>
 
-          <article class="game-panel" id="game-draw" role="tabpanel" data-game-panel="draw" hidden>
-            <div class="game-panel-info"><span>Creative room / 13</span><h3>Draw &amp; Guess</h3><p>Create a private room, sketch a secret prompt in real time, and race your friend to the answer. Drawing roles switch every round.</p><div class="game-score-line"><span>Format</span><strong>5 rounds</strong></div></div>
+          <article class="game-panel" id="game-draw" role="tabpanel" data-game-panel="draw" style="--tone:#8b7bff" hidden>
+            <div class="game-panel-info"><span>Creative · Online, 2 players</span><h3>Draw &amp; Guess</h3><p>Create a private room, sketch a secret prompt in real time, and race your friend to the answer. Drawing roles switch every round.</p><div class="game-score-line"><span>Format</span><strong>5 rounds</strong></div></div>
             <div class="draw-intro"><div class="draw-intro-art" aria-hidden="true"><span></span><i></i><b>?</b></div><strong>One draws. One guesses.</strong><p>Use touch, mouse, or Apple Pencil. No account or download needed.</p></div>
           </article>
     </div>
