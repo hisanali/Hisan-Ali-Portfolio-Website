@@ -919,7 +919,8 @@ html.theme-dark .gc-how { background: #0a1611; }
 .game-stage .reaction-target.is-waiting { background: #b84224; }
 .game-stage .reaction-target.is-go { background: var(--gc-lime); }
 .game-stage .connect-board { border-radius: 24px; box-shadow: 0 30px 60px -24px rgba(0,0,0,.8); }
-.game-stage .connect-cell { background: #0a1a13; }
+.game-stage .connect-cell:not(.is-p):not(.is-c) { background: #0a1a13; }
+.game-stage .connect-cell:not(.is-p):not(.is-c):is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--tone) 30%, #0a1a13); }
 .game-stage .color-options button { min-height: 58px; border-radius: 14px; }
 .game-stage :is(.multi-lobby, .tic-online-lobby) { border-color: rgba(255,255,255,.1); background: rgba(6,18,13,.85); }
 .game-stage .word-board [data-word-form] > div { overflow: hidden; border-radius: 14px; }
