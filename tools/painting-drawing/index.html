@@ -3349,10 +3349,10 @@
             { id: "soft-round", name: "Soft Round", category: "Digital", engine: "soft-round", size: 60, opacity: 100, flow: 100, smoothing: 40, pressure: 40, description: "Soft shading and smooth blends" },
             { id: "block-fill", name: "Block Fill", category: "Digital", engine: "hard-round", size: 70, opacity: 100, flow: 100, smoothing: 30, pressure: 0, description: "Wide even strokes for filling areas" },
             { id: "spray-paint", name: "Spray Paint", category: "Digital", engine: "spray", size: 70, opacity: 100, flow: 100, smoothing: 20, pressure: 50, description: "Fine speckled spray-can mist" },
-            { id: "graphite", name: "HB Graphite", category: "Sketching", engine: "pencil", size: 10, opacity: 82, flow: 92, smoothing: 48, pressure: 88, texture: .34, tiltScale: .42, description: "Balanced pressure and side shading" },
-            { id: "graphite-2b", name: "2B Soft Pencil", category: "Sketching", engine: "pencil-soft", size: 18, opacity: 68, flow: 84, smoothing: 38, pressure: 92, texture: .62, tiltScale: .56, description: "Soft, dark and grainy graphite" },
+            { id: "graphite", name: "HB Graphite", category: "Sketching", engine: "pencil", size: 10, opacity: 82, flow: 92, smoothing: 48, pressure: 88, texture: .34, description: "Balanced pressure and side shading" },
+            { id: "graphite-2b", name: "2B Soft Pencil", category: "Sketching", engine: "pencil-soft", size: 18, opacity: 68, flow: 84, smoothing: 38, pressure: 92, texture: .62, description: "Soft, dark and grainy graphite" },
             { id: "mechanical", name: "Mechanical Pencil", category: "Sketching", engine: "pencil-hard", size: 4, opacity: 94, flow: 100, smoothing: 68, pressure: 36, texture: .08, description: "Precise consistent drafting line" },
-            { id: "colored-pencil", name: "Colored Pencil", category: "Sketching", engine: "colored-pencil", size: 15, opacity: 76, flow: 78, smoothing: 40, pressure: 84, texture: .52, tiltScale: .36, description: "Layerable waxy color grain" },
+            { id: "colored-pencil", name: "Colored Pencil", category: "Sketching", engine: "colored-pencil", size: 15, opacity: 76, flow: 78, smoothing: 40, pressure: 84, texture: .52, description: "Layerable waxy color grain" },
             { id: "chalk-pencil", name: "Chalk Pencil", category: "Sketching", engine: "chalk", size: 24, opacity: 64, flow: 68, smoothing: 28, pressure: 72, texture: .76, description: "Powdery broken sketch marks" },
 
             { id: "technical", name: "Technical Pen", category: "Ink", engine: "ink", size: 6, opacity: 100, flow: 100, smoothing: 78, pressure: 22, description: "Crisp uniform drafting ink" },
@@ -3989,6 +3989,11 @@
             return cartesian;
         }
 
+        // How far the Pencil is laid down beyond a normal writing grip (0 upright or writing, 1 flat).
+        function layTilt(point) {
+            return clamp((tiltAmount(point) - .38) / .5, 0, 1);
+        }
+
         function tiltDirection(point) {
             if (point.azimuthAngle !== null && Number.isFinite(point.azimuthAngle) && tiltAmount(point) > .01) return point.azimuthAngle;
             if (Math.abs(point.tiltX || 0) + Math.abs(point.tiltY || 0) > .01) return Math.atan2(point.tiltY, point.tiltX);
@@ -4001,10 +4006,11 @@
             var sensitivity = settings.pressure / 100;
             var min = 1 - sensitivity * .78;
             if (["marker", "chisel", "felt", "highlighter", "airbrush", "watercolor-wash", "oil-flat"].includes(brush.engine)) min = .78;
-            var tilt = tiltAmount(point);
-            var defaultTiltScale = 0;
-            if (["pencil", "pencil-soft", "colored-pencil", "chalk", "charcoal", "charcoal-block", "pastel", "crayon"].includes(brush.engine)) defaultTiltScale = 1.35;
-            if (["fountain", "brush-ink", "chisel", "oil-flat", "dry-brush", "rake"].includes(brush.engine)) defaultTiltScale = .5;
+            var tilt = layTilt(point);
+            // Every brush answers to tilt; dry media lay down a broad shading side like a real pencil.
+            var defaultTiltScale = ["ink", "pencil-hard"].includes(brush.engine) ? .15 : .7;
+            if (["pencil", "pencil-soft", "colored-pencil", "chalk", "charcoal", "charcoal-block", "pastel", "crayon"].includes(brush.engine)) defaultTiltScale = 2.4;
+            if (["fountain", "brush-ink", "chisel", "oil-flat", "dry-brush", "rake"].includes(brush.engine)) defaultTiltScale = .9;
             var tiltExpansion = 1 + tilt * (brush.tiltScale !== undefined ? brush.tiltScale : defaultTiltScale);
             return Math.max(.7, size * (min + (1 - min) * point.pressure) * tiltExpansion);
         }
@@ -5589,7 +5595,7 @@
             var rx = width / 2;
             var ry = rx;
             var angle = 0;
-            var tilt = profile.tiltShade ? tiltAmount(point) : 0;
+            var tilt = profile.tiltShade ? layTilt(point) : 0;
             if (profile.flat) {
                 angle = nibAngle(point, stroke.brush) + (profile.nibOffset || 0);
                 ry = rx * profile.flat;
@@ -7352,7 +7358,7 @@
             var width = display;
             var height = display;
             var angle = 0;
-            var tilt = point ? tiltAmount(point) : 0;
+            var tilt = point ? layTilt(point) : 0;
             var brushTip = state.tool === "brush";
             var stampPreview = brushTip && isStampBrush(brush);
             if (stampPreview) {
