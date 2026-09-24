@@ -15,7 +15,8 @@
   const pageButtons = $$('[data-game-page]');
   const pagePrevious = $('[data-game-page-prev]');
   const pageNext = $('[data-game-page-next]');
-  const pageSize = 8;
+  const pageSize = 99;
+  const playerOpen = () => { const stage = $('[data-game-stage]'); return !stage || stage.classList.contains('is-open'); };
   const priorityGames = ['draw', 'snake', 'tic', 'connect', 'dots', 'memory', 'flight', 'word', 'pong'];
   let activeFilter = 'all';
   let activePage = 0;
@@ -39,7 +40,7 @@
     const pageGames = new Set(matches.slice(first, first + pageSize));
 
     picks.forEach((pick) => { pick.hidden = !pageGames.has(pick); });
-    if (filterCount) filterCount.textContent = `${matches.length} game${matches.length === 1 ? '' : 's'} · Page ${activePage + 1}/${pageTotal}`;
+    if (filterCount) filterCount.textContent = `${matches.length} game${matches.length === 1 ? '' : 's'}`;
     if (pagination) {
       pagination.hidden = pageTotal <= 1;
     }
@@ -379,8 +380,8 @@
   const startSnake = () => { clearInterval(snakeLoop);snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];snakeDirection={x:1,y:0};snakeNext={x:1,y:0};placeFood();snakeScore.textContent='0';snakeStatus.textContent='Circuit live.';snakeRunning=true;drawSnake();snakeLoop=setInterval(snakeStep,125); };
   const setDirection = (name) => { const map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}},next=map[name];if(!next||next.x===-snakeDirection.x&&next.y===-snakeDirection.y)return;snakeNext=next; };
   $('[data-snake-start]').addEventListener('click',startSnake);$$('[data-direction]').forEach(button=>button.addEventListener('click',()=>setDirection(button.dataset.direction)));
-  document.addEventListener('keydown',(event)=>{const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};if(!map[event.key]||$('[data-game="snake"]')?.getAttribute('aria-selected')!=='true')return;event.preventDefault();setDirection(map[event.key]);});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&snakeRunning){clearInterval(snakeLoop);snakeRunning=false;snakeStatus.textContent='Paused. Press start to continue with a new run.';}}); snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];drawSnake();
+  document.addEventListener('keydown',(event)=>{const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};if(!map[event.key]||!playerOpen()||$('[data-game="snake"]')?.getAttribute('aria-selected')!=='true')return;event.preventDefault();setDirection(map[event.key]);});
+  const pauseSnake=()=>{if(snakeRunning){clearInterval(snakeLoop);snakeRunning=false;snakeStatus.textContent='Paused. Press start to continue with a new run.';}};document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseSnake();});window.addEventListener('games:pause',pauseSnake); snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];drawSnake();
 
   // Stack Drop
   const stackCanvas = $('[data-stack-canvas]');
@@ -438,8 +439,8 @@
   const flipGravity=()=>{if(!gravityRunning){startGravity();return;}gravityTarget=gravityTarget>200?52:382;gravityStatus.textContent=gravityTarget<200?'Running on the ceiling.':'Back on the floor.';};
   gravityAction.addEventListener('click',flipGravity);gravityCanvas.addEventListener('pointerdown',flipGravity);drawGravity();
 
-  document.addEventListener('keydown',(event)=>{const selected=$('[data-game][aria-selected="true"]')?.dataset.game;if(event.code==='Space'&&selected==='flight'){event.preventDefault();liftFlight();}if(event.code==='Space'&&selected==='gravity'){event.preventDefault();flipGravity();}if(selected==='pong'&&(event.key==='ArrowLeft'||event.key==='ArrowRight')){event.preventDefault();pongPaddle=Math.max(0,Math.min(420,pongPaddle+(event.key==='ArrowLeft'?-34:34)));drawPong();}});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;stackRunning=false;cancelAnimationFrame(stackFrame);flightRunning=false;cancelAnimationFrame(flightFrame);pongRunning=false;cancelAnimationFrame(pongFrame);gravityRunning=false;cancelAnimationFrame(gravityFrame);});
+  document.addEventListener('keydown',(event)=>{if(!playerOpen())return;const selected=$('[data-game][aria-selected="true"]')?.dataset.game;if(event.code==='Space'&&selected==='flight'){event.preventDefault();liftFlight();}if(event.code==='Space'&&selected==='gravity'){event.preventDefault();flipGravity();}if(selected==='pong'&&(event.key==='ArrowLeft'||event.key==='ArrowRight')){event.preventDefault();pongPaddle=Math.max(0,Math.min(420,pongPaddle+(event.key==='ArrowLeft'?-34:34)));drawPong();}});
+  const pauseArcade=()=>{stackRunning=false;cancelAnimationFrame(stackFrame);flightRunning=false;cancelAnimationFrame(flightFrame);pongRunning=false;cancelAnimationFrame(pongFrame);gravityRunning=false;cancelAnimationFrame(gravityFrame);};document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseArcade();});window.addEventListener('games:pause',pauseArcade);
 
   // Word Scramble
   const words = [
