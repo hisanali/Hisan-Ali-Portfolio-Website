@@ -28,6 +28,8 @@ function contentTypeFor(filePath: string): string {
   if (ext === '.ttf') return 'font/ttf';
   if (ext === '.otf') return 'font/otf';
   if (ext === '.pdf') return 'application/pdf';
+  if (ext === '.glb') return 'model/gltf-binary';
+  if (ext === '.wasm') return 'application/wasm';
 
   return 'application/octet-stream';
 }
