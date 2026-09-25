@@ -233,7 +233,7 @@ export class Life {
   buildTraffic() {
     const types = ['sedan', 'hatch', 'suv', 'van', 'sedan', 'hatch', 'sedan', 'suv'];
     for (let i = 0; i < 6; i++) { const c = this.car(types[i % types.length]); c.z = -1e9; this.scene.add(c.g); this.traffic.push(c); }
-    for (let i = 0; i < 4; i++) { const c = this.car(types[(i + 3) % types.length]); c.z = -1e9; c.beam.visible = false; this.scene.add(c.g); this.parked.push(c); }
+    for (let i = 0; i < 2; i++) { const c = this.car(types[(i + 3) % types.length]); c.z = -1e9; c.beam.visible = false; this.scene.add(c.g); this.parked.push(c); }
   }
 
   laneOffset() { const lane = this.settings.autoLane; return lane === 'right' ? -2.4 : 2.4; }
@@ -247,26 +247,54 @@ export class Life {
     this.traffic.forEach((c, i) => {
       c.g.visible = !off && i < count;
       if (!c.g.visible) return;
-      if (c.z < s.z - 60 || c.z > s.z + 900) { c.z = s.z + rand(280, 820); c.speed = rand(13, 21); }
+      if (c.z < s.z - 60 || c.z > s.z + 900) { c.z = s.z + rand(280, 820); c.cruise = rand(13, 21); c.speed = c.cruise; }
       c.z -= c.speed * dt;
       const x = r.x(c.z) + oncoming, y = r.y(c.z) + .06;
       c.g.position.set(x, y, c.z);
       c.g.rotation.set(0, Math.atan(r.tangent(c.z)) + Math.PI, 0);
-      if (Math.abs(s.x - x) < 1.9 && Math.abs(s.z - c.z) < (c.length / 2 + 2.2) && !c.hit) { c.hit = 3; this.onHit?.(); }
-      if (c.hit) c.hit = Math.max(0, c.hit - dt);
     });
     this.parked.forEach((c) => {
-      c.g.visible = !off;
-      if (off) return;
-      if (c.z < s.z - 60 || c.z > s.z + 900) {
-        c.z = s.z + rand(250, 850);
-        const railSide = (Math.floor(Math.floor(c.z / 240) / 3) % 3 === 0) ? 1 : -1;
-        c.side = -railSide;
-      }
-      const x = r.x(c.z) + c.side * (width + 2.1), y = this.world.surfaceHeight(x, c.z, false) + .02;
-      c.g.position.set(x, y, c.z);
-      c.g.rotation.set(0, Math.atan(r.tangent(c.z)) + (c.side > 0 ? 0 : Math.PI), 0);
+      if (off) { c.g.visible = false; return; }
+      if (c.z < s.z - 60 || c.z > s.z + 900) this.parkCar(c, s.z);
+      c.g.visible = c.spot;
     });
+    // Oncoming cars brake to a stop when your car is in their lane ahead of them.
+    this.traffic.forEach((c) => {
+      if (!c.g.visible) return;
+      const x = c.g.position.x, gap = c.z - s.z, blocked = gap > -1 && gap < 42 && Math.abs(s.x - x) < 2.4;
+      const target = blocked ? 0 : c.cruise;
+      c.speed = c.speed > target ? Math.max(target, c.speed - (blocked ? 9 : 3) * dt) : Math.min(target, c.speed + 2.5 * dt);
+    });
+  }
+
+  // Park on the shoulder only where the ground is level, resting the car on its wheels.
+  parkCar(c, fromZ) {
+    const r = this.world.road, width = this.settings.roadWidth / 2;
+    c.spot = false;
+    for (let attempt = 0; attempt < 10 && !c.spot; attempt++) {
+      const z = fromZ + rand(250, 850), railSide = (Math.floor(Math.floor(z / 240) / 3) % 3 === 0) ? 1 : -1, side = -railSide;
+      const yaw = Math.atan(r.tangent(z)) + (side > 0 ? 0 : Math.PI), x = r.x(z) + side * (width + 2.2);
+      const fx = Math.sin(yaw) * 1.7, fz = Math.cos(yaw) * 1.7, rx = Math.cos(yaw) * .8, rz = -Math.sin(yaw) * .8, h = (px, pz) => this.world.surfaceHeight(px, pz, false);
+      const hf = h(x + fx, z + fz), hb = h(x - fx, z - fz), hr = h(x + rx, z + rz), hl = h(x - rx, z - rz);
+      if (Math.abs(hf - hb) > .5 || Math.abs(hr - hl) > .3 || Math.min(hf, hb, hr, hl) < -6) continue;
+      c.z = z; c.spot = true;
+      c.g.rotation.order = 'YXZ';
+      c.g.rotation.set(-Math.atan2(hf - hb, 3.4), yaw, Math.atan2(hr - hl, 1.6));
+      c.g.position.set(x, (hf + hb + hr + hl) / 4 + .02, z);
+    }
+    if (!c.spot) c.z = fromZ + 400;
+  }
+
+  // Solid bodies near a point, for the player's collisions.
+  colliders(x, z, range) {
+    const out = [], add = (px, pz, r) => { if (Math.abs(px - x) < range && Math.abs(pz - z) < range) out.push({x: px, z: pz, r}); };
+    for (const c of [...this.traffic, ...this.parked]) {
+      if (!c.g.visible) continue;
+      const yaw = c.g.rotation.y, q = c.length / 4, px = c.g.position.x, pz = c.g.position.z;
+      add(px + Math.sin(yaw) * q, pz + Math.cos(yaw) * q, .95); add(px - Math.sin(yaw) * q, pz - Math.cos(yaw) * q, .95);
+    }
+    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat') add(a.x, a.z, a.kind === 'cow' ? 1 : a.kind === 'sheep' ? .55 : .35);
+    return out;
   }
 
   update(dt) {
