@@ -248,6 +248,19 @@
   const memoryBoard = $('[data-memory-board]');
   const memoryMoves = $('[data-memory-moves]');
   const memorySymbols = ['A','B','C','D','E','F','G','H'];
+  // Card ids stay A–H so online rooms stay compatible; each id is drawn as a coloured shape.
+  const memoryShapes = {
+    A: ['Star', '#6659cb', 'M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.5L12 17.2l-5.9 3.2 1.3-6.5L2.5 9.3l6.6-.8z'],
+    B: ['Heart', '#e8453c', 'M12 21s-7.5-4.6-9.5-9.2C1 8.1 3.3 4.5 7 4.5c2.1 0 3.6 1.1 5 2.9 1.4-1.8 2.9-2.9 5-2.9 3.7 0 6 3.6 4.5 7.3C19.5 16.4 12 21 12 21z'],
+    C: ['Diamond', '#2f7fe0', 'M12 2l8.5 10L12 22 3.5 12z'],
+    D: ['Moon', '#d99a00', 'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z'],
+    E: ['Bolt', '#d9468f', 'M13.5 2 4.5 13.5H11L9.5 22l10-12.5H13z'],
+    F: ['Triangle', '#1f9e6e', 'M12 3l9.5 17h-19z'],
+    G: ['Ring', '#f07a2a', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z'],
+    H: ['Plus', '#0f8f8a', 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z']
+  };
+  const memoryShapeSvg = (symbol) => { const [, color, path] = memoryShapes[symbol] || []; return path ? `<svg viewBox="0 0 24 24" aria-hidden="true" style="--shape:${color}"><path fill-rule="evenodd" d="${path}"/></svg>` : symbol; };
+  window.GameMemoryShapes = { svg: memoryShapeSvg, name: (symbol) => memoryShapes[symbol]?.[0] || symbol };
   let memoryOpen = [];
   let memoryLocked = false;
   let matchedPairs = 0;
@@ -256,10 +269,10 @@
   const resetMemory = () => {
     memoryOpen = []; memoryLocked = false; matchedPairs = 0; moveCount = 0; memoryMoves.textContent = '0'; memoryBoard.replaceChildren();
     shuffle([...memorySymbols,...memorySymbols]).forEach((symbol,index) => {
-      const card = document.createElement('button'); card.type = 'button'; card.className = 'memory-card'; card.dataset.symbol = symbol; card.setAttribute('aria-label', `Hidden card ${index + 1}`); card.textContent = symbol;
+      const card = document.createElement('button'); card.type = 'button'; card.className = 'memory-card'; card.dataset.symbol = symbol; card.setAttribute('aria-label', `Hidden card ${index + 1}`); card.innerHTML = memoryShapeSvg(symbol);
       card.addEventListener('click', () => {
         if (memoryLocked || card.classList.contains('is-flipped') || card.classList.contains('is-matched')) return;
-        card.classList.add('is-flipped'); card.setAttribute('aria-label', symbol); memoryOpen.push(card);
+        card.classList.add('is-flipped'); card.setAttribute('aria-label', memoryShapes[symbol][0]); memoryOpen.push(card);
         if (memoryOpen.length < 2) return;
         moveCount += 1; memoryMoves.textContent = String(moveCount); memoryLocked = true;
         const [first,second] = memoryOpen;
@@ -369,16 +382,19 @@
   let snakeRunning = false;
   const snakeCell = 20;
   const placeFood = () => { do { snakeFood={x:Math.floor(Math.random()*18),y:Math.floor(Math.random()*18)}; } while(snake.some(part=>part.x===snakeFood.x&&part.y===snakeFood.y)); };
+  const snakeSnapshot = () => ({ snake: snake.map(part => ({...part})), food: {...snakeFood}, running: snakeRunning, interval: 125 });
   const drawSnake = () => {
+    if (window.Snake3D) { window.Snake3D.step(snakeSnapshot()); return; }
     snakeCtx.fillStyle='#10261f'; snakeCtx.fillRect(0,0,360,360); snakeCtx.strokeStyle='rgba(223,255,99,.055)'; snakeCtx.lineWidth=1;
     for(let i=0;i<=360;i+=20){snakeCtx.beginPath();snakeCtx.moveTo(i,0);snakeCtx.lineTo(i,360);snakeCtx.stroke();snakeCtx.beginPath();snakeCtx.moveTo(0,i);snakeCtx.lineTo(360,i);snakeCtx.stroke();}
     snakeCtx.fillStyle='#f47a52'; snakeCtx.beginPath(); snakeCtx.arc(snakeFood.x*snakeCell+10,snakeFood.y*snakeCell+10,7,0,Math.PI*2); snakeCtx.fill();
     snake.forEach((part,index)=>{snakeCtx.fillStyle=index===0?'#dfff63':'#75a48d';snakeCtx.fillRect(part.x*snakeCell+2,part.y*snakeCell+2,16,16);});
   };
-  const endSnake = () => { clearInterval(snakeLoop); snakeRunning=false; snakeStatus.textContent=`Circuit ended with ${snake.length-3} points. Press start to try again.`; };
+  const endSnake = () => { clearInterval(snakeLoop); snakeRunning=false; window.Snake3D?.crash(); snakeStatus.textContent=`Circuit ended with ${snake.length-3} points. Press start to try again.`; };
   const snakeStep = () => { snakeDirection=snakeNext;const head={x:snake[0].x+snakeDirection.x,y:snake[0].y+snakeDirection.y};if(head.x<0||head.x>=18||head.y<0||head.y>=18||snake.some(p=>p.x===head.x&&p.y===head.y)){endSnake();return;}snake.unshift(head);if(head.x===snakeFood.x&&head.y===snakeFood.y){snakeScore.textContent=String(snake.length-3);placeFood();}else snake.pop();drawSnake(); };
   const startSnake = () => { clearInterval(snakeLoop);snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];snakeDirection={x:1,y:0};snakeNext={x:1,y:0};placeFood();snakeScore.textContent='0';snakeStatus.textContent='Circuit live.';snakeRunning=true;drawSnake();snakeLoop=setInterval(snakeStep,125); };
   const setDirection = (name) => { const map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}},next=map[name];if(!next||next.x===-snakeDirection.x&&next.y===-snakeDirection.y)return;snakeNext=next; };
+  window.GameSnake = { snapshot: snakeSnapshot, turn: (name) => setDirection(name) };
   $('[data-snake-start]').addEventListener('click',startSnake);$$('[data-direction]').forEach(button=>button.addEventListener('click',()=>setDirection(button.dataset.direction)));
   document.addEventListener('keydown',(event)=>{const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};if(!map[event.key]||!playerOpen()||$('[data-game="snake"]')?.getAttribute('aria-selected')!=='true')return;event.preventDefault();setDirection(map[event.key]);});
   const pauseSnake=()=>{if(snakeRunning){clearInterval(snakeLoop);snakeRunning=false;snakeStatus.textContent='Paused. Press start to continue with a new run.';}};document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseSnake();});window.addEventListener('games:pause',pauseSnake); snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];drawSnake();

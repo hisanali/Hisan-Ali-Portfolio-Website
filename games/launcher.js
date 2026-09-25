@@ -19,7 +19,16 @@
     if (position) position.textContent = `${list.indexOf(pick) + 1} of ${list.length}`;
   };
 
+  const loadSnake3D = () => {
+    if (window.Snake3D || $('script[data-snake3d]')) return;
+    const script = document.createElement('script');
+    script.src = '/games/snake3d.bundle.js?v=1';
+    script.dataset.snake3d = '';
+    document.body.append(script);
+  };
+
   const open = (pick) => {
+    if (pick.dataset.game === 'snake') loadSnake3D();
     if (!stage.classList.contains('is-open')) lastTrigger = document.activeElement;
     setPosition(pick);
     stage.inert = false;
@@ -36,6 +45,7 @@
 
   const close = () => {
     if (!stage.classList.contains('is-open')) return;
+    closeRules();
     stage.classList.remove('is-open');
     stage.setAttribute('aria-hidden', 'true');
     stage.inert = true;
@@ -52,8 +62,38 @@
     const current = list.findIndex((pick) => pick.getAttribute('aria-selected') === 'true');
     const next = list[(current + direction + list.length) % list.length];
     window.dispatchEvent(new Event('games:pause'));
+    closeRules();
     next?.click();
   };
+
+  // "How to play" opens the rules as a pop-over instead of a block of text under the board.
+  const closeRules = () => $$('.game-panel.show-rules', stage).forEach((panel) => {
+    panel.classList.remove('show-rules');
+    $('.game-help', panel)?.setAttribute('aria-expanded', 'false');
+  });
+  $$('.game-panel', stage).forEach((panel) => {
+    const info = $('.game-panel-info', panel);
+    const rules = info && $(':scope > p', info);
+    if (!rules) return;
+    rules.id ||= `rules-${panel.dataset.gamePanel}`;
+    const help = document.createElement('button');
+    help.type = 'button';
+    help.className = 'game-help';
+    help.setAttribute('aria-expanded', 'false');
+    help.setAttribute('aria-controls', rules.id);
+    help.innerHTML = '<span aria-hidden="true">?</span>How to play';
+    help.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const show = !panel.classList.contains('show-rules');
+      closeRules();
+      panel.classList.toggle('show-rules', show);
+      help.setAttribute('aria-expanded', String(show));
+    });
+    info.append(help);
+  });
+  stage.addEventListener('click', (event) => {
+    if (!event.target.closest('.game-help, .game-panel-info > p')) closeRules();
+  });
 
   stage.inert = !stage.classList.contains('is-open');
   picks().forEach((pick) => pick.addEventListener('click', () => open(pick)));
@@ -62,7 +102,11 @@
   $('[data-player-next]')?.addEventListener('click', () => step(1));
 
   stage.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if ($('.game-panel.show-rules', stage)) closeRules(); else close();
+      return;
+    }
     if (event.key !== 'Tab') return;
     const focusable = $$('button, [href], input, select, textarea, canvas[tabindex], [tabindex]:not([tabindex="-1"])', stage)
       .filter((el) => !el.disabled && el.offsetParent !== null);
