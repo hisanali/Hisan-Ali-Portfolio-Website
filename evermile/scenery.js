@@ -444,13 +444,13 @@ export class Scenery {
   setMood({night, dusk, wet}) {
     const lit = night ? 1 : dusk ? .45 : 0;
     this.lit = lit; this.wet = wet;
-    this.mats.shopGlass.material.emissiveIntensity = night ? 1.05 : dusk ? .55 : .06;
-    this.mats.winLit.material.emissiveIntensity = night ? 1.3 : dusk ? .5 : 0;
-    this.mats.sign.material.emissiveIntensity = night ? .85 : dusk ? .35 : 0;
-    this.mats.lampHead.material.emissiveIntensity = night ? 6 : dusk ? 2.5 : 0;
-    this.mats.pool.material.opacity = night ? .5 : dusk ? .18 : 0;
-    this.mats.streak.material.opacity = wet ? (night ? .5 : dusk ? .25 : 0) : 0;
-    for (const m of this.stripMats) m.material.emissiveIntensity = night ? 2.6 : dusk ? 1.6 : .25;
+    this.mats.shopGlass.material.emissiveIntensity = night ? .75 : dusk ? .4 : .05;
+    this.mats.winLit.material.emissiveIntensity = night ? .95 : dusk ? .4 : 0;
+    this.mats.sign.material.emissiveIntensity = night ? .55 : dusk ? .25 : 0;
+    this.mats.lampHead.material.emissiveIntensity = night ? 3.2 : dusk ? 1.3 : 0;
+    this.mats.pool.material.opacity = night ? .36 : dusk ? .12 : 0;
+    this.mats.streak.material.opacity = wet ? (night ? .3 : dusk ? .12 : 0) : 0;
+    for (const m of this.stripMats) m.material.emissiveIntensity = night ? 1.5 : dusk ? .8 : .2;
     if (!lit) { this.glow.begin(); this.glow.end(); for (const l of this.lamps) l.intensity = 0; }
   }
 
@@ -466,7 +466,7 @@ export class Scenery {
     const near = [];
     for (const g of chunks.values()) for (const l of g.userData.lamps || []) {
       const d = Math.hypot(l.x - camera.position.x, l.z - camera.position.z);
-      if (d < 900) this.glow.add(l.x, l.y, l.z, this.lampColor, this.lit, 40);
+      if (d < 900) this.glow.add(l.x, l.y, l.z, this.lampColor, this.lit * .55, 30);
       const df = Math.hypot(l.x - focus.x, l.z - focus.z);
       if (df < 40) near.push([df, l]);
     }

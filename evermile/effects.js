@@ -206,17 +206,18 @@ export class Effects {
     this.contrail = new T.Mesh(trail, new T.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, fog: false, side: T.DoubleSide}));
     this.contrail.visible = false; this.scene.add(this.contrail);
     this.navGlow = new GlowPoints(this.scene, 8, {fade: 3500});
-    this.flight = null; this.nextFlight = rand(25, 60);
+    this.flight = null; this.nextFlight = rand(12, 25);
   }
 
   launchFlight() {
     const s = this.getState(), heli = Math.random() < .4, dir = Math.random() < .5 ? 1 : -1;
-    const across = heli ? rand(700, 1100) : 2100, ahead = heli ? rand(260, 700) : rand(700, 1500), alt = heli ? rand(110, 190) : rand(620, 820);
+    // Kept within the view ahead: low enough to sit in the sky above the road, far enough to feel distant.
+    const across = heli ? rand(650, 900) : 1400, ahead = heli ? rand(300, 520) : rand(550, 850), alt = heli ? rand(45, 80) : rand(150, 220);
     const craft = heli ? this.heli : this.plane, speed = heli ? rand(38, 50) : rand(105, 125);
     const heading = Math.atan2(dir, rand(-.35, .35) * (heli ? 1 : .4));
     craft.position.set(s.x - dir * across, this.world.road.y(s.z) + alt, s.z + ahead);
     craft.rotation.set(0, heading, 0); craft.visible = true;
-    this.flight = {craft, heli, speed, heading, dir, age: 0, life: (across * 2) / speed};
+    this.flight = {craft, heli, speed, heading, dir, age: 0, life: (across * 2) / speed, baseY: craft.position.y};
   }
 
   updateAircraft(dt) {
@@ -232,10 +233,13 @@ export class Effects {
       f.age += dt;
       const c = f.craft, fx = Math.sin(f.heading), fz = Math.cos(f.heading);
       c.position.x += fx * f.speed * dt; c.position.z += fz * f.speed * dt;
+      // Climb over any hill in the way, then settle back to cruising height.
+      const clear = Math.max(f.baseY ?? c.position.y, this.world.road.terrain(c.position.x, c.position.z) + (f.heli ? 38 : 120), this.world.road.terrain(c.position.x + fx * 120, c.position.z + fz * 120) + (f.heli ? 38 : 120));
+      c.position.y += (clear - c.position.y) * Math.min(1, dt * .8);
       if (f.heli) { this.rotor.rotation.y += dt * 38; this.tailRotor.rotation.x += dt * 60; c.rotation.set(.12, f.heading, Math.sin(f.age * .4) * .05); c.position.y += Math.sin(f.age * .6) * .08; }
       else c.rotation.set(0, f.heading, Math.sin(f.age * .15) * .04);
       // Contrail behind a high airliner in clear daylight.
-      const trail = !f.heli && this.settings.time !== 'night' && this.settings.weather === 'clear';
+      const trail = false;
       this.contrail.visible = trail;
       if (trail) { const len = Math.min(900, f.age * f.speed); this.contrail.position.copy(c.position).addScaledVector(new T.Vector3(fx, 0, fz), -22); this.contrail.rotation.set(0, f.heading, 0); this.contrail.scale.set(3.2, 1, len); this.contrail.material.opacity = .5; }
       // Navigation lights: red left, green right, a white tail light, and a blinking strobe and beacon.
@@ -247,7 +251,7 @@ export class Effects {
         v.set(x, y, z); c.localToWorld(v); this.fade.set(col);
         this.navGlow.add(v.x, v.y, v.z, this.fade, kind ? 1.6 * night + .4 : night, kind === 'strobe' ? 40 : 18);
       }
-      if (f.age > f.life || !show) { c.visible = false; this.flight = null; this.nextFlight = rand(40, 110); this.contrail.visible = false; }
+      if (f.age > f.life || !show) { c.visible = false; this.flight = null; this.nextFlight = rand(30, 70); this.contrail.visible = false; }
     }
     this.navGlow.end();
     // Distant engine rumble or rotor thud, fading with distance.
@@ -403,9 +407,9 @@ export class Effects {
     this.base = {hemi: this.hemi.intensity, sun: this.sun.intensity};
     const wet = this.raining, road = this.world.roadMat, hills = this.settings.location === 'hills';
     // Rain soaks the road; winter slush and spring showers leave it damp and glossy.
-    const damp = wet ? 1 : hills && this.settings.season === 'winter' ? .55 : hills && this.settings.season === 'spring' ? .4 : 0;
-    road.roughness = this.original.roadRough + (.32 - this.original.roadRough) * damp;
-    road.envMapIntensity = this.original.roadEnv + (1.6 - this.original.roadEnv) * damp;
+    const damp = wet ? 1 : hills && this.settings.season === 'winter' ? .42 : hills && this.settings.season === 'spring' ? .3 : 0, low = this.settings.time === 'sunset';
+    road.roughness = Math.min(.96, this.original.roadRough + (low ? .06 : 0) + ((wet ? .32 : .5) - this.original.roadRough) * damp);
+    road.envMapIntensity = this.original.roadEnv * (low ? .75 : 1) + ((wet ? 1.5 : 1.15) - this.original.roadEnv) * damp;
     if (damp) road.color.multiplyScalar(1 - .38 * damp);
     this.world.groundMat.roughness = wet ? .82 : this.original.groundRough;
     road.needsUpdate = true;

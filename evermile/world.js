@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {createRoad,random,noise,lerp,smooth} from './math.js?v=20260926b';
-import {Scenery} from './scenery.js?v=20260926b';
+import {Scenery} from './scenery.js?v=20260926c';
 const scratch=new T.Object3D(),col=new T.Color();
 const CHUNK=240;
 const TERRAIN_COLUMNS=[-850,-620,-420,-290,-200,-135,-85,-55,-32,-19,-11,-6.1,-5.5,0,5.5,6.1,11,19,32,55,85,135,200,290,420,620,850];
@@ -30,10 +30,10 @@ export class World{
  void main(){vec3 d=normalize(vPosition);float y=max(d.y,0.);vec3 c=mix(bottom,top,pow(y,.5));
   float sun=max(dot(d,sunDirection),0.),day=1.-night;
   c=mix(c,sunColor*1.08,smoothstep(.3,0.,y)*(.28+.5*pow(sun,2.))*golden*day);
-  c+=sunColor*(pow(sun,6.)*.16+pow(sun,40.)*.28)*(.6+golden)*day;
+  c+=sunColor*(pow(sun,6.)*.12+pow(sun,40.)*.2)*(.6+golden*.7)*day;
   c=mix(c,bottom*1.04,smoothstep(.2,0.,y)*.3*day*(1.-golden*.6));
   float disc=smoothstep(.99988,.99993,dot(d,sunDirection));
-  vec3 sunCore=mix(sunColor,vec3(1.,.96,.88),.55)*(golden>.5?9.:16.);
+  vec3 sunCore=mix(sunColor,vec3(1.,.96,.88),.55)*(golden>.5?6.:14.);
   vec3 lit=c+sunCore*disc*day+sunColor*pow(sun,1200.)*2.*day;
   float m=max(dot(d,moonDirection),0.);vec3 right=normalize(cross(moonDirection,vec3(0,1,0))),up=cross(right,moonDirection);
   vec2 mp=vec2(dot(d,right),dot(d,up))/.0165;float mr=dot(mp,mp);float onMoon=smoothstep(1.,.92,mr)*step(0.,dot(d,moonDirection));
