@@ -12,3 +12,8 @@
 #touch-controls{top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 64px)!important;left:14px!important;right:14px!important;align-items:flex-end}
 #touch-controls button{width:68px!important;height:68px!important;background:#10201ab8;border-color:#ffffff40}
 #touch-controls button[data-drive="throttle"]{height:84px!important}
+
+/* Game controls are for pressing, not selecting: no text selection, long-press callout or tap flash (iOS Safari needs the -webkit- forms) */
+body,button,#hud,#topbar,#touch-controls,#touch-controls *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+#touch-controls button{touch-action:none}
