@@ -19,7 +19,7 @@
     if (position) position.textContent = `${list.indexOf(pick) + 1} of ${list.length}`;
   };
 
-  const bundles3D = { snake: '/games/snake3d.bundle.js?v=1', stack: '/games/arcade3d.bundle.js?v=2', flight: '/games/arcade3d.bundle.js?v=2', pong: '/games/arcade3d.bundle.js?v=2', gravity: '/games/arcade3d.bundle.js?v=2' };
+  const bundles3D = { snake: '/games/snake3d.bundle.js?v=1', stack: '/games/arcade3d.bundle.js?v=4', flight: '/games/arcade3d.bundle.js?v=4', pong: '/games/arcade3d.bundle.js?v=4', gravity: '/games/arcade3d.bundle.js?v=4' };
   const load3D = (game) => {
     const src = bundles3D[game];
     if (!src || (game === 'snake' ? window.Snake3D : window.Arcade3D) || $$('script[data-game3d]').some((script) => script.dataset.game3d === src)) return;
