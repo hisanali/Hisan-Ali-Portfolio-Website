@@ -56,6 +56,8 @@ export class Effects {
     this.buildLightning();
     this.buildBirds();
     this.buildWater();
+    this.buildTyreMarks();
+    this.buildDust();
     this.refresh();
   }
 
@@ -286,8 +288,94 @@ export class Effects {
     if (wet) this.updatePuddles(true);
   }
 
+  /* ---------- Tyres: skid marks on hard braking or cornering, dust off the road, spray in the rain ---------- */
+  buildTyreMarks() {
+    this.markCount = 700; this.markNext = 0; this.markTravel = 0; this.lastMark = null;
+    const mat = new T.MeshBasicMaterial({color: 0x050505, transparent: true, opacity: .38, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2});
+    this.marks = new T.InstancedMesh(new T.PlaneGeometry(.24, 1).rotateX(-Math.PI / 2), mat, this.markCount);
+    this.marks.frustumCulled = false;
+    const hidden = new T.Matrix4().makeTranslation(0, -9999, 0);
+    for (let i = 0; i < this.markCount; i++) this.marks.setMatrixAt(i, hidden);
+    this.scene.add(this.marks);
+  }
+
+  wheelSpots(s) {
+    const v = this.settings.vehicle, back = v === 'coach' ? -3.2 : v === 'bike' ? -.75 : -1.3, sides = v === 'bike' ? [0] : v === 'coach' ? [-1.05, 1.05] : [-.8, .8];
+    const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
+    return sides.map((side) => ({x: s.x + fx * back + fz * side, z: s.z + fz * back - fx * side}));
+  }
+
+  updateTyreMarks(dt) {
+    const s = this.getState(), speed = Math.abs(s.speed || 0);
+    const skidding = s.started && s.grounded !== false && !s.offroad && this.settings.location === 'hills' && speed > 5 && ((s.slip || 0) > .35 || ((s.brakeIn || 0) > .7 && speed > 9));
+    if (!skidding) { this.lastMark = null; return; }
+    this.markTravel += speed * dt;
+    if (this.markTravel < .45) return;
+    const spots = this.wheelSpots(s), m = new T.Matrix4(), q = new T.Quaternion(), sc = new T.Vector3(1, 1, 1), v = new T.Vector3(), up = new T.Vector3(0, 1, 0);
+    spots.forEach((p, i) => {
+      const prev = this.lastMark?.[i];
+      const len = prev ? Math.hypot(p.x - prev.x, p.z - prev.z) : this.markTravel;
+      const cx = prev ? (p.x + prev.x) / 2 : p.x, cz = prev ? (p.z + prev.z) / 2 : p.z;
+      const yaw = prev ? Math.atan2(p.x - prev.x, p.z - prev.z) : s.yaw;
+      q.setFromAxisAngle(up, yaw); sc.set(1, 1, Math.min(2, len + .05));
+      m.compose(v.set(cx, this.world.groundHeight(cx, cz) + .015, cz), q, sc);
+      this.marks.setMatrixAt(this.markNext, m); this.markNext = (this.markNext + 1) % this.markCount;
+    });
+    this.marks.instanceMatrix.needsUpdate = true;
+    this.lastMark = spots; this.markTravel = 0;
+  }
+
+  buildDust() {
+    const n = this.dustCount = 360;
+    this.dustPos = new Float32Array(n * 3).fill(-9999); this.dustVel = new Float32Array(n * 3); this.dustLife = new Float32Array(n); this.dustAlpha = new Float32Array(n); this.dustCol = new Float32Array(n * 4);
+    this.dustNext = 0; this.dustSpawn = 0;
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.BufferAttribute(this.dustPos, 3));
+    g.setAttribute('color', new T.BufferAttribute(this.dustCol, 4));
+    const puff = canvasTexture(64, (x, n) => { const gr = x.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.5, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, n, n); });
+    this.dust = new T.Points(g, new T.PointsMaterial({size: 1.6, map: puff, vertexColors: true, transparent: true, depthWrite: false, sizeAttenuation: true}));
+    this.dust.frustumCulled = false;
+    this.scene.add(this.dust);
+  }
+
+  updateDust(dt) {
+    const s = this.getState(), speed = Math.abs(s.speed || 0), n = this.dustCount;
+    const hills = this.settings.location === 'hills', winter = hills && this.settings.season === 'winter';
+    const dusty = s.started && s.grounded !== false && s.offroad && speed > 3, spray = s.started && this.raining && !s.offroad && speed > 6;
+    let tint = null;
+    if (dusty) tint = winter ? [.92, .94, .97, .5] : hills ? [.62, .54, .42, .42] : ({mars: [.72, .38, .22, .5], moon: [.62, .62, .62, .5], venus: [.78, .62, .36, .5]}[this.settings.planet] || [.6, .5, .4, .45]);
+    else if (spray) tint = [.82, .86, .9, .3];
+    if (tint && this.settings.quality !== 'low') {
+      this.dustSpawn += dt * Math.min(70, speed * (dusty ? 2.6 : 1.8));
+      const spots = this.wheelSpots(s), fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
+      while (this.dustSpawn >= 1) {
+        this.dustSpawn--;
+        const p = spots[this.dustNext % spots.length], i = this.dustNext, k = i * 3;
+        this.dustPos[k] = p.x + rand(-.2, .2); this.dustPos[k + 1] = this.world.groundHeight(p.x, p.z) + .15; this.dustPos[k + 2] = p.z + rand(-.2, .2);
+        const back = speed * rand(.08, .2);
+        this.dustVel[k] = -fx * back + rand(-.8, .8); this.dustVel[k + 1] = rand(.6, dusty ? 1.8 : 1.2); this.dustVel[k + 2] = -fz * back + rand(-.8, .8);
+        this.dustLife[i] = 1; this.dustCol.set(tint, i * 4); this.dustAlpha[i] = tint[3];
+        this.dustNext = (this.dustNext + 1) % n;
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      if (this.dustLife[i] <= 0) continue;
+      const k = i * 3, drag = Math.exp(-dt * 1.8);
+      this.dustLife[i] -= dt * .75;
+      this.dustVel[k] *= drag; this.dustVel[k + 2] *= drag; this.dustVel[k + 1] = this.dustVel[k + 1] * drag + .15 * dt;
+      this.dustPos[k] += this.dustVel[k] * dt; this.dustPos[k + 1] += this.dustVel[k + 1] * dt; this.dustPos[k + 2] += this.dustVel[k + 2] * dt;
+      const life = Math.max(0, this.dustLife[i]);
+      this.dustCol[i * 4 + 3] = this.dustAlpha[i] * life * Math.min(1, (1 - life) / .12 + .1);
+      if (life <= 0) this.dustPos[k + 1] = -9999;
+    }
+    this.dust.geometry.attributes.position.needsUpdate = true;
+    this.dust.geometry.attributes.color.needsUpdate = true;
+  }
+
   update(dt) {
     this.time += dt;
+    this.updateTyreMarks(dt);
+    this.updateDust(dt);
     if (this.raining) { this.updateRain(dt); this.updatePuddles(); this.updateRipples(dt); }
     this.updateLightning(dt);
     this.updateBirds(dt);
