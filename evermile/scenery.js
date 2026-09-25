@@ -197,7 +197,10 @@ export class Scenery {
       for (let bz = t.start + 26; bz < t.end - 20; bz += 20 + rng() * 16) if (rng() < .6) lots.push({side, z: bz, W: 7.5 + rng() * 2, kind: 'backHouse', seed: rng()});
     }
     for (let z = t.start + 8, i = 0; z < t.end - 4; z += 30, i++) lamps.push({z, side: i % 2 ? 1 : -1});
-    const lay = {lots, lamps};
+    // Benches along the pavement, between the lamps.
+    const benches = [];
+    for (let z = t.start + 20; z < t.end - 12; z += 18 + rng() * 22) benches.push({z, side: rng() < .5 ? 1 : -1, bin: rng() < .5});
+    const lay = {lots, lamps, benches};
     this.layouts.set(t, lay);
     if (this.layouts.size > 12) this.layouts.delete(this.layouts.keys().next().value);
     return lay;
@@ -213,6 +216,7 @@ export class Scenery {
       const lay = this.layout(t);
       for (const lot of lay.lots) if (inChunk(lot.z)) this.buildLot(batch, lot, colliders, w);
       for (const l of lay.lamps) if (inChunk(l.z)) this.streetLamp(batch, l.z, l.side, w + .55, colliders, lamps);
+      for (const b of lay.benches) if (inChunk(b.z)) this.bench(batch, b, w, colliders);
       this.pavement(group, t, plan, w);
       if (inChunk(t.center)) this.zebra(batch, t.center, w);
       if (inChunk(t.start - 14)) this.entrySign(group, t, t.start - 14, 1, w, colliders);
@@ -317,6 +321,18 @@ export class Scenery {
     colliders.push({x: px, z: pz, r: .3});
   }
 
+  // Park bench: wooden slats on a dark metal frame, facing the street, sometimes with a litter bin beside it.
+  bench(batch, b, w, colliders) {
+    const r = this.world.road, yaw = Math.atan(r.tangent(b.z)) + (b.side < 0 ? Math.PI : 0), put = frame(batch, r.x(b.z) + b.side * (w + 2.65), r.y(b.z) + .075, b.z, yaw);
+    const wood = 0x8a5a36, iron = 0x2b2e31;
+    for (const lx of [-.18, 0, .18]) put('wall', UNIT, lx, .45, 0, wood, .15, .04, 1.8);
+    for (const y of [.62, .78]) put('wall', UNIT, .3, y, 0, wood, .04, .12, 1.8, 0, 0, -.18);
+    for (const lz of [-.75, .75]) { put('metal', UNIT, -.15, .22, lz, iron, .06, .44, .06); put('metal', UNIT, .22, .4, lz, iron, .06, .8, .06); put('metal', UNIT, .03, .43, lz, iron, .5, .05, .06); }
+    if (b.bin) { put('metal', UNIT, .05, .42, 1.4, 0x2f4a3a, .42, .84, .42); put('metal', UNIT, .05, .86, 1.4, 0x1e2a22, .46, .06, .46); }
+    const [cx, cz] = put.world(0, b.bin ? .3 : 0);
+    colliders.push({x: cx, z: cz, hx: .35, hz: b.bin ? 1.2 : .95, c: put.c, s: put.s, r: 0});
+  }
+
   // Paved footpaths on both sides of the street, with the kerb painted along the road edge.
   pavement(group, t, plan, w) {
     const r = this.world.road, a = Math.max(plan.z0, t.start - 6), b = Math.min(plan.z1, t.end + 6);
@@ -402,7 +418,7 @@ export class Scenery {
     const flowerX = mergeGeometries([flower.clone(), flower.clone().rotateY(Math.PI / 2)]);
     this.mats.flowerBed = {material: new T.MeshStandardMaterial({map: this.flowerTexture, alphaTest: .45, side: T.DoubleSide, roughness: .9})};
     return {hull, gable, bush, flower: flowerX, sail: new T.ShapeGeometry(sail),
-      hullMats: [0xf2f0ea, 0xa8322d, 0x2b4f7a, 0x2f6a4d, 0xe0c35a].map((c) => new T.MeshStandardMaterial({color: c, roughness: .55})),
+      hullMats: [0x121314, 0x17191c, 0x0e1013].map((c) => new T.MeshStandardMaterial({color: c, roughness: .35, metalness: .15})),
       wood: new T.MeshStandardMaterial({color: 0x8a6440, roughness: .8}), sailMat: new T.MeshStandardMaterial({color: 0xf5f2ea, roughness: .7, side: T.DoubleSide}),
       mast: new T.MeshStandardMaterial({color: 0xd8d4c8, roughness: .5})};
   }
@@ -435,7 +451,7 @@ export class Scenery {
       if (!deep(x, z) || (check && !(deep(x + 4, z) && deep(x - 4, z) && deep(x, z + 4) && deep(x, z - 4)))) continue;
       // Only where you can see it from the road: nothing on the line from the driver's eye to the boat rises above that line.
       if (check) { const ex = r.x(z), ey = r.y(z) + 1.6; let seen = true; for (let k = 1; k < 10 && seen; k++) { const f = k / 10, px = ex + (x - ex) * f, py = ey + (water + .6 - ey) * f; if (this.world.surfaceHeight(px, z) > py) seen = false; } if (!seen) continue; }
-      const g = this.boat(rng() < .4, rng); g.position.set(x, water + .05, z); g.rotation.y = rng() * Math.PI * 2;
+      const g = this.boat(rng() < .4, rng); g.scale.setScalar(1.7); g.position.set(x, water + .05, z); g.rotation.y = rng() * Math.PI * 2;
       group.add(g); boats.push({g, phase: rng() * 6.28, yaw: g.rotation.y}); placed++;
     }
   }

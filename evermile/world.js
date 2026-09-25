@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {createRoad,random,noise,lerp,smooth} from './math.js?v=20260926b';
-import {Scenery} from './scenery.js?v=20260926c';
+import {Scenery} from './scenery.js?v=20260926d';
 const scratch=new T.Object3D(),col=new T.Color();
 const CHUNK=240;
 const TERRAIN_COLUMNS=[-850,-620,-420,-290,-200,-135,-85,-55,-32,-19,-11,-6.1,-5.5,0,5.5,6.1,11,19,32,55,85,135,200,290,420,620,850];

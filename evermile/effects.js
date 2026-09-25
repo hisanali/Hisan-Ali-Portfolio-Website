@@ -210,7 +210,7 @@ export class Effects {
   }
 
   launchFlight() {
-    const s = this.getState(), heli = Math.random() < .4, dir = Math.random() < .5 ? 1 : -1;
+    const s = this.getState(), heli = Math.random() < .6, dir = Math.random() < .5 ? 1 : -1;
     // Kept within the view ahead: low enough to sit in the sky above the road, far enough to feel distant.
     const across = heli ? rand(650, 900) : 1400, ahead = heli ? rand(300, 520) : rand(550, 850), alt = heli ? rand(45, 80) : rand(150, 220);
     const craft = heli ? this.heli : this.plane, speed = heli ? rand(38, 50) : rand(105, 125);
@@ -251,7 +251,7 @@ export class Effects {
         v.set(x, y, z); c.localToWorld(v); this.fade.set(col);
         this.navGlow.add(v.x, v.y, v.z, this.fade, kind ? 1.6 * night + .4 : night, kind === 'strobe' ? 40 : 18);
       }
-      if (f.age > f.life || !show) { c.visible = false; this.flight = null; this.nextFlight = rand(30, 70); this.contrail.visible = false; }
+      if (f.age > f.life || !show) { c.visible = false; this.flight = null; this.nextFlight = rand(18, 45); this.contrail.visible = false; }
     }
     this.navGlow.end();
     // Distant engine rumble or rotor thud, fading with distance.
