@@ -112,14 +112,14 @@ export class Life {
   sheep() {
     const g = new T.Group();
     for (const [x, y, z, s] of [[0, .78, .05, 1], [.12, .86, .32, .7], [-.12, .86, .3, .7], [.14, .84, -.26, .72], [-.14, .84, -.28, .72], [0, .98, 0, .62], [0, .74, .42, .6], [0, .76, -.44, .62]]) {
-      const lump = part(this.g.woolBody, this.m.wool, x, y, z, g); lump.scale.setScalar(.5 * s); lump.rotation.set(rand(0, 3), rand(0, 3), 0);
+      const lump = part(this.g.woolBody, this.m.wool, x, y - .08, z, g); lump.scale.setScalar(.5 * s); lump.rotation.set(rand(0, 3), rand(0, 3), 0);
     }
-    const neck = new T.Group(); neck.position.set(0, .88, .52); g.add(neck);
+    const neck = new T.Group(); neck.position.set(0, .8, .52); g.add(neck);
     const head = new T.Group(); head.position.set(0, -.04, .14); neck.add(head);
     part(new RoundedBoxGeometry(.18, .22, .3, 3, .07), this.m.sheepFace, 0, 0, .06, head);
     part(this.g.woolBody, this.m.wool, 0, .12, -.04, head).scale.set(.24, .14, .2);
     for (const s of [-1, 1]) { const ear = part(this.g.sphere, this.m.sheepFace, s * .13, .05, -.02, head); ear.scale.set(.14, .045, .07); part(this.g.eye, this.m.eye, s * .08, .05, .12, head).scale.setScalar(.8); }
-    const legs = [[-.16, .3], [.16, .3], [-.16, -.3], [.16, -.3]].map(([x, z]) => this.leg(g, x, .58, z, .26, .28, .04, this.m.sheepFace, this.m.hoof));
+    const legs = [[-.16, .3], [.16, .3], [-.16, -.3], [.16, -.3]].map(([x, z]) => this.leg(g, x, .5, z, .23, .25, .045, this.m.sheepFace, this.m.hoof));
     return {g, neck, head, legs, kind: 'sheep', size: 1.3, gait: 4.5};
   }
 
@@ -164,11 +164,38 @@ export class Life {
 
   // Herds graze in fields well off the road; dogs trot and cats sit near the verge.
   placeAnimal(a, z, side, offset) {
-    const r = this.world.road;
+    const r = this.world.road, herd = a.kind === 'cow' || a.kind === 'sheep';
+    // Herds need grazeable ground: not steep, not under water, not in a town.
+    for (let k = 0; herd && k < 8; k++) {
+      const x = r.x(z) + side * offset, h = (px, pz) => this.world.surfaceHeight(px, pz, false), y = h(x, z);
+      const slope = Math.max(Math.abs(h(x + 2, z) - h(x - 2, z)), Math.abs(h(x, z + 2) - h(x, z - 2))) / 4;
+      if (slope < .45 && y > -6.5 && !(r.townFactor?.(z) > 0)) break;
+      offset = rand(22, 75); z += rand(-30, 30);
+    }
     a.z = z; a.side = side; a.offset = offset;
     a.heading = a.kind === 'dog' ? (Math.random() < .5 ? 0 : Math.PI) : rand(0, Math.PI * 2);
-    a.speed = a.kind === 'dog' ? rand(1.2, 2.2) : a.kind === 'cat' ? 0 : rand(0, .25);
-    a.x = r.x(z) + side * offset;
+    a.targetHeading = a.heading; a.walking = false; a.timer = rand(1, 9);
+    a.speed = a.kind === 'dog' ? rand(1.2, 2.2) : 0;
+    a.x = r.x(z) + side * offset; a.homeX = a.x; a.homeZ = a.z;
+  }
+
+  // Cows and sheep graze with their heads down, then wander a few metres, staying near the herd and away from steep ground, water and the road.
+  wander(a, dt) {
+    const r = this.world.road, h = (x, z) => this.world.surfaceHeight(x, z, false);
+    if (a.crossing) return this.cross(a, dt);
+    a.timer -= dt;
+    if (a.timer <= 0) {
+      a.walking = !a.walking && Math.random() < .75;
+      a.timer = a.walking ? rand(2.5, 6) : rand(5, 15);
+      if (a.walking) { const far = Math.hypot(a.x - a.homeX, a.z - a.homeZ) > 12; a.targetHeading = far ? Math.atan2(a.homeX - a.x, a.homeZ - a.z) : a.heading + rand(-1.3, 1.3); }
+    }
+    const want = a.walking ? (a.kind === 'sheep' ? .55 : .42) : 0;
+    a.speed += (want - a.speed) * Math.min(1, dt * 1.5);
+    a.heading += Math.atan2(Math.sin(a.targetHeading - a.heading), Math.cos(a.targetHeading - a.heading)) * Math.min(1, dt * .9);
+    if (a.speed < .01) return;
+    const nx = a.x + Math.sin(a.heading) * 1.6, nz = a.z + Math.cos(a.heading) * 1.6, rise = Math.abs(h(nx, nz) - h(a.x, a.z)) / 1.6;
+    if (rise > .6 || h(nx, nz) < -7.2 || Math.abs(nx - r.x(nz)) < this.settings.roadWidth / 2 + 3) { a.targetHeading = a.heading + Math.PI * rand(.6, 1.4); a.speed *= .3; return; }
+    a.x += Math.sin(a.heading) * a.speed * dt; a.z += Math.cos(a.heading) * a.speed * dt;
   }
 
   respawnAnimals() {
@@ -191,22 +218,56 @@ export class Life {
     for (const a of this.animals) a.claimed = false;
   }
 
+  // An animal (or a small group) walking across the road ahead; a honk sends them running for the nearer verge.
+  cross(a, dt) {
+    const r = this.world.road, c = a.crossing, w = this.settings.roadWidth / 2;
+    if (c.delay > 0) { c.delay -= dt; a.speed = 0; return; }
+    const run = c.flee > 0; c.flee -= dt;
+    const want = run ? {cow: 4.6, sheep: 5.2, dog: 6.5}[a.kind] || 4.5 : {cow: 1, sheep: 1.3, dog: 1.8}[a.kind] || 1;
+    a.speed += (want - a.speed) * Math.min(1, dt * (run ? 6 : 1.5));
+    const roadYaw = Math.atan(r.tangent(a.z)), target = roadYaw + (c.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+    a.heading = target; a.targetHeading = target;
+    a.x += Math.sin(a.heading) * a.speed * dt; a.z += Math.cos(a.heading) * a.speed * dt;
+    if ((a.x - r.x(a.z)) * c.dir > w + 5 && c.flee <= 0) { a.crossing = null; a.walking = false; a.timer = rand(4, 10); a.homeX = a.x + c.dir * 6; a.homeZ = a.z; if (a.kind === 'dog') { a.offset = Math.abs(a.x - r.x(a.z)); a.side = c.dir; a.speed = rand(1.2, 2.2); a.heading = Math.random() < .5 ? 0 : Math.PI; } }
+  }
+
+  startCrossing(force) {
+    const s = this.getState(), r = this.world.road, w = this.settings.roadWidth / 2;
+    const z = s.z + Math.max(1, s.speed) * rand(8, 11) + rand(30, 60);
+    if (r.townFactor?.(z) > 0 || r.bridgeNear?.(z) && Math.abs(r.bridgeNear(z).z - z) < 120) return;
+    const kind = force || pick(['sheep', 'sheep', 'cow', 'cow', 'dog']), group = kind === 'dog' ? 1 : kind === 'sheep' ? 3 + Math.floor(Math.random() * 3) : 2 + Math.floor(Math.random() * 2);
+    const from = Math.random() < .5 ? -1 : 1, list = this.animals.filter((a) => a.kind === kind && !a.crossing && (Math.abs(a.z - s.z) > 120 || a.z < s.z)).slice(0, group);
+    list.forEach((a, i) => {
+      const zz = z + (i % 2) * 1.6 - i * .6;
+      a.g.visible = true; a.z = zz; a.x = r.x(zz) + from * (w + 2.5 + i * 1.3);
+      a.crossing = {dir: -from, delay: i * rand(.5, 1.1), flee: 0}; a.speed = 0; a.walking = true;
+    });
+  }
+
   updateAnimals(dt) {
+    if (this.settings.location === 'hills' && this.getState().started) {
+      this.crossTimer = (this.crossTimer ?? rand(20, 40)) - dt;
+      if (this.crossTimer <= 0) { this.startCrossing(); this.crossTimer = rand(45, 100); }
+    }
     this.respawnTimer = (this.respawnTimer || 0) - dt;
     if (this.respawnTimer <= 0) { this.respawnAnimals(); this.respawnTimer = 1.2; }
     if (this.settings.location !== 'hills') return;
     const s = this.getState(), off = false, r = this.world.road;
     for (const a of this.animals) {
       if (!a.g.visible || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
-      a.phase += dt;
-      if (a.speed) {
-        a.z += Math.cos(a.heading) * a.speed * dt;
-        if (a.kind === 'dog') a.x = r.x(a.z) + a.side * a.offset; else a.x += Math.sin(a.heading) * a.speed * dt;
-      }
+      a.phase += dt * (a.speed > 1.8 && a.kind !== 'dog' ? 1 + (a.speed - 1.8) * .45 : 1);
+      if (a.kind === 'cow' || a.kind === 'sheep' || a.crossing) this.wander(a, dt);
+      else if (a.speed) { a.z += Math.cos(a.heading) * a.speed * dt; a.x = r.x(a.z) + a.side * a.offset; }
       const y = this.world.surfaceHeight(a.x, a.z, off);
       if (y < -7) { a.g.position.y = -500; continue; }
-      a.g.position.set(a.x, y, a.z);
-      a.g.rotation.y = a.kind === 'dog' ? (a.heading === 0 ? Math.atan(r.tangent(a.z)) : Math.atan(r.tangent(a.z)) + Math.PI) : a.heading;
+      const yaw = a.kind === 'dog' ? (a.heading === 0 ? Math.atan(r.tangent(a.z)) : Math.atan(r.tangent(a.z)) + Math.PI) : a.heading;
+      // Stand with the slope: pitch and roll the body to the ground under the front, back and sides.
+      const L = a.size * .38, W = a.size * .16, sy = Math.sin(yaw), cy = Math.cos(yaw), g = (x, z) => this.world.surfaceHeight(x, z, off);
+      const hf = g(a.x + sy * L, a.z + cy * L), hb = g(a.x - sy * L, a.z - cy * L), hr = g(a.x + cy * W, a.z - sy * W), hl = g(a.x - cy * W, a.z + sy * W);
+      const pitch = Math.max(-.45, Math.min(.45, -Math.atan2(hf - hb, 2 * L))), roll = Math.max(-.35, Math.min(.35, Math.atan2(hr - hl, 2 * W)));
+      a.g.rotation.order = 'YXZ';
+      a.g.position.set(a.x, Math.min(y, (hf + hb) / 2) + .01, a.z);
+      a.g.rotation.set(pitch, yaw, roll);
       const walk = a.speed > .05;
       if (a.legs) a.legs.forEach((l, i) => {
         if (!l.hip) { l.rotation.x = 0; return; }
@@ -214,7 +275,7 @@ export class Life {
         l.hip.rotation.x = swing * .42;
         l.knee.rotation.x = walk ? (i < 2 ? Math.max(0, -swing) * .7 : -Math.max(0, swing) * .6) : 0;
       });
-      if (a.kind === 'cow' || a.kind === 'sheep') { const grazing = Math.sin(a.phase * .11 + a.z) < .5; a.neck.rotation.x = grazing ? .75 + Math.sin(a.phase * 1.3) * .08 : Math.sin(a.phase * .4) * .12; if (a.head) a.head.rotation.x = grazing ? .35 : 0; }
+      if (a.kind === 'cow' || a.kind === 'sheep') { const grazing = !a.walking && a.speed < .1 ? 1 : 0; a.graze = (a.graze || 0) + (grazing - (a.graze || 0)) * Math.min(1, dt * 1.4); a.neck.rotation.x = a.graze * (.75 + Math.sin(a.phase * 1.3) * .08) + (1 - a.graze) * Math.sin(a.phase * .4) * .12; if (a.head) a.head.rotation.x = a.graze * .35; }
       if (a.kind === 'dog') { a.neck.rotation.x = Math.sin(a.phase * 11) * .04; a.tail.rotation.z = Math.sin(a.phase * 14) * .6; }
       if (a.kind === 'cat') { a.tail.rotation.z = Math.sin(a.phase * 1.3) * .5; a.neck.rotation.y = Math.sin(a.phase * .4) * .7; }
       if (a.kind === 'cow') a.tail.rotation.z = Math.sin(a.phase * 1.7) * .25;
@@ -315,9 +376,24 @@ export class Life {
   honk() {
     const s = this.getState(), now = performance.now();
     for (const c of this.traffic) if (c.dir < 0 && c.g.visible && c.z > s.z && c.z - s.z < 180) this.flash(c, now + rand(250, 700));
+    this.scare(s);
     const ahead = this.leadAhead(s, true);
     if (ahead && ahead.gap < 55 && !ahead.car.yielding && !(this.world.road.townFactor?.(ahead.car.z) > 0) && Math.random() < .7) {
       const c = ahead.car; c.yielding = true; c.yieldPhase = 'signal'; c.yieldClock = rand(.7, 1.3);
+    }
+  }
+
+  // Animals on or beside the road ahead bolt for the nearer verge when you sound the horn.
+  scare(s) {
+    const r = this.world.road, w = this.settings.roadWidth / 2;
+    for (const a of this.animals) {
+      if (!a.g.visible || a.kind === 'cat' || a.z < s.z - 5 || a.z > s.z + 120) continue;
+      const dx = a.x - r.x(a.z);
+      if (Math.abs(dx) > w + 6) continue;
+      // A crossing animal sprints on across to clear the road; one beside the road runs away from it.
+      const dir = a.crossing ? a.crossing.dir : Math.sign(dx) || 1;
+      a.crossing = {dir, delay: 0, flee: 4};
+      a.walking = true;
     }
   }
 
@@ -364,6 +440,7 @@ export class Life {
       const far = c.dir < 0 ? c.z < s.z - 70 || c.z > s.z + 950 : c.z < s.z - 120 || c.z > s.z + 750;
       if (far || !c.g.visible) this.spawnCar(c, s);
     }
+    this.roadAnimals = this.animals.filter((an) => an.g.visible && an.g.position.y > -400 && Math.abs(an.x - r.x(an.z)) < this.settings.roadWidth / 2 + 1.5 && Math.abs(an.z - s.z) < 900);
     const lanes = [this.traffic.filter((c) => c.active && c.g.visible && c.dir < 0), this.traffic.filter((c) => c.active && c.g.visible && c.dir > 0)];
     for (const list of lanes) {
       if (!list.length) continue;
@@ -379,6 +456,10 @@ export class Life {
         if (ahead > 0 && Math.abs(px - x) < (c.width / 2 + 1.25)) {
           const pg = ahead - (playerLen + c.length) / 2;
           if (pg < gap) { gap = pg; leadSpeed = pvz * dir; frontZ = s.z; frontLen = playerLen; }
+        }
+        for (const an of this.roadAnimals) {
+          const ag = (an.z - c.z) * dir - c.length / 2 - 1.2;
+          if (ag > -1 && ag < gap && Math.abs(an.x - x) < c.width / 2 + 1) { gap = ag; leadSpeed = 0; frontZ = null; }
         }
         const town = r.townFactor ? r.townFactor(c.z) : 0, cruise = Math.min(c.cruise, town > .3 ? 13.5 : 99) * (c.yielding && c.yieldPhase === 'aside' ? .72 : 1);
         // Intelligent driver model: accelerate towards cruise speed, brake to keep a time gap to whatever is in front.
@@ -414,7 +495,7 @@ export class Life {
       const lit = night ? 1 : dim ? .55 : .12;
       for (const sx of [-1, 1]) {
         v.set(sx * c.headX, c.headY, c.length / 2 + .05); c.g.localToWorld(v);
-        this.glow.add(v.x, v.y, v.z, warm, flashing ? 2.6 : lit * (c.dir < 0 ? 1 : .5), flashing ? 70 : 26);
+        this.glow.add(v.x, v.y, v.z, warm, flashing ? 2 : lit * (c.dir < 0 ? .65 : .35), flashing ? 60 : 20);
         v.set(sx * c.headX, c.tailY, -c.length / 2 - .05); c.g.localToWorld(v);
         if (night || c.braking) this.glow.add(v.x, v.y, v.z, red, c.braking ? 1.1 : .45, c.braking ? 22 : 14);
         const on = blink && ((c.indicator === 1 && sx > 0) || (c.indicator === -1 && sx < 0));
