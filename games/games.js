@@ -248,6 +248,19 @@
   const memoryBoard = $('[data-memory-board]');
   const memoryMoves = $('[data-memory-moves]');
   const memorySymbols = ['A','B','C','D','E','F','G','H'];
+  // Card ids stay A–H so online rooms stay compatible; each id is drawn as a coloured shape.
+  const memoryShapes = {
+    A: ['Star', '#6659cb', 'M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.5L12 17.2l-5.9 3.2 1.3-6.5L2.5 9.3l6.6-.8z'],
+    B: ['Heart', '#e8453c', 'M12 21s-7.5-4.6-9.5-9.2C1 8.1 3.3 4.5 7 4.5c2.1 0 3.6 1.1 5 2.9 1.4-1.8 2.9-2.9 5-2.9 3.7 0 6 3.6 4.5 7.3C19.5 16.4 12 21 12 21z'],
+    C: ['Diamond', '#2f7fe0', 'M12 2l8.5 10L12 22 3.5 12z'],
+    D: ['Moon', '#d99a00', 'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z'],
+    E: ['Bolt', '#d9468f', 'M13.5 2 4.5 13.5H11L9.5 22l10-12.5H13z'],
+    F: ['Triangle', '#1f9e6e', 'M12 3l9.5 17h-19z'],
+    G: ['Ring', '#f07a2a', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z'],
+    H: ['Plus', '#0f8f8a', 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z']
+  };
+  const memoryShapeSvg = (symbol) => { const [, color, path] = memoryShapes[symbol] || []; return path ? `<svg viewBox="0 0 24 24" aria-hidden="true" style="--shape:${color}"><path fill-rule="evenodd" d="${path}"/></svg>` : symbol; };
+  window.GameMemoryShapes = { svg: memoryShapeSvg, name: (symbol) => memoryShapes[symbol]?.[0] || symbol };
   let memoryOpen = [];
   let memoryLocked = false;
   let matchedPairs = 0;
@@ -256,10 +269,10 @@
   const resetMemory = () => {
     memoryOpen = []; memoryLocked = false; matchedPairs = 0; moveCount = 0; memoryMoves.textContent = '0'; memoryBoard.replaceChildren();
     shuffle([...memorySymbols,...memorySymbols]).forEach((symbol,index) => {
-      const card = document.createElement('button'); card.type = 'button'; card.className = 'memory-card'; card.dataset.symbol = symbol; card.setAttribute('aria-label', `Hidden card ${index + 1}`); card.textContent = symbol;
+      const card = document.createElement('button'); card.type = 'button'; card.className = 'memory-card'; card.dataset.symbol = symbol; card.setAttribute('aria-label', `Hidden card ${index + 1}`); card.innerHTML = memoryShapeSvg(symbol);
       card.addEventListener('click', () => {
         if (memoryLocked || card.classList.contains('is-flipped') || card.classList.contains('is-matched')) return;
-        card.classList.add('is-flipped'); card.setAttribute('aria-label', symbol); memoryOpen.push(card);
+        card.classList.add('is-flipped'); card.setAttribute('aria-label', memoryShapes[symbol][0]); memoryOpen.push(card);
         if (memoryOpen.length < 2) return;
         moveCount += 1; memoryMoves.textContent = String(moveCount); memoryLocked = true;
         const [first,second] = memoryOpen;

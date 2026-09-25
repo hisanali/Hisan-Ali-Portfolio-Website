@@ -986,3 +986,11 @@ html.theme-dark .gc-how { background: #0a1611; }
   .game-stage :is(.tic-mode-switch, .multi-mode) button::after { display: none; }
   .game-stage .game-help { font-size: 0; gap: 0; padding: 0 6px; }
 }
+
+/* Memory Match shapes: hidden while face down (card text colour is transparent), coloured when revealed */
+.memory-card svg { width: 54%; height: 54%; fill: currentColor; pointer-events: none; }
+.memory-card:is(.is-flipped, .is-matched) svg { fill: var(--shape); filter: drop-shadow(0 3px 6px rgba(0,0,0,.18)); }
+.game-stage .memory-card.is-flipped { background: #fbf7ee; }
+.game-stage .memory-card.is-matched { opacity: 1; border-color: var(--gc-lime); background: #fbf7ee; box-shadow: 0 0 0 3px rgba(223,255,99,.45), 0 16px 30px -16px rgba(0,0,0,.9); }
+.game-stage .memory-card.is-matched svg { animation: gc-match-pop .35s ease-out; }
+@keyframes gc-match-pop { 50% { transform: scale(1.18); } }
