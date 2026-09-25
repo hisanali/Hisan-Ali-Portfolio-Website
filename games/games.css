@@ -994,3 +994,7 @@ html.theme-dark .gc-how { background: #0a1611; }
 .game-stage .memory-card.is-matched { opacity: 1; border-color: var(--gc-lime); background: #fbf7ee; box-shadow: 0 0 0 3px rgba(223,255,99,.45), 0 16px 30px -16px rgba(0,0,0,.9); }
 .game-stage .memory-card.is-matched svg { animation: gc-match-pop .35s ease-out; }
 @keyframes gc-match-pop { 50% { transform: scale(1.18); } }
+
+/* Snake Circuit in 3D: the board floats in the arena, so no frame around the canvas */
+.game-stage .snake3d-canvas { display: block; width: min(600px, calc(100dvh - 350px), 100%); aspect-ratio: 1; max-width: 100%; cursor: grab; }
+@media (max-width: 760px) { .game-stage .snake3d-canvas { width: 100%; } }

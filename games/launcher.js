@@ -19,7 +19,16 @@
     if (position) position.textContent = `${list.indexOf(pick) + 1} of ${list.length}`;
   };
 
+  const loadSnake3D = () => {
+    if (window.Snake3D || $('script[data-snake3d]')) return;
+    const script = document.createElement('script');
+    script.src = '/games/snake3d.bundle.js?v=1';
+    script.dataset.snake3d = '';
+    document.body.append(script);
+  };
+
   const open = (pick) => {
+    if (pick.dataset.game === 'snake') loadSnake3D();
     if (!stage.classList.contains('is-open')) lastTrigger = document.activeElement;
     setPosition(pick);
     stage.inert = false;

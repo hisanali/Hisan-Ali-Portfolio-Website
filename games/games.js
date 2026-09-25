@@ -382,16 +382,19 @@
   let snakeRunning = false;
   const snakeCell = 20;
   const placeFood = () => { do { snakeFood={x:Math.floor(Math.random()*18),y:Math.floor(Math.random()*18)}; } while(snake.some(part=>part.x===snakeFood.x&&part.y===snakeFood.y)); };
+  const snakeSnapshot = () => ({ snake: snake.map(part => ({...part})), food: {...snakeFood}, running: snakeRunning, interval: 125 });
   const drawSnake = () => {
+    if (window.Snake3D) { window.Snake3D.step(snakeSnapshot()); return; }
     snakeCtx.fillStyle='#10261f'; snakeCtx.fillRect(0,0,360,360); snakeCtx.strokeStyle='rgba(223,255,99,.055)'; snakeCtx.lineWidth=1;
     for(let i=0;i<=360;i+=20){snakeCtx.beginPath();snakeCtx.moveTo(i,0);snakeCtx.lineTo(i,360);snakeCtx.stroke();snakeCtx.beginPath();snakeCtx.moveTo(0,i);snakeCtx.lineTo(360,i);snakeCtx.stroke();}
     snakeCtx.fillStyle='#f47a52'; snakeCtx.beginPath(); snakeCtx.arc(snakeFood.x*snakeCell+10,snakeFood.y*snakeCell+10,7,0,Math.PI*2); snakeCtx.fill();
     snake.forEach((part,index)=>{snakeCtx.fillStyle=index===0?'#dfff63':'#75a48d';snakeCtx.fillRect(part.x*snakeCell+2,part.y*snakeCell+2,16,16);});
   };
-  const endSnake = () => { clearInterval(snakeLoop); snakeRunning=false; snakeStatus.textContent=`Circuit ended with ${snake.length-3} points. Press start to try again.`; };
+  const endSnake = () => { clearInterval(snakeLoop); snakeRunning=false; window.Snake3D?.crash(); snakeStatus.textContent=`Circuit ended with ${snake.length-3} points. Press start to try again.`; };
   const snakeStep = () => { snakeDirection=snakeNext;const head={x:snake[0].x+snakeDirection.x,y:snake[0].y+snakeDirection.y};if(head.x<0||head.x>=18||head.y<0||head.y>=18||snake.some(p=>p.x===head.x&&p.y===head.y)){endSnake();return;}snake.unshift(head);if(head.x===snakeFood.x&&head.y===snakeFood.y){snakeScore.textContent=String(snake.length-3);placeFood();}else snake.pop();drawSnake(); };
   const startSnake = () => { clearInterval(snakeLoop);snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];snakeDirection={x:1,y:0};snakeNext={x:1,y:0};placeFood();snakeScore.textContent='0';snakeStatus.textContent='Circuit live.';snakeRunning=true;drawSnake();snakeLoop=setInterval(snakeStep,125); };
   const setDirection = (name) => { const map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}},next=map[name];if(!next||next.x===-snakeDirection.x&&next.y===-snakeDirection.y)return;snakeNext=next; };
+  window.GameSnake = { snapshot: snakeSnapshot, turn: (name) => setDirection(name) };
   $('[data-snake-start]').addEventListener('click',startSnake);$$('[data-direction]').forEach(button=>button.addEventListener('click',()=>setDirection(button.dataset.direction)));
   document.addEventListener('keydown',(event)=>{const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};if(!map[event.key]||!playerOpen()||$('[data-game="snake"]')?.getAttribute('aria-selected')!=='true')return;event.preventDefault();setDirection(map[event.key]);});
   const pauseSnake=()=>{if(snakeRunning){clearInterval(snakeLoop);snakeRunning=false;snakeStatus.textContent='Paused. Press start to continue with a new run.';}};document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseSnake();});window.addEventListener('games:pause',pauseSnake); snake=[{x:6,y:9},{x:5,y:9},{x:4,y:9}];drawSnake();
