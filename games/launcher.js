@@ -176,7 +176,12 @@
       const haystack = `${pick.dataset.title} ${pick.dataset.category} ${pick.textContent}`.toLowerCase();
       pick.classList.toggle('is-search-miss', Boolean(query) && !haystack.includes(query));
     });
-    const shown = visiblePicks().length;
+    const externals = $$('.game-pick.is-external', picker);
+    externals.forEach((card) => {
+      card.hidden = !(filter === 'all' || card.dataset.category === filter);
+      card.classList.toggle('is-search-miss', Boolean(query) && !`${card.dataset.title} ${card.textContent}`.toLowerCase().includes(query));
+    });
+    const shown = visiblePicks().length + externals.filter((card) => !card.hidden && !card.classList.contains('is-search-miss')).length;
     picker.classList.toggle('is-filtered', filter !== 'all' || Boolean(query));
     if (empty) empty.hidden = shown > 0;
     if (count) count.textContent = `${shown} game${shown === 1 ? '' : 's'}`;
