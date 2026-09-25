@@ -126,7 +126,7 @@
 
   // Hero cards reuse each game's cover art so the artwork lives in one place.
   $$('[data-hero-art]').forEach((slot) => {
-    const art = $(`.game-pick[data-game="${slot.dataset.heroArt}"] .game-art svg`, picker);
+    const art = $(`.game-pick[data-game="${slot.dataset.heroArt}"] .game-art :is(svg, img)`, picker);
     if (art) slot.append(art.cloneNode(true));
   });
 
