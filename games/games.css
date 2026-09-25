@@ -150,10 +150,8 @@ body.page-games *, body.page-games *::before, body.page-games *::after { box-siz
 .game-pick-desc { color: var(--gc-muted); font-size: 13.5px; line-height: 1.5; }
 .game-pick-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 14px; }
 .game-mode { color: var(--gc-muted); font-size: 12px; font-weight: 700; }
-.game-play { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px 0 7px; color: var(--gc-ink); border-radius: 99px; background: var(--gc-surface-2); font-size: 13px; font-weight: 800; transition: background .25s, color .25s; }
-/* Play icon sits in its own round badge so it reads at a glance. */
-.game-play svg:not(.gc-out) { flex: none; width: 24px; height: 24px; padding: 6px 5px 6px 7px; border-radius: 50%; background: var(--gc-ink); fill: var(--gc-surface-2); transition: background .25s, fill .25s; }
-.game-pick:hover .game-play svg:not(.gc-out) { background: #10231b; fill: var(--tone); }
+.game-play { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px 0 13px; color: var(--gc-ink); border-radius: 99px; background: var(--gc-surface-2); font-size: 13px; font-weight: 800; transition: background .25s, color .25s; }
+.game-play svg:not(.gc-out) { flex: none; width: 17px; height: 17px; margin-left: -2px; fill: currentColor; }
 .game-pick:hover .game-play { color: #10231b; background: var(--tone); }
 
 .game-pick.is-feature { grid-column: span 2; grid-row: span 2; }
@@ -808,8 +806,8 @@ html.theme-dark .gc-how { background: #0a1611; }
   .game-pick-desc { font-size: 12.5px; }
   .game-pick:not(.is-feature) .game-mode { display: none; }
   .game-pick-foot { padding-top: 10px; }
-  .game-play { height: 34px; padding: 0 13px 0 5px; }
-  .game-play svg:not(.gc-out) { width: 22px; height: 22px; }
+  .game-play { height: 34px; padding: 0 13px 0 11px; }
+  .game-play svg:not(.gc-out) { width: 15px; height: 15px; }
   .game-badge { top: 8px; right: 8px; padding: 4px 8px 4px 7px; font-size: 8.5px; }
 
   .gc-how { padding: 64px 0; }
