@@ -1,5 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
+import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
+import {GlowPoints} from './glow.js?v=20260926b';
 
 // Life around the road: grazing cows and sheep, dogs and cats by the verge, oncoming traffic and parked cars.
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -258,16 +260,25 @@ export class Life {
     }[type];
     const color = pick([0xb9c1c9, 0x1e2d4a, 0x8a1c1f, 0xeeeeee, 0x16171a, 0x3a5a48, 0xc7a452, 0x4a5a70, 0x6b6f75, 0x7a2c52, 0xdcdcd8, 0x2a3440]);
     const g = new T.Group(), hw = specs.W / 2, front = specs.L / 2, back = -specs.L / 2;
+    g.rotation.order = 'YXZ';
     part(this.bodyGeometry(specs, color), this.m.bodyPaint, 0, 0, 0, g);
-    const r = type === 'suv' || type === 'van' ? 1.12 : 1;
+    // Each wheel sits in a steering pivot with a spinning hub inside it, so tyres roll with the speed and front wheels turn into bends.
+    const r = type === 'suv' || type === 'van' ? 1.12 : 1, wheels = [];
     for (const z of [specs.wheelbase, -specs.wheelbase]) for (const x of [-hw + .12, hw - .12]) {
-      part(this.g.wheel, this.m.tyre, x, .33 * r, z, g).scale.setScalar(r);
-      part(this.g.rim, this.m.rim, x + Math.sign(x) * .02, .33 * r, z, g).scale.setScalar(r);
+      const pivot = new T.Group(); pivot.position.set(x, .33 * r, z); g.add(pivot);
+      const spin = new T.Group(); pivot.add(spin); spin.scale.setScalar(r);
+      part(this.g.wheel, this.m.tyre, 0, 0, 0, spin);
+      part(this.g.rim, this.m.rim, Math.sign(x) * .02, 0, 0, spin);
+      part(this.g.spokes, this.m.trim, Math.sign(x) * .14, 0, 0, spin);
+      wheels.push({pivot, spin, front: z > 0});
     }
-    const lamps = {head: [], tail: []}, hy = specs.top[1][1] - .08, ty = specs.top[specs.top.length - 2][1] - .12;
+    const lamps = {head: [], tail: [], left: [], right: []}, hy = specs.top[1][1] - .08, ty = specs.top[specs.top.length - 2][1] - .12;
     for (const s of [-1, 1]) {
       lamps.head.push(part(new RoundedBoxGeometry(.42, .1, .06, 2, .03), this.m.head, s * (hw - .32), hy, front - .02, g));
       lamps.tail.push(part(new RoundedBoxGeometry(.38, .09, .05, 2, .025), this.m.tail, s * (hw - .28), ty, back + .02, g));
+      // Amber indicators at each corner; local +x is the car's left side.
+      const side = s > 0 ? lamps.left : lamps.right;
+      side.push(part(this.g.indicator, this.m.indicatorOff, s * (hw - .06), hy, front - .04, g), part(this.g.indicator, this.m.indicatorOff, s * (hw - .05), ty, back + .03, g));
       const mirror = part(new RoundedBoxGeometry(.16, .1, .12, 2, .04), this.m.bodyTrim, s * (hw + .06), specs.belt + .08, specs.L * .5 * specs.glass.side[0] - .05, g);
       mirror.scale.x = 1.2;
     }
@@ -275,14 +286,22 @@ export class Life {
     part(new T.BoxGeometry(.5, .13, .03), this.m.plate, 0, specs.clear + .2, back + .01, g);
     part(new T.BoxGeometry(.5, .11, .03), this.m.plate, 0, specs.clear + .16, front - .01, g);
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, front + 4); g.add(beam);
-    return {g, beam, length: specs.L, lamps};
+    return {g, beam, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
   buildTraffic() {
     this.m.bodyPaint = new T.MeshPhysicalMaterial({vertexColors: true, roughness: .28, metalness: .5, clearcoat: 1, clearcoatRoughness: .07, envMapIntensity: 1.3});
     this.m.bodyTrim = new T.MeshStandardMaterial({color: 0x15181b, roughness: .5});
     this.m.grille = new T.MeshStandardMaterial({color: 0x0e1012, roughness: .45, metalness: .5});
-    this.m.flash = new T.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 6});
+    this.m.flash = new T.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 8});
+    this.m.brake = new T.MeshStandardMaterial({color: 0xb01010, emissive: 0xff1a0a, emissiveIntensity: 3.2});
+    this.m.indicatorOff = new T.MeshStandardMaterial({color: 0x9a5a10, emissive: 0x2a1400, emissiveIntensity: .3, roughness: .3});
+    this.m.indicatorOn = new T.MeshStandardMaterial({color: 0xffb030, emissive: 0xff9a10, emissiveIntensity: 5});
+    this.g.indicator = new RoundedBoxGeometry(.12, .08, .06, 2, .02);
+    // Five spokes on the hub make the wheel's roll visible.
+    const spokes = []; for (let i = 0; i < 5; i++) spokes.push(new T.BoxGeometry(.02, .36, .045).rotateX(i * Math.PI * 2 / 5));
+    this.g.spokes = mergeGeometries(spokes);
+    this.glow = new GlowPoints(this.scene, 80, {fade: 1100});
     const types = ['sedan', 'hatch', 'suv', 'van', 'sedan', 'hatch', 'suv', 'sedan'];
     for (let i = 0; i < 6; i++) { const c = this.car(types[i % types.length]); c.z = -1e9; c.dir = -1; this.scene.add(c.g); this.traffic.push(c); }
     for (let i = 0; i < 3; i++) { const c = this.car(types[(i + 2) % types.length]); c.z = -1e9; c.dir = 1; this.scene.add(c.g); this.traffic.push(c); }
@@ -290,56 +309,119 @@ export class Life {
   }
 
   laneOffset() { const lane = this.settings.autoLane; return lane === 'right' ? -2.4 : 2.4; }
+  playerLength() { return this.settings.vehicle === 'coach' ? 12 : this.settings.vehicle === 'bike' ? 2.2 : 4.6; }
 
-  // Honking makes nearby oncoming drivers flash their headlights back.
+  // Honking: oncoming drivers flash back, and a driver you are stuck behind may signal and move over to let you by.
   honk() {
-    const s = this.getState();
-    for (const c of this.traffic) if (c.dir < 0 && c.g.visible && c.z > s.z && c.z - s.z < 180) c.flashAt = performance.now() + rand(250, 700);
+    const s = this.getState(), now = performance.now();
+    for (const c of this.traffic) if (c.dir < 0 && c.g.visible && c.z > s.z && c.z - s.z < 180) this.flash(c, now + rand(250, 700));
+    const ahead = this.leadAhead(s, true);
+    if (ahead && ahead.gap < 55 && !ahead.car.yielding && !(this.world.road.townFactor?.(ahead.car.z) > 0) && Math.random() < .7) {
+      const c = ahead.car; c.yielding = true; c.yieldPhase = 'signal'; c.yieldClock = rand(.7, 1.3);
+    }
   }
 
-  // Nearest same-direction car ahead in the player's lane, so autodrive can follow it.
-  leadAhead(s) {
+  flash(c, at, times = 2) { if (!c.flashAt || at > c.flashAt + 1200) { c.flashAt = at; c.flashTimes = times; } }
+
+  // Nearest same-direction car ahead in the player's lane, so autodrive can follow it. A car that has pulled over to let you pass no longer blocks.
+  leadAhead(s, includeYielding = false) {
     let best = null;
     for (const c of this.traffic) {
       if (c.dir < 0 || !c.g.visible) continue;
-      const gap = c.z - s.z;
-      if (gap > 0 && gap < 90 && Math.abs(c.g.position.x - s.x) < 2.2 && (!best || gap < best.gap)) best = {gap, speed: c.speed, car: c};
+      if (!includeYielding && c.yielding && Math.abs(c.lat) > 1.1) continue;
+      const gap = c.z - s.z - (c.length + this.playerLength()) / 2;
+      if (c.z > s.z && gap < 110 && Math.abs(c.g.position.x - s.x) < 2.2 && (!best || gap < best.gap)) best = {gap, speed: c.speed, car: c};
     }
     return best;
   }
 
-  // No oncoming car within this distance ahead, so it is safe to overtake.
-  oncomingClear(s, range) {
-    return !this.traffic.some((c) => c.dir < 0 && c.g.visible && c.z > s.z - 10 && c.z - s.z < range);
+  // Seconds until the nearest oncoming car reaches you, assuming you hold this speed; Infinity when the road ahead is clear.
+  oncomingTime(s, speed, range = 900) {
+    let t = Infinity;
+    for (const c of this.traffic) {
+      if (c.dir > 0 || !c.g.visible) continue;
+      const d = c.z - s.z;
+      if (d > -6 && d < range) t = Math.min(t, d / Math.max(1, speed + c.speed));
+    }
+    return t;
   }
 
+  oncomingClear(s, range) { return this.oncomingTime(s, Math.max(s.speed, 10), range) === Infinity; }
+
+  // Traffic follows the car or the player in front with a safe-gap car-following model, so cars never drive into each other.
   updateTraffic(dt) {
-    const s = this.getState(), r = this.world.road, off = this.settings.location !== 'hills';
-    const night = this.settings.time === 'night' || this.settings.weather === 'rain';
-    this.m.head.emissiveIntensity = night ? 3 : .2; this.m.tail.emissiveIntensity = night ? 1.6 : .4; this.m.beam.opacity = this.settings.time === 'night' ? .32 : this.settings.weather === 'rain' ? .12 : 0;
-    const lane = this.laneOffset(), oncoming = -Math.sign(lane) * 2.55, width = this.settings.roadWidth / 2, now = performance.now();
-    const limit = this.settings.quality === 'low' ? [3, 1] : [6, 3];
-    let shown = [0, 0];
+    const s = this.getState(), r = this.world.road, off = this.settings.location !== 'hills', now = performance.now();
+    const night = this.settings.time === 'night', dim = night || this.settings.weather === 'rain' || this.settings.time === 'sunset';
+    this.m.head.emissiveIntensity = night ? 3 : dim ? 1.4 : .2; this.m.tail.emissiveIntensity = night ? 1.6 : .4; this.m.beam.opacity = night ? .32 : this.settings.weather === 'rain' ? .12 : 0;
+    const lane = this.laneOffset(), oncomingX = -Math.sign(lane) * 2.55, outward = Math.sign(lane), limit = this.settings.quality === 'low' ? [3, 1] : [6, 3];
+    const playerLen = this.playerLength(), shown = [0, 0], blink = Math.floor(now / 380) % 2 === 0;
+    const px = s.x, pvz = s.speed * Math.cos(s.yaw);
+    // Keep the enabled cars, spawn any that are out of range at a free spot.
     for (const c of this.traffic) {
-      const k = c.dir < 0 ? 0 : 1;
-      const enabled = (c.dir < 0 ? this.settings.trafficOncoming : this.settings.trafficOwn) !== 'off';
-      c.g.visible = !off && enabled && shown[k] < limit[k]; shown[k]++;
-      if (!c.g.visible) { c.z = -1e9; continue; }
-      if (c.dir < 0) {
-        if (c.z < s.z - 60 || c.z > s.z + 900) { c.z = s.z + rand(280, 820); c.cruise = rand(13, 21); c.speed = c.cruise; }
-      } else if (c.z < s.z - 90 || c.z > s.z + 700) { c.z = s.z + rand(160, 600); c.cruise = rand(13, 18.5); c.speed = c.cruise; }
-      c.z += c.dir * c.speed * dt;
-      const x = r.x(c.z) + (c.dir < 0 ? oncoming : lane), y = r.y(c.z) + .06;
-      c.g.position.set(x, y, c.z);
-      c.g.rotation.set(0, Math.atan(r.tangent(c.z)) + (c.dir < 0 ? Math.PI : 0), 0);
-      // Any car stops for yours when you are in its lane just ahead; same-direction cars also keep their distance behind you.
-      const gap = (c.z - s.z) * -c.dir, blocked = gap > -1 && gap < (c.dir < 0 ? 42 : 26) && Math.abs(s.x - x) < 2.4;
-      const target = blocked ? (c.dir > 0 ? Math.max(0, Math.min(c.cruise, s.speed - 1)) : 0) : c.cruise;
-      c.speed = c.speed > target ? Math.max(target, c.speed - (blocked ? 9 : 3) * dt) : Math.min(target, c.speed + 2.5 * dt);
-      const flashing = c.flashAt && now > c.flashAt && now < c.flashAt + 520 && (Math.floor((now - c.flashAt) / 130) % 2 === 0);
-      for (const l of c.lamps.head) l.material = flashing ? this.m.flash : this.m.head;
-      c.beam.visible = c.dir < 0 || this.settings.time === 'night';
+      const k = c.dir < 0 ? 0 : 1, enabled = (c.dir < 0 ? this.settings.trafficOncoming : this.settings.trafficOwn) !== 'off';
+      c.active = !off && enabled && shown[k] < limit[k]; shown[k]++;
+      if (!c.active) { c.g.visible = false; c.z = -1e9; continue; }
+      const far = c.dir < 0 ? c.z < s.z - 70 || c.z > s.z + 950 : c.z < s.z - 120 || c.z > s.z + 750;
+      if (far || !c.g.visible) this.spawnCar(c, s);
     }
+    const lanes = [this.traffic.filter((c) => c.active && c.g.visible && c.dir < 0), this.traffic.filter((c) => c.active && c.g.visible && c.dir > 0)];
+    for (const list of lanes) {
+      if (!list.length) continue;
+      const dir = list[0].dir, laneX = dir < 0 ? oncomingX : lane;
+      list.sort((a, b) => (b.z - a.z) * dir); // front of the queue first
+      for (let i = 0; i < list.length; i++) {
+        const c = list[i], x = r.x(c.z) + laneX + c.lat;
+        let gap = Infinity, leadSpeed = 0, frontZ = null, frontLen = 0;
+        const leader = list[i - 1];
+        if (leader && !(leader.yielding && Math.abs(leader.lat) > 1.1 && !c.yielding)) { gap = (leader.z - c.z) * dir - (leader.length + c.length) / 2; leadSpeed = leader.speed; frontZ = leader.z; frontLen = leader.length; }
+        // The player counts as the car in front when they are in this lane ahead of the car (including head-on, when overtaking).
+        const ahead = (s.z - c.z) * dir;
+        if (ahead > 0 && Math.abs(px - x) < (c.width / 2 + 1.25)) {
+          const pg = ahead - (playerLen + c.length) / 2;
+          if (pg < gap) { gap = pg; leadSpeed = pvz * dir; frontZ = s.z; frontLen = playerLen; }
+        }
+        const town = r.townFactor ? r.townFactor(c.z) : 0, cruise = Math.min(c.cruise, town > .3 ? 13.5 : 99) * (c.yielding && c.yieldPhase === 'aside' ? .72 : 1);
+        // Intelligent driver model: accelerate towards cruise speed, brake to keep a time gap to whatever is in front.
+        const v = c.speed, s0 = 3, headway = 1.3, amax = 1.7, comfort = 2.6;
+        const desired = s0 + Math.max(0, v * headway + v * (v - leadSpeed) / (2 * Math.sqrt(amax * comfort)));
+        let acc = amax * (1 - Math.pow(v / Math.max(cruise, 1), 4) - (gap < Infinity ? Math.pow(desired / Math.max(gap, .1), 2) : 0));
+        acc = Math.max(-9, Math.min(amax, acc));
+        c.speed = Math.max(0, v + acc * dt);
+        c.braking = acc < -1.2 || (c.speed < .3 && gap < 12);
+        c.z += dir * c.speed * dt;
+        // Hard limit: never closer than touching distance to the car or player in front.
+        if (frontZ !== null) {
+          const minZ = frontZ - dir * ((frontLen + c.length) / 2 + .4);
+          if ((c.z - minZ) * dir > 0) { c.z = minZ; c.speed = Math.min(c.speed, Math.max(0, leadSpeed)); }
+        }
+        this.updateYield(c, dt, s, outward);
+        this.placeCar(c, dt, laneX);
+        // Oncoming drivers flash their headlights at a car coming at them in their lane, like you overtaking.
+        if (dir < 0 && Math.abs(px - (r.x(s.z) + oncomingX)) < 1.9 && ahead > 40 && ahead < 480) this.flash(c, now + rand(100, 400), 3);
+      }
+    }
+    // Lamps, indicators and headlight glow.
+    this.glow.begin();
+    const warm = new T.Color(1, .93, .8), red = new T.Color(1, .12, .06), amber = new T.Color(1, .6, .12), v = new T.Vector3();
+    for (const c of this.traffic) {
+      if (!c.g.visible) continue;
+      const t = c.flashAt ? now - c.flashAt : -1, flashing = t > 0 && t < c.flashTimes * 260 && Math.floor(t / 130) % 2 === 0;
+      for (const l of c.lamps.head) l.material = flashing ? this.m.flash : this.m.head;
+      for (const l of c.lamps.tail) l.material = c.braking ? this.m.brake : this.m.tail;
+      for (const l of c.lamps.left) l.material = c.indicator === 1 && blink ? this.m.indicatorOn : this.m.indicatorOff;
+      for (const l of c.lamps.right) l.material = c.indicator === -1 && blink ? this.m.indicatorOn : this.m.indicatorOff;
+      c.beam.visible = c.dir < 0 || night;
+      const lit = night ? 1 : dim ? .55 : .12;
+      for (const sx of [-1, 1]) {
+        v.set(sx * c.headX, c.headY, c.length / 2 + .05); c.g.localToWorld(v);
+        this.glow.add(v.x, v.y, v.z, warm, flashing ? 2.6 : lit * (c.dir < 0 ? 1 : .5), flashing ? 70 : 26);
+        v.set(sx * c.headX, c.tailY, -c.length / 2 - .05); c.g.localToWorld(v);
+        if (night || c.braking) this.glow.add(v.x, v.y, v.z, red, c.braking ? 1.1 : .45, c.braking ? 22 : 14);
+        const on = blink && ((c.indicator === 1 && sx > 0) || (c.indicator === -1 && sx < 0));
+        if (on) { v.set(sx * (c.width / 2 - .05), c.tailY, -c.length / 2); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, amber, 1.2, 16); v.set(sx * (c.width / 2 - .06), c.headY, c.length / 2); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, amber, 1.2, 16); }
+      }
+    }
+    this.glow.end();
     this.parked.forEach((c) => {
       if (off) { c.g.visible = false; return; }
       if (c.z < s.z - 60 || c.z > s.z + 900) this.parkCar(c, s.z);
@@ -347,14 +429,68 @@ export class Life {
     });
   }
 
+  // A yielding car signals, eases over to the verge and slows until you are past, then signals back into its lane.
+  updateYield(c, dt, s, outward) {
+    if (!c.yielding) { c.latTarget = 0; c.indicator = 0; }
+    else {
+      c.yieldClock -= dt;
+      if (c.yieldPhase === 'signal') { c.indicator = c.dir * outward; if (c.yieldClock <= 0) { c.yieldPhase = 'aside'; c.yieldClock = 16; } }
+      else if (c.yieldPhase === 'aside') {
+        c.latTarget = outward * 1.9; c.indicator = c.dir * outward;
+        if (s.z > c.z + (c.length + this.playerLength()) / 2 + 6 || c.yieldClock <= 0) { c.yieldPhase = 'return'; c.yieldClock = 1.4; }
+      } else if (c.yieldPhase === 'return') {
+        c.indicator = -c.dir * outward;
+        if (c.yieldClock <= 0) { c.latTarget = 0; if (Math.abs(c.lat) < .1) { c.yielding = false; c.indicator = 0; } }
+      }
+    }
+    // Smooth lateral move with limited sideways speed, like a real lane change.
+    const want = Math.max(-1.3, Math.min(1.3, (c.latTarget - c.lat) * 1.4));
+    c.latVel += (want - c.latVel) * Math.min(1, dt * 3);
+    c.lat += c.latVel * dt;
+  }
+
+  placeCar(c, dt, laneX) {
+    const r = this.world.road, x = r.x(c.z) + laneX + c.lat, y = r.y(c.z) + .06;
+    const slope = (r.y(c.z + 1) - r.y(c.z - 1)) / 2;
+    c.g.position.set(x, y, c.z);
+    const vx = c.dir * c.speed * r.tangent(c.z) + c.latVel, vz = c.dir * c.speed;
+    const yaw = c.speed > .4 ? Math.atan2(vx, vz) : Math.atan(r.tangent(c.z)) + (c.dir < 0 ? Math.PI : 0);
+    const yawRate = dt > 0 ? Math.atan2(Math.sin(yaw - c.yaw), Math.cos(yaw - c.yaw)) / dt : 0;
+    c.yaw = yaw;
+    c.g.rotation.set(-Math.atan(slope * c.dir), yaw, 0);
+    // Front wheels steer by the turn rate; all wheels roll with the speed.
+    c.steer += (Math.max(-.5, Math.min(.5, Math.atan(yawRate * 2.7 / Math.max(c.speed, 2)))) - c.steer) * Math.min(1, dt * 6);
+    for (const w of c.wheels) { if (w.front) w.pivot.rotation.y = c.steer; w.spin.rotation.x += c.speed * dt / c.wheelRadius; }
+  }
+
+  // Place a car where nobody else in its lane is within a safe distance.
+  spawnCar(c, s) {
+    const list = this.traffic.filter((o) => o !== c && o.active && o.dir === c.dir && o.g.visible);
+    for (let attempt = 0; attempt < 8; attempt++) {
+      let z;
+      if (c.dir < 0) z = s.z + rand(300, 850);
+      else z = Math.random() < .3 && s.speed < 12 ? s.z - rand(70, 110) : s.z + rand(170, 650);
+      if (list.some((o) => Math.abs(o.z - z) < 45)) continue;
+      if (Math.abs(z - s.z) < 60) continue;
+      c.z = z; c.cruise = c.dir < 0 ? rand(13, 21) : rand(13, 18.5); c.speed = c.cruise; c.lat = c.latVel = c.latTarget = 0; c.yielding = false; c.indicator = 0; c.flashAt = 0;
+      c.yaw = Math.atan(this.world.road.tangent(z)) + (c.dir < 0 ? Math.PI : 0);
+      c.g.visible = true;
+      return;
+    }
+    c.g.visible = false; c.z = -1e9;
+  }
+
   // Park on the shoulder only where the ground is level, resting the car on its wheels.
   parkCar(c, fromZ) {
     const r = this.world.road, width = this.settings.roadWidth / 2;
     c.spot = false;
     for (let attempt = 0; attempt < 10 && !c.spot; attempt++) {
-      const z = fromZ + rand(250, 850), railSide = (Math.floor(Math.floor(z / 240) / 3) % 3 === 0) ? 1 : -1, side = -railSide;
-      const yaw = Math.atan(r.tangent(z)) + (side > 0 ? 0 : Math.PI), x = r.x(z) + side * (width + 2.2);
-      const fx = Math.sin(yaw) * 1.7, fz = Math.cos(yaw) * 1.7, rx = Math.cos(yaw) * .8, rz = -Math.sin(yaw) * .8, h = (px, pz) => this.world.surfaceHeight(px, pz, false);
+      const z = fromZ + rand(250, 850), town = r.townFactor ? r.townFactor(z) > .5 : false, rail = this.world.railSide(z);
+      if (!town && (!rail || (r.bridgeNear && r.bridgeNear(z) && Math.abs(r.bridgeNear(z).z - z) < 120))) continue;
+      const side = town ? (Math.random() < .5 ? 1 : -1) : -rail;
+      const yaw = Math.atan(r.tangent(z)) + (side > 0 ? 0 : Math.PI), x = r.x(z) + side * (width + (town ? 1.25 : 2.2));
+      if (town && this.world.collidersNear(x, z, 4).some((k) => Math.hypot(k.x - x, k.z - z) < 3.2 + (k.r || 0))) continue;
+      const fx = Math.sin(yaw) * 1.7, fz = Math.cos(yaw) * 1.7, rx = Math.cos(yaw) * .8, rz = -Math.sin(yaw) * .8, h = (px, pz) => this.world.groundHeight(px, pz);
       const hf = h(x + fx, z + fz), hb = h(x - fx, z - fz), hr = h(x + rx, z + rz), hl = h(x - rx, z - rz);
       if (Math.abs(hf - hb) > .5 || Math.abs(hr - hl) > .3 || Math.min(hf, hb, hr, hl) < -6) continue;
       c.z = z; c.spot = true;
@@ -363,6 +499,18 @@ export class Life {
       c.g.position.set(x, (hf + hb + hr + hl) / 4 + .02, z);
     }
     if (!c.spot) c.z = fromZ + 400;
+  }
+
+  // Everything solid ahead of the player along the road, with its speed along the road, for autodrive's safety braking.
+  obstacles(z, range) {
+    const out = [];
+    for (const c of [...this.traffic, ...this.parked]) {
+      if (!c.g.visible || c.z < z - 10 || c.z > z + range) continue;
+      const yaw = c.g.rotation.y, q = c.length / 4, px = c.g.position.x, pz = c.g.position.z, vz = (c.dir || 0) * (c.speed || 0);
+      out.push({x: px + Math.sin(yaw) * q, z: pz + Math.cos(yaw) * q, r: 1, vz}, {x: px - Math.sin(yaw) * q, z: pz - Math.cos(yaw) * q, r: 1, vz});
+    }
+    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.z > z - 10 && a.z < z + range) out.push({x: a.x, z: a.z, r: a.kind === 'cow' ? 1.1 : .6, vz: 0});
+    return out;
   }
 
   // Solid bodies near a point, for the player's collisions.
