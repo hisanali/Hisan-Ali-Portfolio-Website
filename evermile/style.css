@@ -7,3 +7,8 @@
 @media(max-width:700px){#exit-inspection{top:70px;right:20px;padding:10px 15px}.inspection-copy{left:23px;bottom:55px}.inspection-copy h2{font-size:25px}.inspection-tag{bottom:25px;right:22px;font-size:8px;letter-spacing:1.5px}}
 
 .camera-dragging #game{cursor:grabbing}#pause-indicator{pointer-events:none}
+
+/* Touch controls sit low, in thumb reach, instead of covering the road */
+#touch-controls{top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 64px)!important;left:14px!important;right:14px!important;align-items:flex-end}
+#touch-controls button{width:68px!important;height:68px!important;background:#10201ab8;border-color:#ffffff40}
+#touch-controls button[data-drive="throttle"]{height:84px!important}
