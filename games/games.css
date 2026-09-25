@@ -1002,3 +1002,6 @@ html.theme-dark .gc-how { background: #0a1611; }
 /* 3D arcade games: wide stage, no frame, so the scene sits directly in the arena */
 .game-stage .arcade-canvas-wrap canvas.arcade3d-canvas { display: block; width: min(900px, 100%); height: min(560px, calc(100dvh - 370px)); max-width: 100%; aspect-ratio: auto; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer; }
 @media (max-width: 760px) { .game-stage .arcade-canvas-wrap canvas.arcade3d-canvas { width: 100%; height: min(470px, 58dvh); } }
+
+/* Signal Flight renders an opaque night sky, so it gets a rounded window */
+.game-stage [data-game-panel="flight"] .arcade-canvas-wrap canvas.arcade3d-canvas { border-radius: 22px; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 34px 70px -26px rgba(0,0,0,.9); }
