@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {World} from './world.js?v=20260925c';
 import {CameraOrbit} from './camera-orbit.js?v=20260912f';
-import {Vehicle} from './vehicle.js?v=20260925c';
+import {Vehicle} from './vehicle.js?v=20260925e';
 import {Effects} from './effects.js?v=20260925b';
 import {Life} from './life.js?v=20260925a';
 import {clamp,damp,angleDifference} from './math.js';
