@@ -446,6 +446,7 @@ export class Life {
       if (!list.length) continue;
       const dir = list[0].dir, laneX = dir < 0 ? oncomingX : lane;
       list.sort((a, b) => (b.z - a.z) * dir); // front of the queue first
+      let nearest = true;
       for (let i = 0; i < list.length; i++) {
         const c = list[i], x = r.x(c.z) + laneX + c.lat;
         let gap = Infinity, leadSpeed = 0, frontZ = null, frontLen = 0;
@@ -478,7 +479,8 @@ export class Life {
         this.updateYield(c, dt, s, outward);
         this.placeCar(c, dt, laneX);
         // Oncoming drivers flash their headlights at a car coming at them in their lane, like you overtaking.
-        if (dir < 0 && Math.abs(px - (r.x(s.z) + oncomingX)) < 1.9 && ahead > 40 && ahead < 480) this.flash(c, now + rand(100, 400), 3);
+        // Only the first oncoming car coming at you flashes, not the whole queue behind it.
+        if (dir < 0 && ahead > 0 && nearest) { nearest = false; if (Math.abs(px - (r.x(s.z) + oncomingX)) < 1.9 && ahead > 40 && ahead < 480) this.flash(c, now + rand(100, 400), 3); }
       }
     }
     // Lamps, indicators and headlight glow.
@@ -495,7 +497,7 @@ export class Life {
       const lit = night ? 1 : dim ? .55 : .12;
       for (const sx of [-1, 1]) {
         v.set(sx * c.headX, c.headY, c.length / 2 + .05); c.g.localToWorld(v);
-        this.glow.add(v.x, v.y, v.z, warm, flashing ? 1.1 : lit * (c.dir < 0 ? .65 : .35), flashing ? 36 : 20);
+        this.glow.add(v.x, v.y, v.z, warm, flashing ? 1.5 : lit * (c.dir < 0 ? .65 : .35), flashing ? 44 : 20);
         v.set(sx * c.headX, c.tailY, -c.length / 2 - .05); c.g.localToWorld(v);
         if (night || c.braking) this.glow.add(v.x, v.y, v.z, red, c.braking ? 1.1 : .45, c.braking ? 22 : 14);
         const on = blink && ((c.indicator === 1 && sx > 0) || (c.indicator === -1 && sx < 0));
@@ -503,7 +505,7 @@ export class Life {
       }
     }
     if (s.flashing) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
-      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, 1.1, 34); }
+      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, .55, 16); }
     this.glow.end();
     this.parked.forEach((c) => {
       if (off) { c.g.visible = false; return; }
