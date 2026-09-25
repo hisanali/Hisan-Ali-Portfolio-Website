@@ -5,6 +5,7 @@ import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 // 3D versions of Stack Drop, Signal Flight, Mini Pong and Gravity Flip.
 // Each game takes over its panel's canvas, score, status and main button; games.js keeps the flat fallback.
@@ -322,8 +323,8 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
   mount('flight', ({scene, ui, renderer}) => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = false;
-    renderer.toneMappingExposure = 1.05;
-    scene.environmentIntensity = 0.3;
+    renderer.toneMappingExposure = 0.95;
+    scene.environmentIntensity = 0.12;
     const camera = new THREE.PerspectiveCamera(56, 1, 0.35, 480);
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
@@ -347,10 +348,10 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
     // Blue-hour sky: dark enough for city lights, light enough to read the buildings.
     scene.background = paint(4, 512, (ctx, w, h) => {
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      [[0, '#0a1733'], [0.45, '#1a2d5a'], [0.72, '#3a4474'], [0.87, '#6e5f86'], [1, '#c98a66']].forEach(([stop, color]) => g.addColorStop(stop, color));
+      [[0, '#02060f'], [0.5, '#071329'], [0.76, '#131b3a'], [0.9, '#2a2442'], [1, '#5c3c3a']].forEach(([stop, color]) => g.addColorStop(stop, color));
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     });
-    scene.fog = new THREE.FogExp2(0x46476f, 0.0062);
+    scene.fog = new THREE.FogExp2(0x151a30, 0.0068);
     const glowTexture = paint(128, 128, (ctx) => {
       const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
       g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,248,230,.8)'); g.addColorStop(1, 'rgba(255,240,210,0)');
@@ -365,11 +366,11 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
     for (let i = 0; i < 500; i += 1) starPositions.set([rand(-260, 260), rand(80, 240), rand(-440, -240)], i * 3);
     starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({color: 0xdfe6ff, size: 0.7, fog: false, transparent: true, opacity: 0.6})));
-    scene.add(new THREE.HemisphereLight(0x8fa2d8, 0x4a3524, 0.9));
-    const moonLight = new THREE.DirectionalLight(0xc3d0ff, 1.1);
+    scene.add(new THREE.HemisphereLight(0x3d4c84, 0x1a120c, 0.3));
+    const moonLight = new THREE.DirectionalLight(0xb3c4ff, 0.6);
     moonLight.position.set(-40, 70, -20);
     scene.add(moonLight);
-    const cityBounce = new THREE.DirectionalLight(0xffc48a, 0.45);
+    const cityBounce = new THREE.DirectionalLight(0xffb070, 0.22);
     cityBounce.position.set(30, 8, 40);
     scene.add(cityBounce);
 
@@ -395,7 +396,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
     road.position.set(0, 0.02, -160);
     scene.add(road);
     const walkTexture = paint(64, 64, (ctx) => {
-      ctx.fillStyle = '#6b6d70'; ctx.fillRect(0, 0, 64, 64);
+      ctx.fillStyle = '#505257'; ctx.fillRect(0, 0, 64, 64);
       ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 62, 62);
     });
     walkTexture.wrapS = walkTexture.wrapT = THREE.RepeatWrapping;
@@ -410,10 +411,10 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
     });
 
     // Facades: floor slabs, window frames and a stable set of lit rooms per building.
-    const walls = ['#5a5f69', '#6a6259', '#4d5462', '#72685c', '#585d57', '#4a5566'];
+    const walls = ['#30343c', '#3a3530', '#2b3039', '#3c362f', '#303530', '#29313f'];
     const facade = (variant) => {
       const glass = variant % 4 === 0;
-      const wall = glass ? '#2c3d55' : walls[variant % walls.length];
+      const wall = glass ? '#18263a' : walls[variant % walls.length];
       const litChance = 0.2 + (variant % 3) * 0.07;
       const warm = ['#f2b766', '#f7c97f', '#e9a552', '#f5d39a'];
       const cool = ['#9fc3ea', '#b7d2ee'];
@@ -441,7 +442,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
             if (blind && !emissive) { ctx.fillStyle = 'rgba(40,30,20,.35)'; ctx.fillRect(x, y, w, h * 0.4); }
           } else if (!emissive) {
             const g = ctx.createLinearGradient(x, y, x + w, y + h);
-            g.addColorStop(0, glass ? '#3a5578' : '#28344a'); g.addColorStop(1, glass ? '#16243a' : '#12182a');
+            g.addColorStop(0, glass ? '#223650' : '#161d2c'); g.addColorStop(1, glass ? '#0c1422' : '#080b14');
             ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
           }
         });
@@ -459,7 +460,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
     const facadeMaterial = (look, width, height) => {
       const colour = look.map.clone(); const glow = look.glow.clone();
       [colour, glow].forEach((texture) => { texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.repeat.set(Math.max(1, Math.round(width / 3)) / 8, Math.max(1, Math.round(height / 2.2)) / 16); texture.anisotropy = anisotropy; texture.needsUpdate = true; });
-      return new THREE.MeshStandardMaterial({map: colour, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: 0.75, roughness: look.glass ? 0.3 : 0.82, metalness: look.glass ? 0.45 : 0.08, envMapIntensity: look.glass ? 1.2 : 0.4});
+      return new THREE.MeshStandardMaterial({map: colour, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: 1, roughness: look.glass ? 0.3 : 0.82, metalness: look.glass ? 0.45 : 0.08, envMapIntensity: look.glass ? 1.2 : 0.4});
     };
     const tower = (w, h, d, look) => {
       const mesh = new THREE.Mesh(unitBox, [facadeMaterial(look, d, h), facadeMaterial(look, d, h), roofMaterial, roofMaterial, facadeMaterial(look, w, h), facadeMaterial(look, w, h)]);
@@ -495,12 +496,41 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 
     // Scenery chunks: blocks of buildings with side streets between them, trees and street lamps.
     const CHUNK = 220;
-    const treeTrunk = new THREE.CylinderGeometry(0.14, 0.2, 2, 7);
-    treeTrunk.translate(0, 1, 0);
-    const treeTop = new THREE.IcosahedronGeometry(1.4, 1);
-    const trunkMaterial = new THREE.MeshStandardMaterial({color: 0x5a4130, roughness: 1});
-    const leafMaterial = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.9, flatShading: true});
-    const leafTones = [0x3f6e3a, 0x4c7d42, 0x37623a, 0x557f3f, 0x2f5a36];
+    // Trees: painted canopies on crossed panels, so every angle shows a trunk, branches and a ragged leafy outline.
+    const paintTree = (seed) => paint(256, 384, (ctx) => {
+      const greens = [['#1f3a22', '#2c4f2c', '#3d6636', '#557f45'], ['#243d26', '#335a31', '#47703c', '#628a4c'], ['#1c3324', '#28472f', '#3a5f3e', '#4f7a50']][seed % 3];
+      ctx.lineCap = 'round';
+      const branch = (x, y, angle, length, width, depth) => {
+        const x2 = x + Math.cos(angle) * length; const y2 = y - Math.sin(angle) * length;
+        ctx.strokeStyle = '#3b2a1f'; ctx.lineWidth = width;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo((x + x2) / 2 + rand(-6, 6), (y + y2) / 2, x2, y2); ctx.stroke();
+        if (depth > 0) [rand(0.35, 0.7), -rand(0.35, 0.7)].forEach((turn) => branch(x2, y2, angle + turn, length * rand(0.62, 0.78), width * 0.62, depth - 1));
+      };
+      branch(128, 384, Math.PI / 2 + rand(-0.05, 0.05), 150, 16, 4);
+      const clumps = Array.from({length: 7}, () => ({x: 128 + rand(-70, 70), y: rand(60, 215), r: rand(42, 70)}));
+      for (let pass = 0; pass < 4; pass += 1) {
+        for (let i = 0; i < 520; i += 1) {
+          const c = pick(clumps);
+          const a = rand(0, Math.PI * 2); const d = Math.sqrt(Math.random()) * c.r;
+          const x = c.x + Math.cos(a) * d; const y = c.y + Math.sin(a) * d * 0.85;
+          const lift = (c.y + c.r - y) / (c.r * 2);
+          if (pass > 1 && (lift < 0.45 || Math.random() < 0.4)) continue;
+          ctx.fillStyle = greens[Math.min(3, pass + (Math.random() < 0.3 ? 1 : 0))];
+          ctx.beginPath(); ctx.ellipse(x, y, rand(4, 9), rand(3, 6), rand(0, Math.PI), 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      for (let i = 0; i < 40; i += 1) {
+        const c = pick(clumps);
+        ctx.clearRect(c.x + rand(-c.r, c.r) * 0.8, c.y + rand(-c.r, c.r) * 0.7, rand(3, 7), rand(3, 7));
+      }
+    });
+    const treeLooks = [0, 1, 2].map(paintTree);
+    const treePanels = (() => {
+      const a = new THREE.PlaneGeometry(4.2, 6.3).translate(0, 3.15, 0);
+      const b = a.clone().rotateY(Math.PI / 2);
+      return mergeGeometries([a, b]);
+    })();
+    const treeMaterials = treeLooks.map((map) => new THREE.MeshStandardMaterial({map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.95}));
     const poleMaterial = new THREE.MeshStandardMaterial({color: 0x9a9fa8, roughness: 0.35, metalness: 0.8});
     const lampMaterial = new THREE.MeshBasicMaterial({color: 0xfff0c8});
     const beamTexture = paint(4, 128, (ctx, w, h) => {
@@ -508,8 +538,8 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
       g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     });
-    const coneMaterial = new THREE.MeshBasicMaterial({color: 0xffd9a0, alphaMap: beamTexture, transparent: true, opacity: 0.045, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.FrontSide});
-    const poolMaterial = new THREE.MeshBasicMaterial({map: glowTexture, color: 0xffc27a, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false});
+    const coneMaterial = new THREE.MeshBasicMaterial({color: 0xffd9a0, alphaMap: beamTexture, transparent: true, opacity: 0.022, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.FrontSide});
+    const poolMaterial = new THREE.MeshBasicMaterial({map: glowTexture, color: 0xffb865, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false});
     const buildChunk = () => {
       const chunk = new THREE.Group();
       [-1, 1].forEach((sideSign) => {
@@ -526,24 +556,26 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
         });
       });
       const trees = Math.floor(CHUNK / 7.5) * 2;
-      const trunks = new THREE.InstancedMesh(treeTrunk, trunkMaterial, trees);
-      const tops = new THREE.InstancedMesh(treeTop, leafMaterial, trees);
+      const perLook = Math.ceil(trees / treeMaterials.length);
+      const groves = treeMaterials.map((material) => new THREE.InstancedMesh(treePanels, material, perLook));
+      const used = groves.map(() => 0);
       const tone = new THREE.Color();
       for (let i = 0; i < trees; i += 1) {
         const sideSign = i % 2 ? 1 : -1;
-        const s = rand(0.9, 1.35);
-        dummy.position.set(sideSign * rand(10.6, 11.2), 0.24, -Math.floor(i / 2) * 7.5 - rand(0, 2) - 3.5);
+        const z = -Math.floor(i / 2) * 7.5 - rand(0, 2) - 3.5;
+        const k = i % groves.length;
+        const s = rand(0.85, 1.25);
+        dummy.position.set(sideSign * rand(10.6, 11.2), 0.24, z);
         dummy.rotation.set(0, rand(0, Math.PI), 0);
-        dummy.scale.setScalar(s);
+        dummy.scale.set(s * rand(0.9, 1.1), s, s * rand(0.9, 1.1));
         dummy.updateMatrix();
-        trunks.setMatrixAt(i, dummy.matrix);
-        dummy.position.y = 0.24 + 2.7 * s;
-        dummy.scale.set(s * rand(0.95, 1.15), s * rand(1.1, 1.4), s * rand(0.95, 1.15));
-        dummy.updateMatrix();
-        tops.setMatrixAt(i, dummy.matrix);
-        tops.setColorAt(i, tone.setHex(pick(leafTones)));
+        groves[k].setMatrixAt(used[k], dummy.matrix);
+        const lampZ = sideSign > 0 ? Math.round((-z - 11) / 22) * 22 + 11 : Math.round(-z / 22) * 22;
+        const lit = Math.max(0, 1 - Math.abs(-z - lampZ) / 7);
+        groves[k].setColorAt(used[k], tone.setRGB(0.55 + lit * 0.75, 0.55 + lit * 0.55, 0.5 + lit * 0.2));
+        used[k] += 1;
       }
-      chunk.add(trunks, tops);
+      groves.forEach((grove, k) => { grove.count = used[k]; chunk.add(grove); });
       const lamps = Math.floor(CHUNK / 22) * 2;
       const poleGeometry = new THREE.CylinderGeometry(0.09, 0.13, 6.6, 8).translate(0, 3.3, 0);
       const poles = new THREE.InstancedMesh(poleGeometry, poleMaterial, lamps);
@@ -672,8 +704,8 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
       mesh.position.z = 1.52;
       return mesh;
     };
-    const plume = exhaust(0.12, 1.25, 0xff9a52, 0.32);
-    const core = exhaust(0.075, 0.5, 0xa9d6ff, 0.9);
+    const plume = exhaust(0.11, 1.1, 0xff9a52, 0.14);
+    const core = exhaust(0.07, 0.42, 0xa9d6ff, 0.7);
     const nozzleGlow = new THREE.Sprite(new THREE.SpriteMaterial({map: glowTexture, color: 0xffb070, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false}));
     nozzleGlow.scale.set(0.55, 0.55, 1);
     nozzleGlow.position.z = 1.55;
