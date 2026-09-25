@@ -354,7 +354,7 @@ export class Life {
     this.m.bodyPaint = new T.MeshPhysicalMaterial({vertexColors: true, roughness: .28, metalness: .5, clearcoat: 1, clearcoatRoughness: .07, envMapIntensity: 1.3});
     this.m.bodyTrim = new T.MeshStandardMaterial({color: 0x15181b, roughness: .5});
     this.m.grille = new T.MeshStandardMaterial({color: 0x0e1012, roughness: .45, metalness: .5});
-    this.m.flash = new T.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 8});
+    this.m.flash = new T.MeshStandardMaterial({color: 0xffffff, emissive: 0xfff4e0, emissiveIntensity: 3.5});
     this.m.brake = new T.MeshStandardMaterial({color: 0xb01010, emissive: 0xff1a0a, emissiveIntensity: 3.2});
     this.m.indicatorOff = new T.MeshStandardMaterial({color: 0x9a5a10, emissive: 0x2a1400, emissiveIntensity: .3, roughness: .3});
     this.m.indicatorOn = new T.MeshStandardMaterial({color: 0xffb030, emissive: 0xff9a10, emissiveIntensity: 5});
@@ -495,13 +495,15 @@ export class Life {
       const lit = night ? 1 : dim ? .55 : .12;
       for (const sx of [-1, 1]) {
         v.set(sx * c.headX, c.headY, c.length / 2 + .05); c.g.localToWorld(v);
-        this.glow.add(v.x, v.y, v.z, warm, flashing ? 2 : lit * (c.dir < 0 ? .65 : .35), flashing ? 60 : 20);
+        this.glow.add(v.x, v.y, v.z, warm, flashing ? 1.1 : lit * (c.dir < 0 ? .65 : .35), flashing ? 36 : 20);
         v.set(sx * c.headX, c.tailY, -c.length / 2 - .05); c.g.localToWorld(v);
         if (night || c.braking) this.glow.add(v.x, v.y, v.z, red, c.braking ? 1.1 : .45, c.braking ? 22 : 14);
         const on = blink && ((c.indicator === 1 && sx > 0) || (c.indicator === -1 && sx < 0));
         if (on) { v.set(sx * (c.width / 2 - .05), c.tailY, -c.length / 2); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, amber, 1.2, 16); v.set(sx * (c.width / 2 - .06), c.headY, c.length / 2); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, amber, 1.2, 16); }
       }
     }
+    if (s.flashing) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
+      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, 1.1, 34); }
     this.glow.end();
     this.parked.forEach((c) => {
       if (off) { c.g.visible = false; return; }
