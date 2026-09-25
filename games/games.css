@@ -1005,3 +1005,15 @@ html.theme-dark .gc-how { background: #0a1611; }
 
 /* Signal Flight renders an opaque night sky, so it gets a rounded window */
 .game-stage [data-game-panel="flight"] .arcade-canvas-wrap canvas.arcade3d-canvas { border-radius: 22px; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 34px 70px -26px rgba(0,0,0,.9); }
+
+/* Cover art images (the 3D games) share the illustrated covers' framing and hover zoom */
+.game-art > img, .gc-spot-art > img, .gc-spot-thumb > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.game-art > img { transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+.game-pick:hover .game-art > img { transform: scale(1.06); }
+.gc-spot-art > img { transform: scale(1); transition: transform 7s linear; }
+.gc-spot-slide.is-active .gc-spot-art > img { transform: scale(1.05); }
+
+/* Evermile opens as its own page: a link card with a New badge */
+a.game-pick { color: var(--gc-ink); text-decoration: none; }
+.game-badge.is-new, .gc-spot-live.is-new { color: #10231b; border-color: transparent; background: var(--gc-lime); }
+.game-play .gc-out { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
