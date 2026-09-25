@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 
 // 3D versions of Stack Drop, Signal Flight, Mini Pong and Gravity Flip.
 // Each game takes over its panel's canvas, score, status and main button; games.js keeps the flat fallback.
@@ -127,7 +131,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
       const {width, height} = canvas.getBoundingClientRect();
       if (!width || !height) return;
       view.renderer.setSize(width, height, false);
-      game.resize(width / height);
+      game.resize(width / height, width, height);
     };
     new ResizeObserver(resize).observe(canvas);
     let last = performance.now();
@@ -137,7 +141,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
       last = now;
       if (document.hidden || !canvas.offsetParent) return;
       game.frame(dt, now / 1000);
-      view.renderer.render(view.scene, game.camera);
+      if (game.render) game.render(); else view.renderer.render(view.scene, game.camera);
     };
     resize();
     requestAnimationFrame(loop);
@@ -314,103 +318,329 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
     return game;
   });
 
-  /* ---------------- Signal Flight ---------------- */
-  mount('flight', ({scene, ui}) => {
-    const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 220);
-    scene.fog = new THREE.Fog(0x061510, 40, 120);
-    standardLights(scene, {sun: 1.4, x: 4, y: 20, z: 10, span: 12});
-    const floorTexture = gridTexture('rgba(200,255,90,.55)', '#071a12', 4);
-    floorTexture.repeat.set(20, 60);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 240), new THREE.MeshStandardMaterial({map: floorTexture, emissiveMap: floorTexture, emissive: 0x6f9f1f, emissiveIntensity: 0.55, roughness: 0.8}));
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.z = -90;
-    floor.receiveShadow = true;
-    scene.add(floor);
+  /* ---------------- Signal Flight: a jet over a city highway at night ---------------- */
+  mount('flight', ({scene, ui, renderer}) => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.shadowMap.enabled = false;
+    renderer.toneMappingExposure = 1;
+    scene.environmentIntensity = 0.08;
+    const camera = new THREE.PerspectiveCamera(56, 1, 0.1, 460);
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.42, 0.32, 0.86);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
 
-    // Canyon towers on both sides for a sense of speed.
-    const towerMaterial = new THREE.MeshStandardMaterial({color: 0x0d2a20, roughness: 0.6, metalness: 0.3});
-    const capMaterial = new THREE.MeshStandardMaterial({color: 0xdfff63, emissive: 0xb6ff2a, emissiveIntensity: 1.1});
-    const towers = Array.from({length: 22}, (_, index) => {
+    const paint = (w, h, draw) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      draw(canvas.getContext('2d'), w, h);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    };
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+    const dummy = new THREE.Object3D();
+
+    // Night sky, haze, moon and stars.
+    scene.background = paint(4, 512, (ctx, w, h) => {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      [[0, '#02050d'], [0.48, '#081229'], [0.74, '#1d1a3d'], [0.88, '#47294a'], [1, '#93503f']].forEach(([stop, color]) => g.addColorStop(stop, color));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    });
+    scene.fog = new THREE.FogExp2(0x291f40, 0.0085);
+    const glowTexture = paint(128, 128, (ctx) => {
+      const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.22, 'rgba(255,248,230,.85)'); g.addColorStop(1, 'rgba(255,240,210,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
+    });
+    const moon = new THREE.Sprite(new THREE.SpriteMaterial({map: glowTexture, color: 0xfff0d2, fog: false, depthWrite: false}));
+    moon.scale.set(38, 38, 1);
+    moon.position.set(-80, 105, -320);
+    scene.add(moon);
+    const starGeometry = new THREE.BufferGeometry();
+    const starPositions = new Float32Array(900 * 3);
+    for (let i = 0; i < 900; i += 1) starPositions.set([rand(-260, 260), rand(40, 220), rand(-420, -200)], i * 3);
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({color: 0xdfe6ff, size: 0.7, fog: false, transparent: true, opacity: 0.85})));
+    scene.add(new THREE.HemisphereLight(0x4a5790, 0x0c0907, 0.32));
+    const moonLight = new THREE.DirectionalLight(0xa9bcff, 0.45);
+    moonLight.position.set(-30, 60, -40);
+    scene.add(moonLight);
+
+    // Ground and the highway.
+    const LENGTH = 420;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(320, LENGTH + 80), new THREE.MeshStandardMaterial({color: 0x090d0b, roughness: 1}));
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, -0.03, -150);
+    scene.add(ground);
+    const roadTexture = paint(256, 256, (ctx) => {
+      ctx.fillStyle = '#18191c'; ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 2600; i += 1) { ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5); }
+      ctx.fillStyle = '#d9d9d2'; ctx.fillRect(10, 0, 4, 256); ctx.fillRect(242, 0, 4, 256);
+      ctx.fillStyle = '#e2b13c'; ctx.fillRect(122, 0, 4, 256); ctx.fillRect(130, 0, 4, 256);
+      ctx.fillStyle = '#d9d9d2';
+      [66, 190].forEach((x) => { ctx.fillRect(x, 0, 3, 90); ctx.fillRect(x, 150, 3, 90); });
+    });
+    roadTexture.wrapS = roadTexture.wrapT = THREE.RepeatWrapping;
+    roadTexture.repeat.set(1, LENGTH / 16);
+    roadTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(16, LENGTH), new THREE.MeshStandardMaterial({map: roadTexture, roughness: 0.62, metalness: 0.12}));
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, 0, -150);
+    scene.add(road);
+    [-1, 1].forEach((side) => {
+      const walk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, LENGTH), new THREE.MeshStandardMaterial({color: 0x2a2c30, roughness: 0.9}));
+      walk.position.set(side * 9.2, 0.11, -150);
+      scene.add(walk);
+    });
+
+    // Facades: window grids with random lit rooms, as colour and emissive maps.
+    const facade = (variant) => {
+      const glass = variant % 3 === 0;
+      const wall = glass ? '#0c1521' : pick(['#1b1e24', '#20232a', '#17191e', '#221f1b']);
+      const litChance = 0.12 + (variant % 2) * 0.1;
+      const warm = ['#e8a64e', '#f2b865', '#d9913d', '#f0c27a', '#c98a45'];
+      const cool = ['#7fa8d9', '#94b8e0', '#6d93c7'];
+      const cells = [];
+      for (let floor = 0; floor < 16; floor += 1) {
+        const dark = Math.random() < 0.18;
+        for (let col = 0; col < 8; col += 1) cells.push({floor, col, lit: !dark && Math.random() < litChance, color: Math.random() < 0.8 ? pick(warm) : pick(cool)});
+      }
+      const draw = (emissive) => (ctx) => {
+        ctx.fillStyle = emissive ? '#000' : wall; ctx.fillRect(0, 0, 128, 256);
+        cells.forEach(({floor, col, lit, color}) => {
+          const x = col * 16 + (glass ? 1 : 3); const y = floor * 16 + (glass ? 1 : 4);
+          const w = glass ? 14 : 10; const h = glass ? 14 : 9;
+          if (lit) { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); if (!emissive) { ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x, y + h - 3, w, 3); } }
+          else if (!emissive) { ctx.fillStyle = glass ? '#122236' : '#0c1017'; ctx.fillRect(x, y, w, h); ctx.fillStyle = 'rgba(120,150,200,.08)'; ctx.fillRect(x, y, w, 2); }
+        });
+      };
+      return {map: paint(128, 256, draw(false)), emissive: paint(128, 256, draw(true))};
+    };
+    const facades = Array.from({length: 8}, (_, i) => facade(i));
+    const roofMaterial = new THREE.MeshStandardMaterial({color: 0x121418, roughness: 0.9});
+    const beaconMaterial = new THREE.MeshBasicMaterial({color: 0xff2a1a});
+    const antennaMaterial = new THREE.MeshStandardMaterial({color: 0x3a3d44, roughness: 0.5, metalness: 0.6});
+    const unitBox = new THREE.BoxGeometry(1, 1, 1);
+    unitBox.translate(0, 0.5, 0);
+    const building = (w, h, d) => {
+      const {map, emissive} = pick(facades);
+      const side = (width) => {
+        const colour = map.clone(); const glow = emissive.clone();
+        [colour, glow].forEach((texture) => { texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.repeat.set(width / 12, h / 30); texture.needsUpdate = true; });
+        return new THREE.MeshStandardMaterial({map: colour, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: 0.85, roughness: 0.82, metalness: 0.18});
+      };
+      const front = side(w); const flank = side(d);
       const group = new THREE.Group();
-      const height = rand(4, 16);
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(rand(2, 4), height, rand(2, 4)), towerMaterial);
-      tower.position.y = height / 2;
-      tower.castShadow = true;
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(tower.geometry.parameters.width + 0.1, 0.12, tower.geometry.parameters.depth + 0.1), capMaterial);
-      cap.position.y = height;
-      group.add(tower, cap);
-      group.position.set((index % 2 ? 1 : -1) * rand(9, 18), 0, -index * 10);
-      scene.add(group);
+      const mesh = new THREE.Mesh(unitBox, [flank, flank, roofMaterial, roofMaterial, front, front]);
+      mesh.scale.set(w, h, d);
+      group.add(mesh);
+      if (h > 34) {
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 6, 6), antennaMaterial);
+        mast.position.y = h + 3;
+        const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), beaconMaterial);
+        beacon.position.y = h + 6.2;
+        group.add(mast, beacon);
+      }
       return group;
+    };
+
+    // Scenery is built in two chunks that leapfrog each other as the jet flies.
+    const CHUNK = 210;
+    const treeTrunk = new THREE.CylinderGeometry(0.12, 0.17, 1.5, 6);
+    treeTrunk.translate(0, 0.75, 0);
+    const treeTop = new THREE.IcosahedronGeometry(1.15, 1);
+    const trunkMaterial = new THREE.MeshStandardMaterial({color: 0x2b1d14, roughness: 1});
+    const leafMaterial = new THREE.MeshStandardMaterial({color: 0x16361f, roughness: 0.95, flatShading: true});
+    const poleMaterial = new THREE.MeshStandardMaterial({color: 0x44474e, roughness: 0.5, metalness: 0.7});
+    const lampMaterial = new THREE.MeshBasicMaterial({color: 0xffd9a0});
+    const poolMaterial = new THREE.MeshBasicMaterial({map: glowTexture, color: 0xffb060, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false});
+    const buildChunk = () => {
+      const chunk = new THREE.Group();
+      [-1, 1].forEach((sideSign) => {
+        [[13.5, 18, 44], [30, 34, 70]].forEach(([inner, minH, maxH], row) => {
+          for (let z = 0; z > -CHUNK;) {
+            const w = rand(6, 11); const d = rand(6, row ? 14 : 10); const h = rand(minH, maxH);
+            const b = building(w, h, d);
+            b.position.set(sideSign * (inner + (row ? rand(0, 8) : 0) + d / 2), 0, z - w / 2);
+            b.rotation.y = Math.PI / 2;
+            chunk.add(b);
+            z -= w + rand(1, row ? 5 : 2.5);
+          }
+        });
+      });
+      const trees = Math.floor(CHUNK / 6.5) * 2;
+      const trunks = new THREE.InstancedMesh(treeTrunk, trunkMaterial, trees);
+      const tops = new THREE.InstancedMesh(treeTop, leafMaterial, trees);
+      for (let i = 0; i < trees; i += 1) {
+        const sideSign = i % 2 ? 1 : -1;
+        const s = rand(0.8, 1.3);
+        dummy.position.set(sideSign * rand(10.8, 12), 0, -Math.floor(i / 2) * 6.5 - rand(0, 3));
+        dummy.rotation.set(0, rand(0, Math.PI), 0);
+        dummy.scale.setScalar(s);
+        dummy.updateMatrix();
+        trunks.setMatrixAt(i, dummy.matrix);
+        dummy.position.y = 1.9 * s;
+        dummy.scale.set(s, s * rand(1.1, 1.5), s);
+        dummy.updateMatrix();
+        tops.setMatrixAt(i, dummy.matrix);
+      }
+      chunk.add(trunks, tops);
+      const lamps = Math.floor(CHUNK / 21) * 2;
+      const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.07, 0.1, 5.4, 6).translate(0, 2.7, 0), poleMaterial, lamps);
+      const arms = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.08, 0.08), poleMaterial, lamps);
+      const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.55, 0.12, 0.28), lampMaterial, lamps);
+      const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(4.6, 4.6).rotateX(-Math.PI / 2), poolMaterial, lamps);
+      for (let i = 0; i < lamps; i += 1) {
+        const sideSign = i % 2 ? 1 : -1;
+        const z = -Math.floor(i / 2) * 21 - (i % 2) * 10;
+        const x = sideSign * 8.4;
+        dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
+        dummy.position.set(x, 0, z); dummy.updateMatrix(); poles.setMatrixAt(i, dummy.matrix);
+        dummy.position.set(x - sideSign * 0.7, 5.35, z); dummy.updateMatrix(); arms.setMatrixAt(i, dummy.matrix);
+        dummy.position.set(x - sideSign * 1.35, 5.25, z); dummy.updateMatrix(); heads.setMatrixAt(i, dummy.matrix);
+        dummy.position.set(x - sideSign * 2.4, 0.03, z); dummy.updateMatrix(); pools.setMatrixAt(i, dummy.matrix);
+      }
+      chunk.add(poles, arms, heads, pools);
+      scene.add(chunk);
+      return chunk;
+    };
+    const chunks = [buildChunk(), buildChunk()];
+    chunks[0].position.z = 30;
+    chunks[1].position.z = 30 - CHUNK;
+
+    // Traffic: instanced cars, headlights toward you on the left, taillights ahead on the right.
+    const CARS = 26;
+    const carPaint = [0xb8c2cc, 0x1d2a44, 0x7a1418, 0xe6e6e6, 0x121212, 0x2f4f3f, 0xc9a24a, 0x3c4a5e];
+    const bodies = new THREE.InstancedMesh(new RoundedBoxGeometry(1.2, 0.52, 2.7, 2, 0.16), new THREE.MeshPhysicalMaterial({roughness: 0.28, metalness: 0.65, clearcoat: 1, clearcoatRoughness: 0.1}), CARS);
+    const cabins = new THREE.InstancedMesh(new RoundedBoxGeometry(1.02, 0.44, 1.35, 2, 0.14), new THREE.MeshPhysicalMaterial({color: 0x0a1220, roughness: 0.06, metalness: 0.4, clearcoat: 1}), CARS);
+    const lampGeometry = new THREE.BoxGeometry(0.28, 0.1, 0.06);
+    const headlights = new THREE.InstancedMesh(lampGeometry, new THREE.MeshBasicMaterial({color: 0xfff7e6}), CARS * 2);
+    const taillights = new THREE.InstancedMesh(lampGeometry, new THREE.MeshBasicMaterial({color: 0xff2414}), CARS * 2);
+    const beams = new THREE.InstancedMesh(new THREE.PlaneGeometry(2.2, 5.5).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glowTexture, color: 0xfff1cc, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false}), CARS);
+    scene.add(bodies, cabins, headlights, taillights, beams);
+    const lanes = [-5.8, -2.1, 2.1, 5.8];
+    const cars = Array.from({length: CARS}, (_, i) => {
+      const x = lanes[i % 4];
+      bodies.setColorAt(i, new THREE.Color(pick(carPaint)));
+      return {x, dir: x < 0 ? 1 : -1, speed: rand(10, 18), z: rand(-380, 40)};
     });
+    const carMatrix = new THREE.Matrix4();
+    const local = new THREE.Matrix4();
+    const world = new THREE.Matrix4();
+    const at = (x, y, z) => local.makeTranslation(x, y, z);
+    const updateCars = (move, dt) => {
+      cars.forEach((car, i) => {
+        car.z += move + car.dir * car.speed * dt;
+        if (car.z > 45) car.z -= 430;
+        if (car.z < -385) car.z += 430;
+        dummy.position.set(car.x, 0.36, car.z);
+        dummy.rotation.set(0, car.dir > 0 ? 0 : Math.PI, 0);
+        dummy.scale.setScalar(1);
+        dummy.updateMatrix();
+        carMatrix.copy(dummy.matrix);
+        bodies.setMatrixAt(i, carMatrix);
+        cabins.setMatrixAt(i, world.multiplyMatrices(carMatrix, at(0, 0.44, -0.2)));
+        headlights.setMatrixAt(i * 2, world.multiplyMatrices(carMatrix, at(-0.38, 0.04, 1.36)));
+        headlights.setMatrixAt(i * 2 + 1, world.multiplyMatrices(carMatrix, at(0.38, 0.04, 1.36)));
+        taillights.setMatrixAt(i * 2, world.multiplyMatrices(carMatrix, at(-0.4, 0.08, -1.36)));
+        taillights.setMatrixAt(i * 2 + 1, world.multiplyMatrices(carMatrix, at(0.4, 0.08, -1.36)));
+        beams.setMatrixAt(i, world.multiplyMatrices(carMatrix, at(0, -0.33, 4.1)));
+      });
+      [bodies, cabins, headlights, taillights, beams].forEach((mesh) => { mesh.instanceMatrix.needsUpdate = true; });
+      if (bodies.instanceColor) bodies.instanceColor.needsUpdate = true;
+    };
 
-    const stars = new THREE.BufferGeometry();
-    const starPositions = new Float32Array(600 * 3);
-    for (let i = 0; i < 600; i += 1) starPositions.set([rand(-60, 60), rand(6, 50), rand(-200, 10)], i * 3);
-    stars.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starField = new THREE.Points(stars, new THREE.PointsMaterial({color: 0xffffff, size: 0.18, transparent: true, opacity: 0.8}));
-    scene.add(starField);
+    // The jet: metal fuselage, glass canopy, swept wings, tail, engine flame and navigation lights.
+    const jet = new THREE.Group();
+    const skin = new THREE.MeshPhysicalMaterial({color: 0xdfe4ea, roughness: 0.24, metalness: 0.75, clearcoat: 1, clearcoatRoughness: 0.08, side: THREE.DoubleSide});
+    const trim = new THREE.MeshPhysicalMaterial({color: 0x1f3a2e, roughness: 0.3, metalness: 0.6, clearcoat: 1, side: THREE.DoubleSide});
+    const profile = [[0, 0], [0.09, 0.08], [0.19, 0.3], [0.26, 0.75], [0.27, 1.5], [0.23, 2.15], [0.15, 2.55], [0.12, 2.7]].map(([r, y]) => new THREE.Vector2(r, y));
+    const fuselage = new THREE.Mesh(new THREE.LatheGeometry(profile, 40), skin);
+    fuselage.rotation.x = -Math.PI / 2;
+    fuselage.position.z = 1.35;
+    const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 18), new THREE.MeshPhysicalMaterial({color: 0x0a1a2e, roughness: 0.04, metalness: 0.3, clearcoat: 1}));
+    canopy.scale.set(0.8, 0.7, 2.1);
+    canopy.position.set(0, 0.17, -0.55);
+    const wingShape = new THREE.Shape();
+    wingShape.moveTo(0.18, -0.25); wingShape.lineTo(1.3, 0.38); wingShape.lineTo(1.3, 0.56); wingShape.lineTo(0.18, 0.62); wingShape.closePath();
+    const wingGeometry = new THREE.ExtrudeGeometry(wingShape, {depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 1});
+    wingGeometry.rotateX(Math.PI / 2);
+    const rightWing = new THREE.Mesh(wingGeometry, skin);
+    const leftWing = new THREE.Mesh(wingGeometry, skin);
+    leftWing.scale.x = -1;
+    [rightWing, leftWing].forEach((wing) => { wing.position.set(0, -0.02, 0.1); });
+    const finShape = new THREE.Shape();
+    finShape.moveTo(0, 0); finShape.lineTo(0.55, 0); finShape.lineTo(0.72, 0.62); finShape.lineTo(0.48, 0.62); finShape.closePath();
+    const fin = new THREE.Mesh(new THREE.ExtrudeGeometry(finShape, {depth: 0.04, bevelEnabled: false}), trim);
+    fin.rotation.y = -Math.PI / 2;
+    fin.position.set(0.02, 0.12, 0.62);
+    const stabilizerRight = new THREE.Mesh(wingGeometry, trim);
+    const stabilizerLeft = new THREE.Mesh(wingGeometry, trim);
+    [stabilizerRight, stabilizerLeft].forEach((part, index) => { part.scale.set(index ? -0.42 : 0.42, 1, 0.42); part.position.set(0, 0.03, 1.02); });
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 1.9), new THREE.MeshBasicMaterial({color: 0xc6f23a}));
+    const stripeLeft = stripe.clone();
+    stripe.position.set(0.262, 0.03, 0.15);
+    stripeLeft.position.set(-0.262, 0.03, 0.15);
+    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.22, 20, 1, true), new THREE.MeshStandardMaterial({color: 0x2c2f35, roughness: 0.4, metalness: 0.9, side: THREE.DoubleSide}));
+    nozzle.rotation.x = Math.PI / 2;
+    nozzle.position.z = 1.42;
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.95, 18, 1, true), new THREE.MeshBasicMaterial({color: 0xffa24a, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false}));
+    flame.rotation.x = Math.PI / 2;
+    flame.position.z = 1.95;
+    const core = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.55, 12, 1, true), new THREE.MeshBasicMaterial({color: 0xbfe6ff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false}));
+    core.rotation.x = Math.PI / 2;
+    core.position.z = 1.72;
+    const navRed = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({color: 0xff2a1a}));
+    navRed.position.set(-1.3, -0.01, 0.5);
+    const navGreen = new THREE.Mesh(navRed.geometry, new THREE.MeshBasicMaterial({color: 0x2aff6a}));
+    navGreen.position.set(1.3, -0.01, 0.5);
+    const strobe = new THREE.Mesh(navRed.geometry, new THREE.MeshBasicMaterial({color: 0xffffff}));
+    strobe.position.set(0, 0.76, 1.12);
+    const exhaustLight = new THREE.PointLight(0xffa04a, 5, 7, 2);
+    exhaustLight.position.z = 1.9;
+    jet.add(fuselage, canopy, rightWing, leftWing, fin, stabilizerRight, stabilizerLeft, stripe, stripeLeft, nozzle, flame, core, navRed, navGreen, strobe, exhaustLight);
+    jet.scale.setScalar(0.9);
+    scene.add(jet);
+    const jetFill = new THREE.PointLight(0xdfe8ff, 9, 9, 1.6);
+    scene.add(jetFill);
 
-    // The craft: a sleek body with wings and a glowing engine.
-    const craft = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.ConeGeometry(0.34, 1.6, 24), new THREE.MeshPhysicalMaterial({color: 0xf4f7f2, roughness: 0.25, metalness: 0.4, clearcoat: 1}));
-    hull.rotation.x = -Math.PI / 2;
-    hull.castShadow = true;
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.06, 0.55), new THREE.MeshPhysicalMaterial({color: 0x1d4d38, roughness: 0.3, metalness: 0.6, clearcoat: 1}));
-    wing.position.set(0, -0.05, 0.25);
-    wing.castShadow = true;
-    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.45), wing.material);
-    fin.position.set(0, 0.22, 0.45);
-    const engine = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshBasicMaterial({color: 0xdfff63}));
-    engine.position.z = 0.78;
-    const glow = new THREE.PointLight(0xc8ff3a, 6, 6, 2);
-    glow.position.z = 1;
-    craft.add(hull, wing, fin, engine, glow);
-    scene.add(craft);
-    const trail = Array.from({length: 12}, (_, index) => {
-      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({color: 0xdfff63, transparent: true, opacity: 0.45 * (1 - index / 12), depthWrite: false}));
-      scene.add(puff);
-      return puff;
-    });
-
-    const ringGeometry = new THREE.TorusGeometry(1.75, 0.16, 16, 64);
+    // Checkpoint rings.
+    const ringGeometry = new THREE.TorusGeometry(1.75, 0.13, 16, 72);
     const rings = [];
     const burst = makeBurst(scene);
     const shake = shaker();
     let running = false;
     let y = 4;
     let vy = 0;
-    let speed = 18;
+    let speed = 20;
     let points = 0;
-    let nextRingZ = -40;
-
     const addRing = (z) => {
-      const material = new THREE.MeshStandardMaterial({color: 0xff8a62, emissive: 0xf4623a, emissiveIntensity: 1.2, roughness: 0.35});
+      const material = new THREE.MeshStandardMaterial({color: 0xffc46b, emissive: 0xff9a2a, emissiveIntensity: 2.2, roughness: 0.3, metalness: 0.2});
       const mesh = new THREE.Mesh(ringGeometry, material);
       const base = rand(2.3, 7.2);
       mesh.position.set(0, base, z);
-      mesh.castShadow = true;
       scene.add(mesh);
       rings.push({mesh, base, sway: points > 6 ? rand(0.6, 1.6) : 0, phase: rand(0, Math.PI * 2), passed: false, flash: 0});
     };
     const resetRings = () => {
       rings.splice(0).forEach((ring) => scene.remove(ring.mesh));
-      nextRingZ = -40;
-      for (let i = 0; i < 6; i += 1) { addRing(nextRingZ); nextRingZ -= 24; }
+      for (let i = 0; i < 6; i += 1) addRing(-45 - i * 26);
     };
     const end = (reason) => {
       running = false;
-      burst.fire(craft.position.clone(), 0xffb36b, 9);
+      burst.fire(jet.position.clone(), 0xffb36b, 10);
       shake.start();
       ui.label('Fly again');
       ui.say(`${reason} Flight ended after ${points} ring${points === 1 ? '' : 's'}.`);
     };
     const start = () => {
-      running = true; y = 4; vy = 3.5; speed = 18; points = 0;
+      running = true; y = 4; vy = 3.5; speed = 20; points = 0;
       resetRings();
       ui.score(0);
       ui.label('Lift');
-      ui.say('Tap, click or press Space to lift. Fly through every ring.');
+      ui.say('Tap, click or press Space to climb. Fly the jet through every ring.');
     };
     resetRings();
     window.addEventListener('keydown', (event) => {
@@ -418,66 +648,71 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
       event.preventDefault();
       game.primary();
     });
+    let camY = 4;
     const game = {
       camera,
       primary() { if (running) vy = 6.4; else start(); },
       peek() { const next = rings.filter((ring) => !ring.passed && ring.mesh.position.z < 0).sort((a, b) => b.mesh.position.z - a.mesh.position.z)[0]; return {running, y, vy, points, ringY: next?.mesh.position.y, ringZ: next?.mesh.position.z}; },
       pause() { if (!running) return; running = false; ui.label('Start flight'); ui.say('Paused. Start a new flight when you are ready.'); },
-      resize(aspect) { camera.aspect = aspect; camera.updateProjectionMatrix(); },
+      resize(aspect, width, height) {
+        camera.aspect = aspect;
+        camera.updateProjectionMatrix();
+        composer.setPixelRatio(renderer.getPixelRatio());
+        composer.setSize(width, height);
+      },
+      render() { composer.render(); },
       frame(dt, t) {
         if (running) {
           vy -= 15 * dt;
           y += vy * dt;
-          speed = Math.min(34, 18 + points * 0.55);
-          if (y < 0.5) { y = 0.5; end('Hit the ground.'); }
-          else if (y > 10.5) { y = 10.5; end('Flew too high.'); }
+          speed = Math.min(36, 20 + points * 0.55);
+          if (y < 0.6) { y = 0.6; end('The jet touched the road.'); }
+          else if (y > 10.5) { y = 10.5; end('Climbed out of the flight path.'); }
         } else if (!still()) {
-          y += (4 + Math.sin(t * 1.6) * 0.35 - y) * Math.min(1, dt * 3);
+          y += (4 + Math.sin(t * 1.4) * 0.3 - y) * Math.min(1, dt * 3);
         }
-        const move = running ? speed * dt : (still() ? 0 : 3 * dt);
-        craft.position.set(0, y, 0);
-        craft.rotation.x = running ? THREE.MathUtils.clamp(vy * 0.06, -0.5, 0.45) : 0.05;
-        craft.rotation.z = still() ? 0 : Math.sin(t * 2.2) * 0.08;
-        trail.forEach((puff, index) => {
-          puff.position.set(0, y + (running ? vy * 0.004 * index : 0), 0.85 + index * 0.22);
-          puff.scale.setScalar(1 - index / 16);
-        });
-        floorTexture.offset.y += move / 4;
-        towers.forEach((tower) => { tower.position.z += move; if (tower.position.z > 12) tower.position.z -= 220; });
-        for (let i = 0; i < 600; i += 1) {
-          starPositions[i * 3 + 2] += move * 0.4;
-          if (starPositions[i * 3 + 2] > 10) starPositions[i * 3 + 2] -= 210;
-        }
-        stars.attributes.position.needsUpdate = true;
+        const move = running ? speed * dt : (still() ? 0 : 6 * dt);
+        jet.position.set(0, y, 0);
+        jetFill.position.set(0.8, y + 2.2, 2.4);
+        jet.rotation.x = running ? THREE.MathUtils.clamp(vy * 0.055, -0.45, 0.4) : 0.04;
+        jet.rotation.z = still() ? 0 : Math.sin(t * 1.7) * 0.07;
+        const flicker = still() ? 1 : 0.85 + Math.random() * 0.3;
+        flame.scale.set(1, running ? flicker * (1 + Math.max(0, vy) * 0.08) : 0.7, 1);
+        core.scale.set(1, flicker, 1);
+        strobe.visible = Math.sin(t * 7) > 0.85;
+        beaconMaterial.color.setScalar(0).setRGB(Math.sin(t * 2.2) > 0 ? 1 : 0.25, 0.08, 0.04);
+
+        roadTexture.offset.y += move / 16;
+        chunks.forEach((chunk) => { chunk.position.z += move; if (chunk.position.z > 30 + CHUNK) chunk.position.z -= CHUNK * 2; });
+        updateCars(move, dt);
+
         for (let i = rings.length - 1; i >= 0; i -= 1) {
           const ring = rings[i];
           const before = ring.mesh.position.z;
           ring.mesh.position.z += move;
           if (ring.sway) ring.mesh.position.y = ring.base + Math.sin(t * ring.sway + ring.phase) * 1.1;
-          ring.mesh.rotation.z += dt * 0.6;
           if (running && !ring.passed && before < 0 && ring.mesh.position.z >= 0) {
             ring.passed = true;
-            if (Math.abs(y - ring.mesh.position.y) < 1.28) {
+            if (Math.abs(y - ring.mesh.position.y) < 1.3) {
               points += 1;
               ui.score(points);
               ring.flash = 1;
               ring.mesh.material.color.set(0xdfff63);
-              ring.mesh.material.emissive.set(0xb6ff2a);
+              ring.mesh.material.emissive.set(0x9fe01f);
               burst.fire(ring.mesh.position.clone(), 0xdfff63, 5, 16);
             } else { end('Missed the ring.'); }
           }
-          if (ring.flash > 0) { ring.flash -= dt * 2; ring.mesh.scale.setScalar(1 + (1 - ring.flash) * 0.4); }
-          if (ring.mesh.position.z > 14) {
-            scene.remove(ring.mesh);
-            rings.splice(i, 1);
-          }
+          if (ring.flash > 0) { ring.flash -= dt * 2; ring.mesh.scale.setScalar(1 + (1 - ring.flash) * 0.35); }
+          if (ring.mesh.position.z > 14) { scene.remove(ring.mesh); rings.splice(i, 1); }
         }
         const farthest = rings.reduce((min, ring) => Math.min(min, ring.mesh.position.z), 0);
-        while (rings.length < 6) addRing(Math.min(farthest, -24) - 24 * (6 - rings.length));
+        while (rings.length < 6) addRing(Math.min(farthest, -26) - 26 * (6 - rings.length));
         burst.update(dt, 6);
-        camera.position.set(0, y * 0.6 + 1.9, 5.8);
+
+        camY += (y - camY) * Math.min(1, dt * 4);
+        camera.position.set(Math.sin(t * 0.35) * (still() ? 0 : 0.35), camY * 0.7 + 2.35, 5.1);
         shake.apply(camera, 0.4);
-        camera.lookAt(0, y * 0.8 + 0.4, -12);
+        camera.lookAt(0, camY * 0.85 + 0.1, -12);
       },
     };
     return game;
