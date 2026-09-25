@@ -19,16 +19,18 @@
     if (position) position.textContent = `${list.indexOf(pick) + 1} of ${list.length}`;
   };
 
-  const loadSnake3D = () => {
-    if (window.Snake3D || $('script[data-snake3d]')) return;
+  const bundles3D = { snake: '/games/snake3d.bundle.js?v=1', stack: '/games/arcade3d.bundle.js?v=1', flight: '/games/arcade3d.bundle.js?v=1', pong: '/games/arcade3d.bundle.js?v=1', gravity: '/games/arcade3d.bundle.js?v=1' };
+  const load3D = (game) => {
+    const src = bundles3D[game];
+    if (!src || (game === 'snake' ? window.Snake3D : window.Arcade3D) || $$('script[data-game3d]').some((script) => script.dataset.game3d === src)) return;
     const script = document.createElement('script');
-    script.src = '/games/snake3d.bundle.js?v=1';
-    script.dataset.snake3d = '';
+    script.src = src;
+    script.dataset.game3d = src;
     document.body.append(script);
   };
 
   const open = (pick) => {
-    if (pick.dataset.game === 'snake') loadSnake3D();
+    load3D(pick.dataset.game);
     if (!stage.classList.contains('is-open')) lastTrigger = document.activeElement;
     setPosition(pick);
     stage.inert = false;
