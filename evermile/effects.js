@@ -1,5 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {Water} from './vendor/objects/Water.js';
+import {GlowPoints} from './glow.js?v=20260926b';
 
 // Weather, water and wildlife layered over the world: rain, wet roads, puddles, lightning, thunder, reflective water and birds.
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -58,7 +59,41 @@ export class Effects {
     this.buildWater();
     this.buildTyreMarks();
     this.buildDust();
+    this.buildSnow();
+    this.buildAircraft();
     this.refresh();
+  }
+
+  get snowing() { return this.settings.season === 'winter' && this.settings.location === 'hills' && this.settings.weather !== 'rain'; }
+
+  /* ---------- Snow: a light, slow fall of soft flakes drifting in the air around you ---------- */
+  buildSnow() {
+    const n = this.snowCount = 1700;
+    this.snowPos = new Float32Array(n * 3); this.snowSeed = new Float32Array(n);
+    for (let i = 0; i < n; i++) { this.snowPos.set([rand(-40, 40), rand(-4, 30), rand(-40, 40)], i * 3); this.snowSeed[i] = Math.random() * 100; }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(n * 3), 3));
+    const flake = canvasTexture(32, (x, n) => { const gr = x.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.45, 'rgba(255,255,255,.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, n, n); });
+    this.snow = new T.Points(g, new T.PointsMaterial({size: .17, map: flake, transparent: true, opacity: .9, depthWrite: false, sizeAttenuation: true, color: 0xffffff}));
+    this.snow.frustumCulled = false; this.snowAnchor = new T.Vector3(); this.scene.add(this.snow);
+  }
+
+  updateSnow(dt) {
+    const show = this.snowing; this.snow.visible = show; if (!show) return;
+    const c = this.camera.position, n = this.settings.quality === 'low' ? 600 : this.settings.quality === 'medium' ? 1100 : this.snowCount;
+    this.snow.geometry.setDrawRange(0, n);
+    // Flakes live in world space; the box around the camera wraps, so driving through them feels right.
+    const moveX = c.x - this.snowAnchor.x, moveY = c.y - this.snowAnchor.y, moveZ = c.z - this.snowAnchor.z; this.snowAnchor.copy(c);
+    const a = this.snow.geometry.attributes.position.array, p = this.snowPos, t = this.time;
+    for (let i = 0; i < n; i++) {
+      const k = i * 3, sd = this.snowSeed[i];
+      p[k] += Math.sin(t * .7 + sd) * .35 * dt - moveX; p[k + 1] -= (.75 + (sd % 1) * .5) * dt + moveY; p[k + 2] += Math.cos(t * .5 + sd) * .3 * dt - moveZ;
+      if (p[k] < -40) p[k] += 80; else if (p[k] > 40) p[k] -= 80;
+      if (p[k + 2] < -40) p[k + 2] += 80; else if (p[k + 2] > 40) p[k + 2] -= 80;
+      if (p[k + 1] < -4) p[k + 1] += 34; else if (p[k + 1] > 30) p[k + 1] -= 34;
+      a[k] = c.x + p[k]; a[k + 1] = c.y + p[k + 1]; a[k + 2] = c.z + p[k + 2];
+    }
+    this.snow.geometry.attributes.position.needsUpdate = true;
+    this.snow.material.color.set(this.settings.time === 'night' ? 0xaab6cc : 0xffffff);
   }
 
   get raining() { return this.settings.weather === 'rain' && this.settings.location === 'hills'; }
@@ -143,6 +178,88 @@ export class Effects {
     this.ripples.instanceMatrix.needsUpdate = true;
   }
 
+  /* ---------- Aircraft: now and then an airliner high overhead or a helicopter low over the hills ---------- */
+  buildAircraft() {
+    const white = new T.MeshStandardMaterial({color: 0xf2f3f5, roughness: .45, metalness: .3}), grey = new T.MeshStandardMaterial({color: 0x9aa2aa, roughness: .5, metalness: .5});
+    const add = (g, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); g.add(m); return m; };
+    // Airliner, about 38 m long, nose along +z.
+    const plane = new T.Group();
+    add(plane, new T.CapsuleGeometry(2, 32, 6, 12).rotateX(Math.PI / 2), white, 0, 0, 0);
+    for (const s of [1, -1]) { add(plane, new T.BoxGeometry(17, .5, 5.5).translate(s * 8.5, 0, 0), white, s * 1.5, -.6, -1, 0, s * .45, 0); add(plane, new T.CylinderGeometry(1.2, 1.1, 4.5, 12).rotateX(Math.PI / 2), grey, s * 7, -1.8, 2); }
+    add(plane, new T.BoxGeometry(.5, 7, 5).translate(0, 3.5, 0), white, 0, 1.2, -15, -.35, 0, 0);
+    for (const s of [1, -1]) add(plane, new T.BoxGeometry(6, .35, 3).translate(s * 3, 0, 0), white, s * .8, .8, -15.5, 0, s * .4, 0);
+    this.plane = plane;
+    // Helicopter, about 12 m long.
+    const heli = new T.Group(), body = new T.MeshStandardMaterial({color: 0xb42a24, roughness: .4, metalness: .35}), glass = new T.MeshStandardMaterial({color: 0x1a232b, roughness: .1, metalness: .6});
+    add(heli, new T.SphereGeometry(1.6, 16, 12).scale(1, .95, 1.5), body, 0, 0, 0);
+    add(heli, new T.SphereGeometry(1.25, 14, 10).scale(1, .8, 1), glass, 0, .25, 1.35);
+    add(heli, new T.CylinderGeometry(.22, .45, 6.5, 8).rotateX(Math.PI / 2), body, 0, .35, -4.6);
+    add(heli, new T.BoxGeometry(.12, 1.6, 1.1), body, 0, 1.05, -7.6);
+    for (const s of [1, -1]) { add(heli, new T.BoxGeometry(.12, .12, 3.6), grey, s * 1.1, -1.65, 0); add(heli, new T.BoxGeometry(.1, .7, .1), grey, s * 1.1, -1.3, .8); add(heli, new T.BoxGeometry(.1, .7, .1), grey, s * 1.1, -1.3, -.9); }
+    this.rotor = new T.Group(); this.rotor.position.y = 1.75; heli.add(this.rotor);
+    for (const a of [0, Math.PI / 2]) add(this.rotor, new T.BoxGeometry(11, .06, .35), grey, 0, 0, 0, 0, a, 0);
+    this.tailRotor = new T.Group(); this.tailRotor.position.set(.2, 1.05, -7.6); heli.add(this.tailRotor);
+    for (const a of [0, Math.PI / 2]) add(this.tailRotor, new T.BoxGeometry(.06, 1.8, .18), grey, 0, 0, 0, a, 0, 0);
+    this.heli = heli;
+    for (const g of [plane, heli]) { g.visible = false; g.traverse((o) => { if (o.isMesh) o.castShadow = false; }); this.scene.add(g); }
+    const trail = new T.PlaneGeometry(1, 1).translate(0, -.5, 0).rotateX(-Math.PI / 2);
+    this.contrail = new T.Mesh(trail, new T.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, fog: false, side: T.DoubleSide}));
+    this.contrail.visible = false; this.scene.add(this.contrail);
+    this.navGlow = new GlowPoints(this.scene, 8, {fade: 3500});
+    this.flight = null; this.nextFlight = rand(25, 60);
+  }
+
+  launchFlight() {
+    const s = this.getState(), heli = Math.random() < .4, dir = Math.random() < .5 ? 1 : -1;
+    const across = heli ? rand(700, 1100) : 2100, ahead = heli ? rand(260, 700) : rand(700, 1500), alt = heli ? rand(110, 190) : rand(620, 820);
+    const craft = heli ? this.heli : this.plane, speed = heli ? rand(38, 50) : rand(105, 125);
+    const heading = Math.atan2(dir, rand(-.35, .35) * (heli ? 1 : .4));
+    craft.position.set(s.x - dir * across, this.world.road.y(s.z) + alt, s.z + ahead);
+    craft.rotation.set(0, heading, 0); craft.visible = true;
+    this.flight = {craft, heli, speed, heading, dir, age: 0, life: (across * 2) / speed};
+  }
+
+  updateAircraft(dt) {
+    const show = this.settings.location === 'hills';
+    this.navGlow.begin();
+    if (!this.flight) {
+      this.nextFlight -= dt;
+      if (show && this.nextFlight <= 0 && this.getState().started) this.launchFlight();
+      if (this.contrail.visible) this.contrail.visible = false;
+    }
+    const f = this.flight;
+    if (f) {
+      f.age += dt;
+      const c = f.craft, fx = Math.sin(f.heading), fz = Math.cos(f.heading);
+      c.position.x += fx * f.speed * dt; c.position.z += fz * f.speed * dt;
+      if (f.heli) { this.rotor.rotation.y += dt * 38; this.tailRotor.rotation.x += dt * 60; c.rotation.set(.12, f.heading, Math.sin(f.age * .4) * .05); c.position.y += Math.sin(f.age * .6) * .08; }
+      else c.rotation.set(0, f.heading, Math.sin(f.age * .15) * .04);
+      // Contrail behind a high airliner in clear daylight.
+      const trail = !f.heli && this.settings.time !== 'night' && this.settings.weather === 'clear';
+      this.contrail.visible = trail;
+      if (trail) { const len = Math.min(900, f.age * f.speed); this.contrail.position.copy(c.position).addScaledVector(new T.Vector3(fx, 0, fz), -22); this.contrail.rotation.set(0, f.heading, 0); this.contrail.scale.set(3.2, 1, len); this.contrail.material.opacity = .5; }
+      // Navigation lights: red left, green right, a white tail light, and a blinking strobe and beacon.
+      const night = this.settings.time === 'night' ? 1 : this.settings.time === 'sunset' ? .7 : .35, v = new T.Vector3(), t = this.time;
+      const lights = f.heli ? [[-1.2, 0, 0, 0xff2a1a], [1.2, 0, 0, 0x2aff5a], [0, 1.6, 0, 0xff3322, 'beacon'], [0, .4, -7.8, 0xffffff]] : [[-17.5, -.2, -8, 0xff2a1a], [17.5, -.2, -8, 0x2aff5a], [0, 8, -17, 0xffffff], [0, -2.2, 2, 0xff3322, 'beacon'], [-17.5, -.2, -8.4, 0xffffff, 'strobe'], [17.5, -.2, -8.4, 0xffffff, 'strobe']];
+      for (const [x, y, z, col, kind] of lights) {
+        if (kind === 'beacon' && Math.floor(t * 1.2) % 2) continue;
+        if (kind === 'strobe' && (t % 1.3) > .08) continue;
+        v.set(x, y, z); c.localToWorld(v); this.fade.set(col);
+        this.navGlow.add(v.x, v.y, v.z, this.fade, kind ? 1.6 * night + .4 : night, kind === 'strobe' ? 40 : 18);
+      }
+      if (f.age > f.life || !show) { c.visible = false; this.flight = null; this.nextFlight = rand(40, 110); this.contrail.visible = false; }
+    }
+    this.navGlow.end();
+    // Distant engine rumble or rotor thud, fading with distance.
+    if (this.aircraftGain) {
+      const cam = this.camera.position, d = f ? f.craft.position.distanceTo(cam) : 1e4, vol = this.getVolume();
+      const level = f ? vol * (f.heli ? .5 : .3) / Math.pow(1 + d / (f.heli ? 260 : 700), 2) : 0;
+      this.aircraftGain.gain.setTargetAtTime(level, this.audio.currentTime, .3);
+      this.aircraftFilter.frequency.setTargetAtTime(f?.heli ? 180 : 320, this.audio.currentTime, .3);
+      this.rotorDepth.gain.setTargetAtTime(f?.heli ? .9 : 0, this.audio.currentTime, .3);
+    }
+  }
+
   /* ---------- Lightning and thunder ---------- */
   buildLightning() {
     this.bolt = new T.Line(new T.BufferGeometry(), new T.LineBasicMaterial({color: 0xeef3ff, transparent: true, opacity: 0, fog: false}));
@@ -193,6 +310,14 @@ export class Effects {
     this.rainGain = context.createGain(); this.rainGain.gain.value = 0;
     src.connect(hp).connect(lp).connect(this.rainGain).connect(context.destination); src.start();
     this.noise = buffer;
+    // Aircraft: low filtered noise, pulsed by the rotor for a helicopter.
+    const air = context.createBufferSource(); air.buffer = buffer; air.loop = true; air.playbackRate.value = .5;
+    this.aircraftFilter = context.createBiquadFilter(); this.aircraftFilter.type = 'lowpass'; this.aircraftFilter.frequency.value = 300;
+    const pulse = context.createGain(); pulse.gain.value = .6;
+    const rotor = context.createOscillator(); rotor.frequency.value = 17; this.rotorDepth = context.createGain(); this.rotorDepth.gain.value = 0;
+    rotor.connect(this.rotorDepth).connect(pulse.gain); rotor.start();
+    this.aircraftGain = context.createGain(); this.aircraftGain.gain.value = 0;
+    air.connect(this.aircraftFilter).connect(pulse).connect(this.aircraftGain).connect(context.destination); air.start();
   }
 
   thunder(delay, strength) {
@@ -266,20 +391,22 @@ export class Effects {
     this.water.position.x = Math.round(c.x / 50) * 50; this.water.position.z = Math.round(c.z / 50) * 50;
     const u = this.water.material.uniforms;
     u.time.value += dt * (this.raining ? 1.6 : .7);
-    u.sunDirection.value.copy(this.world.skyMaterial.uniforms.sunDirection.value);
+    u.sunDirection.value.copy(this.world.lightDir);
     const night = this.settings.time === 'night', sunset = this.settings.time === 'sunset';
     u.waterColor.value.set(night ? 0x08141c : this.raining ? 0x2a3a40 : sunset ? 0x33403f : 0x1d3b44);
-    u.sunColor.value.set(night ? 0x223044 : sunset ? 0xffb070 : this.raining ? 0x6a7680 : 0xfff2d6);
+    u.sunColor.value.set(night ? 0x8fa6d8 : sunset ? 0xffa050 : this.raining ? 0x6a7680 : 0xfff2d6);
     u.distortionScale.value = this.raining ? 5 : 2.4;
   }
 
   /* ---------- Settings changes ---------- */
   refresh() {
     this.base = {hemi: this.hemi.intensity, sun: this.sun.intensity};
-    const wet = this.raining, road = this.world.roadMat;
-    road.roughness = wet ? .32 : this.original.roadRough;
-    road.envMapIntensity = wet ? 1.6 : this.original.roadEnv;
-    if (wet) road.color.multiplyScalar(.62);
+    const wet = this.raining, road = this.world.roadMat, hills = this.settings.location === 'hills';
+    // Rain soaks the road; winter slush and spring showers leave it damp and glossy.
+    const damp = wet ? 1 : hills && this.settings.season === 'winter' ? .55 : hills && this.settings.season === 'spring' ? .4 : 0;
+    road.roughness = this.original.roadRough + (.32 - this.original.roadRough) * damp;
+    road.envMapIntensity = this.original.roadEnv + (1.6 - this.original.roadEnv) * damp;
+    if (damp) road.color.multiplyScalar(1 - .38 * damp);
     this.world.groundMat.roughness = wet ? .82 : this.original.groundRough;
     road.needsUpdate = true;
     this.rain.visible = this.puddles.visible = this.ripples.visible = wet;
@@ -376,6 +503,8 @@ export class Effects {
     this.time += dt;
     this.updateTyreMarks(dt);
     this.updateDust(dt);
+    this.updateSnow(dt);
+    this.updateAircraft(dt);
     if (this.raining) { this.updateRain(dt); this.updatePuddles(); this.updateRipples(dt); }
     this.updateLightning(dt);
     this.updateBirds(dt);
