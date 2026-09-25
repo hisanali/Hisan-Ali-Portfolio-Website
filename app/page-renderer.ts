@@ -8,6 +8,7 @@ const fieldGuideStyles = '<link rel="stylesheet" href="/blog/field-guide.css?v=2
 const interiorScript = '<script src="/interior-redesign.js?v=34"></script>';
 
 export function prepareInteriorPage(html: string, pathname: string) {
+  if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return html;
   if (/^\/tools\/rubiks-cube\/?$/.test(pathname)) return html;
   const isFieldGuide = /\bfield-guide-page\b/i.test(html);
   const pageStyles = `${interiorStyles}${isFieldGuide ? fieldGuideStyles : ''}${experienceStyles}${qualityRepairStyles}`;
