@@ -265,7 +265,7 @@ export class Life {
     if (this.settings.location !== 'hills') return;
     const s = this.getState(), off = false, r = this.world.road;
     for (const a of this.animals) {
-      if (!a.g.visible || ((['cow','horse','bighorn'].includes(a.kind)) && this.world.landmarks.active(a.z) && this.settings.destination !== 'lake') || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
+      if (!a.g.visible || ((['cow','horse','bighorn'].includes(a.kind)) && this.world.landmarks.active(a.z) && this.world.landmarks.kindAt(a.z) !== 'lake') || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
       a.phase += dt * (a.speed > 1.8 && a.kind !== 'dog' ? 1 + (a.speed - 1.8) * .45 : 1);
       if (['cow','horse','bighorn'].includes(a.kind) || a.crossing) this.wander(a, dt);
       else if (a.speed) {
@@ -800,7 +800,8 @@ export class Life {
       if (Math.abs(front - target) < 1.6 && c.speed < .25) { c.atStop += dt; if (c.atStop > 9 && !beside) { c.served.add(b); c.atStop = 0; c.pullOut = 1.6; } }
     } else c.nextStop = null;
     if (c.pullOut > 0) { c.pullOut -= dt; c.signal = {side: -r.side, until: performance.now() + 400}; if (c.pullOut < .8) c.latTarget = 0; }
-    else if (!b) c.latTarget = 0;
+    // Between stops a bus eases out round a cyclist like any other vehicle, so traffic behind it isn't held up.
+    else if (!b) c.latTarget = c.passing ? -r.side * c.dir * (c.passShift || 0) : 0;
   }
 
   // Everything a vehicle must stop for ahead: lights, stop signs, zebras, level crossings and its own bus stop.

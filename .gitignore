@@ -28,3 +28,6 @@ node_modules/
 # Local Codex agent tooling
 .agents/
 skills-lock.json
+
+# Supplied Sketchfab Standard scenes: used in the game via import-maps.py, never redistributed
+/scripts/evermile/source/maps/

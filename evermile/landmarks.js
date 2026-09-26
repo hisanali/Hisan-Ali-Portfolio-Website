@@ -1,9 +1,11 @@
 import {ArchitectureModels} from './architecture-models.js?v=20260926-supplied7';
+import {MapKits} from './map-kits.js?v=20260926-maps1';
 import * as T from './vendor/three.module.js';
 import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260926-supplied7';
 import {scanned} from './materials.js?v=20260926-supplied7';
-import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-supplied7';
+import {DESTINATIONS} from './destinations.js?v=20260926-supplied7';
 import {random, clamp} from './math.js?v=20260926-supplied7';
+import {SEA} from './network.js?v=20260926-supplied7';
 
 const CYLINDER = new T.CylinderGeometry(1, 1, 1, 12).toNonIndexed();
 const SPHERE = new T.SphereGeometry(1, 12, 8).toNonIndexed();
@@ -27,7 +29,7 @@ function palmLeaf() {
 const FROND = palmLeaf();
 export class Landmarks {
  constructor(world) {
-  this.imported=new ArchitectureModels(world);this.world = world; this.settings = world.settings; this.t = 0; this.signs = new Map(); this.wheels = []; this.lit = 0;
+  this.imported=new ArchitectureModels(world);this.kits=new MapKits(world);this.world = world; this.settings = world.settings; this.t = 0; this.signs = new Map(); this.wheels = []; this.lit = 0;
   const std = (o) => new T.MeshStandardMaterial({vertexColors:true, ...o});
   const leaves = canvasTexture(512, 128, (c,w,h) => { c.clearRect(0,0,w,h); c.strokeStyle='#fff'; c.lineWidth=3; c.beginPath(); c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke(); for(let i=0;i<65;i++){const x=i*w/65;c.lineWidth=3.8;for(const s of [-1,1]){c.beginPath();c.moveTo(x,h/2);c.lineTo(x+30,h/2+s*(h*.48));c.stroke();}} });
   this.m = {
@@ -49,8 +51,11 @@ export class Landmarks {
   // A bounded light pool avoids hundreds of per-building point lights.
   this.lights = Array.from({length:4},()=>{const l=new T.PointLight(0xffcd8c,0,26,2);world.scene.add(l);return l;});
  }
- active(z) { return inDestination(this.settings,z); }
- blocked(x,z) { if(!this.active(z))return false; const r=this.world.road;return Math.abs(x-r.x(z))< (this.settings.destination==='lake'?18:115); }
+ // Districts sit on the road network wherever a junction led; each has its own origin (d0) along the road.
+ district(z) { return this.world.road.districtAt(z); }
+ active(z) { return !!this.district(z); }
+ kindAt(z) { return this.district(z)?.district || null; }
+ blocked(x,z) { const d=this.district(z); if(!d)return false; const r=this.world.road;return Math.abs(x-r.x(z))< (d.district==='lake'?18:d.district==='forest'?14:d.district==='city'?130:115); }
  sign(text) {
   if(this.signs.has(text))return this.signs.get(text);
   const map=canvasTexture(1024,128,(c,w,h)=>{c.fillStyle='#16272b';c.fillRect(0,0,w,h);c.fillStyle='#e8efde';c.font='500 58px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(text,w/2,h/2,w-50);});
@@ -165,26 +170,95 @@ export class Landmarks {
    for(let i=0;i<8;i++)put('stone',SPHERE,-edge-9-i*2,-1.6-i*.25,8,0xaca795,1.9,1.5,1.7);
   }
  }
+ // A welcome board on two posts at the district entrance.
+ entrance(b,group,z,text,side=1){const r=this.world.road,y=r.y(z),yaw=Math.atan(r.tangent(z))+(side<0?Math.PI:0),put=frame(b,r.x(z),y,z,yaw);put.y=y;const x=r.width(z)+3.2;
+  for(const q of [-2.1,2.1])put('wood',UNIT,x,1.6,q,0x6f5a40,.18,3.2,.18);const [sx,sz]=put.world(x-.12,0);this.label(b,text,sx,y+2.75,sz,5,yaw-Math.PI/2);this.collider(group,put,x,0,.4,2.4);}
+ // Eastgate City: shop rows and street facades along the kerb, tower blocks and panel slabs behind.
+ city(b,group,start,end,district,rng,trunks,crowns){
+  const r=this.world.road,kits=this.kits;
+  for(const side of [-1,1]){
+   for(const [kinds,setback,maxW,gapA,gapB] of [[['low','facade'],7,26,1.5,4],[['block','tower'],36,40,8,18]]){
+    let q=start+rng()*8;
+    for(let n=0;n<12&&q<end-3;n++){
+     const bld=kits.pick(kinds,rng,maxW);if(!bld)break;
+     const z=q+bld.w/2;if(z>=end)break;
+     if(this.district(z)!==district||this.district(z-bld.w/2)!==district||this.district(z+bld.w/2)!==district){q+=12;continue;}
+     const y=r.y(z),yaw=Math.atan(r.tangent(z))+(side<0?Math.PI:0),put=frame(b,r.x(z),y,z,yaw);put.y=y;
+     const x=r.width(z)+setback+bld.d/2+(setback>10?rng()*14:0),[wx,wz]=put.world(x,0);
+     kits.place(bld,group,wx,y-.05,wz,yaw-Math.PI/2);this.collider(group,put,x,0,bld.d/2,bld.w/2);
+     q+=bld.w+(setback<10&&rng()<.22?9+rng()*6:gapA+rng()*(gapB-gapA));
+    }
+   }
+  }
+  for(let z=Math.ceil(start/30)*30;z<end;z+=30){if(this.district(z)!==district)continue;
+   const y=r.y(z),put=frame(b,r.x(z),y,z,Math.atan(r.tangent(z)));put.y=y;const edge=r.width(z);
+   for(const side of [-1,1]){put('pavement',UNIT,side*(edge+3.5),.1,0,0xb3b0a8,7,.2,30);put('stone',UNIT,side*(edge+.15),.14,0,0xc9c5bb,.3,.28,30);this.lamp(put,side*(edge+1.1),side*7,group,6.2);
+    // Street trees in the pavement.
+    const tx=r.x(z)+Math.cos(Math.atan(r.tangent(z)))*side*(edge+5.4),tz=z+8,size=5.5+rng()*1.5;
+    trunks.push({p:[tx,y+size*.43,tz],s:[size*.2,size*.86,size*.2]});
+    for(let k=0;k<6;k++){const a=k*2.399;crowns.push({p:[tx+Math.cos(a)*size*.2,y+size*(.78+rng()*.25),tz+Math.sin(a)*size*.2],s:[size*.34,size*.38,size*.34],r:[rng()*.3,rng()*6,0],c:k%3?0x6f8d4f:0x5f7c45});}
+   }
+  }
+ }
+ // Pinecrest Forest: tall pines and spruces close to a quiet road, mossy boulders and undergrowth at their feet.
+ forest(b,group,start,end,district,rng){
+  const r=this.world.road,items=[];
+  for(let i=0;i<260;i++){
+   const z=start+rng()*(end-start);if(this.district(z)!==district)continue;
+   const side=rng()<.5?-1:1,edge=r.half(z),far=Math.pow(rng(),1.35),d=edge+3.5+far*120,x=r.x(z)+side*d,y=this.world.surfaceHeight(x,z);
+   if(!(y>SEA+1))continue;
+   const roll=rng();let name,s;
+   if(d<edge+9){name=roll<.55?'fern-1':roll<.8?'fern-0':'boulder-0';s=name==='fern-0'?.35+rng()*.2:name==='fern-1'?.55+rng()*.45:.12+rng()*.14;}
+   else if(roll<.06){name='boulder-0';s=.45+rng()*.6;}
+   else if(roll<.13){name='boulder-0';s=.15+rng()*.25;}
+   else if(roll<.2){name='fern-1';s=.7+rng()*.5;}
+   else{name=rng()<.55?'pine-'+Math.floor(rng()*4):'spruce-'+Math.floor(rng()*3);s=.8+rng()*.4;}
+   items.push({name,p:[x,y-(name.startsWith('boulder')?.35*s:0),z],yaw:rng()*6.283,s});
+  }
+  this.kits.plant(group,items,this.settings.quality!=='low');
+  // A fallen log and a picnic spot now and then.
+  if(rng()<.6){const z=start+60+rng()*120;if(this.district(z)===district){const y=r.y(z),side=rng()<.5?-1:1,put=frame(b,r.x(z),y,z,Math.atan(r.tangent(z)));put.y=y;const x=side*(r.width(z)+6);
+   put('wood',UNIT,x,.75,0,0x8d7556,1.8,.1,3.2);for(const q of [-1.4,1.4])put('wood',UNIT,x,.4,q,0x6f5a40,1.6,.8,.12);for(const dx of [-1.25,1.25])put('wood',UNIT,x+dx,.45,0,0x7d6547,.35,.1,3.2);
+   put('bark',CYLINDER,x+side*6,.35,8,0x5b4a36,.35,5.5,.35,0,Math.PI/2,.4);this.collider(group,put,x,0,1.2,1.8);}}
+ }
+ // Outside the districts: stands of the imported pines and big boulders on mountain passes.
+ wild(group,index,plan){
+  const r=this.world.road,start=index*240,type=r.typeAt(start+120);if(type!=='mountain'||!this.kits.ready.forest)return;
+  const rng=random(index*613+r.id),items=[];
+  for(let i=0;i<70;i++){
+   const z=start+rng()*240,side=rng()<.5?-1:1,d=r.half(z)+8+Math.pow(rng(),1.2)*110,x=r.x(z)+side*d;
+   if(r.typeAt(z)!=='mountain'||r.tunnelAt(z)||r.roadUnder(x,z,6)||plan.blocked(x,z))continue;
+   const y=this.world.surfaceHeight(x,z);if(!(y>SEA+2)||y>112)continue;
+   const big=rng()<.12;items.push({name:big?'boulder-0':'pine-'+Math.floor(rng()*4),p:[x,y-(big?1:0),z],yaw:rng()*6.283,s:big?.3+rng()*.5:.7+rng()*.4});
+  }
+  this.kits.plant(group,items,this.settings.quality!=='low');
+ }
  build(group,index){
-  const start=index*240,end=start+240,kind=this.settings.destination;if(!this.active(start+120))return;
-  const b=new Batch(),rng=random(index*251+42),r=this.world.road,trunks=[],crowns=[];
-  for(let z=Math.ceil(start/40)*40;z<end;z+=40){if(!this.active(z))continue;
+  const start=index*240,end=start+240,district=this.district(start+120);if(!district)return;
+  const kind=district.district,d0=district.d0,local=(z)=>z-d0;
+  const b=new Batch(),rng=random(index*251+42+d0),r=this.world.road,trunks=[],crowns=[];
+  if(kind==='city')this.city(b,group,start,end,district,rng,trunks,crowns);
+  if(kind==='forest')this.forest(b,group,start,end,district,rng);
+  for(let z=Math.ceil(start/40)*40;z<end;z+=40){if(this.district(z)!==district)continue;
    if(['neon','oldtown','pier','villa','lake'].includes(kind))this.boardwalk(b,group,z,kind);
    if(kind==='neon')this.building(b,group,z,1,'hotel',rng);
-   if(kind==='oldtown'&&!(z>=120&&z<=280))this.building(b,group,z,1,'oldtown',rng);
+   if(kind==='oldtown'&&!(local(z)>=120&&local(z)<=280))this.building(b,group,z,1,'oldtown',rng);
    if(['estate','palms','villa'].includes(kind))for(const s of kind==='villa'?[1]:[-1,1])this.building(b,group,z,s,kind==='villa'?'modern':kind==='palms'?'residential':'estate',rng);
    if(kind==='airport'){const put=frame(b,r.x(z),r.y(z),z,0);put.y=r.y(z);for(const side of [-1,1])put('pavement',UNIT,side*(r.width(z)+3.7),.1,0,0xccc4ae,7.4,.2,40);this.palm(put,-10,0,15);this.lamp(put,-8,7,group);}
    if(kind==='pier'){const put=frame(b,r.x(z),r.y(z),z,0);put('pavement',UNIT,r.width(z)+3.7,.1,0,0xccc4ae,7.4,.2,40);}
-   if(kind==='pier'&&z%80===0)this.building(b,group,z,1,'hotel',rng);
+   if(kind==='pier'&&local(z)%80===0)this.building(b,group,z,1,'hotel',rng);
    if(kind==='lake')for(let t=0;t<5;t++){
     const tz=z-16+rng()*32,x=r.x(tz)+14+rng()*22,y=this.world.surfaceHeight(x,tz),size=5+rng()*5;
     trunks.push({p:[x,y+size*.43,tz],s:[size*.28,size*.86,size*.28]});
     for(let k=0;k<7;k++){const a=k*2.399;crowns.push({p:[x+Math.cos(a)*size*.24,y+size*(.75+rng()*.3),tz+Math.sin(a)*size*.24],s:[size*.4,size*.45,size*.4],r:[rng()*.3,rng()*6,0],c:k%4?0x829963:0x748861});}
    }
   }
-  if(kind==='airport'&&start<=160&&end>160)this.terminal(b,group,160);
-  if(kind==='oldtown'&&start<=210&&end>210)this.fortress(b,group,210);
-  if(kind==='pier'&&start<=170&&end>170)this.wheel(b,group,170);
+  const at=(u)=>start<=d0+u&&end>d0+u;
+  if(kind==='city'&&at(-120))this.entrance(b,group,d0-120,'EASTGATE CITY');
+  if(kind==='forest'&&at(-120))this.entrance(b,group,d0-120,'PINECREST FOREST');
+  if(kind==='airport'&&at(160))this.terminal(b,group,d0+160);
+  if(kind==='oldtown'&&at(210))this.fortress(b,group,d0+210);
+  if(kind==='pier'&&at(170))this.wheel(b,group,d0+170);
   b.flush(group,this.m);
   this.world.makeInstances(group,this.world.geos.trunk,this.world.trunkMat,trunks,true);
   this.world.makeInstances(group,this.world.geos.leaves,this.world.leafMat,crowns,true);

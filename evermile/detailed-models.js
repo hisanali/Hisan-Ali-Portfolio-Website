@@ -60,6 +60,6 @@ export class DetailedModels{
   if(!this.foxes.length)for(let i=0;i<3;i++){
    const animation=animatedAnimal(this.loaded.fox,'fox',i),root=animation.root;this.scene.add(root);this.foxes.push({root,animation,z:-1e6,i});
   }
-  for(const f of this.foxes){const active=this.settings.location==='hills'&&(!world.landmarks.active(state.z)||this.settings.destination==='lake');f.root.visible=active;if(!active)continue;if(Math.abs(f.z-state.z)>220)f.z=state.z+65+f.i*45;f.z+=dt*.65;const x=world.road.x(f.z)+world.road.half(f.z)+10+f.i*2,y=world.surfaceHeight(x,f.z);f.root.position.set(x,y,f.z);f.root.rotation.y=Math.atan(world.road.tangent(f.z));f.root.visible=y>-7&&!world.road.roadUnder(x,f.z,2);f.animation.update(dt,.65);}
+  for(const f of this.foxes){const active=this.settings.location==='hills'&&(!world.landmarks.active(state.z)||['lake','forest'].includes(world.landmarks.kindAt(state.z)));f.root.visible=active;if(!active)continue;if(Math.abs(f.z-state.z)>220)f.z=state.z+65+f.i*45;f.z+=dt*.65;const x=world.road.x(f.z)+world.road.half(f.z)+10+f.i*2,y=world.surfaceHeight(x,f.z);f.root.position.set(x,y,f.z);f.root.rotation.y=Math.atan(world.road.tangent(f.z));f.root.visible=y>-7&&!world.road.roadUnder(x,f.z,2);f.animation.update(dt,.65);}
  }
 }

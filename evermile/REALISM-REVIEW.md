@@ -49,3 +49,14 @@ The original horse/fox glTF animation channels are retained because Blender resa
 Model Studio includes all five new imports. Browser checked model rendering and Mercedes chase/cockpit driving; animal scale, root drift, wheel rolling and native clips have regression checks. This is still a simplified game simulation, and the W201's textured dashboard instruments are static. Horse/fox retain their source non-commercial license; the bighorn archive lacks license/source metadata. See ASSET-CREDITS.md. Publication of this supplied-asset pass was authorized on 26 September 2026; deployment is verified separately against the production files.
 
 Validation after sheep removal: all 82 Evermile tests pass, including native animal clips, horn attachment, wheel pivots and locomotive scale. Reloaded game reports no sheep assets or instances, all new imports loaded, an active imported train, and no browser warnings/errors. W201 acceleration and steering-release checks ran in the rendered game loop; steering/yaw rate settled near zero. This short check is not an exhaustive handling audit.
+
+
+## One connected map
+
+Destinations are no longer separate maps. Every district is a place on the endless road network: junction signs and the junction card name it ("Ocean Drive · Art deco hotels"), the road settles flat and gentle through it, then winds back into open country and reaches the next junction, so no place is a dead end. About three in four junctions offer a place (never straight after one, never one of the last four visited); motorways reach them by exits. Autodrive takes a signposted place most of the time. Starting a drive in a destination still starts inside it, and the rest of the network is reachable from there.
+
+Two new districts use the supplied dasy444 scenes: Eastgate City (shop rows and street facades at the kerb, panel tower blocks behind, street trees and lamps) and Pinecrest Forest (dense imported pines, spruces, boulders and undergrowth on a quiet road). Mountain passes also get stands of the imported pines and boulders.
+
+Buses now ease out round cyclists between stops like other traffic; previously one bus behind a cyclist held every vehicle behind it at cycling pace.
+
+Validation: 93 automated checks, including 160 km network walks in three road styles (continuous road, grade under 15 %, every junction offering two ways that run on to another junction, every destination signposted, districts aligned, level and clear of tunnels, towns, rail and services). A 21 km autodrive run in the rendered game went through the airport, lake and forest districts with no errors, averaging 50 km/h. City and forest cost about the same to draw as the existing Old Town.

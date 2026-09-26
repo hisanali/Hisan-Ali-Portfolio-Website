@@ -161,11 +161,12 @@ export class TownLife {
   }
 
   updatePeople(dt, s) {
-    if (this.world.landmarks.active(s.z) && this.settings.destination !== 'lake') {
-      const r = this.world.road, rain = this.world.atmo.rain;
+    const district = this.world.landmarks.district(s.z);
+    if (district && !['lake', 'forest'].includes(district.district)) {
+      const r = this.world.road, rain = this.world.atmo.rain, d0 = district.d0;
       for (const p of this.people) {
-        if (!p.destination || p.destination !== this.settings.destination || Math.abs(p.z - s.z) > 240) {
-          p.destination = this.settings.destination; p.active = true; p.z = clamp(s.z + 25 + p.i * 7, -90, 950);
+        if (p.destination !== district || Math.abs(p.z - s.z) > 240) {
+          p.destination = district; p.active = true; p.z = clamp(s.z + 25 + p.i * 7, d0 - 90, d0 + 950);
           p.side = p.i % 3 ? 1 : -1; p.dir = p.i % 2 ? 1 : -1; p.speed = .95 + (p.i % 7) * .075; p.state = p.i%5===0?'look':'walk';p.timer=3+p.i*.8;p.walkVelocity=0;
         }
         p.active = true;const oldX=p.x,oldZ=p.z;
@@ -175,7 +176,7 @@ export class TownLife {
         // Yield to a slower pedestrian ahead instead of walking through their body.
         for(const other of this.people)if(other!==p&&other.active&&other.side===p.side&&Number.isFinite(other.x)&&Math.abs(other.x-p.x)<.5){const ahead=(other.z-p.z)*p.dir;if(ahead>0&&ahead<1.3)target=Math.min(target,Math.max(0,(ahead-.55)*1.2));}
         p.walkVelocity+=(target-p.walkVelocity)*(1-Math.exp(-dt*3));p.z+=p.dir*p.walkVelocity*dt;
-        if(p.z < -80 || p.z > 980) p.dir *= -1;
+        if(p.z < d0 - 80 || p.z > d0 + 980) p.dir *= -1;
         p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55 + .10*Math.sin(p.z*.08+p.i)); p.y = r.y(p.z) + .2;
         p.yaw = p.state==='look'?Math.atan(r.tangent(p.z))+p.side*Math.PI*.35 : Number.isFinite(oldX)&&Math.abs(p.z-oldZ)>.0001?Math.atan2(p.x-oldX,p.z-oldZ):Math.atan(r.tangent(p.z))+(p.dir<0?Math.PI:0); this.pose(p, p.walkVelocity>.05, rain, dt);
       }

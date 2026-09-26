@@ -299,7 +299,7 @@ export class Roadside {
     const r = this.world.road, x = r.x(z), y = r.y(z), yaw = Math.atan(r.tangent(z)), half = r.width(z), side = r.side, put = frame(batch, x, y, z, yaw);
     for (const px of [side * 1.4, side * (half + 1.2)]) put('metal', UNIT, px, 3.8, 0, 0x7c8288, .35, 7.6, .35);
     put('metal', UNIT, side * (half + 2.6) / 2, 7.4, 0, 0x7c8288, half, .5, .5);
-    const j = r.junctionAhead(z, 3000), text = j ? [`${r.optionInfo(j, 1).label} · ${j.options[1].name}`, `${Math.max(1, Math.round((j.z - z) / 100) / 10)} km`] : ['Services', `${1 + Math.round(random(Math.round(z))() * 20)} km`];
+    const j = r.junctionAhead(z, 3000), text = j ? [`${r.optionInfo(j, 1).label} · ${r.optionInfo(j, 1).name}`, `${Math.max(1, Math.round((j.z - z) / 100) / 10)} km`] : ['Services', `${1 + Math.round(random(Math.round(z))() * 20)} km`];
     const tex = this.signTexture(text, '#1f5c3a'), board = new T.Mesh(new T.PlaneGeometry(6.4, 2.4), new T.MeshStandardMaterial({map: tex, roughness: .6}));
     board.position.set(x + Math.cos(yaw) * side * (half * .55 + 1), y + 8.9, z - Math.sin(yaw) * side * (half * .55 + 1) - .3); board.rotation.y = yaw + Math.PI; group.add(board);
   }

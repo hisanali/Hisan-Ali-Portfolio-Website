@@ -3,7 +3,7 @@ import {citizenKey} from './citizen-assets.js?v=20260926-supplied7';
 import {motorcycleLean} from './wheel-rig.js?v=20260926-supplied7';
 import {DetailedModels} from './detailed-models.js?v=20260926-supplied7';
 import {boomFraction} from './camera-clearance.js?v=20260926-supplied7';
-import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-supplied7';
+import {DESTINATIONS} from './destinations.js?v=20260926-supplied7';
 import {traction, longitudinal, steeringMotion, steeringTarget, advancePose, VEHICLE_DYNAMICS} from './handling.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
 import {World} from './world.js?v=20260926-supplied7';
@@ -58,7 +58,7 @@ let audioContext, windGain, mixer = null, audioReady = false, muted = false, dri
 // High quality extras: bloom on bright lights and live reflections on your car. They switch off by themselves if the frame rate drops.
 let detailedModels, intro, starting = false;
 let composer = null, bloom = null, cubeRT = null, cubeCam = null, cubeFace = 0, highFx = true, slowTime = 0;
-let lastEnv = null, envClock = 0, tunnelDim = 1, valleyY = 0, valleyClock = 0, blockedTime = 0, lastType = null, lastTown = null, cardJunction = null, stopShown = null, stopStill = 0, lastTick = null;
+let lastDistrict = null, lastEnv = null, envClock = 0, tunnelDim = 1, valleyY = 0, valleyClock = 0, blockedTime = 0, lastType = null, lastTown = null, cardJunction = null, stopShown = null, stopStill = 0, lastTick = null;
 
 function setupHighFx() {
   const on = ['high', 'ultra'].includes(settings.quality) && highFx && renderer.capabilities.isWebGL2;
@@ -476,7 +476,7 @@ function toggleIndicator(side) {
 function chooseJunction(j, i, announce = true) {
   const r = world.road, was = j.chosen;
   if (r.choose(j, i)) { world.onRouteChange(j.z + ZONE - 80, state.z); life.onRouteChange(j.z); }
-  if (announce && (was !== i || i === 1)) { const o = r.optionInfo(j, i); radio?.notify('junction', o); toast(`${o.dir === 'ahead' ? 'Straight on' : o.dir === 'left' ? 'Turning left' : 'Turning right'} · ${o.label}${o.name ? ' to ' + o.name : ''}`); }
+  if (announce && (was !== i || i === 1)) { const o = r.optionInfo(j, i); radio?.notify('junction', o); toast(`${o.dir === 'ahead' ? 'Straight on' : o.dir === 'left' ? 'Turning left' : 'Turning right'} · ${o.district ? 'to ' + o.label : o.label + (o.name ? ' to ' + o.name : '')}`); }
   j.picked = true; updateJunctionCard(j, true);
 }
 
@@ -489,7 +489,8 @@ function routeWatch() {
   if (j && state.started) {
     const ahead = j.z - state.z, o = j.options[j.chosen];
     // Autodrive picks a way now and then (sometimes the side road), and signals for it.
-    if (state.auto && settings.autoMode !== 'speed' && !j.picked && ahead < 800) { chooseJunction(j, settings.junctions === 'surprise' && Math.random() < .42 ? 1 : 0, true); }
+    // It is keener on the ways that lead somewhere: a signposted destination is taken most of the time.
+    if (state.auto && settings.autoMode !== 'speed' && !j.picked && ahead < 800) { const place = j.options.findIndex((q) => q.district); chooseJunction(j, settings.junctions === 'surprise' ? (place >= 0 && Math.random() < .65 ? place : Math.random() < .42 ? 1 : 0) : 0, true); }
     if (state.auto && ahead < 260 && ahead > -10 && o.side) setIndicator(o.side > 0 ? 1 : -1, 'auto', .4);
   }
   // Indicators switch off once the turn is done.
@@ -503,6 +504,9 @@ function routeWatch() {
   const t = r.townAt(state.z), inside = t && state.z > t.start && state.z < t.end ? t : null;
   if (inside && inside.center !== lastTown?.center && state.started) { toast('Welcome to ' + inside.name); radio?.notify('town', {name: inside.name}); }
   lastTown = inside;
+  // Arriving in (or leaving) a destination district along the way.
+  const district = r.districtAt(state.z);
+  if (district !== lastDistrict) { if (district && state.started) { const d = DESTINATIONS[district.district]; toast(`Welcome to ${d.name} · ${d.detail}`); radio?.notify('town', {name: d.name}); } lastDistrict = district; updateUI(); }
   town.watchPlayer(state, (msg) => { if (state.time - (state.lastNote || -9) > 4) { state.lastNote = state.time; toast(msg); } });
 }
 
@@ -680,7 +684,7 @@ function updateHUD() {
 export function updateUI() {
   $('autodrive-btn').classList.toggle('active', state.auto); $('autodrive-btn').setAttribute('aria-pressed', String(state.auto));
   $('drive-status').textContent = state.auto ? 'ENJOY THE VIEW' : state.cruise ? 'CRUISE CONTROL' : 'TAKE THE SCENIC ROUTE';
-  $('scene-label').innerHTML = (settings.location === 'hills' ? (inDestination(settings,state.z) ? DESTINATIONS[settings.destination].name.toUpperCase() : 'HILLS') : 'OFF-WORLD') + ' <span>/</span> ' + (settings.location === 'hills' ? settings.season : settings.planet).toUpperCase();
+  $('scene-label').innerHTML = (settings.location === 'hills' ? (world.road.districtAt(state.z) ? DESTINATIONS[world.road.districtAt(state.z).district].name.toUpperCase() : 'HILLS') : 'OFF-WORLD') + ' <span>/</span> ' + (settings.location === 'hills' ? settings.season : settings.planet).toUpperCase();
   $('camera-label').textContent = ['CHASE', 'FAR CHASE', 'COCKPIT', 'BONNET', 'BUMPER'][settings.camera];
   $('speed-unit').textContent = settings.units === 'mi' ? 'MPH' : 'KM / H'; document.querySelector('.journey>span').textContent = settings.units === 'mi' ? 'MILES' : 'KILOMETERS';
   $('pause-indicator').hidden = !state.paused;
@@ -823,7 +827,7 @@ function closePanel() { endAllTouchDrive(); panelOpen = false; $('panel').hidden
 function options(key, values) { return `<div class="options">${values.map((v) => { const [value, label] = Array.isArray(v) ? v : [v, v]; return `<button data-setting="${key}" data-value="${value}" class="${settings[key] === value ? 'selected' : ''}" aria-pressed="${settings[key] === value}">${label}</button>`; }).join('')}</div>`; }
 function section(label, html) { return `<div class="control-group"><label>${label}</label>${html}</div>`; }
 function panelMarkup(name) {
-  if (name === 'world') return section('DESTINATIONS', `<div class="destination-list">${Object.entries(DESTINATIONS).map(([key, d]) => `<button data-destination="${key}" aria-pressed="${settings.destination === key}" class="destination-card ${settings.destination === key ? 'selected' : ''}"><strong>${d.name}</strong><span>${d.detail}</span></button>`).join('')}</div>`) + section('LANDSCAPE', options('location', [['hills', 'Hills'], ['offworld', 'Off-World']])) + section('ROAD', options('roadStyle', [['straight', 'Straight'], ['casual', 'Casual'], ['normal', 'Normal'], ['winding', 'Winding']])) + section('AT JUNCTIONS', options('junctions', [['surprise', 'Surprise me'], ['straight', 'Keep straight on']]) + '<p class="hint">What autodrive does at a junction. Indicate with Q or E, or tap the sign that pops up, to choose your own way.</p>') + section('WORLD SEED', '<input id="seed-input" aria-label="World seed" type="text" maxlength="60"><button id="generate-btn" class="action-btn">Generate a new journey ↗︎</button><p class="hint">The same seed always leads to the same road.</p>');
+  if (name === 'world') return section('START YOUR DRIVE IN', `<p class="hint">Every place is on the same road network. Look for them on junction signs as you drive, or start in one.</p><div class="destination-list">${Object.entries(DESTINATIONS).map(([key, d]) => `<button data-destination="${key}" aria-pressed="${settings.destination === key}" class="destination-card ${settings.destination === key ? 'selected' : ''}"><strong>${d.name}</strong><span>${d.detail}</span></button>`).join('')}</div>`) + section('LANDSCAPE', options('location', [['hills', 'Hills'], ['offworld', 'Off-World']])) + section('ROAD', options('roadStyle', [['straight', 'Straight'], ['casual', 'Casual'], ['normal', 'Normal'], ['winding', 'Winding']])) + section('AT JUNCTIONS', options('junctions', [['surprise', 'Surprise me'], ['straight', 'Keep straight on']]) + '<p class="hint">What autodrive does at a junction. Indicate with Q or E, or tap the sign that pops up, to choose your own way.</p>') + section('WORLD SEED', '<input id="seed-input" aria-label="World seed" type="text" maxlength="60"><button id="generate-btn" class="action-btn">Generate a new journey ↗︎</button><p class="hint">The same seed always leads to the same road.</p>');
   if (name === 'style') return (settings.location === 'hills' ? section('SEASON', options('season', [['spring', 'Spring'], ['summer', 'Summer'], ['autumn', 'Autumn'], ['winter', 'Winter']])) : section('PLANET', options('planet', [['mars', 'Mars'], ['moon', 'Moon'], ['venus', 'Venus']]))) + section('TIME OF DAY', options('time', [['dawn', 'Dawn'], ['day', 'Day'], ['sunset', 'Golden hour'], ['night', 'Night']])) + section('CLOCK', options('clock', [['live', 'Time passes'], ['still', 'Hold the time']]) + '<p class="hint">With time passing, a whole day goes by in about half an hour: sunset, night, dawn.</p>') + section('WEATHER', options('weather', [['changing', 'Changing'], ['clear', 'Clear skies'], ['overcast', 'Overcast'], ['rain', 'Rain & thunder']]));
   if (name === 'vehicle') return section('YOUR RIDE', options('vehicle', [['coupe', 'Coupé'], ['mercedes', 'Mercedes W201'], ['coach', 'Coach'], ['bike', 'Bike']])) + '<p class="vehicle-description">' + ({mercedes: '1982 Mercedes W201. A classic saloon with a textured cabin, independently rigged wheels, and calmer everyday handling.', coupe: 'A detailed sports coupé with sculpted bodywork, alloy wheels, and reflective paint. Balanced, responsive, and made for the long way home.', coach: 'A higher perspective on the open road. Take your time and watch the scenery unfold.', bike: 'Light, nimble, and a little closer to the elements.'}[settings.vehicle]) + '</p>' + '<button id="inspect-car" class="action-btn">Explore in 3D <span>↗︎</span></button>' + (state.dirt > .15 ? '<button id="wash-car" class="action-btn">Wash the car <span>↗︎</span></button>' : '') + section('PAINT', `<div class="options swatches">${['#e9e7db', '#b51f25', '#335b4c', '#7b9ba8', '#333a43', '#d6ba75'].map((c) => `<button data-setting="color" data-value="${c}" aria-label="${{'#e9e7db': 'Pearl', '#335b4c': 'Forest', '#7b9ba8': 'Glacier', '#b51f25': 'Racing red', '#333a43': 'Graphite', '#d6ba75': 'Champagne'}[c]} paint" class="${settings.color === c ? 'selected' : ''}" style="background:${c}"></button>`).join('')}</div>`) + section('VIEW', options('camera', [[0, 'Chase'], [1, 'Far'], [2, 'Cockpit'], [3, 'Bonnet'], [4, 'Bumper']]));
   if (name === 'help') return '<p class="vehicle-description">There’s no finish line. Drive at your own pace, or let autodrive take you somewhere new.</p><div class="keylist">' + [['Look around / return behind', 'Drag / release'], ['Explore car in 3D', 'V'], ['Accelerate / brake', 'W / S or ↑︎ / ↓︎'], ['Steer', 'A / D or ←︎ / →︎'], ['Indicate left / right', 'Q / E'], ['Autodrive', 'F'], ['Boost', 'Shift'], ['Handbrake', 'Space'], ['Radio station', 'N'], ['Reset on road', 'R'], ['Change camera', 'C'], ['Cruise control', 'J'], ['Adjust cruise speed', 'I / K'], ['Headlights', 'H'], ['Horn', 'G'], ['Pause', 'P'], ['Mute', 'M'], ['Hide interface', 'U'], ['Performance', 'F4'], ['Settings', 'Esc']].map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div><p class="hint">At a junction, indicate towards the side road (or tap the sign) to take it. Stop in a petrol station, café or viewpoint for something to do there.</p><p class="hint">Gamepad: left stick to steer, right trigger to accelerate, left trigger to brake.</p><p class="hint">3D car: Ferrari 458 Italia by <a href="https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6" target="_blank" rel="noopener noreferrer">vicent091036</a>, via the <a href="https://threejs.org/examples/webgl_materials_car.html" target="_blank" rel="noopener noreferrer">Three.js car demo</a>. Adapted materials and animation.</p>';

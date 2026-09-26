@@ -1,4 +1,4 @@
-import {DESTINATIONS, DISTRICT_END, inDestination} from './destinations.js?v=20260926-supplied7';
+import {DESTINATIONS, DISTRICT_END, DISTRICT_START, DISTRICT_GRID, DISTRICT_LEVEL, PLACE_KINDS} from './destinations.js?v=20260926-supplied7';
 import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260926-supplied7';
 
 /*
@@ -7,6 +7,9 @@ import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260926
   ways on: carry on along this kind of road, or turn off left or right towards another. Both branches are built and
   drawn through the junction; each climbs over a crest a few hundred metres on, so once you pick one the world beyond
   the crest can be rebuilt for your choice without you seeing it change.
+  Destinations are part of the same network: a segment can carry a district (Ocean Drive, the old town, the airport...)
+  a couple of kilometres past its junction. The road settles flat and gentle through it, then winds back into open
+  country and on to the next junction, so every place is reachable by road and none is a dead end.
 */
 export const FORK = 420, ZONE = FORK + 150, RAMP = 500, CREST = 7, SEA = -8;
 
@@ -32,8 +35,8 @@ const bump = (t) => (t <= -1 || t >= 1 ? 0 : (1 - t * t) ** 2);
 const mix = (a, b) => (Math.imul(a ^ 0x9e3779b9, 2654435761) ^ b) >>> 0;
 
 class Segment {
-  constructor(net, parent, z0, type, side, option) {
-    this.net = net; this.parent = parent; this.z0 = z0; this.type = type; this.side = side; this.option = option;
+  constructor(net, parent, z0, type, side, option, district = null) {
+    this.net = net; this.parent = parent; this.z0 = z0; this.type = type; this.side = side; this.option = option; this.district = district;
     this.id = parent ? mix(mix(parent.id, option + 1), Math.round(z0)) : net.id;
     const rng = random(this.id + 7);
     this.rng = rng;
@@ -43,7 +46,10 @@ class Segment {
     this.p = [rng() * 6.28, rng() * 6.28, rng() * 6.28, rng() * 6.28];
     this.name = PLACES[type][Math.floor(rng() * PLACES[type].length)];
     this.seaSide = rng() < .5 ? -1 : 1;
-    this.same = parent && !side && parent.type === type;
+    if (district) this.name = DESTINATIONS[district].name;
+    // The places passed most recently on this path, newest first, so the same one doesn't come straight back round.
+    this.recent = district ? [district, ...(parent?.recent || [])].slice(0, 4) : parent?.recent || [];
+    this.same = parent && !side && parent.type === type && !district;
     // Straight-on continuations share their road with the first ancestor that is not one, so lookups never chain back.
     this.base = this.same ? (parent.same ? parent.base : parent) : null;
     const t = TYPES[type];
@@ -62,6 +68,11 @@ class Segment {
     else this.cy = parent.y(z0 + ZONE) - this.ownY(z0 + ZONE);
     // Long enough to keep the change in height to about a 6% grade.
     this.settle = Math.max(900, Math.abs(this.cy || 0) / .035 * 1.6);
+    // A district begins once the branch has fully settled onto its own line, and the next junction comes after it.
+    if (district && parent) {
+      this.d0 = Math.ceil((z0 + ZONE + RAMP + Math.max(this.settle, 700) + 250) / DISTRICT_GRID) * DISTRICT_GRID;
+      this.len = this.d0 + DISTRICT_END + 650 - z0; this.z1 = net.off ? Infinity : z0 + this.len;
+    }
   }
 
   makeGenerators() {
@@ -76,12 +87,21 @@ class Segment {
     }[this.type];
     this.ownX = G[0]; this.ownY = G[1];
     if (!this.parent && !this.net.off && this.net.settings.destination && this.net.settings.destination !== 'journey') {
-      const name = this.net.settings.destination, curve = name === 'airport' ? .3 : name === 'lake' ? 7 : 2;
-      this.ownX = z => curve * Math.sin(z * .004);
-      this.ownY = z => name === 'lake' ? -3 : name === 'oldtown' ? 1.5 : 0;
-      this.seaSide = -1; this.len = 3000; this.z1 = this.z0 + this.len;
+      // Starting at a destination: the drive begins inside it.
+      this.district = this.net.settings.destination; this.d0 = 0; this.len = 3000; this.z1 = this.z0 + this.len;
+      this.recent = [this.district];
+    }
+    if (this.district) {
+      // Level and nearly straight through the district, blending in from (and back out to) this road's own character.
+      const kind = this.district, curve = kind === 'airport' ? .3 : kind === 'lake' ? 7 : 2, level = DISTRICT_LEVEL[kind] ?? 0, [gx, gy] = G;
+      const k = (z) => this.d0 === undefined ? 0 : smooth(this.d0 - 900, this.d0 + DISTRICT_START, z) * (1 - smooth(this.d0 + DISTRICT_END, this.d0 + DISTRICT_END + 600, z));
+      this.ownX = (z) => { const w = k(z); return w ? lerp(gx(z), gx(this.d0) + curve * Math.sin(z * .004), w) : gx(z); };
+      this.ownY = (z) => { const w = k(z); return w ? lerp(gy(z), level, w) : gy(z); };
+      this.seaSide = -1;
     }
   }
+  // Within this segment's district (with an optional margin either side)?
+  inDistrict(z, before = 0, after = before) { return !!this.district && z > this.d0 + DISTRICT_START - before && z < this.d0 + DISTRICT_END + after; }
 
   x(z) {
     if (!this.parent) return this.ownX(z) + this.cx;
@@ -156,13 +176,28 @@ export class Network {
       const rng = random(last.id + 99), choices = NEXT[last.type], bType = choices[Math.floor(rng() * choices.length)];
       // Motorway exits leave from your own carriageway.
       const coin = rng(), side = last.type === 'highway' ? this.side : coin < .5 ? -1 : 1;
-      const A = new Segment(this, last, last.z1, last.type, 0, 0), B = new Segment(this, last, last.z1, bType, side, 1);
+      const place = this.placeFor(last, rng), placeType = place && (DESTINATIONS[place.kind].type || 'country');
+      const A = place?.way === 0 ? new Segment(this, last, last.z1, placeType, 0, 0, place.kind) : new Segment(this, last, last.z1, last.type, 0, 0);
+      const B = place?.way === 1 ? new Segment(this, last, last.z1, placeType, side, 1, place.kind) : new Segment(this, last, last.z1, bType, side, 1);
       const j = {z: last.z1, from: last, options: [A, B], chosen: 0, committed: false, side, n: this.count++};
       this.picks[j.n] = 0;
       this.junctions.push(j); this.segs.push(A); last = A;
     }
   }
 
+  // Which way (if either) at the junction after this segment leads to a destination, and which one. The first junction
+  // always offers one; after that most do, never straight after a district, and never one of the last few again.
+  placeFor(last, rng) {
+    if (this.off || last.district) return null;
+    const first = !last.parent, roll = rng(), pickRoll = rng();
+    if (!first && roll > .72) return null;
+    const pool = PLACE_KINDS.filter((k) => !last.recent.includes(k)), kind = pool[Math.floor(pickRoll * pool.length)] || PLACE_KINDS[0];
+    // A motorway doesn't run straight into a town: its places are always an exit.
+    const way = last.type === 'highway' || first || roll < .5 ? 1 : 0;
+    return {kind, way};
+  }
+  // The district you are in at z, as its segment (origin d0), or null.
+  districtAt(z) { if (this.off) return null; const s = this.segAt(z); return s.inDistrict(z) ? s : null; }
   segAt(z) { const s = this.segs; for (let i = s.length - 1; i > 0; i--) if (z >= s[i].z0) return s[i]; return s[0]; }
   x(z) { return this.segAt(z).x(z); }
   y(z) { return this.segAt(z).y(z); }
@@ -205,7 +240,11 @@ export class Network {
 
   /* ---------- Junctions ---------- */
   junctionAhead(z, range = 900) { return this.junctions.find((j) => !j.committed && j.z > z - 30 && j.z - z < range) || null; }
-  optionInfo(j, i) { const o = j.options[i]; return {type: o.type, label: TYPES[o.type].label, name: o.name, side: o.side, dir: o.side === 0 ? 'ahead' : o.side > 0 ? 'left' : 'right'}; }
+  optionInfo(j, i) {
+    const o = j.options[i], dir = o.side === 0 ? 'ahead' : o.side > 0 ? 'left' : 'right';
+    if (o.district) { const d = DESTINATIONS[o.district]; return {type: o.type, label: d.name, name: d.detail.split(' · ')[0], district: o.district, side: o.side, dir}; }
+    return {type: o.type, label: TYPES[o.type].label, name: o.name, side: o.side, dir};
+  }
   // Pick a branch before reaching it (indicator or tap); returns true if the road ahead changed.
   choose(j, i) {
     if (!j || j.committed || j.chosen === i) return false;
@@ -291,7 +330,7 @@ export class Network {
       let start = null;
       for (let z = z0; z <= z1; z += 10) {
         const lift = this.hills(seg.x(z), z) + this.ridgeAt(seg, z, 0) + (seg.type === 'mountain' ? 10 * Math.abs(seg.upF(z)) : 0);
-        const deep = !inDestination(this.settings, z - 100) && !inDestination(this.settings, z + 100) && lift > (seg.type === 'mountain' ? 32 : 50);
+        const deep = !seg.inDistrict(z, 100) && lift > (seg.type === 'mountain' ? 32 : 50);
         if (deep && start === null) start = z;
         if ((!deep || z + 10 > z1) && start !== null) { if (z - start >= 150) out.push({start: start - 15, end: z + 15, seg}); start = null; }
       }
@@ -311,7 +350,7 @@ export class Network {
       if (b - a < 1000) return null;
       // Keep to the longest stretch that stays clear of tunnels; towns are passed at a wider berth.
       const blocks = this.tunnels(seg).map((t) => [t.start - 250, t.end + 250]), towns = [];
-      if (inDestination(this.settings, 0)) blocks.push([-500, DISTRICT_END + 160]);
+      if (seg.district) blocks.push([seg.d0 - 500, seg.d0 + DISTRICT_END + 160]);
       for (let z = a; z < b; z += 400) { const br = this.bridgeNear(z); if (br && br.seg === seg && !blocks.some((q) => q[2] === br)) blocks.push([br.start - 280, br.end + 280, br]); }
       for (let z = a - 300; z < b + 300; z += 150) { const tw = this.townAt(z); if (tw && tw.seg === seg && !towns.includes(tw)) towns.push(tw); }
       blocks.sort((p, q) => p[0] - q[0]);
@@ -343,7 +382,7 @@ export class Network {
       if (this.off) return [];
       const rng = random(seg.id + 17), out = [], own = this.side;
       const clear = (z, len) => {
-        if (inDestination(this.settings, 0) && z + len > -240 && z - len < DISTRICT_END + 120) return false;
+        if (seg.district && z + len > seg.d0 - 240 && z - len < seg.d0 + DISTRICT_END + 120) return false;
         if (z - len < seg.z0 + ZONE + 250 || z + len > seg.z0 + seg.len - 300) return false;
         for (const tn of this.tunnels(seg)) if (z + len > tn.start - 80 && z - len < tn.end + 80) return false;
         const r = this.rail(seg); if (r) for (const c of r.crossings) if (Math.abs(z - c) < len + 120) return false;
@@ -391,7 +430,7 @@ export class Network {
       if (!TYPES[type].towns) return null;
       const small = type === 'farm', half = small ? 70 + rnd(6) * 40 : 130 + rnd(6) * 100, center = k * TOWN + half + 60 + rnd(7) * (TOWN - 2 * half - 120);
       const s = this.segAt(center);
-      if (inDestination(this.settings, 0) && center + half > -240 && center - half < DISTRICT_END + 120) return null;
+      if (s.district && center + half > s.d0 - 240 && center - half < s.d0 + DISTRICT_END + 120) return null;
       if (s.typeAt(center) !== type || center - half < s.z0 + ZONE + 250 || center + half > s.z0 + s.len - 250) return null;
       for (const tn of this.tunnels(s)) if (center + half > tn.start - 100 && center - half < tn.end + 100) return null;
       const names = PLACES[type === 'coast' ? 'coast' : 'country'];
@@ -408,7 +447,7 @@ export class Network {
       let best = null;
       for (let i = 0; i < 30; i++) { const zz = k * BRIDGE + 300 + i * (BRIDGE - 600) / 29; if (!best || this.y(zz) < this.y(best)) best = zz; }
       const zc = best, s = this.segAt(zc);
-      if (!TYPES[s.typeAt(zc)].rivers || zc - 330 < s.z0 + ZONE + 200 || zc + 330 > s.z0 + s.len - 200) return null;
+      if (!TYPES[s.typeAt(zc)].rivers || zc - 330 < s.z0 + ZONE + 200 || zc + 330 > s.z0 + s.len - 200 || s.inDistrict(zc, 450)) return null;
       for (const q of [this.townAt(zc), this.townAt(zc - 300), this.townAt(zc + 300)]) if (q && zc > q.start - 300 && zc < q.end + 300) return null;
       for (const tn of this.tunnels(s)) if (zc + 300 > tn.start && zc - 300 < tn.end) return null;
       const half = 16 + rnd(12) * 8;
@@ -472,17 +511,18 @@ export class Network {
       }
       if (tunnel && d < half + 3) h = Math.max(h, y + 9.5);
     }
-    if (inDestination(this.settings, z) && !offworld && !tunnel) {
-      const area = this.settings.destination, coastal = DESTINATIONS[area].type === 'coast', signed = px - this.x(z);
-      const fade = smooth(-180, -100, z) * (1 - smooth(980, 1080, z));
-      const width = area === 'lake' ? 22 : area === 'airport' ? 120 : 90;
+    const district = offworld ? null : this.districtAt(z);
+    if (district && !tunnel) {
+      const area = district.district, coastal = DESTINATIONS[area].type === 'coast', signed = px - district.x(z), local = z - district.d0;
+      const fade = smooth(DISTRICT_START, DISTRICT_START + 80, local) * (1 - smooth(DISTRICT_END - 100, DISTRICT_END, local));
+      const width = area === 'lake' ? 22 : area === 'airport' ? 120 : area === 'forest' ? 16 : area === 'city' ? 130 : 90;
       const plot = 1 - smooth(width, width + 45, Math.abs(signed));
       const shore = coastal && signed < -half - 12 ? smooth(half + 12, half + 45, -signed) : 0;
       h = lerp(h, lerp(y - .02, SEA - 5, shore), fade * plot);
     }
-    if (inDestination(this.settings,z) && this.settings.destination === 'lake' && px < this.x(z)-100) {
+    if (district?.district === 'lake' && px < district.x(z)-100) {
       // Far bank encloses the lake, rising into a mountain rather than an infinite ocean.
-      const far = smooth(280,540,this.x(z)-px), bank = 42 + 80*Math.pow(Math.max(0,Math.sin(z*.004+1)),2);
+      const far = smooth(280,540,district.x(z)-px), bank = 42 + 80*Math.pow(Math.max(0,Math.sin(z*.004+1)),2);
       h = lerp(h,bank,far);
     }
     // The ground never rises through a road surface you can drive on.

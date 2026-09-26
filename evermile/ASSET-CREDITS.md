@@ -171,3 +171,18 @@ The traffic-signal housing is adapted from **Kenney City Kit Roads**, **CC0**. E
 **Bighorn demo** was supplied as `bighorn-realistic-3d-model-demo-free.zip`, containing `BIGHORN_DEMO.fbx` and two textures. No license text or source-page link was included in that archive. Attribution/source details were not supplied; the archive metadata remains unresolved. The FBX rig, walk/idle clips and textures are converted to GLB; the separate horn mesh retains its original head-bone attachment, and the native breathing loop supplies the idle state.
 
 Original supplied files are retained under `scripts/evermile/source/supplied/`. Conversion is reproducible with `scripts/evermile/import-supplied.py`. The user authorized publication of this supplied-asset pass on 26 September 2026.
+
+
+## User-supplied map scenes — 26 September 2026
+
+All five scenes are by **dasy444** on Sketchfab and were supplied as GLB downloads. `scripts/evermile/import-maps.py` splits them into two runtime kits; nothing is used as a whole scene.
+
+- **street city (7) for games FREE**: https://sketchfab.com/3d-models/street-city-7-for-games-free-493a69b451284ff88346c7b3e4e1b5a7 (Sketchfab Standard)
+- **street city buildings (8)**: https://sketchfab.com/3d-models/street-city-buildings-8-873c5f14ec464966a11a4d772d187270 (Sketchfab Standard)
+- **low poly street gameready (6)**: https://sketchfab.com/3d-models/low-poly-street-gameready-6-8070aa74a8724379aaf70008fa33bd6d (Sketchfab Standard)
+- **The landscape is a forest in the mountains**: https://sketchfab.com/3d-models/the-landscape-is-a-forest-in-the-mountains-27b7e06431f244ef84e28bada7560c98 (Sketchfab Standard)
+- **a forest (3) with a road at night for game**: https://sketchfab.com/3d-models/a-forest-3-with-a-road-at-night-for-game-61f8c7817fe6457fb26e4814cfc48a3f (**CC BY 4.0**, https://creativecommons.org/licenses/by/4.0/)
+
+Runtime: `assets/models/city-kit.glb` (37 distinct buildings from the three street scenes, rescaled to metres per scene, duplicates removed, dense shopfronts decimated, open-topped towers given roofs, single facade sheets given a textured building volume behind them, textures reduced to 768 px JPEG) and `assets/models/forest-kit.glb` (pines, spruces, a boulder and undergrowth cards, cut-out alpha, 512 px WebP). They furnish Eastgate City, Pinecrest Forest and stands on mountain passes.
+
+The Sketchfab Standard licence allows use in a project like this but not redistribution of the files themselves, so the original downloads are **not** committed: the import script reads them from the git-ignored `scripts/evermile/source/maps/` (or `~/Downloads`).

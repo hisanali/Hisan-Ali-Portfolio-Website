@@ -27,7 +27,7 @@ function progress(base) {
 }
 const idle = () => started === ended;
 
-const STAGES = [[/materials\//, 'Laying the road'], [/train/, 'Setting the trains on their rails'], [/pedestrian|citizen/, 'Waking the towns'], [/horse|fox|bighorn|cow|dog|cat|animal/, 'Letting the animals out'],
+const STAGES = [[/city-kit/, 'Building Eastgate City'], [/forest-kit/, 'Planting Pinecrest Forest'], [/materials\//, 'Laying the road'], [/train/, 'Setting the trains on their rails'], [/pedestrian|citizen/, 'Waking the towns'], [/horse|fox|bighorn|cow|dog|cat|animal/, 'Letting the animals out'],
   [/place-/, 'Raising the old town'], [/prop-/, 'Opening the petrol station'], [/road-|coupe|motorcycle|traffic/, 'Fuelling the traffic']];
 function stage() { for (const url of active) for (const [pattern, label] of STAGES) if (pattern.test(url)) return label; return active.size ? 'Preparing the scenery' : null; }
 

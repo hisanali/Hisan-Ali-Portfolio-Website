@@ -264,6 +264,7 @@ export class World {
     if (!this.landmarks.active(index * CHUNK + 120)) {
       this.scenery.build(group, plan);
       this.roadside.build(group, index, rowInfo);
+      if (!off) this.landmarks.wild(group, index, plan);
     } else {
       group.userData.colliders ||= []; group.userData.lamps = []; group.userData.pumps = [];
       this.landmarks.build(group, index);
