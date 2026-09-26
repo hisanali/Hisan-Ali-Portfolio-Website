@@ -10,7 +10,8 @@ const rand = (a, b) => a + Math.random() * (b - a);
 export class Windscreen {
   constructor(canvas) {
     this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.drops = []; this.time = 0;
-    this.blades = [{px: .3, py: 1.04, len: .62}, {px: .66, py: 1.04, len: .56}];
+    // Wipers pivot at the base of the windscreen (about two thirds of the way down the view in the driver's seat).
+    this.base = .63; this.blades = [{px: .3, py: .64, len: .43}, {px: .64, py: .64, len: .39}];
     this.angle = 0; this.sweep = 0; this.pause = 0; this.wiping = false;
     // A single pre-drawn drop, scaled for every droplet: dark rim, bright lower edge where light refracts through it.
     const d = document.createElement('canvas'); d.width = d.height = 64; const x = d.getContext('2d');
@@ -42,7 +43,7 @@ export class Windscreen {
     if (!show) { if (this.visible) { c.clearRect(0, 0, W, H); this.visible = false; cv.style.opacity = 0; } if (rain < .02) this.drops.length = 0; return; }
     if (!this.visible) { this.visible = true; cv.style.opacity = 1; }
     // New drops land in proportion to the rain, more at speed.
-    const rate = rain * (40 + Math.abs(speed) * 4) * dt, top = H * .06, bottom = H * .74;
+    const rate = rain * (40 + Math.abs(speed) * 4) * dt, top = H * .04, bottom = H * this.base;
     for (let n = rate + Math.random() > 1 ? Math.floor(rate + Math.random()) : 0; n > 0 && this.drops.length < 520; n--) this.drops.push({x: rand(0, W), y: rand(top, bottom), r: rand(1.2, 3.8) * this.dpr * (Math.random() < .1 ? 1.8 : 1), age: 0, vx: 0, vy: 0});
     // Airflow pushes drops up and outwards; slow down and the big ones run down the glass.
     const v = Math.abs(speed), cx = W / 2;
@@ -58,7 +59,7 @@ export class Windscreen {
       const px = b.px * W, py = b.py * H, len = b.len * H, lo = .12 + a0 * 2, hi = .12 + a1 * 2;
       this.drops = this.drops.filter((d) => { const dx = d.x - px, dy = py - d.y, ang = Math.atan2(dy, dx), dist = Math.hypot(dx, dy); return !(dist < len && dist > len * .12 && ang > Math.PI - hi - .05 && ang < Math.PI - lo + .05); });
     }
-    this.drops = this.drops.filter((d) => d.y > -20 && d.y < H * .8 && d.x > -20 && d.x < W + 20 && d.age < 40);
+    this.drops = this.drops.filter((d) => d.y > -20 && d.y < H * (this.base + .01) && d.x > -20 && d.x < W + 20 && d.age < 40);
     c.clearRect(0, 0, W, H);
     // A faint film of water on the glass.
     if (rain > .05) { c.fillStyle = `rgba(150,165,180,${.035 * rain})`; c.fillRect(0, 0, W, bottom); }
@@ -84,13 +85,13 @@ export class Mirror {
     this.hudScene = new T.Scene(); this.hudCamera = new T.OrthographicCamera(0, 1, 1, 0, -1, 1);
     // Mirrored image in a rounded frame with a dark bezel.
     this.material = new T.ShaderMaterial({
-      uniforms: {map: {value: this.target.texture}, aspect: {value: 3}},
+      uniforms: {map: {value: this.target.texture}, aspect: {value: 3}, bezel: {value: .05}},
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-      fragmentShader: `uniform sampler2D map; uniform float aspect; varying vec2 vUv;
+      fragmentShader: `uniform sampler2D map; uniform float aspect, bezel; varying vec2 vUv;
         float box(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
         void main(){
           vec2 p = (vUv - .5) * vec2(aspect, 1.);
-          float outer = box(p, vec2(aspect * .5, .5), .22), inner = box(p, vec2(aspect * .5 - .05, .44), .18);
+          float outer = box(p, vec2(aspect * .5, .5), .22), inner = box(p, vec2(aspect * .5 - bezel, .5 - bezel * 1.2), .18);
           if (outer > 0.) discard;
           vec3 c = texture2D(map, vec2(1. - vUv.x, vUv.y)).rgb;
           gl_FragColor = vec4(c, 1.);
@@ -105,8 +106,21 @@ export class Mirror {
     this.frame = 0;
   }
 
-  render(state, vehicle, every = 1) {
-    const r = this.renderer, size = r.getSize(new T.Vector2()), w = Math.min(Math.max(size.x * .24, 210), 380), h = w / 3.05;
+  // Where the car's own interior mirror appears on screen, so the view behind can be shown on its glass.
+  fitted(vehicle, camera, size) {
+    const g = vehicle.group, pts = [[-.122, 1.07], [.122, 1.07], [-.122, 1.13], [.122, 1.13]].map(([x, y]) => { const v = new T.Vector3(x, y, .285); g.localToWorld(v); v.project(camera); return v; });
+    if (pts.some((v) => v.z > 1 || v.z < -1)) return null;
+    const xs = pts.map((v) => (v.x * .5 + .5) * size.x), ys = pts.map((v) => (v.y * .5 + .5) * size.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    if (x1 < 0 || x0 > size.x || y1 < 0 || y0 > size.y || x1 - x0 < 20) return null;
+    return {x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0};
+  }
+
+  render(state, vehicle, every = 1, camera = null) {
+    const r = this.renderer, size = r.getSize(new T.Vector2());
+    const fit = camera && vehicle.detailed ? this.fitted(vehicle, camera, size) : null;
+    const w = fit ? fit.w : Math.min(Math.max(size.x * .24, 210), 380), h = fit ? fit.h : w / 3.05, aspect = w / h;
+    if (Math.abs(aspect - this.camera.aspect) > .08) { this.camera.aspect = aspect; this.camera.updateProjectionMatrix(); this.target.setSize(512, Math.round(512 / aspect)); }
     if (this.frame++ % every === 0) {
       const yaw = state.yaw, cam = this.camera, up = vehicle.type === 'coach' ? 3.1 : vehicle.type === 'bike' ? 1.7 : 1.45;
       cam.position.set(state.x - Math.sin(yaw) * .3, state.y + up, state.z - Math.cos(yaw) * .3);
@@ -118,8 +132,9 @@ export class Mirror {
     }
     // Draw it at the top middle of the screen.
     const hc = this.hudCamera; hc.left = 0; hc.right = size.x; hc.top = size.y; hc.bottom = 0; hc.updateProjectionMatrix();
-    this.quad.scale.set(w, h, 1); this.quad.position.set(size.x / 2, size.y - h / 2 - Math.max(58, size.y * .075), 0);
-    this.material.uniforms.aspect.value = w / h;
+    this.quad.scale.set(w, h, 1);
+    if (fit) this.quad.position.set(fit.x, fit.y, 0); else this.quad.position.set(size.x / 2, size.y - h / 2 - Math.max(58, size.y * .075), 0);
+    this.material.uniforms.aspect.value = aspect; this.material.uniforms.bezel.value = fit ? .015 : .05;
     const clear = r.autoClear; r.autoClear = false; r.render(this.hudScene, hc); r.autoClear = clear;
   }
 

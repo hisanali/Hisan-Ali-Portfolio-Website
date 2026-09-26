@@ -399,7 +399,8 @@ export class Life {
     part(new T.PlaneGeometry(W - .3, .95), this.m.glass, 0, 2.15, L / 2 + .012, g).castShadow = false;
     for (const s of [-1, 1]) { const w = part(new T.PlaneGeometry(1, .8), this.m.glass, s * (W / 2 + .012), 2.15, L / 2 - .9, g); w.rotation.y = s * Math.PI / 2; w.castShadow = false; }
     part(new RoundedBoxGeometry(W * .6, .4, .06, 2, .03), this.m.grille, 0, 1.1, L / 2 + .01, g);
-    part(new T.BoxGeometry(W + .05, 2.75, L - cabL - .15), livery.box, 0, .55 + 1.45, -cabL / 2 - .05, g);
+    const plain = this.m.boxPlain ||= new T.MeshStandardMaterial({color: 0xeeece6, roughness: .6});
+    part(new T.BoxGeometry(W + .05, 2.75, L - cabL - .15), [livery.box, livery.box, plain, plain, plain, plain], 0, .55 + 1.45, -cabL / 2 - .05, g);
     part(new T.BoxGeometry(W - .2, .3, L - .6), this.m.trim, 0, .55, -.2, g);
     const wheels = [];
     for (const z of [L / 2 - 1.2, -L / 2 + 1.6]) for (const x of [-W / 2 + .22, W / 2 - .22]) {
@@ -672,6 +673,9 @@ export class Life {
         if ((c.z - minZ) * dir > 0) { c.z = minZ; c.speed = Math.min(c.speed, Math.max(0, leadSpeed)); }
       }
       this.lanes(c, list, s, dt, blocker, gap);
+      // Nose to nose with you on a narrow road: after a moment, squeeze over towards the verge to get by.
+      c.squeeze = blocker === 'player' && dir < 0 && gap < 25 && c.speed < .6 ? (c.squeeze || 0) + dt : 0;
+      if (c.squeeze > 2) c.latTarget = ow * Math.max(0, c.road.half(c.z) - .3 - Math.abs(laneOff) - c.width / 2);
       this.updateYield(c, dt, s);
       this.busStops(c, dt);
       this.turnSignal(c);

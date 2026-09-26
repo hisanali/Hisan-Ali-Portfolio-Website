@@ -260,7 +260,7 @@ export class Roadside {
   highway(batch, group, rows) {
     const r = this.world.road;
     for (let i = 0; i < rows.length - 1; i++) {
-      const R = rows[i]; if (R.tunnel) continue;
+      const R = rows[i], inTube = R.tunnel && R.z > R.tunnel.start + 3 && R.z < R.tunnel.end - 3;
       // The central barrier follows whichever road here is the motorway: the one you are on, or the one you are leaving.
       const zm = R.z + 2.5, main = r.segAt(zm), here = main.typeAt(zm);
       const seg = here !== 'highway' ? null : main.type === 'highway' ? main : r.stubs(zm).map((q) => q.seg).find((q) => q.type === 'highway');
@@ -268,7 +268,9 @@ export class Roadside {
       const onMain = seg === main;
       const x = seg.x(zm), y = seg.y(zm), t = seg.x(zm + .5) - seg.x(zm - .5), yaw = Math.atan(t), pitch = -Math.atan(seg.y(zm + .5) - seg.y(zm - .5)), L = 5 * Math.sqrt(1 + t * t) + .03;
       const put = frame(batch, x, y + .05, zm, yaw);
-      put('concrete', UNIT, 0, .2, 0, 0xbab6ad, .62, .4, L, 0, pitch); put('concrete', UNIT, 0, .6, 0, 0xc4c0b7, .26, .5, L, 0, pitch);
+      const mat = inTube ? 'tunnelShell' : 'concrete';
+      put(mat, UNIT, 0, .2, 0, 0xbab6ad, .62, .4, L, 0, pitch); put(mat, UNIT, 0, .6, 0, 0xc4c0b7, .26, .5, L, 0, pitch);
+      if (R.tunnel) continue;
       if (Math.round(R.z / 5) % 12 === 0 && Math.floor(R.z / 900) % 2 === 0) {
         put('metal', UNIT, 0, 6, 0, 0x6a7078, .16, 12, .16);
         for (const s of [-1, 1]) { put('metal', UNIT, s * 1.2, 11.8, 0, 0x6a7078, 2.4, .1, .1); put('lamp', UNIT, s * 2.4, 11.7, 0, 0xffffff, .8, .14, .3); const [lx, lz] = put.world(s * 2.4, 0); group.userData.lamps.push({x: lx, y: y + 11.5, z: lz}); }

@@ -348,7 +348,7 @@ export class Network {
     const TOWN = 1400, k = Math.floor(z / TOWN);
     return this.cached('town' + k, () => {
       const rnd = (salt) => random(this.id * 31 + k * 977 + salt)();
-      if (k < 0 || rnd(5) > .85) return null;
+      if (this.off || k < 0 || rnd(5) > .85) return null;
       const seg = this.segAt(k * TOWN + TOWN / 2), type = seg.typeAt(k * TOWN + TOWN / 2);
       if (!TYPES[type].towns) return null;
       const small = type === 'farm', half = small ? 70 + rnd(6) * 40 : 130 + rnd(6) * 100, center = k * TOWN + half + 60 + rnd(7) * (TOWN - 2 * half - 120);
@@ -365,7 +365,7 @@ export class Network {
     const BRIDGE = 2300;
     return this.cached('br' + k, () => {
       const rnd = (salt) => random(this.id * 31 + k * 977 + salt)();
-      if (k < 1 || rnd(11) > .8) return null;
+      if (this.off || k < 1 || rnd(11) > .8) return null;
       let best = null;
       for (let i = 0; i < 30; i++) { const zz = k * BRIDGE + 300 + i * (BRIDGE - 600) / 29; if (!best || this.y(zz) < this.y(best)) best = zz; }
       const zc = best, s = this.segAt(zc);
