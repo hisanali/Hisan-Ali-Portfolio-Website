@@ -1,7 +1,8 @@
+import {RoadsideModels} from './roadside-models.js?v=20260926-transit3';
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260926-people3';
-import {random} from './math.js?v=20260926-people3';
+import {GlowPoints} from './glow.js?v=20260926-transit3';
+import {random} from './math.js?v=20260926-transit3';
 
 // Places people live and cross: towns with shops, strip lights and street lamps, cottages with gardens,
 // river bridges, and boats on the water. Everything static in a chunk is merged into a handful of meshes.
@@ -56,7 +57,7 @@ export function frame(batch, ox, oy, oz, yaw) {
 
 export class Scenery {
   constructor(world) {
-    this.world = world; this.scene = world.scene; this.settings = world.settings;
+    this.world = world; this.models = world.roadsideModels ||= new RoadsideModels(world); this.scene = world.scene; this.settings = world.settings;
     this.layouts = new Map(); this.time = 0;
     this.makeMaterials();
     this.glow = new GlowPoints(this.scene, 220, {fade: 1000});
@@ -372,7 +373,8 @@ export class Scenery {
   // Materials for signals, swapped each frame by town life.
   signalMaterials() {
     if (this.sig) return this.sig;
-    const lamp = (c, on) => new T.MeshStandardMaterial({color: on ? c : new T.Color(c).multiplyScalar(.12), emissive: c, emissiveIntensity: on ? 4.5 : .05, roughness: .3});
+    const led=canvasTexture(128,128,(x,w,h)=>{x.fillStyle='#606060';x.fillRect(0,0,w,h);x.fillStyle='#ffffff';for(let y=3;y<h;y+=8)for(let xx=3;xx<w;xx+=8){x.beginPath();x.arc(xx,y,2.2,0,Math.PI*2);x.fill();}});
+    const lamp = (c, on) => new T.MeshStandardMaterial({map:led,emissiveMap:led,color: on ? c : new T.Color(c).multiplyScalar(.12), emissive: c, emissiveIntensity: on ? 4.5 : .05, roughness: .3});
     const walk = (c, man, on) => new T.MeshStandardMaterial({map: canvasTexture(64, 64, (x, w) => { x.fillStyle = '#050505'; x.fillRect(0, 0, w, w); x.fillStyle = on ? c : '#1d1d1d'; x.beginPath(); x.arc(32, 12, 6, 0, 7); x.fill(); x.fillRect(27, 20, 10, 22); if (man) { x.fillRect(24, 40, 5, 18); x.fillRect(35, 40, 5, 18); } else { x.save(); x.translate(32, 42); x.rotate(.35); x.fillRect(-2, 0, 5, 18); x.restore(); x.save(); x.translate(32, 42); x.rotate(-.35); x.fillRect(-3, 0, 5, 18); x.restore(); } }), emissive: 0xffffff, emissiveIntensity: on ? 2.2 : 0, emissiveMap: null, roughness: .4});
     const sig = this.sig = {red: [lamp(0xff2210, false), lamp(0xff2210, true)], amber: [lamp(0xffa11a, false), lamp(0xffa11a, true)], green: [lamp(0x22ff7a, false), lamp(0x22ff7a, true)], stand: [walk('#ff3322', true, false), walk('#ff3322', true, true)], walk: [walk('#39ff8a', false, false), walk('#39ff8a', false, true)], belisha: [lamp(0xffa11a, false), lamp(0xffa11a, true)]};
     for (const k of ['stand', 'walk']) sig[k][1].emissiveMap = sig[k][1].map;
@@ -402,6 +404,7 @@ export class Scenery {
     }
     const heads = [];
     const head = (hx, hy) => {
+      const imported=this.models.signal(g,hx,hy);if(imported){heads.push(imported);return;}
       const box = new T.Mesh(new T.BoxGeometry(.36, 1, .26), dark); box.position.set(hx, hy, 0); box.castShadow = true; g.add(box);
       const plate = new T.Mesh(new T.BoxGeometry(.56, 1.2, .04), dark); plate.position.set(hx, hy, -.14); g.add(plate);
       const lamps = {};

@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {GlowPoints} from './glow.js?v=20260926-people3';
-import {random, clamp} from './math.js?v=20260926-people3';
+import {GlowPoints} from './glow.js?v=20260926-transit3';
+import {random, clamp} from './math.js?v=20260926-transit3';
 
 /*
   Life in town: the traffic lights run their cycle (and everyone obeys them), villages have a four-way stop where each
@@ -166,12 +166,18 @@ export class TownLife {
       for (const p of this.people) {
         if (!p.destination || p.destination !== this.settings.destination || Math.abs(p.z - s.z) > 240) {
           p.destination = this.settings.destination; p.active = true; p.z = clamp(s.z + 25 + p.i * 7, -90, 950);
-          p.side = p.i % 3 ? 1 : -1; p.dir = p.i % 2 ? 1 : -1; p.speed = 1.1 + (p.i % 4) * .1; p.state = 'walk';
+          p.side = p.i % 3 ? 1 : -1; p.dir = p.i % 2 ? 1 : -1; p.speed = .95 + (p.i % 7) * .075; p.state = p.i%5===0?'look':'walk';p.timer=3+p.i*.8;p.walkVelocity=0;
         }
-        p.active = true; p.z += p.dir * p.speed * dt;
+        p.active = true;const oldX=p.x,oldZ=p.z;
+        p.timer-=dt;
+        if(p.timer<=0){p.state=p.state==='walk'&&p.i%3!==0?'look':'walk';p.timer=p.state==='look'?3+(p.i%4):9+(p.i%7)*2;}
+        let target=p.state==='walk'?p.speed:0;
+        // Yield to a slower pedestrian ahead instead of walking through their body.
+        for(const other of this.people)if(other!==p&&other.active&&other.side===p.side&&Number.isFinite(other.x)&&Math.abs(other.x-p.x)<.5){const ahead=(other.z-p.z)*p.dir;if(ahead>0&&ahead<1.3)target=Math.min(target,Math.max(0,(ahead-.55)*1.2));}
+        p.walkVelocity+=(target-p.walkVelocity)*(1-Math.exp(-dt*3));p.z+=p.dir*p.walkVelocity*dt;
         if(p.z < -80 || p.z > 980) p.dir *= -1;
-        p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55); p.y = r.y(p.z) + .2;
-        p.yaw = Math.atan(r.tangent(p.z)) + (p.dir < 0 ? Math.PI : 0); this.pose(p, true, rain, dt);
+        p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55 + .10*Math.sin(p.z*.08+p.i)); p.y = r.y(p.z) + .2;
+        p.yaw = p.state==='look'?Math.atan(r.tangent(p.z))+p.side*Math.PI*.35 : Number.isFinite(oldX)&&Math.abs(p.z-oldZ)>.0001?Math.atan2(p.x-oldX,p.z-oldZ):Math.atan(r.tangent(p.z))+(p.dir<0?Math.PI:0); this.pose(p, p.walkVelocity>.05, rain, dt);
       }
       return;
     }

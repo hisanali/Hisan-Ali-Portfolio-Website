@@ -1,21 +1,23 @@
-import {DetailedModels} from './detailed-models.js?v=20260926-people3';
-import {boomFraction} from './camera-clearance.js?v=20260926-people3';
-import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-people3';
-import {traction, longitudinal, steeringMotion, VEHICLE_DYNAMICS} from './handling.js?v=20260926-people3';
+import {citizenKey} from './citizen-assets.js?v=20260926-transit3';
+import {motorcycleLean} from './wheel-rig.js?v=20260926-transit3';
+import {DetailedModels} from './detailed-models.js?v=20260926-transit3';
+import {boomFraction} from './camera-clearance.js?v=20260926-transit3';
+import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-transit3';
+import {traction, longitudinal, steeringMotion, steeringTarget, advancePose, VEHICLE_DYNAMICS} from './handling.js?v=20260926-transit3';
 import * as T from './vendor/three.module.js';
-import {World} from './world.js?v=20260926-people3';
-import {CameraOrbit} from './camera-orbit.js?v=20260926-people3';
-import {Vehicle} from './vehicle.js?v=20260926-people3';
-import {Effects} from './effects.js?v=20260926-people3';
-import {Life} from './life.js?v=20260926-people3';
-import {TownLife} from './townlife.js?v=20260926-people3';
-import {Railway} from './railway.js?v=20260926-people3';
-import {Atmosphere, PRESETS} from './atmosphere.js?v=20260926-people3';
-import {Windscreen, Mirror} from './cockpit.js?v=20260926-people3';
-import {Radio, STATIONS} from './radio.js?v=20260926-people3';
-import {DriveAudio} from './audio.js?v=20260926-people3';
-import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260926-people3';
-import {ZONE, TYPES} from './network.js?v=20260926-people3';
+import {World} from './world.js?v=20260926-transit3';
+import {CameraOrbit} from './camera-orbit.js?v=20260926-transit3';
+import {Vehicle} from './vehicle.js?v=20260926-transit3';
+import {Effects} from './effects.js?v=20260926-transit3';
+import {Life} from './life.js?v=20260926-transit3';
+import {TownLife} from './townlife.js?v=20260926-transit3';
+import {Railway} from './railway.js?v=20260926-transit3';
+import {Atmosphere, PRESETS} from './atmosphere.js?v=20260926-transit3';
+import {Windscreen, Mirror} from './cockpit.js?v=20260926-transit3';
+import {Radio, STATIONS} from './radio.js?v=20260926-transit3';
+import {DriveAudio} from './audio.js?v=20260926-transit3';
+import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260926-transit3';
+import {ZONE, TYPES} from './network.js?v=20260926-transit3';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from './vendor/postprocessing/UnrealBloomPass.js';
@@ -137,7 +139,7 @@ export function changeSetting(key, value) {
     world.update(state.z, camera, true); if (!['destination', 'seed', 'roadStyle', 'location'].includes(key)) state.speed = moving;
   }
   if (key === 'destination') { settings.time = DESTINATIONS[value].time || 'day'; atmo.setPreset(settings.time); save(); lastEnv = null; effects.refresh(); applyAtmosphere(0, true); }
-  if (key === 'vehicle') { vehicle.dispose(); vehicle = new Vehicle(scene, settings.vehicle, settings.color); if (cubeRT) vehicle.setEnvMap(cubeRT.texture); }
+  if (key === 'vehicle') { state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.tireSlip = 0; vehicle.dispose(); vehicle = new Vehicle(scene, settings.vehicle, settings.color); if (cubeRT) vehicle.setEnvMap(cubeRT.texture); }
   if (key === 'color') vehicle.setColor(value);
   if (key === 'time') { atmo.setPreset(value); lastEnv = null; }
   if (key === 'weather') atmo.applyWeather(true);
@@ -187,7 +189,7 @@ function physics(dt) {
   if (gamepad) { if (Math.abs(gamepad.axes[0] || 0) > .1) input = -gamepad.axes[0]; throttle = Math.max(throttle, gamepad.buttons[7]?.value || 0); brake = Math.max(brake, gamepad.buttons[6]?.value || 0); }
   if ((input || throttle || brake) && state.auto) { if ((input && settings.autoMode !== 'speed') || (throttle && settings.autoMode === 'full') || brake) { state.auto = false; state.pit = null; updateUI(); } }
   // Steering gets gentler with speed, so the car no longer darts at the slightest touch.
-  let steerTarget = input * .42 / (1 + Math.abs(state.speed) * .065);
+  let steerTarget = steeringTarget({vehicle: settings.vehicle, speed: state.speed, input});
   const curvature = Math.abs(r.tangent(state.z + 45) - r.tangent(state.z)), plan = autoPlan(r, curvature);
   if (state.auto && settings.autoMode !== 'speed') {
     const quick = state.pass || state.laneMove > state.time, rushing = settings.rushMode === 'on';
@@ -213,12 +215,11 @@ function physics(dt) {
   if (keys.Space && oldSpeed * state.speed <= 0) state.speed = 0;
   if ((state.auto || state.cruise) && brake && !throttle && oldSpeed >= 0 && state.speed < .12) state.speed = 0;
   if (!throttle && !brake && Math.abs(state.speed) < .02 && Math.abs(slope) < .012) state.speed = 0;
-  state.steer = damp(state.steer, steerTarget, VEHICLE_DYNAMICS[settings.vehicle].response, dt);
+  state.steer = damp(state.steer, steerTarget, Math.abs(steerTarget) < Math.abs(state.steer) ? 10 : VEHICLE_DYNAMICS[settings.vehicle].response, dt);
   const motion = steeringMotion({vehicle: settings.vehicle, speed: state.speed, steer: state.steer, mu, acceleration, previousRate: state.yawRate || 0, dt});
   state.yawRate = state.grounded === false ? 0 : motion.yawRate;
-  state.lateralAcceleration = motion.lateral; state.tireSlip = motion.slip;
-  state.yaw += state.yawRate * dt;
-  state.x += Math.sin(state.yaw) * state.speed * dt; state.z += Math.cos(state.yaw) * state.speed * dt;
+  state.lateralAcceleration = state.grounded === false ? 0 : motion.lateral; state.tireSlip = motion.slip;
+  Object.assign(state, advancePose({x: state.x, z: state.z, yaw: state.yaw, speed: state.speed, yawRate: state.yawRate, beta: state.grounded === false ? 0 : motion.beta, dt}));
   if (state.z < -200) { state.z = -180; reset(); toast('Back on the road'); }
   barriers(r);
   collide();
@@ -414,7 +415,7 @@ function autoHonk(dt) {
 
 // Solid world: trees, rocks, buildings, traffic, trains, barriers, people and animals push the car back instead of passing through it.
 function collide() {
-  const bike = settings.vehicle === 'bike', coach = settings.vehicle === 'coach', R = coach ? 1.35 : bike ? .45 : .95, offsets = coach ? [-2.9, -1, 1, 2.9] : bike ? [-.55, .55] : [-1.25, 0, 1.25];
+  const bike = settings.vehicle === 'bike', coach = settings.vehicle === 'coach', R = coach ? 1.35 : bike ? .45 : .95, offsets = coach ? [-4.8, -2.4, 0, 2.4, 4.8] : bike ? [-.55, .55] : [-1.25, 0, 1.25];
   const fx = Math.sin(state.yaw), fz = Math.cos(state.yaw);
   const nearby = [...world.collidersNear(state.x, state.z, 16), ...life.colliders(state.x, state.z, 14), ...railway.colliders(state.x, state.z, 16), ...town.colliders(state.x, state.z, 12)];
   let impact = 0, what = null;
@@ -545,7 +546,7 @@ function updateCar(dt) {
   const air = state.grounded === false ? 4 : 8;
   vehicle.group.rotation.x = damp(vehicle.group.rotation.x, -Math.atan2(hf - hb, L * 2), air, dt);
   const lateral = state.lateralAcceleration || 0;
-  const lean = settings.vehicle === 'bike' ? clamp(Math.atan2(lateral, 9.81), -.65, .65) : clamp(lateral * (settings.vehicle === 'coach' ? .009 : .004), -.08, .08);
+  const lean = settings.vehicle === 'bike' ? motorcycleLean(lateral) : clamp(lateral * (settings.vehicle === 'coach' ? .009 : .004), -.08, .08);
   vehicle.group.rotation.z = damp(vehicle.group.rotation.z, (settings.vehicle === 'bike' ? 0 : Math.atan2(hr - hl, Wd * 2)) + lean, air, dt);
   vehicle.group.updateMatrixWorld(); vehicle.setDirt(state.dirt);
   const inTunnel = !!world.road.tunnelAt(state.z);
@@ -576,10 +577,11 @@ function positionCamera(dt, instant = false) {
   const yaw = state.yaw, forward = new T.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), right = new T.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
   let back = 7.6, up = 2.25, ahead = 14;
   const coach = settings.vehicle === 'coach', bike = settings.vehicle === 'bike';
-  if (settings.camera === 1) { back = 14; up = 5.5; ahead = 20; }
+  if(coach){back=14;up=4.8;}
+  if (settings.camera === 1) { back = coach ? 21 : 14; up = coach ? 7 : 5.5; ahead = 20; }
   if (settings.camera === 2) { back = -vehicle.seatZ; up = vehicle.seatY; ahead = 45; }
-  if (settings.camera === 3) { back = coach ? -3.9 : bike ? -.98 : -1.02; up = coach ? 1.8 : bike ? 1.1 : 1.06; ahead = 40; }
-  if (settings.camera === 4) { back = coach ? -4 : bike ? -1 : -2.25; up = bike ? .5 : .55; ahead = 40; }
+  if (settings.camera === 3) { back = coach ? -5.85 : bike ? -.98 : -1.02; up = coach ? 1.8 : bike ? 1.1 : 1.06; ahead = 40; }
+  if (settings.camera === 4) { back = coach ? -6.05 : bike ? -1 : -2.25; up = bike ? .5 : .55; ahead = 40; }
   cameraPos.set(state.x - forward.x * back, state.y + up, state.z - forward.z * back);
   if (settings.camera < 2) {
     const height = up - .95; let radius = Math.hypot(back, height);
@@ -833,12 +835,24 @@ if (new URLSearchParams(location.search).has('debug')) window.evermile = {state,
 const modelContext = document.modelContext;
 if (modelContext?.registerTool) {
   const controller = new AbortController(); addEventListener('pagehide', () => controller.abort(), {once: true});
-  const read = () => ({game: 'Evermile', detailedModels: detailedModels ? {loaded:Object.keys(detailedModels.loaded),errors:detailedModels.errors,traffic:life.traffic.filter(c=>c.detailModel?.visible).length,people:town.people.filter(p=>p.detailed).length,pedestrianTypes:[...new Set(town.people.filter(p=>p.detailed).map(p=>p.i%6))],animals:life.animals.filter(a=>detailedModels.animalModels.has(a)).reduce((out,a)=>(out[a.kind]=(out[a.kind]||0)+1,out),{})} : null, position: {x: state.x, y: state.y, z: state.z}, cameraPosition: camera.position.toArray(), terrainAtCamera: world.surfaceHeight(camera.position.x,camera.position.z), started: state.started, paused: state.paused || panelOpen || state.inspection, autodrive: state.auto, speedKmh: Math.round(Math.abs(state.speed) * 3.6), distanceKm: Number(state.distance.toFixed(3)), fps: state.fps, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, chunks: world.chunks.size, onRoad: !state.offroad, road: world.road.typeAt(state.z), clock: atmo.clock, vehicle: settings.vehicle, detailedCarLoaded: !!vehicle.detailed, location: settings.location, destination: settings.destination, tireSlip: state.tireSlip || 0, season: settings.season, timeOfDay: atmo.period, weather: {cloud: Number(atmo.cloud.toFixed(2)), rain: Number(atmo.rain.toFixed(2))}, camera: settings.camera, cameraOrbit: {dragging: !!driveOrbit.pointer, yawDegrees: Number((driveOrbit.yaw * 180 / Math.PI).toFixed(1)), pitchDegrees: Number((driveOrbit.pitch * 180 / Math.PI).toFixed(1)), returning: !driveOrbit.pointer && Math.abs(driveOrbit.yaw) + Math.abs(driveOrbit.pitch) > .01}});
+  const read = () => ({game: 'Evermile', detailedModels: detailedModels ? {loaded:Object.keys(detailedModels.loaded),errors:detailedModels.errors,traffic:life.traffic.filter(c=>c.detailModel?.visible).length,people:town.people.filter(p=>p.detailed).length,pedestrianTypes:[...new Set(town.people.filter(p=>p.detailed).map(p=>citizenKey(p.i)))],trafficTypes:[...new Set(life.traffic.filter(c=>c.detailModel?.visible).map(c=>c.style))],trafficErrors:detailedModels.trafficModels.errors,architecture:{loaded:Object.keys(world.landmarks.imported.loaded),errors:world.landmarks.imported.errors},roadside:{loaded:Object.keys(world.roadsideModels.loaded),errors:world.roadsideModels.errors},motorcycleImported:!!vehicle.importedBike,animals:life.animals.filter(a=>detailedModels.animalModels.has(a)).reduce((out,a)=>(out[a.kind]=(out[a.kind]||0)+1,out),{})} : null, position: {x: state.x, y: state.y, z: state.z}, cameraPosition: camera.position.toArray(), terrainAtCamera: world.surfaceHeight(camera.position.x,camera.position.z), started: state.started, paused: state.paused || panelOpen || state.inspection, autodrive: state.auto, speedKmh: Math.round(Math.abs(state.speed) * 3.6), distanceKm: Number(state.distance.toFixed(3)), fps: state.fps, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, chunks: world.chunks.size, onRoad: !state.offroad, road: world.road.typeAt(state.z), clock: atmo.clock, vehicle: settings.vehicle, detailedCarLoaded: !!vehicle.detailed, location: settings.location, destination: settings.destination, tireSlip: state.tireSlip || 0, handling: {yaw:state.yaw, yawRate:state.yawRate || 0, steer:state.steer, lateralAcceleration:state.lateralAcceleration || 0}, season: settings.season, timeOfDay: atmo.period, weather: {cloud: Number(atmo.cloud.toFixed(2)), rain: Number(atmo.rain.toFixed(2))}, camera: settings.camera, cameraOrbit: {dragging: !!driveOrbit.pointer, yawDegrees: Number((driveOrbit.yaw * 180 / Math.PI).toFixed(1)), pitchDegrees: Number((driveOrbit.pitch * 180 / Math.PI).toFixed(1)), returning: !driveOrbit.pointer && Math.abs(driveOrbit.yaw) + Math.abs(driveOrbit.pitch) > .01}});
   const tools = [
     {name: 'get_drive_status', description: 'Read the current Evermile driving state and rendering performance.', inputSchema: {type: 'object', properties: {}, additionalProperties: false}, annotations: {readOnlyHint: true}, execute: () => read()},
     {name: 'start_drive', description: 'Start Evermile and optionally enable or disable autodrive, using the normal game controls.', inputSchema: {type: 'object', properties: {autodrive: {type: 'boolean'}}, required: ['autodrive'], additionalProperties: false}, annotations: {readOnlyHint: false}, execute: async (input) => { if (typeof input?.autodrive !== 'boolean') throw new Error('autodrive must be boolean'); inspectCar(false); state.paused = false; begin(); closePanel(); toggleAuto(input.autodrive); await new Promise(requestAnimationFrame); return read(); }},
     {name: 'configure_drive', description: 'Change the destination, vehicle, landscape, season, time, or camera using the same options as the visible menus.', inputSchema: {type: 'object', properties: {destination: {type: 'string', enum: valid.destination}, vehicle: {type: 'string', enum: valid.vehicle}, location: {type: 'string', enum: valid.location}, season: {type: 'string', enum: valid.season}, time: {type: 'string', enum: valid.time}, weather: {type: 'string', enum: valid.weather}, camera: {type: 'integer', minimum: 0, maximum: 4}}, additionalProperties: false}, annotations: {readOnlyHint: false}, execute: async (input) => { if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Expected options object'); for (const [key, value] of Object.entries(input)) { if (key === 'camera') { if (!Number.isInteger(value) || value < 0 || value > 4) throw new Error('Invalid camera'); } else if (!['destination', 'vehicle', 'location', 'season', 'time', 'weather'].includes(key) || !valid[key].includes(value)) throw new Error('Invalid option: ' + key); } for (const [key, value] of Object.entries(input)) changeSetting(key, value); await new Promise(requestAnimationFrame); return read(); }},
     {name: 'reset_vehicle', description: 'Put the vehicle back on the road and stop it, like pressing R.', inputSchema: {type: 'object', properties: {}, additionalProperties: false}, annotations: {readOnlyHint: false}, execute: () => { reset(); updateUI(); return read(); }},
   ];
+  // Development-only review positions use the same generated roads and simulation as normal driving.
+  if(['127.0.0.1','localhost'].includes(location.hostname))tools.push({name:'review_roadside',description:'In the local preview, position the player before a generated fuel station or signal junction for visual and gameplay checks.',inputSchema:{type:'object',properties:{subject:{type:'string',enum:['fuel','signals']}},required:['subject'],additionalProperties:false},annotations:{readOnlyHint:false},execute:async({subject})=>{
+   if(!['fuel','signals'].includes(subject))throw new Error('Unknown subject');const r=world.road;let target;
+   for(let z=0;z<16000&&!target;z+=120){if(subject==='fuel')target=r.stops(r.segAt(z)).find(s=>s.kind==='fuel');else{const t=r.townAt(z);if(t){const lay=world.scenery.layout(t);if(lay.cross.kind==='lights')target=lay.cross;}}}
+   if(!target)throw new Error('No matching roadside scene on this route');state.auto=false;state.z=target.z-30;life.clear();reset();world.update(state.z,camera,true);begin();closePanel();await new Promise(requestAnimationFrame);return {...read(),reviewTarget:{subject,z:target.z}};
+  }});
+  if(['127.0.0.1','localhost'].includes(location.hostname))tools.push({name:'review_controls',description:'Hold normal driving controls briefly in the local preview, then release them. Uses the rendered game loop for handling verification.',inputSchema:{type:'object',properties:{steer:{type:'integer',minimum:-1,maximum:1},pedal:{type:'string',enum:['accelerate','brake','coast']},seconds:{type:'number',minimum:.1,maximum:5}},required:['steer','pedal','seconds'],additionalProperties:false},annotations:{readOnlyHint:false},execute:async({steer,pedal,seconds})=>{
+   if(![-1,0,1].includes(steer)||!['accelerate','brake','coast'].includes(pedal)||!Number.isFinite(seconds)||seconds<.1||seconds>5)throw new Error('Invalid controls');
+   state.auto=false;state.cruise=false;state.paused=false;begin();closePanel();const before=read();
+   keys.KeyA=steer===1;keys.KeyD=steer===-1;keys.KeyW=pedal==='accelerate';keys.KeyS=pedal==='brake';
+   try{await new Promise(resolve=>setTimeout(resolve,seconds*1000));return {before,after:read()};}finally{keys.KeyA=keys.KeyD=keys.KeyW=keys.KeyS=false;}
+  }});
   for (const tool of tools) try { Promise.resolve(modelContext.registerTool(tool, {signal: controller.signal})).catch(() => {}); } catch {}
 }

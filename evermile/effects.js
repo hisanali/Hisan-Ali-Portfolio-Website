@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {Water} from './vendor/objects/Water.js';
-import {GlowPoints} from './glow.js?v=20260926-people3';
-import {addMist} from './atmosphere.js?v=20260926-people3';
+import {GlowPoints} from './glow.js?v=20260926-transit3';
+import {addMist} from './atmosphere.js?v=20260926-transit3';
 
 // Weather, water and wildlife layered over the world: rain, wet roads, puddles, lightning, thunder, reflective water and birds.
 const rand = (a, b) => a + Math.random() * (b - a);

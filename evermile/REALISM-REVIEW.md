@@ -1,40 +1,40 @@
-# Evermile realism preview — 26 September 2026
+# Evermile imported asset review — 26 September 2026
 
-Worktree: `/Users/hisan/Documents/Codex/evermile-realism`
-Branch: `codex/evermile-realism`
-Base: `e048857` from `origin/main`.
-Local preview: http://127.0.0.1:4173/evermile/
+Development preview: `/Users/hisan/Documents/Codex/evermile-realism`, served at http://127.0.0.1:4173/evermile/. Production target: https://hisanali.com/evermile/. The validation below records local checks; production deployment must separately match the release commit and runtime assets.
 
-## Implemented
+## What changed
 
-- World menu with eight reference-inspired districts: Escobar Airport, Ocean Drive, Adriatic Old Town, Cypress Estate, Palm Hills, Pacific Pier, Azure Retreat and Silverpine Lake. Each provides an approximately one-kilometre authored section before the existing endless road continues. These are original procedural interpretations, not geographically accurate replicas.
-- CC0 scanned stone, bark, roof, asphalt and ground surface maps, with local files and attribution in ASSET-CREDITS.md. World-scale mapping avoids stretching a single texture across a building.
-- Airport terminal/control tower, neon hotel fronts, old-town ramparts, arched estates, low-rise palm residences, animated Ferris wheel and coaster structure, glass-front villas/pools, and lakeside timber stairs/jetties. Street lighting and pedestrians are pooled/batched.
-- Ultra option: up to 2× display pixel ratio and 4096-pixel shadow maps. High effects retain automatic fallback when frame rate remains low. Static traffic and train parts are merged while animated wheels, lamps and freight containers remain individually controlled.
-- Vehicle-specific mass/power/drag/braking and wheelbase-based steering, with a shared traction budget affected by rain, snow and off-road surfaces. Coach stopping distance and motorcycle lean differ from the coupe. This is a simplified driving model, not a full tire/suspension simulator.
-- Additional rail fastenings, train bogie/brake details, pump hoses/nozzles, traffic trim, rubber and animal surface detail.
-- Authored-district exclusions prevent invisible fuel stops/towns/tunnels/rail routes from conflicting with landmark geometry. Livestock crossings stay outside these districts. Chase camera retracts before passing through nearby traffic.
+- Twelve imported civilian looks: eleven Quaternius outfits plus Michelle with corrected retargeted walking. The existing six anatomical pedestrians remain in the mix. People blend idle/walk from actual movement and ease into turns rather than rotating instantly.
+- Six imported everyday traffic shapes: saloon, hatchback, SUV, estate, pickup and van. Wheels rotate about centred axles, front wheels steer independently, and lamp glows follow actual model anchors. The previous repeated concept supercar is no longer the ordinary traffic model.
+- A playable imported GYO motorcycle with separate rotating wheels, steering fork/handlebars, corrected rubber materials, and rider hands following the grips. Inward lean and reverse wheel rotation are covered by tests.
+- Imported cow, dog, textured cat and replacement sheep; the modified imported fox has visible eyes, nose and mouth. Sheep/cow/dog retain native skinning and locomotion; cow/dog have native feeding clips. The cat retains its idle animation and stays in its existing stationary role. Walking playback is matched to movement speed. Animal types were retained.
+- Three architectural assemblies from Poly Haven modules: apartments, brick works, and a coastal fort. They appear in destination streets/estates and the Old Town fort location, with colliders and shared geometry. Apartment/brick geometry is reduced for street viewing.
+- Model Studio previews the same runtime models, with play/pause, steering, reverse, and source credits.
 
 ## Validation
 
-`node --test tests/evermile/*.test.mjs` — 35 passing tests: traction and braking, steering limits, finite long simulation, deterministic road/terrain, district feature exclusions, static-batch bounds preserved animation controls, camera clearance around traffic, six pedestrian gait/skin checks, four animal rig checks and the umbrella hand solver.
+- 78 automated checks cover road/simulation behavior, wheel axle/rolling direction, motorcycle banking, imported models, every civilian's native walk/idle, finite animated skins, animal scale, and architecture geometry.
+- All first-party JavaScript modules and Model Studio's module script pass syntax checks; `git diff --check` passes.
+- Browser inspected the imported crowd, sheep, cow, cat, fox, saloon, motorcycle steering in both directions, apartments and fort. The driving scene loaded every animal/civilian/architecture family and imported traffic without current browser errors.
+- Desktop coastal-town driving ran around 20–30 FPS in this machine's in-app browser while both game and Model Studio were open. This is not a 60 FPS certification. There is an initial asset-loading cost; fallback models render until imports are ready.
 
-At 100 km/h, isolated model tests stop the coupe in about 37.7 m dry and 55.5 m wet, and the coach in about 55.6 m dry. These are model results, not real-vehicle measurements or in-game obstacle avoidance guarantees.
+## Limits
 
-All top-level Evermile modules pass `node --check`; relative module imports resolve; `git diff --check` passes. The browser preview was inspected across the eight destinations, clear/rain and day/sunset, all three player vehicles, and Ultra selection. Fresh preview console had no errors or warnings during the final sampled check. Coupe, coach and motorcycle autodrive were observed staying on-road. Frame rate varied with simultaneous running game tabs; 30 FPS was observed in sampled checks, but a controlled hardware benchmark remains necessary.
+These free assets vary in realism: the cat, motorcycle, vehicle textures and architectural materials are more detailed, while several characters and animals remain stylized. This update does not make the whole game photorealistic or reconstruct the reference locations geographically. Train, bicycle, much of the landscape, and the motorcycle rider still use existing authored geometry. Physics is still the game's simplified driving simulation. Passing checks does not establish that every route, collision, weather, camera or mobile combination is bug-free.
 
-## Remaining scope
+No paid asset was purchased. Attribution, licenses, modification notes and source URLs are recorded in `ASSET-CREDITS.md`; source files and build scripts are retained under `scripts/evermile/`. Runtime GLBs embed their textures and do not rely on third-party hosting while playing.
 
-This preview does not reach the photorealistic reference images. Nearby cars and pedestrians now use imported/authored GLB meshes, and all four original animal types have articulated replacement GLBs. These are still game models; their surfaces, hair/fur and clothing do not match photorealistic scans. Buildings and much of the landscape remain procedural. Matching the supplied photographic references still needs higher-quality art, richer terrain/foliage, improved water/reflections and further performance/physics tuning. A usable browser preview and passing checks do not establish that every gameplay situation is bug-free. The train, railway and fuel details have code changes but have not received a complete end-to-end playtest in every route/weather combination. Mobile performance has not been certified; desktop/laptop was the requested priority.
 
-Production release is authorized. Deployment status and live verification are recorded in the release task.
+## Transit, roadside and handling follow-up
 
-## Pedestrian repair and model pass
+- Imported one authored 12 m bus in coach and city-bus variants, including independent wheels, interior seats and lamp anchors. Updated the coach camera, collision samples and wheelbase to fit the longer body.
+- Imported modular petrol-station shop, pumps, canopy, ice cabinet and bins. Expanded station ground preparation and kept the existing refuelling interaction. Added imported signal housings with independent red/amber/green lenses.
+- Replaced the sheep again with pracalic's textured, rigged model; retimed a real source animation cycle instead of using its static pose action. The shape remains stylized.
+- Removed the second yaw smoothing stage that allowed body rotation after wheels straightened. Keyboard steering now has a vehicle-specific speed envelope; the coach uses a 6.1 m wheelbase. Position integrates the axle midpoint around a rolling rear axle, and braking/cornering share the available traction budget. Switching vehicles clears old steering state.
+- Added regression checks for no rotation at rest, steering release, reverse direction, speed-dependent controls, rear-axle lateral slip, 30/60/120 Hz consistency, and combined braking/cornering traction. Existing stopping-distance checks remain 37.7 m dry / 55.5 m wet from 100 km/h (simplified model).
+- Browser checked the coach chase/cockpit, station placement, bus traffic, sheep animation, and signal green/amber phases. Car and motorcycle accelerated and steered using the actual rendered game loop; yaw rate returned nearly to zero on release and both stayed on paved ground in those short checks. Current browser error/warning log was empty.
+- These are short local checks, not exhaustive route testing or a full rigid-body tire/suspension simulation. Production verification is separate from these local checks.
 
-- Removed the mismatched Michelle/Soldier rig integration. Six CC0 MakeHuman-derived adult bodies now use skeletons generated from their own anatomy, with original planted-foot Walk and Idle clips. Older/younger appearances, different faces/builds, varied skin/hair, short/long sleeves, skirt/trousers and backpacks replace the single repeated character. Runtime assigns 26 distinct combinations of body, outfit colors, scale and animation phase.
-- Runtime gait speed follows measured motion; idle transitions and heading changes are damped. A two-segment arm solver holds the existing umbrella during rain. Close-range/distant fallback switching updates the fallback pose immediately.
-- Rebuilt cows, sheep, dogs and cats as articulated GLBs, preserving 10 cows, 12 sheep, 3 dogs and 3 cats, original wandering/grazing and collision roots. Distance detail reduces rendering cost. Corrected dogs facing the wrong direction after multiple turns or while crossing. An attributed animated fox is additional wildlife.
-- Added optimized attributed CarConcept traffic meshes and real leaflet geometry for district palms. Authoring scripts, exact source assets, hashes and credits are retained.
-- Model Studio provides crowd and individual/animal inspection. Browser checks confirmed all six pedestrian types and all 28 original animals loaded without model errors; a roughly 2.5 km lake-route autodrive sample stayed on-road. Clear/day and rain/day crowd scenes were inspected, including umbrella holding. Fresh console samples had no warnings or errors. Sampled steady state was 30 FPS; startup loading was slower. This is not a hardware benchmark or an exhaustive bug-free guarantee.
+### Assets supplied by the user
 
-The same build is available locally at port 4173. Production deployment must be verified against the committed assets, rather than inferred from local checks.
+Preferred: GLB with embedded 2K textures, with source URL and license. People/animals should have a skin rig and in-place walk/idle clips. Vehicles should have separate wheel meshes; separate handlebars/forks are useful on bikes. If only glTF is available, retain the `.gltf`, `.bin` and texture directory together in a ZIP. FBX can be converted but should include its texture files.

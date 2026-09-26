@@ -1,9 +1,9 @@
-import {batchStatic} from './mesh-batching.js?v=20260926-people3';
+import {batchStatic} from './mesh-batching.js?v=20260926-transit3';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
-import {GlowPoints} from './glow.js?v=20260926-people3';
-import {clamp} from './math.js?v=20260926-people3';
-import {canvasTexture} from './scenery.js?v=20260926-people3';
+import {GlowPoints} from './glow.js?v=20260926-transit3';
+import {clamp} from './math.js?v=20260926-transit3';
+import {canvasTexture} from './scenery.js?v=20260926-transit3';
 
 /*
   Trains on the line beside the road. A train comes out of the tunnel at one end of the line, runs along the valley and

@@ -1,9 +1,10 @@
+import {RoadsideModels} from './roadside-models.js?v=20260926-transit3';
 import * as T from './vendor/three.module.js';
-import {random, noise, smooth, lerp, clamp} from './math.js?v=20260926-people3';
-import {GlowPoints} from './glow.js?v=20260926-people3';
-import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260926-people3';
-import {sheltered} from './atmosphere.js?v=20260926-people3';
-import {ZONE, TYPES, SEA} from './network.js?v=20260926-people3';
+import {random, noise, smooth, lerp, clamp} from './math.js?v=20260926-transit3';
+import {GlowPoints} from './glow.js?v=20260926-transit3';
+import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260926-transit3';
+import {sheltered} from './atmosphere.js?v=20260926-transit3';
+import {ZONE, TYPES, SEA} from './network.js?v=20260926-transit3';
 
 // Everything built along the road network itself: tunnels, motorway furniture, junction signs, the railway and its
 // level crossings, petrol stations, cafés and viewpoints, lighthouses on the coast, snowbanks up high and farm fields.
@@ -19,7 +20,7 @@ function stripes(w, h, a, b, n, vertical = false) {
 
 export class Roadside {
   constructor(world) {
-    this.world = world; this.scene = world.scene; this.settings = world.settings; this.time = 0;
+    this.world = world; this.models = world.roadsideModels ||= new RoadsideModels(world); this.scene = world.scene; this.settings = world.settings; this.time = 0;
     this.lit = 0; this.glow = new GlowPoints(this.scene, 260, {fade: 900});
     this.lampColor = new T.Color(1, .86, .62); this.tunnelColor = new T.Color(1, .72, .38); this.red = new T.Color(1, .12, .05); this.white = new T.Color(1, 1, 1);
     this.signCache = new Map();
@@ -231,20 +232,20 @@ export class Roadside {
     const lamp = (lx, lz, h = 6) => { put('metal', UNIT, lx, h / 2, lz, 0x4d5257, .12, h, .12); put('lamp', UNIT, lx - .5, h - .1, lz, 0xffffff, 1, .12, .3); const [wx, wz] = put.world(lx - .5, lz); group.userData.lamps.push({x: wx, y: y + h - .3, z: wz}); };
     if (st.kind === 'fuel') {
       const d = 9, cw = 11, cl = 20;
-      put('paint', UNIT, d + 1, 5.3, 0, 0xf4f4f0, cw + 1, .5, cl);
+      if(!this.models.loaded.canopy){put('paint', UNIT, d + 1, 5.3, 0, 0xf4f4f0, cw + 1, .5, cl);
       put('paint', UNIT, d + 1, 5.62, 0, 0xc81f25, cw + 1.1, .16, cl + .1);
-      put('canopyLight', UNIT, d + 1, 5.03, 0, 0xffffff, cw - 1, .05, cl - 2);
+      put('canopyLight', UNIT, d + 1, 5.03, 0, 0xffffff, cw - 1, .05, cl - 2); }else{const [cx,cz]=put.world(d+1,0);this.models.place('canopy',group,cx,y+5.03,cz,yaw+Math.PI/2);}
       for (const lx of [d - 3.5, d + 5.5]) for (const lz of [-7, 7]) { put('metal', UNIT, lx, 2.6, lz, 0xdadada, .35, 5.2, .35); const [cx, cz] = put.world(lx, lz); col.push({x: cx, z: cz, r: .35}); }
       for (const lz of [-4.5, 4.5]) {
         put('concrete', UNIT, d + 1, .12, lz, 0xbdbab2, 1.4, .24, 6);
-        for (const pz of [-1.6, 1.6]) { put('paint', UNIT, d + 1, .95, lz + pz, 0xf1f1ee, .6, 1.5, .5); put('paint', UNIT, d + 1, 1.72, lz + pz, 0xc81f25, .62, .12, .52); put('screen', UNIT, d + .68, 1.25, lz + pz, 0xffffff, .02, .3, .3);
+        for (const pz of [-1.6, 1.6]) { if(this.models.loaded.pump){const [px,pzz]=put.world(d+1,lz+pz);this.models.place('pump',group,px,y+.24,pzz,yaw);continue;}put('paint', UNIT, d + 1, .95, lz + pz, 0xf1f1ee, .6, 1.5, .5); put('paint', UNIT, d + 1, 1.72, lz + pz, 0xc81f25, .62, .12, .52); put('screen', UNIT, d + .68, 1.25, lz + pz, 0xffffff, .02, .3, .3);
           for(let j=0;j<9;j++){const a=j/8*Math.PI;put('dark',UNIT,d+.65,.85-Math.sin(a)*.45,lz+pz+Math.cos(a)*.32,0xffffff,.05,.07,.14,0,-Math.cos(a)*.4);}
           put('metal',UNIT,d+.61,1.07,lz+pz+.32,0x323b37,.09,.22,.07,0,.3); }
         const [px, pz2] = put.world(d + 1, lz); col.push({x: px, z: pz2, hx: 1.1, hz: 3.2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0});
         for (const lane of [-2.4, 2.4]) { const [ax, az] = put.world(d + 1 + lane, lz); group.userData.pumps.push({x: ax, z: az, stop: st}); }
       }
-      put('paint', UNIT, d + 13.5, 1.9, 0, 0xeeece6, 6, 3.8, 10); put('glass', UNIT, d + 10.45, 1.6, 0, 0xffffff, .1, 2.4, 8); put('paint', UNIT, d + 10.4, 3.4, 0, 0xc81f25, .2, .7, 9.5);
-      const [bx, bz] = put.world(d + 13.5, 0); col.push({x: bx, z: bz, hx: 3, hz: 5, c: Math.cos(yaw), s: Math.sin(yaw), r: 0});
+      if(!this.models.loaded.shop){put('paint', UNIT, d + 13.5, 1.9, 0, 0xeeece6, 6, 3.8, 10); put('glass', UNIT, d + 10.45, 1.6, 0, 0xffffff, .1, 2.4, 8); put('paint', UNIT, d + 10.4, 3.4, 0, 0xc81f25, .2, .7, 9.5);}else{const [sx,sz]=put.world(d+13.5,0);this.models.place('shop',group,sx,y,sz,yaw-Math.PI/2);for(const [key,lz] of [['ice',-5.3],['bin',5.3]]){const [px,pz]=put.world(d+8,lz);this.models.place(key,group,px,y,pz,yaw-Math.PI/2);}}
+      const [bx, bz] = put.world(d + 13.5, 0); col.push({x: bx, z: bz, hx: 5.3, hz: 4.6, c: Math.cos(yaw), s: Math.sin(yaw), r: 0});
       put('metal', UNIT, 2, 3.2, -st.len * .7, 0x3c4045, .3, 6.4, .3); put('paint', UNIT, 2, 6.2, -st.len * .7, 0xc81f25, .3, 2.2, 1.8); put('screen', UNIT, 1.83, 5.8, -st.len * .7, 0xffffff, .02, 1, 1.4);
       lamp(d - 4, -st.len * .55); lamp(d - 4, st.len * .55);
       group.userData.lamps.push(...[[d + 1, -6], [d + 1, 6]].map(([lx, lz]) => { const [wx, wz] = put.world(lx, lz); return {x: wx, y: y + 4.8, z: wz}; }));

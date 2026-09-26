@@ -1,12 +1,12 @@
-import {addMicroSurface} from './surface-detail.js?v=20260926-people3';
-import {batchStatic} from './mesh-batching.js?v=20260926-people3';
+import {addMicroSurface} from './surface-detail.js?v=20260926-transit3';
+import {batchStatic} from './mesh-batching.js?v=20260926-transit3';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260926-people3';
-import {clamp} from './math.js?v=20260926-people3';
-import {canvasTexture} from './scenery.js?v=20260926-people3';
-import {ZONE} from './network.js?v=20260926-people3';
+import {GlowPoints} from './glow.js?v=20260926-transit3';
+import {clamp} from './math.js?v=20260926-transit3';
+import {canvasTexture} from './scenery.js?v=20260926-transit3';
+import {ZONE} from './network.js?v=20260926-transit3';
 
 // Life around the road: grazing cows and sheep, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.
@@ -302,7 +302,7 @@ export class Life {
   // The body is a finely divided box bent to a side profile (bonnet, windscreen, roof, rear) with the glasshouse tapered in;
   // window areas are coloured dark glass through vertex colours so pillars and panels read correctly.
   bodyGeometry(spec, paintColor) {
-    const {L, W, clear, belt, top, glass} = spec, seg = [14, 10, 44];
+    const {L, W, clear, belt, top, glass} = spec, seg = [20, 24, 96];
     const g = new T.BoxGeometry(2, 1, 2, ...seg), pos = g.attributes.position, colors = [];
     const profile = (w) => { for (let i = 0; i < top.length - 1; i++) { const [w0, y0] = top[i], [w1, y1] = top[i + 1]; if (w <= w0 && w >= w1) { const t = (w0 - w) / (w0 - w1); const s = t * t * (3 - 2 * t); return y0 + (y1 - y0) * s; } } return top[top.length - 1][1]; };
     const paint = new T.Color(paintColor), dark = new T.Color(0x0c1218), trim = new T.Color(0x14171a), c = new T.Color();
@@ -324,6 +324,17 @@ export class Life {
       colors.push(c.r, c.g, c.b);
     }
     g.setAttribute('color', new T.Float32BufferAttribute(colors, 3));
+    // Cut real wheel openings; the old closed shell intersected the tyres.
+    const index=g.index.array,kept=[];const radius=(spec.clear>.3?.3696:.33)+.055;
+    for(let k=0;k<index.length;k+=3){const ids=[index[k],index[k+1],index[k+2]],cx=ids.reduce((v,i)=>v+pos.getX(i),0)/3,cy=ids.reduce((v,i)=>v+pos.getY(i),0)/3,cz=ids.reduce((v,i)=>v+pos.getZ(i),0)/3;
+      const arch=Math.abs(cx)>W*.32&&Math.min(Math.hypot(cz-spec.wheelbase,cy-(radius-.055)),Math.hypot(cz+spec.wheelbase,cy-(radius-.055)))<radius;
+      if(!arch)kept.push(...ids);
+    }
+    g.clearGroups();const surfaces=[[],[]];
+    // Separate glass from paint instead of interpolating grey window colours into the bodywork.
+    for(let k=0;k<kept.length;k+=3){const dark=kept.slice(k,k+3).filter(i=>colors[i*3]<.015&&colors[i*3+1]<.02).length===3;surfaces[dark?1:0].push(...kept.slice(k,k+3));}
+    for(let i=0;i<pos.count;i++)if(Math.abs(pos.getX(i))>W*.32){const y=pos.getY(i),z=pos.getZ(i),axle=z>0?spec.wheelbase:-spec.wheelbase,dy=y-(radius-.055),dz=z-axle,d=Math.hypot(dy,dz);if(d>radius-.08&&d<radius+.045&&dy>-.05){pos.setY(i,(radius-.055)+dy/d*(radius+.018));pos.setZ(i,axle+dz/d*(radius+.018));}}
+    g.setIndex([...surfaces[0],...surfaces[1]]);g.addGroup(0,surfaces[0].length,0);g.addGroup(surfaces[0].length,surfaces[1].length,1);
     g.computeVertexNormals();
     return g;
   }
@@ -333,29 +344,34 @@ export class Life {
       sedan: {L: 4.6, W: 1.8, clear: .26, belt: .95, wheelbase: 1.38, top: [[1, .62], [.93, .84], [.62, .95], [.38, .99], [.1, 1.42], [-.36, 1.44], [-.6, 1.04], [-.9, .99], [-1, .8]], glass: {front: [.36, .12], rear: [-.38, -.58], side: [.33, -.56], b: [-.08, -.16]}},
       hatch: {L: 4.1, W: 1.74, clear: .26, belt: .97, wheelbase: 1.24, top: [[1, .62], [.93, .83], [.64, .95], [.42, .99], [.13, 1.46], [-.74, 1.45], [-.9, 1.2], [-.97, .95], [-1, .76]], glass: {front: [.4, .15], rear: [-.73, -.94], side: [.38, -.72], b: [-.1, -.19]}},
       suv: {L: 4.7, W: 1.9, clear: .38, belt: 1.18, wheelbase: 1.45, top: [[1, .78], [.93, 1.04], [.64, 1.16], [.44, 1.2], [.18, 1.76], [-.82, 1.78], [-.95, 1.6], [-1, 1.06]], glass: {front: [.42, .2], rear: [-.8, -.975], side: [.4, -.8], b: [-.1, -.18]}},
+      wagon: {L: 4.85, W: 1.83, clear: .26, belt: 1.0, wheelbase: 1.46, top: [[1,.64],[.92,.86],[.56,1.0],[.34,1.06],[.08,1.48],[-.78,1.5],[-.95,1.15],[-1,.81]], glass: {front:[.32,.1],rear:[-.79,-.94],side:[.31,-.78],b:[-.1,-.19]}},
+      pickup: {L:5.3,W:2.0,clear:.4,belt:1.22,wheelbase:1.65,top:[[1,.86],[.93,1.08],[.64,1.24],[.44,1.25],[.19,1.81],[-.23,1.83],[-.32,1.21],[-.95,1.2],[-1,1.04]],glass:{front:[.42,.21],rear:[-.24,-.31],side:[.41,-.22],b:[-.04,-.12]}},
       van: {L: 5.0, W: 1.96, clear: .32, belt: 1.25, wheelbase: 1.62, top: [[1, .74], [.94, 1.02], [.8, 1.26], [.6, 1.4], [.42, 2.02], [-.97, 2.06], [-1, 1.8]], glass: {front: [.58, .44], rear: [-2, -3], side: [.56, .18], b: [.3, .26]}},
     }[type];
     const color = pick([0xb9c1c9, 0x1e2d4a, 0x8a1c1f, 0xeeeeee, 0x16171a, 0x3a5a48, 0xc7a452, 0x4a5a70, 0x6b6f75, 0x7a2c52, 0xdcdcd8, 0x2a3440]);
     const g = new T.Group(), hw = specs.W / 2, front = specs.L / 2, back = -specs.L / 2;
     g.rotation.order = 'YXZ';
-    part(this.bodyGeometry(specs, color), this.m.bodyPaint, 0, 0, 0, g);
+    part(this.bodyGeometry(specs, color), [this.m.bodyPaint,this.m.roadGlass ||= new T.MeshPhysicalMaterial({color:0x243640,roughness:.13,metalness:.25,clearcoat:1})], 0, 0, 0, g);
     // Each wheel sits in a steering pivot with a spinning hub inside it, so tyres roll with the speed and front wheels turn into bends.
-    const r = type === 'suv' || type === 'van' ? 1.12 : 1, wheels = [];
+    const r = type === 'suv' || type === 'van' || type === 'pickup' ? 1.12 : 1, wheels = [];
     for (const z of [specs.wheelbase, -specs.wheelbase]) for (const x of [-hw + .12, hw - .12]) {
       const pivot = new T.Group(); pivot.position.set(x, .33 * r, z); g.add(pivot);
       const spin = new T.Group(); pivot.add(spin); spin.scale.setScalar(r);
       part(this.g.wheel, this.m.tyre, 0, 0, 0, spin);
       part(this.g.rim, this.m.rim, Math.sign(x) * .02, 0, 0, spin);
       part(this.g.spokes, this.m.trim, Math.sign(x) * .14, 0, 0, spin);
+      const arch=part(new T.TorusGeometry(.405*r,.026,8,48,Math.PI),this.m.bodyTrim,x>0?hw-.008:-hw+.008,.33*r,z,g);arch.rotation.y=Math.PI/2;
+      const disc=part(new T.CylinderGeometry(.22*r,.22*r,.018,32),this.m.rim,Math.sign(x)*.1,0,0,spin);disc.rotation.z=Math.PI/2;
+      part(new T.BoxGeometry(.05,.13,.065),this.m.grille,Math.sign(x)*.12,.08,-.16,pivot);
       wheels.push({pivot, spin, front: z > 0});
     }
-    const lamps = {head: [], tail: [], left: [], right: []}, hy = specs.top[1][1] - .08, ty = specs.top[specs.top.length - 2][1] - .12;
+    const lamps = {head: [], tail: [], left: [], right: []}, hy = specs.top[0][1] - .13, ty = specs.top[specs.top.length - 1][1] - .14;
     for (const s of [-1, 1]) {
       lamps.head.push(part(new RoundedBoxGeometry(.42, .1, .06, 2, .03), this.m.head, s * (hw - .32), hy, front - .02, g));
       lamps.tail.push(part(new RoundedBoxGeometry(.38, .09, .05, 2, .025), this.m.tail, s * (hw - .28), ty, back + .02, g));
       // Amber indicators at each corner; local +x is the car's left side.
       const side = s > 0 ? lamps.left : lamps.right;
-      side.push(part(this.g.indicator, this.m.indicatorOff, s * (hw - .06), hy, front - .04, g), part(this.g.indicator, this.m.indicatorOff, s * (hw - .05), ty, back + .03, g));
+      side.push(part(this.g.indicator, this.m.indicatorOff, s * (hw*.84 - .09), hy, front - .04, g), part(this.g.indicator, this.m.indicatorOff, s * (hw*.84 - .09), ty, back + .03, g));
       const mirror = part(new RoundedBoxGeometry(.16, .1, .12, 2, .04), this.m.bodyTrim, s * (hw + .06), specs.belt + .08, specs.L * .5 * specs.glass.side[0] - .05, g);
       mirror.scale.x = 1.2;
     }
@@ -369,7 +385,7 @@ export class Life {
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, front + 4); g.add(beam);
     batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
-    return {g, beam, kind: 'car', length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
+    return {g, beam, kind: 'car', style: type, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
   // A 12 m single-deck bus: rounded body, a long window band lit inside after dark, doors on the kerb side and a destination display.
@@ -403,7 +419,7 @@ export class Life {
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, L / 2 + 4); g.add(beam);
     batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
-    return {g, beam, kind: 'bus', length: L, width: W, lamps, wheels, wheelRadius: .5, headY: .95, headX: W / 2 - .35, tailY: 1.1, lat: 0, latVel: 0, yaw: 0, steer: 0};
+    return {g, beam, kind: 'bus', style: 'bus', length: L, width: W, lamps, wheels, wheelRadius: .5, headY: .95, headX: W / 2 - .35, tailY: 1.1, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
   // A delivery truck: cab and a box body in a company's colours.
@@ -490,7 +506,7 @@ export class Life {
     const spokes = []; for (let i = 0; i < 5; i++) spokes.push(new T.BoxGeometry(.02, .36, .045).rotateX(i * Math.PI * 2 / 5));
     this.g.spokes = mergeGeometries(spokes);
     this.glow = new GlowPoints(this.scene, 110, {fade: 1100});
-    const types = ['sedan', 'hatch', 'suv', 'van', 'sedan', 'hatch', 'suv', 'sedan'];
+    const types = ['sedan', 'hatch', 'suv', 'van', 'wagon', 'pickup', 'hatch', 'sedan'];
     const add = (v, dir, pool, cooldown = 0) => { v.dir = dir; v.pool = pool; v.z = -1e9; v.cooldown = cooldown; v.g.visible = false; this.scene.add(v.g); this.traffic.push(v); v.id = this.traffic.length; };
     for (let i = 0; i < 6; i++) add(this.car(types[i % types.length]), -1, 'oncoming');
     add(this.bus(), -1, 'oncoming', 20); add(this.truck(), -1, 'oncoming', 12); add(this.cyclist(), -1, 'bike', 30);
@@ -838,7 +854,7 @@ export class Life {
     c.yaw = yaw;
     c.g.rotation.set(-Math.atan(slope * c.dir), yaw, c.kind === 'bike' ? Math.sin(c.crank * .5) * .025 - c.latVel * .06 : 0);
     // Front wheels steer by the turn rate; all wheels roll with the speed.
-    c.steer += (Math.max(-.5, Math.min(.5, Math.atan(yawRate * 2.7 / Math.max(c.speed, 2)))) - c.steer) * Math.min(1, dt * 6);
+    c.steer += (Math.max(-.5, Math.min(.5, Math.atan(yawRate * (c.kind === 'bus' ? 6.1 : 2.7) / Math.max(c.speed, 2)))) - c.steer) * Math.min(1, dt * 6);
     for (const w of c.wheels) { if (w.front && !w.bike) w.pivot.rotation.y = c.steer; w.spin.rotation.x += c.speed * dt / c.wheelRadius; }
     if (c.legs) {
       // Pedalling: the crank turns with the rear wheel through the gears, legs follow the pedals.
@@ -865,13 +881,11 @@ export class Life {
         continue;
       }
       if (c.delivery && !c.g.visible) continue;
-      for (const sx of [-1, 1]) {
-        if (!c.delivery) { v.set(sx * c.headX, c.headY, c.length / 2 + .05); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, warm, flashing ? 1.5 : glowLit * (c.dir < 0 ? .65 : .35), flashing ? 44 : 20); }
-        v.set(sx * c.headX, c.tailY, -c.length / 2 - .05); c.g.localToWorld(v);
-        if (lit > .4 || c.braking) this.glow.add(v.x, v.y, v.z, red, c.braking ? 1.1 : .45, c.braking ? 22 : 14);
-        const on = blink && (ind === 2 || (ind === 1 && sx > 0) || (ind === -1 && sx < 0));
-        if (on) { v.set(sx * (c.width / 2 - .05), c.tailY, -c.length / 2); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, amber, 1.2, 16); v.set(sx * (c.width / 2 - .06), c.headY, c.length / 2); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, amber, 1.2, 16); }
-      }
+      c.g.updateMatrixWorld(true);const lights=c.detailModel?.visible?c.detailLamps:c.lamps;
+      for(const lamp of lights.head)if(!c.delivery){lamp.getWorldPosition(v);this.glow.add(v.x,v.y,v.z,warm,flashing?1.5:glowLit*(c.dir<0?.65:.35),flashing?44:20);}
+      if(lit>.4||c.braking)for(const lamp of lights.tail){lamp.getWorldPosition(v);this.glow.add(v.x,v.y,v.z,red,c.braking?1.1:.45,c.braking?22:14);}
+      if(blink)for(const [side,lamps] of [[1,lights.left],[-1,lights.right]])if(ind===2||ind===side)for(const lamp of lamps){lamp.getWorldPosition(v);this.glow.add(v.x,v.y,v.z,amber,1.2,16);}
+
     }
     if (s.flashing) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
       for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, .55, 16); }
@@ -882,7 +896,7 @@ export class Life {
 
   playerIndicatorSpots() {
     const v = this.settings.vehicle;
-    if (v === 'coach') return [[1.1, 3.98], [-1.1, 3.98], [1.1, -3.98], [-1.1, -3.98]];
+    if (v === 'coach') return [[1.1, 6], [-1.1, 6], [1.1, -6], [-1.1, -6]];
     if (v === 'bike') return [[.2, .9], [-.2, .9], [.15, -.95], [-.15, -.95]];
     return [[.82, 2.18], [-.82, 2.18], [.8, -2.2], [-.8, -2.2]];
   }

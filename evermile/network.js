@@ -1,5 +1,5 @@
-import {DESTINATIONS, DISTRICT_END, inDestination} from './destinations.js?v=20260926-people3';
-import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260926-people3';
+import {DESTINATIONS, DISTRICT_END, inDestination} from './destinations.js?v=20260926-transit3';
+import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260926-transit3';
 
 /*
   The road network. The world is still laid out along z, but the road is now a chain of segments, each of a kind
@@ -365,7 +365,7 @@ export class Network {
           let side = own;
           if (kind === 'view') side = seg.type === 'coast' ? seg.seaSide : (seg.upF(z) > 0 ? -1 : 1);
           if (kind === 'view' && seg.type === 'mountain' && Math.abs(seg.upF(z)) < .35) continue;
-          out.push({kind, z, side, len, depth: kind === 'fuel' ? 22 : kind === 'cafe' ? 18 : 10, seg});
+          out.push({kind, z, side, len, depth: kind === 'fuel' ? 30 : kind === 'cafe' ? 18 : 10, seg});
           break;
         }
       }

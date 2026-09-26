@@ -116,6 +116,29 @@ for idx,(name,height,hairtype) in enumerate(profiles):
   for p in o.data.polygons:p.use_smooth=True
   sewn.append(o)
  clothes=sewn
+ # Fit the shirt to the actual anatomy. Lofted sleeve cylinders produced hard,
+ # disconnected shoulders when lowered from the source rest pose.
+ oldshirt=clothes[0];bpy.data.objects.remove(oldshirt,do_unlink=True)
+ anatomy=mesh('GarmentGuide',[vs[i] for i in ids],[[mapping[i] for i in f] for f in faces['body']],shirt)
+ garmentfaces=[]
+ for face in anatomy.data.polygons:
+  c=face.center;torso=hipz-.02<c.z<neckz-.025 and abs(c.x)<shoulder+.018
+  sleeve=False
+  for side in ['l','r']:
+   sh=joint(side+'-shoulder');el=joint(side+'-elbow');wr=joint(side+'-hand')
+   for a,b,end in [(sh,el,.66 if idx in [3,5] else 1.0),(el,wr,0 if idx in [3,5] else .82)]:
+    d=b-a;u=(c-a).dot(d)/d.length_squared
+    if -.08<u<end and end>0 and (c-(a+d*max(0,min(1,u)))).length<.115:sleeve=True
+  if (torso or sleeve) and not (c.z>neckz-.075 and abs(c.x)<.061):garmentfaces.append(list(face.vertices))
+ garmentverts=[]
+ for v in anatomy.data.vertices:
+  p=v.co.copy();ease=.026+.002*math.sin(p.z*105+p.x*30)*math.sin(p.y*55)
+  garmentverts.append(p+v.normal*ease)
+ fitted=mesh('FittedShirt',garmentverts,garmentfaces,shirt);bpy.data.objects.remove(anatomy,do_unlink=True)
+ bpy.context.view_layer.objects.active=fitted
+ mod=fitted.modifiers.new('FabricDrape','SMOOTH');mod.factor=1;mod.iterations=18;bpy.ops.object.modifier_apply(modifier=mod.name)
+ mod=fitted.modifiers.new('FabricThickness','SOLIDIFY');mod.thickness=.004;bpy.context.view_layer.objects.active=fitted;bpy.ops.object.modifier_apply(modifier=mod.name)
+ clothes[0]=fitted
  # Skeleton joints derive from each morphed anatomy, not from a different character's pose.
  armdata=bpy.data.armatures.new('CitizenRig');arm=bpy.data.objects.new('CitizenRig',armdata);bpy.context.collection.objects.link(arm);bpy.context.view_layer.objects.active=arm;arm.select_set(True);body.select_set(False);bpy.ops.object.mode_set(mode='EDIT')
  bones={}
@@ -172,28 +195,43 @@ for idx,(name,height,hairtype) in enumerate(profiles):
   pb=arm.pose.bones[n];direction=(b-a).normalized();q=(rest[n]@Vector((0,1,0))).rotation_difference(direction)@rest[n]
   pb.matrix=Matrix.Translation(a)@q.to_matrix().to_4x4();bpy.context.view_layer.update()
  def pose(t,walking):
-  phase=t*math.tau;bob=.009*(1-math.cos(phase*2)) if walking else .002*math.sin(phase)
-  offset=Vector((0,0,bob))
-  for n in ['Hips','Chest','Head']:aim(n,bones[n][0]+offset,bones[n][1]+offset)
+  phase=t*math.tau
+  # Pelvis shifts over the supporting foot; ribcage counter-rotates, head remains stable.
+  sway=(.014 if walking else .007)*math.sin(phase)
+  bob=.008*(1-math.cos(phase*2)) if walking else .002*math.sin(phase)
+  offset=Vector((sway,0,bob-.024))
+  twist=(.06 if walking else .016)*math.cos(phase)
+  pelvis=bones['Hips'][0]+offset;chest=bones['Chest'][0]+offset
+  def twistpoint(p,pivot,angle):return pivot+Matrix.Rotation(angle,3,'Z')@(p-pivot)
+  def bodybone(n,angle):
+   a=bones[n][0]+offset;b=bones[n][1]+offset
+   aim(n,a,b)
+   pb=arm.pose.bones[n];pb.matrix=Matrix.Translation(a)@Matrix.Rotation(angle,4,'Z')@pb.matrix.to_3x3().to_4x4();bpy.context.view_layer.update()
+  bodybone('Hips',twist);bodybone('Chest',-twist*.8);bodybone('Head',.018*math.sin(phase+.4) if walking else .065*math.sin(phase))
   for si,side in enumerate(['l','r']):
    ph=(t+si*.5)%1
-   hip=bones[side+'Thigh'][0]+offset;oldankle=bones[side+'Shin'][1]
+   hip=twistpoint(bones[side+'Thigh'][0]+offset,pelvis,twist);oldankle=bones[side+'Shin'][1]
    stride=.62 if walking else 0
    if ph<.6:forward=stride*(.5-ph/.6);lift=0
-   else:u=(ph-.6)/.4;forward=stride*(-.5+smoothstep(0,1,u));lift=.095*math.sin(math.pi*u)
-   ankle=Vector((hip.x,oldankle.y-forward,oldankle.z+lift))
+   else:u=(ph-.6)/.4;forward=stride*(-.5+smoothstep(0,1,u));lift=.105*math.sin(math.pi*u)
+   # Soft heel strike and toe-off, with a planted mid-stance and no locked knees.
+   footangle=0
+   if walking:
+    if ph<.12:footangle=-.16*(1-smoothstep(0,.12,ph))
+    elif ph>.46 and ph<.6:footangle=.3*smoothstep(.46,.6,ph)
+    elif ph>=.6:footangle=.3*(1-smoothstep(.6,.78,ph))-.16*smoothstep(.85,1,ph)
+   ankle=Vector((oldankle.x,oldankle.y-forward,oldankle.z+lift+max(0,footangle)*.11))
    a=(bones[side+'Thigh'][1]-bones[side+'Thigh'][0]).length;b=(bones[side+'Shin'][1]-bones[side+'Shin'][0]).length
-   # Keep pelvis low enough to avoid knee locking throughout stance.
-   hip.z-=.032
    delta=ankle-hip;dist=min(delta.length,a+b-.003);direction=delta.normalized();along=(a*a-b*b+dist*dist)/(2*dist);bend=math.sqrt(max(0,a*a-along*along));pole=Vector((0,-1,0));pole=(pole-direction*pole.dot(direction)).normalized();knee=hip+direction*along+pole*bend
    aim(side+'Thigh',hip,knee);aim(side+'Shin',knee,ankle)
-   toe=ankle+Vector((0,-.15,-oldankle.z+.035));aim(side+'Foot',ankle,toe)
-   shoulder=bones[side+'Arm'][0]+offset;armLength=(bones[side+'Arm'][1]-bones[side+'Arm'][0]).length;foreLength=(bones[side+'Forearm'][1]-bones[side+'Forearm'][0]).length
-   swing=.20*math.sin(phase+si*math.pi) if walking else .012*math.sin(phase)
+   footdir=Matrix.Rotation(footangle,3,'X')@Vector((0,-.15,-oldankle.z+.035));aim(side+'Foot',ankle,ankle+footdir)
+   shoulder=twistpoint(bones[side+'Arm'][0]+offset,chest,-twist*.8);armLength=(bones[side+'Arm'][1]-bones[side+'Arm'][0]).length;foreLength=(bones[side+'Forearm'][1]-bones[side+'Forearm'][0]).length
+   # Opposite leg/arm pairing, relaxed elbows, individual swing amplitude.
+   swing=(.36+idx*.015)*math.cos(phase+si*math.pi) if walking else .035*math.sin(phase+si)
    sideSign=1 if side=='l' else -1
-   elbow=shoulder+Vector((sideSign*.04,swing,-1)).normalized()*armLength
-   wrist=elbow+Vector((sideSign*.015,swing-.16,-1)).normalized()*foreLength
-   aim(side+'Arm',shoulder,elbow);aim(side+'Forearm',elbow,wrist);aim(side+'Hand',wrist,wrist+Vector((0,-.018,-.10)))
+   elbow=shoulder+Vector((sideSign*.075,swing,-1)).normalized()*armLength
+   wrist=elbow+Vector((sideSign*.025,swing-.28,-1)).normalized()*foreLength
+   aim(side+'Arm',shoulder,elbow);aim(side+'Forearm',elbow,wrist);aim(side+'Hand',wrist,wrist+Vector((sideSign*.008,-.025,-.10)))
  for clip,walking,duration in [('Walk',True,32),('Idle',False,80)]:
   arm.animation_data_create();action=bpy.data.actions.new(clip);arm.animation_data.action=action
   for f in range(duration+1):

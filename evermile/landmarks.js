@@ -1,8 +1,9 @@
+import {ArchitectureModels} from './architecture-models.js?v=20260926-transit3';
 import * as T from './vendor/three.module.js';
-import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260926-people3';
-import {scanned} from './materials.js?v=20260926-people3';
-import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-people3';
-import {random, clamp} from './math.js?v=20260926-people3';
+import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260926-transit3';
+import {scanned} from './materials.js?v=20260926-transit3';
+import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-transit3';
+import {random, clamp} from './math.js?v=20260926-transit3';
 
 const CYLINDER = new T.CylinderGeometry(1, 1, 1, 12).toNonIndexed();
 const SPHERE = new T.SphereGeometry(1, 12, 8).toNonIndexed();
@@ -26,7 +27,7 @@ function palmLeaf() {
 const FROND = palmLeaf();
 export class Landmarks {
  constructor(world) {
-  this.world = world; this.settings = world.settings; this.t = 0; this.signs = new Map(); this.wheels = []; this.lit = 0;
+  this.imported=new ArchitectureModels(world);this.world = world; this.settings = world.settings; this.t = 0; this.signs = new Map(); this.wheels = []; this.lit = 0;
   const std = (o) => new T.MeshStandardMaterial({vertexColors:true, ...o});
   const leaves = canvasTexture(512, 128, (c,w,h) => { c.clearRect(0,0,w,h); c.strokeStyle='#fff'; c.lineWidth=3; c.beginPath(); c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke(); for(let i=0;i<65;i++){const x=i*w/65;c.lineWidth=3.8;for(const s of [-1,1]){c.beginPath();c.moveTo(x,h/2);c.lineTo(x+30,h/2+s*(h*.48));c.stroke();}} });
   this.m = {
@@ -75,6 +76,11 @@ export class Landmarks {
  }
  building(b,group,z,side,kind,rng){
   const r=this.world.road,y=r.y(z),yaw=Math.atan(r.tangent(z))+(side<0?Math.PI:0),put=frame(b,r.x(z),y,z,yaw);put.y=y;
+  const importedKey=kind==='oldtown'?'apartments':kind==='hotel'&&Math.round(z/40)%2===0?'apartments':kind==='estate'&&Math.round(z/40)%3===0?'brick-works':null;
+  if(importedKey&&this.imported.loaded[importedKey]){
+   const edge=r.width(z),x=edge+14,[wx,wz]=put.world(x,0);this.imported.place(importedKey,group,wx,y,wz,yaw-Math.PI/2);this.collider(group,put,x,0,6.5,8);
+   put('pavement',UNIT,edge+4,.08,0,0xa3a29a,8,.16,36);this.palm(put,edge+2,-15,12);this.lamp(put,edge+1,12,group);return;
+  }
   const edge=r.width(z),w=kind==='hotel'?23:kind==='oldtown'?17:25,depth=kind==='modern'?23:16,x=edge+(kind==='modern'?14:7)+depth/2,levels=kind==='hotel'?4+Math.floor(rng()*3):kind==='residential'?1:2;
   put('pavement',UNIT,edge+3,.08,0,0xa3a29a,6,.16,36);
   const material=kind==='oldtown'?'stone':'plaster', color=kind==='hotel'?[0xeadfce,0xc9ddd7,0xe2c1bf,0xd4d8e5][Math.floor(rng()*4)]:0xe8dbc5;
@@ -114,6 +120,7 @@ export class Landmarks {
   this.collider(group,put,x,0,14.5,76);
  }
  fortress(b,group,z){const r=this.world.road,y=r.y(z),put=frame(b,r.x(z),y,z,0);put.y=y;
+  if(this.imported.loaded['coastal-fort']){put('stone',SPHERE,-43,-6,0,0xaaa797,28,10,29);this.imported.place('coastal-fort',group,r.x(z)-43,y,z,Math.PI/2);this.collider(group,put,-43,0,22,22);return;}
   // Rock promontory and masonry foundations descend below sea level.
   put('stone',SPHERE,-38,-5,0,0xaaa797,22,9,44);
   put('stone',UNIT,-38,-3,0,0xb4aa94,18,12,58);
