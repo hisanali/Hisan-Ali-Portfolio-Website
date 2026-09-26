@@ -1,0 +1,59 @@
+.pp-guide { --pp-accent:#0f7a5a; --pp-warm:#c7851f; --pp-low:#c94a3a; --pp-high:#2e9a62; --pp-surface:#eef7f2; --pp-border:#c3ddd0; --pp-ink:#13261e; }
+html.theme-dark .pp-guide { --pp-accent:#5fd6a9; --pp-warm:#f3bd62; --pp-low:#ff8a7a; --pp-high:#6fdca0; --pp-surface:#11211b; --pp-border:#2a4539; --pp-ink:#e7f6ef; }
+html.reading-mode:not(.theme-dark) .pp-guide { --pp-accent:#6b4a14; --pp-warm:#8a4a14; --pp-low:#9c3f22; --pp-high:#3c6b3a; --pp-surface:#ece3d1; --pp-border:#bcb09a; --pp-ink:#332d24; }
+html.reading-mode.theme-dark .pp-guide { --pp-accent:#f5c85b; --pp-warm:#ffae7d; --pp-low:#ff9e7a; --pp-high:#9fd49a; --pp-surface:#2a1a13; --pp-border:#493127; --pp-ink:#f7ead3; }
+.pp-guide .pp-deck { max-width:660px; margin:18px auto; font-size:1.2rem; }
+.pp-guide .blog-post-content { min-width:0; }
+.pp-guide .blog-featured-image img { display:block; width:100%; height:auto; }
+.pp-guide .blog-post-content figcaption { padding:12px 2px; font-size:.875rem; line-height:1.6; }
+.pp-guide :is(h2,h3,section[id]) { scroll-margin-top:110px; }
+.pp-guide .pp-tags { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:center; gap:18px; margin:30px 0; padding:28px 20px; border-radius:22px; background:var(--pp-ink); }
+.pp-guide .pp-tag { position:relative; min-width:150px; padding:16px 22px 14px 34px; border-radius:6px 14px 14px 6px; background:var(--pp-surface); color:var(--pp-ink); text-align:left; }
+.pp-guide .pp-tag::before { content:""; position:absolute; left:12px; top:50%; width:10px; height:10px; margin-top:-5px; border-radius:50%; background:var(--pp-ink); }
+.pp-guide .pp-tag small { display:block; font-size:.75rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.75; }
+.pp-guide .pp-tag b { display:block; font-family:'DM Serif Display',serif; font-size:2rem; font-weight:400; line-height:1.1; }
+.pp-guide .pp-tag--win { outline:3px solid var(--pp-warm); outline-offset:4px; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-tags p { flex-basis:100%; margin:6px 0 0 !important; text-align:center; font-size:.95rem !important; color:var(--pp-surface) !important; }
+.pp-guide .pp-hook { margin:30px 0; padding:0 0 0 24px; border-left:6px solid var(--pp-accent); }
+html body.pp-guide.page-blog-article .blog-post-content .pp-hook p { font-size:1.12rem !important; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-hook p:last-child { font-family:'DM Serif Display',serif; font-size:1.5rem !important; line-height:1.35 !important; color:var(--pp-accent) !important; }
+.pp-guide .pp-effects { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:26px 0; }
+.pp-guide .pp-effects article { padding:20px 22px; border-radius:16px; border:1px solid var(--pp-border); background:var(--pp-surface); color:var(--pp-ink); }
+.pp-guide .pp-effects span { display:inline-block; margin-bottom:8px; padding:3px 10px; border-radius:999px; background:color-mix(in srgb,var(--pp-accent) 16%,transparent); color:var(--pp-accent); font-size:.75rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-effects h3 { margin:0 0 6px !important; font-size:1.15rem !important; color:var(--pp-ink) !important; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-effects p { margin:0 !important; font-size:.94rem !important; color:var(--pp-ink) !important; }
+.pp-guide .pp-ladder { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:24px 0 10px; }
+.pp-guide .pp-plan { position:relative; padding:20px 18px; border-radius:16px; border:1px solid var(--pp-border); background:var(--pp-surface); color:var(--pp-ink); }
+.pp-guide .pp-plan--target { border:2px solid var(--pp-accent); box-shadow:0 12px 30px -18px var(--pp-accent); }
+.pp-guide .pp-plan--decoy { opacity:.8; border-style:dashed; }
+.pp-guide .pp-plan em { position:absolute; top:-11px; left:16px; padding:2px 10px; border-radius:999px; background:var(--pp-accent); color:var(--pp-surface); font-size:.72rem; font-style:normal; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.pp-guide .pp-plan--decoy em { background:var(--pp-warm); }
+.pp-guide .pp-plan h4 { margin:4px 0 4px; font-size:1rem; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-plan strong { display:block; font-family:'DM Serif Display',serif; font-size:1.7rem; font-weight:400; color:var(--pp-ink) !important; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-plan p { margin:6px 0 0 !important; font-size:.88rem !important; line-height:1.5 !important; color:var(--pp-ink) !important; }
+.pp-guide .pp-lab { margin:34px 0; padding:26px; border-radius:22px; background:linear-gradient(135deg,var(--pp-surface),color-mix(in srgb,var(--pp-accent) 12%,var(--pp-surface))); border:1px solid var(--pp-border); color:var(--pp-ink); }
+.pp-guide .pp-eyebrow { display:block; color:var(--pp-accent); font-size:.8rem; font-weight:800; letter-spacing:.1em; }
+.pp-guide .pp-inputs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:18px 0; }
+.pp-guide .pp-inputs label { display:flex; flex-direction:column; gap:8px; font-size:.9rem; font-weight:600; }
+.pp-guide .pp-inputs :is(input,select) { width:100%; min-width:0; box-sizing:border-box; padding:12px; border:1px solid var(--pp-border); border-radius:10px; background:var(--pp-surface); color:var(--pp-ink); font:inherit; font-size:1.05rem; }
+.pp-guide #pp-lab-error { color:var(--pp-low); font-weight:700; }
+.pp-guide .pp-out { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:18px; }
+.pp-guide .pp-out > div { padding:16px; border-radius:14px; background:var(--pp-surface); border:1px solid var(--pp-border); }
+.pp-guide .pp-out span { display:block; font-size:.78rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--pp-accent); }
+html body.pp-guide.page-blog-article .blog-post-content .pp-out strong { display:block; margin:6px 0; font-family:'DM Serif Display',serif; font-size:1.45rem; font-weight:400; line-height:1.2; color:var(--pp-ink) !important; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-out p { margin:0 !important; font-size:.86rem !important; line-height:1.5 !important; color:var(--pp-ink) !important; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-small { font-size:.85rem !important; opacity:.85; }
+.pp-guide .pp-check { margin:24px 0; padding:6px 20px; border-radius:18px; border:1px solid var(--pp-border); background:var(--pp-surface); color:var(--pp-ink); }
+html body.pp-guide.page-blog-article .blog-post-content .pp-check ul { list-style:none !important; margin:0 !important; padding:0 !important; border:0 !important; background:none !important; box-shadow:none !important; max-width:none !important; }
+html body.pp-guide.page-blog-article .blog-post-content .pp-check li { position:relative; padding:13px 0 13px 34px !important; border-top:1px solid var(--pp-border); font-size:.95rem; line-height:1.6; color:var(--pp-ink); }
+html body.pp-guide.page-blog-article .blog-post-content .pp-check li:first-child { border-top:0; }
+.pp-guide .pp-check li::before { content:"✓"; position:absolute; left:2px; top:14px; width:22px; height:22px; border-radius:50%; background:var(--pp-high); color:#fff; font-size:.75rem; font-weight:800; display:grid; place-items:center; }
+.pp-guide .pp-warn { margin:24px 0; padding:18px 22px; border-radius:14px; border:1px solid color-mix(in srgb,var(--pp-low) 45%,transparent); background:color-mix(in srgb,var(--pp-low) 9%,var(--pp-surface)); color:var(--pp-ink); }
+html body.pp-guide.page-blog-article .blog-post-content .pp-warn p { margin:0 !important; color:var(--pp-ink) !important; }
+.pp-guide .lead-faq details { padding:18px 0; border-bottom:1px solid var(--pp-border); }
+.pp-guide .lead-faq summary { font-size:1.05rem; font-weight:700; cursor:pointer; }
+.pp-guide .pp-sources { padding:24px; margin-top:32px; border:1px solid var(--pp-border); border-radius:16px; background:var(--pp-surface); font-size:.95rem; }
+.pp-guide .blog-post-content .pp-sources :is(h2,p,li) { color:var(--pp-ink); }
+.pp-guide .pp-sources li { margin-bottom:12px; overflow-wrap:anywhere; }
+.pp-guide :is(input,select,button,a,summary,[tabindex]):focus-visible { outline:3px solid var(--pp-accent); outline-offset:3px; }
+@media(max-width:720px) { .pp-guide .pp-inputs,.pp-guide .pp-out,.pp-guide .pp-ladder,.pp-guide .pp-effects { grid-template-columns:1fr; } .pp-guide .pp-lab { padding:18px; } .pp-guide .pp-ladder { gap:18px; } }
