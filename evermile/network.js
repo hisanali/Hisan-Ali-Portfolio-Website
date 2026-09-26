@@ -167,8 +167,15 @@ export class Network {
   snapshot(j = null, option = 0) {
     let segs = this.segs.slice();
     if (j) { const at = segs.indexOf(j.from); if (at >= 0) segs = [...segs.slice(0, at + 1), j.options[option]]; }
-    const net = this, end = j ? j.z + ZONE : Infinity;
-    const at = (z) => { for (let i = segs.length - 1; i > 0; i--) if (z >= segs[i].z0) return segs[i]; return segs[0]; };
+    const net = this, end = j ? j.z + ZONE : Infinity, version = this.version;
+    // The main path follows the live road while it is unchanged, and beyond its own last segment, so traffic never
+    // drives on a stale copy (missing the crests after junctions, say) and ends up above or below the real road.
+    const at = (z) => {
+      if (!j && net.version === version) return net.segAt(z);
+      const last = segs[segs.length - 1];
+      if (!j && z > last.z1 && net.segs.includes(last)) return net.segAt(z);
+      for (let i = segs.length - 1; i > 0; i--) if (z >= segs[i].z0) return segs[i]; return segs[0];
+    };
     return {version: this.version, segs, end, seg: at, x: (z) => at(z).x(z), y: (z) => at(z).y(z), tangent: (z) => at(z).x(z + .5) - at(z).x(z - .5), slope: (z) => at(z).y(z + .5) - at(z).y(z - .5), half: (z) => at(z).half(z) * net.stretch(at(z), z),
       typeAt: (z) => at(z).typeAt(z), laneX: (z, dir = 1, lane = 0) => { const s = at(z), l = s.lanes(z); return net.side * dir * l[Math.min(lane, l.length - 1)] * net.stretch(s, z); }, laneCount: (z) => at(z).lanes(z).length,
       // Does this path still match the road you are on at z?
@@ -188,8 +195,14 @@ export class Network {
     // Towns and rivers before the junction stay exactly as they are; those beyond it are worked out again.
     for (const key of [...this.caches.keys()]) {
       const m = /^(town|br)(-?\d+)$/.exec(key); if (!m) continue;
-      const end = (Number(m[2]) + 1) * (m[1] === 'town' ? 1400 : 2300);
-      if (end > j.z - 350) this.caches.delete(key);
+      const size = m[1] === 'town' ? 1400 : 2300, start = Number(m[2]) * size, old = this.caches.get(key);
+      if (start + size <= j.z - 350) continue;
+      this.caches.delete(key);
+      // A cell straddling the junction keeps whatever already lies before it, so nothing already built moves.
+      if (start < j.z) {
+        const now = m[1] === 'town' ? this.townAt(start + 1) : this.bridgeCell(Number(m[2]));
+        if ((old && old.end < j.z) || (now && now.start < j.z)) this.caches.set(key, old && old.end < j.z ? old : null);
+      }
     }
     this.extend(j.z + 6000);
     return true;
@@ -376,7 +389,8 @@ export class Network {
       return {z: zc, river: half, bank: 48, start: zc - half - 48, end: zc + half + 48, phase: rnd(13) * 6.3, deckY: this.y(zc), seg: s};
     });
   }
-  bridgeNear(z) { const k = Math.floor(z / 2300); for (const kk of [k, k - 1, k + 1]) { const b = this.bridgeCell(kk); if (b && z > b.start - 300 && z < b.end + 300) return b; } return null; }
+  // Only rivers on the road you are actually on (a straddling cell can remember one on a branch not taken).
+  bridgeNear(z) { const k = Math.floor(z / 2300); for (const kk of [k, k - 1, k + 1]) { const b = this.bridgeCell(kk); if (b && z > b.start - 300 && z < b.end + 300 && this.segs.includes(b.seg)) return b; } return null; }
   bridgeAt(z) { const b = this.bridgeNear(z); return b && z >= b.start && z <= b.end ? b : null; }
   riverOff(px, z) { const b = this.bridgeNear(z); if (!b) return Infinity; const dx = px - b.seg.x(b.z); return Math.abs(z - b.z - (Math.sin(dx * .009 + b.phase) - Math.sin(b.phase)) * 26 - dx * .12) - b.river; }
   riverDepth(px, z) { const b = this.bridgeNear(z); if (!b) return 0; return 1 - smooth(0, b.bank, this.riverOff(px, z)); }

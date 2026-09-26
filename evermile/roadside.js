@@ -67,6 +67,17 @@ export class Roadside {
   }
 
   /* ---------- Planning, so vegetation keeps off fields, forecourts and railway ---------- */
+  // Fields in a chunk, remembered per road version so ground checks stay cheap.
+  fieldsCached(index) {
+    const key = this.world.road.version + ':' + index, c = (this.fieldCache ||= new Map());
+    if (!c.has(key)) { c.set(key, this.fields(index)); if (c.size > 40) c.delete(c.keys().next().value); }
+    return c.get(key);
+  }
+  inField(x, z) {
+    const r = this.world.road;
+    for (const f of this.fieldsCached(Math.floor(z / 240))) if (z > f.za && z < f.zb) { const d = (x - r.x(z)) * f.side; if (d > f.d0 && d < f.d1) return true; }
+    return false;
+  }
   fields(index) {
     const r = this.world.road, z0 = index * 240, out = [];
     const mid = z0 + 120; if (r.typeAt(mid) !== 'farm' || this.settings.location !== 'hills') return out;
@@ -354,7 +365,8 @@ export class Roadside {
   farm(batch, group, index) {
     const r = this.world.road, w = this.world, fields = this.fields(index); if (!fields.length) return;
     for (const f of fields) {
-      const nz = 8, nd = 6, pos = [], uv = [], idx = [];
+      // Fine enough to lie on the ground everywhere, so nothing sinks into the crop.
+      const nz = Math.max(4, Math.ceil((f.zb - f.za) / 3)), nd = Math.max(4, Math.ceil((f.d1 - f.d0) / 3)), pos = [], uv = [], idx = [];
       for (let i = 0; i <= nz; i++) for (let k = 0; k <= nd; k++) {
         const z = lerp(f.za, f.zb, i / nz), d = lerp(f.d0, f.d1, k / nd), x = r.x(z) + f.side * d, y = w.surfaceHeight(x, z) + .06;
         pos.push(x, y, z); uv.push(d / 6, z / 6);

@@ -273,7 +273,7 @@ export class Life {
       const hf = g(a.x + sy * L, a.z + cy * L), hb = g(a.x - sy * L, a.z - cy * L), hr = g(a.x + cy * W, a.z - sy * W), hl = g(a.x - cy * W, a.z + sy * W);
       const pitch = Math.max(-.45, Math.min(.45, -Math.atan2(hf - hb, 2 * L))), roll = Math.max(-.35, Math.min(.35, Math.atan2(hr - hl, 2 * W)));
       a.g.rotation.order = 'YXZ';
-      a.g.position.set(a.x, Math.min(y, (hf + hb) / 2) + .01, a.z);
+      a.g.position.set(a.x, Math.max(y - .12, Math.min(y, (hf + hb) / 2)) + .01, a.z);
       a.g.rotation.set(pitch, yaw, roll);
       const walk = a.speed > .05;
       if (a.legs) a.legs.forEach((l, i) => {
@@ -576,7 +576,8 @@ export class Life {
       const type = r.typeAt(z);
       if (c.kind === 'bike' && (type === 'highway' || r.tunnelAt(z))) continue;
       if (c.kind === 'bus' && type === 'mountain') continue;
-      if (j && Math.random() < .38) {
+      // Side-road traffic, except off a motorway, where anything joining would have to cross the central barrier.
+      if (j && Math.random() < .38 && !(c.dir < 0 && (j.from.typeAt(j.z) === 'highway' || j.options.some((o) => o.type === 'highway')))) {
         const other = 1 - j.chosen;
         if (c.dir < 0 && z > j.z + 60 && z < j.z + ZONE - 50) road = this.path(j, other);
         if (c.dir > 0 && z < j.z - 80 && z > s.z) road = this.path(j, other);

@@ -379,7 +379,8 @@ export class World {
     if (d <= w + 3.3 && r.townFactor(z) > .02) return r.y(z) + .075;
     if (d <= w + 1.7 && r.bridgeAt(z)) return r.y(z) + .25;
     for (const st of r.stopsNear(z, 60)) if (r.stopPad(st, x, z)) return r.y(z) + .06;
-    return this.surfaceHeight(x, z, false);
+    const ground = this.surfaceHeight(x, z, false);
+    return this.roadside.inField(x, z) ? ground + .06 : ground;
   }
 
   // Paved surfaces you can drive on without slowing: roads and junction branches, tunnels, town streets, bridge footpaths and lay-bys.
