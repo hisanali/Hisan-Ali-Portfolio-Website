@@ -1,17 +1,17 @@
 import * as T from './vendor/three.module.js';
-import {World} from './world.js?v=20260927a';
-import {CameraOrbit} from './camera-orbit.js?v=20260912f';
-import {Vehicle} from './vehicle.js?v=20260927a';
-import {Effects} from './effects.js?v=20260927a';
-import {Life} from './life.js?v=20260927a';
-import {TownLife} from './townlife.js?v=20260927a';
-import {Railway} from './railway.js?v=20260927a';
-import {Atmosphere, PRESETS} from './atmosphere.js?v=20260927a';
-import {Windscreen, Mirror} from './cockpit.js?v=20260927a';
-import {Radio, STATIONS} from './radio.js?v=20260927a';
-import {DriveAudio} from './audio.js?v=20260926b';
-import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260927a';
-import {ZONE, TYPES} from './network.js?v=20260927a';
+import {World} from './world.js?v=20260928a';
+import {CameraOrbit} from './camera-orbit.js?v=20260928a';
+import {Vehicle} from './vehicle.js?v=20260928a';
+import {Effects} from './effects.js?v=20260928a';
+import {Life} from './life.js?v=20260928a';
+import {TownLife} from './townlife.js?v=20260928a';
+import {Railway} from './railway.js?v=20260928a';
+import {Atmosphere, PRESETS} from './atmosphere.js?v=20260928a';
+import {Windscreen, Mirror} from './cockpit.js?v=20260928a';
+import {Radio, STATIONS} from './radio.js?v=20260928a';
+import {DriveAudio} from './audio.js?v=20260928a';
+import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260928a';
+import {ZONE, TYPES} from './network.js?v=20260928a';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from './vendor/postprocessing/UnrealBloomPass.js';
@@ -122,7 +122,7 @@ export function changeSetting(key, value) {
   settings[key] = value; save();
   const rebuild = ['seed', 'roadStyle', 'location', 'roadWidth', 'season', 'planet', 'quality', 'autoLane'];
   if (rebuild.includes(key)) {
-    const moving = state.speed; world.rebuild(); life.pathMap = null;
+    const moving = state.speed, same = !['seed', 'roadStyle', 'location'].includes(key); world.rebuild(same); life.clear();
     if (['seed', 'roadStyle', 'location'].includes(key)) { state.z = 35; reset(); } else { const r = world.road; state.laneIndex = r.homeLane(state.z); }
     world.update(state.z, camera, true); if (!['seed', 'roadStyle', 'location'].includes(key)) state.speed = moving;
   }
@@ -276,11 +276,12 @@ function autoPlan(r, curvature) {
   const ownX = (q) => ownLaneX(q, 0), oppX = (q) => r.laneX(q, -1, 0);
   let lead = life.leadAhead(state, true);
   // Cyclists and a bus at its stop: ease out to give them room, or follow until there is a gap to pass.
-  let nudge = 0, kerbLead = null;
-  for (const k of life.kerbside(state, 80)) { const need = Math.abs(ownX(k.car.z)) + pw - (k.inner - (k.car.kind === 'bike' ? 1.2 : .8)); if (need > 0) { nudge = Math.max(nudge, need); if (!kerbLead || k.ahead < kerbLead.ahead) kerbLead = k; } }
+  let nudge = 0, kerbLead = null; const kerb = life.kerbside(state, 80);
+  for (const k of kerb) { const need = Math.abs(ownX(k.car.z)) + pw - (k.inner - (k.car.kind === 'bike' ? 1.2 : .8)); if (need > 0) { nudge = Math.max(nudge, need); if (!kerbLead || k.ahead < kerbLead.ahead) kerbLead = k; } }
   // A wide berth over the centre line is fine when nothing is coming for the few seconds it takes to get by.
   const NP = state.nudgePass;
-  if (NP && (!NP.car.g.visible || z - NP.car.z > (NP.car.length + len) / 2 + 3 || NP.car.z - z > 90)) state.nudgePass = null;
+  // A bus pulling away from its stop is back in the lane: follow it again instead of easing past.
+  if (NP && (!NP.car.g.visible || z - NP.car.z > (NP.car.length + len) / 2 + 3 || NP.car.z - z > 90 || !kerb.some((k) => k.car === NP.car))) state.nudgePass = null;
   if (nudge > .9 && kerbLead && lanes === 1 && !state.pass) {
     const passV = Math.min(speed, kerbLead.speed + 9), tPass = (kerbLead.ahead + kerbLead.car.length + len + 4) / Math.max(3, passV - kerbLead.speed);
     const calm = r.townFactor(z) < .5 || kerbLead.car.kind === 'bus';
@@ -383,8 +384,10 @@ function safeSpeed(r, offset, limit, ignoreOncoming = false, fromHere = true) {
   const dx0 = fromHere ? state.x - r.x(state.z) - offset(state.z) : 0;
   for (const o of [...life.obstacles(state.z, 90), ...railway.colliders(state.x, state.z + 45, 60).map((k) => ({x: k.x, z: k.z, r: k.train ? 2 : Math.max(k.hx, .5), vz: 0}))]) {
     const dz = o.z - state.z; if (dz < -1 || (ignoreOncoming && o.vz < -1)) continue;
-    const pathX = r.x(o.z) + offset(o.z) + dx0 * Math.exp(-Math.max(0, dz) / 16);
-    if (Math.abs(o.x - pathX) > o.r + half + .35) continue;
+    const pathX = r.x(o.z) + offset(o.z) + dx0 * Math.exp(-Math.max(0, dz) / 16), gap = Math.abs(o.x - pathX) - o.r - half;
+    // Squeezing past something coming the other way on a narrow road: crawl by rather than brush it.
+    if (o.vz < -1 && gap < 1.2 && dz < 9 && safe > 2.5) { safe = 2.5; state.safeWhy = {dz: +dz.toFixed(1), squeeze: +gap.toFixed(2)}; }
+    if (gap > .35) continue;
     const room = dz - o.r - len - 2.5, v = Math.sqrt(Math.max(0, 2 * 6 * room)) + Math.max(0, o.vz);
     if (v < safe) { safe = v; state.safeWhy = {dz: +dz.toFixed(1), dx: +(o.x - pathX).toFixed(2), r: o.r, vz: o.vz}; }
   }
@@ -426,7 +429,7 @@ function collide() {
   }
   if (impact > .15) {
     const hit = Math.abs(state.speed); state.speed = impact > .6 ? 0 : state.speed * .55; state.vy = Math.min(state.vy || 0, 0);
-    if (hit > 3 && state.time - (state.lastBump || -9) > 1.5) { state.lastBump = state.time; toast(what?.train ? 'The train! Wait for the barriers next time.' : what?.barrier ? 'Wait for the barrier to lift' : what?.person ? 'Watch out for pedestrians!' : hit > 12 ? 'Crash! Take it easy.' : 'Bump!'); }
+    if (hit > 3 && state.time - (state.lastBump || -9) > 1.5) { state.lastBump = state.time; state.lastHit = what; toast(what?.train ? 'The train! Wait for the barriers next time.' : what?.barrier ? 'Wait for the barrier to lift' : what?.person ? 'Watch out for pedestrians!' : hit > 12 ? 'Crash! Take it easy.' : 'Bump!'); }
   }
 }
 
@@ -447,7 +450,7 @@ function toggleIndicator(side) {
 }
 function chooseJunction(j, i, announce = true) {
   const r = world.road, was = j.chosen;
-  if (r.choose(j, i)) { world.onRouteChange(j.z + ZONE - 40, state.z); life.pathMap = null; }
+  if (r.choose(j, i)) { world.onRouteChange(j.z + ZONE - 80, state.z); life.onRouteChange(j.z); }
   if (announce && (was !== i || i === 1)) { const o = r.optionInfo(j, i); toast(`${o.dir === 'ahead' ? 'Straight on' : o.dir === 'left' ? 'Turning left' : 'Turning right'} · ${o.label}${o.name ? ' to ' + o.name : ''}`); }
   j.picked = true; updateJunctionCard(j, true);
 }
@@ -456,7 +459,7 @@ function routeWatch() {
   if (settings.location !== 'hills') return;
   const r = world.road;
   const changed = r.commit(state.x, state.z);
-  if (changed) { world.onRouteChange(changed.z + ZONE - 40, state.z); life.pathMap = null; }
+  if (changed) { world.onRouteChange(changed.z + ZONE - 80, state.z); life.onRouteChange(changed.z); }
   const j = r.junctionAhead(state.z, 950);
   if (j && state.started) {
     const ahead = j.z - state.z, o = j.options[j.chosen];

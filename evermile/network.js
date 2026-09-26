@@ -1,4 +1,4 @@
-import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260927a';
+import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260928a';
 
 /*
   The road network. The world is still laid out along z, but the road is now a chain of segments, each of a kind
@@ -24,6 +24,9 @@ const PLACES = {
   highway: ['M4 North', 'City Motorway', 'A1 Express', 'Coast Motorway'],
 };
 const NEXT = {country: ['farm', 'coast', 'mountain', 'highway'], farm: ['country', 'coast', 'mountain'], coast: ['country', 'mountain', 'farm', 'highway'], mountain: ['country', 'coast', 'farm'], highway: ['country', 'coast', 'mountain', 'farm']};
+// Every road layout gets its own version number, so anything remembered against an older road (or a road from before a
+// rebuild) is always recognised as stale.
+let versions = 0;
 const bump = (t) => (t <= -1 || t >= 1 ? 0 : (1 - t * t) ** 2);
 const mix = (a, b) => (Math.imul(a ^ 0x9e3779b9, 2654435761) ^ b) >>> 0;
 
@@ -80,7 +83,8 @@ class Segment {
     if (u >= ZONE + RAMP) return this.ownX(z) + this.cx;
     const trunk = this.parent.x(z);
     if (u <= 0) return trunk;
-    const k = u < FORK ? 1 - (1 - u / FORK) ** 2 : 1, fork = this.side * this.D * k + this.edge * smooth(0, FORK, u), w = smooth(ZONE, ZONE + RAMP, u);
+    // An S-bend away from the trunk: no kink where the roads part, so nobody (autodrive included) is thrown wide into the gore.
+    const k = smooth(0, FORK, u), fork = this.side * this.D * k + this.edge * smooth(0, FORK, u), w = smooth(ZONE, ZONE + RAMP, u);
     return trunk + fork + (w ? w * (this.ownX(z) + this.cx - trunk - this.side * this.D - this.edge) : 0);
   }
 
@@ -118,13 +122,22 @@ class Segment {
 }
 
 export class Network {
-  constructor(settings) {
+  // With a route (from an older copy of the same road), the same turns are taken again, so a rebuild for a new season,
+  // width or quality leaves you on the road you were driving rather than back on the one you turned off.
+  constructor(settings, route = null) {
     this.settings = settings; this.id = hashSeed(settings.seed); this.off = settings.location !== 'hills';
-    this.version = 0; this.junctions = [];
+    this.version = ++versions; this.junctions = []; this.count = 0; this.picks = []; this.done = 0;
     this.segs = [new Segment(this, null, -700, 'country', 0, 0)];
     this.caches = new Map(); this.rowZ = NaN; this.row = null;
     this.extend(4000);
+    if (route && !this.off) for (let n = 0; n < route.picks.length; n++) {
+      let j; while (!(j = this.junctions.find((q) => q.n === n))) this.extend(this.segs[this.segs.length - 1].z1 + 1);
+      if (route.picks[n]) this.choose(j, route.picks[n]);
+      if (n < route.done) { j.committed = true; this.done = n + 1; }
+      if (route.picked.includes(n)) j.picked = true;
+    }
   }
+  get route() { return {picks: this.picks.slice(), done: this.done, picked: this.junctions.filter((j) => j.picked).map((j) => j.n)}; }
 
   get type0() { return this.segs[0].type; }
 
@@ -137,7 +150,8 @@ export class Network {
       // Motorway exits leave from your own carriageway.
       const coin = rng(), side = last.type === 'highway' ? this.side : coin < .5 ? -1 : 1;
       const A = new Segment(this, last, last.z1, last.type, 0, 0), B = new Segment(this, last, last.z1, bType, side, 1);
-      const j = {z: last.z1, from: last, options: [A, B], chosen: 0, committed: false, side};
+      const j = {z: last.z1, from: last, options: [A, B], chosen: 0, committed: false, side, n: this.count++};
+      this.picks[j.n] = 0;
       this.junctions.push(j); this.segs.push(A); last = A;
     }
   }
@@ -189,9 +203,9 @@ export class Network {
   choose(j, i) {
     if (!j || j.committed || j.chosen === i) return false;
     const k = this.junctions.indexOf(j); if (k < 0) return false;
-    j.chosen = i; this.junctions.length = k + 1;
+    j.chosen = i; this.junctions.length = k + 1; this.count = j.n + 1; this.picks.length = j.n + 1; this.picks[j.n] = i;
     const at = this.segs.indexOf(j.from); this.segs.length = at + 1; this.segs.push(j.options[i]);
-    this.version++; this.rowZ = NaN;
+    this.version = ++versions; this.rowZ = NaN;
     // Towns and rivers before the junction stay exactly as they are; those beyond it are worked out again.
     for (const key of [...this.caches.keys()]) {
       const m = /^(town|br)(-?\d+)$/.exec(key); if (!m) continue;
@@ -212,11 +226,13 @@ export class Network {
     let changed = null;
     for (const j of this.junctions.slice()) {
       if (j.committed || z < j.z + 25) continue;
-      // Which road surface you are actually on (or nearer the edge of, if neither).
+      // Which road surface you are actually on (or nearer the edge of, if neither). While both roads still overlap
+      // under you, wait until they part: you can still steer onto either.
       const edge = (o) => Math.abs(x - o.x(z)) - o.half(z) * this.stretch(o, z), eA = edge(j.options[0]), eB = edge(j.options[1]);
-      const pick = z > j.z + ZONE || (eA <= 0 && eB <= 0) ? j.chosen : eB < eA ? 1 : 0;
+      if (eA <= 0 && eB <= 0 && z < j.z + ZONE) continue;
+      const pick = z > j.z + ZONE ? j.chosen : eB < eA ? 1 : 0;
       if (pick !== j.chosen && this.choose(j, pick)) changed = j;
-      j.committed = true;
+      j.committed = true; this.done = Math.max(this.done, j.n + 1);
     }
     // Forget segments far behind.
     while (this.segs.length > 3 && this.segs[1].z1 < z - 3000) this.segs.shift();
@@ -436,7 +452,8 @@ export class Network {
         const rx = this.railX(rail, z), rd = Math.abs(px - rx), ry = this.railY(rail, z), live = smooth(rail.a - 12, rail.a, z) * (1 - smooth(rail.b, rail.b + 12, z));
         h = lerp(h, ry - .12, live * (1 - smooth(3.5, 16, rd)));
         // A hillside rises straight up from each end of the line, where the track runs into its tunnel.
-        for (const [zp, dirn] of [[rail.a, -1], [rail.b, 1]]) { const into = (z - zp) * dirn + 2; if (into > 0 && into < 90) { const dx = px - this.railX(rail, zp); h = Math.max(h, this.railY(rail, zp) + Math.min(28, into * 1.4) * Math.exp(-dx * dx / 1800) * (1 - smooth(55, 90, into))); } }
+        // It keeps off the road itself, which would otherwise be buried under its foot.
+        for (const [zp, dirn] of [[rail.a, -1], [rail.b, 1]]) { const into = (z - zp) * dirn + 2; if (into > 0 && into < 90) { const dx = px - this.railX(rail, zp); h = Math.max(h, this.railY(rail, zp) + Math.min(28, into * 1.4) * Math.exp(-dx * dx / 1800) * (1 - smooth(55, 90, into)) * smooth(half + 3, half + 30, d)); } }
       }
       for (const st of this.stopsNear(z, 60)) {
         const u = Math.abs(z - st.z) / (st.len + 14); if (u > 1) continue;
@@ -445,6 +462,8 @@ export class Network {
       }
       if (tunnel && d < half + 3) h = Math.max(h, y + 9.5);
     }
+    // The ground never rises through a road surface you can drive on.
+    if (d < half + .6 && !(tunnel && d < half + 3) && (best.main || best.fade > .5)) h = Math.min(h, y);
     return h;
   }
 }
