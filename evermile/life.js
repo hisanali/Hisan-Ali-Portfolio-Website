@@ -1,10 +1,12 @@
+import {addMicroSurface} from './surface-detail.js?v=20260926-people3';
+import {batchStatic} from './mesh-batching.js?v=20260926-people3';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260928b';
-import {clamp} from './math.js?v=20260928b';
-import {canvasTexture} from './scenery.js?v=20260928b';
-import {ZONE} from './network.js?v=20260928b';
+import {GlowPoints} from './glow.js?v=20260926-people3';
+import {clamp} from './math.js?v=20260926-people3';
+import {canvasTexture} from './scenery.js?v=20260926-people3';
+import {ZONE} from './network.js?v=20260926-people3';
 
 // Life around the road: grazing cows and sheep, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.
@@ -36,7 +38,9 @@ export class Life {
     this.traffic = [];
     this.parked = [];
     this.buildAnimals();
+    for (const mat of [this.m.wool,this.m.cow,this.m.brownCow,...this.m.dogs,...this.m.cats]) if(mat) addMicroSurface(mat,mat===this.m.wool?'wool':'fur',mat===this.m.wool?.035:.009);
     this.buildTraffic();
+    addMicroSurface(this.m.tyre,'rubber',.012);
   }
 
   materials() {
@@ -46,7 +50,7 @@ export class Life {
       muzzle: new T.MeshStandardMaterial({color: 0xd9a39a, roughness: .7}),
       hoof: new T.MeshStandardMaterial({color: 0x2a2420, roughness: .7}),
       horn: new T.MeshStandardMaterial({color: 0xe8dcc4, roughness: .5}),
-      wool: new T.MeshStandardMaterial({color: 0xeae6dc, roughness: 1, flatShading: true}),
+      wool: new T.MeshStandardMaterial({color: 0xeae6dc, roughness: .98, flatShading: false}),
       sheepFace: new T.MeshStandardMaterial({color: 0x2c2826, roughness: .8}),
       dogs: [0x8a5a32, 0x2a2624, 0xc9a06a, 0xe8e2d6].map((c) => new T.MeshStandardMaterial({color: c, roughness: .8})),
       cats: [0xd2843c, 0x3a3634, 0x9a948c, 0xf0ece4].map((c) => new T.MeshStandardMaterial({color: c, roughness: .75})),
@@ -240,7 +244,7 @@ export class Life {
   startCrossing(force) {
     const s = this.getState(), r = this.world.road;
     const z = s.z + Math.max(1, s.speed) * rand(8, 11) + rand(30, 60), w = r.half(z);
-    if (r.townFactor(z) > 0 || r.bridgeNear(z) && Math.abs(r.bridgeNear(z).z - z) < 120) return;
+    if (this.world.landmarks.active(z) || r.townFactor(z) > 0 || r.bridgeNear(z) && Math.abs(r.bridgeNear(z).z - z) < 120) return;
     if (r.typeAt(z) === 'highway' || r.tunnelAt(z) || r.portalNear(z) > 0 || r.crossingAt(z, 60) || r.stopAt(z, 30) || r.junctions.some((j) => z > j.z - 40 && z < j.z + ZONE)) return;
     const kind = force || pick(['sheep', 'sheep', 'cow', 'cow', 'dog']), group = kind === 'dog' ? 1 : kind === 'sheep' ? 3 + Math.floor(Math.random() * 3) : 2 + Math.floor(Math.random() * 2);
     const from = Math.random() < .5 ? -1 : 1, list = this.animals.filter((a) => a.kind === kind && !a.crossing && (Math.abs(a.z - s.z) > 120 || a.z < s.z)).slice(0, group);
@@ -261,7 +265,7 @@ export class Life {
     if (this.settings.location !== 'hills') return;
     const s = this.getState(), off = false, r = this.world.road;
     for (const a of this.animals) {
-      if (!a.g.visible || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
+      if (!a.g.visible || ((a.kind === 'cow' || a.kind === 'sheep') && this.world.landmarks.active(a.z) && this.settings.destination !== 'lake') || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
       a.phase += dt * (a.speed > 1.8 && a.kind !== 'dog' ? 1 + (a.speed - 1.8) * .45 : 1);
       if (a.kind === 'cow' || a.kind === 'sheep' || a.crossing) this.wander(a, dt);
       else if (a.speed) {
@@ -272,7 +276,7 @@ export class Life {
       }
       const y = this.world.surfaceHeight(a.x, a.z, off);
       if (y < -7) { a.g.position.y = -500; continue; }
-      const yaw = a.kind === 'dog' ? (a.heading === 0 ? Math.atan(r.tangent(a.z)) : Math.atan(r.tangent(a.z)) + Math.PI) : a.heading;
+      const yaw = a.kind === 'dog' && !a.crossing ? Math.atan(r.tangent(a.z)) + (Math.cos(a.heading) < 0 ? Math.PI : 0) : a.heading;
       // Stand with the slope: pitch and roll the body to the ground under the front, back and sides.
       const L = a.size * .38, W = a.size * .16, sy = Math.sin(yaw), cy = Math.cos(yaw), g = (x, z) => this.world.surfaceHeight(x, z, off);
       const hf = g(a.x + sy * L, a.z + cy * L), hb = g(a.x - sy * L, a.z - cy * L), hr = g(a.x + cy * W, a.z - sy * W), hl = g(a.x - cy * W, a.z + sy * W);
@@ -358,7 +362,13 @@ export class Life {
     part(new RoundedBoxGeometry(specs.W * .46, .16, .05, 2, .03), this.m.grille, 0, specs.top[0][1] - .06, front - .02, g);
     part(new T.BoxGeometry(.5, .13, .03), this.m.plate, 0, specs.clear + .2, back + .01, g);
     part(new T.BoxGeometry(.5, .11, .03), this.m.plate, 0, specs.clear + .16, front - .01, g);
+    for (const side of [-1, 1]) {
+      for (const z of [.35, -.65]) part(new T.BoxGeometry(.03,.035,.22), this.m.rim, side*(hw+.015), specs.belt-.16,z,g);
+      for (const z of [0,-1]) part(new T.BoxGeometry(.008,.46,.009), this.m.bodyTrim, side*(hw+.008),specs.belt-.29,z,g);
+      part(new T.BoxGeometry(.03,.035,specs.L*.72),this.m.rim,side*(hw+.01),specs.clear+.18,0,g);
+    }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, front + 4); g.add(beam);
+    batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
     return {g, beam, kind: 'car', length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
@@ -392,6 +402,7 @@ export class Life {
       mirror.rotation.y = s * .2;
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, L / 2 + 4); g.add(beam);
+    batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
     return {g, beam, kind: 'bus', length: L, width: W, lamps, wheels, wheelRadius: .5, headY: .95, headX: W / 2 - .35, tailY: 1.1, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
@@ -422,6 +433,7 @@ export class Life {
       mirror.rotation.y = s * .2;
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, L / 2 + 4); g.add(beam);
+    batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
     return {g, beam, kind: 'truck', length: L, width: W, lamps, wheels, wheelRadius: .48, headY: 1.05, headX: W / 2 - .32, tailY: .75, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 

@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {GlowPoints} from './glow.js?v=20260928b';
-import {random, clamp} from './math.js?v=20260928b';
+import {GlowPoints} from './glow.js?v=20260926-people3';
+import {random, clamp} from './math.js?v=20260926-people3';
 
 /*
   Life in town: the traffic lights run their cycle (and everyone obeys them), villages have a four-way stop where each
@@ -161,6 +161,21 @@ export class TownLife {
   }
 
   updatePeople(dt, s) {
+    if (this.world.landmarks.active(s.z) && this.settings.destination !== 'lake') {
+      const r = this.world.road, rain = this.world.atmo.rain;
+      for (const p of this.people) {
+        if (!p.destination || p.destination !== this.settings.destination || Math.abs(p.z - s.z) > 240) {
+          p.destination = this.settings.destination; p.active = true; p.z = clamp(s.z + 25 + p.i * 7, -90, 950);
+          p.side = p.i % 3 ? 1 : -1; p.dir = p.i % 2 ? 1 : -1; p.speed = 1.1 + (p.i % 4) * .1; p.state = 'walk';
+        }
+        p.active = true; p.z += p.dir * p.speed * dt;
+        if(p.z < -80 || p.z > 980) p.dir *= -1;
+        p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55); p.y = r.y(p.z) + .2;
+        p.yaw = Math.atan(r.tangent(p.z)) + (p.dir < 0 ? Math.PI : 0); this.pose(p, true, rain, dt);
+      }
+      return;
+    }
+    for (const p of this.people) if (p.destination) { p.destination = null; p.active = false; }
     const r = this.world.road, rain = this.world.atmo?.rain || 0, towns = this.settings.location === 'hills' ? this.townsNear(s.z) : [];
     for (const t of towns) if (s.z > t.start - 320 && s.z < t.end + 80) this.populate(t, s);
     for (const p of this.people) {
@@ -239,12 +254,14 @@ export class TownLife {
       const umbrellaArm = k === 1 && p.umbrella && rain > .25;
       set(P.arm, i * 2 + k, sgn * .24, 1.45 + bob, 0, umbrellaArm ? -1.9 : a * 1.1 * -1 + (p.state === 'board' ? -.3 : 0), sgn * .08);
     }
+    if(p.detailed){const zero=new T.Matrix4().makeScale(0,0,0);for(const key of ['torso','head','hair'])P[key].setMatrixAt(i,zero);for(const key of ['thigh','shin','shoe','arm'])for(const k of [0,1])P[key].setMatrixAt(i*2+k,zero);}
     const brolly = p.umbrella && rain > .25;
     if (brolly) { set(P.canopy, i, .1, 2.25 + bob, .18); set(P.handle, i, .1, 2.2 + bob, .18); }
     else { P.canopy.setMatrixAt(i, M2.makeScale(0, 0, 0)); P.handle.setMatrixAt(i, M2.makeScale(0, 0, 0)); }
   }
 
   hide(p) {
+    if(p.detail)p.detail.root.visible=false;
     const P = this.parts, z = M2.makeScale(0, 0, 0);
     for (const k of ['torso', 'head', 'hair', 'canopy', 'handle']) P[k].setMatrixAt(p.i, z);
     for (const k of ['thigh', 'shin', 'shoe', 'arm']) { P[k].setMatrixAt(p.i * 2, z); P[k].setMatrixAt(p.i * 2 + 1, z); }

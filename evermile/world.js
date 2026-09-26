@@ -1,9 +1,11 @@
+import {Landmarks} from './landmarks.js?v=20260926-people3';
+import {upgradeSurfaces} from './materials.js?v=20260926-people3';
 import * as T from './vendor/three.module.js';
-import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260928b';
-import {Network, TYPES, ZONE, SEA} from './network.js?v=20260928b';
-import {Scenery} from './scenery.js?v=20260928b';
-import {Roadside} from './roadside.js?v=20260928b';
-import {sheltered} from './atmosphere.js?v=20260928b';
+import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260926-people3';
+import {Network, TYPES, ZONE, SEA} from './network.js?v=20260926-people3';
+import {Scenery} from './scenery.js?v=20260926-people3';
+import {Roadside} from './roadside.js?v=20260926-people3';
+import {sheltered} from './atmosphere.js?v=20260926-people3';
 
 // The landscape around the road network: terrain, road surfaces, trees, rocks, grass and guard rails, built in 240 m chunks.
 const scratch = new T.Object3D(), col = new T.Color(), col2 = new T.Color();
@@ -113,6 +115,8 @@ export class World {
     this.makeSky();
     this.scenery = new Scenery(this);
     this.roadside = new Roadside(this);
+    this.landmarks = new Landmarks(this);
+    upgradeSurfaces(this);
     this.updatePalette();
   }
 
@@ -136,8 +140,12 @@ export class World {
   float maria=smoothstep(.42,.7,fbm(mp*2.4+7.))*.28+smoothstep(.55,.8,fbm(mp*6.+3.))*.12;
   vec3 moon=vec3(1.,.98,.93)*2.4*(.72+.28*sqrt(max(0.,1.-mr)))*(1.-maria);
   lit=mix(lit,moon,onMoon*night);lit+=vec3(.55,.63,.82)*(pow(m,500.)*.35+pow(m,60.)*.1+pow(m,8.)*.05)*night;
-  vec2 uv=d.xz/(max(d.y,.03)+.24)*2.1;float cl=smoothstep(.47,.7,fbm(uv+5.))*smoothstep(.015,.16,y);
+  vec2 uv=d.xz/(max(d.y,.03)+.24)*2.1;
+  float density=fbm(uv*1.4+5.)*.72+fbm(uv*4.8+17.)*.28;
+  float cl=smoothstep(.41,.65,density)*smoothstep(.015,.16,y);
+  float relief=clamp((fbm(uv*1.4+5.+sunDirection.xz*.15)-fbm(uv*1.4+5.))*5.,-.25,.25);
   vec3 cloudCol=mix(cloudTint,sunColor*1.2,golden*(.25+.6*pow(sun,2.))*day);cloudCol=mix(cloudCol,vec3(.2,.23,.3)+vec3(.35,.38,.45)*pow(m,6.),night);
+  cloudCol*=.76+relief;cloudCol+=sunColor*golden*max(0.,relief)*.6;
   lit=mix(lit,cloudCol,cl*cloud*(1.-night*.35));
   float stars=step(.9984,hash(floor(d.xz/(abs(d.y)+.1)*900.)))*night*smoothstep(0.,.25,y)*(1.-cl*cloud)*(1.-smoothstep(.97,1.,m));
   lit=mix(lit,vec3(.86,.9,1.),flash*.7);gl_FragColor=vec4(lit+stars*.65,1.);
@@ -209,7 +217,7 @@ export class World {
     const group = new T.Group(); group.userData.index = index; group.userData.version = this.road.version;
     const plan = this.scenery.plan(index, CHUNK), fields = this.roadside.blocked(index), townBlocked = plan.blocked, rng = random(this.road.id + index * 331 + 91), r = this.road, off = this.settings.location !== 'hills';
     // Trees and grass keep out of farm fields as well as houses and streets.
-    plan.blocked = (x, z) => townBlocked(x, z) || fields(x, z);
+    plan.blocked = (x, z) => townBlocked(x, z) || fields(x, z) || this.landmarks.blocked(x, z);
     const pos = [], uv = [], colors = [], indices = [], heights = [], rowInfo = [];
     const base = new T.Color(this.theme.ground), dry = base.clone().multiply(new T.Color(1.22, 1.1, .78)), lush = base.clone().multiply(new T.Color(.74, .9, .7));
     const winter = this.settings.season === 'winter', gravel = new T.Color(winter ? 0xb9bfc0 : 0x8a826f), rock = new T.Color(off ? 0x8a8073 : winter ? 0xaab6b7 : 0x8b8970);
@@ -253,8 +261,13 @@ export class World {
     const ground = new T.Mesh(geo, this.groundMat); ground.receiveShadow = true; group.add(ground);
     this.buildRoads(group, index, rowInfo);
     this.buildVegetation(group, index, plan, rng, rowInfo);
-    this.scenery.build(group, plan);
-    this.roadside.build(group, index, rowInfo);
+    if (!this.landmarks.active(index * CHUNK + 120)) {
+      this.scenery.build(group, plan);
+      this.roadside.build(group, index, rowInfo);
+    } else {
+      group.userData.colliders ||= []; group.userData.lamps = []; group.userData.pumps = [];
+      this.landmarks.build(group, index);
+    }
     this.building = null;
     group.traverse((o) => o.layers.enable(3));
     this.scene.add(group); this.chunks.set(index, group);
@@ -331,7 +344,7 @@ export class World {
       const x = r.x(z) - sides[0] * (r.half(z) + 1.4), y = r.y(z); markers.push({p: [x, y + .5, z], s: [1, 1, 1]}); reflectors.push({p: [x, y + .86, z + .02], s: [1, 1, 1]});
     }
     if (!off && !winter) {
-      const n = quality === 'low' ? 200 : quality === 'high' ? 1000 : 650;
+      const n = quality === 'low' ? 200 : ['high','ultra'].includes(quality) ? 1000 : 650;
       for (let i = 0; i < n; i++) {
         const z = index * CHUNK + rng() * CHUNK, x = r.x(z) + (rng() > .5 ? 1 : -1) * (r.half(z) + .7 + rng() * 21), y = this.surfaceHeight(x, z);
         if (y < SEA + 2.6 || y > SNOWLINE || plan.blocked(x, z) || onRoad(x, z, .4)) continue;
@@ -350,7 +363,7 @@ export class World {
     }
     group.userData.colliders = [...trunks.map((t) => ({x: t.p[0], z: t.p[2], r: t.s[0] * .22 + .18})), ...rocks.filter((k) => Math.max(k.s[0], k.s[2]) > .75).map((k) => ({x: k.p[0], z: k.p[2], r: Math.max(k.s[0], k.s[2]) * .8}))];
     this.makeInstances(group, this.geos.marker, this.markerMat, markers, true); this.makeInstances(group, this.geos.reflector, this.reflectorMat, reflectors);
-    this.makeInstances(group, this.geos.trunk, this.trunkMat, trunks, true); this.makeInstances(group, this.geos.leaves, this.leafMat, crowns, quality === 'high'); this.makeInstances(group, this.geos.leaves, this.pineMat, pines, quality === 'high');
+    this.makeInstances(group, this.geos.trunk, this.trunkMat, trunks, true); this.makeInstances(group, this.geos.leaves, this.leafMat, crowns, ['high','ultra'].includes(quality)); this.makeInstances(group, this.geos.leaves, this.pineMat, pines, ['high','ultra'].includes(quality));
     this.makeInstances(group, this.geos.rock, this.rockMat, rocks, true); this.makeInstances(group, this.geos.post, this.postMat, posts, true); this.makeInstances(group, this.geos.rail, this.railMat, rails, true);
     this.makeInstances(group, this.geos.grass, this.grassMat, grass); this.makeInstances(group, this.geos.grass, this.scenery.flowerMat, flowers);
   }
@@ -388,6 +401,7 @@ export class World {
     const road = r.roadUnder(x, z);
     if (road) return road.y + (road.main ? .055 : .062);
     const d = Math.abs(x - r.x(z)), w = r.half(z);
+    if (this.landmarks.active(z) && d > w && d < w + 7.5) return r.y(z) + .2;
     if (r.tunnelAt(z) && d < w + 3) return r.y(z) + .055;
     if (d <= w + 3.3 && r.townFactor(z) > .02) return r.y(z) + .075;
     if (d <= w + 1.7 && r.bridgeAt(z)) return r.y(z) + .25;
@@ -402,6 +416,7 @@ export class World {
     if (this.settings.location !== 'hills') return Math.abs(x - r.x(z)) <= r.half(z) + .6;
     if (r.roadUnder(x, z, .6)) return true;
     const d = Math.abs(x - r.x(z)), w = r.half(z);
+    if (this.landmarks.active(z) && d > w && d < w + 7.5) return r.y(z) + .2;
     if (d < w + 3.3 && (r.tunnelAt(z) || r.townFactor(z) > .02 || r.bridgeAt(z))) return true;
     for (const st of r.stopsNear(z, 70)) if (this.onStopPad(st, x, z)) return true;
     const t = r.townAt(z); if (t && this.scenery.layouts.has(t)) { const cr = this.scenery.layout(t).cross; if (Math.abs(z - cr.z) < cr.street + .5 && d < cr.len) return true; }
@@ -420,6 +435,7 @@ export class World {
   // Which sides have a guard rail here: the drop side on hill roads, the sea side on the coast, the valley side on
   // mountain passes, both sides on the motorway; none in towns, on bridges, in tunnels, at junctions, crossings and lay-bys.
   railSides(z) {
+    if (this.landmarks?.active(z)) return [];
     const r = this.road;
     if (this.settings.location !== 'hills') return [(Math.floor(Math.floor(z / CHUNK) / 3) % 3 === 0) ? 1 : -1];
     if (r.townFactor(z) > 0 || r.bridgeAt(z) || r.bridgeAt(z - 8) || r.bridgeAt(z + 8) || r.tunnelAt(z) || r.tunnelAt(z + 8) || r.crossingAt(z, 30) || r.stopAt(z, 14)) return [];

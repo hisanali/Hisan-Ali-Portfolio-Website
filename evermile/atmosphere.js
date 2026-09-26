@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {clamp, lerp, smooth, random} from './math.js?v=20260928b';
+import {clamp, lerp, smooth, random} from './math.js?v=20260926-people3';
 
 /*
   Time and weather. The clock runs as you drive (a full day in about half an hour, slower through dawn and golden hour,
@@ -130,6 +130,7 @@ export class Atmosphere {
     const overcast = grey * (.85 + .15 * this.daylight);
     this.top.copy(c1).lerp(c3, overcast * .9); this.bottom.copy(c2).lerp(c4, overcast * .85);
     if (s.location !== 'hills' && s.planet === 'moon') { this.top.set(0x050a14).lerp(c1, .04); this.bottom.set(0x303845).multiplyScalar(.3 + .7 * this.daylight); }
+    if (s.location === 'hills' && this.golden > .05) { this.top.lerp(c3.set(0x685c91),this.golden*.38*(1-grey)); this.bottom.lerp(c4.set(0xfaa272),this.golden*.35*(1-grey)); }
     this.sunColor.set(0xfff5db).lerp(c3.set(0xff9e4a), this.golden).lerp(c4.set(0xff6a3a), smooth(.02, -.08, se));
     this.cloudTint.set(0xf4f4ef).lerp(c3.set(rain > .3 ? 0xb4bcc2 : 0xe4e8ea), grey);
     this.skyCloud = lerp(.36, 1, cloud) * (1 - this.golden * .15);

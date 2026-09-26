@@ -1,8 +1,9 @@
+import {batchStatic} from './mesh-batching.js?v=20260926-people3';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
-import {GlowPoints} from './glow.js?v=20260928b';
-import {clamp} from './math.js?v=20260928b';
-import {canvasTexture} from './scenery.js?v=20260928b';
+import {GlowPoints} from './glow.js?v=20260926-people3';
+import {clamp} from './math.js?v=20260926-people3';
+import {canvasTexture} from './scenery.js?v=20260926-people3';
 
 /*
   Trains on the line beside the road. A train comes out of the tunnel at one end of the line, runs along the valley and
@@ -68,6 +69,10 @@ export class Railway {
     for (const e of [-1, 1]) {
       const z = e * (len / 2 - 3);
       this.add(g, new T.BoxGeometry(2.3, .45, 3.4), this.m.dark, 0, .62, z);
+      for(const side of [-1,1])for(const dz of [-.8,.8]){
+        this.add(g,new T.CylinderGeometry(.14,.14,.42,12),this.m.wheel,side*1.12,.78,z+dz);
+        for(let j=0;j<5;j++)this.add(g,new T.TorusGeometry(.15,.024,5,12),this.m.dark,side*1.12,.6+j*.085,z+dz,Math.PI/2);
+      }
       for (const dz of [-1.1, 1.1]) for (const x of [-.72, .72]) this.add(g, wheel, this.m.wheel, x, .46, z + dz);
     }
   }
@@ -125,6 +130,7 @@ export class Railway {
 
   makeTrain(kind) {
     const cars = kind === 'passenger' ? [this.loco(), this.coach(), this.coach(), this.coach(), this.coach()] : [this.loco(), this.wagon(), this.wagon(), this.wagon(), this.wagon(), this.wagon(), this.wagon(), this.wagon()];
+    for (const c of cars) batchStatic(c.g,new Set(c.boxes || []));
     let offset = 0;
     for (const c of cars) { c.offset = offset + c.len / 2; offset += c.len + .9; c.g.visible = false; c.g.rotation.order = 'YXZ'; this.scene.add(c.g); }
     // A passenger train sometimes runs with a second loco at the back, facing the other way.

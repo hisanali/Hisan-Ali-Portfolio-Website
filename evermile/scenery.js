@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260928b';
-import {random} from './math.js?v=20260928b';
+import {GlowPoints} from './glow.js?v=20260926-people3';
+import {random} from './math.js?v=20260926-people3';
 
 // Places people live and cross: towns with shops, strip lights and street lamps, cottages with gardens,
 // river bridges, and boats on the water. Everything static in a chunk is merged into a handful of meshes.
@@ -563,7 +563,7 @@ export class Scenery {
     const tri = new T.Shape(); tri.moveTo(0, 0); tri.lineTo(1, 0); tri.lineTo(.5, 1); tri.closePath();
     const gable = new T.ExtrudeGeometry(tri, {depth: 1, bevelEnabled: false}).translate(-.5, 0, -.5);
     const sail = new T.Shape(); sail.moveTo(0, 0); sail.lineTo(2.3, 0); sail.lineTo(0, 5); sail.closePath();
-    const bush = new T.IcosahedronGeometry(.5, 1).toNonIndexed();
+    const bush = new T.IcosahedronGeometry(.5, 1);
     const flower = new T.PlaneGeometry(1, 1).toNonIndexed();
     const flowerX = mergeGeometries([flower.clone(), flower.clone().rotateY(Math.PI / 2)]);
     this.mats.flowerBed = {material: new T.MeshStandardMaterial({map: this.flowerTexture, alphaTest: .45, side: T.DoubleSide, roughness: .9})};

@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {random, noise, smooth, lerp, clamp} from './math.js?v=20260928b';
-import {GlowPoints} from './glow.js?v=20260928b';
-import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260928b';
-import {sheltered} from './atmosphere.js?v=20260928b';
-import {ZONE, TYPES, SEA} from './network.js?v=20260928b';
+import {random, noise, smooth, lerp, clamp} from './math.js?v=20260926-people3';
+import {GlowPoints} from './glow.js?v=20260926-people3';
+import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260926-people3';
+import {sheltered} from './atmosphere.js?v=20260926-people3';
+import {ZONE, TYPES, SEA} from './network.js?v=20260926-people3';
 
 // Everything built along the road network itself: tunnels, motorway furniture, junction signs, the railway and its
 // level crossings, petrol stations, cafés and viewpoints, lighthouses on the coast, snowbanks up high and farm fields.
@@ -180,7 +180,10 @@ export class Roadside {
       const zm = zz + step / 2, xm = r.railX(rail, zm), ym = r.railY(rail, zm), dxm = r.railX(rail, zm + 1) - r.railX(rail, zm - 1), yawm = Math.atan2(dxm, 2), L = step * Math.sqrt(1 + (dxm / 2) ** 2) + .05;
       const pm = frame(batch, xm, ym, zm, yawm), mOnRoad = Math.abs(xm - r.x(zm)) < r.half(zm) + 1.2;
       for (const g of [-.72, .72]) pm('rail', UNIT, g, mOnRoad ? .03 : .2, 0, 0xffffff, .075, mOnRoad ? .06 : .15, L);
-      if (!mOnRoad) for (let k = 0; k < 7; k++) pm('paint', UNIT, 0, .07, -L / 2 + (k + .5) * L / 7, 0x7a6a58, 2.5, .14, .24);
+      if (!mOnRoad) for (let k = 0; k < 7; k++) {
+        const sleeperZ=-L/2+(k+.5)*L/7;pm('paint', UNIT, 0, .07, sleeperZ, 0x9d9a8a, 2.5, .14, .24);
+        for(const railX of [-.72,.72]){pm('metal',UNIT,railX,.155,sleeperZ,0x5a493e,.28,.04,.2);for(const side of [-1,1])pm('metal',UNIT,railX+side*.095,.2,sleeperZ,0x866e49,.035,.08,.11);}
+      }
       else pm('concrete', UNIT, 0, .045, 0, 0x2f3134, 2.2, .06, L);
     }
     if (bi.length) { const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(bed, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(bu, 2)); g.setIndex(bi); g.computeVertexNormals(); const m = new T.Mesh(g, this.mats.ballast.material); m.receiveShadow = true; group.add(m); }
@@ -234,7 +237,9 @@ export class Roadside {
       for (const lx of [d - 3.5, d + 5.5]) for (const lz of [-7, 7]) { put('metal', UNIT, lx, 2.6, lz, 0xdadada, .35, 5.2, .35); const [cx, cz] = put.world(lx, lz); col.push({x: cx, z: cz, r: .35}); }
       for (const lz of [-4.5, 4.5]) {
         put('concrete', UNIT, d + 1, .12, lz, 0xbdbab2, 1.4, .24, 6);
-        for (const pz of [-1.6, 1.6]) { put('paint', UNIT, d + 1, .95, lz + pz, 0xf1f1ee, .6, 1.5, .5); put('paint', UNIT, d + 1, 1.72, lz + pz, 0xc81f25, .62, .12, .52); put('screen', UNIT, d + .68, 1.25, lz + pz, 0xffffff, .02, .3, .3); }
+        for (const pz of [-1.6, 1.6]) { put('paint', UNIT, d + 1, .95, lz + pz, 0xf1f1ee, .6, 1.5, .5); put('paint', UNIT, d + 1, 1.72, lz + pz, 0xc81f25, .62, .12, .52); put('screen', UNIT, d + .68, 1.25, lz + pz, 0xffffff, .02, .3, .3);
+          for(let j=0;j<9;j++){const a=j/8*Math.PI;put('dark',UNIT,d+.65,.85-Math.sin(a)*.45,lz+pz+Math.cos(a)*.32,0xffffff,.05,.07,.14,0,-Math.cos(a)*.4);}
+          put('metal',UNIT,d+.61,1.07,lz+pz+.32,0x323b37,.09,.22,.07,0,.3); }
         const [px, pz2] = put.world(d + 1, lz); col.push({x: px, z: pz2, hx: 1.1, hz: 3.2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0});
         for (const lane of [-2.4, 2.4]) { const [ax, az] = put.world(d + 1 + lane, lz); group.userData.pumps.push({x: ax, z: az, stop: st}); }
       }
@@ -342,7 +347,7 @@ export class Roadside {
   lighthouse(batch, group, seg, z0, z1) {
     const r = this.world.road, z = seg.z0 + seg.len * .62; if (z < z0 || z >= z1 || r.stopAt(z, 60) || r.townFactor(z)) return;
     const d = r.half(z) + 150, x = r.x(z) + seg.seaSide * d, base = SEA - .5;
-    for (let k = 0; k < 14; k++) { const a = k * 2.4, rr = 5 + (k % 3) * 2.5; batch.add('concrete', new T.IcosahedronGeometry(1, 1).toNonIndexed(), x + Math.cos(a) * rr, base + .5, z + Math.sin(a) * rr, a, 0x6c665c, 3 + (k % 2) * 2, 2.2, 3.5); }
+    for (let k = 0; k < 14; k++) { const a = k * 2.4, rr = 5 + (k % 3) * 2.5; batch.add('concrete', new T.IcosahedronGeometry(1, 1), x + Math.cos(a) * rr, base + .5, z + Math.sin(a) * rr, a, 0x6c665c, 3 + (k % 2) * 2, 2.2, 3.5); }
     batch.add('concrete', CYL, x, base + 1.2, z, 0, 0xcfcac0, 9, 2.6, 9);
     batch.add('stripe', CYL, x, base + 12, z, 0, 0xffffff, 3.4, 19, 3.4);
     batch.add('metal', CYL, x, base + 22, z, 0, 0x2a2d30, 4.4, .4, 4.4);

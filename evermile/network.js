@@ -1,4 +1,5 @@
-import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260928b';
+import {DESTINATIONS, DISTRICT_END, inDestination} from './destinations.js?v=20260926-people3';
+import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260926-people3';
 
 /*
   The road network. The world is still laid out along z, but the road is now a chain of segments, each of a kind
@@ -74,6 +75,12 @@ class Segment {
       highway: [(z) => 120 * Math.sin(z * .0007 + a) + 30 * Math.sin(z * .0019 + b), (z) => 18 + 5 * Math.sin(z * .0011 + b)],
     }[this.type];
     this.ownX = G[0]; this.ownY = G[1];
+    if (!this.parent && !this.net.off && this.net.settings.destination && this.net.settings.destination !== 'journey') {
+      const name = this.net.settings.destination, curve = name === 'airport' ? .3 : name === 'lake' ? 7 : 2;
+      this.ownX = z => curve * Math.sin(z * .004);
+      this.ownY = z => name === 'lake' ? -3 : name === 'oldtown' ? 1.5 : 0;
+      this.seaSide = -1; this.len = 3000; this.z1 = this.z0 + this.len;
+    }
   }
 
   x(z) {
@@ -127,7 +134,7 @@ export class Network {
   constructor(settings, route = null) {
     this.settings = settings; this.id = hashSeed(settings.seed); this.off = settings.location !== 'hills';
     this.version = ++versions; this.junctions = []; this.count = 0; this.picks = []; this.done = 0;
-    this.segs = [new Segment(this, null, -700, 'country', 0, 0)];
+    this.segs = [new Segment(this, null, -700, this.off ? 'country' : (DESTINATIONS[settings.destination]?.type || 'country'), 0, 0)];
     this.caches = new Map(); this.rowZ = NaN; this.row = null;
     this.extend(4000);
     if (route && !this.off) for (let n = 0; n < route.picks.length; n++) {
@@ -284,7 +291,7 @@ export class Network {
       let start = null;
       for (let z = z0; z <= z1; z += 10) {
         const lift = this.hills(seg.x(z), z) + this.ridgeAt(seg, z, 0) + (seg.type === 'mountain' ? 10 * Math.abs(seg.upF(z)) : 0);
-        const deep = lift > (seg.type === 'mountain' ? 32 : 50);
+        const deep = !inDestination(this.settings, z - 100) && !inDestination(this.settings, z + 100) && lift > (seg.type === 'mountain' ? 32 : 50);
         if (deep && start === null) start = z;
         if ((!deep || z + 10 > z1) && start !== null) { if (z - start >= 150) out.push({start: start - 15, end: z + 15, seg}); start = null; }
       }
@@ -304,6 +311,7 @@ export class Network {
       if (b - a < 1000) return null;
       // Keep to the longest stretch that stays clear of tunnels; towns are passed at a wider berth.
       const blocks = this.tunnels(seg).map((t) => [t.start - 250, t.end + 250]), towns = [];
+      if (inDestination(this.settings, 0)) blocks.push([-500, DISTRICT_END + 160]);
       for (let z = a; z < b; z += 400) { const br = this.bridgeNear(z); if (br && br.seg === seg && !blocks.some((q) => q[2] === br)) blocks.push([br.start - 280, br.end + 280, br]); }
       for (let z = a - 300; z < b + 300; z += 150) { const tw = this.townAt(z); if (tw && tw.seg === seg && !towns.includes(tw)) towns.push(tw); }
       blocks.sort((p, q) => p[0] - q[0]);
@@ -335,6 +343,7 @@ export class Network {
       if (this.off) return [];
       const rng = random(seg.id + 17), out = [], own = this.side;
       const clear = (z, len) => {
+        if (inDestination(this.settings, 0) && z + len > -240 && z - len < DISTRICT_END + 120) return false;
         if (z - len < seg.z0 + ZONE + 250 || z + len > seg.z0 + seg.len - 300) return false;
         for (const tn of this.tunnels(seg)) if (z + len > tn.start - 80 && z - len < tn.end + 80) return false;
         const r = this.rail(seg); if (r) for (const c of r.crossings) if (Math.abs(z - c) < len + 120) return false;
@@ -382,6 +391,7 @@ export class Network {
       if (!TYPES[type].towns) return null;
       const small = type === 'farm', half = small ? 70 + rnd(6) * 40 : 130 + rnd(6) * 100, center = k * TOWN + half + 60 + rnd(7) * (TOWN - 2 * half - 120);
       const s = this.segAt(center);
+      if (inDestination(this.settings, 0) && center + half > -240 && center - half < DISTRICT_END + 120) return null;
       if (s.typeAt(center) !== type || center - half < s.z0 + ZONE + 250 || center + half > s.z0 + s.len - 250) return null;
       for (const tn of this.tunnels(s)) if (center + half > tn.start - 100 && center - half < tn.end + 100) return null;
       const names = PLACES[type === 'coast' ? 'coast' : 'country'];
@@ -461,6 +471,19 @@ export class Network {
         if (inside) h = lerp(h, y - .02, 1 - smooth(.8, 1, u));
       }
       if (tunnel && d < half + 3) h = Math.max(h, y + 9.5);
+    }
+    if (inDestination(this.settings, z) && !offworld && !tunnel) {
+      const area = this.settings.destination, coastal = DESTINATIONS[area].type === 'coast', signed = px - this.x(z);
+      const fade = smooth(-180, -100, z) * (1 - smooth(980, 1080, z));
+      const width = area === 'lake' ? 22 : area === 'airport' ? 120 : 90;
+      const plot = 1 - smooth(width, width + 45, Math.abs(signed));
+      const shore = coastal && signed < -half - 12 ? smooth(half + 12, half + 45, -signed) : 0;
+      h = lerp(h, lerp(y - .02, SEA - 5, shore), fade * plot);
+    }
+    if (inDestination(this.settings,z) && this.settings.destination === 'lake' && px < this.x(z)-100) {
+      // Far bank encloses the lake, rising into a mountain rather than an infinite ocean.
+      const far = smooth(280,540,this.x(z)-px), bank = 42 + 80*Math.pow(Math.max(0,Math.sin(z*.004+1)),2);
+      h = lerp(h,bank,far);
     }
     // The ground never rises through a road surface you can drive on.
     if (d < half + .6 && !(tunnel && d < half + 3) && (best.main || best.fade > .5)) h = Math.min(h, y);

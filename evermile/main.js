@@ -1,24 +1,28 @@
+import {DetailedModels} from './detailed-models.js?v=20260926-people3';
+import {boomFraction} from './camera-clearance.js?v=20260926-people3';
+import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-people3';
+import {traction, longitudinal, steeringMotion, VEHICLE_DYNAMICS} from './handling.js?v=20260926-people3';
 import * as T from './vendor/three.module.js';
-import {World} from './world.js?v=20260928b';
-import {CameraOrbit} from './camera-orbit.js?v=20260928b';
-import {Vehicle} from './vehicle.js?v=20260928b';
-import {Effects} from './effects.js?v=20260928b';
-import {Life} from './life.js?v=20260928b';
-import {TownLife} from './townlife.js?v=20260928b';
-import {Railway} from './railway.js?v=20260928b';
-import {Atmosphere, PRESETS} from './atmosphere.js?v=20260928b';
-import {Windscreen, Mirror} from './cockpit.js?v=20260928b';
-import {Radio, STATIONS} from './radio.js?v=20260928b';
-import {DriveAudio} from './audio.js?v=20260928b';
-import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260928b';
-import {ZONE, TYPES} from './network.js?v=20260928b';
+import {World} from './world.js?v=20260926-people3';
+import {CameraOrbit} from './camera-orbit.js?v=20260926-people3';
+import {Vehicle} from './vehicle.js?v=20260926-people3';
+import {Effects} from './effects.js?v=20260926-people3';
+import {Life} from './life.js?v=20260926-people3';
+import {TownLife} from './townlife.js?v=20260926-people3';
+import {Railway} from './railway.js?v=20260926-people3';
+import {Atmosphere, PRESETS} from './atmosphere.js?v=20260926-people3';
+import {Windscreen, Mirror} from './cockpit.js?v=20260926-people3';
+import {Radio, STATIONS} from './radio.js?v=20260926-people3';
+import {DriveAudio} from './audio.js?v=20260926-people3';
+import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260926-people3';
+import {ZONE, TYPES} from './network.js?v=20260926-people3';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from './vendor/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from './vendor/postprocessing/OutputPass.js';
 
 /* ---------- Settings and state ---------- */
-export const settings = {seed: 'the-long-way', roadStyle: 'winding', location: 'hills', season: 'spring', planet: 'mars', time: 'dawn', clock: 'live', weather: 'changing', vehicle: 'coupe', color: '#b51f25', roadWidth: 10.6, quality: 'high', camera: 0, volume: .35, steerAssist: .8, speedFactor: 1, grip: .7, units: 'km', autoMode: 'full', autoLane: 'left', trafficOncoming: 'on', trafficOwn: 'on', cyclists: 'on', rushMode: 'off', junctions: 'surprise', fuel: 'on', mirror: 'on', radio: 0, radioVolume: .55, vehicleVolume: 1, weatherVolume: 1, sfxVolume: 1, fov: 45, hideUI: false, version: 4};
+export const settings = {destination: 'journey', seed: 'the-long-way', roadStyle: 'winding', location: 'hills', season: 'spring', planet: 'mars', time: 'dawn', clock: 'live', weather: 'changing', vehicle: 'coupe', color: '#b51f25', roadWidth: 10.6, quality: 'high', camera: 0, volume: .35, steerAssist: .8, speedFactor: 1, grip: .7, units: 'km', autoMode: 'full', autoLane: 'left', trafficOncoming: 'on', trafficOwn: 'on', cyclists: 'on', rushMode: 'off', junctions: 'surprise', fuel: 'on', mirror: 'on', radio: 0, radioVolume: .55, vehicleVolume: 1, weatherVolume: 1, sfxVolume: 1, fov: 45, hideUI: false, version: 4};
 let savedVersion = 2;
 try { const saved = JSON.parse(localStorage.getItem('evermile-settings') || 'null'); if (saved && typeof saved === 'object') { savedVersion = saved.version || 1; for (const k of Object.keys(settings)) if (k !== 'version' && typeof saved[k] === typeof settings[k]) settings[k] = saved[k]; } } catch {}
 // Players from before the living world get it switched on once.
@@ -27,7 +31,7 @@ if (savedVersion < 2) { settings.weather = 'changing'; settings.clock = 'live'; 
 if (savedVersion < 3 && settings.grip === 1) settings.grip = .7;
 // The new standard journey from version 4: spring dawn on winding roads, a red coupé, traffic and the fuel gauge on.
 if (savedVersion < 4) Object.assign(settings, {season: 'spring', time: 'dawn', clock: 'live', weather: 'changing', roadStyle: 'winding', junctions: 'surprise', color: '#b51f25', camera: 0, quality: 'high', fov: 45, autoMode: 'full', rushMode: 'off', trafficOncoming: 'on', trafficOwn: 'on', cyclists: 'on', fuel: 'on', mirror: 'on'});
-const valid = {roadStyle: ['winding', 'straight', 'casual', 'normal'], location: ['hills', 'offworld'], season: ['spring', 'summer', 'autumn', 'winter'], planet: ['mars', 'moon', 'venus'], time: ['dawn', 'day', 'sunset', 'night'], clock: ['live', 'still'], weather: ['changing', 'clear', 'overcast', 'rain'], vehicle: ['coupe', 'coach', 'bike'], quality: ['low', 'medium', 'high'], units: ['km', 'mi'], autoMode: ['full', 'steering', 'speed'], autoLane: ['left', 'right', 'center'], trafficOncoming: ['on', 'off'], trafficOwn: ['on', 'off'], cyclists: ['on', 'off'], rushMode: ['off', 'on'], junctions: ['surprise', 'straight'], fuel: ['off', 'on'], mirror: ['on', 'off']};
+const valid = {destination: Object.keys(DESTINATIONS), roadStyle: ['winding', 'straight', 'casual', 'normal'], location: ['hills', 'offworld'], season: ['spring', 'summer', 'autumn', 'winter'], planet: ['mars', 'moon', 'venus'], time: ['dawn', 'day', 'sunset', 'night'], clock: ['live', 'still'], weather: ['changing', 'clear', 'overcast', 'rain'], vehicle: ['coupe', 'coach', 'bike'], quality: ['low', 'medium', 'high', 'ultra'], units: ['km', 'mi'], autoMode: ['full', 'steering', 'speed'], autoLane: ['left', 'right', 'center'], trafficOncoming: ['on', 'off'], trafficOwn: ['on', 'off'], cyclists: ['on', 'off'], rushMode: ['off', 'on'], junctions: ['surprise', 'straight'], fuel: ['off', 'on'], mirror: ['on', 'off']};
 for (const [k, v] of Object.entries(valid)) if (!v.includes(settings[k])) settings[k] = v[0];
 settings.camera = clamp(settings.camera, 0, 4); settings.radio = clamp(Math.round(settings.radio), -1, STATIONS.length - 1); settings.version = 4;
 
@@ -49,11 +53,12 @@ const driveOrbit = new CameraOrbit();
 let chaseOrbitRadius = 0, orbitYaw = .72, orbitPitch = .28, orbitDistance = 7.5, orbitPointer = null;
 let audioContext, windGain, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
 // High quality extras: bloom on bright lights and live reflections on your car. They switch off by themselves if the frame rate drops.
+let detailedModels;
 let composer = null, bloom = null, cubeRT = null, cubeCam = null, cubeFace = 0, highFx = true, slowTime = 0;
 let lastEnv = null, envClock = 0, tunnelDim = 1, valleyY = 0, valleyClock = 0, blockedTime = 0, lastType = null, lastTown = null, cardJunction = null, stopShown = null, stopStill = 0, lastTick = null;
 
 function setupHighFx() {
-  const on = settings.quality === 'high' && highFx && renderer.capabilities.isWebGL2;
+  const on = ['high', 'ultra'].includes(settings.quality) && highFx && renderer.capabilities.isWebGL2;
   if (!on) {
     if (composer) { composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; bloom = null; }
     if (cubeRT) { cubeRT.dispose(); cubeRT = null; scene.remove(cubeCam); cubeCam = null; vehicle?.setEnvMap(null); }
@@ -77,16 +82,16 @@ function updateLiveReflection() {
   cubeFace = (cubeFace + 1) % 6;
   if (cubeFace === 0) { cubeRT.texture.needsPMREMUpdate = true; vehicle.setEnvMap(cubeRT.texture); }
 }
-function watchPerformance(dt) { if (!composer && !cubeRT) return; if (state.started && state.time > 8 && state.fps < 34) slowTime += dt; else slowTime = Math.max(0, slowTime - dt); if (slowTime > 5) { highFx = false; setupHighFx(); toast('Effects reduced for smoother driving'); } }
+function watchPerformance(dt) { if (!composer && !cubeRT) return; if (state.started && state.time > 8 && state.fps < (settings.quality === 'ultra' ? 18 : 24)) slowTime += dt; else slowTime = Math.max(0, slowTime - dt); if (slowTime > 10) { highFx = false; setupHighFx(); toast('Effects reduced for smoother driving'); } }
 
 /* ---------- Start up ---------- */
 try {
   renderer = new T.WebGLRenderer({canvas: $('game'), antialias: true, alpha: false, powerPreference: 'high-performance'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio, settings.quality === 'high' ? 1.5 : settings.quality === 'medium' ? 1.15 : 1)); renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, settings.quality === 'ultra' ? 2 : settings.quality === 'high' ? 1.5 : settings.quality === 'medium' ? 1.15 : 1)); renderer.setSize(innerWidth, innerHeight);
   renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12; renderer.shadowMap.enabled = settings.quality !== 'low'; renderer.shadowMap.type = T.PCFSoftShadowMap;
   scene = new T.Scene(); camera = new T.PerspectiveCamera(settings.fov, innerWidth / innerHeight, .08, 3000);
   hemi = new T.HemisphereLight(0xdce9f3, 0x646443, 2.05); scene.add(hemi);
-  sun = new T.DirectionalLight(0xfff2d6, 3); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, {left: -65, right: 65, top: 80, bottom: -65, near: 1, far: 300}); sun.shadow.normalBias = .055; sun.shadow.bias = -.00015; scene.add(sun, sun.target);
+  sun = new T.DirectionalLight(0xfff2d6, 3); sun.castShadow = true; sun.shadow.mapSize.set(settings.quality === 'ultra' ? 4096 : 2048, settings.quality === 'ultra' ? 4096 : 2048); Object.assign(sun.shadow.camera, {left: -65, right: 65, top: 80, bottom: -65, near: 1, far: 300}); sun.shadow.normalBias = .055; sun.shadow.bias = -.00015; scene.add(sun, sun.target);
   atmo = new Atmosphere(settings);
   try { const saved = localStorage.getItem('evermile-hour'), h = Number(saved); if (saved !== null && settings.clock === 'live' && h >= 0 && h < 24) atmo.hour = h; } catch {}
   world = new World(scene, settings, atmo);
@@ -111,7 +116,7 @@ export function reset() {
   releaseCameraDrag(true);
   const r = world.road, z = state.z;
   state.laneIndex = r.homeLane(z); state.x = r.x(z) + ownLaneX(z, state.laneIndex); state.y = r.y(z); state.yaw = Math.atan(r.tangent(z));
-  state.speed = 0; state.steer = 0; state.vy = 0; state.lastGround = undefined; state.grounded = true; state.pass = null; state.pit = null; state.viewing = null;
+  state.speed = 0; state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.vy = 0; state.lastGround = undefined; state.grounded = true; state.pass = null; state.pit = null; state.viewing = null;
   state.medianSide = Math.sign(state.x - r.x(z)) || 1;
   updateCar(1 / 60); positionCamera(1, true);
 }
@@ -121,19 +126,23 @@ export function toast(message) { $('toast').textContent = message; $('toast').cl
 
 export function changeSetting(key, value) {
   if (!(key in settings)) return;
-  settings[key] = value; save();
-  const rebuild = ['seed', 'roadStyle', 'location', 'roadWidth', 'season', 'planet', 'quality', 'autoLane'];
+  if (key === 'destination' && !DESTINATIONS[value]) return;
+  settings[key] = value;
+  if (key === 'destination') { lastType = null; settings.location = 'hills'; settings.seed = 'the-long-way'; state.auto = false; state.z = 35; state.viewing = null; state.inspection = false; state.fuel = Math.max(state.fuel, .5); }
+  save();
+  const rebuild = ['destination', 'seed', 'roadStyle', 'location', 'roadWidth', 'season', 'planet', 'quality', 'autoLane'];
   if (rebuild.includes(key)) {
-    const moving = state.speed, same = !['seed', 'roadStyle', 'location'].includes(key); world.rebuild(same); life.clear();
-    if (['seed', 'roadStyle', 'location'].includes(key)) { state.z = 35; reset(); } else { const r = world.road; state.laneIndex = r.homeLane(state.z); }
-    world.update(state.z, camera, true); if (!['seed', 'roadStyle', 'location'].includes(key)) state.speed = moving;
+    const moving = state.speed, same = !['destination', 'seed', 'roadStyle', 'location'].includes(key); world.rebuild(same); life.clear();
+    if (['destination', 'seed', 'roadStyle', 'location'].includes(key)) { state.z = 35; reset(); } else { const r = world.road; state.laneIndex = r.homeLane(state.z); }
+    world.update(state.z, camera, true); if (!['destination', 'seed', 'roadStyle', 'location'].includes(key)) state.speed = moving;
   }
+  if (key === 'destination') { settings.time = DESTINATIONS[value].time || 'day'; atmo.setPreset(settings.time); save(); lastEnv = null; effects.refresh(); applyAtmosphere(0, true); }
   if (key === 'vehicle') { vehicle.dispose(); vehicle = new Vehicle(scene, settings.vehicle, settings.color); if (cubeRT) vehicle.setEnvMap(cubeRT.texture); }
   if (key === 'color') vehicle.setColor(value);
   if (key === 'time') { atmo.setPreset(value); lastEnv = null; }
   if (key === 'weather') atmo.applyWeather(true);
   if (['time', 'weather', 'season', 'location', 'planet'].includes(key)) { world.updatePalette(); effects.refresh(); applyAtmosphere(0, true); }
-  if (key === 'quality') { renderer.setPixelRatio(Math.min(devicePixelRatio, value === 'high' ? 1.5 : value === 'medium' ? 1.15 : 1)); renderer.shadowMap.enabled = value !== 'low'; highFx = true; slowTime = 0; setupHighFx(); composer?.setPixelRatio(renderer.getPixelRatio()); composer?.setSize(innerWidth, innerHeight); applyAtmosphere(0, true); }
+  if (key === 'quality') { const size = value === 'ultra' ? 4096 : 2048; sun.shadow.mapSize.set(size,size); sun.shadow.map?.dispose(); sun.shadow.map = null; renderer.setPixelRatio(Math.min(devicePixelRatio, value === 'ultra' ? 2 : value === 'high' ? 1.5 : value === 'medium' ? 1.15 : 1)); renderer.shadowMap.enabled = value !== 'low'; highFx = true; slowTime = 0; setupHighFx(); composer?.setPixelRatio(renderer.getPixelRatio()); composer?.setSize(innerWidth, innerHeight); applyAtmosphere(0, true); }
   if (key === 'camera') { releaseCameraDrag(true); positionCamera(1, true); }
   if (key === 'radioVolume') radio?.update(0);
   updateUI();
@@ -184,7 +193,7 @@ function physics(dt) {
     const quick = state.pass || state.laneMove > state.time, rushing = settings.rushMode === 'on';
     const lead = quick ? (rushing ? 7 : 10) + Math.abs(state.speed) * (rushing ? .38 : .6) : 13 + Math.abs(state.speed) * 1.05;
     const zt = state.z + lead, targetYaw = Math.atan2(r.x(zt) + plan.offset(zt) - state.x, lead), err = angleDifference(targetYaw, state.yaw);
-    steerTarget = clamp(Math.atan2(2 * 2.8 * Math.sin(err), lead), -.45, .45);
+    steerTarget = clamp(Math.atan2(2 * VEHICLE_DYNAMICS[settings.vehicle].wheelbase * Math.sin(err), lead), -.45, .45);
   }
   if ((state.auto && settings.autoMode !== 'steering') || state.cruise) {
     const target = state.cruise ? Math.min(state.cruiseSpeed, plan.safe) : plan.speed;
@@ -194,29 +203,28 @@ function physics(dt) {
   }
   state.throttle = throttle; state.brakeIn = brake; autoHonk(dt);
   const boost = keys.ShiftLeft || keys.ShiftRight || (state.auto && settings.rushMode === 'on' && !!state.pass && (state.pass.phase === 'pass' || state.pass.phase === 'commit'));
-  let power = (settings.vehicle === 'coach' ? 3.7 : settings.vehicle === 'bike' ? 6.5 : 5.4) * settings.speedFactor * (boost ? 1.75 : 1);
-  // An empty tank leaves you crawling on the last of the fuel to the next station.
-  if (settings.fuel === 'on' && state.fuel <= 0) power *= .16;
   const off = !world.onPaved(state.x, state.z); state.offroad = off;
-  let acceleration = throttle * power - .11 * state.speed - Math.sign(state.speed) * state.speed * state.speed * .0013;
-  if (brake) { if (state.speed > .35) acceleration -= brake * 11; else acceleration -= brake * power * .6; }
-  if (keys.Space) acceleration -= Math.sign(state.speed) * 14;
-  if (off) acceleration -= state.speed * .30;
-  if (state.grounded !== false) { const fx = Math.sin(state.yaw) * 1.4, fz = Math.cos(state.yaw) * 1.4; acceleration -= 9.8 * .85 * (world.groundHeight(state.x + fx, state.z + fz) - world.groundHeight(state.x - fx, state.z - fz)) / 2.8; }
+  const mu = traction({vehicle: settings.vehicle, rain: atmo.rain, snow: settings.season === 'winter', offroad: off, grip: settings.grip, handbrake: !!keys.Space});
+  const fx = Math.sin(state.yaw) * 1.4, fz = Math.cos(state.yaw) * 1.4;
+  const slope = state.grounded !== false ? (world.groundHeight(state.x + fx, state.z + fz) - world.groundHeight(state.x - fx, state.z - fz)) / 2.8 : 0;
+  const acceleration = longitudinal({vehicle: settings.vehicle, speed: state.speed, throttle, brake: keys.Space ? 1 : brake, mu, slope, offroad: off, speedFactor: settings.speedFactor, boost, powered: settings.fuel !== 'on' || state.fuel > 0, hold: state.auto || state.cruise, parking: !!keys.Space});
+  const oldSpeed = state.speed;
   state.speed = clamp(state.speed + acceleration * dt, -9, boost ? 65 : 49);
-  if (!throttle && !brake && Math.abs(state.speed) < .02) state.speed = 0;
-  // Autodrive and cruise hold the car still when stopped; holding the brake yourself still reverses.
-  if ((state.auto || state.cruise) && brake && !throttle && Math.abs(state.speed) < .08) state.speed = 0;
-  state.steer = damp(state.steer, steerTarget, 8, dt);
-  const grip = keys.Space ? .5 : settings.grip;
-  state.yaw += state.speed / 2.8 * Math.tan(state.steer) * dt * grip;
+  if (keys.Space && oldSpeed * state.speed <= 0) state.speed = 0;
+  if ((state.auto || state.cruise) && brake && !throttle && oldSpeed >= 0 && state.speed < .12) state.speed = 0;
+  if (!throttle && !brake && Math.abs(state.speed) < .02 && Math.abs(slope) < .012) state.speed = 0;
+  state.steer = damp(state.steer, steerTarget, VEHICLE_DYNAMICS[settings.vehicle].response, dt);
+  const motion = steeringMotion({vehicle: settings.vehicle, speed: state.speed, steer: state.steer, mu, acceleration, previousRate: state.yawRate || 0, dt});
+  state.yawRate = state.grounded === false ? 0 : motion.yawRate;
+  state.lateralAcceleration = motion.lateral; state.tireSlip = motion.slip;
+  state.yaw += state.yawRate * dt;
   state.x += Math.sin(state.yaw) * state.speed * dt; state.z += Math.cos(state.yaw) * state.speed * dt;
   if (state.z < -200) { state.z = -180; reset(); toast('Back on the road'); }
   barriers(r);
   collide();
   // Heavy car: rising ground (a kerb, the road edge, an uphill) is followed, never turned into a launch; it only leaves the ground where the ground drops away.
   const ground = world.groundHeight(state.x, state.z);
-  state.vy = (state.vy || 0) - 16 * dt; state.y += state.vy * dt;
+  state.vy = (state.vy || 0) - 9.81 * dt; state.y += state.vy * dt;
   if (state.y <= ground + .02) { const fall = (ground - (state.lastGround ?? ground)) / dt; state.y = ground; state.vy = Math.min(0, Math.max(fall, -8)); state.grounded = true; } else state.grounded = false;
   state.lastGround = ground; state.distance += Math.abs(state.speed) * dt / 1000; state.time += dt;
   fuelAndDirt(dt, throttle, off);
@@ -536,7 +544,8 @@ function updateCar(dt) {
   const hf = world.groundHeight(state.x + fx * L, state.z + fz * L), hb = world.groundHeight(state.x - fx * L, state.z - fz * L), hr = world.groundHeight(state.x + rx * Wd, state.z + rz * Wd), hl = world.groundHeight(state.x - rx * Wd, state.z - rz * Wd);
   const air = state.grounded === false ? 4 : 8;
   vehicle.group.rotation.x = damp(vehicle.group.rotation.x, -Math.atan2(hf - hb, L * 2), air, dt);
-  const lean = (settings.vehicle === 'bike' ? 1 : .12) * state.steer * state.speed * .065;
+  const lateral = state.lateralAcceleration || 0;
+  const lean = settings.vehicle === 'bike' ? clamp(Math.atan2(lateral, 9.81), -.65, .65) : clamp(lateral * (settings.vehicle === 'coach' ? .009 : .004), -.08, .08);
   vehicle.group.rotation.z = damp(vehicle.group.rotation.z, (settings.vehicle === 'bike' ? 0 : Math.atan2(hr - hl, Wd * 2)) + lean, air, dt);
   vehicle.group.updateMatrixWorld(); vehicle.setDirt(state.dirt);
   const inTunnel = !!world.road.tunnelAt(state.z);
@@ -585,6 +594,13 @@ function positionCamera(dt, instant = false) {
   if (settings.camera === 2) cameraPos.addScaledVector(right, bike ? 0 : (vehicle.seatX ?? .4));
   // Views from inside or on the car are fixed to it; the chase cameras follow smoothly.
   if (instant || settings.camera >= 2 || driveOrbit.focus > .001) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-5 * dt));
+  // Retract the camera boom before it passes through a following vehicle.
+  if (settings.camera < 2) {
+    const target={x:state.x,y:state.y+1.35,z:state.z};
+    const boxes=life.traffic.filter(c=>c.g.visible&&Math.abs(c.z-state.z)<40).map(c=>({x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,yaw:c.g.rotation.y,width:c.width,length:c.length,height:c.kind==='bus'?3.9:c.kind==='truck'?4.4:2.2}));
+    const fraction=boomFraction(target,camera.position,boxes);
+    if(fraction<1)camera.position.set(target.x+(camera.position.x-target.x)*fraction,target.y+(camera.position.y-target.y)*fraction,target.z+(camera.position.z-target.z)*fraction);
+  }
   lookTarget.set(state.x + forward.x * ahead, state.y + (settings.camera >= 2 ? up : 1.35), state.z + forward.z * ahead);
   if (settings.camera >= 2) lookTarget.y = world.road.y(state.z + ahead) + up * .8; else lookTarget.lerp(tmp.set(state.x, state.y + .95, state.z), driveOrbit.focus);
   camera.lookAt(lookTarget);
@@ -608,11 +624,15 @@ function frame(now) {
   effects.inTunnel = !!world.road.tunnelAt(camera.position.z);
   effects.update(dt); town.update(dt, camera); life.update(dt); railway.update(dt, camera, () => effects.getVolume());
   world.update(state.z, camera); world.scenery.update(dt, camera, state); world.roadside.update(dt, camera, railway, state);
+  world.landmarks.update(dt, state);
+  detailedModels ||= new DetailedModels(scene,settings);
+  detailedModels.update(dt,state,life.traffic,town.people,world,life.animals,town);
   routeWatch(); stopWatch(dt);
+  renderer.info.autoReset = false; renderer.info.reset();
   updateLiveReflection();
   if (composer) composer.render(dt); else renderer.render(scene, camera);
   const cockpit = settings.camera === 2 && !state.inspection && !state.viewing;
-  if (settings.mirror === 'on' && settings.quality !== 'low' && (cockpit || settings.camera === 3) && !state.viewing && !state.inspection && state.started) mirror.render(state, vehicle, settings.quality === 'high' ? 1 : 2, cockpit ? camera : null);
+  if (settings.mirror === 'on' && settings.quality !== 'low' && (cockpit || settings.camera === 3) && !state.viewing && !state.inspection && state.started) mirror.render(state, vehicle, ['high','ultra'].includes(settings.quality) ? 1 : 2, cockpit ? camera : null);
   windscreen.update(dt, {show: cockpit && settings.vehicle !== 'bike' && settings.location === 'hills' && !effects.inTunnel, rain: effects.raining ? atmo.rain : 0, speed: state.speed, wipers: effects.raining && atmo.rain > .03 && !effects.inTunnel});
   watchPerformance(dt); updateAudio(dt);
   hudClock += dt; fpsFrames++; fpsTime += elapsed;
@@ -644,7 +664,7 @@ function updateHUD() {
 export function updateUI() {
   $('autodrive-btn').classList.toggle('active', state.auto); $('autodrive-btn').setAttribute('aria-pressed', String(state.auto));
   $('drive-status').textContent = state.auto ? 'ENJOY THE VIEW' : state.cruise ? 'CRUISE CONTROL' : 'TAKE THE SCENIC ROUTE';
-  $('scene-label').innerHTML = (settings.location === 'hills' ? 'HILLS' : 'OFF-WORLD') + ' <span>/</span> ' + (settings.location === 'hills' ? settings.season : settings.planet).toUpperCase();
+  $('scene-label').innerHTML = (settings.location === 'hills' ? (inDestination(settings,state.z) ? DESTINATIONS[settings.destination].name.toUpperCase() : 'HILLS') : 'OFF-WORLD') + ' <span>/</span> ' + (settings.location === 'hills' ? settings.season : settings.planet).toUpperCase();
   $('camera-label').textContent = ['CHASE', 'FAR CHASE', 'COCKPIT', 'BONNET', 'BUMPER'][settings.camera];
   $('speed-unit').textContent = settings.units === 'mi' ? 'MPH' : 'KM / H'; document.querySelector('.journey>span').textContent = settings.units === 'mi' ? 'MILES' : 'KILOMETERS';
   $('pause-indicator').hidden = !state.paused;
@@ -787,16 +807,17 @@ function closePanel() { endAllTouchDrive(); panelOpen = false; $('panel').hidden
 function options(key, values) { return `<div class="options">${values.map((v) => { const [value, label] = Array.isArray(v) ? v : [v, v]; return `<button data-setting="${key}" data-value="${value}" class="${settings[key] === value ? 'selected' : ''}" aria-pressed="${settings[key] === value}">${label}</button>`; }).join('')}</div>`; }
 function section(label, html) { return `<div class="control-group"><label>${label}</label>${html}</div>`; }
 function panelMarkup(name) {
-  if (name === 'world') return section('LANDSCAPE', options('location', [['hills', 'Hills'], ['offworld', 'Off-World']])) + section('ROAD', options('roadStyle', [['straight', 'Straight'], ['casual', 'Casual'], ['normal', 'Normal'], ['winding', 'Winding']])) + section('AT JUNCTIONS', options('junctions', [['surprise', 'Surprise me'], ['straight', 'Keep straight on']]) + '<p class="hint">What autodrive does at a junction. Indicate with Q or E, or tap the sign that pops up, to choose your own way.</p>') + section('WORLD SEED', '<input id="seed-input" aria-label="World seed" type="text" maxlength="60"><button id="generate-btn" class="action-btn">Generate a new journey ↗︎</button><p class="hint">The same seed always leads to the same road.</p>');
+  if (name === 'world') return section('DESTINATIONS', `<div class="destination-list">${Object.entries(DESTINATIONS).map(([key, d]) => `<button data-destination="${key}" aria-pressed="${settings.destination === key}" class="destination-card ${settings.destination === key ? 'selected' : ''}"><strong>${d.name}</strong><span>${d.detail}</span></button>`).join('')}</div>`) + section('LANDSCAPE', options('location', [['hills', 'Hills'], ['offworld', 'Off-World']])) + section('ROAD', options('roadStyle', [['straight', 'Straight'], ['casual', 'Casual'], ['normal', 'Normal'], ['winding', 'Winding']])) + section('AT JUNCTIONS', options('junctions', [['surprise', 'Surprise me'], ['straight', 'Keep straight on']]) + '<p class="hint">What autodrive does at a junction. Indicate with Q or E, or tap the sign that pops up, to choose your own way.</p>') + section('WORLD SEED', '<input id="seed-input" aria-label="World seed" type="text" maxlength="60"><button id="generate-btn" class="action-btn">Generate a new journey ↗︎</button><p class="hint">The same seed always leads to the same road.</p>');
   if (name === 'style') return (settings.location === 'hills' ? section('SEASON', options('season', [['spring', 'Spring'], ['summer', 'Summer'], ['autumn', 'Autumn'], ['winter', 'Winter']])) : section('PLANET', options('planet', [['mars', 'Mars'], ['moon', 'Moon'], ['venus', 'Venus']]))) + section('TIME OF DAY', options('time', [['dawn', 'Dawn'], ['day', 'Day'], ['sunset', 'Golden hour'], ['night', 'Night']])) + section('CLOCK', options('clock', [['live', 'Time passes'], ['still', 'Hold the time']]) + '<p class="hint">With time passing, a whole day goes by in about half an hour: sunset, night, dawn.</p>') + section('WEATHER', options('weather', [['changing', 'Changing'], ['clear', 'Clear skies'], ['overcast', 'Overcast'], ['rain', 'Rain & thunder']]));
   if (name === 'vehicle') return section('YOUR RIDE', options('vehicle', [['coupe', 'Coupé'], ['coach', 'Coach'], ['bike', 'Bike']])) + '<p class="vehicle-description">' + ({coupe: 'A detailed sports coupé with sculpted bodywork, alloy wheels, and reflective paint. Balanced, responsive, and made for the long way home.', coach: 'A higher perspective on the open road. Take your time and watch the scenery unfold.', bike: 'Light, nimble, and a little closer to the elements.'}[settings.vehicle]) + '</p>' + '<button id="inspect-car" class="action-btn">Explore in 3D <span>↗︎</span></button>' + (state.dirt > .15 ? '<button id="wash-car" class="action-btn">Wash the car <span>↗︎</span></button>' : '') + section('PAINT', `<div class="options swatches">${['#e9e7db', '#b51f25', '#335b4c', '#7b9ba8', '#333a43', '#d6ba75'].map((c) => `<button data-setting="color" data-value="${c}" aria-label="${{'#e9e7db': 'Pearl', '#335b4c': 'Forest', '#7b9ba8': 'Glacier', '#b51f25': 'Racing red', '#333a43': 'Graphite', '#d6ba75': 'Champagne'}[c]} paint" class="${settings.color === c ? 'selected' : ''}" style="background:${c}"></button>`).join('')}</div>`) + section('VIEW', options('camera', [[0, 'Chase'], [1, 'Far'], [2, 'Cockpit'], [3, 'Bonnet'], [4, 'Bumper']]));
   if (name === 'help') return '<p class="vehicle-description">There’s no finish line. Drive at your own pace, or let autodrive take you somewhere new.</p><div class="keylist">' + [['Look around / return behind', 'Drag / release'], ['Explore car in 3D', 'V'], ['Accelerate / brake', 'W / S or ↑︎ / ↓︎'], ['Steer', 'A / D or ←︎ / →︎'], ['Indicate left / right', 'Q / E'], ['Autodrive', 'F'], ['Boost', 'Shift'], ['Handbrake', 'Space'], ['Radio station', 'N'], ['Reset on road', 'R'], ['Change camera', 'C'], ['Cruise control', 'J'], ['Adjust cruise speed', 'I / K'], ['Headlights', 'H'], ['Horn', 'G'], ['Pause', 'P'], ['Mute', 'M'], ['Hide interface', 'U'], ['Performance', 'F4'], ['Settings', 'Esc']].map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div><p class="hint">At a junction, indicate towards the side road (or tap the sign) to take it. Stop in a petrol station, café or viewpoint for something to do there.</p><p class="hint">Gamepad: left stick to steer, right trigger to accelerate, left trigger to brake.</p><p class="hint">3D car: Ferrari 458 Italia by <a href="https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6" target="_blank" rel="noopener noreferrer">vicent091036</a>, via the <a href="https://threejs.org/examples/webgl_materials_car.html" target="_blank" rel="noopener noreferrer">Three.js car demo</a>. Adapted materials and animation.</p>';
-  return section('RENDER QUALITY', options('quality', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']])) + section('CAMERA FIELD OF VIEW', `<input aria-label="Field of view" data-range="fov" type="range" min="45" max="85" step="1" value="${settings.fov}">`) + section('AUTODRIVE', options('autoMode', [['full', 'Full auto'], ['steering', 'Steer only'], ['speed', 'Speed only']])) + section('DRIVING LANE', options('autoLane', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']])) + section('RUSH MODE', options('rushMode', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Autodrive drives faster and overtakes as soon as a gap opens, even with oncoming cars in the distance.</p>') + section('ONCOMING TRAFFIC', options('trafficOncoming', [['on', 'On'], ['off', 'Off']])) + section('TRAFFIC IN YOUR LANE', options('trafficOwn', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Slower cars, buses and delivery trucks ahead of you. Autodrive follows them and overtakes when the road is clear.</p>') + section('CYCLISTS', options('cyclists', [['on', 'On'], ['off', 'Off']])) + section('FUEL GAUGE', options('fuel', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Keep an eye on the tank and fill up at petrol stations. Autodrive pulls in by itself when it runs low.</p>') + section('REAR-VIEW MIRROR', options('mirror', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Shown in the cockpit and bonnet views.</p>') + section('UNITS', options('units', [['km', 'Kilometers'], ['mi', 'Miles']])) + section('SOUND', [['volume', 'Master'], ['vehicleVolume', 'Vehicle'], ['weatherVolume', 'Weather'], ['sfxVolume', 'Effects'], ['radioVolume', 'Radio']].map(([k, label]) => `<label class="setting-line">${label}<input aria-label="${label} volume" data-range="${k}" type="range" min="0" max="1" step=".05" value="${settings[k]}"></label>`).join('') + '<p class="hint">Vehicle: engine, brakes, wind and indicators. Weather: rain and thunder. Effects: trains and aircraft.</p>') + section('RADIO', `<div class="options radio-options">${[[-1, 'Off'], ...STATIONS.map((s, i) => [i, s.name])].map(([i, label]) => `<button data-radio="${i}" class="${settings.radio === i ? 'selected' : ''}" aria-pressed="${settings.radio === i}">${label}</button>`).join('')}</div><p class="hint">${STATIONS.map((s) => `${s.name}: ${s.tag}`).join(' · ')}</p>`) + section('ROAD WIDTH', `<input aria-label="Road width" data-range="roadWidth" type="range" min="8" max="13" step=".5" value="${settings.roadWidth}">`) + section('HANDLING', `<label class="setting-line">Grip<input aria-label="Grip" data-range="grip" type="range" min=".4" max="1.5" step=".1" value="${settings.grip}"></label><label class="setting-line">Speed<input aria-label="Speed factor" data-range="speedFactor" type="range" min=".5" max="2" step=".1" value="${settings.speedFactor}"></label>`);
+  return section('RENDER QUALITY', options('quality', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']])) + section('CAMERA FIELD OF VIEW', `<input aria-label="Field of view" data-range="fov" type="range" min="45" max="85" step="1" value="${settings.fov}">`) + section('AUTODRIVE', options('autoMode', [['full', 'Full auto'], ['steering', 'Steer only'], ['speed', 'Speed only']])) + section('DRIVING LANE', options('autoLane', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']])) + section('RUSH MODE', options('rushMode', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Autodrive drives faster and overtakes as soon as a gap opens, even with oncoming cars in the distance.</p>') + section('ONCOMING TRAFFIC', options('trafficOncoming', [['on', 'On'], ['off', 'Off']])) + section('TRAFFIC IN YOUR LANE', options('trafficOwn', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Slower cars, buses and delivery trucks ahead of you. Autodrive follows them and overtakes when the road is clear.</p>') + section('CYCLISTS', options('cyclists', [['on', 'On'], ['off', 'Off']])) + section('FUEL GAUGE', options('fuel', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Keep an eye on the tank and fill up at petrol stations. Autodrive pulls in by itself when it runs low.</p>') + section('REAR-VIEW MIRROR', options('mirror', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Shown in the cockpit and bonnet views.</p>') + section('UNITS', options('units', [['km', 'Kilometers'], ['mi', 'Miles']])) + section('SOUND', [['volume', 'Master'], ['vehicleVolume', 'Vehicle'], ['weatherVolume', 'Weather'], ['sfxVolume', 'Effects'], ['radioVolume', 'Radio']].map(([k, label]) => `<label class="setting-line">${label}<input aria-label="${label} volume" data-range="${k}" type="range" min="0" max="1" step=".05" value="${settings[k]}"></label>`).join('') + '<p class="hint">Vehicle: engine, brakes, wind and indicators. Weather: rain and thunder. Effects: trains and aircraft.</p>') + section('RADIO', `<div class="options radio-options">${[[-1, 'Off'], ...STATIONS.map((s, i) => [i, s.name])].map(([i, label]) => `<button data-radio="${i}" class="${settings.radio === i ? 'selected' : ''}" aria-pressed="${settings.radio === i}">${label}</button>`).join('')}</div><p class="hint">${STATIONS.map((s) => `${s.name}: ${s.tag}`).join(' · ')}</p>`) + section('ROAD WIDTH', `<input aria-label="Road width" data-range="roadWidth" type="range" min="8" max="13" step=".5" value="${settings.roadWidth}">`) + section('HANDLING', `<label class="setting-line">Grip<input aria-label="Grip" data-range="grip" type="range" min=".4" max="1.5" step=".1" value="${settings.grip}"></label><label class="setting-line">Speed<input aria-label="Speed factor" data-range="speedFactor" type="range" min=".5" max="2" step=".1" value="${settings.speedFactor}"></label>`);
 }
 function bindPanel() {
   if ($('inspect-car')) $('inspect-car').onclick = () => inspectCar(true);
   if ($('wash-car')) $('wash-car').onclick = () => { state.dirt = 0; toast('Sparkling clean'); openPanel('vehicle'); };
   const name = $('panel-title').textContent.toLowerCase();
+  for (const b of document.querySelectorAll('[data-destination]')) b.onclick = () => { changeSetting('destination', b.dataset.destination); closePanel(); toast(DESTINATIONS[settings.destination].name); };
   for (const b of document.querySelectorAll('[data-setting]')) b.onclick = () => { const key = b.dataset.setting; changeSetting(key, key === 'camera' ? Number(b.dataset.value) : b.dataset.value); openPanel(name); };
   for (const b of document.querySelectorAll('[data-radio]')) b.onclick = () => { initAudio(); if (audioContext?.state === 'suspended') audioContext.resume(); const i = Number(b.dataset.radio); settings.radio = i; save(); radio?.tune(i); openPanel(name); };
   for (const input of document.querySelectorAll('[data-range]')) { input.onchange = () => changeSetting(input.dataset.range, Number(input.value)); if (/olume$/.test(input.dataset.range)) input.oninput = input.onchange; }
@@ -812,11 +833,11 @@ if (new URLSearchParams(location.search).has('debug')) window.evermile = {state,
 const modelContext = document.modelContext;
 if (modelContext?.registerTool) {
   const controller = new AbortController(); addEventListener('pagehide', () => controller.abort(), {once: true});
-  const read = () => ({game: 'Evermile', started: state.started, paused: state.paused || panelOpen || state.inspection, autodrive: state.auto, speedKmh: Math.round(Math.abs(state.speed) * 3.6), distanceKm: Number(state.distance.toFixed(3)), fps: state.fps, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, chunks: world.chunks.size, onRoad: !state.offroad, road: world.road.typeAt(state.z), clock: atmo.clock, vehicle: settings.vehicle, detailedCarLoaded: !!vehicle.detailed, location: settings.location, season: settings.season, timeOfDay: atmo.period, weather: {cloud: Number(atmo.cloud.toFixed(2)), rain: Number(atmo.rain.toFixed(2))}, camera: settings.camera, cameraOrbit: {dragging: !!driveOrbit.pointer, yawDegrees: Number((driveOrbit.yaw * 180 / Math.PI).toFixed(1)), pitchDegrees: Number((driveOrbit.pitch * 180 / Math.PI).toFixed(1)), returning: !driveOrbit.pointer && Math.abs(driveOrbit.yaw) + Math.abs(driveOrbit.pitch) > .01}});
+  const read = () => ({game: 'Evermile', detailedModels: detailedModels ? {loaded:Object.keys(detailedModels.loaded),errors:detailedModels.errors,traffic:life.traffic.filter(c=>c.detailModel?.visible).length,people:town.people.filter(p=>p.detailed).length,pedestrianTypes:[...new Set(town.people.filter(p=>p.detailed).map(p=>p.i%6))],animals:life.animals.filter(a=>detailedModels.animalModels.has(a)).reduce((out,a)=>(out[a.kind]=(out[a.kind]||0)+1,out),{})} : null, position: {x: state.x, y: state.y, z: state.z}, cameraPosition: camera.position.toArray(), terrainAtCamera: world.surfaceHeight(camera.position.x,camera.position.z), started: state.started, paused: state.paused || panelOpen || state.inspection, autodrive: state.auto, speedKmh: Math.round(Math.abs(state.speed) * 3.6), distanceKm: Number(state.distance.toFixed(3)), fps: state.fps, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, chunks: world.chunks.size, onRoad: !state.offroad, road: world.road.typeAt(state.z), clock: atmo.clock, vehicle: settings.vehicle, detailedCarLoaded: !!vehicle.detailed, location: settings.location, destination: settings.destination, tireSlip: state.tireSlip || 0, season: settings.season, timeOfDay: atmo.period, weather: {cloud: Number(atmo.cloud.toFixed(2)), rain: Number(atmo.rain.toFixed(2))}, camera: settings.camera, cameraOrbit: {dragging: !!driveOrbit.pointer, yawDegrees: Number((driveOrbit.yaw * 180 / Math.PI).toFixed(1)), pitchDegrees: Number((driveOrbit.pitch * 180 / Math.PI).toFixed(1)), returning: !driveOrbit.pointer && Math.abs(driveOrbit.yaw) + Math.abs(driveOrbit.pitch) > .01}});
   const tools = [
     {name: 'get_drive_status', description: 'Read the current Evermile driving state and rendering performance.', inputSchema: {type: 'object', properties: {}, additionalProperties: false}, annotations: {readOnlyHint: true}, execute: () => read()},
     {name: 'start_drive', description: 'Start Evermile and optionally enable or disable autodrive, using the normal game controls.', inputSchema: {type: 'object', properties: {autodrive: {type: 'boolean'}}, required: ['autodrive'], additionalProperties: false}, annotations: {readOnlyHint: false}, execute: async (input) => { if (typeof input?.autodrive !== 'boolean') throw new Error('autodrive must be boolean'); inspectCar(false); state.paused = false; begin(); closePanel(); toggleAuto(input.autodrive); await new Promise(requestAnimationFrame); return read(); }},
-    {name: 'configure_drive', description: 'Change the vehicle, landscape, season, time, or camera using the same options as the visible menus.', inputSchema: {type: 'object', properties: {vehicle: {type: 'string', enum: valid.vehicle}, location: {type: 'string', enum: valid.location}, season: {type: 'string', enum: valid.season}, time: {type: 'string', enum: valid.time}, weather: {type: 'string', enum: valid.weather}, camera: {type: 'integer', minimum: 0, maximum: 4}}, additionalProperties: false}, annotations: {readOnlyHint: false}, execute: async (input) => { if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Expected options object'); for (const [key, value] of Object.entries(input)) { if (key === 'camera') { if (!Number.isInteger(value) || value < 0 || value > 4) throw new Error('Invalid camera'); } else if (!['vehicle', 'location', 'season', 'time', 'weather'].includes(key) || !valid[key].includes(value)) throw new Error('Invalid option: ' + key); } for (const [key, value] of Object.entries(input)) changeSetting(key, value); await new Promise(requestAnimationFrame); return read(); }},
+    {name: 'configure_drive', description: 'Change the destination, vehicle, landscape, season, time, or camera using the same options as the visible menus.', inputSchema: {type: 'object', properties: {destination: {type: 'string', enum: valid.destination}, vehicle: {type: 'string', enum: valid.vehicle}, location: {type: 'string', enum: valid.location}, season: {type: 'string', enum: valid.season}, time: {type: 'string', enum: valid.time}, weather: {type: 'string', enum: valid.weather}, camera: {type: 'integer', minimum: 0, maximum: 4}}, additionalProperties: false}, annotations: {readOnlyHint: false}, execute: async (input) => { if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Expected options object'); for (const [key, value] of Object.entries(input)) { if (key === 'camera') { if (!Number.isInteger(value) || value < 0 || value > 4) throw new Error('Invalid camera'); } else if (!['destination', 'vehicle', 'location', 'season', 'time', 'weather'].includes(key) || !valid[key].includes(value)) throw new Error('Invalid option: ' + key); } for (const [key, value] of Object.entries(input)) changeSetting(key, value); await new Promise(requestAnimationFrame); return read(); }},
     {name: 'reset_vehicle', description: 'Put the vehicle back on the road and stop it, like pressing R.', inputSchema: {type: 'object', properties: {}, additionalProperties: false}, annotations: {readOnlyHint: false}, execute: () => { reset(); updateUI(); return read(); }},
   ];
   for (const tool of tools) try { Promise.resolve(modelContext.registerTool(tool, {signal: controller.signal})).catch(() => {}); } catch {}

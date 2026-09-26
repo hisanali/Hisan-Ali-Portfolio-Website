@@ -1,0 +1,104 @@
+{
+  "files": [
+    {
+      "path": "evermile/assets/models/cat.glb",
+      "bytes": 1151036,
+      "sha256": "d3e814edfa3b574fb39bcd54d2e4efd43a358c2ef77ae2ad4d047d0e4c5d2a96"
+    },
+    {
+      "path": "evermile/assets/models/cow.glb",
+      "bytes": 1991208,
+      "sha256": "16d7ae7c0f44bbe4c6ac13afb99c1427b07c767f8f50e57ef6583996790ae99a"
+    },
+    {
+      "path": "evermile/assets/models/dog.glb",
+      "bytes": 1705376,
+      "sha256": "043a546318f73bc074434c78df16206aae4aa578f04629a9209910f8be9f9b95"
+    },
+    {
+      "path": "evermile/assets/models/fox.glb",
+      "bytes": 162852,
+      "sha256": "d97044e701822bac5a62696459b27d7b375aada5de8574ed4362edbba94771f7"
+    },
+    {
+      "path": "evermile/assets/models/pedestrian-0.glb",
+      "bytes": 2424160,
+      "sha256": "7fd83bcd8d99b53b28b6afdaf5a5cde7a8fafdaa0967227524c065566d96dd29"
+    },
+    {
+      "path": "evermile/assets/models/pedestrian-1.glb",
+      "bytes": 2527648,
+      "sha256": "648a0fa4bfebf9cf70447de1714420e0340eb14dd55d282de7fad49ba1c3a5d5"
+    },
+    {
+      "path": "evermile/assets/models/pedestrian-2.glb",
+      "bytes": 2289896,
+      "sha256": "1d8bae1bab27897a55e56d2ffc48300943d48c002a254c50691f54c44ef1aabd"
+    },
+    {
+      "path": "evermile/assets/models/pedestrian-3.glb",
+      "bytes": 2125044,
+      "sha256": "cd6aa0ac5c4c824d6ed0188c21216110dc56314e13bf172c1593e97bf9a19ca0"
+    },
+    {
+      "path": "evermile/assets/models/pedestrian-4.glb",
+      "bytes": 2875508,
+      "sha256": "14291b1e0bd5228e5b2c1b466e983dd356301d9d1c78018ae444580bf9be90b3"
+    },
+    {
+      "path": "evermile/assets/models/pedestrian-5.glb",
+      "bytes": 2345428,
+      "sha256": "597036ca0b95e7402af421b4b7967636d5955cea812333b3893421860c78916b"
+    },
+    {
+      "path": "evermile/assets/models/sheep.glb",
+      "bytes": 1364016,
+      "sha256": "68eed882e11a886b21ac8bc40cd69743c532f1bc239dc2f0daf9d1b00247ced9"
+    },
+    {
+      "path": "evermile/assets/models/traffic-car.glb",
+      "bytes": 7085876,
+      "sha256": "91b62b4a1ad567c05408702dfacc087f6e5f368d649e0aa6f43211f7b5cbc9a1"
+    },
+    {
+      "path": "scripts/evermile/source/CarConcept.glb",
+      "bytes": 11778688,
+      "sha256": "c272098089d78c5cd9fd9f24ff50ee8acf8d932c55f2d55fc10adb6c8998966b"
+    },
+    {
+      "path": "scripts/evermile/source/african-female-old.target",
+      "bytes": 408823,
+      "sha256": "c165e7caf01aaf45511ebc78a441c8c73ead13231af1a8c6666941345f088b61"
+    },
+    {
+      "path": "scripts/evermile/source/african-male-young.target",
+      "bytes": 406170,
+      "sha256": "894abc1fbb3d28543a51fef16f89d5d4bdf9aa2e1534413339811a3d47818b7d"
+    },
+    {
+      "path": "scripts/evermile/source/asian-female-young.target",
+      "bytes": 435553,
+      "sha256": "095fe79694fa19e1fe98d93009ec116199bd524e081c640351a10eccf2cca1eb"
+    },
+    {
+      "path": "scripts/evermile/source/asian-male-old.target",
+      "bytes": 427966,
+      "sha256": "36dc5a3a135ded33885e814806b0e3668ca5bf44bddcebdee48ae75ae68bc3d3"
+    },
+    {
+      "path": "scripts/evermile/source/caucasian-female-young.target",
+      "bytes": 420559,
+      "sha256": "118379f6e8ba9266247fdb8788a20e1df40a239f97ced0b9905bcbcc74f6e820"
+    },
+    {
+      "path": "scripts/evermile/source/caucasian-male-young.target",
+      "bytes": 396479,
+      "sha256": "70e228ba7164737dae664454394536fc5935fa48d333c1a97d77e2dc6eacc5f5"
+    },
+    {
+      "path": "scripts/evermile/source/human-base.obj",
+      "bytes": 1749303,
+      "sha256": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c"
+    }
+  ]
+}
