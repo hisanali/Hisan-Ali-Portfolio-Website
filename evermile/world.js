@@ -1,11 +1,11 @@
-import {Landmarks} from './landmarks.js?v=20260926-transit3';
-import {upgradeSurfaces} from './materials.js?v=20260926-transit3';
+import {Landmarks} from './landmarks.js?v=20260926-supplied7';
+import {upgradeSurfaces} from './materials.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
-import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260926-transit3';
-import {Network, TYPES, ZONE, SEA} from './network.js?v=20260926-transit3';
-import {Scenery} from './scenery.js?v=20260926-transit3';
-import {Roadside} from './roadside.js?v=20260926-transit3';
-import {sheltered} from './atmosphere.js?v=20260926-transit3';
+import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260926-supplied7';
+import {Network, TYPES, ZONE, SEA} from './network.js?v=20260926-supplied7';
+import {Scenery} from './scenery.js?v=20260926-supplied7';
+import {Roadside} from './roadside.js?v=20260926-supplied7';
+import {sheltered} from './atmosphere.js?v=20260926-supplied7';
 
 // The landscape around the road network: terrain, road surfaces, trees, rocks, grass and guard rails, built in 240 m chunks.
 const scratch = new T.Object3D(), col = new T.Color(), col2 = new T.Color();

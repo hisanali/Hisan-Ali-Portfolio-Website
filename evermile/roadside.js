@@ -1,10 +1,10 @@
-import {RoadsideModels} from './roadside-models.js?v=20260926-transit3';
+import {RoadsideModels} from './roadside-models.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
-import {random, noise, smooth, lerp, clamp} from './math.js?v=20260926-transit3';
-import {GlowPoints} from './glow.js?v=20260926-transit3';
-import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260926-transit3';
-import {sheltered} from './atmosphere.js?v=20260926-transit3';
-import {ZONE, TYPES, SEA} from './network.js?v=20260926-transit3';
+import {random, noise, smooth, lerp, clamp} from './math.js?v=20260926-supplied7';
+import {GlowPoints} from './glow.js?v=20260926-supplied7';
+import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260926-supplied7';
+import {sheltered} from './atmosphere.js?v=20260926-supplied7';
+import {ZONE, TYPES, SEA} from './network.js?v=20260926-supplied7';
 
 // Everything built along the road network itself: tunnels, motorway furniture, junction signs, the railway and its
 // level crossings, petrol stations, cafés and viewpoints, lighthouses on the coast, snowbanks up high and farm fields.

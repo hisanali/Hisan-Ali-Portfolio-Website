@@ -1,6 +1,7 @@
 // SI units. A traction-limited bicycle model; not a full suspension/tire simulator.
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export const VEHICLE_DYNAMICS = {
+ mercedes: {mass: 1220, wheelbase: 2.66, power: 90000, force: 4700, brake: 8.7, drag: .43, rolling: .015, response: 6.5, mu: .96},
  coupe: {mass: 1480, wheelbase: 2.8, power: 185000, force: 7900, brake: 10.4, drag: .39, rolling: .014, response: 7.5, mu: 1.04},
  coach: {mass: 11500, wheelbase: 6.1, power: 245000, force: 42000, brake: 6.7, drag: 3.2, rolling: .012, response: 4.0, mu: .86},
  bike: {mass: 270, wheelbase: 1.42, power: 65000, force: 1900, brake: 9.0, drag: .25, rolling: .016, response: 10, mu: 1.02},

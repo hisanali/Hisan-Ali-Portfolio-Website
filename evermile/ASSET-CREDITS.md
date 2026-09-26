@@ -148,3 +148,26 @@ The traffic-signal housing is adapted from **Kenney City Kit Roads**, **CC0**. E
 
 - Source and license: https://opengameart.org/content/city-kit-roads
 - Runtime: `prop-signal.glb`; source and license: `scripts/evermile/source/transport/signals/`.
+
+
+## User-supplied models — 26 September 2026
+
+**1982 Mercedes W201** by **Dave Love SketchFab / Tyler_Dave**, **CC BY 4.0**, supplied as `1982_mercedes_w201.glb`.
+
+- Source embedded in the file: https://sketchfab.com/3d-models/1982-mercedes-w201-9b2ea34482654173a7f421aab8f1b287
+- Adaptation: metre scale, independent wheel/caliper rigs, removal of duplicate motion-blur meshes, lamp anchors, glass/material adjustments, playable saloon and traffic integration.
+
+**EngineTrain** by **DJMaesen**, **CC BY 4.0**, supplied as `enginetrain.glb`.
+
+- Source embedded in the file: https://sketchfab.com/3d-models/enginetrain-b90db0a968dd4ddd85e04eab7f15163f
+- Adaptation: remove the source track diorama, fit the existing locomotive slot, preserve textures, separate twelve rolling wheels, batch static bogie/body parts. Existing rail paths, carriages and crossing control remain in use.
+
+**HORSE - Realistic 3D Model (DEMO FREE)** and **FOX - Realistic 3D Model (DEMO FREE)** by **WildMesh 3D**, marked **CC BY-NC 4.0** in both supplied GLBs. The original non-commercial license designation is retained; user approval to use the models does not change that designation.
+
+- Horse: https://sketchfab.com/3d-models/horse-realistic-3d-model-demo-free-65d6a70a6721495f938c93e80a5998e4
+- Fox: https://sketchfab.com/3d-models/fox-realistic-3d-model-demo-free-83b1b144712c43d282d90c2fb15ba450
+- Adaptation: native glTF rigs/animation channels retained, clip names standardized, legacy specular/glossiness materials converted to metallic/roughness, saddle meshes omitted from the field horse. Walk/idle blend is driven by actual travel.
+
+**Bighorn demo** was supplied as `bighorn-realistic-3d-model-demo-free.zip`, containing `BIGHORN_DEMO.fbx` and two textures. No license text or source-page link was included in that archive. Attribution/source details were not supplied; the archive metadata remains unresolved. The FBX rig, walk/idle clips and textures are converted to GLB; the separate horn mesh retains its original head-bone attachment, and the native breathing loop supplies the idle state.
+
+Original supplied files are retained under `scripts/evermile/source/supplied/`. Conversion is reproducible with `scripts/evermile/import-supplied.py`. The user authorized publication of this supplied-asset pass on 26 September 2026.

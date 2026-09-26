@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
-import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260926-transit3';
+import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260926-supplied7';
 export class TrafficModels {
- constructor(){this.loaded={};this.errors=[];const loader=new GLTFLoader();for(const style of ['sedan','hatch','suv','wagon','pickup','van','bus','coach'])loader.load(new URL('./assets/models/road-'+style+'.glb?v=transit3',import.meta.url).href,g=>this.loaded[style]=g.scene,undefined,e=>{this.errors.push(style);console.warn('Traffic asset',style,e.message)});}
+ constructor(){this.loaded={};this.errors=[];const loader=new GLTFLoader();for(const style of ['sedan','hatch','suv','wagon','pickup','van','bus','coach','mercedes'])loader.load(new URL('./assets/models/road-'+style+'.glb?v=supplied7',import.meta.url).href,g=>this.loaded[style]=g.scene,undefined,e=>{this.errors.push(style);console.warn('Traffic asset',style,e.message)});}
  attach(c){
   const model=this.loaded[c.style].clone(true);const original=[...c.g.children];c.g.add(model);c.detailModel=model;c.detailFallback=original;
   const wheels=[];model.traverse(o=>{if(/^Wheel_[FR][LR]$/.test(o.name))wheels.push(o);});

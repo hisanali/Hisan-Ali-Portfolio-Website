@@ -1,9 +1,11 @@
-import {batchStatic} from './mesh-batching.js?v=20260926-transit3';
+import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
+import {prepareTrain} from './train-model.js?v=20260926-supplied7';
+import {batchStatic} from './mesh-batching.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
-import {GlowPoints} from './glow.js?v=20260926-transit3';
-import {clamp} from './math.js?v=20260926-transit3';
-import {canvasTexture} from './scenery.js?v=20260926-transit3';
+import {GlowPoints} from './glow.js?v=20260926-supplied7';
+import {clamp} from './math.js?v=20260926-supplied7';
+import {canvasTexture} from './scenery.js?v=20260926-supplied7';
 
 /*
   Trains on the line beside the road. A train comes out of the tunnel at one end of the line, runs along the valley and
@@ -22,6 +24,9 @@ export class Railway {
     this.white = new T.Color(1, .96, .88); this.red = new T.Color(1, .15, .08);
     this.materials();
     this.pool = {passenger: this.makeTrain('passenger'), freight: this.makeTrain('freight')};
+    this.importErrors=[];this.ready=new GLTFLoader().loadAsync(new URL('./assets/models/train-supplied.glb?v=supplied7',import.meta.url).href).then(asset=>{
+      for(const pool of Object.values(this.pool)){const engine=pool.cars[0];engine.g.clear();engine.imported=prepareTrain(asset);engine.g.add(engine.imported.model);}
+    }).catch(e=>{this.importErrors.push(e.message);console.warn('Imported locomotive unavailable',e);});
   }
 
   materials() {
@@ -189,6 +194,7 @@ export class Railway {
       const rail = tr.rail, cam = camera.position;
       const place = (z) => [r.railX(rail, z), r.railY(rail, z) + .2];
       for (const c of tr.cars) {
+        c.imported?.update(dt,tr.delay>0?0:tr.speed);
         const zc = tr.front - tr.dir * c.offset, shown = tr.delay <= 0 && zc > rail.a - 22 && zc < rail.b + 22;
         c.g.visible = shown; if (!shown) continue;
         const [x, y] = place(zc), [xa, ya] = place(zc + 4), [xb, yb] = place(zc - 4);
@@ -198,7 +204,7 @@ export class Railway {
       }
       // Headlights at the front, tail lights at the back, lit windows after dark.
       const lead = tr.cars[0];
-      if (lead.g.visible) for (const sx of [-.95, .95]) { const v = new T.Vector3(sx, 1.45, lead.len / 2 + .1); lead.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, this.white, .7 + this.lit * .6, 26); }
+      if (lead.g.visible && !lead.imported) for (const sx of [-.95, .95]) { const v = new T.Vector3(sx, 1.45, lead.len / 2 + .1); lead.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, this.white, .7 + this.lit * .6, 26); }
       const last = tr.cars[tr.cars.length - 1];
       if (last.g.visible) for (const sx of [-.95, .95]) { const v = new T.Vector3(sx, 1.45, -last.len / 2 - .1); last.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, this.red, .6, 16); }
       // Horn before each crossing.

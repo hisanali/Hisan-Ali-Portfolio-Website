@@ -16,3 +16,7 @@ Pedestrians have six distinct adult anatomical meshes, sewn clothing volumes, ha
 Animals retain the existing pool, behavior and collision roots. Their detailed meshes replace near-distance appearance; distant animals use the original cheaper models. Named Head/Neck/Tail/Hip/Knee controls follow the existing animation. These are original modeled animals, not photogrammetry or production fur simulations.
 
 `evermile/model-studio.html` previews the actual exported assets. No raster scene images are substituted for 3D geometry.
+
+## Supplied imports
+
+Run `Blender --background --python scripts/evermile/import-supplied.py` with Blender 4.5 to reproduce the supplied W201, locomotive, horse, fox and bighorn assets. The horse/fox conversion preserves the original glTF rig data and patches materials without resampling their control rigs. Bighorn retains its original horn bone parenting; its breathing take is the runtime Idle. The car and train wheels are separated into named rotors. Source files and license notes remain alongside the pipeline and in `evermile/ASSET-CREDITS.md`. Domestic sheep are no longer registered or spawned; old files are retained only as archived source/output.

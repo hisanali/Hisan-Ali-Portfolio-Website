@@ -38,3 +38,14 @@ No paid asset was purchased. Attribution, licenses, modification notes and sourc
 ### Assets supplied by the user
 
 Preferred: GLB with embedded 2K textures, with source URL and license. People/animals should have a skin rig and in-place walk/idle clips. Vehicles should have separate wheel meshes; separate handlebars/forks are useful on bikes. If only glTF is available, retain the `.gltf`, `.bin` and texture directory together in a ZIP. FBX can be converted but should include its texture files.
+
+
+## Supplied-asset integration
+
+Added the user-supplied Mercedes W201 as a selectable vehicle and one traffic variant, with independently rigged wheels/calipers and preserved textured cockpit. Added the supplied locomotive to passenger and freight train pools, with twelve wheel rotors; existing wagons, tracks and crossing controls remain. Added three horses and four bighorns to field herds, and replaced the close-up fox with the supplied animated model. The user subsequently requested sheep removal: domestic sheep no longer spawn, cross roads, load a model, or appear in Model Studio. Other species, including the separately supplied bighorn, remain.
+
+The original horse/fox glTF animation channels are retained because Blender resampling changed their root basis. Their legacy specular/glossiness materials are converted to the renderer's metallic/roughness format. Bighorn horns are a separate source object and are attached to the head rig. The original saddled horse remains in source; field horses omit the tack meshes.
+
+Model Studio includes all five new imports. Browser checked model rendering and Mercedes chase/cockpit driving; animal scale, root drift, wheel rolling and native clips have regression checks. This is still a simplified game simulation, and the W201's textured dashboard instruments are static. Horse/fox retain their source non-commercial license; the bighorn archive lacks license/source metadata. See ASSET-CREDITS.md. Publication of this supplied-asset pass was authorized on 26 September 2026; deployment is verified separately against the production files.
+
+Validation after sheep removal: all 82 Evermile tests pass, including native animal clips, horn attachment, wheel pivots and locomotive scale. Reloaded game reports no sheep assets or instances, all new imports loaded, an active imported train, and no browser warnings/errors. W201 acceleration and steering-release checks ran in the rendered game loop; steering/yaw rate settled near zero. This short check is not an exhaustive handling audit.

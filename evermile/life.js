@@ -1,14 +1,14 @@
-import {addMicroSurface} from './surface-detail.js?v=20260926-transit3';
-import {batchStatic} from './mesh-batching.js?v=20260926-transit3';
+import {addMicroSurface} from './surface-detail.js?v=20260926-supplied7';
+import {batchStatic} from './mesh-batching.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260926-transit3';
-import {clamp} from './math.js?v=20260926-transit3';
-import {canvasTexture} from './scenery.js?v=20260926-transit3';
-import {ZONE} from './network.js?v=20260926-transit3';
+import {GlowPoints} from './glow.js?v=20260926-supplied7';
+import {clamp} from './math.js?v=20260926-supplied7';
+import {canvasTexture} from './scenery.js?v=20260926-supplied7';
+import {ZONE} from './network.js?v=20260926-supplied7';
 
-// Life around the road: grazing cows and sheep, dogs and cats by the verge, and traffic: cars, buses that stop at bus
+// Life around the road: grazing cows, horses and bighorns, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -38,7 +38,7 @@ export class Life {
     this.traffic = [];
     this.parked = [];
     this.buildAnimals();
-    for (const mat of [this.m.wool,this.m.cow,this.m.brownCow,...this.m.dogs,...this.m.cats]) if(mat) addMicroSurface(mat,mat===this.m.wool?'wool':'fur',mat===this.m.wool?.035:.009);
+    for (const mat of [this.m.bighornCoat,this.m.cow,this.m.brownCow,...this.m.dogs,...this.m.cats]) if(mat) addMicroSurface(mat,'fur',.009);
     this.buildTraffic();
     addMicroSurface(this.m.tyre,'rubber',.012);
   }
@@ -50,8 +50,8 @@ export class Life {
       muzzle: new T.MeshStandardMaterial({color: 0xd9a39a, roughness: .7}),
       hoof: new T.MeshStandardMaterial({color: 0x2a2420, roughness: .7}),
       horn: new T.MeshStandardMaterial({color: 0xe8dcc4, roughness: .5}),
-      wool: new T.MeshStandardMaterial({color: 0xeae6dc, roughness: .98, flatShading: false}),
-      sheepFace: new T.MeshStandardMaterial({color: 0x2c2826, roughness: .8}),
+      bighornCoat: new T.MeshStandardMaterial({color: 0x82715b, roughness: .98, flatShading: false}),
+      bighornFace: new T.MeshStandardMaterial({color: 0x2c2826, roughness: .8}),
       dogs: [0x8a5a32, 0x2a2624, 0xc9a06a, 0xe8e2d6].map((c) => new T.MeshStandardMaterial({color: c, roughness: .8})),
       cats: [0xd2843c, 0x3a3634, 0x9a948c, 0xf0ece4].map((c) => new T.MeshStandardMaterial({color: c, roughness: .75})),
       eye: new T.MeshStandardMaterial({color: 0x101010, roughness: .2}),
@@ -117,18 +117,17 @@ export class Life {
     return {g, neck, head, legs, tail, kind: 'cow', size: 2.4, gait: 3.6};
   }
 
-  sheep() {
+  bighorn() {
     const g = new T.Group();
-    for (const [x, y, z, s] of [[0, .78, .05, 1], [.12, .86, .32, .7], [-.12, .86, .3, .7], [.14, .84, -.26, .72], [-.14, .84, -.28, .72], [0, .98, 0, .62], [0, .74, .42, .6], [0, .76, -.44, .62]]) {
-      const lump = part(this.g.woolBody, this.m.wool, x, y - .08, z, g); lump.scale.setScalar(.5 * s); lump.rotation.set(rand(0, 3), rand(0, 3), 0);
-    }
+    part(this.g.sphere, this.m.bighornCoat, 0, .75, 0, g).scale.set(.36, .46, .65);
     const neck = new T.Group(); neck.position.set(0, .8, .52); g.add(neck);
     const head = new T.Group(); head.position.set(0, -.04, .14); neck.add(head);
-    part(new RoundedBoxGeometry(.18, .22, .3, 3, .07), this.m.sheepFace, 0, 0, .06, head);
-    part(this.g.woolBody, this.m.wool, 0, .12, -.04, head).scale.set(.24, .14, .2);
-    for (const s of [-1, 1]) { const ear = part(this.g.sphere, this.m.sheepFace, s * .13, .05, -.02, head); ear.scale.set(.14, .045, .07); part(this.g.eye, this.m.eye, s * .08, .05, .12, head).scale.setScalar(.8); }
-    const legs = [[-.16, .3], [.16, .3], [-.16, -.3], [.16, -.3]].map(([x, z]) => this.leg(g, x, .5, z, .23, .25, .045, this.m.sheepFace, this.m.hoof));
-    return {g, neck, head, legs, kind: 'sheep', size: 1.3, gait: 4.5};
+    part(new RoundedBoxGeometry(.18, .22, .3, 3, .07), this.m.bighornFace, 0, 0, .06, head);
+    part(this.g.woolBody, this.m.bighornCoat, 0, .12, -.04, head).scale.set(.24, .14, .2);
+    for (const s of [-1, 1]) { const ear = part(this.g.sphere, this.m.bighornFace, s * .13, .05, -.02, head); ear.scale.set(.14, .045, .07); part(this.g.eye, this.m.eye, s * .08, .05, .12, head).scale.setScalar(.8); }
+    for (const side of [-1,1]) { const horn=part(new T.TorusGeometry(.19,.05,5,12,Math.PI*1.7),this.m.horn,side*.17,.15,-.03,head);horn.rotation.y=Math.PI/2; }
+    const legs = [[-.16, .3], [.16, .3], [-.16, -.3], [.16, -.3]].map(([x, z]) => this.leg(g, x, .5, z, .23, .25, .045, this.m.bighornFace, this.m.hoof));
+    return {g, neck, head, legs, kind: 'bighorn', size: 1.5, gait: 4.5};
   }
 
   dog() {
@@ -161,8 +160,9 @@ export class Life {
     return {g, neck, legs, tail, kind: 'cat', size: .5};
   }
 
+  horse() { const a=this.cow();a.kind='horse';a.size=2;return a; }
   buildAnimals() {
-    const makers = [['cow', 10], ['sheep', 12], ['dog', 3], ['cat', 3]];
+    const makers = [['cow', 10], ['dog', 3], ['cat', 3], ['horse', 3], ['bighorn', 4]];
     for (const [kind, n] of makers) for (let i = 0; i < n; i++) {
       const a = this[kind](); a.phase = rand(0, 6.28); a.z = -1e9; a.visible = true;
       this.scene.add(a.g); this.animals.push(a);
@@ -172,7 +172,7 @@ export class Life {
 
   // Herds graze in fields well off the road; dogs trot and cats sit near the verge.
   placeAnimal(a, z, side, offset) {
-    const r = this.world.road, herd = a.kind === 'cow' || a.kind === 'sheep';
+    const r = this.world.road, herd = ['cow','horse','bighorn'].includes(a.kind);
     // Herds need grazeable ground: not steep, not under water, not in a town.
     for (let k = 0; herd && k < 8; k++) {
       const x = r.x(z) + side * offset, h = (px, pz) => this.world.surfaceHeight(px, pz, false), y = h(x, z);
@@ -188,7 +188,7 @@ export class Life {
     a.x = r.x(z) + side * offset; a.homeX = a.x; a.homeZ = a.z;
   }
 
-  // Cows and sheep graze with their heads down, then wander a few metres, staying near the herd and away from steep ground, water and the road.
+  // Herd animals graze with their heads down, then wander a few metres, staying near the herd and away from steep ground, water and the road.
   wander(a, dt) {
     const r = this.world.road, h = (x, z) => this.world.surfaceHeight(x, z, false);
     if (a.crossing) return this.cross(a, dt);
@@ -198,7 +198,7 @@ export class Life {
       a.timer = a.walking ? rand(2.5, 6) : rand(5, 15);
       if (a.walking) { const far = Math.hypot(a.x - a.homeX, a.z - a.homeZ) > 12; a.targetHeading = far ? Math.atan2(a.homeX - a.x, a.homeZ - a.z) : a.heading + rand(-1.3, 1.3); }
     }
-    const want = a.walking ? (a.kind === 'sheep' ? .55 : .42) : 0;
+    const want = a.walking ? (a.kind === 'bighorn' ? .55 : .42) : 0;
     a.speed += (want - a.speed) * Math.min(1, dt * 1.5);
     a.heading += Math.atan2(Math.sin(a.targetHeading - a.heading), Math.cos(a.targetHeading - a.heading)) * Math.min(1, dt * .9);
     if (a.speed < .01) return;
@@ -220,7 +220,7 @@ export class Life {
       list.forEach((a) => { a.claimed = true; this.placeAnimal(a, z + rand(-14, 14), side, offset + rand(-10, 10)); });
     };
     herd('cow', 4 + Math.floor(Math.random() * 3));
-    herd('sheep', 5 + Math.floor(Math.random() * 5));
+    herd('horse',3);herd('bighorn',4);
     for (const a of due.filter((x) => (x.kind === 'dog' || x.kind === 'cat') && !x.claimed)) {
       const z = s.z + rand(220, 600);
       if (Math.random() < .5 && r.typeAt(z) !== 'highway' && !r.tunnelAt(z) && !r.portalNear(z)) { a.claimed = true; this.placeAnimal(a, z, Math.random() < .5 ? -1 : 1, r.half(z) + rand(2.8, 5.5)); }
@@ -233,7 +233,7 @@ export class Life {
     const r = this.world.road, c = a.crossing, w = r.half(a.z);
     if (c.delay > 0) { c.delay -= dt; a.speed = 0; return; }
     const run = c.flee > 0; c.flee -= dt;
-    const want = run ? {cow: 4.6, sheep: 5.2, dog: 6.5}[a.kind] || 4.5 : {cow: 1, sheep: 1.3, dog: 1.8}[a.kind] || 1;
+    const want = run ? {cow: 4.6, dog: 6.5}[a.kind] || 4.5 : {cow: 1, dog: 1.8}[a.kind] || 1;
     a.speed += (want - a.speed) * Math.min(1, dt * (run ? 6 : 1.5));
     const roadYaw = Math.atan(r.tangent(a.z)), target = roadYaw + (c.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
     a.heading = target; a.targetHeading = target;
@@ -246,7 +246,7 @@ export class Life {
     const z = s.z + Math.max(1, s.speed) * rand(8, 11) + rand(30, 60), w = r.half(z);
     if (this.world.landmarks.active(z) || r.townFactor(z) > 0 || r.bridgeNear(z) && Math.abs(r.bridgeNear(z).z - z) < 120) return;
     if (r.typeAt(z) === 'highway' || r.tunnelAt(z) || r.portalNear(z) > 0 || r.crossingAt(z, 60) || r.stopAt(z, 30) || r.junctions.some((j) => z > j.z - 40 && z < j.z + ZONE)) return;
-    const kind = force || pick(['sheep', 'sheep', 'cow', 'cow', 'dog']), group = kind === 'dog' ? 1 : kind === 'sheep' ? 3 + Math.floor(Math.random() * 3) : 2 + Math.floor(Math.random() * 2);
+    const kind = force || pick(['cow', 'cow', 'dog']), group = kind === 'dog' ? 1 : 2 + Math.floor(Math.random() * 2);
     const from = Math.random() < .5 ? -1 : 1, list = this.animals.filter((a) => a.kind === kind && !a.crossing && (Math.abs(a.z - s.z) > 120 || a.z < s.z)).slice(0, group);
     list.forEach((a, i) => {
       const zz = z + (i % 2) * 1.6 - i * .6;
@@ -265,9 +265,9 @@ export class Life {
     if (this.settings.location !== 'hills') return;
     const s = this.getState(), off = false, r = this.world.road;
     for (const a of this.animals) {
-      if (!a.g.visible || ((a.kind === 'cow' || a.kind === 'sheep') && this.world.landmarks.active(a.z) && this.settings.destination !== 'lake') || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
+      if (!a.g.visible || ((['cow','horse','bighorn'].includes(a.kind)) && this.world.landmarks.active(a.z) && this.settings.destination !== 'lake') || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
       a.phase += dt * (a.speed > 1.8 && a.kind !== 'dog' ? 1 + (a.speed - 1.8) * .45 : 1);
-      if (a.kind === 'cow' || a.kind === 'sheep' || a.crossing) this.wander(a, dt);
+      if (['cow','horse','bighorn'].includes(a.kind) || a.crossing) this.wander(a, dt);
       else if (a.speed) {
         // Dogs trotting along the verge turn back before a tunnel rather than walking over its mouth.
         const nz = a.z + Math.cos(a.heading) * a.speed * dt;
@@ -291,7 +291,7 @@ export class Life {
         l.hip.rotation.x = swing * .42;
         l.knee.rotation.x = walk ? (i < 2 ? Math.max(0, -swing) * .7 : -Math.max(0, swing) * .6) : 0;
       });
-      if (a.kind === 'cow' || a.kind === 'sheep') { const grazing = !a.walking && a.speed < .1 ? 1 : 0; a.graze = (a.graze || 0) + (grazing - (a.graze || 0)) * Math.min(1, dt * 1.4); a.neck.rotation.x = a.graze * (.75 + Math.sin(a.phase * 1.3) * .08) + (1 - a.graze) * Math.sin(a.phase * .4) * .12; if (a.head) a.head.rotation.x = a.graze * .35; }
+      if (['cow','horse','bighorn'].includes(a.kind)) { const grazing = !a.walking && a.speed < .1 ? 1 : 0; a.graze = (a.graze || 0) + (grazing - (a.graze || 0)) * Math.min(1, dt * 1.4); a.neck.rotation.x = a.graze * (.75 + Math.sin(a.phase * 1.3) * .08) + (1 - a.graze) * Math.sin(a.phase * .4) * .12; if (a.head) a.head.rotation.x = a.graze * .35; }
       if (a.kind === 'dog') { a.neck.rotation.x = Math.sin(a.phase * 11) * .04; a.tail.rotation.z = Math.sin(a.phase * 14) * .6; }
       if (a.kind === 'cat') { a.tail.rotation.z = Math.sin(a.phase * 1.3) * .5; a.neck.rotation.y = Math.sin(a.phase * .4) * .7; }
       if (a.kind === 'cow') a.tail.rotation.z = Math.sin(a.phase * 1.7) * .25;
@@ -340,6 +340,7 @@ export class Life {
   }
 
   car(type) {
+    const requestedStyle=type;if(type==='mercedes')type='sedan';
     const specs = {
       sedan: {L: 4.6, W: 1.8, clear: .26, belt: .95, wheelbase: 1.38, top: [[1, .62], [.93, .84], [.62, .95], [.38, .99], [.1, 1.42], [-.36, 1.44], [-.6, 1.04], [-.9, .99], [-1, .8]], glass: {front: [.36, .12], rear: [-.38, -.58], side: [.33, -.56], b: [-.08, -.16]}},
       hatch: {L: 4.1, W: 1.74, clear: .26, belt: .97, wheelbase: 1.24, top: [[1, .62], [.93, .83], [.64, .95], [.42, .99], [.13, 1.46], [-.74, 1.45], [-.9, 1.2], [-.97, .95], [-1, .76]], glass: {front: [.4, .15], rear: [-.73, -.94], side: [.38, -.72], b: [-.1, -.19]}},
@@ -385,7 +386,7 @@ export class Life {
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, front + 4); g.add(beam);
     batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
-    return {g, beam, kind: 'car', style: type, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
+    return {g, beam, kind: 'car', style: requestedStyle, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
   // A 12 m single-deck bus: rounded body, a long window band lit inside after dark, doors on the kerb side and a destination display.
@@ -506,7 +507,7 @@ export class Life {
     const spokes = []; for (let i = 0; i < 5; i++) spokes.push(new T.BoxGeometry(.02, .36, .045).rotateX(i * Math.PI * 2 / 5));
     this.g.spokes = mergeGeometries(spokes);
     this.glow = new GlowPoints(this.scene, 110, {fade: 1100});
-    const types = ['sedan', 'hatch', 'suv', 'van', 'wagon', 'pickup', 'hatch', 'sedan'];
+    const types = ['mercedes', 'hatch', 'suv', 'van', 'wagon', 'pickup', 'hatch', 'sedan'];
     const add = (v, dir, pool, cooldown = 0) => { v.dir = dir; v.pool = pool; v.z = -1e9; v.cooldown = cooldown; v.g.visible = false; this.scene.add(v.g); this.traffic.push(v); v.id = this.traffic.length; };
     for (let i = 0; i < 6; i++) add(this.car(types[i % types.length]), -1, 'oncoming');
     add(this.bus(), -1, 'oncoming', 20); add(this.truck(), -1, 'oncoming', 12); add(this.cyclist(), -1, 'bike', 30);
@@ -951,7 +952,7 @@ export class Life {
       const yaw = c.g.rotation.y, n = Math.max(2, Math.round(c.length / 2.4)), px = c.g.position.x, pz = c.g.position.z, vz = (c.dir || 0) * (c.speed || 0), rr = c.kind === 'bike' ? .45 : c.width / 2 + .05;
       for (let i = 0; i < n; i++) { const q = (i / (n - 1) - .5) * (c.length - rr * 1.6); out.push({x: px + Math.sin(yaw) * q, z: pz + Math.cos(yaw) * q, r: rr, vz}); }
     }
-    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.z > z - 10 && a.z < z + range) out.push({x: a.x, z: a.z, r: a.kind === 'cow' ? 1.1 : .6, vz: 0});
+    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.z > z - 10 && a.z < z + range) out.push({x: a.x, z: a.z, r: ['cow','horse'].includes(a.kind) ? 1.1 : .6, vz: 0});
     if (this.town) out.push(...this.town.obstacles(z, range));
     return out;
   }
@@ -965,7 +966,7 @@ export class Life {
       const yaw = c.g.rotation.y;
       out.push({x: px, z: pz, hx: c.width / 2, hz: c.length / 2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0, vehicle: c});
     }
-    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat' && Math.abs(a.x - x) < range && Math.abs(a.z - z) < range) out.push({x: a.x, z: a.z, r: a.kind === 'cow' ? 1 : a.kind === 'sheep' ? .55 : .35});
+    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat' && Math.abs(a.x - x) < range && Math.abs(a.z - z) < range) out.push({x: a.x, z: a.z, r: ['cow','horse'].includes(a.kind) ? 1.1 : a.kind === 'bighorn' ? .6 : .35});
     return out;
   }
 

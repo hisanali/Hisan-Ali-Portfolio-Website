@@ -1,8 +1,8 @@
-import {RoadsideModels} from './roadside-models.js?v=20260926-transit3';
+import {RoadsideModels} from './roadside-models.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260926-transit3';
-import {random} from './math.js?v=20260926-transit3';
+import {GlowPoints} from './glow.js?v=20260926-supplied7';
+import {random} from './math.js?v=20260926-supplied7';
 
 // Places people live and cross: towns with shops, strip lights and street lamps, cottages with gardens,
 // river bridges, and boats on the water. Everything static in a chunk is merged into a handful of meshes.

@@ -1,9 +1,9 @@
-import {ArchitectureModels} from './architecture-models.js?v=20260926-transit3';
+import {ArchitectureModels} from './architecture-models.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
-import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260926-transit3';
-import {scanned} from './materials.js?v=20260926-transit3';
-import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-transit3';
-import {random, clamp} from './math.js?v=20260926-transit3';
+import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260926-supplied7';
+import {scanned} from './materials.js?v=20260926-supplied7';
+import {DESTINATIONS, inDestination} from './destinations.js?v=20260926-supplied7';
+import {random, clamp} from './math.js?v=20260926-supplied7';
 
 const CYLINDER = new T.CylinderGeometry(1, 1, 1, 12).toNonIndexed();
 const SPHERE = new T.SphereGeometry(1, 12, 8).toNonIndexed();

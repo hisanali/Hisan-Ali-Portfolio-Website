@@ -1,6 +1,6 @@
-import {prepareMotorcycle} from './motorcycle-model.js?v=20260926-transit3';
-import {rotorFor,mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260926-transit3';
-import {addMicroSurface} from './surface-detail.js?v=20260926-transit3';
+import {prepareMotorcycle} from './motorcycle-model.js?v=20260926-supplied7';
+import {rotorFor,mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260926-supplied7';
+import {addMicroSurface} from './surface-detail.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {DRACOLoader} from './vendor/loaders/DRACOLoader.js';
@@ -9,7 +9,7 @@ const modelLoader=new GLTFLoader().setDRACOLoader(draco);
 function block(w,h,d,r=.07){const shape=new T.Shape();const x=-w/2,y=-h/2;shape.moveTo(x+r,y);shape.lineTo(x+w-r,y);shape.quadraticCurveTo(x+w,y,x+w,y+r);shape.lineTo(x+w,y+h-r);shape.quadraticCurveTo(x+w,y+h,x+w-r,y+h);shape.lineTo(x+r,y+h);shape.quadraticCurveTo(x,y+h,x,y+h-r);shape.lineTo(x,y+r);shape.quadraticCurveTo(x,y,x+r,y);const g=new T.ExtrudeGeometry(shape,{depth:d,bevelEnabled:true,bevelThickness:r*.5,bevelSize:r*.4,bevelSegments:4,steps:1,curveSegments:3});g.translate(0,0,-d/2);g.computeVertexNormals();return g}
 function wedge(w,baseY,topY,zBack,zFront,topBack,topFront){const p=[-w,baseY,zBack,w,baseY,zBack,w,baseY,zFront,-w,baseY,zFront,-w*.84,topY,topBack,w*.84,topY,topBack,w*.84,topY,topFront,-w*.84,topY,topFront];const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setIndex([0,2,1,0,3,2,4,5,6,4,6,7,0,1,5,0,5,4,1,2,6,1,6,5,2,3,7,2,7,6,3,0,4,3,4,7]);const ix=g.index;for(let i=0;i<ix.count;i+=3){const a=ix.getX(i);ix.setX(i,ix.getX(i+2));ix.setX(i+2,a)}g.computeVertexNormals();return g}
 export class Vehicle{
- constructor(scene,type='coupe',color='#e9e7db'){this.scene=scene;this.group=new T.Group();scene.add(this.group);this.wheels=[];this.frontWheels=[];this.type=type;this.body=new T.MeshPhysicalMaterial({color,metalness:.45,roughness:.25,clearcoat:1,clearcoatRoughness:.16});this.glass=new T.MeshPhysicalMaterial({color:0x263c49,metalness:.65,roughness:.12,clearcoat:1});this.black=new T.MeshStandardMaterial({color:0x151b1d,roughness:.65});this.chrome=new T.MeshStandardMaterial({color:0xadb6ba,metalness:.9,roughness:.2});this.rubber=new T.MeshStandardMaterial({color:0x171c1e,roughness:.94});this.red=new T.MeshStandardMaterial({color:0x610b12,emissive:0xb92723,emissiveIntensity:.65,roughness:.25});this.white=new T.MeshStandardMaterial({color:0xeaf1ea,emissive:0xe6f8ff,emissiveIntensity:1});addMicroSurface(this.rubber,'rubber',.012);addMicroSurface(this.black,'fabric',.006);this.setupDirt();this.build();this.addContactShadow();if(type==='coupe')this.loadDetailedCar();if(type==='bike')this.loadDetailedBike();if(type==='coach')this.loadDetailedCoach();}
+ constructor(scene,type='coupe',color='#e9e7db'){this.scene=scene;this.group=new T.Group();scene.add(this.group);this.wheels=[];this.frontWheels=[];this.type=type;this.body=new T.MeshPhysicalMaterial({color,metalness:.45,roughness:.25,clearcoat:1,clearcoatRoughness:.16});this.glass=new T.MeshPhysicalMaterial({color:0x263c49,metalness:.65,roughness:.12,clearcoat:1});this.black=new T.MeshStandardMaterial({color:0x151b1d,roughness:.65});this.chrome=new T.MeshStandardMaterial({color:0xadb6ba,metalness:.9,roughness:.2});this.rubber=new T.MeshStandardMaterial({color:0x171c1e,roughness:.94});this.red=new T.MeshStandardMaterial({color:0x610b12,emissive:0xb92723,emissiveIntensity:.65,roughness:.25});this.white=new T.MeshStandardMaterial({color:0xeaf1ea,emissive:0xe6f8ff,emissiveIntensity:1});addMicroSurface(this.rubber,'rubber',.012);addMicroSurface(this.black,'fabric',.006);this.setupDirt();this.build();this.addContactShadow();if(type==='coupe')this.loadDetailedCar();if(type==='bike')this.loadDetailedBike();if(type==='coach')this.loadDetailedCoach();if(type==='mercedes')this.loadMercedes();}
  add(g,m,x,y,z,parent=this.group){const mesh=new T.Mesh(g,m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh}
  wheel(x,z,r=.39){const wheel=new T.Group();wheel.userData.radius=r;wheel.position.set(x,r,z);this.group.add(wheel);this.wheels.push(wheel);if(z>0)this.frontWheels.push(wheel);const tire=this.add(new T.CylinderGeometry(r,r,.26,24),this.rubber,0,0,0,wheel);tire.rotation.z=Math.PI/2;const outer=x>0?.145:-.145;const hub=this.add(new T.CylinderGeometry(r*.68,r*.68,.015,24),this.chrome,outer,0,0,wheel);hub.rotation.z=Math.PI/2;const dark=this.add(new T.CylinderGeometry(r*.52,r*.52,.02,20),this.black,outer*1.06,0,0,wheel);dark.rotation.z=Math.PI/2;for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const spoke=this.add(new T.BoxGeometry(.03,r*.98,.05),this.chrome,outer*1.15,0,0,wheel);spoke.rotation.x=a;}rotorFor(wheel);return wheel}
  build(){const coach=this.type==='coach',bike=this.type==='bike';if(bike){this.buildBike();}
@@ -127,7 +127,7 @@ export class Vehicle{
 
  loadDetailedCoach(){
   const fallback=[...this.group.children].filter(o=>o!==this.interior&&o!==this.contact&&!o.isLight&&!this.headlights.some(l=>l.target===o));
-  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/road-coach.glb?v=transit3',asset=>{
+  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/road-coach.glb?v=supplied7',asset=>{
    if(this.disposed){resolve();return;}const model=asset.scene;this.realWheels=[];this.realBrakeMats=[];const wheelNodes=[];
    model.traverse(o=>{if(/^Wheel_[FR][LR]$/.test(o.name))wheelNodes.push(o);if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material.name==='RearLightsPBR')this.realBrakeMats.push(o.material);if(o.material.name==='BodyPBR')o.material=this.body;}});
    for(const wheel of wheelNodes)this.realWheels.push(mountImportedWheel(wheel,model,wheel.name[6]==='F'));
@@ -136,8 +136,19 @@ export class Vehicle{
    this.headlights.forEach((l,i)=>l.position.set(i? .99:-.99,.72,5.96));resolve();
   },undefined,error=>{console.warn('Imported coach unavailable',error);resolve();}));
  }
+ loadMercedes(){
+  const fallback=[...this.group.children].filter(o=>o!==this.interior&&o!==this.contact&&!o.isLight&&!this.headlights.some(l=>l.target===o));
+  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/road-mercedes.glb?v=supplied7',asset=>{
+   if(this.disposed){resolve();return;}const model=asset.scene,nodes=[];this.realWheels=[];this.realBrakeMats=[];
+   model.traverse(o=>{if(/^Wheel_[FR][LR]$/.test(o.name))nodes.push(o);if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material.name.startsWith('TailLens'))this.realBrakeMats.push(o.material);if(o.material.name==='BodyPaint')this.body=o.material;if(o.material.name==='EXT_Glass')this.realGlass=o.material;}});
+   for(const wheel of nodes)this.realWheels.push(mountImportedWheel(wheel,model,wheel.name[6]==='F'));
+   this.detailed=model;this.group.add(model);fallback.forEach(o=>{o.userData.fallback=true;o.visible=false;});this.wheels=[];this.frontWheels=[];
+   this.seatX=.34;this.seatY=1.12;this.seatZ=.02;
+   this.headlights.forEach((l,i)=>l.position.set(i?.62:-.62,.62,2.12));resolve();
+  },undefined,error=>{console.warn('Mercedes unavailable',error);resolve();}));
+ }
  loadDetailedBike(){
-  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/motorcycle-gyo.glb?v=transit3',asset=>{
+  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/motorcycle-gyo.glb?v=supplied7',asset=>{
    if(this.disposed){resolve();return;}this.importedBike=prepareMotorcycle(asset);this.group.add(this.importedBike.model);
    for(const o of this.bikeModel.children)if(o!==this.rider)o.visible=false;
    this.rider.position.y=-.12;this.rider.position.z=-.08;resolve();

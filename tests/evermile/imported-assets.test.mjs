@@ -13,7 +13,7 @@ async function load(name){
  const binOffset=20+b.readUInt32LE(12),bin=b.subarray(binOffset+8,binOffset+8+b.readUInt32LE(binOffset));j.buffers=[{byteLength:bin.length,uri:'data:application/octet-stream;base64,'+bin.toString('base64')}];
  return new GLTFLoader().parseAsync(JSON.stringify(j),'');
 }
-for(const style of ['sedan','hatch','suv','wagon','pickup','van','bus','coach'])test(`${style}: four centred wheel axles and attached forward/rear lamps`,async()=>{
+for(const style of ['sedan','hatch','suv','wagon','pickup','van','bus','coach','mercedes'])test(`${style}: four centred wheel axles and attached forward/rear lamps`,async()=>{
  const asset=await load('road-'+style),importer=Object.create(TrafficModels.prototype);importer.loaded={[style]:asset.scene};
  const c={style,g:new T.Group()};c.g.position.set(130,18,-550);c.g.rotation.y=1.2;importer.attach(c);c.g.updateMatrixWorld(true);
  assert.equal(c.detailWheels.length,4);assert.equal(c.detailWheels.filter(w=>w.front).length,2);
@@ -39,11 +39,7 @@ for(const [key] of citizenAssets.filter(([key])=>key!=='michelle'))test(`${key}:
  for(let i=0;i<24;i++){mixer.setTime(walk.duration*i/24);g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isSkinnedMesh){skins++;o.skeleton.update();assert.ok(o.skeleton.boneMatrices.every(Number.isFinite));}});}
  const size=new T.Box3().setFromObject(g.scene,true).getSize(new T.Vector3());assert.ok(skins>0);assert.ok(size.y>1.3&&size.y<2.1);assert.ok(size.x<1.4);
 });
-test('replacement sheep uses a complete skin and native gait',async()=>{
- const g=await load('sheep-textured'),a=animatedAnimal(g,'sheep');assert.ok(g.animations.find(c=>c.name==='Walk'));assert.ok(g.animations.find(c=>c.name==='Idle'));
- for(let i=0;i<80;i++){a.update(.025,.7);a.root.updateMatrixWorld(true);a.model.traverse(o=>{if(o.isSkinnedMesh){o.skeleton.update();assert.ok(o.skeleton.boneMatrices.every(Number.isFinite));}});}
- assert.ok(new T.Box3().setFromObject(a.root).getSize(new T.Vector3()).y<1.5);
-});
+
 test('imported motorcycle: rolling axles, steering fork and fixed body',async()=>{
  const g=await load('motorcycle-gyo'),bike=prepareMotorcycle(g);const body= bike.model.getObjectByName('Body'),initial=body.quaternion.clone();assert.equal(bike.wheels.length,2);assert.ok(bike.model.getObjectByName('FrontAssembly').children.length>0);
  bike.update(.1,5,.25);bike.model.updateMatrixWorld(true);assert.ok(bike.wheels.every(w=>Math.abs(w.rotor.rotation.x)>.1));assert.equal(bike.steering.rotation.y,.25);assert.ok(body.quaternion.equals(initial));assert.ok(bike.grips.every(Boolean));
@@ -58,8 +54,23 @@ for(const key of ['pump','shop','canopy','signal','ice','bin'])test(`roadside ${
  g.scene.traverse(o=>{if(o.isMesh)assert.ok(o.geometry.attributes.position.array.every(Number.isFinite));});
  if(key==='signal')for(const name of ['red','amber','green'])assert.ok(g.scene.getObjectByName(name)?.isMesh);
 });
-test('textured sheep walk articulates its legs, stays bounded and faces forward',async()=>{
- const g=await load('sheep-textured'),a=animatedAnimal(g,'sheep');let min=Infinity,max=-Infinity;
- for(let i=0;i<60;i++){a.update(.025,.55);a.root.updateMatrixWorld(true);const b=new T.Box3().setFromObject(a.root,true);min=Math.min(min,b.min.y);max=Math.max(max,b.max.y);}
- assert.ok(min>-.2&&max<1.5,`${min}..${max}`);const walk=g.animations.find(c=>c.name==='Walk');assert.ok(walk.tracks.some(t=>t.name.includes('noga')&&t.name.endsWith('quaternion')&&new Set(t.values).size>5),'animated legs');
+
+
+for(const kind of ['horse','fox','bighorn'])test(`supplied ${kind}: native walk and idle stay grounded without root drift`,async()=>{
+ const g=await load(kind+'-supplied'),a=animatedAnimal(g,kind);
+ assert.ok(g.animations.find(c=>c.name==='Walk'));assert.ok(g.animations.find(c=>c.name==='Idle'));
+ let min=Infinity,max=-Infinity;const centers=[];
+ for(let i=0;i<90;i++){a.update(1/30,i<60?.7:0);a.root.updateMatrixWorld(true);const b=new T.Box3().setFromObject(a.root,true);min=Math.min(min,b.min.y);max=Math.max(max,b.max.y);centers.push(b.getCenter(new T.Vector3()));assert.ok(b.max.z-b.min.z>b.max.x-b.min.x,'animal must face along the route');}
+ assert.ok(min>-.12&&min<.08,`${kind} ground ${min}`);assert.ok(Number.isFinite(max)&&max<2.5);
+ assert.ok(Math.max(...centers.map(c=>c.x))-Math.min(...centers.map(c=>c.x))<.25,'no sideways root drift');
+});
+test('supplied locomotive has a batched body, rolling wheel rigs, and no source track diorama',async()=>{
+ const g=await load('train-supplied');const {prepareTrain}=await import('../../evermile/train-model.js');const t=prepareTrain(g);assert.equal(t.wheels.length,12);assert.ok(!g.scene.getObjectByName('trainrail_trainrail_0'));
+ const b=new T.Box3().setFromObject(t.model);assert.ok(Math.abs(b.max.z-b.min.z-19)<.05);assert.ok(Math.abs(b.min.y)<.02);
+ t.update(.1,12);assert.ok(t.wheels.every(w=>Number.isFinite(w.rotor.rotation.x)&&w.rotor.rotation.x!==0));
+});
+
+test('bighorn horns remain parented to the animated head during walking',async()=>{
+ const g=await load('bighorn-supplied'),a=animatedAnimal(g,'bighorn');let horns; a.model.traverse(o=>{if(o.name.includes('Trophy')&&o.isMesh)horns=o;});assert.ok(horns);assert.equal(horns.parent.name,'Head');a.model.traverse(o=>{if(o.isMesh)for(const attr of Object.values(o.geometry.attributes))assert.ok(attr.array.every(Number.isFinite),'finite bighorn geometry');});
+ for(let i=0;i<60;i++){a.update(1/30,.55);a.root.updateMatrixWorld(true);const b=new T.Box3().setFromObject(horns,true),c=b.getCenter(new T.Vector3()),head=horns.parent.getWorldPosition(new T.Vector3());assert.ok(c.distanceTo(head)<.5);assert.ok(b.min.y>.5,'horns must stay above the torso base');}
 });

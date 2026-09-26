@@ -1,18 +1,18 @@
-import {citizenAssets,citizenKey,fitCitizen} from './citizen-assets.js?v=20260926-transit3';
-import {animalAssets,animatedAnimal} from './animated-assets.js?v=20260926-transit3';
-import {TrafficModels} from './traffic-models.js?v=20260926-transit3';
+import {citizenAssets,citizenKey,fitCitizen} from './citizen-assets.js?v=20260926-supplied7';
+import {animalAssets,animatedAnimal} from './animated-assets.js?v=20260926-supplied7';
+import {TrafficModels} from './traffic-models.js?v=20260926-supplied7';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
-import {addMicroSurface} from './surface-detail.js?v=20260926-transit3';
-import {reachHand} from './pedestrian-motion.js?v=20260926-transit3';
-import {batchStatic} from './mesh-batching.js?v=20260926-transit3';
+import {addMicroSurface} from './surface-detail.js?v=20260926-supplied7';
+import {reachHand} from './pedestrian-motion.js?v=20260926-supplied7';
+import {batchStatic} from './mesh-batching.js?v=20260926-supplied7';
 
 const box=new T.Box3();
 export class DetailedModels{
  constructor(scene,settings){
   this.scene=scene;this.settings=settings;this.trafficModels=new TrafficModels();this.loaded={};this.errors=[];this.foxes=[];this.animalModels=new WeakSet();this.animalCount=0;const loader=new GLTFLoader();
-  for(const [key,file] of Object.entries({...Object.fromEntries(Object.entries(animalAssets).map(([k,v])=>[k,v.file+'.glb'])),...Object.fromEntries(citizenAssets.map(([key])=>[key,'citizen-'+key+'.glb'])),...Object.fromEntries(Array.from({length:6},(_,i)=>['citizen'+i,'pedestrian-'+i+'.glb']))}))loader.load(new URL('./assets/models/'+file+'?v=transit3',import.meta.url).href,g=>{this.loaded[key]=g;},undefined,e=>{this.errors.push(key);console.warn('Optional detailed model unavailable:',key,e.message);});
+  for(const [key,file] of Object.entries({...Object.fromEntries(Object.entries(animalAssets).map(([k,v])=>[k,v.file+'.glb'])),...Object.fromEntries(citizenAssets.map(([key])=>[key,'citizen-'+key+'.glb'])),...Object.fromEntries(Array.from({length:6},(_,i)=>['citizen'+i,'pedestrian-'+i+'.glb']))}))loader.load(new URL('./assets/models/'+file+'?v=supplied7',import.meta.url).href,g=>{this.loaded[key]=g;},undefined,e=>{this.errors.push(key);console.warn('Optional detailed model unavailable:',key,e.message);});
  }
  makeCitizen(p){
   const key=citizenKey(p.i),imported=!key.startsWith('citizen'),asset=this.loaded[key]||this.loaded['citizen'+p.i%6],model=cloneSkin(asset.scene),root=new T.Group();root.add(model);this.scene.add(root);if(imported)fitCitizen(model,p.i);
@@ -29,7 +29,7 @@ export class DetailedModels{
   if(animalAssets[a.kind]){const animation=animatedAnimal(this.loaded[a.kind],a.kind,this.animalCount++);a.detailFallback=[...a.g.children];a.g.add(animation.root);a.detailModel=animation.root;a.detailAnimation=animation;a.detailLast={x:a.x,z:a.z};this.animalModels.add(a);return;}
   const model=this.loaded[a.kind].scene.clone(true);a.detailFallback=[...a.g.children];a.g.add(model);a.detailModel=model;
   const variant=this.animalCount++,mats=new Map();model.scale.setScalar(.94+(variant%5)*.025);
-  model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const base=o.material;if(!mats.has(base)){const m=base.clone();if(m.name.startsWith('Coat')&&['dog','cat'].includes(a.kind))m.color.set([0x966e49,0x343333,0xb79c7b,0xbdb7a9][variant%4]);if(m.name.startsWith('CowPatches')&&variant%3===0)m.color.set(0xa97950);if(o.geometry.attributes.uv&&m.roughness>.7)addMicroSurface(m,a.kind==='sheep'?'wool':'fur',a.kind==='sheep'?.008:.002);mats.set(base,m);}o.material=mats.get(base);});
+  model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const base=o.material;if(!mats.has(base)){const m=base.clone();if(m.name.startsWith('Coat')&&['dog','cat'].includes(a.kind))m.color.set([0x966e49,0x343333,0xb79c7b,0xbdb7a9][variant%4]);if(m.name.startsWith('CowPatches')&&variant%3===0)m.color.set(0xa97950);if(o.geometry.attributes.uv&&m.roughness>.7)addMicroSurface(m,'fur',.002);mats.set(base,m);}o.material=mats.get(base);});
   const groups=[];model.traverse(o=>{if(o.isGroup)groups.push(o);});groups.reverse().forEach(g=>batchStatic(g));
   a.detailControls={neck:model.getObjectByName('Neck'),head:model.getObjectByName('Head'),tail:model.getObjectByName('Tail'),legs:Array.from({length:a.kind==='cat'?2:4},(_,i)=>({hip:model.getObjectByName('Hip'+i),knee:model.getObjectByName('Knee'+i)}))};
   this.animalModels.add(a);

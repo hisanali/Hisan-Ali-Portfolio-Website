@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260926-transit3';
+import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260926-supplied7';
 export function prepareMotorcycle(asset){
  const model=asset.scene.clone(true);model.updateMatrixWorld(true);
  const front=model.getObjectByName('Wheel_F'),rear=model.getObjectByName('Wheel_R');

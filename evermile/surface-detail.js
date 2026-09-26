@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {random} from './math.js?v=20260926-transit3';
+import {random} from './math.js?v=20260926-supplied7';
 const cache=new Map();
 export function microSurface(kind){
  if(cache.has(kind))return cache.get(kind);

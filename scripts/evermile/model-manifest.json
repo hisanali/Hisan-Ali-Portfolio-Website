@@ -1,6 +1,11 @@
 {
   "files": [
     {
+      "path": "evermile/assets/models/bighorn-supplied.glb",
+      "bytes": 13411192,
+      "sha256": "0dab81866e9a5d848059cce35850659e6d19d8a3d94f0143e77b7005f7cc9984"
+    },
+    {
       "path": "evermile/assets/models/cat-imported.glb",
       "bytes": 2297972,
       "sha256": "4b395ba943d647f4c490c982a70fa2175ef91569615773da7ef3429e427ed21a"
@@ -101,9 +106,19 @@
       "sha256": "7c1ea2ef578a31c98e51e2bfde2efae1995f7aef0fecb661c2dee18811d6e1d9"
     },
     {
+      "path": "evermile/assets/models/fox-supplied.glb",
+      "bytes": 3280348,
+      "sha256": "a003c603ccf6ca9951ba015f3dd6819601b401f76a3d08451cc7e98a12027089"
+    },
+    {
       "path": "evermile/assets/models/fox.glb",
       "bytes": 162852,
       "sha256": "d97044e701822bac5a62696459b27d7b375aada5de8574ed4362edbba94771f7"
+    },
+    {
+      "path": "evermile/assets/models/horse-supplied.glb",
+      "bytes": 27314416,
+      "sha256": "75bf377f51c2aa318633217582a5930aedd5238f8a500a9d6e580d510424ef7e"
     },
     {
       "path": "evermile/assets/models/motorcycle-gyo.glb",
@@ -201,6 +216,11 @@
       "sha256": "349c7f017ab0f990e40f99ab7277d5b01e4506bdb82b2bdd39450b21c33fecbf"
     },
     {
+      "path": "evermile/assets/models/road-mercedes.glb",
+      "bytes": 20232024,
+      "sha256": "a05c36620a9c0511ce3773604d1a22b7866f95fc9bc40ad39c53615fa65d0eac"
+    },
+    {
       "path": "evermile/assets/models/road-pickup.glb",
       "bytes": 2040860,
       "sha256": "537c4efb4a5985f59fc74ec4be9764960d86b3ab8aa25a950aa4e688325220dc"
@@ -244,6 +264,11 @@
       "path": "evermile/assets/models/traffic-car.glb",
       "bytes": 7085876,
       "sha256": "91b62b4a1ad567c05408702dfacc087f6e5f368d649e0aa6f43211f7b5cbc9a1"
+    },
+    {
+      "path": "evermile/assets/models/train-supplied.glb",
+      "bytes": 26899628,
+      "sha256": "b5b2c1be6a081a185c9b9869dc27abb267aacdce67025a4e0ff2a2c65a439a94"
     },
     {
       "path": "scripts/evermile/source/CarConcept.glb",
@@ -806,6 +831,46 @@
       "sha256": "2c7263e5dc7a7296cdb1755ea2b4e758feb00c6dc8ac0448dc0bb7d61a75bdae"
     },
     {
+      "path": "scripts/evermile/source/supplied/1982_mercedes_w201.glb",
+      "bytes": 26255368,
+      "sha256": "8cab37678ab04a1ee5e1d37a84d645bd631f5855cd5b3ee69ab373dfdf67c1f2"
+    },
+    {
+      "path": "scripts/evermile/source/supplied/bighorn/source/BIGHORN_DEMO.fbx",
+      "bytes": 14040812,
+      "sha256": "4d9e1f1e55d16f83f569897ffa135ba0d839f772dd7fdc2b43db843eb5d4d33c"
+    },
+    {
+      "path": "scripts/evermile/source/supplied/bighorn/textures/T_BigHorn_Antler.png",
+      "bytes": 4493623,
+      "sha256": "1df8dbf2e16422a211272d4fe7985526f0dadcb9a4c6fb065d34cd66f764efae"
+    },
+    {
+      "path": "scripts/evermile/source/supplied/bighorn/textures/T_BighornSheep.png",
+      "bytes": 4665631,
+      "sha256": "90bbc66f4fd27291a9b1cf33d93a23a55f3d32c51bfaa68d981f3747ade0b0f2"
+    },
+    {
+      "path": "scripts/evermile/source/supplied/enginetrain.glb",
+      "bytes": 72472616,
+      "sha256": "fb23f4b0ce58f3b75f6f17f47b35c40a69f9e648717ff2784f5dba841e663ea8"
+    },
+    {
+      "path": "scripts/evermile/source/supplied/fox_-_realistic_3d_model_demo_free.glb",
+      "bytes": 3280500,
+      "sha256": "6e0615dc8fec710aaa627fe03345c194c52bd0bb7ed23b2d784a54c0335fd7dc"
+    },
+    {
+      "path": "scripts/evermile/source/supplied/horse_-_realistic_3d_model_demo_free.glb",
+      "bytes": 27314652,
+      "sha256": "743fd70ec937dde1aa550afde17eeb506ca538933e291eca41d2fa8d5ffb20ea"
+    },
+    {
+      "path": "scripts/evermile/source/transport/bus.zip",
+      "bytes": 782148,
+      "sha256": "88c6c178a7334263bac319b6a20531c7911e65e566a39dd1797044485d0f75f1"
+    },
+    {
       "path": "scripts/evermile/source/transport/bus/BUS.blend",
       "bytes": 1027796,
       "sha256": "3bd079ad29637ce381486eaba926d499da72f0bcf61da99bf45d55ff85f25dfd"
@@ -841,14 +906,14 @@
       "sha256": "ec039f1c3605ebf588d424aefeaccc5d73a57c120d39c490076895b4a4f120b9"
     },
     {
-      "path": "scripts/evermile/source/transport/bus.zip",
-      "bytes": 782148,
-      "sha256": "88c6c178a7334263bac319b6a20531c7911e65e566a39dd1797044485d0f75f1"
-    },
-    {
       "path": "scripts/evermile/source/transport/gas-station.rar",
       "bytes": 32037001,
       "sha256": "5ff93fe29cd719fcea6234816cc167656bb0de81c656c0344d2159603915e7d9"
+    },
+    {
+      "path": "scripts/evermile/source/transport/sheep.zip",
+      "bytes": 2793053,
+      "sha256": "a7982fb343762c8195a150c21710f2303837087f843d0494b06a555736973a92"
     },
     {
       "path": "scripts/evermile/source/transport/sheep/owca/owca.blend",
@@ -864,11 +929,6 @@
       "path": "scripts/evermile/source/transport/sheep/owca/owcaSkoraGN.png",
       "bytes": 1224509,
       "sha256": "1702082b51487cc18e3feba937179ad17222d18999888e214aa564dfaa5c32f0"
-    },
-    {
-      "path": "scripts/evermile/source/transport/sheep.zip",
-      "bytes": 2793053,
-      "sha256": "a7982fb343762c8195a150c21710f2303837087f843d0494b06a555736973a92"
     },
     {
       "path": "scripts/evermile/source/transport/signals/License.txt",

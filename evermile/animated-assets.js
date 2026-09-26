@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {clone} from './vendor/utils/SkeletonUtils.js';
 // Heights and strides are in metres; source files use several different unit systems.
-export const animalAssets={sheep:{file:"sheep-textured",height:1.05,stride:.65},cow:{file:'cow-imported',height:1.5,stride:1.35},dog:{file:'dog-imported',height:.65,stride:.85},cat:{file:'cat-imported',height:.36,stride:.45},fox:{file:'fox-imported',height:.75,stride:.8}};
+export const animalAssets={cow:{file:'cow-imported',height:1.5,stride:1.35},dog:{file:'dog-imported',height:.65,stride:.85},cat:{file:'cat-imported',height:.36,stride:.45},fox:{file:'fox-supplied',height:.6,stride:1.05},horse:{file:'horse-supplied',height:2,stride:1.5},bighorn:{file:'bighorn-supplied',height:1.25,stride:1}};
 export function animatedAnimal(asset,kind,variant=0){
  const config=animalAssets[kind],model=clone(asset.scene),root=new T.Group();root.add(model);model.updateMatrixWorld(true);
  const bounds=new T.Box3().setFromObject(model),scale=config.height/bounds.getSize(new T.Vector3()).y*(.97+(variant%4)*.02),center=bounds.getCenter(new T.Vector3());
