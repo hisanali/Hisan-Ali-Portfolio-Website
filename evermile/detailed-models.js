@@ -34,7 +34,8 @@ export class DetailedModels{
   const model=this.loaded.car.scene.clone(true),colors=[0x9c2524,0x243749,0xd2d1c8,0x26272a,0x557065,0x978467];
   const mats=new Map();model.traverse(o=>{if(!o.isMesh)return;const base=o.material;if(!mats.has(base)){const m=base.clone();if(/Paint 1/i.test(m.name)){m.color.set(colors[Math.floor(Math.random()*colors.length)]);m.metalness=.65;m.roughness=.25;}if(m.transmission){m.transmission=0;m.transparent=true;m.opacity=.42;m.depthWrite=false;}m.envMapIntensity=.8;mats.set(base,m);}o.material=mats.get(base);});
   model.scale.setScalar(c.length/4.7);c.detailWheels=[];model.traverse(o=>{if(/^Wheel(?:Front|Rear)[LR]$/.test(o.name))c.detailWheels.push({node:o,front:o.name.includes('Front'),base:o.quaternion.clone()});});
-  const preserve=new Set([c.beam,...Object.values(c.lamps||{}).flat()]);c.detailFallback=c.g.children.filter(o=>!preserve.has(o));c.g.add(model);c.detailModel=model;
+  // The detailed car has its own lamps; fallback lamps sit at different body heights.
+  const preserve=new Set([c.beam]);c.detailFallback=c.g.children.filter(o=>!preserve.has(o));c.g.add(model);c.detailModel=model;
  }
  makeCitizen(p){
   const asset=this.loaded['citizen'+p.i%6],model=cloneSkin(asset.scene),root=new T.Group();root.add(model);this.scene.add(root);
