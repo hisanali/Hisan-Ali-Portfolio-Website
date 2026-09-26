@@ -171,6 +171,8 @@ export class Railway {
       this.timer -= dt;
       if (this.timer <= 0 && s.started) { if (!this.dispatch(s)) this.timer = 6; }
     }
+    // A train on a line you have left behind (or turned away from) is simply retired.
+    if (this.train && !r.segs.includes(this.train.rail.seg)) { for (const c of this.train.cars) c.g.visible = false; this.train = null; this.timer = rand(20, 50); }
     const tr = this.train;
     this.glow.begin();
     if (tr) {

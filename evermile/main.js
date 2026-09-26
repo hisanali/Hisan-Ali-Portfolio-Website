@@ -333,7 +333,9 @@ function autoPlan(r, curvature) {
     if (!state.pass && lead && !(lead.car.yielding && Math.abs(lead.car.lat) > 1.1) && lead.gap < 80) speed = Math.min(speed, Math.max(0, lead.speed + (lead.gap - (rush ? 6 : 12)) * (rush ? .45 : .3)));
   }
   speed = Math.min(speed, stopLines(r, len));
-  const safe = safeSpeed(r, offset, speed, committed);
+  let safe = safeSpeed(r, offset, speed, committed);
+  // Caught out of lane with something coming: if our own lane is clear, creep back into it rather than freeze.
+  if (safe < 2 && speed > 2 && Math.abs(state.x - r.x(z) - offset(z)) > .6 && safeSpeed(r, offset, speed, committed, false) > 3) safe = 2.2;
   return {speed: Math.min(speed, safe), offset, safe};
 }
 
@@ -372,14 +374,15 @@ function pitPlan(r, cruise) {
 }
 
 // Highest speed that still stops short of anything solid in the path the car is heading for.
-function safeSpeed(r, offset, limit, ignoreOncoming = false) {
+function safeSpeed(r, offset, limit, ignoreOncoming = false, fromHere = true) {
   const half = settings.vehicle === 'coach' ? 1.3 : settings.vehicle === 'bike' ? .45 : .95, len = life.playerLength() / 2; let safe = limit;
-  const dx0 = state.x - r.x(state.z) - offset(state.z);
+  const dx0 = fromHere ? state.x - r.x(state.z) - offset(state.z) : 0;
   for (const o of [...life.obstacles(state.z, 90), ...railway.colliders(state.x, state.z + 45, 60).map((k) => ({x: k.x, z: k.z, r: k.train ? 2 : Math.max(k.hx, .5), vz: 0}))]) {
     const dz = o.z - state.z; if (dz < -1 || (ignoreOncoming && o.vz < -1)) continue;
     const pathX = r.x(o.z) + offset(o.z) + dx0 * Math.exp(-Math.max(0, dz) / 16);
     if (Math.abs(o.x - pathX) > o.r + half + .35) continue;
-    const room = dz - o.r - len - 2.5; safe = Math.min(safe, Math.sqrt(Math.max(0, 2 * 6 * room)) + Math.max(0, o.vz));
+    const room = dz - o.r - len - 2.5, v = Math.sqrt(Math.max(0, 2 * 6 * room)) + Math.max(0, o.vz);
+    if (v < safe) { safe = v; state.safeWhy = {dz: +dz.toFixed(1), dx: +(o.x - pathX).toFixed(2), r: o.r, vz: o.vz}; }
   }
   return safe;
 }
@@ -786,7 +789,7 @@ function bindPanel() {
 }
 
 // Test hook (only with ?debug in the address): run the simulation without drawing, to check long drives quickly.
-if (new URLSearchParams(location.search).has('debug')) window.evermile = {state, settings, get world() { return world; }, get life() { return life; }, get town() { return town; }, get railway() { return railway; }, get atmo() { return atmo; }, get radio() { return radio; }, get camera() { return camera; }, get vehicle() { return vehicle; }, changeSetting, toggleAuto, reset, toggleIndicator, chooseJunction,
+if (new URLSearchParams(location.search).has('debug')) window.evermile = {state, settings, get world() { return world; }, get life() { return life; }, get town() { return town; }, get railway() { return railway; }, get atmo() { return atmo; }, get radio() { return radio; }, get camera() { return camera; }, get vehicle() { return vehicle; }, plan() { const r = world.road; return autoPlan(r, Math.abs(r.tangent(state.z + 45) - r.tangent(state.z))); }, changeSetting, toggleAuto, reset, toggleIndicator, chooseJunction,
   simulate(seconds, step = 1 / 30) { const stop = state.time + seconds; let n = 0; while (state.time < stop && n++ < seconds * 200) { for (let i = 0; i < 4; i++) physics(step / 4); applyAtmosphere(step); updateCar(step); positionCamera(step); town.update(step, camera); life.update(step); railway.update(step, camera, () => 0); world.update(state.z, camera); routeWatch(); stopWatch(step); if (!state.started) break; } return {z: state.z, time: state.time}; },
   render() { if (composer) composer.render(0); else renderer.render(scene, camera); }};
 

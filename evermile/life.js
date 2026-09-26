@@ -673,6 +673,9 @@ export class Life {
         if ((c.z - minZ) * dir > 0) { c.z = minZ; c.speed = Math.min(c.speed, Math.max(0, leadSpeed)); }
       }
       this.lanes(c, list, s, dt, blocker, gap);
+      // Nose to nose with you on a narrow road: after a moment, squeeze over towards the verge to get by.
+      c.squeeze = blocker === 'player' && dir < 0 && gap < 25 && c.speed < .6 ? (c.squeeze || 0) + dt : 0;
+      if (c.squeeze > 2) c.latTarget = ow * Math.max(0, c.road.half(c.z) - .3 - Math.abs(laneOff) - c.width / 2);
       this.updateYield(c, dt, s);
       this.busStops(c, dt);
       this.turnSignal(c);

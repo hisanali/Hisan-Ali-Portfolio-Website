@@ -85,7 +85,7 @@ export class Effects {
   }
 
   updateSnow(dt) {
-    const show = this.snowing; this.snow.visible = show; if (!show) return;
+    const show = this.snowing && !this.inTunnel; this.snow.visible = show; if (!show) return;
     const c = this.camera.position, n = Math.round((this.settings.quality === 'low' ? 600 : this.settings.quality === 'medium' ? 1100 : this.snowCount) * this.snowAmount);
     this.snow.geometry.setDrawRange(0, n);
     // Flakes live in world space; the box around the camera wraps, so driving through them feels right.
@@ -523,7 +523,8 @@ export class Effects {
     this.updateSnow(dt);
     this.updateAircraft(dt);
     const rain = this.raining;
-    this.rain.visible = rain; this.ripples.visible = rain && this.precip > .08;
+    // No rain falls inside a tunnel.
+    this.rain.visible = rain && !this.inTunnel; this.ripples.visible = rain && this.precip > .08 && !this.inTunnel;
     this.rain.material.opacity = .42 * Math.min(1, .35 + this.precip);
     this.rain.material.color.set(0xb9c6d2).lerp(this.fade.set(0x6d7a88), this.atmo.night);
     if (rain) { this.updateRain(dt); if (this.ripples.visible) this.updateRipples(dt); }

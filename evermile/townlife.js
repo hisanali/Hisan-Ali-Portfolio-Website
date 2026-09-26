@@ -194,7 +194,9 @@ export class TownLife {
       } else if (p.state === 'board') {
         const door = new T.Vector3(r.side * 1.35, 0, 4.7); p.bus.g.localToWorld(door);
         const dx = door.x - p.x, dz = door.z - p.z, d = Math.hypot(dx, dz);
+        // On board (or the bus left without them, and they go back to the shelter).
         if (d < .5 || !p.bus.g.visible) { p.active = false; continue; }
+        if (!p.bus.atStop && p.bus.speed > .5) { p.state = 'bus'; p.bus = null; p.x = r.x(p.z) + p.side * p.lane; continue; }
         p.z += dz / d * 1.4 * dt; p.x += dx / d * 1.4 * dt; p.yaw = Math.atan2(dx, dz); moving = true;
         this.pose(p, moving, rain, dt); continue;
       }
