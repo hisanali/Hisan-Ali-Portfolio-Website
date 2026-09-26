@@ -30,9 +30,9 @@ function engineWave(ctx, falloff, bright) {
 }
 
 export class DriveAudio {
-  constructor(ctx) {
+  constructor(ctx, dest = ctx.destination) {
     this.ctx = ctx; this.gear = 1; this.rpm = 850; this.shiftDip = 0; this.vehicle = 'coupe'; this.popClock = 0; this.stopSqueal = false;
-    const out = ctx.createGain(); out.gain.value = 1; out.connect(ctx.destination); this.out = out;
+    const out = ctx.createGain(); out.gain.value = 1; out.connect(dest); this.out = out;
     this.noise = noiseBuffer(ctx);
     const loopNoise = () => { const src = ctx.createBufferSource(); src.buffer = this.noise; src.loop = true; src.start(0, Math.random() * 1.5); return src; };
 

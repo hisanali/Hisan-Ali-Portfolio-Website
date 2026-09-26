@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {Water} from './vendor/objects/Water.js';
-import {GlowPoints} from './glow.js?v=20260928a';
-import {addMist} from './atmosphere.js?v=20260928a';
+import {GlowPoints} from './glow.js?v=20260928b';
+import {addMist} from './atmosphere.js?v=20260928b';
 
 // Weather, water and wildlife layered over the world: rain, wet roads, puddles, lightning, thunder, reflective water and birds.
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -309,16 +309,17 @@ export class Effects {
   }
 
   /* ---------- Sound: rain hiss and thunder, built from noise ---------- */
-  initAudio(context) {
+  // weather: rain and thunder; sfx: aircraft overhead. Each goes to its own channel of the mixer.
+  initAudio(context, {weather, sfx} = {}) {
     if (this.audio || !context) return;
-    this.audio = context;
+    this.audio = context; this.weatherOut = weather || context.destination;
     const sr = context.sampleRate, buffer = context.createBuffer(1, sr * 2, sr), data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     const src = context.createBufferSource(); src.buffer = buffer; src.loop = true;
     const hp = context.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900;
     const lp = context.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6500;
     this.rainGain = context.createGain(); this.rainGain.gain.value = 0;
-    src.connect(hp).connect(lp).connect(this.rainGain).connect(context.destination); src.start();
+    src.connect(hp).connect(lp).connect(this.rainGain).connect(this.weatherOut); src.start();
     this.noise = buffer;
     // Aircraft: low filtered noise, pulsed by the rotor for a helicopter.
     const air = context.createBufferSource(); air.buffer = buffer; air.loop = true; air.playbackRate.value = .5;
@@ -327,7 +328,7 @@ export class Effects {
     const rotor = context.createOscillator(); rotor.frequency.value = 17; this.rotorDepth = context.createGain(); this.rotorDepth.gain.value = 0;
     rotor.connect(this.rotorDepth).connect(pulse.gain); rotor.start();
     this.aircraftGain = context.createGain(); this.aircraftGain.gain.value = 0;
-    air.connect(this.aircraftFilter).connect(pulse).connect(this.aircraftGain).connect(context.destination); air.start();
+    air.connect(this.aircraftFilter).connect(pulse).connect(this.aircraftGain).connect(sfx || context.destination); air.start();
   }
 
   thunder(delay, strength) {
@@ -338,7 +339,7 @@ export class Effects {
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(900 * strength + 120, now); lp.frequency.exponentialRampToValueAtTime(90, now + 3.5);
     const g = ctx.createGain(); g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(volume * (.5 + strength * .9), now + .06);
     g.gain.setTargetAtTime(volume * .35 * strength, now + .3, .4); g.gain.setTargetAtTime(0, now + 1.2, 1.1);
-    src.connect(lp).connect(g).connect(ctx.destination); src.start(now); src.stop(now + 7);
+    src.connect(lp).connect(g).connect(this.weatherOut); src.start(now); src.stop(now + 7);
   }
 
   updateAudio() {

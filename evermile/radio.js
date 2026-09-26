@@ -1,66 +1,117 @@
 /*
-  The car radio. Four stations, each playing its own endless music, composed as it plays: lo-fi beats, acoustic guitar
-  by the sea, synthwave for the night and gentle classical. Between songs the DJ talks now and then: the station, the
-  time, the weather, the town you are coming into. The sound goes through a small car-speaker filter.
+  The car radio. Six stations, each with its own music (composed as it plays) and its own people: a breakfast show
+  with two hosts and surprise phone calls, coast phone-ins, late-night stories, a classical host, a two-host podcast and
+  a business talk show. The music keeps playing under the voices, hosts talk over the intros, and they react to the drive:
+  towns, junctions, the road, the weather, tunnels (where the signal crackles) and stops. Voices use the best speech
+  voices the browser has (the "Natural" and online voices sound far more human than the defaults).
 */
+import {showFor, eventLine, songTitle} from './radio-shows.js?v=20260928b';
+
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (l) => l[Math.floor(Math.random() * l.length)];
 const freq = (m) => 440 * 2 ** ((m - 69) / 12);
 const MAJOR = [0, 2, 4, 5, 7, 9, 11], MINOR = [0, 2, 3, 5, 7, 8, 10];
+const wait = (s) => new Promise((ok) => setTimeout(ok, s * 1000));
 
+// format: music (songs with DJ breaks), podcast and business (talk over a quiet music bed).
 export const STATIONS = [
-  {id: 'evermile', name: 'Evermile FM', freq: '98.4', genre: 'lofi', tempo: [76, 90], voice: {pitch: 1, rate: .96}, tag: 'easy beats for the long way round'},
-  {id: 'coast', name: 'Coast Radio', freq: '104.2', genre: 'acoustic', tempo: [94, 110], voice: {pitch: 1.12, rate: 1}, tag: 'sunshine and sea air'},
-  {id: 'night', name: 'Night Drive', freq: '89.1', genre: 'synthwave', tempo: [100, 114], voice: {pitch: .82, rate: .92}, tag: 'neon, chrome and empty roads'},
-  {id: 'classic', name: 'Classic Hills', freq: '101.7', genre: 'classical', tempo: [64, 80], voice: {pitch: .95, rate: .9}, tag: 'timeless music for timeless views'},
+  {id: 'evermile', name: 'Evermile FM', freq: '98.4', genre: 'lofi', tempo: [76, 90], format: 'music', tag: 'easy beats for the long way round', cast: {host: {name: 'Maya', g: 'f', rate: 1.04}, co: {name: 'Leo', g: 'm', rate: 1.03}}},
+  {id: 'coast', name: 'Coast Radio', freq: '104.2', genre: 'acoustic', tempo: [94, 110], format: 'music', tag: 'sunshine, sea air and your phone calls', cast: {host: {name: 'Jess', g: 'f', rate: 1.05}}},
+  {id: 'night', name: 'Night Drive', freq: '89.1', genre: 'synthwave', tempo: [100, 114], format: 'music', tag: 'neon, chrome and empty roads', cast: {host: {name: 'Nate', g: 'm', rate: .93, pitch: .92}}},
+  {id: 'classic', name: 'Classic Hills', freq: '101.7', genre: 'classical', tempo: [64, 80], format: 'music', tag: 'timeless music for timeless views', cast: {host: {name: 'Eleanor', g: 'f', rate: .95}}},
+  {id: 'talk', name: 'Road Talk', freq: '92.7', genre: 'lofi', tempo: [70, 80], format: 'podcast', tag: 'the long way round podcast', cast: {host: {name: 'Ben', g: 'm', rate: 1.05}, co: {name: 'Priya', g: 'f', rate: 1.06}}},
+  {id: 'growth', name: 'Growth FM', freq: '96.1', genre: 'acoustic', tempo: [92, 100], format: 'business', tag: 'business talk for Oman', cast: {host: {name: 'Omar', g: 'm', rate: 1.03}, co: {name: 'Sara', g: 'f', rate: 1.04}}},
 ];
+// People who phone in (their voices are picked to differ from the hosts').
+const GUESTS = {c1: {g: 'f', rate: 1.06, pitch: 1.05}, c2: {g: 'm', rate: 1.02, pitch: .97}, kid: {g: 'f', rate: 1.15, pitch: 1.9}};
+
+/* ---------- Voices: rank what the browser offers and cast them ---------- */
+const FEMALE = /female|woman|samantha|karen|victoria|moira|tessa|fiona|serena|allison|\bava\b|susan|zira|hazel|aria|jenny|sonia|libby|natasha|clara|emma|\bamy\b|joanna|kendra|kimberly|salli|\bivy\b|olivia|michelle|\bana\b|nova|shelley|sandy|\bflo\b|catherine|elizabeth|linda|heera|neerja|ashley|cora|elsa|isla|\bjane\b|maisie|nancy|\bsara\b|abbi|bella|hollie|\bmia\b|molly|ellie|freya|yara|jessa|emily|kate|\bleah\b|nicky|\bsiri.*female/i;
+const MALE = /\bmale\b|daniel|\balex\b|\bguy\b|ryan|david|mark|george|oliver|thomas|arthur|aaron|james|brian|matthew|joey|justin|russell|\beric\b|rishi|reed|christopher|roger|andrew|brandon|davis|tony|jason|william|liam|noah|elliot|ethan|prabhat|ravi|connor|luke|mitchell|ollie|alfie|\blee\b|\bsteffan\b|\bduncan\b|\bnathan\b|\bgordon\b/i;
+const NOVELTY = /compact|espeak|eloquence|zarvox|whisper|bad news|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|wobble|albert|bahh|junior|ralph|\bfred\b|kathy|princess|grandma|grandpa|rocko|shelley|sandy|\bflo\b|reed|eddy/i;
+function gender(v) { const n = v.name; return FEMALE.test(n) ? 'f' : MALE.test(n) ? 'm' : '?'; }
+function quality(v) {
+  const n = v.name; let s = 0;
+  if (/natural|neural/i.test(n)) s += 14; if (/premium|enhanced/i.test(n)) s += 9; if (/online/i.test(n)) s += 5; if (/google/i.test(n)) s += 6; if (/siri/i.test(n)) s += 6;
+  if (/^en[-_](gb|us|au|ie|ca|nz)/i.test(v.lang)) s += 2; if (!v.localService) s += 2; if (NOVELTY.test(n)) s -= 30;
+  return s;
+}
+export const natural = (v) => !!v && /natural|neural|premium|enhanced|online|google|siri/i.test(v.name);
 
 export class Radio {
   constructor(ctx, getVolume, getContext) {
     this.ctx = ctx; this.getVolume = getVolume; this.getContext = getContext;
-    this.index = -1; this.song = null; this.next = 0; this.step = 0; this.talking = false; this.wait(0); this.songsSinceTalk = 0;
+    this.index = -1; this.song = null; this.next = 0; this.step = 0; this.talking = false; this.wait(0);
+    this.token = 0; this.events = []; this.lastTalk = -99; this.lastEvent = -99; this.memory = new Map(); this.log = []; this.said = 0; this.breakDue = false;
     // Car speakers: no deep bass, soft highs, a little compression. Reverb for space.
     this.out = ctx.createGain(); this.out.gain.value = 0;
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 65;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 9500;
+    this.lp = ctx.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.frequency.value = 9500;
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.attack.value = .01; comp.release.value = .25;
     this.duck = ctx.createGain(); this.duck.gain.value = 1;
     this.bus = ctx.createGain(); this.bus.gain.value = .8;
+    this.fxBus = ctx.createGain(); this.fxBus.gain.value = 1;
     this.verb = ctx.createConvolver(); this.verb.buffer = this.impulse(2.2); this.wet = ctx.createGain(); this.wet.gain.value = .22;
     this.bus.connect(this.duck); this.bus.connect(this.verb).connect(this.wet).connect(this.duck);
-    this.duck.connect(hp).connect(lp).connect(comp).connect(this.out).connect(ctx.destination);
+    this.duck.connect(hp); this.fxBus.connect(hp); hp.connect(this.lp).connect(comp).connect(this.out).connect(ctx.destination);
     const n = ctx.sampleRate; this.noise = ctx.createBuffer(1, n, n); const d = this.noise.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-    this.voices = []; this.loadVoices();
+    // Reception hiss (tunnels) and the phone line under callers.
+    this.hiss = this.loop(2600, .5); this.line = this.loop(1500, 1.4);
+    this.voices = []; this.cast = {}; this.loadVoices();
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.addEventListener?.('voiceschanged', () => this.loadVoices());
   }
 
   // Pause before the next song, measured on the audio clock.
   wait(sec) { this.resumeAt = this.ctx.currentTime + sec; }
-
   impulse(sec) {
     const ctx = this.ctx, len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2.6; }
     return b;
   }
+  loop(tone, q) {
+    const src = this.ctx.createBufferSource(), bp = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+    src.buffer = this.noise; src.loop = true; bp.type = 'bandpass'; bp.frequency.value = tone; bp.Q.value = q; g.gain.value = 0;
+    src.connect(bp).connect(g).connect(this.fxBus); src.start(); return g;
+  }
 
-  loadVoices() { try { this.voices = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)); } catch { this.voices = []; } }
+  loadVoices() {
+    try { this.voices = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)).sort((a, b) => quality(b) - quality(a)); } catch { this.voices = []; }
+    this.cast = {};
+  }
+  // The voice for a role on the current station: the best voice of the right kind that nobody else on the show uses.
+  voiceFor(who) {
+    const key = this.index + ':' + who; if (key in this.cast) return this.cast[key];
+    const st = this.station, role = st.cast[who] || GUESTS[who] || st.cast.host, taken = new Set(Object.entries(this.cast).filter(([k]) => k.startsWith(this.index + ':')).map(([, v]) => v));
+    const good = this.voices.filter((v) => quality(v) > -10).sort((a, b) => quality(b) - quality(a)), same = good.filter((v) => gender(v) === role.g), maybe = good.filter((v) => gender(v) === '?');
+    const pool = [...same, ...maybe, ...good].filter((v, i, l) => l.indexOf(v) === i);
+    // Hosts on different stations get different voices where there are enough good ones.
+    const tier = same.filter((v) => quality(v) >= quality(same[0]) - 6).length, offset = who === 'host' || who === 'co' ? this.index % Math.max(1, Math.min(3, tier)) : 0;
+    const free = pool.filter((v) => !taken.has(v)), list = free.length ? free : pool;
+    return (this.cast[key] = list[Math.min(offset, list.length - 1)] || null);
+  }
 
   get station() { return this.index >= 0 ? STATIONS[this.index] : null; }
+  get talkShow() { return this.station && this.station.format !== 'music'; }
 
   // Next station in the list, then off, then round again.
   cycle(dir = 1) { const n = STATIONS.length + 1; this.tune(((this.index + 1 + dir) % n + n) % n - 1); return this.station; }
-  tune(i) {
-    this.index = i; this.song = null; this.wait(.9); this.cancelTalk();
+  tune(i, greet = true) {
+    this.index = i; this.song = null; this.wait(.9); this.cancelTalk(); this.events = [];
     this.static(.5);
-    // Often the DJ says hello before the music starts.
-    if (this.station && Math.random() < .6) { this.wait(99); setTimeout(() => { if (this.station && this.index === i && !this.talking) this.talk(this.ident()); else if (this.index === i) this.wait(.5); }, 900); }
+    if (this.station && greet) { this.breakDue = false; setTimeout(() => { if (this.index === i && !this.talking) this.segment(showFor(this, 'tuned')); }, 900); }
+  }
+  // Something happened on the drive: the host may mention it (towns, junctions, stops, the start of the drive).
+  notify(kind, data = {}) {
+    if (!this.station) return;
+    if (kind === 'start') { this.cancelTalk(); this.events = []; this.segment(showFor(this, 'welcome')); return; }
+    this.events = this.events.filter((e) => e.kind !== kind); this.events.push({kind, data, until: this.ctx.currentTime + (kind === 'town' ? 25 : 40)});
   }
 
-  static(len) {
+  static(len, level = .18) {
     const ctx = this.ctx, t = ctx.currentTime, src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
     src.buffer = this.noise; bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = .6;
-    g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + len);
-    src.connect(bp).connect(g).connect(this.duck); src.start(t, Math.random() * .5); src.stop(t + len);
+    g.gain.setValueAtTime(level, t); g.gain.exponentialRampToValueAtTime(.001, t + len);
+    src.connect(bp).connect(g).connect(this.fxBus); src.start(t, Math.random() * .5); src.stop(t + len);
   }
 
   /* ---------- Songs ---------- */
@@ -69,7 +120,7 @@ export class Radio {
     const scale = minor ? MINOR : MAJOR, root = 45 + Math.floor(rand(0, 10));
     const progs = minor ? [[0, 5, 2, 6], [0, 3, 6, 2], [0, 6, 5, 6], [0, 5, 3, 4]] : [[0, 4, 5, 3], [0, 5, 3, 4], [5, 3, 0, 4], [0, 3, 5, 4], [3, 4, 0, 5]];
     const beats = st.genre === 'classical' && Math.random() < .6 ? 3 : 4;
-    const tempo = rand(...st.tempo), bars = st.genre === 'classical' ? 40 : 48;
+    const tempo = rand(...st.tempo), bars = st.genre === 'classical' ? 30 : 36;
     const prog = pick(progs), prog2 = pick(progs);
     // A short melody motif, reused and varied.
     const motif = Array.from({length: 8}, () => (Math.random() < .3 ? null : Math.floor(rand(0, 6))));
@@ -80,15 +131,31 @@ export class Radio {
   note(song, degree, octave = 0) { const n = song.scale.length, d = ((degree % n) + n) % n, o = Math.floor(degree / n); return song.root + song.scale[d] + 12 * (o + octave); }
   chord(song, degree, size = 3) { return Array.from({length: size}, (_, i) => this.note(song, degree + i * 2)); }
 
+
   update(dt) {
-    const ctx = this.ctx, vol = this.getVolume();
-    this.out.gain.setTargetAtTime(this.station ? vol * .5 : 0, ctx.currentTime, .15);
+    const ctx = this.ctx, vol = this.getVolume(), st = this.station, c = st ? this.getContext?.() || {} : {};
+    this.out.gain.setTargetAtTime(st ? vol * .5 : 0, ctx.currentTime, .15);
+    // In a tunnel the signal fades to a muffled crackle.
+    const weak = c.tunnel ? 1 : 0;
+    this.lp.frequency.setTargetAtTime(weak ? 1100 : 9500, ctx.currentTime, .4); this.hiss.gain.setTargetAtTime(weak * .05, ctx.currentTime, .4);
+    if (this.weak && !weak && st) this.notify('signal'); this.weak = weak;
+    // Talk stations keep their music low under the voices; music stations duck it while someone speaks.
+    this.bus.gain.setTargetAtTime(this.talkShow ? .3 : .8, ctx.currentTime, .5);
+    this.duck.gain.setTargetAtTime(this.talking && !this.musicUp ? (this.talkShow ? .7 : .28) : 1, ctx.currentTime, this.talking ? .15 : .6);
     if (!vol && this.talking) this.cancelTalk();
-    if (!this.station || !vol) { this.next = 0; return; }
-    if (this.talking) return;
+    if (!st || !vol) { this.next = 0; return; }
+    this.watchWeather(c);
+    // What to say next: news from the drive first, then the show itself.
+    if (!this.talking && this.ctx.currentTime > (this.quietUntil || 0)) {
+      this.events = this.events.filter((e) => e.until > ctx.currentTime);
+      const e = this.events[0];
+      if (e && ctx.currentTime - this.lastEvent > (e.kind === 'town' ? 12 : 20)) { this.events.shift(); this.lastEvent = ctx.currentTime; const items = eventLine(this, e.kind, e.data, c); if (items) this.segment(items); }
+      else if (this.talkShow) this.segment(showFor(this, 'next'));
+      else if (this.breakDue) { this.breakDue = false; this.segment(showFor(this, 'break')); }
+    }
     if (!this.song) {
       if (ctx.currentTime < this.resumeAt) return;
-      this.song = this.compose(); this.step = 0; this.next = ctx.currentTime + .1;
+      this.song = this.compose(); this.song.meta = songTitle(st, this.song); this.step = 0; this.next = ctx.currentTime + .1;
     }
     const song = this.song, sixteenth = 60 / song.tempo / 4;
     if (this.next < ctx.currentTime - .5) this.next = ctx.currentTime + .05;
@@ -96,8 +163,19 @@ export class Radio {
       const swing = this.step % 2 ? song.swing * sixteenth : 0;
       this.play(song, this.step, this.next + swing, sixteenth);
       this.next += sixteenth; this.step++;
-      if (this.step >= song.bars * song.beats * 4) { this.song = null; this.songsSinceTalk++; this.wait(.8); if (this.songsSinceTalk >= 1 && Math.random() < .6) { this.songsSinceTalk = 0; this.wait(99); setTimeout(() => this.talk(this.line()), 900); } break; }
+      // Song over: straight into the next one, with the host talking over its intro.
+      if (this.step >= song.bars * song.beats * 4) { this.last = song; this.song = this.compose(); this.song.meta = songTitle(st, this.song); this.step = 0; this.next = ctx.currentTime + .5; if (!this.talkShow) this.breakDue = true; break; }
     }
+  }
+
+  // Rain starting or clearing, night falling and the sun coming up are worth a word.
+  watchWeather(c) {
+    const wet = c.rain > .35 ? 1 : c.rain < .05 ? 0 : this.wet0;
+    if (this.wet0 !== undefined && wet !== this.wet0) this.notify(wet ? 'rain' : 'dry');
+    this.wet0 = wet;
+    const h = c.hour ?? 12, dark = h > 20.3 || h < 5.6;
+    if (this.dark0 !== undefined && dark !== this.dark0) this.notify(dark ? 'night' : 'sunrise');
+    this.dark0 = dark;
   }
 
   play(song, step, t, dur) {
@@ -158,54 +236,72 @@ export class Radio {
   crackle(t, len) { const src = this.ctx.createBufferSource(); src.buffer = this.noise; src.playbackRate.value = .25; const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3000; const g = this.ctx.createGain(); g.gain.value = .012; src.connect(hp).connect(g).connect(this.bus); src.start(t); src.stop(t + len); }
   chime(t) { [0, 4, 7, 12].forEach((s, i) => { const g = this.env(t + i * .12, .005, 1.2, .07); g.connect(this.bus); this.osc('sine', freq(72 + s), t + i * .12, 1.3, g); }); }
 
-  /* ---------- The DJ ---------- */
-  ident() { const s = this.station; return pick([`You're tuned to ${s.name}, ${s.freq}. ${cap(s.tag)}.`, `This is ${s.name} on ${s.freq}. Glad you're with us.`, `${s.name}, ${s.freq}. Sit back, the road's all yours.`]); }
 
-  line() {
-    const s = this.station, c = this.getContext?.() || {}, h = c.hour ?? 12, lines = [];
-    const time = c.clock ? `It's ${speakTime(c.clock)}` : '';
-    const part = h < 5 ? 'in the small hours' : h < 9 ? 'this morning' : h < 12 ? 'this morning' : h < 17 ? 'this afternoon' : h < 20.5 ? 'this evening' : 'tonight';
-    lines.push(this.ident());
-    if (time) lines.push(`${time} here on ${s.name}. Hope the drive's treating you well ${part}.`);
-    if (c.rain > .5) lines.push(pick(['Rain coming down across the hills right now. Take it easy out there, and keep those wipers going.', 'Wet roads out there tonight. Leave a little extra room, and enjoy the sound of the rain.']));
-    else if (c.rain > .05) lines.push('A bit of drizzle about. It should clear through in a while.');
-    else if (c.cloud > .7) lines.push('Clouds building up over the hills. Might be rain on the way later.');
-    else if (h > 17.3 && h < 19.6) lines.push('That sun is getting low. If you can pull over somewhere, it is a beautiful evening for it.');
-    else if (h > 5 && h < 8 && c.mist > .3) lines.push('Some mist lying in the valleys this morning. Lovely, but watch your speed down there.');
-    else if (h > 21 || h < 4.5) lines.push(pick(['Clear skies tonight. Plenty of stars out, if you can find somewhere dark.', 'Late one tonight. Stay with us, we will keep you company.']));
-    else lines.push(pick(['Clear and bright out there. Perfect driving weather.', 'Blue skies across the region. Windows down, if you ask me.']));
-    if (c.town) lines.push(pick([`Coming up on ${c.town}? Say hello from all of us.`, `Shout out to everyone in ${c.town} today.`]));
-    if (c.road === 'mountain') lines.push('If you are up on the mountain pass, mind those bends, and look out for snow near the top.');
-    if (c.road === 'highway') lines.push('Traffic on the motorway is moving nicely in both directions.');
-    if (c.road === 'coast') lines.push('Down on the lakeside road, the water is looking gorgeous right now.');
-    if (c.fuel !== undefined && c.fuel < .2) lines.push('Running low on fuel? There are services along the way, keep an eye out for the signs.');
-    lines.push(pick([`Here's another one for you on ${s.name}.`, 'Right, back to the music.', 'Keep it here. More music coming right up.', `${s.freq}, ${s.name}. Let's keep rolling.`]));
-    // Two or three sentences: an opener, one about the conditions, a sign-off.
-    const opener = lines[Math.random() < .5 ? 0 : Math.min(1, lines.length - 1)], mid = lines.slice(2, -1), close = lines[lines.length - 1];
-    return [opener, mid.length ? pick(mid) : '', close].filter(Boolean).join(' ');
+  /* ---------- Sound effects for the shows ---------- */
+  fx(kind) {
+    const t = this.ctx.currentTime + .02;
+    if (kind === 'jingle') { this.chime(t); this.sweep(t, .9); return 1.1; }
+    if (kind === 'sting') { [0, 7, 12, 16].forEach((s, i) => { const g = this.env(t + i * .09, .004, .5, .06); g.connect(this.fxBus); this.osc('triangle', freq(67 + s), t + i * .09, .6, g); }); return .8; }
+    if (kind === 'ring') { for (let r = 0; r < 2; r++) for (const b of [0, .6]) { const s = t + r * 2 + b, g = this.env(s, .01, .4, .05, 'lin'); g.connect(this.fxBus); this.osc('sine', 400, s, .4, g); this.osc('sine', 450, s, .4, g); } return 3.4; }
+    if (kind === 'pickup' || kind === 'hangup') { this.click(t); if (kind === 'hangup') { const g = this.env(t + .15, .005, .25, .04, 'lin'); g.connect(this.fxBus); this.osc('sine', 480, t + .15, .25, g); } return .5; }
+    if (kind === 'giggle') { for (let i = 0; i < 7; i++) { const s = t + i * .13 + rand(0, .03), f = rand(620, 980) * (1 + (i % 2) * .15), g = this.env(s, .015, .09, .05); const o = this.osc('sine', f, s, .12, g), v = this.ctx.createOscillator(), vd = this.ctx.createGain(); v.frequency.value = 26; vd.gain.value = f * .08; v.connect(vd).connect(o.frequency); v.start(s); v.stop(s + .13); g.connect(this.fxBus); } return 1.1; }
+    if (kind === 'cheer') { const src = this.ctx.createBufferSource(), bp = this.ctx.createBiquadFilter(), g = this.ctx.createGain(); src.buffer = this.noise; src.loop = true; bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = .4; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.05, t + .3); g.gain.linearRampToValueAtTime(0, t + 2); src.connect(bp).connect(g).connect(this.fxBus); src.start(t); src.stop(t + 2.1); return 1.6; }
+    return 0;
+  }
+  sweep(t, len) { const src = this.ctx.createBufferSource(), bp = this.ctx.createBiquadFilter(), g = this.ctx.createGain(); src.buffer = this.noise; bp.type = 'bandpass'; bp.Q.value = 3; bp.frequency.setValueAtTime(400, t); bp.frequency.exponentialRampToValueAtTime(6000, t + len); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.05, t + len * .7); g.gain.linearRampToValueAtTime(0, t + len); src.connect(bp).connect(g).connect(this.fxBus); src.start(t); src.stop(t + len); }
+  click(t) { const src = this.ctx.createBufferSource(), g = this.env(t, .001, .03, .12); src.buffer = this.noise; src.connect(g).connect(this.fxBus); src.start(t); src.stop(t + .05); }
+
+  /* ---------- Speaking ---------- */
+  // A segment is a list of lines ({who, text, phone}), sound effects ({fx}) and pauses ({pause}), played in order.
+  segment(items) {
+    if (!items || !items.length) return;
+    const token = ++this.token; this.talking = true; this.lastTalk = this.ctx.currentTime;
+    const run = async () => {
+      for (const it of items) {
+        if (token !== this.token || !this.station) return;
+        if (it.fx) { await wait(this.fx(it.fx)); continue; }
+        if (it.pause) { await wait(it.pause); continue; }
+        if (it.music) { this.musicUp = true; await wait(it.music); this.musicUp = false; continue; }
+        this.line.gain.setTargetAtTime(it.phone ? .03 : 0, this.ctx.currentTime, .05);
+        await this.say(it.who || 'host', it.text, it.phone);
+        await wait(it.gap ?? rand(.18, .45));
+      }
+    };
+    run().catch(() => {}).finally(() => {
+      if (token !== this.token) return;
+      this.line.gain.setTargetAtTime(0, this.ctx.currentTime, .05);
+      this.musicUp = false; this.talking = false; this.quietUntil = this.ctx.currentTime + (this.talkShow ? rand(1.2, 3.2) : 4);
+    });
   }
 
-  talk(text) {
-    this.wait(1.2); this.song = null;
-    if (!this.station || typeof speechSynthesis === 'undefined' || !this.getVolume()) { this.talking = false; return; }
-    this.talking = true;
-    const ctx = this.ctx; this.chime(ctx.currentTime + .05);
-    this.duck.gain.setTargetAtTime(.35, ctx.currentTime, .2);
-    const u = new SpeechSynthesisUtterance(text), p = this.station.voice;
-    const voices = this.voices.length ? this.voices : [];
-    if (voices.length) u.voice = voices[(this.index * 3 + 1) % voices.length];
-    u.pitch = p.pitch; u.rate = p.rate; u.volume = Math.min(1, this.getVolume() * 2.2);
-    const done = () => { this.talking = false; this.duck.gain.setTargetAtTime(1, this.ctx.currentTime, .4); this.wait(.6); };
-    u.onend = done; u.onerror = done;
-    setTimeout(() => { try { speechSynthesis.speak(u); } catch { done(); } }, 700);
-    // Some browsers never fire onend: give up after a while.
-    clearTimeout(this.talkTimer); this.talkTimer = setTimeout(() => { if (this.talking) done(); }, 16000);
+  // One person's turn: each sentence is its own utterance with a touch of natural variation in pace and pitch.
+  say(who, text, phone) {
+    this.log.push((this.station?.cast[who]?.name || who) + ': ' + text); if (this.log.length > 60) this.log.shift(); this.said++;
+    if (typeof speechSynthesis === 'undefined' || !this.getVolume()) return wait(Math.min(8, text.length / 16));
+    const st = this.station, role = st.cast[who] || GUESTS[who] || st.cast.host, voice = this.voiceFor(who), good = natural(voice);
+    const parts = text.match(/[^.!?…]+[.!?…]*["”']?\s*/g) || [text];
+    return new Promise((ok) => {
+      let left = parts.length, done = false;
+      const finish = () => { if (!done) { done = true; clearTimeout(timer); ok(); } };
+      const words = text.split(/\s+/).length, timer = setTimeout(() => { try { speechSynthesis.cancel(); } catch {} finish(); }, (words / 2.3 / (role.rate || 1) + 3) * 1000);
+      for (const p of parts) {
+        const u = new SpeechSynthesisUtterance(p.trim()); if (voice) { u.voice = voice; u.lang = voice.lang; }
+        // Good voices already sound natural; others get the character's pitch to tell people apart.
+        const base = good ? 1 + ((role.pitch || 1) - 1) * .35 : role.pitch || 1, q = /[?]$/.test(p.trim()) ? 1.03 : /!$/.test(p.trim()) ? 1.02 : 1;
+        u.pitch = Math.max(.1, Math.min(2, base * q * rand(.97, 1.03))); u.rate = (role.rate || 1) * rand(.97, 1.03) * (phone ? 1.02 : 1);
+        u.volume = Math.min(1, this.getVolume() * (phone ? 1.8 : 2.2));
+        u.onend = () => { if (--left <= 0) finish(); }; u.onerror = () => finish();
+        try { speechSynthesis.speak(u); } catch { finish(); }
+      }
+    });
   }
-  cancelTalk() { if (this.talking) { try { speechSynthesis.cancel(); } catch {} this.talking = false; this.duck.gain.setTargetAtTime(1, this.ctx.currentTime, .2); } }
-}
+  cancelTalk() { this.token++; try { speechSynthesis.cancel(); } catch {} this.talking = false; this.line.gain.setTargetAtTime(0, this.ctx.currentTime, .05); this.duck.gain.setTargetAtTime(1, this.ctx.currentTime, .2); }
 
-function cap(s) { return s[0].toUpperCase() + s.slice(1); }
-function speakTime(clock) {
-  const [h, m] = clock.split(':').map(Number), h12 = h % 12 || 12, words = m === 0 ? `${h12} o'clock` : m < 10 ? `${h12} oh ${m}` : `${h12} ${m}`;
-  return `${words} ${h < 12 ? 'in the morning' : h < 17 ? 'in the afternoon' : h < 21 ? 'in the evening' : 'at night'}`;
+  // Pick an option not used lately, so the shows do not repeat themselves.
+  fresh(key, list) {
+    const seen = this.memory.get(key) || []; let choice = list.filter((x, i) => !seen.includes(i));
+    if (!choice.length) { seen.length = 0; choice = list; }
+    const item = pick(choice), i = list.indexOf(item); seen.push(i); if (seen.length > Math.max(1, Math.floor(list.length * .7))) seen.shift(); this.memory.set(key, seen);
+    return item;
+  }
 }

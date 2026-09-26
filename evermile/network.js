@@ -1,4 +1,4 @@
-import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260928a';
+import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260928b';
 
 /*
   The road network. The world is still laid out along z, but the road is now a chain of segments, each of a kind
