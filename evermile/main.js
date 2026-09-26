@@ -18,14 +18,16 @@ import {UnrealBloomPass} from './vendor/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from './vendor/postprocessing/OutputPass.js';
 
 /* ---------- Settings and state ---------- */
-export const settings = {seed: 'the-long-way', roadStyle: 'normal', location: 'hills', season: 'summer', planet: 'mars', time: 'day', clock: 'live', weather: 'changing', vehicle: 'coupe', color: '#e9e7db', roadWidth: 10.6, quality: 'high', camera: 0, volume: .35, steerAssist: .8, speedFactor: 1, grip: 1, units: 'km', autoMode: 'full', autoLane: 'left', trafficOncoming: 'on', trafficOwn: 'off', cyclists: 'on', rushMode: 'off', junctions: 'surprise', fuel: 'off', mirror: 'on', radio: 0, radioVolume: .55, fov: 60, hideUI: false, version: 2};
+export const settings = {seed: 'the-long-way', roadStyle: 'normal', location: 'hills', season: 'summer', planet: 'mars', time: 'day', clock: 'live', weather: 'changing', vehicle: 'coupe', color: '#e9e7db', roadWidth: 10.6, quality: 'high', camera: 0, volume: .35, steerAssist: .8, speedFactor: 1, grip: .7, units: 'km', autoMode: 'full', autoLane: 'left', trafficOncoming: 'on', trafficOwn: 'off', cyclists: 'on', rushMode: 'off', junctions: 'surprise', fuel: 'off', mirror: 'on', radio: 0, radioVolume: .55, fov: 60, hideUI: false, version: 3};
 let savedVersion = 2;
 try { const saved = JSON.parse(localStorage.getItem('evermile-settings') || 'null'); if (saved && typeof saved === 'object') { savedVersion = saved.version || 1; for (const k of Object.keys(settings)) if (k !== 'version' && typeof saved[k] === typeof settings[k]) settings[k] = saved[k]; } } catch {}
 // Players from before the living world get it switched on once.
 if (savedVersion < 2) { settings.weather = 'changing'; settings.clock = 'live'; }
+// Calmer steering by default from version 3.
+if (savedVersion < 3 && settings.grip === 1) settings.grip = .7;
 const valid = {roadStyle: ['straight', 'casual', 'normal', 'winding'], location: ['hills', 'offworld'], season: ['summer', 'spring', 'autumn', 'winter'], planet: ['mars', 'moon', 'venus'], time: ['day', 'dawn', 'sunset', 'night'], clock: ['live', 'still'], weather: ['changing', 'clear', 'overcast', 'rain'], vehicle: ['coupe', 'coach', 'bike'], quality: ['low', 'medium', 'high'], units: ['km', 'mi'], autoMode: ['full', 'steering', 'speed'], autoLane: ['left', 'right', 'center'], trafficOncoming: ['on', 'off'], trafficOwn: ['on', 'off'], cyclists: ['on', 'off'], rushMode: ['off', 'on'], junctions: ['surprise', 'straight'], fuel: ['off', 'on'], mirror: ['on', 'off']};
 for (const [k, v] of Object.entries(valid)) if (!v.includes(settings[k])) settings[k] = v[0];
-settings.camera = clamp(settings.camera, 0, 4); settings.radio = clamp(Math.round(settings.radio), -1, STATIONS.length - 1); settings.version = 2;
+settings.camera = clamp(settings.camera, 0, 4); settings.radio = clamp(Math.round(settings.radio), -1, STATIONS.length - 1); settings.version = 3;
 
 export const state = {started: false, paused: false, auto: false, speed: 0, x: 0, z: 35, y: 0, yaw: 0, steer: 0, distance: 0, time: 0, fps: 60, headlights: false, cruise: false, cruiseSpeed: 22, photo: false, offroad: false, inspection: false, indicator: 0, fuel: 1, dirt: 0, medianSide: 1};
 try { state.distance = Number(localStorage.getItem('evermile-distance')) || 0; state.fuel = clamp(Number(localStorage.getItem('evermile-fuel') ?? 1), 0, 1); if (Number.isNaN(state.fuel)) state.fuel = 1; } catch {}
@@ -173,7 +175,8 @@ function physics(dt) {
   let input = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0);
   if (gamepad) { if (Math.abs(gamepad.axes[0] || 0) > .1) input = -gamepad.axes[0]; throttle = Math.max(throttle, gamepad.buttons[7]?.value || 0); brake = Math.max(brake, gamepad.buttons[6]?.value || 0); }
   if ((input || throttle || brake) && state.auto) { if ((input && settings.autoMode !== 'speed') || (throttle && settings.autoMode === 'full') || brake) { state.auto = false; state.pit = null; updateUI(); } }
-  let steerTarget = input * .48 / (1 + Math.abs(state.speed) * .04);
+  // Steering gets gentler with speed, so the car no longer darts at the slightest touch.
+  let steerTarget = input * .42 / (1 + Math.abs(state.speed) * .065);
   const curvature = Math.abs(r.tangent(state.z + 45) - r.tangent(state.z)), plan = autoPlan(r, curvature);
   if (state.auto && settings.autoMode !== 'speed') {
     const quick = state.pass || state.laneMove > state.time, rushing = settings.rushMode === 'on';
@@ -200,7 +203,8 @@ function physics(dt) {
   if (state.grounded !== false) { const fx = Math.sin(state.yaw) * 1.4, fz = Math.cos(state.yaw) * 1.4; acceleration -= 9.8 * .85 * (world.groundHeight(state.x + fx, state.z + fz) - world.groundHeight(state.x - fx, state.z - fz)) / 2.8; }
   state.speed = clamp(state.speed + acceleration * dt, -9, boost ? 65 : 49);
   if (!throttle && !brake && Math.abs(state.speed) < .02) state.speed = 0;
-  if (brake && !throttle && Math.abs(state.speed) < .08) state.speed = 0;
+  // Autodrive and cruise hold the car still when stopped; holding the brake yourself still reverses.
+  if ((state.auto || state.cruise) && brake && !throttle && Math.abs(state.speed) < .08) state.speed = 0;
   state.steer = damp(state.steer, steerTarget, 8, dt);
   const grip = keys.Space ? .5 : settings.grip;
   state.yaw += state.speed / 2.8 * Math.tan(state.steer) * dt * grip;
@@ -554,7 +558,7 @@ function positionCamera(dt, instant = false) {
     placeSun(Math.sin(state.yaw), Math.cos(state.yaw)); return;
   }
   const yaw = state.yaw, forward = new T.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), right = new T.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-  let back = 8.2, up = 3.3, ahead = 12;
+  let back = 7.6, up = 2.25, ahead = 14;
   const coach = settings.vehicle === 'coach', bike = settings.vehicle === 'bike';
   if (settings.camera === 1) { back = 14; up = 5.5; ahead = 20; }
   if (settings.camera === 2) { back = -vehicle.seatZ; up = vehicle.seatY; ahead = 45; }
@@ -747,7 +751,7 @@ function bindCameraDrag() {
     if (!state.started || panelOpen || !$('start').hidden || e.button !== 0 || orbitPointer || driveOrbit.pointer) return;
     e.preventDefault();
     if (state.inspection) orbitPointer = {id: e.pointerId, x: e.clientX, y: e.clientY};
-    else { driveOrbit.begin(e.pointerId, e.clientX, e.clientY); chaseOrbitRadius = settings.camera < 2 ? camera.position.distanceTo(tmp.set(state.x, state.y + .95, state.z)) : Math.hypot(8.2, 2.35); }
+    else { driveOrbit.begin(e.pointerId, e.clientX, e.clientY); chaseOrbitRadius = settings.camera < 2 ? camera.position.distanceTo(tmp.set(state.x, state.y + .95, state.z)) : Math.hypot(7.6, 1.3); }
     canvas.setPointerCapture(e.pointerId); document.body.classList.add('camera-dragging');
   });
   canvas.addEventListener('pointermove', (e) => {
