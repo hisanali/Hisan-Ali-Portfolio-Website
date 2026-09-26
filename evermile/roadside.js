@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {random, noise, smooth, lerp, clamp} from './math.js?v=20260927a';
-import {GlowPoints} from './glow.js?v=20260926b';
-import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260927a';
-import {sheltered} from './atmosphere.js?v=20260927a';
-import {ZONE, TYPES, SEA} from './network.js?v=20260927a';
+import {random, noise, smooth, lerp, clamp} from './math.js?v=20260928a';
+import {GlowPoints} from './glow.js?v=20260928a';
+import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260928a';
+import {sheltered} from './atmosphere.js?v=20260928a';
+import {ZONE, TYPES, SEA} from './network.js?v=20260928a';
 
 // Everything built along the road network itself: tunnels, motorway furniture, junction signs, the railway and its
 // level crossings, petrol stations, cafés and viewpoints, lighthouses on the coast, snowbanks up high and farm fields.
@@ -334,7 +334,7 @@ export class Roadside {
     });
     // Chevron at the gore where the roads part.
     for (let u = 20; u < 200; u += 5) {
-      const z = j.z + u, sep = Math.abs(j.options[1].x(z) - j.options[0].x(z)), need = j.options[0].half(z) + j.options[1].half(z) + 3;
+      const z = j.z + u, sep = Math.abs(j.options[1].x(z) - j.options[0].x(z)), need = j.options.reduce((n, o) => n + o.half(z) * r.stretch(o, z), 4);
       if (sep > need) { if (z >= z0 && z < z1) { const xm = (j.options[0].x(z) + j.options[1].x(z)) / 2, y = j.options[0].y(z), put = frame(batch, xm, y, z, 0); put('metal', UNIT, 0, .7, 0, 0x3a3a3a, .1, 1.4, .1); put('paint', UNIT, 0, 1.5, -.06, 0xffc21a, 1.2, .8, .04); group.userData.colliders.push({x: xm, z, r: .4}); } break; }
     }
   }

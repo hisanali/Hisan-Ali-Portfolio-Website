@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {GlowPoints} from './glow.js?v=20260926b';
-import {random, clamp} from './math.js?v=20260927a';
+import {GlowPoints} from './glow.js?v=20260928a';
+import {random, clamp} from './math.js?v=20260928a';
 
 /*
   Life in town: the traffic lights run their cycle (and everyone obeys them), villages have a four-way stop where each

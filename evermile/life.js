@@ -1,10 +1,10 @@
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260926b';
-import {clamp} from './math.js?v=20260927a';
-import {canvasTexture} from './scenery.js?v=20260927a';
-import {ZONE} from './network.js?v=20260927a';
+import {GlowPoints} from './glow.js?v=20260928a';
+import {clamp} from './math.js?v=20260928a';
+import {canvasTexture} from './scenery.js?v=20260928a';
+import {ZONE} from './network.js?v=20260928a';
 
 // Life around the road: grazing cows and sheep, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.
@@ -219,7 +219,7 @@ export class Life {
     herd('sheep', 5 + Math.floor(Math.random() * 5));
     for (const a of due.filter((x) => (x.kind === 'dog' || x.kind === 'cat') && !x.claimed)) {
       const z = s.z + rand(220, 600);
-      if (Math.random() < .5 && r.typeAt(z) !== 'highway' && !r.tunnelAt(z)) { a.claimed = true; this.placeAnimal(a, z, Math.random() < .5 ? -1 : 1, r.half(z) + rand(2.8, 5.5)); }
+      if (Math.random() < .5 && r.typeAt(z) !== 'highway' && !r.tunnelAt(z) && !r.portalNear(z)) { a.claimed = true; this.placeAnimal(a, z, Math.random() < .5 ? -1 : 1, r.half(z) + rand(2.8, 5.5)); }
     }
     for (const a of this.animals) a.claimed = false;
   }
@@ -241,7 +241,7 @@ export class Life {
     const s = this.getState(), r = this.world.road;
     const z = s.z + Math.max(1, s.speed) * rand(8, 11) + rand(30, 60), w = r.half(z);
     if (r.townFactor(z) > 0 || r.bridgeNear(z) && Math.abs(r.bridgeNear(z).z - z) < 120) return;
-    if (r.typeAt(z) === 'highway' || r.tunnelAt(z) || r.crossingAt(z, 60) || r.stopAt(z, 30) || r.junctions.some((j) => z > j.z - 40 && z < j.z + ZONE)) return;
+    if (r.typeAt(z) === 'highway' || r.tunnelAt(z) || r.portalNear(z) > 0 || r.crossingAt(z, 60) || r.stopAt(z, 30) || r.junctions.some((j) => z > j.z - 40 && z < j.z + ZONE)) return;
     const kind = force || pick(['sheep', 'sheep', 'cow', 'cow', 'dog']), group = kind === 'dog' ? 1 : kind === 'sheep' ? 3 + Math.floor(Math.random() * 3) : 2 + Math.floor(Math.random() * 2);
     const from = Math.random() < .5 ? -1 : 1, list = this.animals.filter((a) => a.kind === kind && !a.crossing && (Math.abs(a.z - s.z) > 120 || a.z < s.z)).slice(0, group);
     list.forEach((a, i) => {
@@ -264,7 +264,12 @@ export class Life {
       if (!a.g.visible || Math.abs(a.z - s.z) > 700) { a.g.position.y = -500; continue; }
       a.phase += dt * (a.speed > 1.8 && a.kind !== 'dog' ? 1 + (a.speed - 1.8) * .45 : 1);
       if (a.kind === 'cow' || a.kind === 'sheep' || a.crossing) this.wander(a, dt);
-      else if (a.speed) { a.z += Math.cos(a.heading) * a.speed * dt; a.x = r.x(a.z) + a.side * a.offset; }
+      else if (a.speed) {
+        // Dogs trotting along the verge turn back before a tunnel rather than walking over its mouth.
+        const nz = a.z + Math.cos(a.heading) * a.speed * dt;
+        if (r.tunnelAt(nz) || r.portalNear(nz) > .6) a.heading += Math.PI; else a.z = nz;
+        a.x = r.x(a.z) + a.side * a.offset;
+      }
       const y = this.world.surfaceHeight(a.x, a.z, off);
       if (y < -7) { a.g.position.y = -500; continue; }
       const yaw = a.kind === 'dog' ? (a.heading === 0 ? Math.atan(r.tangent(a.z)) : Math.atan(r.tangent(a.z)) + Math.PI) : a.heading;
@@ -582,7 +587,7 @@ export class Life {
         if (c.dir < 0 && z > j.z + 60 && z < j.z + ZONE - 50) road = this.path(j, other);
         if (c.dir > 0 && z < j.z - 80 && z > s.z) road = this.path(j, other);
       }
-      if (road.end !== Infinity && c.dir < 0 && z > road.end - 40) continue;
+      if (road.end !== Infinity && c.dir < 0 && z > road.end - 90) continue;
       if (others.some((o) => Math.abs(o.z - z) < (c.kind === 'bike' ? 25 : 45))) continue;
       if (Math.abs(z - s.z) < 60) continue;
       if (r.crossingAt(z, 20) || r.bridgeAt(z) && c.kind === 'bike') continue;
@@ -616,7 +621,8 @@ export class Life {
       if (!c.active) { if (c.g.visible) this.despawn(c); continue; }
       if (c.g.visible) {
         const far = c.dir < 0 ? c.z < s.z - 70 || c.z > s.z + 1000 : c.z < s.z - 150 || c.z > s.z + 820;
-        const lost = !c.road.current(c.z) && !r.roadUnder(c.x ?? c.road.x(c.z), c.z, 2);
+        // Off the road that is drawn, or near the end of a branch not taken, where it runs on into the hillside.
+        const under = r.roadUnder(c.x ?? c.road.x(c.z), c.z, 2), lost = !c.road.current(c.z) && (!under || c.z > c.road.end - 60 || (!under.main && under.u > ZONE - 60));
         if (far || lost) this.despawn(c);
       }
       if (!c.g.visible) { if (c.wait > 0) c.wait -= dt; else this.spawnCar(c, s); }
@@ -687,7 +693,7 @@ export class Life {
     this.lamps(list, s, now, blink, lit, night);
     this.parked.forEach((c) => {
       if (off) { c.g.visible = false; return; }
-      if (c.z < s.z - 60 || c.z > s.z + 900 || c.version !== r.version && !r.roadUnder(c.g.position.x, c.z, 4) && !r.townFactor(c.z)) this.parkCar(c, s.z);
+      if (c.z < s.z - 60 || c.z > s.z + 900 || c.version !== r.version && this.parkedMoved(c)) this.parkCar(c, s.z);
       c.g.visible = !!c.spot;
     });
   }
@@ -760,7 +766,9 @@ export class Life {
       if (ahead < 70) { c.latTarget = ow * .95; c.signal = {side: r.side, until: performance.now() + 500}; }
       // Front door at the shelter.
       const front = c.z + c.dir * c.length / 2, target = b.z + c.dir * 3;
-      if (Math.abs(front - target) < 1.6 && c.speed < .25) { c.atStop += dt; if (c.atStop > 9) { c.served.add(b); c.atStop = 0; c.pullOut = 1.6; } }
+      // Before pulling out it waits for you to get by if you are alongside or just behind, easing past.
+      const s = this.getState(), along = (s.z - c.z) * c.dir, beside = along > -(c.length / 2 + 14) && along < c.length / 2 + 4 && Math.abs(s.x - c.x) < 4.2;
+      if (Math.abs(front - target) < 1.6 && c.speed < .25) { c.atStop += dt; if (c.atStop > 9 && !beside) { c.served.add(b); c.atStop = 0; c.pullOut = 1.6; } }
     } else c.nextStop = null;
     if (c.pullOut > 0) { c.pullOut -= dt; c.signal = {side: -r.side, until: performance.now() + 400}; if (c.pullOut < .8) c.latTarget = 0; }
     else if (!b) c.latTarget = 0;
@@ -866,6 +874,24 @@ export class Life {
     if (v === 'bike') return [[.2, .9], [-.2, .9], [.15, -.95], [-.15, -.95]];
     return [[.82, 2.18], [-.82, 2.18], [.8, -2.2], [-.8, -2.2]];
   }
+
+  // The road changed (a junction choice or a rebuild): is this parked vehicle still beside a road, on the ground, and out of the lanes?
+  parkedMoved(c) {
+    const r = this.world.road, x = c.g.position.x; c.version = r.version;
+    if (!c.spot) return true;
+    const beside = r.roadUnder(x, c.z, 4) || r.townFactor(c.z) > .5, inLane = r.roadUnder(x, c.z, -.4);
+    return !beside || inLane || Math.abs(this.world.groundHeight(x, c.z) + .02 - c.g.position.y) > .35;
+  }
+  // Everything forgets where it was, as after a rebuild of the world: vehicles and animals are placed afresh.
+  clear() {
+    for (const c of this.traffic) { this.despawn(c); c.wait = rand(0, 2); }
+    for (const c of this.parked) { c.spot = false; c.z = -1e9; c.g.visible = false; }
+    for (const a of this.animals) { a.z = -1e9; a.crossing = null; }
+    this.respawnTimer = 0; this.pathMap = null;
+  }
+
+  // The road beyond a junction changed: animals out there are moved on to the new road's fields.
+  onRouteChange(fromZ) { this.pathMap = null; for (const a of this.animals) if (a.z > fromZ && !a.crossing) a.z = -1e9; this.respawnTimer = 0; }
 
   // Park on the shoulder only where the ground is level, resting the vehicle on its wheels. Delivery trucks stop in towns.
   parkCar(c, fromZ) {

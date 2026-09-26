@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {random, noise, lerp, smooth, clamp} from './math.js?v=20260927a';
-import {Network, TYPES, ZONE, SEA} from './network.js?v=20260927a';
-import {Scenery} from './scenery.js?v=20260927a';
-import {Roadside} from './roadside.js?v=20260927a';
-import {sheltered} from './atmosphere.js?v=20260927a';
+import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260928a';
+import {Network, TYPES, ZONE, SEA} from './network.js?v=20260928a';
+import {Scenery} from './scenery.js?v=20260928a';
+import {Roadside} from './roadside.js?v=20260928a';
+import {sheltered} from './atmosphere.js?v=20260928a';
 
 // The landscape around the road network: terrain, road surfaces, trees, rocks, grass and guard rails, built in 240 m chunks.
 const scratch = new T.Object3D(), col = new T.Color(), col2 = new T.Color();
@@ -184,8 +184,19 @@ export class World {
 
   columns(z) { return columnsFor(this.road.half(z)); }
 
-  // Height of the rendered terrain triangles at a point, so things rest exactly on the ground you see.
+  // Height of the rendered terrain triangles at a point, so things rest exactly on the ground you see. Where a chunk is
+  // built (or being built) its own grid is used: after a junction choice the road centre, and so the grid, can move
+  // before the chunk is rebuilt, and sampling the new grid would put things a metre above or below the drawn ground.
   surfaceHeight(x, z, off = this.settings.location !== 'hills') {
+    const index = Math.floor(z / CHUNK), grid = this.building?.index === index ? this.building : this.chunks.get(index)?.userData.grid;
+    if (grid && grid.off === off) {
+      const i = Math.min(ROWS - 2, Math.floor((z - index * CHUNK) / ROW)), A = grid.rows[i], B = grid.rows[i + 1], t = (z - A.z) / ROW, c0 = A.cols, c1 = B.cols, H = grid.heights, n = COLS;
+      const dx = x - lerp(A.cx, B.cx, t);
+      let j = 0; while (j < c0.length - 2 && lerp(c0[j + 1], c1[j + 1], t) < dx) j++;
+      const lo = lerp(c0[j], c1[j], t), hi = lerp(c0[j + 1], c1[j + 1], t), u = clamp((dx - lo) / (hi - lo), 0, 1);
+      const a = H[i * n + j], b = H[i * n + j + 1], c = H[(i + 1) * n + j], d = H[(i + 1) * n + j + 1];
+      return u + t <= 1 ? a + (b - a) * u + (c - a) * t : d + (c - d) * (1 - u) + (b - d) * (1 - t);
+    }
     const r = this.road, z0 = Math.floor(z / ROW) * ROW, z1 = z0 + ROW, t = (z - z0) / ROW;
     const c0 = this.columns(z0), c1 = this.columns(z1), x0 = r.x(z0), x1 = r.x(z1), dx = x - lerp(x0, x1, t);
     let j = 0; while (j < c0.length - 2 && lerp(c0[j + 1], c1[j + 1], t) < dx) j++;
@@ -237,12 +248,14 @@ export class World {
         }
       }
     }
+    group.userData.grid = this.building = {index, rows: rowInfo, heights, off};
     const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); geo.setAttribute('color', new T.Float32BufferAttribute(colors, 3)); geo.setIndex(indices); geo.computeVertexNormals();
     const ground = new T.Mesh(geo, this.groundMat); ground.receiveShadow = true; group.add(ground);
     this.buildRoads(group, index, rowInfo);
     this.buildVegetation(group, index, plan, rng, rowInfo);
     this.scenery.build(group, plan);
     this.roadside.build(group, index, rowInfo);
+    this.building = null;
     group.traverse((o) => o.layers.enable(3));
     this.scene.add(group); this.chunks.set(index, group);
   }
@@ -421,5 +434,6 @@ export class World {
   railSide(z) { const s = this.railSides(z); return s.length === 1 ? s[0] : 0; }
 
   disposeChunk(g) { this.scene.remove(g); g.traverse((o) => { if (o.userData.shared) return; if (o.isInstancedMesh) o.dispose(); else if (o.isMesh) o.geometry.dispose(); }); }
-  rebuild() { for (const g of this.chunks.values()) this.disposeChunk(g); this.chunks.clear(); this.road = new Network(this.settings); this.scenery.layouts.clear(); this.updatePalette(); }
+  // keepRoute: the same road with other looks (season, width, quality), so the turns you took are kept.
+  rebuild(keepRoute = false) { for (const g of this.chunks.values()) this.disposeChunk(g); this.chunks.clear(); this.road = new Network(this.settings, keepRoute && this.road.id === hashSeed(this.settings.seed) ? this.road.route : null); this.scenery.layouts.clear(); this.roadside.fieldCache?.clear(); this.updatePalette(); }
 }
