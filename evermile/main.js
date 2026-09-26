@@ -1,3 +1,4 @@
+import {Intro} from './loader.js?v=20260926-intro1';
 import {citizenKey} from './citizen-assets.js?v=20260926-supplied7';
 import {motorcycleLean} from './wheel-rig.js?v=20260926-supplied7';
 import {DetailedModels} from './detailed-models.js?v=20260926-supplied7';
@@ -55,7 +56,7 @@ const driveOrbit = new CameraOrbit();
 let chaseOrbitRadius = 0, orbitYaw = .72, orbitPitch = .28, orbitDistance = 7.5, orbitPointer = null;
 let audioContext, windGain, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
 // High quality extras: bloom on bright lights and live reflections on your car. They switch off by themselves if the frame rate drops.
-let detailedModels;
+let detailedModels, intro, starting = false;
 let composer = null, bloom = null, cubeRT = null, cubeCam = null, cubeFace = 0, highFx = true, slowTime = 0;
 let lastEnv = null, envClock = 0, tunnelDim = 1, valleyY = 0, valleyClock = 0, blockedTime = 0, lastType = null, lastTown = null, cardJunction = null, stopShown = null, stopStill = 0, lastTick = null;
 
@@ -106,6 +107,7 @@ try {
   windscreen = new Windscreen($('windscreen'));
   mirror = new Mirror(renderer, scene);
   reset(); world.update(state.z, camera, true); setupHighFx(); applyAtmosphere(0, true); initUI();
+  intro = new Intro($('intro'), renderer, scene, () => camera);
   frameId = requestAnimationFrame(frame);
 } catch (error) { console.error(error); $('fatal-message').textContent = error.message; $('fatal').hidden = false; }
 
@@ -121,6 +123,18 @@ export function reset() {
   state.speed = 0; state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.vy = 0; state.lastGround = undefined; state.grounded = true; state.pass = null; state.pit = null; state.viewing = null;
   state.medianSide = Math.sign(state.x - r.x(z)) || 1;
   updateCar(1 / 60); positionCamera(1, true);
+}
+// The Begin button waits behind the loading screen until every model is in and every shader is ready, then drops you on the road.
+function beginWithIntro() {
+  if (state.started || starting) return; starting = true; initAudio();
+  intro.run({task: () => { $('start').hidden = true; }}).then(() => { starting = false; begin(); });
+}
+// Settings that build a new world or swap the vehicle go behind a shorter version of the same screen.
+const LOADED_SETTINGS = {destination: (v) => DESTINATIONS[v]?.name, seed: () => 'A new road', roadStyle: () => 'A new road', location: (v) => v === 'offworld' ? 'Off world' : 'The hills', planet: (v) => v, vehicle: (v) => ({coupe: 'Sports coupé', coach: 'Coach', bike: 'Motorcycle', mercedes: 'Mercedes W201'})[v]};
+function changeSettingLoaded(key, value, after) {
+  if (!state.started || !LOADED_SETTINGS[key] || settings[key] === value || intro.busy) { changeSetting(key, value); after?.(); return; }
+  const wasPaused = state.paused; state.paused = true;
+  intro.run({quick: true, minimum: 1300, label: String(LOADED_SETTINGS[key](value) || '').toUpperCase(), task: () => { changeSetting(key, value); after?.(); }}).then(() => { state.paused = wasPaused; updateUI(); });
 }
 export function begin() { if (state.started) return; state.started = true; $('start').classList.add('leaving'); setTimeout(() => $('start').hidden = true, 700); initAudio(); radio?.notify('start'); toast('WASD to drive · Drag to look around · F for autodrive'); }
 export function toggleAuto(value = !state.auto) { state.auto = value; if (value) state.cruise = false; updateUI(); toast(value ? 'Autodrive on. Enjoy the view.' : 'You’re in control.'); }
@@ -688,7 +702,7 @@ function initAudio() {
     effects?.initAudio(audioContext, mixer); railway?.initAudio(audioContext, mixer.sfx);
     driveAudio = new DriveAudio(audioContext, mixer.vehicle);
     radio = new Radio(audioContext, () => state.started && !state.paused && !muted ? settings.radioVolume * Math.min(1, settings.volume * 2.6) : 0, radioContext);
-    if (settings.radio >= 0) radio.tune(settings.radio, !state.started);
+    if (settings.radio >= 0) radio.tune(settings.radio, !state.started && !starting);
     audioReady = true;
   } catch (e) { console.warn(e); }
 }
@@ -719,7 +733,7 @@ function updateAudio(dt = 0) {
 
 /* ---------- Controls ---------- */
 function initUI() {
-  $('begin').onclick = begin; $('autodrive-btn').onclick = () => toggleAuto(); $('reset-btn').onclick = () => { reset(); toast('Back on the road'); };
+  $('begin').onclick = beginWithIntro; $('autodrive-btn').onclick = () => toggleAuto(); $('reset-btn').onclick = () => { reset(); toast('Back on the road'); };
   $('camera-btn').onclick = () => changeSetting('camera', (settings.camera + 1) % 5);
   $('sound-btn').onclick = () => { muted = !muted; $('sound-btn').style.opacity = muted ? .4 : 1; toast(muted ? 'Sound off' : 'Sound on'); initAudio(); };
   $('radio-btn').onclick = () => cycleRadio();
@@ -732,7 +746,7 @@ function initUI() {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
     keys[e.code] = true; if (e.repeat) return;
     if (state.viewing) { state.viewing = null; positionCamera(1, true); return; }
-    if (e.code === 'Enter' && !state.started) begin();
+    if (e.code === 'Enter' && !state.started && $('start').hidden === false) beginWithIntro();
     if (e.code === 'KeyF') toggleAuto();
     if (e.code === 'KeyC') changeSetting('camera', (settings.camera + 1) % 5);
     if (e.code === 'KeyR') { reset(); toast('Back on the road'); }
@@ -819,11 +833,11 @@ function bindPanel() {
   if ($('inspect-car')) $('inspect-car').onclick = () => inspectCar(true);
   if ($('wash-car')) $('wash-car').onclick = () => { state.dirt = 0; toast('Sparkling clean'); openPanel('vehicle'); };
   const name = $('panel-title').textContent.toLowerCase();
-  for (const b of document.querySelectorAll('[data-destination]')) b.onclick = () => { changeSetting('destination', b.dataset.destination); closePanel(); toast(DESTINATIONS[settings.destination].name); };
-  for (const b of document.querySelectorAll('[data-setting]')) b.onclick = () => { const key = b.dataset.setting; changeSetting(key, key === 'camera' ? Number(b.dataset.value) : b.dataset.value); openPanel(name); };
+  for (const b of document.querySelectorAll('[data-destination]')) b.onclick = () => { closePanel(); changeSettingLoaded('destination', b.dataset.destination, () => toast(DESTINATIONS[settings.destination].name)); };
+  for (const b of document.querySelectorAll('[data-setting]')) b.onclick = () => { const key = b.dataset.setting; changeSettingLoaded(key, key === 'camera' ? Number(b.dataset.value) : b.dataset.value, () => openPanel(name)); };
   for (const b of document.querySelectorAll('[data-radio]')) b.onclick = () => { initAudio(); if (audioContext?.state === 'suspended') audioContext.resume(); const i = Number(b.dataset.radio); settings.radio = i; save(); radio?.tune(i); openPanel(name); };
   for (const input of document.querySelectorAll('[data-range]')) { input.onchange = () => changeSetting(input.dataset.range, Number(input.value)); if (/olume$/.test(input.dataset.range)) input.oninput = input.onchange; }
-  if ($('seed-input')) { $('seed-input').value = settings.seed; $('generate-btn').onclick = () => { changeSetting('seed', $('seed-input').value.trim() || String(Math.floor(Math.random() * 1e8))); closePanel(); toast('A new road is waiting'); }; $('seed-input').onkeydown = (e) => { if (e.key === 'Enter') $('generate-btn').click(); }; }
+  if ($('seed-input')) { $('seed-input').value = settings.seed; $('generate-btn').onclick = () => { closePanel(); changeSettingLoaded('seed', $('seed-input').value.trim() || String(Math.floor(Math.random() * 1e8)), () => toast('A new road is waiting')); }; $('seed-input').onkeydown = (e) => { if (e.key === 'Enter') $('generate-btn').click(); }; }
 }
 
 // Test hook (only with ?debug in the address): run the simulation without drawing, to check long drives quickly.
