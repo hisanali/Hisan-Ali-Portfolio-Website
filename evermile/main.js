@@ -1,33 +1,35 @@
 import * as T from './vendor/three.module.js';
-import {World} from './world.js?v=20260928a';
-import {CameraOrbit} from './camera-orbit.js?v=20260928a';
-import {Vehicle} from './vehicle.js?v=20260928a';
-import {Effects} from './effects.js?v=20260928a';
-import {Life} from './life.js?v=20260928a';
-import {TownLife} from './townlife.js?v=20260928a';
-import {Railway} from './railway.js?v=20260928a';
-import {Atmosphere, PRESETS} from './atmosphere.js?v=20260928a';
-import {Windscreen, Mirror} from './cockpit.js?v=20260928a';
-import {Radio, STATIONS} from './radio.js?v=20260928a';
-import {DriveAudio} from './audio.js?v=20260928a';
-import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260928a';
-import {ZONE, TYPES} from './network.js?v=20260928a';
+import {World} from './world.js?v=20260928b';
+import {CameraOrbit} from './camera-orbit.js?v=20260928b';
+import {Vehicle} from './vehicle.js?v=20260928b';
+import {Effects} from './effects.js?v=20260928b';
+import {Life} from './life.js?v=20260928b';
+import {TownLife} from './townlife.js?v=20260928b';
+import {Railway} from './railway.js?v=20260928b';
+import {Atmosphere, PRESETS} from './atmosphere.js?v=20260928b';
+import {Windscreen, Mirror} from './cockpit.js?v=20260928b';
+import {Radio, STATIONS} from './radio.js?v=20260928b';
+import {DriveAudio} from './audio.js?v=20260928b';
+import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260928b';
+import {ZONE, TYPES} from './network.js?v=20260928b';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from './vendor/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from './vendor/postprocessing/OutputPass.js';
 
 /* ---------- Settings and state ---------- */
-export const settings = {seed: 'the-long-way', roadStyle: 'normal', location: 'hills', season: 'summer', planet: 'mars', time: 'day', clock: 'live', weather: 'changing', vehicle: 'coupe', color: '#e9e7db', roadWidth: 10.6, quality: 'high', camera: 0, volume: .35, steerAssist: .8, speedFactor: 1, grip: .7, units: 'km', autoMode: 'full', autoLane: 'left', trafficOncoming: 'on', trafficOwn: 'off', cyclists: 'on', rushMode: 'off', junctions: 'surprise', fuel: 'off', mirror: 'on', radio: 0, radioVolume: .55, fov: 60, hideUI: false, version: 3};
+export const settings = {seed: 'the-long-way', roadStyle: 'winding', location: 'hills', season: 'spring', planet: 'mars', time: 'dawn', clock: 'live', weather: 'changing', vehicle: 'coupe', color: '#b51f25', roadWidth: 10.6, quality: 'high', camera: 0, volume: .35, steerAssist: .8, speedFactor: 1, grip: .7, units: 'km', autoMode: 'full', autoLane: 'left', trafficOncoming: 'on', trafficOwn: 'on', cyclists: 'on', rushMode: 'off', junctions: 'surprise', fuel: 'on', mirror: 'on', radio: 0, radioVolume: .55, vehicleVolume: 1, weatherVolume: 1, sfxVolume: 1, fov: 45, hideUI: false, version: 4};
 let savedVersion = 2;
 try { const saved = JSON.parse(localStorage.getItem('evermile-settings') || 'null'); if (saved && typeof saved === 'object') { savedVersion = saved.version || 1; for (const k of Object.keys(settings)) if (k !== 'version' && typeof saved[k] === typeof settings[k]) settings[k] = saved[k]; } } catch {}
 // Players from before the living world get it switched on once.
 if (savedVersion < 2) { settings.weather = 'changing'; settings.clock = 'live'; }
 // Calmer steering by default from version 3.
 if (savedVersion < 3 && settings.grip === 1) settings.grip = .7;
-const valid = {roadStyle: ['straight', 'casual', 'normal', 'winding'], location: ['hills', 'offworld'], season: ['summer', 'spring', 'autumn', 'winter'], planet: ['mars', 'moon', 'venus'], time: ['day', 'dawn', 'sunset', 'night'], clock: ['live', 'still'], weather: ['changing', 'clear', 'overcast', 'rain'], vehicle: ['coupe', 'coach', 'bike'], quality: ['low', 'medium', 'high'], units: ['km', 'mi'], autoMode: ['full', 'steering', 'speed'], autoLane: ['left', 'right', 'center'], trafficOncoming: ['on', 'off'], trafficOwn: ['on', 'off'], cyclists: ['on', 'off'], rushMode: ['off', 'on'], junctions: ['surprise', 'straight'], fuel: ['off', 'on'], mirror: ['on', 'off']};
+// The new standard journey from version 4: spring dawn on winding roads, a red coupé, traffic and the fuel gauge on.
+if (savedVersion < 4) Object.assign(settings, {season: 'spring', time: 'dawn', clock: 'live', weather: 'changing', roadStyle: 'winding', junctions: 'surprise', color: '#b51f25', camera: 0, quality: 'high', fov: 45, autoMode: 'full', rushMode: 'off', trafficOncoming: 'on', trafficOwn: 'on', cyclists: 'on', fuel: 'on', mirror: 'on'});
+const valid = {roadStyle: ['winding', 'straight', 'casual', 'normal'], location: ['hills', 'offworld'], season: ['spring', 'summer', 'autumn', 'winter'], planet: ['mars', 'moon', 'venus'], time: ['dawn', 'day', 'sunset', 'night'], clock: ['live', 'still'], weather: ['changing', 'clear', 'overcast', 'rain'], vehicle: ['coupe', 'coach', 'bike'], quality: ['low', 'medium', 'high'], units: ['km', 'mi'], autoMode: ['full', 'steering', 'speed'], autoLane: ['left', 'right', 'center'], trafficOncoming: ['on', 'off'], trafficOwn: ['on', 'off'], cyclists: ['on', 'off'], rushMode: ['off', 'on'], junctions: ['surprise', 'straight'], fuel: ['off', 'on'], mirror: ['on', 'off']};
 for (const [k, v] of Object.entries(valid)) if (!v.includes(settings[k])) settings[k] = v[0];
-settings.camera = clamp(settings.camera, 0, 4); settings.radio = clamp(Math.round(settings.radio), -1, STATIONS.length - 1); settings.version = 3;
+settings.camera = clamp(settings.camera, 0, 4); settings.radio = clamp(Math.round(settings.radio), -1, STATIONS.length - 1); settings.version = 4;
 
 export const state = {started: false, paused: false, auto: false, speed: 0, x: 0, z: 35, y: 0, yaw: 0, steer: 0, distance: 0, time: 0, fps: 60, headlights: false, cruise: false, cruiseSpeed: 22, photo: false, offroad: false, inspection: false, indicator: 0, fuel: 1, dirt: 0, medianSide: 1};
 try { state.distance = Number(localStorage.getItem('evermile-distance')) || 0; state.fuel = clamp(Number(localStorage.getItem('evermile-fuel') ?? 1), 0, 1); if (Number.isNaN(state.fuel)) state.fuel = 1; } catch {}
@@ -45,7 +47,7 @@ let last = 0, accumulator = 0, hudClock = 0, fpsTime = 0, fpsFrames = 0, panelOp
 const cameraPos = new T.Vector3(), lookTarget = new T.Vector3(), tmp = new T.Vector3();
 const driveOrbit = new CameraOrbit();
 let chaseOrbitRadius = 0, orbitYaw = .72, orbitPitch = .28, orbitDistance = 7.5, orbitPointer = null;
-let audioContext, windGain, audioReady = false, muted = false, driveAudio = null, horning = false;
+let audioContext, windGain, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
 // High quality extras: bloom on bright lights and live reflections on your car. They switch off by themselves if the frame rate drops.
 let composer = null, bloom = null, cubeRT = null, cubeCam = null, cubeFace = 0, highFx = true, slowTime = 0;
 let lastEnv = null, envClock = 0, tunnelDim = 1, valleyY = 0, valleyClock = 0, blockedTime = 0, lastType = null, lastTown = null, cardJunction = null, stopShown = null, stopStill = 0, lastTick = null;
@@ -113,7 +115,7 @@ export function reset() {
   state.medianSide = Math.sign(state.x - r.x(z)) || 1;
   updateCar(1 / 60); positionCamera(1, true);
 }
-export function begin() { if (state.started) return; state.started = true; $('start').classList.add('leaving'); setTimeout(() => $('start').hidden = true, 700); initAudio(); toast('WASD to drive · Drag to look around · F for autodrive'); }
+export function begin() { if (state.started) return; state.started = true; $('start').classList.add('leaving'); setTimeout(() => $('start').hidden = true, 700); initAudio(); radio?.notify('start'); toast('WASD to drive · Drag to look around · F for autodrive'); }
 export function toggleAuto(value = !state.auto) { state.auto = value; if (value) state.cruise = false; updateUI(); toast(value ? 'Autodrive on. Enjoy the view.' : 'You’re in control.'); }
 export function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').classList.remove('visible'), 2700); }
 
@@ -241,11 +243,11 @@ function fuelAndDirt(dt, throttle, off) {
   if (settings.fuel === 'on') {
     const before = state.fuel;
     state.fuel = Math.max(0, state.fuel - dt * (.00016 + throttle * .0006) * v / 20);
-    if (before > .2 && state.fuel <= .2) toast(nextFuelText('Fuel is getting low'));
+    if (before > .2 && state.fuel <= .2) { toast(nextFuelText('Fuel is getting low')); radio?.notify('fuel'); }
     if (before > 0 && state.fuel <= 0) toast('Out of fuel. Limping on to the next station…');
     // Filling up: stopped beside a pump.
     state.refuelling = v < .4 && world.pumpNear(state.x, state.z, 3.2) && state.fuel < 1;
-    if (state.refuelling) { state.fuel = Math.min(1, state.fuel + dt * .14); if (state.fuel >= 1) { state.refuelling = false; toast('Tank full. Safe travels!'); if (state.pit) state.pit.stage = 'out'; } }
+    if (state.refuelling) { state.fuel = Math.min(1, state.fuel + dt * .14); if (state.fuel >= 1) { state.refuelling = false; toast('Tank full. Safe travels!'); radio?.notify('tank'); if (state.pit) state.pit.stage = 'out'; } }
   }
   // Dust off-road and on farm tracks, washed off by the rain.
   const farm = world.road.typeAt(state.z) === 'farm';
@@ -451,7 +453,7 @@ function toggleIndicator(side) {
 function chooseJunction(j, i, announce = true) {
   const r = world.road, was = j.chosen;
   if (r.choose(j, i)) { world.onRouteChange(j.z + ZONE - 80, state.z); life.onRouteChange(j.z); }
-  if (announce && (was !== i || i === 1)) { const o = r.optionInfo(j, i); toast(`${o.dir === 'ahead' ? 'Straight on' : o.dir === 'left' ? 'Turning left' : 'Turning right'} · ${o.label}${o.name ? ' to ' + o.name : ''}`); }
+  if (announce && (was !== i || i === 1)) { const o = r.optionInfo(j, i); radio?.notify('junction', o); toast(`${o.dir === 'ahead' ? 'Straight on' : o.dir === 'left' ? 'Turning left' : 'Turning right'} · ${o.label}${o.name ? ' to ' + o.name : ''}`); }
   j.picked = true; updateJunctionCard(j, true);
 }
 
@@ -472,9 +474,11 @@ function routeWatch() {
   if (changed === null && state.indicator && state.indicatorSource === 'manual' && r.junctions.some((q) => q.committed && state.z - q.z < 40 && state.z - q.z > 25)) { state.indicator = 0; updateIndicatorHUD(); }
   updateJunctionCard(j);
   const type = r.typeAt(state.z);
-  if (type !== lastType) { if (lastType && state.started) toast(`${TYPES[type].label} · ${r.segAt(state.z).name}`); lastType = type; }
+  if (type !== lastType) { if (lastType && state.started) { toast(`${TYPES[type].label} · ${r.segAt(state.z).name}`); radio?.notify('road', {type, label: TYPES[type].label, name: r.segAt(state.z).name}); } lastType = type; }
+  // Every ten kilometres (or miles), the radio may notice.
+  const mark = Math.floor(state.distance / (settings.units === 'mi' ? 16.09 : 10)); if (state.started && mark > (state.distanceMark ?? mark)) radio?.notify('miles'); state.distanceMark = mark;
   const t = r.townAt(state.z), inside = t && state.z > t.start && state.z < t.end ? t : null;
-  if (inside && inside.center !== lastTown?.center && state.started) toast('Welcome to ' + inside.name);
+  if (inside && inside.center !== lastTown?.center && state.started) { toast('Welcome to ' + inside.name); radio?.notify('town', {name: inside.name}); }
   lastTown = inside;
   town.watchPlayer(state, (msg) => { if (state.time - (state.lastNote || -9) > 4) { state.lastNote = state.time; toast(msg); } });
 }
@@ -516,11 +520,11 @@ function stopWatch(dt) {
 function stopAction(kind, st) {
   const card = $('stop-card');
   if (kind === 'fuel-on') { changeSetting('fuel', 'on'); card.hidden = true; toast('Fuel gauge on. Pull up to a pump to fill up.'); }
-  if (kind === 'coffee') {
+  if (kind === 'coffee') { radio?.notify('coffee');
     card.hidden = true; const fade = $('fade'); fade.classList.add('on');
     setTimeout(() => { atmo.hour = (atmo.hour + 1 / 3) % 24; applyAtmosphere(0, true); toast('Twenty minutes later. Refreshed and ready to go.'); fade.classList.remove('on'); }, 1400);
   }
-  if (kind === 'view') { card.hidden = true; state.viewing = {st, t: 0}; toast('Press any key to drive on'); }
+  if (kind === 'view') { card.hidden = true; state.viewing = {st, t: 0}; toast('Press any key to drive on'); radio?.notify('view'); }
   if (kind === 'close') card.hidden = true;
 }
 
@@ -656,18 +660,21 @@ function initAudio() {
     let brown = 0; for (let i = 0; i < data.length; i++) { brown = (brown + (Math.random() * 2 - 1) * .025) / 1.02; data[i] = brown * 3; }
     const source = audioContext.createBufferSource(); source.buffer = buffer; source.loop = true;
     const filter = audioContext.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 500;
-    windGain = audioContext.createGain(); windGain.gain.value = 0; source.connect(filter).connect(windGain).connect(audioContext.destination); source.start();
-    effects?.initAudio(audioContext); railway?.initAudio(audioContext);
-    driveAudio = new DriveAudio(audioContext);
+    // Mixer: one channel each for the vehicle (engine, brakes, wind, indicators), the weather and other sound effects.
+    mixer = Object.fromEntries(['vehicle', 'weather', 'sfx'].map((k) => { const g = audioContext.createGain(); g.gain.value = settings[k + 'Volume']; g.connect(audioContext.destination); return [k, g]; }));
+    windGain = audioContext.createGain(); windGain.gain.value = 0; source.connect(filter).connect(windGain).connect(mixer.vehicle); source.start();
+    effects?.initAudio(audioContext, mixer); railway?.initAudio(audioContext, mixer.sfx);
+    driveAudio = new DriveAudio(audioContext, mixer.vehicle);
     radio = new Radio(audioContext, () => state.started && !state.paused && !muted ? settings.radioVolume * Math.min(1, settings.volume * 2.6) : 0, radioContext);
-    if (settings.radio >= 0) radio.tune(settings.radio);
+    if (settings.radio >= 0) radio.tune(settings.radio, !state.started);
     audioReady = true;
   } catch (e) { console.warn(e); }
 }
 function radioContext() {
   const r = world.road; let townName = null;
   for (let q = state.z; q < state.z + 1600 && !townName; q += 200) { const t = r.townAt(q); if (t && t.end > state.z) townName = t.name; }
-  return {hour: atmo.hour, clock: atmo.clock, rain: atmo.rain, cloud: atmo.cloud, mist: atmo.mistAmount, town: townName, road: r.typeAt(state.z), fuel: settings.fuel === 'on' ? state.fuel : undefined};
+  return {hour: atmo.hour, clock: atmo.clock, rain: atmo.rain, cloud: atmo.cloud, mist: atmo.mistAmount, town: townName, road: settings.location === 'hills' ? r.typeAt(state.z) : 'offworld', roadName: settings.location === 'hills' ? r.segAt(state.z).name : '', fuel: settings.fuel === 'on' ? state.fuel : undefined,
+    km: state.distance, kmh: Math.abs(state.speed) * 3.6, units: settings.units, season: settings.season, location: settings.location, planetName: {mars: 'Mars', moon: 'the Moon', venus: 'Venus'}[settings.planet], tunnel: settings.location === 'hills' && !!r.inTunnel(state.x, state.z)};
 }
 export function cycleRadio() {
   initAudio(); if (audioContext?.state === 'suspended') audioContext.resume();
@@ -680,10 +687,11 @@ function updateAudio(dt = 0) {
   const active = state.started && !state.paused && !muted && !panelOpen && !state.inspection ? settings.volume : 0;
   if (driveAudio) { state.gearLabel = driveAudio.update(dt, {speed: state.speed, throttle: state.throttle || 0, brake: Math.max(state.brakeIn || 0, keys.Space ? 1 : 0), steer: state.steer, offroad: state.offroad, volume: active, vehicle: settings.vehicle, reverse: state.speed < -.2, grounded: state.grounded !== false}); state.slip = driveAudio.slip; driveAudio.horn(horning && state.started, active); }
   windGain.gain.setTargetAtTime(active * .14 * Math.min(Math.abs(state.speed) / 25, 1), audioContext.currentTime, .3);
+  for (const k in mixer) mixer[k].gain.setTargetAtTime(settings[k + 'Volume'], audioContext.currentTime, .1);
   radio?.update(dt);
   // Indicator relay: tick on, tock off.
   const blink = state.indicator ? Math.floor(performance.now() / 380) % 2 : null;
-  if (blink !== lastTick && blink !== null && active) { const t = audioContext.currentTime, o = audioContext.createOscillator(), g = audioContext.createGain(); o.type = 'square'; o.frequency.value = blink ? 1650 : 1250; g.gain.setValueAtTime(active * .05, t); g.gain.exponentialRampToValueAtTime(.0001, t + .018); o.connect(g).connect(audioContext.destination); o.start(t); o.stop(t + .03); }
+  if (blink !== lastTick && blink !== null && active) { const t = audioContext.currentTime, o = audioContext.createOscillator(), g = audioContext.createGain(); o.type = 'square'; o.frequency.value = blink ? 1650 : 1250; g.gain.setValueAtTime(active * .05, t); g.gain.exponentialRampToValueAtTime(.0001, t + .018); o.connect(g).connect(mixer.vehicle); o.start(t); o.stop(t + .03); }
   lastTick = blink;
 }
 
@@ -783,7 +791,7 @@ function panelMarkup(name) {
   if (name === 'style') return (settings.location === 'hills' ? section('SEASON', options('season', [['spring', 'Spring'], ['summer', 'Summer'], ['autumn', 'Autumn'], ['winter', 'Winter']])) : section('PLANET', options('planet', [['mars', 'Mars'], ['moon', 'Moon'], ['venus', 'Venus']]))) + section('TIME OF DAY', options('time', [['dawn', 'Dawn'], ['day', 'Day'], ['sunset', 'Golden hour'], ['night', 'Night']])) + section('CLOCK', options('clock', [['live', 'Time passes'], ['still', 'Hold the time']]) + '<p class="hint">With time passing, a whole day goes by in about half an hour: sunset, night, dawn.</p>') + section('WEATHER', options('weather', [['changing', 'Changing'], ['clear', 'Clear skies'], ['overcast', 'Overcast'], ['rain', 'Rain & thunder']]));
   if (name === 'vehicle') return section('YOUR RIDE', options('vehicle', [['coupe', 'Coupé'], ['coach', 'Coach'], ['bike', 'Bike']])) + '<p class="vehicle-description">' + ({coupe: 'A detailed sports coupé with sculpted bodywork, alloy wheels, and reflective paint. Balanced, responsive, and made for the long way home.', coach: 'A higher perspective on the open road. Take your time and watch the scenery unfold.', bike: 'Light, nimble, and a little closer to the elements.'}[settings.vehicle]) + '</p>' + '<button id="inspect-car" class="action-btn">Explore in 3D <span>↗︎</span></button>' + (state.dirt > .15 ? '<button id="wash-car" class="action-btn">Wash the car <span>↗︎</span></button>' : '') + section('PAINT', `<div class="options swatches">${['#e9e7db', '#b51f25', '#335b4c', '#7b9ba8', '#333a43', '#d6ba75'].map((c) => `<button data-setting="color" data-value="${c}" aria-label="${{'#e9e7db': 'Pearl', '#335b4c': 'Forest', '#7b9ba8': 'Glacier', '#b51f25': 'Racing red', '#333a43': 'Graphite', '#d6ba75': 'Champagne'}[c]} paint" class="${settings.color === c ? 'selected' : ''}" style="background:${c}"></button>`).join('')}</div>`) + section('VIEW', options('camera', [[0, 'Chase'], [1, 'Far'], [2, 'Cockpit'], [3, 'Bonnet'], [4, 'Bumper']]));
   if (name === 'help') return '<p class="vehicle-description">There’s no finish line. Drive at your own pace, or let autodrive take you somewhere new.</p><div class="keylist">' + [['Look around / return behind', 'Drag / release'], ['Explore car in 3D', 'V'], ['Accelerate / brake', 'W / S or ↑︎ / ↓︎'], ['Steer', 'A / D or ←︎ / →︎'], ['Indicate left / right', 'Q / E'], ['Autodrive', 'F'], ['Boost', 'Shift'], ['Handbrake', 'Space'], ['Radio station', 'N'], ['Reset on road', 'R'], ['Change camera', 'C'], ['Cruise control', 'J'], ['Adjust cruise speed', 'I / K'], ['Headlights', 'H'], ['Horn', 'G'], ['Pause', 'P'], ['Mute', 'M'], ['Hide interface', 'U'], ['Performance', 'F4'], ['Settings', 'Esc']].map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div><p class="hint">At a junction, indicate towards the side road (or tap the sign) to take it. Stop in a petrol station, café or viewpoint for something to do there.</p><p class="hint">Gamepad: left stick to steer, right trigger to accelerate, left trigger to brake.</p><p class="hint">3D car: Ferrari 458 Italia by <a href="https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6" target="_blank" rel="noopener noreferrer">vicent091036</a>, via the <a href="https://threejs.org/examples/webgl_materials_car.html" target="_blank" rel="noopener noreferrer">Three.js car demo</a>. Adapted materials and animation.</p>';
-  return section('RENDER QUALITY', options('quality', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']])) + section('CAMERA FIELD OF VIEW', `<input aria-label="Field of view" data-range="fov" type="range" min="45" max="85" step="1" value="${settings.fov}">`) + section('AUTODRIVE', options('autoMode', [['full', 'Full auto'], ['steering', 'Steer only'], ['speed', 'Speed only']])) + section('DRIVING LANE', options('autoLane', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']])) + section('RUSH MODE', options('rushMode', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Autodrive drives faster and overtakes as soon as a gap opens, even with oncoming cars in the distance.</p>') + section('ONCOMING TRAFFIC', options('trafficOncoming', [['on', 'On'], ['off', 'Off']])) + section('TRAFFIC IN YOUR LANE', options('trafficOwn', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Slower cars, buses and delivery trucks ahead of you. Autodrive follows them and overtakes when the road is clear.</p>') + section('CYCLISTS', options('cyclists', [['on', 'On'], ['off', 'Off']])) + section('FUEL GAUGE', options('fuel', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Keep an eye on the tank and fill up at petrol stations. Autodrive pulls in by itself when it runs low.</p>') + section('REAR-VIEW MIRROR', options('mirror', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Shown in the cockpit and bonnet views.</p>') + section('UNITS', options('units', [['km', 'Kilometers'], ['mi', 'Miles']])) + section('SOUND', `<input aria-label="Volume" data-range="volume" type="range" min="0" max="1" step=".05" value="${settings.volume}">`) + section('RADIO', `<div class="options">${[[-1, 'Off'], ...STATIONS.map((s, i) => [i, s.name])].map(([i, label]) => `<button data-radio="${i}" class="${settings.radio === i ? 'selected' : ''}" aria-pressed="${settings.radio === i}">${label}</button>`).join('')}</div><label class="setting-line">Radio volume<input aria-label="Radio volume" data-range="radioVolume" type="range" min="0" max="1" step=".05" value="${settings.radioVolume}"></label>`) + section('ROAD WIDTH', `<input aria-label="Road width" data-range="roadWidth" type="range" min="8" max="13" step=".5" value="${settings.roadWidth}">`) + section('HANDLING', `<label class="setting-line">Grip<input aria-label="Grip" data-range="grip" type="range" min=".4" max="1.5" step=".1" value="${settings.grip}"></label><label class="setting-line">Speed<input aria-label="Speed factor" data-range="speedFactor" type="range" min=".5" max="2" step=".1" value="${settings.speedFactor}"></label>`);
+  return section('RENDER QUALITY', options('quality', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']])) + section('CAMERA FIELD OF VIEW', `<input aria-label="Field of view" data-range="fov" type="range" min="45" max="85" step="1" value="${settings.fov}">`) + section('AUTODRIVE', options('autoMode', [['full', 'Full auto'], ['steering', 'Steer only'], ['speed', 'Speed only']])) + section('DRIVING LANE', options('autoLane', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']])) + section('RUSH MODE', options('rushMode', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Autodrive drives faster and overtakes as soon as a gap opens, even with oncoming cars in the distance.</p>') + section('ONCOMING TRAFFIC', options('trafficOncoming', [['on', 'On'], ['off', 'Off']])) + section('TRAFFIC IN YOUR LANE', options('trafficOwn', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Slower cars, buses and delivery trucks ahead of you. Autodrive follows them and overtakes when the road is clear.</p>') + section('CYCLISTS', options('cyclists', [['on', 'On'], ['off', 'Off']])) + section('FUEL GAUGE', options('fuel', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Keep an eye on the tank and fill up at petrol stations. Autodrive pulls in by itself when it runs low.</p>') + section('REAR-VIEW MIRROR', options('mirror', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Shown in the cockpit and bonnet views.</p>') + section('UNITS', options('units', [['km', 'Kilometers'], ['mi', 'Miles']])) + section('SOUND', [['volume', 'Master'], ['vehicleVolume', 'Vehicle'], ['weatherVolume', 'Weather'], ['sfxVolume', 'Effects'], ['radioVolume', 'Radio']].map(([k, label]) => `<label class="setting-line">${label}<input aria-label="${label} volume" data-range="${k}" type="range" min="0" max="1" step=".05" value="${settings[k]}"></label>`).join('') + '<p class="hint">Vehicle: engine, brakes, wind and indicators. Weather: rain and thunder. Effects: trains and aircraft.</p>') + section('RADIO', `<div class="options radio-options">${[[-1, 'Off'], ...STATIONS.map((s, i) => [i, s.name])].map(([i, label]) => `<button data-radio="${i}" class="${settings.radio === i ? 'selected' : ''}" aria-pressed="${settings.radio === i}">${label}</button>`).join('')}</div><p class="hint">${STATIONS.map((s) => `${s.name}: ${s.tag}`).join(' · ')}</p>`) + section('ROAD WIDTH', `<input aria-label="Road width" data-range="roadWidth" type="range" min="8" max="13" step=".5" value="${settings.roadWidth}">`) + section('HANDLING', `<label class="setting-line">Grip<input aria-label="Grip" data-range="grip" type="range" min=".4" max="1.5" step=".1" value="${settings.grip}"></label><label class="setting-line">Speed<input aria-label="Speed factor" data-range="speedFactor" type="range" min=".5" max="2" step=".1" value="${settings.speedFactor}"></label>`);
 }
 function bindPanel() {
   if ($('inspect-car')) $('inspect-car').onclick = () => inspectCar(true);
@@ -791,7 +799,7 @@ function bindPanel() {
   const name = $('panel-title').textContent.toLowerCase();
   for (const b of document.querySelectorAll('[data-setting]')) b.onclick = () => { const key = b.dataset.setting; changeSetting(key, key === 'camera' ? Number(b.dataset.value) : b.dataset.value); openPanel(name); };
   for (const b of document.querySelectorAll('[data-radio]')) b.onclick = () => { initAudio(); if (audioContext?.state === 'suspended') audioContext.resume(); const i = Number(b.dataset.radio); settings.radio = i; save(); radio?.tune(i); openPanel(name); };
-  for (const input of document.querySelectorAll('[data-range]')) input.onchange = () => changeSetting(input.dataset.range, Number(input.value));
+  for (const input of document.querySelectorAll('[data-range]')) { input.onchange = () => changeSetting(input.dataset.range, Number(input.value)); if (/olume$/.test(input.dataset.range)) input.oninput = input.onchange; }
   if ($('seed-input')) { $('seed-input').value = settings.seed; $('generate-btn').onclick = () => { changeSetting('seed', $('seed-input').value.trim() || String(Math.floor(Math.random() * 1e8))); closePanel(); toast('A new road is waiting'); }; $('seed-input').onkeydown = (e) => { if (e.key === 'Enter') $('generate-btn').click(); }; }
 }
 

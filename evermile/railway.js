@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
-import {GlowPoints} from './glow.js?v=20260928a';
-import {clamp} from './math.js?v=20260928a';
-import {canvasTexture} from './scenery.js?v=20260928a';
+import {GlowPoints} from './glow.js?v=20260928b';
+import {clamp} from './math.js?v=20260928b';
+import {canvasTexture} from './scenery.js?v=20260928b';
 
 /*
   Trains on the line beside the road. A train comes out of the tunnel at one end of the line, runs along the valley and

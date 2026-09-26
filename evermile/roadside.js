@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {random, noise, smooth, lerp, clamp} from './math.js?v=20260928a';
-import {GlowPoints} from './glow.js?v=20260928a';
-import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260928a';
-import {sheltered} from './atmosphere.js?v=20260928a';
-import {ZONE, TYPES, SEA} from './network.js?v=20260928a';
+import {random, noise, smooth, lerp, clamp} from './math.js?v=20260928b';
+import {GlowPoints} from './glow.js?v=20260928b';
+import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260928b';
+import {sheltered} from './atmosphere.js?v=20260928b';
+import {ZONE, TYPES, SEA} from './network.js?v=20260928b';
 
 // Everything built along the road network itself: tunnels, motorway furniture, junction signs, the railway and its
 // level crossings, petrol stations, cafés and viewpoints, lighthouses on the coast, snowbanks up high and farm fields.

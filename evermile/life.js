@@ -1,10 +1,10 @@
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260928a';
-import {clamp} from './math.js?v=20260928a';
-import {canvasTexture} from './scenery.js?v=20260928a';
-import {ZONE} from './network.js?v=20260928a';
+import {GlowPoints} from './glow.js?v=20260928b';
+import {clamp} from './math.js?v=20260928b';
+import {canvasTexture} from './scenery.js?v=20260928b';
+import {ZONE} from './network.js?v=20260928b';
 
 // Life around the road: grazing cows and sheep, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.

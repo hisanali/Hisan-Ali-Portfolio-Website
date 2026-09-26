@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260928a';
-import {Network, TYPES, ZONE, SEA} from './network.js?v=20260928a';
-import {Scenery} from './scenery.js?v=20260928a';
-import {Roadside} from './roadside.js?v=20260928a';
-import {sheltered} from './atmosphere.js?v=20260928a';
+import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260928b';
+import {Network, TYPES, ZONE, SEA} from './network.js?v=20260928b';
+import {Scenery} from './scenery.js?v=20260928b';
+import {Roadside} from './roadside.js?v=20260928b';
+import {sheltered} from './atmosphere.js?v=20260928b';
 
 // The landscape around the road network: terrain, road surfaces, trees, rocks, grass and guard rails, built in 240 m chunks.
 const scratch = new T.Object3D(), col = new T.Color(), col2 = new T.Color();
