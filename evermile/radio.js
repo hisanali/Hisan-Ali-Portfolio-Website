@@ -18,7 +18,7 @@ export const STATIONS = [
 export class Radio {
   constructor(ctx, getVolume, getContext) {
     this.ctx = ctx; this.getVolume = getVolume; this.getContext = getContext;
-    this.index = -1; this.song = null; this.next = 0; this.step = 0; this.talking = false; this.gap = 0; this.songsSinceTalk = 0;
+    this.index = -1; this.song = null; this.next = 0; this.step = 0; this.talking = false; this.wait(0); this.songsSinceTalk = 0;
     // Car speakers: no deep bass, soft highs, a little compression. Reverb for space.
     this.out = ctx.createGain(); this.out.gain.value = 0;
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 65;
@@ -34,6 +34,9 @@ export class Radio {
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.addEventListener?.('voiceschanged', () => this.loadVoices());
   }
 
+  // Pause before the next song, measured on the audio clock.
+  wait(sec) { this.resumeAt = this.ctx.currentTime + sec; }
+
   impulse(sec) {
     const ctx = this.ctx, len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2.6; }
@@ -47,10 +50,10 @@ export class Radio {
   // Next station in the list, then off, then round again.
   cycle(dir = 1) { const n = STATIONS.length + 1; this.tune(((this.index + 1 + dir) % n + n) % n - 1); return this.station; }
   tune(i) {
-    this.index = i; this.song = null; this.gap = .9; this.cancelTalk();
+    this.index = i; this.song = null; this.wait(.9); this.cancelTalk();
     this.static(.5);
     // Often the DJ says hello before the music starts.
-    if (this.station && Math.random() < .6) { this.gap = 99; setTimeout(() => { if (this.station && this.index === i && !this.talking) this.talk(this.ident()); else if (this.index === i) this.gap = .5; }, 900); }
+    if (this.station && Math.random() < .6) { this.wait(99); setTimeout(() => { if (this.station && this.index === i && !this.talking) this.talk(this.ident()); else if (this.index === i) this.wait(.5); }, 900); }
   }
 
   static(len) {
@@ -84,7 +87,7 @@ export class Radio {
     if (!this.station || !vol) { this.next = 0; return; }
     if (this.talking) return;
     if (!this.song) {
-      this.gap -= dt; if (this.gap > 0) return;
+      if (ctx.currentTime < this.resumeAt) return;
       this.song = this.compose(); this.step = 0; this.next = ctx.currentTime + .1;
     }
     const song = this.song, sixteenth = 60 / song.tempo / 4;
@@ -93,7 +96,7 @@ export class Radio {
       const swing = this.step % 2 ? song.swing * sixteenth : 0;
       this.play(song, this.step, this.next + swing, sixteenth);
       this.next += sixteenth; this.step++;
-      if (this.step >= song.bars * song.beats * 4) { this.song = null; this.songsSinceTalk++; this.gap = .8; if (this.songsSinceTalk >= 1 && Math.random() < .6) { this.songsSinceTalk = 0; this.gap = 99; setTimeout(() => this.talk(this.line()), 900); } break; }
+      if (this.step >= song.bars * song.beats * 4) { this.song = null; this.songsSinceTalk++; this.wait(.8); if (this.songsSinceTalk >= 1 && Math.random() < .6) { this.songsSinceTalk = 0; this.wait(99); setTimeout(() => this.talk(this.line()), 900); } break; }
     }
   }
 
@@ -183,7 +186,7 @@ export class Radio {
   }
 
   talk(text) {
-    this.gap = 1.2; this.song = null;
+    this.wait(1.2); this.song = null;
     if (!this.station || typeof speechSynthesis === 'undefined' || !this.getVolume()) { this.talking = false; return; }
     this.talking = true;
     const ctx = this.ctx; this.chime(ctx.currentTime + .05);
@@ -192,7 +195,7 @@ export class Radio {
     const voices = this.voices.length ? this.voices : [];
     if (voices.length) u.voice = voices[(this.index * 3 + 1) % voices.length];
     u.pitch = p.pitch; u.rate = p.rate; u.volume = Math.min(1, this.getVolume() * 2.2);
-    const done = () => { this.talking = false; this.duck.gain.setTargetAtTime(1, this.ctx.currentTime, .4); this.gap = .6; };
+    const done = () => { this.talking = false; this.duck.gain.setTargetAtTime(1, this.ctx.currentTime, .4); this.wait(.6); };
     u.onend = done; u.onerror = done;
     setTimeout(() => { try { speechSynthesis.speak(u); } catch { done(); } }, 700);
     // Some browsers never fire onend: give up after a while.

@@ -11,7 +11,7 @@ import {canvasTexture} from './scenery.js?v=20260927a';
   crossing about when you do, so you get to wait at the barrier now and then.
 */
 const rand = (a, b) => a + Math.random() * (b - a);
-const WARN = 29, CLOSE = 23, LOWER = 6, RAISE = 4.5, CLEAR = 3;
+const WARN = 24, CLOSE = 19, LOWER = 6, RAISE = 4.5, CLEAR = 3;
 
 export class Railway {
   constructor({scene, world, settings, getState}) {
@@ -142,7 +142,7 @@ export class Railway {
 
   dispatch(s) {
     const lines = this.lines(s.z); if (!lines.length) return false;
-    const pv = Math.max(10, s.speed);
+    const pv = this.eta(s);
     // Prefer to meet you at a crossing ahead.
     let pick = null;
     for (const rail of lines) for (const c of rail.crossings) { const d = c - s.z; if (d > 300 && d < 1600 && (!pick || d < pick.d)) pick = {rail, c, d}; }
@@ -157,8 +157,9 @@ export class Railway {
       speed = clamp(dist / want, train.kind === 'passenger' ? 24 : 18, train.kind === 'passenger' ? 44 : 32);
       delay = Math.max(0, want - dist / speed);
     }
+    const aim = pick && pick.rail === rail ? {c: pick.c, margin: rand(3, 13), start} : null;
     for (const c of train.cars) for (const b of c.boxes || []) b.material = this.m.containers[Math.floor(Math.random() * this.m.containers.length)];
-    this.train = {...train, rail, dir, speed, front: start, delay, horned: new Set(), age: 0};
+    this.train = {...train, rail, dir, speed, front: start, delay, horned: new Set(), age: 0, aim};
     return true;
   }
 
@@ -173,6 +174,8 @@ export class Railway {
     const tr = this.train;
     this.glow.begin();
     if (tr) {
+      // Until it sets off, the train keeps adjusting its departure to meet you at the crossing as you actually drive.
+      if (tr.delay > 0 && tr.aim) { const d = tr.aim.c - s.z; if (d > 60) tr.delay = clamp(d / this.eta(s) + tr.aim.margin - Math.abs(tr.aim.c - tr.aim.start) / tr.speed, 0, 90); else if (d < -20) tr.aim = null; }
       if (tr.delay > 0) tr.delay -= dt;
       else { tr.front += tr.dir * tr.speed * dt; tr.age += dt; }
       const rail = tr.rail, cam = camera.position;
@@ -203,6 +206,9 @@ export class Railway {
     for (const [z, a] of this.arms) { const want = this.wantClosed(z); a.closed = clamp(a.closed + (want ? dt / LOWER : -dt / RAISE), 0, 1); a.flashing = this.warning(z) || a.closed > .01; if (Math.abs(z - s.z) > 3000) this.arms.delete(z); }
     this.sound(dt, camera, audio);
   }
+
+  // Your likely average speed from here: somewhere between how fast you are going and the road's limit.
+  eta(s) { const r = this.world.road; return Math.max(8, Math.abs(s.speed) * .55 + r.limit(s.z) * .45 * (r.townFactor(s.z + 200) > .3 ? .6 : 1)); }
 
   // Seconds until the train front reaches the crossing, and whether its tail is clear of it.
   timing(zc) {

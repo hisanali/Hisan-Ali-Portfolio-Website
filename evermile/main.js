@@ -569,7 +569,8 @@ function positionCamera(dt, instant = false) {
     else cameraPos.y = Math.max(cameraPos.y, world.surfaceHeight(cameraPos.x, cameraPos.z, settings.location !== 'hills') + .6);
   }
   if (settings.camera === 2) cameraPos.addScaledVector(right, bike ? 0 : (vehicle.seatX ?? .4));
-  if (instant || (settings.camera < 2 && driveOrbit.focus > .001)) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-(settings.camera >= 2 ? 16 : 5) * dt));
+  // Views from inside or on the car are fixed to it; the chase cameras follow smoothly.
+  if (instant || settings.camera >= 2 || driveOrbit.focus > .001) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-5 * dt));
   lookTarget.set(state.x + forward.x * ahead, state.y + (settings.camera >= 2 ? up : 1.35), state.z + forward.z * ahead);
   if (settings.camera >= 2) lookTarget.y = world.road.y(state.z + ahead) + up * .8; else lookTarget.lerp(tmp.set(state.x, state.y + .95, state.z), driveOrbit.focus);
   camera.lookAt(lookTarget);
@@ -597,7 +598,7 @@ function frame(now) {
   updateLiveReflection();
   if (composer) composer.render(dt); else renderer.render(scene, camera);
   const cockpit = settings.camera === 2 && !state.inspection && !state.viewing;
-  if (settings.mirror === 'on' && settings.quality !== 'low' && (cockpit || settings.camera === 3) && !state.viewing && !state.inspection && state.started) mirror.render(state, vehicle, settings.quality === 'high' ? 1 : 2);
+  if (settings.mirror === 'on' && settings.quality !== 'low' && (cockpit || settings.camera === 3) && !state.viewing && !state.inspection && state.started) mirror.render(state, vehicle, settings.quality === 'high' ? 1 : 2, cockpit ? camera : null);
   windscreen.update(dt, {show: cockpit && settings.vehicle !== 'bike' && settings.location === 'hills' && !effects.inTunnel, rain: effects.raining ? atmo.rain : 0, speed: state.speed, wipers: effects.raining && atmo.rain > .03 && !effects.inTunnel});
   watchPerformance(dt); updateAudio(dt);
   hudClock += dt; fpsFrames++; fpsTime += elapsed;
@@ -785,7 +786,7 @@ function bindPanel() {
 }
 
 // Test hook (only with ?debug in the address): run the simulation without drawing, to check long drives quickly.
-if (new URLSearchParams(location.search).has('debug')) window.evermile = {state, settings, get world() { return world; }, get life() { return life; }, get town() { return town; }, get railway() { return railway; }, get atmo() { return atmo; }, get radio() { return radio; }, changeSetting, toggleAuto, reset, toggleIndicator, chooseJunction,
+if (new URLSearchParams(location.search).has('debug')) window.evermile = {state, settings, get world() { return world; }, get life() { return life; }, get town() { return town; }, get railway() { return railway; }, get atmo() { return atmo; }, get radio() { return radio; }, get camera() { return camera; }, get vehicle() { return vehicle; }, changeSetting, toggleAuto, reset, toggleIndicator, chooseJunction,
   simulate(seconds, step = 1 / 30) { const stop = state.time + seconds; let n = 0; while (state.time < stop && n++ < seconds * 200) { for (let i = 0; i < 4; i++) physics(step / 4); applyAtmosphere(step); updateCar(step); positionCamera(step); town.update(step, camera); life.update(step); railway.update(step, camera, () => 0); world.update(state.z, camera); routeWatch(); stopWatch(step); if (!state.started) break; } return {z: state.z, time: state.time}; },
   render() { if (composer) composer.render(0); else renderer.render(scene, camera); }};
 
