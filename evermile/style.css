@@ -17,3 +17,40 @@
 body,button,#hud,#topbar,#touch-controls,#touch-controls *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 #touch-controls button{touch-action:none}
+
+/* Living world HUD: clock, junction signs, indicators, fuel, radio, stops */
+#windscreen{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .4s}
+#clock{position:absolute;left:50%;top:24px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;font:11px 'DM Mono',monospace;letter-spacing:2px;opacity:.85;white-space:nowrap}
+#clock-icon svg{display:block;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#junction{position:fixed;right:36px;top:84px;z-index:6;background:rgba(22,55,120,.9);border:2px solid #f3f5f8;border-radius:12px;padding:11px 12px 9px;box-shadow:0 12px 40px #0b163055;backdrop-filter:blur(10px);pointer-events:auto;min-width:250px}
+#junction>small{display:block;font:9px 'DM Mono',monospace;letter-spacing:2px;opacity:.85;margin:0 4px 8px}
+#junction-options{display:flex;flex-direction:column;gap:6px}
+#junction-options button{display:flex;align-items:center;gap:11px;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid #ffffff38;background:#ffffff10;transition:background .2s,border-color .2s}
+#junction-options button.chosen{background:#f3f5f8;color:#16377a;border-color:#fff}
+#junction-options button:hover{color:inherit;border-color:#ffffffaa}
+#junction-options svg{width:26px;height:26px;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#junction-options b{display:block;font-size:13px;font-weight:700;letter-spacing:.2px}
+#junction-options small{display:block;font-size:11px;opacity:.8;margin-top:1px}
+.junction-hint{display:block;font:8px 'DM Mono',monospace;letter-spacing:1.4px;opacity:.6;margin:8px 4px 0}
+#indicators{display:flex;justify-content:flex-end;gap:10px;height:18px;margin-bottom:2px}
+#indicators svg{width:18px;height:18px;fill:#9bf07a;opacity:.12;transition:opacity .08s}
+#indicators.blink #ind-left.on,#indicators.blink #ind-right.on{opacity:1;filter:drop-shadow(0 0 6px #9bf07a)}
+#fuel{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;font:9px 'DM Mono',monospace;letter-spacing:1.4px;opacity:.9}
+#fuel svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.fuel-track{width:70px;height:4px;border-radius:3px;background:#ffffff26;overflow:hidden}
+.fuel-track i{display:block;height:100%;width:100%;background:var(--accent);transition:width .3s}
+#fuel.low .fuel-track i{background:#ff8a4a}#fuel.low svg{color:#ff8a4a}
+#fuel-next{min-width:44px;text-align:right}
+.ind-btn svg{width:16px!important;height:16px!important;stroke-width:2!important}
+#radio-label{min-width:30px}
+#stop-card{position:fixed;left:50%;bottom:122px;transform:translateX(-50%);z-index:7;min-width:300px;max-width:min(420px,92vw);background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:16px 20px 18px;backdrop-filter:blur(18px);box-shadow:0 16px 50px #0a1a1440;text-align:center}
+#stop-card small{font:9px 'DM Mono',monospace;letter-spacing:2px;color:var(--accent)}
+#stop-card h3{font-size:21px;font-weight:400;margin:6px 0 4px}
+#stop-card p{font-size:12px;opacity:.8;margin:0 0 14px;line-height:1.6}
+#stop-card div{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#stop-card button{border:1px solid var(--line);border-radius:22px;padding:9px 16px;font-size:12px}
+#stop-card button:first-child{background:var(--accent);color:#263933;border-color:var(--accent)}
+#stop-card button small{color:inherit;opacity:.7;margin-left:4px;letter-spacing:0;font-size:10px}
+#fade{position:fixed;inset:0;background:#05080a;opacity:0;pointer-events:none;transition:opacity .6s;z-index:40}#fade.on{opacity:1}
+.photo-mode #junction,.photo-mode #stop-card,.inspection-mode #junction,.inspection-mode #stop-card{display:none!important}
+@media(max-width:700px){#clock{top:25px;font-size:10px;left:52%}#junction{right:auto;left:50%;transform:translateX(-50%);top:122px;min-width:0;width:min(300px,86vw);padding:8px 9px 7px}#junction-options{flex-direction:row}#junction-options button{flex:1;padding:6px 7px;gap:6px}#junction-options svg{width:20px;height:20px}#junction-options b{font-size:11px}#junction-options small{font-size:9px}.junction-hint{display:none}.ind-btn,#radio-btn .key,#radio-label{display:none!important}#fuel{margin-top:8px}.fuel-track{width:50px}#stop-card{bottom:150px;min-width:0;width:88vw;padding:13px 14px}}

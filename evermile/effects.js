@@ -1,6 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {Water} from './vendor/objects/Water.js';
 import {GlowPoints} from './glow.js?v=20260926b';
+import {addMist} from './atmosphere.js?v=20260927a';
 
 // Weather, water and wildlife layered over the world: rain, wet roads, puddles, lightning, thunder, reflective water and birds.
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -51,6 +52,7 @@ export class Effects {
     this.flash = 0; this.nextStrike = rand(6, 12); this.time = 0; this.fade = new T.Color();
     this.base = {hemi: hemi.intensity, sun: sun.intensity};
     this.original = {roadRough: world.roadMat.roughness, roadEnv: world.roadMat.envMapIntensity ?? 1, groundRough: world.groundMat.roughness};
+    this.wetShown = -1;
     this.buildRain();
     this.buildPuddles();
     this.buildRipples();
@@ -64,7 +66,12 @@ export class Effects {
     this.refresh();
   }
 
-  get snowing() { return this.settings.season === 'winter' && this.settings.location === 'hills' && this.settings.weather !== 'rain'; }
+  get atmo() { return this.world.atmo; }
+  get winter() { return this.settings.season === 'winter' && this.settings.location === 'hills'; }
+  // In winter the showers fall as snow, unless you picked rain.
+  get precip() { return this.settings.location === 'hills' ? this.atmo.rain : 0; }
+  get snowAmount() { return this.winter && this.settings.weather !== 'rain' ? .3 + .7 * this.precip : 0; }
+  get snowing() { return this.snowAmount > 0; }
 
   /* ---------- Snow: a light, slow fall of soft flakes drifting in the air around you ---------- */
   buildSnow() {
@@ -79,7 +86,7 @@ export class Effects {
 
   updateSnow(dt) {
     const show = this.snowing; this.snow.visible = show; if (!show) return;
-    const c = this.camera.position, n = this.settings.quality === 'low' ? 600 : this.settings.quality === 'medium' ? 1100 : this.snowCount;
+    const c = this.camera.position, n = Math.round((this.settings.quality === 'low' ? 600 : this.settings.quality === 'medium' ? 1100 : this.snowCount) * this.snowAmount);
     this.snow.geometry.setDrawRange(0, n);
     // Flakes live in world space; the box around the camera wraps, so driving through them feels right.
     const moveX = c.x - this.snowAnchor.x, moveY = c.y - this.snowAnchor.y, moveZ = c.z - this.snowAnchor.z; this.snowAnchor.copy(c);
@@ -93,10 +100,10 @@ export class Effects {
       a[k] = c.x + p[k]; a[k + 1] = c.y + p[k + 1]; a[k + 2] = c.z + p[k + 2];
     }
     this.snow.geometry.attributes.position.needsUpdate = true;
-    this.snow.material.color.set(this.settings.time === 'night' ? 0xaab6cc : 0xffffff);
+    this.snow.material.color.set(0xffffff).lerp(this.fade.set(0xaab6cc), this.atmo.night);
   }
 
-  get raining() { return this.settings.weather === 'rain' && this.settings.location === 'hills'; }
+  get raining() { return this.precip > .02 && (!this.winter || this.settings.weather === 'rain'); }
 
   /* ---------- Rain ---------- */
   buildRain() {
@@ -110,7 +117,7 @@ export class Effects {
   }
 
   updateRain(dt) {
-    const s = this.getState(), c = this.camera.position, count = this.settings.quality === 'low' ? 2200 : this.settings.quality === 'medium' ? 3600 : this.dropCount;
+    const s = this.getState(), c = this.camera.position, count = Math.round((this.settings.quality === 'low' ? 2200 : this.settings.quality === 'medium' ? 3600 : this.dropCount) * Math.min(1, .12 + this.precip));
     this.rain.geometry.setDrawRange(0, count * 2);
     const vx = -Math.sin(s.yaw) * s.speed, vz = -Math.cos(s.yaw) * s.speed, fall = 17;
     const len = .07, arr = this.rain.geometry.attributes.position.array, d = this.drops;
@@ -138,7 +145,7 @@ export class Effects {
   }
 
   placePuddle(p, z) {
-    const half = this.settings.roadWidth / 2 - .8;
+    const half = this.world.road.half(z) - .8;
     Object.assign(p, {z, off: rand(-half, half), w: rand(1.2, 3.6), l: rand(1.6, 5.5), rot: rand(-.3, .3)});
   }
 
@@ -165,10 +172,9 @@ export class Effects {
 
   updateRipples(dt) {
     const s = this.getState(), r = this.world.road, m = new T.Matrix4(), v = new T.Vector3(), q = new T.Quaternion(), sc = new T.Vector3();
-    const half = this.settings.roadWidth / 2 - .3;
     this.rippleData.forEach((p, i) => {
       p.age += dt;
-      if (p.age > .6) { p.age = 0; p.z = s.z + rand(-4, 40); p.x = r.x(p.z) + rand(-half, half); p.y = r.y(p.z) + .07; }
+      if (p.age > .6) { p.age = 0; p.z = s.z + rand(-4, 40); const half = r.half(p.z) - .3; p.x = r.x(p.z) + rand(-half, half); p.y = r.y(p.z) + .07; if (r.tunnelAt(p.z)) p.y = -999; }
       const t = p.age / .6;
       m.compose(v.set(p.x, p.y, p.z), q, sc.setScalar(.03 + t * .13));
       this.ripples.setMatrixAt(i, m);
@@ -243,7 +249,7 @@ export class Effects {
       this.contrail.visible = trail;
       if (trail) { const len = Math.min(900, f.age * f.speed); this.contrail.position.copy(c.position).addScaledVector(new T.Vector3(fx, 0, fz), -22); this.contrail.rotation.set(0, f.heading, 0); this.contrail.scale.set(3.2, 1, len); this.contrail.material.opacity = .5; }
       // Navigation lights: red left, green right, a white tail light, and a blinking strobe and beacon.
-      const night = this.settings.time === 'night' ? 1 : this.settings.time === 'sunset' ? .7 : .35, v = new T.Vector3(), t = this.time;
+      const night = .35 + .65 * this.atmo.night + .3 * this.atmo.golden, v = new T.Vector3(), t = this.time;
       const lights = f.heli ? [[-1.2, 0, 0, 0xff2a1a], [1.2, 0, 0, 0x2aff5a], [0, 1.6, 0, 0xff3322, 'beacon'], [0, .4, -7.8, 0xffffff]] : [[-17.5, -.2, -8, 0xff2a1a], [17.5, -.2, -8, 0x2aff5a], [0, 8, -17, 0xffffff], [0, -2.2, 2, 0xff3322, 'beacon'], [-17.5, -.2, -8.4, 0xffffff, 'strobe'], [17.5, -.2, -8.4, 0xffffff, 'strobe']];
       for (const [x, y, z, col, kind] of lights) {
         if (kind === 'beacon' && Math.floor(t * 1.2) % 2) continue;
@@ -285,7 +291,7 @@ export class Effects {
   }
 
   updateLightning(dt) {
-    if (this.raining) {
+    if (this.raining && this.atmo.storm && this.precip > .7) {
       this.nextStrike -= dt;
       if (this.nextStrike <= 0) { this.strike(); this.nextStrike = rand(9, 22); }
     }
@@ -296,9 +302,9 @@ export class Effects {
       const f = pulse * this.flash;
       this.bolt.material.opacity = f;
       this.flashLight.intensity = f * 3.2;
-      this.hemi.intensity = this.base.hemi + f * 2.2;
+      this.hemi.intensity += f * 2.2;
       this.world.skyMaterial.uniforms.flash && (this.world.skyMaterial.uniforms.flash.value = f);
-      if (this.flash === 0) { this.hemi.intensity = this.base.hemi; this.flashLight.intensity = 0; }
+      if (this.flash === 0) this.flashLight.intensity = 0;
     }
   }
 
@@ -337,7 +343,7 @@ export class Effects {
 
   updateAudio() {
     if (!this.rainGain) return;
-    this.rainGain.gain.setTargetAtTime(this.raining ? this.getVolume() * .22 : 0, this.audio.currentTime, .4);
+    this.rainGain.gain.setTargetAtTime(this.raining ? this.getVolume() * .24 * Math.min(1, .25 + this.precip) * (this.inTunnel ? .25 : 1) : 0, this.audio.currentTime, .4);
   }
 
   /* ---------- Birds: small flocks gliding and flapping ahead of the drive ---------- */
@@ -358,7 +364,7 @@ export class Effects {
   }
 
   updateBirds(dt) {
-    const show = this.settings.location === 'hills' && this.settings.time !== 'night' && !this.raining;
+    const show = this.settings.location === 'hills' && this.atmo.night < .5 && this.precip < .3;
     const s = this.getState(), fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
     for (const f of this.flocks) {
       for (const b of f.birds) b.g.visible = show;
@@ -383,6 +389,7 @@ export class Effects {
     this.water = new Water(new T.PlaneGeometry(6000, 6000), {textureWidth: 512, textureHeight: 512, waterNormals: waterNormals(), sunDirection: new T.Vector3(-.5, .48, .65).normalize(), sunColor: 0xfff2d6, waterColor: 0x1d3b44, distortionScale: 2.4, fog: true, alpha: 1});
     this.water.rotation.x = -Math.PI / 2; this.water.position.y = this.world.water.position.y + .05;
     this.water.material.uniforms.size.value = 2.2;
+    addMist(this.water.material.uniforms);
     this.scene.add(this.water);
   }
 
@@ -396,27 +403,33 @@ export class Effects {
     const u = this.water.material.uniforms;
     u.time.value += dt * (this.raining ? 1.6 : .7);
     u.sunDirection.value.copy(this.world.lightDir);
-    const night = this.settings.time === 'night', sunset = this.settings.time === 'sunset';
-    u.waterColor.value.set(night ? 0x08141c : this.raining ? 0x2a3a40 : sunset ? 0x33403f : 0x1d3b44);
-    u.sunColor.value.set(night ? 0x8fa6d8 : sunset ? 0xffa050 : this.raining ? 0x6a7680 : 0xfff2d6);
-    u.distortionScale.value = this.raining ? 5 : 2.4;
+    const a = this.atmo, wet = Math.min(1, this.precip * 1.5);
+    u.waterColor.value.set(0x1d3b44).lerp(this.fade.set(0x33403f), a.golden).lerp(this.fade.set(0x2a3a40), wet).lerp(this.fade.set(0x08141c), a.night);
+    u.sunColor.value.set(0xfff2d6).lerp(this.fade.set(0xffa050), a.golden).lerp(this.fade.set(0x6a7680), wet).lerp(this.fade.set(0x8fa6d8), a.night);
+    u.distortionScale.value = 2.4 + 2.6 * wet;
   }
 
   /* ---------- Settings changes ---------- */
-  refresh() {
-    this.base = {hemi: this.hemi.intensity, sun: this.sun.intensity};
-    const wet = this.raining, road = this.world.roadMat, hills = this.settings.location === 'hills';
-    // Rain soaks the road; winter slush and spring showers leave it damp and glossy.
-    const damp = wet ? 1 : hills && this.settings.season === 'winter' ? .42 : hills && this.settings.season === 'spring' ? .3 : 0, low = this.settings.time === 'sunset';
-    road.roughness = Math.min(.96, this.original.roadRough + (low ? .06 : 0) + ((wet ? .32 : .5) - this.original.roadRough) * damp);
-    road.envMapIntensity = this.original.roadEnv * (low ? .75 : 1) + ((wet ? 1.5 : 1.15) - this.original.roadEnv) * damp;
-    if (damp) road.color.multiplyScalar(1 - .38 * damp);
-    this.world.groundMat.roughness = wet ? .82 : this.original.groundRough;
-    road.needsUpdate = true;
-    this.rain.visible = this.puddles.visible = this.ripples.visible = wet;
-    this.rain.material.color.set(this.settings.time === 'night' ? 0x6d7a88 : 0xb9c6d2);
-    if (!wet) { this.flash = 0; this.bolt.material.opacity = 0; this.flashLight.intensity = 0; }
-    if (wet) this.updatePuddles(true);
+  refresh() { this.base = {hemi: this.hemi.intensity, sun: this.sun.intensity}; this.wetShown = -1; this.updateWet(true); }
+
+  // Rain soaks the road and it dries slowly afterwards; winter slush and spring showers leave it damp and glossy.
+  updateWet(force = false) {
+    const hills = this.settings.location === 'hills', a = this.atmo;
+    const damp = Math.max(hills ? a.wet : 0, hills && this.settings.season === 'winter' ? .42 : hills && this.settings.season === 'spring' ? .3 : 0);
+    const key = Math.round(damp * 50) + (a.golden > .5 ? 100 : 0);
+    if (!force && key === this.wetShown) return;
+    this.wetShown = key;
+    const soaked = hills && a.wet > .5, low = a.golden > .5;
+    for (const road of this.world.allRoadMats) {
+      road.userData.base ||= road.color.clone();
+      road.roughness = Math.min(.96, this.original.roadRough + (low ? .06 : 0) + ((soaked ? .32 : .5) - this.original.roadRough) * damp);
+      road.envMapIntensity = this.original.roadEnv * (low ? .75 : 1) + ((soaked ? 1.5 : 1.15) - this.original.roadEnv) * damp;
+      road.color.copy(road.userData.base).multiplyScalar(1 - .38 * damp);
+    }
+    this.world.groundMat.roughness = soaked ? .82 : this.original.groundRough;
+    this.puddles.visible = soaked && a.wet > .55;
+    if (this.puddles.visible && !this.puddlesPlaced) { this.updatePuddles(true); this.puddlesPlaced = true; }
+    if (!this.puddles.visible) this.puddlesPlaced = false;
   }
 
   /* ---------- Tyres: skid marks on hard braking or cornering, dust off the road, spray in the rain ---------- */
@@ -509,7 +522,14 @@ export class Effects {
     this.updateDust(dt);
     this.updateSnow(dt);
     this.updateAircraft(dt);
-    if (this.raining) { this.updateRain(dt); this.updatePuddles(); this.updateRipples(dt); }
+    const rain = this.raining;
+    this.rain.visible = rain; this.ripples.visible = rain && this.precip > .08;
+    this.rain.material.opacity = .42 * Math.min(1, .35 + this.precip);
+    this.rain.material.color.set(0xb9c6d2).lerp(this.fade.set(0x6d7a88), this.atmo.night);
+    if (rain) { this.updateRain(dt); if (this.ripples.visible) this.updateRipples(dt); }
+    this.updateWet();
+    if (this.puddles.visible) this.updatePuddles();
+    if (!rain && this.flash) { this.flash = 0; this.bolt.material.opacity = 0; this.flashLight.intensity = 0; }
     this.updateLightning(dt);
     this.updateBirds(dt);
     this.updateWater(dt);

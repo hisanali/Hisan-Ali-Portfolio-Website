@@ -1,27 +1,27 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
 import {GlowPoints} from './glow.js?v=20260926b';
-import {random} from './math.js?v=20260926b';
+import {random} from './math.js?v=20260927a';
 
 // Places people live and cross: towns with shops, strip lights and street lamps, cottages with gardens,
 // river bridges, and boats on the water. Everything static in a chunk is merged into a handful of meshes.
 const V = new T.Vector3(), S = new T.Vector3(), Q = new T.Quaternion(), E = new T.Euler(0, 0, 0, 'YXZ'), M = new T.Matrix4(), C = new T.Color();
-const UNIT = new T.BoxGeometry(1, 1, 1).toNonIndexed();
-const PLANE = new T.PlaneGeometry(1, 1).toNonIndexed();
-const FLAT = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).toNonIndexed();
+export const UNIT = new T.BoxGeometry(1, 1, 1).toNonIndexed();
+export const PLANE = new T.PlaneGeometry(1, 1).toNonIndexed();
+export const FLAT = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).toNonIndexed();
 const WALLS = [0xefe6d6, 0xe8dcc2, 0xf3efe6, 0xd9c4a3, 0xc98f6b, 0xb8c2c4, 0xd8d2b8, 0xa9b89d, 0xe2c9a5, 0xcfd6d8, 0xb9776a];
 const ROOFS = [0x7a3b2e, 0x5a4038, 0x4a4f55, 0x6b2f24, 0x3d4148, 0x8a5a3c];
 const AWNINGS = [0xa8322d, 0x2f5d45, 0x283d63, 0xc98b2b, 0x6d2f4f, 0x3f6f78];
 const STRIPS = [[1, .82, .55], [.25, .85, 1], [1, .3, .75], [1, .62, .18], [.55, 1, .6]];
 const SHOPS = ['CAFÉ AROMA', 'BAKERY', 'MINI MARKET', 'PHARMACY', 'BOOKS & CO', 'PIZZA', 'FLOWERS', 'HARDWARE', 'TAILOR', 'FRESH FRUIT', 'ICE CREAM', 'BARBER', 'TEA HOUSE', 'ELECTRONICS', 'SWEETS', 'GROCERY'];
 
-function canvasTexture(w, h, draw, srgb = true) {
+export function canvasTexture(w, h, draw, srgb = true) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
   const t = new T.CanvasTexture(c); if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; return t;
 }
 
 // Collects transformed, vertex-coloured copies of small geometries, then merges them per material.
-class Batch {
+export class Batch {
   constructor() { this.lists = {}; }
   add(key, geo, x, y, z, yaw, color, sx, sy, sz, pitch = 0, roll = 0, uvRect = null) {
     const g = geo.clone();
@@ -45,7 +45,7 @@ class Batch {
 }
 
 // A local frame for one building: +x points away from the road, +z runs along it.
-function frame(batch, ox, oy, oz, yaw) {
+export function frame(batch, ox, oy, oz, yaw) {
   const c = Math.cos(yaw), s = Math.sin(yaw);
   const put = (key, geo, lx, ly, lz, color, sx, sy, sz, lyaw = 0, pitch = 0, roll = 0, uv = null) =>
     batch.add(key, geo, ox + lx * c + lz * s, oy + ly, oz - lx * s + lz * c, yaw + lyaw, color, sx, sy, sz, pitch, roll, uv);
@@ -131,6 +131,7 @@ export class Scenery {
       pavement: {material: std({map: paving, roughness: .92})},
       zebra: {material: std({map: zebra, transparent: true, alphaTest: .4, roughness: .7, polygonOffset: true, polygonOffsetFactor: -2})},
       glassTrim: {material: std({color: 0x20262b, roughness: .4, metalness: .5})},
+      mark: {material: std({vertexColors: true, roughness: .7, polygonOffset: true, polygonOffsetFactor: -2})},
     };
     this.stripMats = STRIPS.map(([r, g, b]) => ({material: std({color: new T.Color(r * .5, g * .5, b * .5), emissive: new T.Color(r, g, b), emissiveIntensity: .25, roughness: .3})}));
     STRIPS.forEach((_, i) => { this.mats['strip' + i] = this.stripMats[i]; });
@@ -153,7 +154,7 @@ export class Scenery {
 
   /* ---------- Planning: what occupies a chunk, so trees and grass keep out of houses and streets ---------- */
   plan(index, CHUNK) {
-    const r = this.world.road, z0 = index * CHUNK, z1 = z0 + CHUNK, hills = this.settings.location === 'hills', w = this.settings.roadWidth / 2;
+    const r = this.world.road, z0 = index * CHUNK, z1 = z0 + CHUNK, hills = this.settings.location === 'hills';
     const plan = {index, z0, z1, towns: [], bridge: null, cottages: [], zones: []};
     if (!hills) { plan.blocked = () => false; return plan; }
     for (const z of [z0, z1]) { const t = r.townAt(z); if (t && t.end > z0 && t.start < z1 && !plan.towns.includes(t)) plan.towns.push(t); }
@@ -176,31 +177,38 @@ export class Scenery {
       for (const zone of plan.zones) if (Math.hypot(x - zone.x, z - zone.z) < zone.r) return true;
       const d = Math.abs(x - r.x(z));
       if (plan.towns.length && r.townFactor(z) > 0 && d < 60) return true;
-      if (plan.bridge && z > plan.bridge.start - 6 && z < plan.bridge.end + 6 && d < w + 4) return true;
+      if (plan.bridge && z > plan.bridge.start - 6 && z < plan.bridge.end + 6 && d < r.half(z) + 4) return true;
       return false;
     };
     return plan;
   }
 
+  // A town's street plan: shop lots along both sides, a crossroads in the middle (traffic lights in towns, a four-way
+  // stop in villages), a zebra crossing, bus stops at each end, lamps and benches. Town life reads the same plan.
   layout(t) {
     if (this.layouts.has(t)) return this.layouts.get(t);
-    const rng = random(this.world.road.id * 7 + t.k * 131 + 3), lots = [], lamps = [];
-    for (const side of [-1, 1]) {
+    const r = this.world.road, rng = random(r.id * 7 + t.k * 131 + 3), lots = [], lamps = [], side = r.side;
+    const cross = {z: Math.round(t.center), kind: t.small || t.half < 150 ? 'stop' : 'lights', street: 4, len: 42, lane: 2};
+    const zebra = t.half > 95 ? cross.z + (rng() < .5 ? -1 : 1) * Math.round(t.half * .55) : null;
+    const busStops = t.small ? [] : [{z: t.start + 42, dir: 1, side}, {z: t.end - 42, dir: -1, side: -side}];
+    const clear = (z, W, s) => Math.abs(z - cross.z) > 12 + W / 2 && (zebra === null || Math.abs(z - zebra) > 4 + W / 2) && busStops.every((b) => b.side !== s || Math.abs(z - b.z) > 3 + W / 2);
+    for (const s of [-1, 1]) {
       let z = t.start + 14;
       while (z < t.end - 14) {
         const roll = rng(), kind = roll < .52 ? 'shop' : roll < .77 ? 'block' : roll < .88 ? 'house' : 'gap';
         const W = kind === 'block' ? 12 + rng() * 5 : kind === 'house' ? 9 + rng() * 2 : kind === 'gap' ? 6 + rng() * 9 : 7 + rng() * 5;
         if (z + W > t.end - 10) break;
-        lots.push({side, z: z + W / 2, W, kind, seed: rng()});
+        if (Math.abs(z + W / 2 - cross.z) < 12 + W / 2) { z = cross.z + 12; continue; }
+        lots.push({side: s, z: z + W / 2, W, kind, seed: rng()});
         z += W + .5 + rng() * 2.4;
       }
-      for (let bz = t.start + 26; bz < t.end - 20; bz += 20 + rng() * 16) if (rng() < .6) lots.push({side, z: bz, W: 7.5 + rng() * 2, kind: 'backHouse', seed: rng()});
+      for (let bz = t.start + 26; bz < t.end - 20; bz += 20 + rng() * 16) if (rng() < .6 && Math.abs(bz - cross.z) > 16) lots.push({side: s, z: bz, W: 7.5 + rng() * 2, kind: 'backHouse', seed: rng()});
     }
-    for (let z = t.start + 8, i = 0; z < t.end - 4; z += 30, i++) lamps.push({z, side: i % 2 ? 1 : -1});
+    for (let z = t.start + 8, i = 0; z < t.end - 4; z += 30, i++) if (Math.abs(z - cross.z) > 10) lamps.push({z, side: i % 2 ? 1 : -1});
     // Benches along the pavement, between the lamps.
     const benches = [];
-    for (let z = t.start + 20; z < t.end - 12; z += 18 + rng() * 22) benches.push({z, side: rng() < .5 ? 1 : -1, bin: rng() < .5});
-    const lay = {lots, lamps, benches};
+    for (let z = t.start + 20; z < t.end - 12; z += 18 + rng() * 22) { const s = rng() < .5 ? 1 : -1; if (clear(z, 3, s)) benches.push({z, side: s, bin: rng() < .5}); }
+    const lay = {lots, lamps, benches, cross, zebra, busStops, town: t};
     this.layouts.set(t, lay);
     if (this.layouts.size > 12) this.layouts.delete(this.layouts.keys().next().value);
     return lay;
@@ -209,21 +217,24 @@ export class Scenery {
   /* ---------- Building ---------- */
   build(group, plan) {
     if (this.settings.location !== 'hills') return;
-    const batch = new Batch(), r = this.world.road, w = this.settings.roadWidth / 2;
+    const batch = new Batch(), r = this.world.road;
     const colliders = group.userData.colliders, lamps = group.userData.lamps = [], boats = group.userData.boats = [];
+    group.userData.signals = []; group.userData.belisha = [];
     const inChunk = (z) => z >= plan.z0 && z < plan.z1;
     for (const t of plan.towns) {
-      const lay = this.layout(t);
+      const lay = this.layout(t), w = r.half(t.center);
       for (const lot of lay.lots) if (inChunk(lot.z)) this.buildLot(batch, lot, colliders, w);
       for (const l of lay.lamps) if (inChunk(l.z)) this.streetLamp(batch, l.z, l.side, w + .55, colliders, lamps);
       for (const b of lay.benches) if (inChunk(b.z)) this.bench(batch, b, w, colliders);
-      this.pavement(group, t, plan, w);
-      if (inChunk(t.center)) this.zebra(batch, t.center, w);
+      this.pavement(group, t, plan, w, lay.cross);
+      if (inChunk(lay.cross.z)) this.crossroads(group, batch, lay, w, colliders, lamps);
+      if (lay.zebra !== null && inChunk(lay.zebra)) this.zebraCrossing(group, batch, lay.zebra, w, colliders);
+      for (const b of lay.busStops) if (inChunk(b.z)) this.busStop(group, batch, b, w, colliders);
       if (inChunk(t.start - 14)) this.entrySign(group, t, t.start - 14, 1, w, colliders);
       if (inChunk(t.end + 14)) this.entrySign(group, t, t.end + 14, -1, w, colliders);
     }
     for (const c of plan.cottages) this.cottage(batch, c, colliders, true);
-    if (plan.bridge) this.bridge(batch, plan.bridge, plan, w, lamps);
+    if (plan.bridge) this.bridge(batch, plan.bridge, plan, r.half(plan.bridge.z), lamps);
     this.placeBoats(group, plan, boats);
     batch.flush(group, this.mats);
   }
@@ -334,10 +345,12 @@ export class Scenery {
   }
 
   // Paved footpaths on both sides of the street, with the kerb painted along the road edge.
-  pavement(group, t, plan, w) {
-    const r = this.world.road, a = Math.max(plan.z0, t.start - 6), b = Math.min(plan.z1, t.end + 6);
-    if (b <= a) return;
-    for (const side of [-1, 1]) {
+  pavement(group, t, plan, w, cross) {
+    const r = this.world.road, a0 = Math.max(plan.z0, t.start - 6), b0 = Math.min(plan.z1, t.end + 6);
+    if (b0 <= a0) return;
+    // The footpaths stop where the side street meets the main road.
+    const pieces = [[a0, Math.min(b0, cross.z - cross.street)], [Math.max(a0, cross.z + cross.street), b0]].filter(([p, q]) => q - p > .5);
+    for (const [a, b] of pieces) for (const side of [-1, 1]) {
       const pos = [], uv = [], idx = [];
       let i = 0;
       for (let z = a; z <= b + .01; z += 2.5, i++) {
@@ -354,6 +367,143 @@ export class Scenery {
   zebra(batch, z, w) {
     const r = this.world.road;
     batch.add('zebra', FLAT, r.x(z), r.y(z) + .062, z, Math.atan(r.tangent(z)) + Math.PI / 2, 0xffffff, 3.2, 1, w * 2 - .8);
+  }
+
+  // Materials for signals, swapped each frame by town life.
+  signalMaterials() {
+    if (this.sig) return this.sig;
+    const lamp = (c, on) => new T.MeshStandardMaterial({color: on ? c : new T.Color(c).multiplyScalar(.12), emissive: c, emissiveIntensity: on ? 4.5 : .05, roughness: .3});
+    const walk = (c, man, on) => new T.MeshStandardMaterial({map: canvasTexture(64, 64, (x, w) => { x.fillStyle = '#050505'; x.fillRect(0, 0, w, w); x.fillStyle = on ? c : '#1d1d1d'; x.beginPath(); x.arc(32, 12, 6, 0, 7); x.fill(); x.fillRect(27, 20, 10, 22); if (man) { x.fillRect(24, 40, 5, 18); x.fillRect(35, 40, 5, 18); } else { x.save(); x.translate(32, 42); x.rotate(.35); x.fillRect(-2, 0, 5, 18); x.restore(); x.save(); x.translate(32, 42); x.rotate(-.35); x.fillRect(-3, 0, 5, 18); x.restore(); } }), emissive: 0xffffff, emissiveIntensity: on ? 2.2 : 0, emissiveMap: null, roughness: .4});
+    const sig = this.sig = {red: [lamp(0xff2210, false), lamp(0xff2210, true)], amber: [lamp(0xffa11a, false), lamp(0xffa11a, true)], green: [lamp(0x22ff7a, false), lamp(0x22ff7a, true)], stand: [walk('#ff3322', true, false), walk('#ff3322', true, true)], walk: [walk('#39ff8a', false, false), walk('#39ff8a', false, true)], belisha: [lamp(0xffa11a, false), lamp(0xffa11a, true)]};
+    for (const k of ['stand', 'walk']) sig[k][1].emissiveMap = sig[k][1].map;
+    sig.stopSign = new T.MeshStandardMaterial({map: canvasTexture(256, 256, (x, w) => {
+      x.clearRect(0, 0, w, w); const oct = (r, fill) => { x.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; x.lineTo(w / 2 + Math.cos(a) * r, w / 2 + Math.sin(a) * r); } x.closePath(); x.fillStyle = fill; x.fill(); };
+      oct(126, '#ffffff'); oct(116, '#c8161b'); x.fillStyle = '#fff'; x.font = '700 78px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('STOP', w / 2, w / 2 + 4);
+    }), transparent: true, alphaTest: .4, side: T.DoubleSide, roughness: .5});
+    sig.stopText = new T.MeshStandardMaterial({map: canvasTexture(256, 128, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = '#efeee6'; x.font = '700 104px Arial Narrow, Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.save(); x.translate(w / 2, h / 2); x.scale(1, 1.1); x.fillText('STOP', 0, 4); x.restore(); }), transparent: true, alphaTest: .35, roughness: .7, polygonOffset: true, polygonOffsetFactor: -3});
+    sig.bus = new T.MeshStandardMaterial({map: canvasTexture(512, 64, (x, w, h) => { x.clearRect(0, 0, w, h); x.strokeStyle = '#f2c230'; x.lineWidth = 7; x.strokeRect(4, 4, w - 8, h - 8); x.fillStyle = '#f2c230'; x.font = '700 38px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('B U S   S T O P', w / 2, h / 2 + 2); }), transparent: true, alphaTest: .35, roughness: .7, polygonOffset: true, polygonOffsetFactor: -3});
+    sig.busSign = new T.MeshStandardMaterial({map: canvasTexture(128, 128, (x, w) => { x.fillStyle = '#fff'; x.beginPath(); x.arc(64, 64, 62, 0, 7); x.fill(); x.fillStyle = '#b31b1b'; x.beginPath(); x.arc(64, 64, 56, 0, 7); x.fill(); x.fillStyle = '#fff'; x.fillRect(8, 50, 112, 28); x.fillStyle = '#1b3f8f'; x.font = '700 26px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('BUS', 64, 65); }), roughness: .5, side: T.DoubleSide});
+    sig.advert = new T.MeshStandardMaterial({map: canvasTexture(128, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#1d4e6e'); g.addColorStop(1, '#f2a766'); x.fillStyle = g; x.fillRect(0, 0, w, h); x.fillStyle = '#fff'; x.font = '700 22px Georgia, serif'; x.textAlign = 'center'; x.fillText('EVERMILE', w / 2, 60); x.font = '14px Arial'; x.fillText('the scenic route', w / 2, 84); x.beginPath(); x.moveTo(20, 230); x.quadraticCurveTo(70, 120, 64, 110); x.quadraticCurveTo(60, 150, 108, 230); x.fillStyle = 'rgba(40,40,40,.6)'; x.fill(); }), emissive: 0xffffff, emissiveIntensity: 0, roughness: .3});
+    sig.advert.emissiveMap = sig.advert.map;
+    sig.street = this.world.roadMats.farm.clone(); sig.street.polygonOffset = true; sig.street.polygonOffsetFactor = -1;
+    this.mats.stopText = {material: sig.stopText};
+    return sig;
+  }
+
+  // A traffic light or stop sign facing traffic that heads along `face` (unit x/z), standing at (x, z).
+  signalHead(group, x, y, z, face, axis, kind, list, colliders, arm = 0, left = null) {
+    const sig = this.signalMaterials(), yaw = Math.atan2(-face[0], -face[1]), g = new T.Group(); g.position.set(x, y, z); g.rotation.y = yaw; group.add(g);
+    const dark = this.poleMat ||= new T.MeshStandardMaterial({color: 0x2d3034, metalness: .5, roughness: .45});
+    const pole = new T.Mesh(new T.CylinderGeometry(.075, .09, kind === 'stop' ? 2.6 : 3.6, 10), dark); pole.position.y = kind === 'stop' ? 1.3 : 1.8; pole.castShadow = true; g.add(pole);
+    colliders.push({x, z, r: .3});
+    if (kind === 'stop') {
+      const sign = new T.Mesh(new T.PlaneGeometry(.9, .9), sig.stopSign); sign.position.set(0, 2.45, .1); sign.castShadow = true; g.add(sign);
+      return;
+    }
+    const heads = [];
+    const head = (hx, hy) => {
+      const box = new T.Mesh(new T.BoxGeometry(.36, 1, .26), dark); box.position.set(hx, hy, 0); box.castShadow = true; g.add(box);
+      const plate = new T.Mesh(new T.BoxGeometry(.56, 1.2, .04), dark); plate.position.set(hx, hy, -.14); g.add(plate);
+      const lamps = {};
+      for (const [k, dy] of [['red', .3], ['amber', 0], ['green', -.3]]) { const l = new T.Mesh(new T.CylinderGeometry(.11, .11, .04, 16).rotateX(Math.PI / 2), sig[k][0]); l.position.set(hx, hy + dy, .14); g.add(l); lamps[k] = l; const hood = new T.Mesh(new T.CylinderGeometry(.13, .13, .14, 12, 1, true, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2), dark); hood.position.set(hx, hy + dy + .02, .2); g.add(hood); }
+      heads.push(lamps);
+    };
+    head(0, 2.9);
+    // A mast arm reaching out over the lane with a second head.
+    if (arm) { const a = new T.Mesh(new T.CylinderGeometry(.06, .06, Math.abs(arm), 8).rotateZ(Math.PI / 2), dark); a.position.set(arm / 2, 4.9, 0); g.add(a); const mast = new T.Mesh(new T.CylinderGeometry(.075, .075, 1.4, 8), dark); mast.position.set(0, 4.3, 0); g.add(mast); head(arm, 4.35); }
+    // Pedestrian signal facing across the road.
+    let ped = null;
+    if (left !== null) {
+      ped = {};
+      const pg = new T.Group(); pg.position.set(0, 2.1, 0); pg.rotation.y = left * Math.PI / 2; g.add(pg);
+      const box = new T.Mesh(new T.BoxGeometry(.3, .62, .2), dark); pg.add(box);
+      for (const [k, dy] of [['stand', .15], ['walk', -.15]]) { const p = new T.Mesh(new T.PlaneGeometry(.24, .24), sig[k][0]); p.position.set(0, dy, .105); pg.add(p); ped[k] = p; }
+    }
+    list.push({axis, heads, ped});
+  }
+
+  // The crossroads: side streets with footpaths, stop lines, crossings, and traffic lights or stop signs on every approach.
+  crossroads(group, batch, lay, w, colliders, lamps) {
+    const r = this.world.road, cr = lay.cross, zc = cr.z, x0 = r.x(zc), y0 = r.y(zc), yaw = Math.atan(r.tangent(zc)), c = Math.cos(yaw), s = Math.sin(yaw);
+    const side = r.side, sig = this.signalMaterials(), W = cr.street, L = cr.len, put = frame(batch, x0, y0, zc, yaw);
+    const at = (lx, lz) => [x0 + lx * c + lz * s, zc - lx * s + lz * c];
+    const surf = (lx, lz, lift) => { const [x, z] = at(lx, lz); return Math.max(y0, this.world.surfaceHeight(x, z)) + lift; };
+    // Side street surfaces and their footpaths, following the ground.
+    for (const e of [-1, 1]) {
+      const pos = [], uv = [], idx = [], n = 10;
+      for (let i = 0; i <= n; i++) {
+        const lx = e * (w + (L - w) * i / n);
+        for (const lz of [-W, W]) { const [x, z] = at(lx, lz); pos.push(x, surf(lx, lz, .06), z); uv.push((lz + W) / (2 * W), Math.abs(lx) / 16); }
+        if (i) { const k = (i - 1) * 2; if (e > 0) idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); else idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+      }
+      const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new T.Mesh(g, sig.street); m.receiveShadow = true; group.add(m);
+      for (const f of [-1, 1]) {
+        const pp = [], pu = [], pi = [];
+        for (let i = 0; i <= n; i++) {
+          const lx = e * (w + 3.3 + (L - w - 3.3) * i / n);
+          for (const lz of [f * W, f * (W + 2.6)]) { const [x, z] = at(lx, lz); pp.push(x, surf(lx, lz, .085), z); pu.push(lz / 2.2, lx / 2.2); }
+          if (i) { const k = (i - 1) * 2; if (e * f > 0) pi.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); else pi.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+        }
+        const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.Float32BufferAttribute(pp, 3)); pg.setAttribute('uv', new T.Float32BufferAttribute(pu, 2)); pg.setIndex(pi); pg.computeVertexNormals();
+        const pm = new T.Mesh(pg, this.mats.pavement.material); pm.receiveShadow = true; group.add(pm);
+      }
+      this.streetLamp(batch, zc + e * (W + 1.6), e, w + .55, colliders, lamps);
+    }
+    // Stop lines and, at traffic lights, pedestrian crossings on every approach.
+    const lights = cr.kind === 'lights', list = group.userData.signals, stopLine = lights ? 8.2 : 6.6, before = list.length;
+    for (const dir of [1, -1]) {
+      const lz = -dir * stopLine, kerb = side * dir;
+      put('mark', FLAT, kerb * w / 2, .064, lz, 0xefeee6, w - .3, 1, .45);
+      if (lights) put('zebra', FLAT, 0, .064, -dir * 5.6, 0xffffff, 3, 1, w * 2 - .8, Math.PI / 2);
+      else put('stopText', FLAT, kerb * w / 2, .065, lz - dir * 3.2, 0xffffff, 2.2, 1, 1.4, dir > 0 ? Math.PI : 0);
+      const [px, pz] = at(kerb * (w + .5), lz - dir * .4);
+      this.signalHead(group, px, y0 + .075, pz, [s * dir, c * dir], 'main', cr.kind, list, colliders, lights ? side * w * .55 : 0, lights ? side : null);
+    }
+    for (const e of [-1, 1]) {
+      // Traffic coming out of the side street on side e drives on its own `side`, towards the main road.
+      const lx = e * (w + 3.3 + (lights ? 1.2 : .6)), kerbZ = side * e;
+      put('mark', FLAT, lx, surf(lx, 0, .066) - y0, kerbZ * W / 2, 0xefeee6, .45, 1, W - .2);
+      if (lights) put('zebra', FLAT, e * (w + 1.65), surf(e * (w + 1.65), 0, .066) - y0, 0, 0xffffff, 2.4, 1, 2 * W - .4);
+      else put('stopText', FLAT, lx + e * 3.2, surf(lx + e * 3.2, 0, .067) - y0, kerbZ * W / 2, 0xffffff, 2.2, 1, 1.4, e > 0 ? Math.PI / 2 : -Math.PI / 2);
+      const [px, pz] = at(lx + e * .4, kerbZ * (W + .6));
+      const toMain = [-e * c, e * s];
+      this.signalHead(group, px, surf(lx, kerbZ * (W + .6), .08), pz, toMain, 'side', cr.kind, list, colliders, 0, null);
+    }
+    for (const item of list.slice(before)) item.cross = cr;
+  }
+
+  // Zebra crossing with flashing amber beacons on black and white poles at each kerb.
+  zebraCrossing(group, batch, z, w, colliders) {
+    const r = this.world.road, x0 = r.x(z), y0 = r.y(z), yaw = Math.atan(r.tangent(z)), put = frame(batch, x0, y0, z, yaw);
+    this.zebra(batch, z, w);
+    for (const dir of [1, -1]) put('mark', FLAT, r.side * dir * w / 2, .064, -dir * 3.4, 0xefeee6, w - .3, 1, .3);
+    for (const e of [-1, 1]) {
+      const lx = e * (w + .45);
+      for (let k = 0; k < 6; k++) put('metal', UNIT, lx, .28 + k * .47, 1.9, k % 2 ? 0xf2f2ee : 0x141414, .12, .47, .12);
+      const globe = new T.Mesh(new T.SphereGeometry(.2, 16, 12), this.signalMaterials().belisha[0]);
+      const [gx, gz] = put.world(lx, 1.9); globe.position.set(gx, y0 + 3.05, gz); group.add(globe);
+      group.userData.belisha.push(globe);
+      colliders.push({x: gx, z: gz, r: .25});
+    }
+  }
+
+  // Bus stop: a glass shelter with a bench and a lit advert, a stop sign on a pole and the bay painted on the road.
+  busStop(group, batch, b, w, colliders) {
+    const r = this.world.road, yaw = Math.atan(r.tangent(b.z)) + (b.side < 0 ? Math.PI : 0), x0 = r.x(b.z) + b.side * w, y0 = r.y(b.z) + .075, put = frame(batch, x0, y0, b.z, yaw), sig = this.signalMaterials();
+    const glass = this.shelterGlass ||= new T.MeshPhysicalMaterial({color: 0xbfd4dc, roughness: .05, metalness: 0, transparent: true, opacity: .28, depthWrite: false, side: T.DoubleSide});
+    put('metal', UNIT, 2.28, 2.45, 0, 0x2d3034, 1.6, .08, 4);
+    for (const lz of [-1.9, 1.9]) for (const lx of [1.65, 2.95]) put('metal', UNIT, lx, 1.2, lz, 0x2d3034, .07, 2.4, .07);
+    put('metal', UNIT, 2.95, .1, 0, 0x2d3034, .07, .07, 3.8);
+    const back = new T.Mesh(new T.PlaneGeometry(3.8, 2.1), glass), [bx, bz] = put.world(2.95, 0); back.position.set(bx, y0 + 1.25, bz); back.rotation.y = yaw + Math.PI / 2; group.add(back);
+    for (const lz of [-1.9, 1.9]) { const p = new T.Mesh(new T.PlaneGeometry(1.3, 2.1), glass), [px, pz] = put.world(2.3, lz); p.position.set(px, y0 + 1.25, pz); p.rotation.y = yaw; group.add(p); }
+    const ad = new T.Mesh(new T.PlaneGeometry(1.1, 1.9), sig.advert), [ax, az] = put.world(2.3, 1.93); ad.position.set(ax, y0 + 1.2, az); ad.rotation.y = yaw + Math.PI; group.add(ad);
+    for (const lx of [-.2, 0, .2]) put('metal', UNIT, 2.62 + lx * .5, .48, -.3, 0x5a3b26, .12, .04, 2.2);
+    const [sx, sz] = put.world(.55, -2.8); put('metal', UNIT, .55, 1.3, -2.8, 0x6a7078, .07, 2.6, .07);
+    const sign = new T.Mesh(new T.PlaneGeometry(.55, .55), sig.busSign); sign.position.set(sx, y0 + 2.55, sz); sign.rotation.y = yaw + Math.PI / 2; group.add(sign);
+    const bay = new T.Mesh(FLAT, sig.bus), [mx, mz] = put.world(-1.3, 0); bay.position.set(mx, r.y(b.z) + .064, mz); bay.rotation.y = yaw + Math.PI / 2; bay.scale.set(20, 1, 2.4); group.add(bay);
+    const [cx, cz] = put.world(2.3, 0); colliders.push({x: cx, z: cz, hx: .7, hz: 2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0});
+    colliders.push({x: sx, z: sz, r: .2});
   }
 
   entrySign(group, t, z, side, w, colliders) {
@@ -457,17 +607,17 @@ export class Scenery {
   }
 
   /* ---------- Per frame: lamps at night, boats on the swell ---------- */
-  setMood({night, dusk, wet}) {
-    const lit = night ? 1 : dusk ? .45 : 0;
+  setMood({lit, wet}) {
     this.lit = lit; this.wet = wet;
-    this.mats.shopGlass.material.emissiveIntensity = night ? .75 : dusk ? .4 : .05;
-    this.mats.winLit.material.emissiveIntensity = night ? .95 : dusk ? .4 : 0;
-    this.mats.sign.material.emissiveIntensity = night ? .55 : dusk ? .25 : 0;
-    this.mats.lampHead.material.emissiveIntensity = night ? 3.2 : dusk ? 1.3 : 0;
-    this.mats.pool.material.opacity = night ? .36 : dusk ? .12 : 0;
-    this.mats.streak.material.opacity = wet ? (night ? .3 : dusk ? .12 : 0) : 0;
-    for (const m of this.stripMats) m.material.emissiveIntensity = night ? 1.5 : dusk ? .8 : .2;
-    if (!lit) { this.glow.begin(); this.glow.end(); for (const l of this.lamps) l.intensity = 0; }
+    this.mats.shopGlass.material.emissiveIntensity = .05 + .7 * lit;
+    this.mats.winLit.material.emissiveIntensity = .95 * lit;
+    this.mats.sign.material.emissiveIntensity = .55 * lit;
+    this.mats.lampHead.material.emissiveIntensity = 3.2 * lit;
+    this.mats.pool.material.opacity = .36 * lit;
+    this.mats.streak.material.opacity = wet ? .3 * lit : 0;
+    for (const m of this.stripMats) m.material.emissiveIntensity = .2 + 1.3 * lit;
+    if (this.sig) this.sig.advert.emissiveIntensity = .9 * lit;
+    if (lit < .02) { this.glow.begin(); this.glow.end(); for (const l of this.lamps) l.intensity = 0; }
   }
 
   update(dt, camera, focus) {
@@ -477,7 +627,7 @@ export class Scenery {
       b.g.position.y = this.world.water.position.y + .05 + Math.sin(t * 1.1 + b.phase) * .06;
       b.g.rotation.set(Math.sin(t * .7 + b.phase * 1.3) * .025, b.yaw + Math.sin(t * .05 + b.phase) * .3, Math.sin(t * .9 + b.phase) * .04);
     }
-    if (!this.lit) return;
+    if (this.lit < .02) return;
     this.glow.begin();
     const near = [];
     for (const g of chunks.values()) for (const l of g.userData.lamps || []) {
