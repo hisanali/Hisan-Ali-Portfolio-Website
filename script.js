@@ -1218,6 +1218,7 @@ if (contactForm) {
     const goalParam = params.get('goal');
     const websiteParam = params.get('website');
     const diagnosticParam = params.get('diagnostic');
+    const briefParam = params.get('brief');
     const serviceField = contactForm.querySelector('#service');
     const goalField = contactForm.querySelector('#goal');
     const websiteField = contactForm.querySelector('#website');
@@ -1229,6 +1230,9 @@ if (contactForm) {
         messageField.value = `I completed the Growth Diagnostic. Result: ${diagnosticParam}\n\nI would like help deciding what to prioritize first.`;
         const contextNote = document.querySelector('[data-contact-context]');
         if (contextNote) contextNote.hidden = false;
+    } else if (briefParam && messageField) {
+        // Sent from the services brief builder (/services/).
+        messageField.value = briefParam.slice(0, 2000);
     }
 
     contactForm.addEventListener('submit', async (e) => {
