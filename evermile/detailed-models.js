@@ -1,12 +1,12 @@
-import {citizenAssets,citizenKey,fitCitizen} from './citizen-assets.js?v=20260927-toyota1';
-import {animalAssets,animatedAnimal} from './animated-assets.js?v=20260927-toyota1';
-import {TrafficModels} from './traffic-models.js?v=20260927-toyota1';
+import {citizenAssets,citizenKey,fitCitizen} from './citizen-assets.js?v=20260927-tunnel1';
+import {animalAssets,animatedAnimal} from './animated-assets.js?v=20260927-tunnel1';
+import {TrafficModels} from './traffic-models.js?v=20260927-tunnel1';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
-import {addMicroSurface} from './surface-detail.js?v=20260927-toyota1';
-import {reachHand} from './pedestrian-motion.js?v=20260927-toyota1';
-import {batchStatic} from './mesh-batching.js?v=20260927-toyota1';
+import {addMicroSurface} from './surface-detail.js?v=20260927-tunnel1';
+import {reachHand} from './pedestrian-motion.js?v=20260927-tunnel1';
+import {batchStatic} from './mesh-batching.js?v=20260927-tunnel1';
 
 const box=new T.Box3();
 export class DetailedModels{

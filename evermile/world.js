@@ -1,11 +1,11 @@
-import {Landmarks} from './landmarks.js?v=20260927-toyota1';
-import {upgradeSurfaces} from './materials.js?v=20260927-toyota1';
+import {Landmarks} from './landmarks.js?v=20260927-tunnel1';
+import {upgradeSurfaces} from './materials.js?v=20260927-tunnel1';
 import * as T from './vendor/three.module.js';
-import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260927-toyota1';
-import {Network, TYPES, ZONE, SEA} from './network.js?v=20260927-toyota1';
-import {Scenery} from './scenery.js?v=20260927-toyota1';
-import {Roadside} from './roadside.js?v=20260927-toyota1';
-import {sheltered} from './atmosphere.js?v=20260927-toyota1';
+import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260927-tunnel1';
+import {Network, TYPES, ZONE, SEA} from './network.js?v=20260927-tunnel1';
+import {Scenery} from './scenery.js?v=20260927-tunnel1';
+import {Roadside} from './roadside.js?v=20260927-tunnel1';
+import {sheltered} from './atmosphere.js?v=20260927-tunnel1';
 
 // The landscape around the road network: terrain, road surfaces, trees, rocks, grass and guard rails, built in 240 m chunks.
 const scratch = new T.Object3D(), col = new T.Color(), col2 = new T.Color();
@@ -241,7 +241,7 @@ export class World {
         const road = r.roadUnder(x, z, 1.2);
         const ax = Math.abs(R.cols[j]);
         if (!off) {
-          if (ax <= R.half + .9 || (road && !road.main)) col.copy(gravel).multiplyScalar(.9 + noise(x * .3, z * .3, r.id) * .2);
+          if ((ax <= R.half + .9 && !R.tunnel) || (road && !road.main)) col.copy(gravel).multiplyScalar(.9 + noise(x * .3, z * .3, r.id) * .2);
           else if (ax <= R.half + 6) col.lerp(lush, .35);
           // Beaches and rocky shores near the water line; snow on high ground; bare rock on steep mountain faces.
           if (y < SEA + 2.6 && y > SEA - 3) col.copy(y < SEA + .6 ? wetSand : sand).multiplyScalar(.92 + noise(x * .2, z * .2, r.id) * .16);
@@ -249,9 +249,10 @@ export class World {
         }
         colors.push(col.r, col.g, col.b);
         if (i < ROWS - 1 && j < nc - 1) {
-          // A hole in the ground at tunnel mouths, where the portal stands.
-          const Rn = rowInfo[i + 1], mouth = [R.tunnel, Rn.tunnel].some((t) => t && (Math.abs(R.z - t.start) < 6 || Math.abs(R.z - t.end) < 6 || Math.abs(Rn.z - t.start) < 6 || Math.abs(Rn.z - t.end) < 6));
-          if (mouth && Math.abs(R.cols[j]) < R.half + 3.5 && Math.abs(R.cols[j + 1]) < R.half + 3.5) continue;
+          // The ground opens only where it would rise across a tunnel mouth: the strip between the last row outside and
+          // the first row inside, over the arch's width. The portal face and its apron cover the edges.
+          const Rn = rowInfo[i + 1], t = R.tunnel || Rn.tunnel, mouth = t && ((R.z < t.start && Rn.z >= t.start) || (R.z <= t.end && Rn.z > t.end));
+          if (mouth && Math.abs(R.cols[j]) < R.half + 3.2 && Math.abs(R.cols[j + 1]) < R.half + 3.2) continue;
           const a = k, b = k + nc; indices.push(a, b, a + 1, b, b + 1, a + 1);
         }
       }

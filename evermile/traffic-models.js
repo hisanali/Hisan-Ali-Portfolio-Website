@@ -5,7 +5,7 @@ import {DRACOLoader} from './vendor/loaders/DRACOLoader.js';
 // cars wear the everyday hatchback and SUV bodies.
 const ULTRA={grcorolla:{file:'car-gr-corolla.glb',base:'hatch'},landcruiser:{file:'car-land-cruiser.glb',base:'suv'}};
 const PAINTS=[0xb51f25,0xe9e7db,0x1e2d4a,0x16171a,0xb9c1c9,0x3a5a48,0x7b9ba8];
-import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260927-toyota1';
+import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260927-tunnel1';
 export class TrafficModels {
  constructor(){this.loaded={};this.errors=[];const loader=this.loader=new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./vendor/draco/').setWorkerLimit(1));for(const style of ['sedan','hatch','suv','wagon','pickup','van','bus','coach','mercedes'])loader.load(new URL('./assets/models/road-'+style+'.glb?v=supplied7',import.meta.url).href,g=>this.loaded[style]=g.scene,undefined,e=>{this.errors.push(style);console.warn('Traffic asset',style,e.message)});}
  loadUltra(){if(this.ultraRequested)return;this.ultraRequested=true;for(const [style,{file}] of Object.entries(ULTRA))this.loader.load(new URL('./assets/models/'+file+'?v=20260927a',import.meta.url).href,g=>this.loaded[style]=g.scene,undefined,e=>{this.errors.push(style);console.warn('Traffic asset',style,e.message)});}
