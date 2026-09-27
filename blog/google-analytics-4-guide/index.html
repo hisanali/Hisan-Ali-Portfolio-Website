@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
@@ -45,7 +45,7 @@
         "description": "Navigate Google Analytics 4 with confidence. Learn which metrics to track and how to use data.",
         "image": {"@type": "ImageObject", "url": "https://hisanali.com/blog-google-analytics-4-guide-illustration.webp", "width": 800, "height": 800},
         "datePublished": "2026-01-03T09:00:00+04:00",
-        "dateModified": "2026-01-03T09:00:00+04:00",
+        "dateModified": "2026-09-27",
         "author": {"@type": "Person", "@id": "https://hisanali.com/#person", "name": "Hisan Ali", "url": "https://hisanali.com"},
         "publisher": {"@type": "Person", "@id": "https://hisanali.com/#person", "name": "Hisan Ali"},
         "articleSection": "Analytics",
@@ -156,6 +156,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <section class="blog-post-section">
         <div class="blog-post-container">
             <article class="blog-post-content" id="blog-content">
+<div class="editorial-update"><small>Updated <time datetime="2026-09-27">27 September 2026</time> · By <a href="/about/">Hisan Ali</a></small></div>
                                     <div class="blog-featured-image">
                 <img src="/blog-google-analytics-4-guide-illustration.webp" alt="Understanding Google Analytics 4 article thumbnail" loading="eager" decoding="async">
             </div>
@@ -198,8 +199,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <p>A session is "engaged" if it meets any of these criteria:</p>
                         <ul>
                             <li>Lasts longer than 10 seconds</li>
-                            <li>Has a conversion event</li>
-                            <li>Has 2 or more page views</li>
+                            <li>Has a key event</li>
+                            <li>Has 2 or more page or screen views</li>
                         </ul>
 
                         <h4>Engagement Rate</h4>
@@ -207,30 +208,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <ul>
                             <li>Formula: Engaged sessions / Total sessions</li>
                             <li>Higher is better (opposite of bounce rate)</li>
-                            <li>Benchmark: 60-70% is good for most sites</li>
+                            <li>Compare the same landing page and channel over time; there is no universal engagement-rate target.</li>
                         </ul>
 
-                        <h3>3. Conversion Tracking</h3>
-                        <p>Setting up conversions correctly is crucial:</p>
-
-                        <h4>Default Conversions to Enable:</h4>
-                        <ul>
-                            <li>first_visit (new user acquisition)</li>
-                            <li>session_start (traffic patterns)</li>
-                            <li>purchase (for e-commerce)</li>
-                            <li>form_submit (lead generation)</li>
-                        </ul>
-
-                        <h4>Custom Conversions to Create:</h4>
-                        <ul>
-                            <li>Contact form submissions</li>
-                            <li>Phone number clicks</li>
-                            <li>Newsletter signups</li>
-                            <li>Video completion</li>
-                            <li>Product demo requests</li>
-                        </ul>
-
-                        <h3>4. User Behavior Flow</h3>
+                        <h3>3. Track meaningful key events</h3>
+<p>Use a successful enquiry, booking or purchase as the outcome. A page view or session start is activity, not a sale. Validate a form-success event against the actual saved enquiry before marking it as a key event.</p>
+<ul><li><strong>generate_lead:</strong> send after a valid enquiry succeeds, not on every submit-button click.</li><li><strong>purchase:</strong> include the transaction identifier, value and currency and check for duplicate orders.</li><li><strong>Contact clicks:</strong> report phone and WhatsApp clicks separately from confirmed leads; a click does not prove a conversation happened.</li></ul>
+<p>Google documents how <a href="https://support.google.com/analytics/answer/12195621">engaged sessions and key events</a> relate. For implementation checks, use the <a href="/blog/conversion-tracking-oman-businesses/">conversion tracking guide for Oman businesses</a>.</p>
+<h3>4. User Behavior Flow</h3>
                         <p>Understanding the customer journey:</p>
                         <ul>
                             <li><strong>Path exploration:</strong> Visualize user journeys through your site</li>
@@ -301,7 +286,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <p>Three ways to track events in GA4:</p>
 
                         <h4>1. Automatic Events</h4>
-                        <p>GA4 tracks these automatically:</p>
+                        <p>GA4 collects basic events automatically; the following web interactions depend on enhanced measurement and supported page implementations:</p>
                         <ul>
                             <li>Page views</li>
                             <li>Scrolls</li>
@@ -331,19 +316,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                         <h2>Attribution and Multi-Touch Analysis</h2>
 
-                        <h3>Attribution Models in GA4</h3>
+                        <h3>Attribution models and their limits</h3><p>First-click, linear, time-decay and position-based models are no longer available in GA4. Consult the <a href="https://support.google.com/analytics/answer/10596865">current attribution models report</a>. Changing a model changes credit allocation; it does not establish which sales advertising caused.</p>
                         <p>Understand how different touchpoints contribute to conversions:</p>
                         <ul>
                             <li><strong>Data-driven:</strong> ML-based credit distribution (recommended)</li>
                             <li><strong>Last click:</strong> All credit to final interaction</li>
-                            <li><strong>First click:</strong> All credit to initial touchpoint</li>
-                            <li><strong>Linear:</strong> Equal credit to all touchpoints</li>
+
+
                         </ul>
 
                         <h2>Predictive Metrics</h2>
 
                         <h3>Machine Learning Insights</h3>
-                        <p>GA4 automatically generates predictions (requires sufficient data):</p>
+                        <p>Predictive metrics are available only when a property meets Google’s eligibility and data requirements:</p>
                         <ul>
                             <li><strong>Purchase probability:</strong> Likelihood user will make purchase in next 7 days</li>
                             <li><strong>Churn probability:</strong> Likelihood user won't be active in next 7 days</li>
@@ -410,7 +395,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                         <p>Remember: data is only valuable when it drives action. Use GA4 insights to continuously optimize your digital marketing efforts and improve business results.</p>
 
-            </article>
+            <h2>A worked weekly review for an Oman service business</h2>
+<p>Suppose a campaign produces 200 sessions, 12 successful enquiries and four sales-qualified leads. These are illustrative figures, not a client result. Report a 6% enquiry rate and a 2% qualified-lead rate separately. With OMR 100 of campaign spend, cost per enquiry is OMR 8.33 while cost per qualified lead is OMR 25. A report showing only the cheaper figure hides the sales team's work.</p>
+<ol><li>Open Traffic acquisition and use session source/medium for this visit-level question.</li><li>Filter the landing page and the specific lead event; compare equal date ranges.</li><li>Reconcile leads with your CRM using an internal lead ID. Keep contact details out of analytics event parameters.</li><li>Check a sample on mobile: a successful enquiry should record once; a validation error should not record success.</li><li>Write one action: fix the form, refine the audience, or keep the campaign running until the sample is useful.</li></ol>
+<p>Build the executive view with the <a href="/blog/ga4-dashboard-for-ceos/">GA4 dashboard worksheet</a> and use a consistent <a href="/tools/utm-builder/">UTM naming scheme</a>.</p>
+</article>
             <aside class="blog-sidebar">
                 <div class="author-card">
                     <div class="author-avatar"><i class="fas fa-user-tie"></i></div>
