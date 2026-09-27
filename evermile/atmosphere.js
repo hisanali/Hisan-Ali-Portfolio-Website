@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {clamp, lerp, smooth, random} from './math.js?v=20260927-tunnel1';
+import {clamp, lerp, smooth, random} from './math.js?v=20260927-train1';
 
 /*
   Time and weather. The clock runs as you drive (a full day in about half an hour, slower through dawn and golden hour,

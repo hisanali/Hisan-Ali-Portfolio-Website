@@ -1,11 +1,11 @@
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
-import {prepareTrain} from './train-model.js?v=20260927-tunnel1';
-import {batchStatic} from './mesh-batching.js?v=20260927-tunnel1';
+import {prepareTrain} from './train-model.js?v=20260927-train1';
+import {batchStatic} from './mesh-batching.js?v=20260927-train1';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
-import {GlowPoints} from './glow.js?v=20260927-tunnel1';
-import {clamp} from './math.js?v=20260927-tunnel1';
-import {canvasTexture} from './scenery.js?v=20260927-tunnel1';
+import {GlowPoints} from './glow.js?v=20260927-train1';
+import {clamp} from './math.js?v=20260927-train1';
+import {canvasTexture} from './scenery.js?v=20260927-train1';
 
 /*
   Trains on the line beside the road. A train comes out of the tunnel at one end of the line, runs along the valley and
@@ -190,12 +190,18 @@ export class Railway {
       // Until it sets off, the train keeps adjusting its departure to meet you at the crossing as you actually drive.
       if (tr.delay > 0 && tr.aim) { const d = tr.aim.c - s.z; if (d > 60) tr.delay = clamp(d / this.eta(s) + tr.aim.margin - Math.abs(tr.aim.c - tr.aim.start) / tr.speed, 0, 90); else if (d < -20) tr.aim = null; }
       if (tr.delay > 0) tr.delay -= dt;
-      else { tr.front += tr.dir * tr.speed * dt; tr.age += dt; }
+      // The train runs at its speed along the track, which crosses the road on a diagonal: its z advances more slowly there.
+      else { const k = Math.hypot(1, r.railX(tr.rail, tr.front + .5) - r.railX(tr.rail, tr.front - .5)); tr.front += tr.dir * tr.speed * dt / k; tr.age += dt; }
       const rail = tr.rail, cam = camera.position;
       const place = (z) => [r.railX(rail, z), r.railY(rail, z) + .2];
-      for (const c of tr.cars) {
+      // Each car sits at its distance behind the front measured along the rails, so the couplings stay closed on curves.
+      const along = [];
+      { let z = tr.front, px = r.railX(rail, z), dist = 0, i = 0; const cars = tr.cars;
+        while (i < cars.length) { const nz = z - tr.dir * .5, nx = r.railX(rail, nz), ds = Math.hypot(.5, nx - px); if (dist + ds >= cars[i].offset) { along[i++] = z - tr.dir * .5 * (cars[i - 1].offset - dist) / ds; continue; } dist += ds; z = nz; px = nx; }
+        tr.tailZ = along[cars.length - 1] - tr.dir * cars[cars.length - 1].len / 2; }
+      for (const [ci, c] of tr.cars.entries()) {
         c.imported?.update(dt,tr.delay>0?0:tr.speed);
-        const zc = tr.front - tr.dir * c.offset, shown = tr.delay <= 0 && zc > rail.a - 22 && zc < rail.b + 22;
+        const zc = along[ci], shown = tr.delay <= 0 && zc > rail.a - 22 && zc < rail.b + 22;
         c.g.visible = shown; if (!shown) continue;
         const [x, y] = place(zc), [xa, ya] = place(zc + 4), [xb, yb] = place(zc - 4);
         c.g.position.set(x, y, zc);
@@ -212,7 +218,7 @@ export class Railway {
         const ahead = (c - tr.front) * tr.dir;
         if (ahead > 0 && ahead < 380 && !tr.horned.has(c)) { tr.horned.add(c); if (Math.hypot(r.railX(rail, tr.front) - cam.x, tr.front - cam.z) < 1400) this.horn(audio); }
       }
-      const tail = tr.front - tr.dir * tr.length;
+      const tail = tr.tailZ ?? tr.front - tr.dir * tr.length;
       if ((tr.dir > 0 && tail > rail.b + 30) || (tr.dir < 0 && tail < rail.a - 30) || tr.age > 400) { for (const c of tr.cars) c.g.visible = false; this.train = null; this.timer = rand(30, 70); }
     }
     this.glow.end();
@@ -228,7 +234,7 @@ export class Railway {
   timing(zc) {
     const tr = this.train; if (!tr || tr.delay > 0 && tr.delay > 40) return null;
     if (!tr.rail.crossings.includes(zc)) return null;
-    const until = ((zc - tr.front) * tr.dir) / tr.speed + Math.max(0, tr.delay), tailPast = ((tr.front - tr.dir * tr.length - zc) * tr.dir) / tr.speed;
+    const until = ((zc - tr.front) * tr.dir) / tr.speed + Math.max(0, tr.delay), tailPast = (((tr.tailZ ?? tr.front - tr.dir * tr.length) - zc) * tr.dir) / tr.speed;
     return {until, tailPast};
   }
   warning(zc) { const t = this.timing(zc); return !!t && t.until < WARN && t.tailPast < CLEAR; }

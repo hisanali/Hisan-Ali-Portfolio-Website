@@ -1,12 +1,12 @@
-import {addMicroSurface} from './surface-detail.js?v=20260927-tunnel1';
-import {batchStatic} from './mesh-batching.js?v=20260927-tunnel1';
+import {addMicroSurface} from './surface-detail.js?v=20260927-train1';
+import {batchStatic} from './mesh-batching.js?v=20260927-train1';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260927-tunnel1';
-import {clamp} from './math.js?v=20260927-tunnel1';
-import {canvasTexture} from './scenery.js?v=20260927-tunnel1';
-import {ZONE} from './network.js?v=20260927-tunnel1';
+import {GlowPoints} from './glow.js?v=20260927-train1';
+import {clamp} from './math.js?v=20260927-train1';
+import {canvasTexture} from './scenery.js?v=20260927-train1';
+import {ZONE} from './network.js?v=20260927-train1';
 
 // Life around the road: grazing cows, horses and bighorns, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.

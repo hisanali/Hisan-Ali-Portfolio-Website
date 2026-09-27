@@ -1,4 +1,4 @@
-import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260927-tunnel1';
+import {mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260927-train1';
 export function prepareTrain(asset){
  const model=asset.scene.clone(true),nodes=[];
  model.traverse(o=>{if(/^TrainWheel_\d+$/.test(o.name))nodes.push(o);if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});

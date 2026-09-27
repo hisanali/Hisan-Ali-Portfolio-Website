@@ -1,6 +1,6 @@
-import {prepareMotorcycle} from './motorcycle-model.js?v=20260927-tunnel1';
-import {rotorFor,mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260927-tunnel1';
-import {addMicroSurface} from './surface-detail.js?v=20260927-tunnel1';
+import {prepareMotorcycle} from './motorcycle-model.js?v=20260927-train1';
+import {rotorFor,mountImportedWheel,rollWheel} from './wheel-rig.js?v=20260927-train1';
+import {addMicroSurface} from './surface-detail.js?v=20260927-train1';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {DRACOLoader} from './vendor/loaders/DRACOLoader.js';
