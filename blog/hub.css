@@ -55,3 +55,7 @@ html body.page-blog.redesign-interior .blog-grid { row-gap: 40px !important; }
   html body.page-blog.redesign-interior #articles .blog-search-box { flex-basis: 100% !important; }
   html body.page-blog.redesign-interior .blog-grid > .blog-card.blog-card--pinned h2 { font-size: 30px !important; }
 }
+
+/* One card layout for every post in the grid. A legacy rule gave cards from the 4th child onward
+   25px inset padding while cards 2-3 used the flat layout, so the first row looked misaligned. */
+html body.page-blog.redesign-interior .blog-grid > .blog-card:not(.blog-card--pinned) .blog-content { padding: 14px 2px 0 !important; }
