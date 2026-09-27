@@ -1,0 +1,9 @@
+.ff-guide .ff-split { display:flex; height:46px; margin:22px 0 8px; border-radius:12px; overflow:hidden; font-weight:800; font-size:.9rem; }
+.ff-guide .ff-split div { display:flex; align-items:center; padding:0 16px; white-space:nowrap; }
+.ff-guide .ff-split div:first-child { flex:0 0 56.6%; background:var(--fe-accent); color:var(--fe-raised); }
+.ff-guide .ff-split div:last-child { flex:1; background:var(--fe-accent-2); color:var(--fe-ink); justify-content:flex-end; }
+html.theme-dark .ff-guide .ff-split div:last-child { color:#1b1406; }
+.ff-guide .ff-funnel { display:grid; gap:8px; margin:24px 0; }
+.ff-guide .ff-funnel div { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 auto; width:var(--w); min-width:260px; max-width:100%; box-sizing:border-box; padding:14px 18px; border-radius:12px; background:color-mix(in srgb,var(--fe-accent) calc(var(--o) * 1%),var(--fe-surface)); color:var(--fe-ink); font-size:.92rem; }
+.ff-guide .ff-funnel b { font-family:'DM Serif Display',serif; font-size:1.3rem; font-weight:400; font-variant-numeric:tabular-nums; }
+@media(max-width:640px) { .ff-guide .ff-funnel div { width:100%; min-width:0; } .ff-guide .ff-split { font-size:.78rem; } .ff-guide .ff-split div { padding:0 10px; } }

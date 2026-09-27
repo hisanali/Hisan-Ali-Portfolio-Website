@@ -1,0 +1,27 @@
+.mc-guide .mc-next { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:24px 0; padding:16px 20px; border-radius:16px; background:var(--fe-ink); color:var(--fe-raised); }
+.mc-guide .mc-next b { font-family:'DM Serif Display',serif; font-size:2rem; font-weight:400; line-height:1; color:var(--fe-accent-2); font-variant-numeric:tabular-nums; }
+.mc-guide .mc-next span { font-size:.95rem; }
+.mc-guide .mc-next small { flex-basis:100%; opacity:.7; font-size:.78rem; }
+.mc-guide .mc-year { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:26px 0; }
+.mc-guide .mc-month { position:relative; padding:18px 18px 16px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.mc-guide .mc-month header { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--fe-border); }
+html body.fe-page.page-blog-article .blog-post-content .mc-month h3 { margin:0 !important; font-size:1.3rem !important; color:var(--fe-ink) !important; }
+.mc-guide .mc-month header span { font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--fe-accent); text-align:right; }
+.mc-guide .mc-month.is-peak { border-color:var(--fe-accent); box-shadow:inset 0 4px 0 var(--fe-accent); }
+html body.fe-page.page-blog-article .blog-post-content .mc-month ul { margin:0 !important; padding:0 !important; border:0 !important; background:none !important; box-shadow:none !important; max-width:none !important; list-style:none !important; }
+html body.fe-page.page-blog-article .blog-post-content .mc-month li { margin:0 !important; padding:4px 0 4px 16px !important; position:relative; color:var(--fe-ink) !important; font-size:.86rem !important; line-height:1.5 !important; }
+.mc-guide .mc-month li::before { content:""; position:absolute; left:0; top:12px; width:7px; height:7px; border-radius:50%; background:var(--fe-accent-2); }
+html body.fe-page.page-blog-article .blog-post-content .mc-month p { margin:10px 0 0 !important; padding-top:10px; border-top:1px dashed var(--fe-border); color:var(--fe-muted) !important; font-size:.84rem !important; line-height:1.5 !important; max-width:none; }
+.mc-guide .mc-month p b { color:var(--fe-accent); }
+.mc-guide .mc-heat { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:6px; margin:18px 0 8px; }
+.mc-guide .mc-cell { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:6px; height:130px; padding:8px 0; border-radius:10px; background:var(--fe-raised); border:1px solid var(--fe-border); font-size:.72rem; font-weight:800; }
+.mc-guide .mc-cell i { display:block; width:60%; height:calc(var(--v) * 17px); border-radius:6px; background:color-mix(in srgb,var(--fe-accent) calc(28% + var(--v) * 14%),transparent); transition:height .35s ease; }
+.mc-guide .mc-cell.is-top i { background:var(--fe-accent-2); }
+.mc-guide .mc-legend { display:flex; justify-content:space-between; font-size:.75rem; color:var(--fe-muted); }
+.mc-guide .mc-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.mc-guide .mc-summary > div { padding:16px; border-radius:14px; background:var(--fe-raised); border:1px solid var(--fe-border); }
+.mc-guide .mc-summary span { display:block; color:var(--fe-accent); font-size:.74rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+html body.fe-page.page-blog-article .blog-post-content .mc-summary p { margin:6px 0 0 !important; color:var(--fe-ink) !important; font-size:.92rem !important; line-height:1.55 !important; max-width:none; }
+@media(max-width:860px) { .mc-guide .mc-year { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:640px) { .mc-guide .mc-year,.mc-guide .mc-summary { grid-template-columns:1fr; } .mc-guide .mc-heat { gap:3px; } .mc-guide .mc-cell { height:104px; font-size:.62rem; } .mc-guide .mc-cell i { width:70%; height:calc(var(--v) * 13px); } }
+html.theme-dark .mc-guide .mc-next { background:var(--fe-raised); border:1px solid var(--fe-border); color:var(--fe-ink); }

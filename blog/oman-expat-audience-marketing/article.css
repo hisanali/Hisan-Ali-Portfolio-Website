@@ -1,0 +1,19 @@
+.ex-guide .ex-bars { display:grid; gap:12px; margin:24px 0; }
+.ex-guide .ex-row { display:grid; grid-template-columns:150px minmax(0,1fr) 92px; align-items:center; gap:14px; color:var(--fe-ink); font-size:.92rem; }
+.ex-guide .ex-row b { font-weight:700; }
+.ex-guide .ex-row i { display:block; height:26px; border-radius:8px; background:color-mix(in srgb,var(--fe-accent) 12%,transparent); overflow:hidden; }
+.ex-guide .ex-row i::before { content:""; display:block; width:var(--w); height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--fe-accent),color-mix(in srgb,var(--fe-accent) 70%,var(--fe-accent-2))); }
+.ex-guide .ex-row span { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+.ex-guide .ex-sliders { display:grid; gap:12px; margin:18px 0; }
+.ex-guide .ex-sliders label { display:grid; grid-template-columns:190px minmax(0,1fr) 56px; align-items:center; gap:12px; font-size:.9rem; font-weight:600; }
+.ex-guide .ex-sliders input { width:100%; accent-color:var(--fe-accent); }
+.ex-guide .ex-sliders output { text-align:right; font-variant-numeric:tabular-nums; font-weight:800; color:var(--fe-accent); }
+.ex-guide .ex-plan { display:grid; gap:10px; margin-top:16px; }
+.ex-guide .ex-plan > div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 12px; padding:14px 16px; border-radius:14px; border:1px solid var(--fe-border); background:var(--fe-raised); }
+.ex-guide .ex-plan strong { font-size:1rem; }
+.ex-guide .ex-plan em { font-style:normal; justify-self:end; padding:3px 10px; border-radius:999px; font-size:.74rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.ex-guide .ex-plan em.t1 { background:var(--fe-accent); color:var(--fe-raised); }
+.ex-guide .ex-plan em.t2 { background:color-mix(in srgb,var(--fe-accent-2) 25%,transparent); color:var(--fe-ink); }
+.ex-guide .ex-plan em.t3 { background:color-mix(in srgb,var(--fe-ink) 8%,transparent); color:var(--fe-muted); }
+html body.fe-page.page-blog-article .blog-post-content .ex-plan p { grid-column:1 / -1; margin:0 !important; color:var(--fe-muted) !important; font-size:.86rem !important; line-height:1.5 !important; max-width:none; }
+@media(max-width:640px) { .ex-guide .ex-row { grid-template-columns:96px minmax(0,1fr) 72px; gap:8px; font-size:.84rem; } .ex-guide .ex-sliders label { grid-template-columns:1fr 48px; } .ex-guide .ex-sliders input { grid-column:1 / -1; grid-row:2; } }
