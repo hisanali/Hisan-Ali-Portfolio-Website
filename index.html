@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preload" as="image" href="/Hisan-optimized.webp" fetchpriority="high">
-  <link rel="stylesheet" href="/home-redesign.css?v=19">
+  <link rel="stylesheet" href="/home-redesign.css?v=21">
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -195,52 +195,193 @@
         <div class="section-heading reveal">
           <div><span class="section-index">02</span><span class="kicker">How I help</span></div>
           <h2>One partner for your<br><em>whole growth engine.</em></h2>
-          <p>I connect search, advertising, content, and measurement so every channel works toward the same business goal.</p>
+          <p>Seven services, one plan. Strategy, creative, search, ads and measurement move together, so every channel pulls toward the same business goal.</p>
         </div>
-        <div class="service-list">
-          <article class="service-row reveal">
-            <span class="service-number">01</span>
-            <div class="service-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></div>
-            <div><h3>Search engine optimization</h3><p>Technical SEO, content systems, and local search strategy that help the right customers find you.</p></div>
-            <ul><li>SEO audits</li><li>Keyword strategy</li><li>Content optimization</li></ul>
-            <a href="/services/" aria-label="Learn about search visibility">↗︎</a>
-          </article>
-          <article class="service-row reveal">
-            <span class="service-number">02</span>
-            <div class="service-icon" aria-hidden="true"><i class="fa-brands fa-google"></i></div>
-            <div><h3>Google Ads management</h3><p>Search and Performance Max campaigns built around commercial intent, lead quality, and efficient spend.</p></div>
-            <ul><li>Campaign setup</li><li>Keyword &amp; bid strategy</li><li>Ad testing</li></ul>
-            <a href="/services/" aria-label="Learn about Google Ads">↗︎</a>
-          </article>
-          <article class="service-row reveal">
-            <span class="service-number">03</span>
-            <div class="service-icon" aria-hidden="true"><i class="fa-brands fa-meta"></i></div>
-            <div><h3>Meta Ads management</h3><p>Facebook and Instagram campaigns that connect sharper audience targeting with stronger creative direction.</p></div>
-            <ul><li>Audience targeting</li><li>Campaign setup</li><li>Performance tracking</li></ul>
-            <a href="/services/" aria-label="Learn about Meta Ads">↗︎</a>
-          </article>
-          <article class="service-row reveal">
-            <span class="service-number">04</span>
-            <div class="service-icon" aria-hidden="true"><i class="fa-solid fa-share-nodes"></i></div>
-            <div><h3>Social media marketing</h3><p>Consistent content planning and platform management that builds a clearer, more useful brand presence.</p></div>
-            <ul><li>Content planning</li><li>Platform management</li><li>Community engagement</li></ul>
-            <a href="/services/" aria-label="Learn about social media marketing">↗︎</a>
-          </article>
-          <article class="service-row reveal">
-            <span class="service-number">05</span>
-            <div class="service-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></div>
-            <div><h3>Digital growth strategy</h3><p>A practical roadmap that aligns your audience, message, channels, customer journey, and measurement.</p></div>
-            <ul><li>Market research</li><li>Journey mapping</li><li>Performance planning</li></ul>
-            <a href="/services/" aria-label="Learn about growth strategy">↗︎</a>
-          </article>
-          <article class="service-row reveal">
-            <span class="service-number">06</span>
-            <div class="service-icon service-icon-pencil" aria-hidden="true"></div>
-            <div><h3>Creative &amp; graphic design</h3><p>Campaign creatives, social visuals, and branded marketing materials that communicate with more clarity.</p></div>
-            <ul><li>Ad creatives</li><li>Social media design</li><li>Brand visuals</li></ul>
-            <a href="/services/" aria-label="Learn about creative support">↗︎</a>
-          </article>
+        <div class="engine reveal" data-engine>
+          <div class="engine-item is-active" data-engine-item="strategy">
+            <button class="engine-tab" type="button" id="engine-tab-strategy" aria-expanded="true" aria-controls="engine-panel-strategy">
+              <span class="engine-num">01</span>
+              <span class="engine-name">Strategy &amp; growth planning</span>
+              <span class="engine-stage">Plan</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-strategy" role="region" aria-labelledby="engine-tab-strategy">
+              <ol class="engine-rail" aria-label="Stage: Plan"><li class="is-on">Plan</li><li>Build</li><li>Grow</li><li>Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></span>
+                <span class="engine-kicker">Plan · Direction</span>
+              </div>
+              <h3>Strategy &amp; growth planning</h3>
+              <p class="engine-outcome">Turn a business goal into a clear audience, offer, channel plan and practical roadmap.</p>
+              <ul class="engine-includes"><li>Digital and campaign strategy</li><li>Market and competitor research</li><li>Launch and channel planning</li><li>Growth audits and consultation</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>Semrush · GA4 · Looker Studio</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#seo" data-engine-go="seo">SEO</a><a href="/services/#google-ads" data-engine-go="google-ads">Google Ads</a><a href="/services/#analytics" data-engine-go="analytics">Analytics</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=strategy">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#strategy">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="engine-item" data-engine-item="creative">
+            <button class="engine-tab" type="button" id="engine-tab-creative" aria-expanded="false" aria-controls="engine-panel-creative">
+              <span class="engine-num">02</span>
+              <span class="engine-name">Creative &amp; graphic design</span>
+              <span class="engine-stage">Build</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-creative" role="region" aria-labelledby="engine-tab-creative">
+              <ol class="engine-rail" aria-label="Stage: Build"><li>Plan</li><li class="is-on">Build</li><li>Grow</li><li>Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-solid fa-pen-nib"></i></span>
+                <span class="engine-kicker">Build · Visuals</span>
+              </div>
+              <h3>Creative &amp; graphic design</h3>
+              <p class="engine-outcome">Strong visual work for everyday posts and high-attention campaigns, in Arabic and English.</p>
+              <ul class="engine-includes"><li>Posters, flyers and social posts</li><li>Ad creatives and campaign systems</li><li>Brochures, presentations and profiles</li><li>Brand identity and print collateral</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>Photoshop · Illustrator · Figma · Canva</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#meta-ads" data-engine-go="meta-ads">Meta Ads</a><a href="/services/#social-media" data-engine-go="social-media">Social media</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=content">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#creative">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="engine-item" data-engine-item="seo">
+            <button class="engine-tab" type="button" id="engine-tab-seo" aria-expanded="false" aria-controls="engine-panel-seo">
+              <span class="engine-num">03</span>
+              <span class="engine-name">Search engine optimization</span>
+              <span class="engine-stage">Grow</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-seo" role="region" aria-labelledby="engine-tab-seo">
+              <ol class="engine-rail" aria-label="Stage: Grow"><li>Plan</li><li>Build</li><li class="is-on">Grow</li><li>Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <span class="engine-kicker">Grow · Discovery</span>
+              </div>
+              <h3>Search engine optimization</h3>
+              <p class="engine-outcome">Be found wherever customers research, compare and decide: Google, Maps and AI answers.</p>
+              <ul class="engine-includes"><li>Technical, on-page and local SEO</li><li>Website copy and editorial content</li><li>Google Business Profile optimisation</li><li>AI-search and content visibility</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>Search Console · Business Profile · Ahrefs · Semrush</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#google-ads" data-engine-go="google-ads">Google Ads</a><a href="/services/#analytics" data-engine-go="analytics">Analytics</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=seo">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#seo">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="engine-item" data-engine-item="google-ads">
+            <button class="engine-tab" type="button" id="engine-tab-google-ads" aria-expanded="false" aria-controls="engine-panel-google-ads">
+              <span class="engine-num">04</span>
+              <span class="engine-name">Google Ads management</span>
+              <span class="engine-stage">Grow</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-google-ads" role="region" aria-labelledby="engine-tab-google-ads">
+              <ol class="engine-rail" aria-label="Stage: Grow"><li>Plan</li><li>Build</li><li class="is-on">Grow</li><li>Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-brands fa-google"></i></span>
+                <span class="engine-kicker">Grow · Demand</span>
+              </div>
+              <h3>Google Ads management</h3>
+              <p class="engine-outcome">Search, Display and Performance Max campaigns built around intent, lead quality and a defensible budget.</p>
+              <ul class="engine-includes"><li>Account structure and keyword strategy</li><li>Search, Display and Performance Max</li><li>Ad and landing-page testing</li><li>Conversion tracking and reporting</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>Google Ads · Tag Manager · GA4</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#seo" data-engine-go="seo">SEO</a><a href="/services/#analytics" data-engine-go="analytics">Analytics</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=google-ads">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#google-ads">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="engine-item" data-engine-item="meta-ads">
+            <button class="engine-tab" type="button" id="engine-tab-meta-ads" aria-expanded="false" aria-controls="engine-panel-meta-ads">
+              <span class="engine-num">05</span>
+              <span class="engine-name">Meta &amp; social ads</span>
+              <span class="engine-stage">Grow</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-meta-ads" role="region" aria-labelledby="engine-tab-meta-ads">
+              <ol class="engine-rail" aria-label="Stage: Grow"><li>Plan</li><li>Build</li><li class="is-on">Grow</li><li>Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-brands fa-meta"></i></span>
+                <span class="engine-kicker">Grow · Reach</span>
+              </div>
+              <h3>Meta &amp; social ads</h3>
+              <p class="engine-outcome">Paid social with sharper audiences, creative that gets tested, and a clear path to enquiry.</p>
+              <ul class="engine-includes"><li>Facebook and Instagram campaigns</li><li>TikTok and LinkedIn advertising</li><li>Remarketing and lead forms</li><li>Creative testing and media planning</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>Meta Ads · TikTok · LinkedIn</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#creative" data-engine-go="creative">Creative</a><a href="/services/#social-media" data-engine-go="social-media">Social media</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=meta-ads">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#meta-ads">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="engine-item" data-engine-item="social-media">
+            <button class="engine-tab" type="button" id="engine-tab-social-media" aria-expanded="false" aria-controls="engine-panel-social-media">
+              <span class="engine-num">06</span>
+              <span class="engine-name">Social media management</span>
+              <span class="engine-stage">Grow</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-social-media" role="region" aria-labelledby="engine-tab-social-media">
+              <ol class="engine-rail" aria-label="Stage: Grow"><li>Plan</li><li>Build</li><li class="is-on">Grow</li><li>Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-solid fa-share-nodes"></i></span>
+                <span class="engine-kicker">Grow · Presence</span>
+              </div>
+              <h3>Social media management</h3>
+              <p class="engine-outcome">A consistent operating rhythm for content, publishing, conversation and paid reach.</p>
+              <ul class="engine-includes"><li>Strategy and monthly calendars</li><li>Account and community management</li><li>Copy, captions and content production</li><li>Influencer and paid-social support</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>Instagram · Meta Ads · WhatsApp Business · Canva</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#creative" data-engine-go="creative">Creative</a><a href="/services/#meta-ads" data-engine-go="meta-ads">Meta Ads</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=social-media">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#social-media">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="engine-item" data-engine-item="analytics">
+            <button class="engine-tab" type="button" id="engine-tab-analytics" aria-expanded="false" aria-controls="engine-panel-analytics">
+              <span class="engine-num">07</span>
+              <span class="engine-name">Analytics, tracking &amp; CRO</span>
+              <span class="engine-stage">Measure</span>
+              <i class="engine-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="engine-panel" id="engine-panel-analytics" role="region" aria-labelledby="engine-tab-analytics">
+              <ol class="engine-rail" aria-label="Stage: Measure"><li>Plan</li><li>Build</li><li>Grow</li><li class="is-on">Measure</li></ol>
+              <div class="engine-panel-head">
+                <span class="engine-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></span>
+                <span class="engine-kicker">Measure · Evidence</span>
+              </div>
+              <h3>Analytics, tracking &amp; CRO</h3>
+              <p class="engine-outcome">Connect activity to real actions, find what is leaking, and decide the next move with evidence.</p>
+              <ul class="engine-includes"><li>GA4, Tag Manager and ad pixels</li><li>Conversion events and attribution checks</li><li>Dashboards and campaign reporting</li><li>Website audits and conversion fixes</li></ul>
+              <div class="engine-meta">
+                <div><span>Tools</span><p>GA4 · Tag Manager · Looker Studio · Hotjar</p></div>
+                <div><span>Works best with</span><p class="engine-pairs"><a href="/services/#google-ads" data-engine-go="google-ads">Google Ads</a><a href="/services/#seo" data-engine-go="seo">SEO</a></p></div>
+              </div>
+              <div class="engine-actions">
+                <a class="engine-primary" href="/contact/?service=analytics">Start a brief <span aria-hidden="true">↗︎</span></a>
+                <a class="engine-secondary" href="/services/#analytics">How it works <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
         </div>
+        <p class="engine-foot reveal"><span>Not sure where to start?</span> <a href="/growth-diagnostic/">Take the free growth diagnostic <b aria-hidden="true">↗︎</b></a></p>
       </div>
     </section>
 
@@ -306,10 +447,102 @@
       </div>
     </section>
 
+    <section class="section made-section" id="made">
+      <div class="shell">
+        <div class="section-heading reveal">
+          <div><span class="section-index">04</span><span class="kicker">Things I’ve built</span></div>
+          <h2>Made in the Lab.<br><em>Free to explore.</em></h2>
+          <p>Side projects built from scratch: a 3D cube solver, an open-world driving game, an arcade, a canvas studio, and everyday tools.</p>
+        </div>
+
+        <div class="made-grid">
+          <a class="made-card made-evermile reveal" href="/evermile/">
+            <img src="/games/thumbs/evermile.webp" alt="A red convertible on a coastal road at sunset in Evermile" width="1200" height="900" loading="lazy">
+            <span class="made-shade" aria-hidden="true"></span>
+            <div class="made-copy">
+              <span class="made-type">Open-world driving game</span>
+              <h3>Evermile</h3>
+              <p>Take the scenic route through coast roads, tunnels, and towns in a 3D world built for the browser, with traffic and radio.</p>
+              <span class="made-cta">Start driving <b aria-hidden="true">↗︎</b></span>
+            </div>
+          </a>
+
+          <a class="made-card made-cube reveal" href="/tools/rubiks-cube/">
+            <div class="made-cube-stage" aria-hidden="true"><div class="made-cube-3d"><span class="made-cube-face made-cube-front"><i class="c-r"></i><i class="c-y"></i><i class="c-o"></i><i class="c-g"></i><i class="c-w"></i><i class="c-w"></i><i class="c-b"></i><i class="c-w"></i><i class="c-r"></i></span><span class="made-cube-face made-cube-back"><i class="c-b"></i><i class="c-w"></i><i class="c-b"></i><i class="c-y"></i><i class="c-w"></i><i class="c-w"></i><i class="c-o"></i><i class="c-o"></i><i class="c-w"></i></span><span class="made-cube-face made-cube-right"><i class="c-y"></i><i class="c-w"></i><i class="c-b"></i><i class="c-o"></i><i class="c-w"></i><i class="c-b"></i><i class="c-w"></i><i class="c-y"></i><i class="c-g"></i></span><span class="made-cube-face made-cube-left"><i class="c-g"></i><i class="c-b"></i><i class="c-w"></i><i class="c-b"></i><i class="c-b"></i><i class="c-o"></i><i class="c-w"></i><i class="c-y"></i><i class="c-w"></i></span><span class="made-cube-face made-cube-top"><i class="c-b"></i><i class="c-y"></i><i class="c-r"></i><i class="c-o"></i><i class="c-y"></i><i class="c-b"></i><i class="c-w"></i><i class="c-b"></i><i class="c-r"></i></span><span class="made-cube-face made-cube-bottom"><i class="c-b"></i><i class="c-g"></i><i class="c-y"></i><i class="c-w"></i><i class="c-b"></i><i class="c-b"></i><i class="c-g"></i><i class="c-y"></i><i class="c-r"></i></span></div></div>
+            <div class="made-copy">
+              <span class="made-type">3D Rubik’s cube solver</span>
+              <h3>Cube Studio</h3>
+              <p>Scan or paint your scramble, then follow the solve move by move.</p>
+              <span class="made-cta">Solve a cube <b aria-hidden="true">↗︎</b></span>
+            </div>
+          </a>
+
+          <a class="made-card made-games reveal" href="/games/">
+            <div class="made-thumbs" aria-hidden="true">
+              <img src="/games/thumbs/stack.webp" alt="" width="1000" height="750" loading="lazy">
+              <img src="/games/thumbs/flight.webp" alt="" width="1000" height="750" loading="lazy">
+              <img src="/games/thumbs/snake.webp" alt="" width="1000" height="750" loading="lazy">
+            </div>
+            <div class="made-copy">
+              <span class="made-type">13 browser games</span>
+              <h3>Game Center</h3>
+              <span class="made-cta">Play now <b aria-hidden="true">↗︎</b></span>
+            </div>
+          </a>
+
+          <a class="made-card made-paint reveal" href="/tools/painting-drawing/">
+            <svg class="made-strokes" viewBox="0 0 240 110" aria-hidden="true">
+              <path d="M12 78 C 48 20, 86 22, 104 58 S 170 96, 226 30"/>
+              <path d="M20 96 C 70 70, 120 92, 168 68 S 214 56, 232 70"/>
+              <path d="M34 36 C 60 30, 70 50, 96 40"/>
+            </svg>
+            <div class="made-copy">
+              <span class="made-type">Drawing &amp; painting</span>
+              <h3>Canvas Studio</h3>
+              <span class="made-cta">Start painting <b aria-hidden="true">↗︎</b></span>
+            </div>
+          </a>
+
+          <article class="made-card made-diagnostic reveal">
+            <div class="made-copy">
+              <span class="made-type">Free growth diagnostic</span>
+              <h3><a href="/growth-diagnostic/">What should you fix first?</a></h3>
+              <p>Eight quick questions show where your marketing leaks opportunity. About three minutes.</p>
+            </div>
+            <ul class="made-goals" aria-label="Start the diagnostic with a goal">
+              <li><a href="/growth-diagnostic/?goal=search%20visibility">Search visibility</a></li>
+              <li><a href="/growth-diagnostic/?goal=qualified%20leads">Qualified leads</a></li>
+              <li><a href="/growth-diagnostic/?goal=online%20sales">Online sales</a></li>
+              <li><a href="/growth-diagnostic/?goal=measurement%20clarity">Measurement clarity</a></li>
+              <li><a href="/growth-diagnostic/?goal=brand%20demand">Brand demand</a></li>
+            </ul>
+          </article>
+
+          <article class="made-card made-tools reveal">
+            <div class="made-copy">
+              <span class="made-type">Free browser tools</span>
+              <h3><a href="/tools/">Everyday utilities</a></h3>
+              <p>No sign-up, no clutter. Files are processed in your browser.</p>
+            </div>
+            <ul class="made-tool-list" aria-label="Popular tools">
+              <li><a href="/tools/pdf-merger/"><i class="fa-regular fa-copy" aria-hidden="true"></i>PDF merger</a></li>
+              <li><a href="/tools/pdf-compressor/"><i class="fa-solid fa-compress" aria-hidden="true"></i>PDF compressor</a></li>
+              <li><a href="/tools/image-converter/"><i class="fa-regular fa-image" aria-hidden="true"></i>Image converter</a></li>
+              <li><a href="/tools/qr-code-generator/"><i class="fa-solid fa-qrcode" aria-hidden="true"></i>QR code generator</a></li>
+              <li><a href="/tools/utm-builder/"><i class="fa-solid fa-link" aria-hidden="true"></i>UTM builder</a></li>
+              <li><a href="/tools/content-analyzer/"><i class="fa-solid fa-align-left" aria-hidden="true"></i>Content analyzer</a></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="made-foot reveal"><a href="/lab/">Explore everything in the Lab <span>↗︎</span></a></div>
+      </div>
+    </section>
+
     <section class="section process-section" id="why-me">
       <div class="shell">
         <header class="reason-head reveal">
-          <div><span class="section-index">04</span><span class="kicker">Why work with me</span></div>
+          <div><span class="section-index">05</span><span class="kicker">Why work with me</span></div>
           <h2>A working rhythm that<br><em>keeps things moving.</em></h2>
           <p>Clear thinking, close collaboration, and practical execution—without unnecessary layers between the idea and the result.</p>
         </header>
@@ -343,7 +576,7 @@
     <section class="section insights-section" id="insights">
       <div class="shell">
         <div class="insights-head reveal">
-          <div><span class="section-index">05</span><span class="kicker">Field notes</span><h2>Useful thinking.<br><em>Without the noise.</em></h2></div>
+          <div><span class="section-index">06</span><span class="kicker">Field notes</span><h2>Useful thinking.<br><em>Without the noise.</em></h2></div>
           <p>Practical ideas for businesses growing in Oman and the GCC—written from real search, advertising, and strategy work.</p>
         </div>
         <div class="journal-layout">
@@ -386,7 +619,7 @@
     <section class="contact-section" id="contact">
       <div class="shell contact-grid">
         <div class="contact-intro reveal">
-          <span class="section-index">06</span><span class="kicker">Start a conversation</span>
+          <span class="section-index">07</span><span class="kicker">Start a conversation</span>
           <h2>Have a growth problem worth <em>solving<span class="blinking-question">?</span></em></h2>
           <p class="contact-lead">Bring the challenge. I’ll help turn it into a focused plan with clear priorities, practical execution, and measurable next steps.</p>
           <div class="contact-proof"><span><b>Muscat</b> Oman-based</span><span><b>1–2 days</b> Typical reply</span></div>
@@ -440,6 +673,6 @@
   </div>
 </footer>
 
-  <script src="/home-redesign.js?v=13"></script>
+  <script src="/home-redesign.js?v=14"></script>
 <script src="/site-shell.js?v=20260906-4"></script></body>
 </html>

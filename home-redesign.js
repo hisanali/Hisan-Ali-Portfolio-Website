@@ -66,6 +66,59 @@ const observer = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
 
+const engine = document.querySelector('[data-engine]');
+if (engine) {
+  const items = [...engine.querySelectorAll('[data-engine-item]')];
+  const tabs = items.map((item) => item.querySelector('.engine-tab'));
+  const stacked = window.matchMedia('(max-width: 980px)');
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+  let hoverTimer = 0;
+
+  const activate = (item, { toggle = false, reveal = false } = {}) => {
+    const closing = toggle && stacked.matches && item.classList.contains('is-active');
+    items.forEach((other) => {
+      const open = other === item && !closing;
+      other.classList.toggle('is-active', open);
+      other.querySelector('.engine-tab').setAttribute('aria-expanded', String(open));
+    });
+    if (reveal && stacked.matches && !closing) {
+      const top = item.getBoundingClientRect().top;
+      if (top < 80 || top > window.innerHeight * .6) window.scrollTo({ top: window.scrollY + top - 90, behavior: 'smooth' });
+    }
+  };
+
+  tabs.forEach((tab, index) => {
+    const item = items[index];
+    tab.addEventListener('click', () => activate(item, { toggle: true, reveal: true }));
+    tab.addEventListener('mouseenter', () => {
+      if (stacked.matches || !canHover.matches) return;
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(() => activate(item), 110);
+    });
+    tab.addEventListener('mouseleave', () => clearTimeout(hoverTimer));
+    tab.addEventListener('keydown', (event) => {
+      const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
+      if (!step) return;
+      event.preventDefault();
+      tabs[(index + step + tabs.length) % tabs.length].focus();
+    });
+  });
+
+  engine.addEventListener('click', (event) => {
+    const link = event.target.closest('[data-engine-go]');
+    if (!link) return;
+    const target = items.find((item) => item.dataset.engineItem === link.dataset.engineGo);
+    if (!target) return;
+    event.preventDefault();
+    activate(target, { reveal: true });
+    target.querySelector('.engine-tab').focus({ preventScroll: true });
+  });
+
+  stacked.addEventListener?.('change', () => {
+    if (!stacked.matches && !items.some((item) => item.classList.contains('is-active'))) activate(items[0]);
+  });
+}
+
 const progress = document.querySelector('[data-scroll-progress]');
 const parallaxItems = [...document.querySelectorAll('[data-parallax]')];
 const heroVisual = document.querySelector('.hero-visual');
