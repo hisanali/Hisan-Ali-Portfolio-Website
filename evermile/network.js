@@ -1,5 +1,5 @@
-import {DESTINATIONS, DISTRICT_END, DISTRICT_START, DISTRICT_GRID, DISTRICT_LEVEL, PLACE_KINDS} from './destinations.js?v=20260927-toyota1';
-import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260927-toyota1';
+import {DESTINATIONS, DISTRICT_END, DISTRICT_START, DISTRICT_GRID, DISTRICT_LEVEL, PLACE_KINDS} from './destinations.js?v=20260927-tunnel1';
+import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260927-tunnel1';
 
 /*
   The road network. The world is still laid out along z, but the road is now a chain of segments, each of a kind
@@ -216,7 +216,9 @@ export class Network {
   laneCount(z) { return this.segAt(z).lanes(z).length; }
   // Your usual lane: the outer (slow) lane on a motorway, the only lane elsewhere.
   homeLane(z) { return this.laneCount(z) - 1; }
-  median(z) { return this.typeAt(z) === 'highway' ? TYPES.highway.median * this.segAt(z).weight(z) * this.stretch(this.segAt(z), z) : 0; }
+  // Where a side road leaves the motorway at grade, the central barrier opens so traffic to and from it can cross.
+  medianGap(z) { return this.junctions.some((j) => z > j.z - 30 && z < j.z + 170 && j.from.typeAt(j.z) === 'highway' && j.options.some((o) => o.type !== 'highway')); }
+  median(z) { return this.medianGap(z) ? 0 : this.typeAt(z) === 'highway' ? TYPES.highway.median * this.segAt(z).weight(z) * this.stretch(this.segAt(z), z) : 0; }
 
   // Frozen copy of the current path: traffic keeps driving the road it spawned on even if you turn off elsewhere.
   // With a junction and option, the copy takes that branch instead, so a car can turn off (or come in from) a side road.
@@ -510,6 +512,12 @@ export class Network {
         if (inside) h = lerp(h, y - .02, 1 - smooth(.8, 1, u));
       }
       if (tunnel && d < half + 3) h = Math.max(h, y + 9.5);
+      // At each portal the hillside comes down to just above the arch, and the cutting's banks rise gently either side.
+      for (const tn of this.tunnels(this.segAt(z))) for (const [zp, inward] of [[tn.start, 1], [tn.end, -1]]) {
+        const u = (z - zp) * inward; if (u < -60 || u > 40) continue;
+        h = Math.min(h, y + 10.4 + Math.max(0, d - (half + 4)) + (u > 0 ? 1.7 * Math.max(0, u - 6) : 2.5 * Math.max(0, -u - 8)));
+        if (u >= 0 && d < half + 3) h = Math.max(h, y + 9.5);
+      }
     }
     const district = offworld ? null : this.districtAt(z);
     if (district && !tunnel) {

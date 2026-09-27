@@ -1,12 +1,12 @@
-import {addMicroSurface} from './surface-detail.js?v=20260927-toyota1';
-import {batchStatic} from './mesh-batching.js?v=20260927-toyota1';
+import {addMicroSurface} from './surface-detail.js?v=20260927-tunnel1';
+import {batchStatic} from './mesh-batching.js?v=20260927-tunnel1';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260927-toyota1';
-import {clamp} from './math.js?v=20260927-toyota1';
-import {canvasTexture} from './scenery.js?v=20260927-toyota1';
-import {ZONE} from './network.js?v=20260927-toyota1';
+import {GlowPoints} from './glow.js?v=20260927-tunnel1';
+import {clamp} from './math.js?v=20260927-tunnel1';
+import {canvasTexture} from './scenery.js?v=20260927-tunnel1';
+import {ZONE} from './network.js?v=20260927-tunnel1';
 
 // Life around the road: grazing cows, horses and bighorns, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.
@@ -522,8 +522,7 @@ export class Life {
 
   // Honking: oncoming drivers flash back, and a driver you are stuck behind may signal and move over to let you by.
   honk() {
-    const s = this.getState(), now = performance.now();
-    for (const c of this.traffic) if (c.dir < 0 && c.g.visible && c.kind !== 'bike' && c.z > s.z && c.z - s.z < 180) this.flash(c, now + rand(250, 700));
+    const s = this.getState();
     this.scare(s);
     const ahead = this.leadAhead(s, true);
     if (ahead && ahead.gap < 55 && !ahead.car.yielding && ahead.car.kind !== 'bike' && !(this.world.road.townFactor(ahead.car.z) > 0) && this.world.road.laneCount(ahead.car.z) === 1 && Math.random() < .7) {
@@ -876,21 +875,22 @@ export class Life {
       for (const l of c.lamps.left) l.material = (ind === 1 || ind === 2) && blink ? this.m.indicatorOn : this.m.indicatorOff;
       for (const l of c.lamps.right) l.material = (ind === -1 || ind === 2) && blink ? this.m.indicatorOn : this.m.indicatorOff;
       if (c.beam) c.beam.visible = !c.delivery && (c.dir < 0 || night > .5);
-      const glowLit = .12 + .88 * lit;
       if (c.kind === 'bike') {
         // Small front and rear lights on the bicycle after dark.
         if (lit > .3) { v.set(0, .9, .6); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, warm, .45 * lit, 9); v.set(0, .75, -.6); c.g.localToWorld(v); this.glow.add(v.x, v.y, v.z, red, .5 * lit, 8); }
         continue;
       }
       if (c.delivery && !c.g.visible) continue;
-      c.g.updateMatrixWorld(true);const lights=c.detailModel?.visible?c.detailLamps:c.lamps;
-      for(const lamp of lights.head)if(!c.delivery){lamp.getWorldPosition(v);this.glow.add(v.x,v.y,v.z,warm,flashing?1.5:glowLit*(c.dir<0?.65:.35),flashing?44:20);}
-      if(lit>.4||c.braking)for(const lamp of lights.tail){lamp.getWorldPosition(v);this.glow.add(v.x,v.y,v.z,red,c.braking?1.1:.45,c.braking?22:14);}
+      c.g.updateMatrixWorld(true);const lights=c.detailModel?.visible?c.detailLamps:c.lamps,fwd=(this.fwd3||=new T.Vector3()).set(0,0,1).transformDirection(c.g.matrixWorld);
+      // Halos sit just outside the lamp glass so the bodywork never hides them; headlamps only glow once it is getting dark.
+      if(!c.delivery&&(flashing||lit>.2))for(const lamp of lights.head){lamp.getWorldPosition(v).addScaledVector(fwd,.28);this.glow.add(v.x,v.y,v.z,warm,flashing?1.5:lit*(c.dir<0?1:.6),flashing?44:c.dir<0?24:18);}
+      if(lit>.4||c.braking)for(const lamp of lights.tail){lamp.getWorldPosition(v).addScaledVector(fwd,-.22);this.glow.add(v.x,v.y,v.z,red,c.braking?1.1:.45,c.braking?22:14);}
       if(blink)for(const [side,lamps] of [[1,lights.left],[-1,lights.right]])if(ind===2||ind===side)for(const lamp of lamps){lamp.getWorldPosition(v);this.glow.add(v.x,v.y,v.z,amber,1.2,16);}
 
     }
-    if (s.flashing) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
-      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, .55, 16); }
+    // Your own headlamps: a halo at night or with the lights on, brighter while flashing.
+    if (s.flashing || s.headlights || lit > .5) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = (this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25) + .3, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
+      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16); }
     // Your own indicators.
     if (s.indicator && blink) for (const [lx, lz] of this.playerIndicatorSpots()) { const sx = Math.sign(lx); if (sx !== s.indicator && s.indicator !== 2) continue; const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw); this.glow.add(s.x + fx * lz + fz * lx, s.y + .8, s.z + fz * lz - fx * lx, amber, 1.1, 14); }
     this.glow.end();

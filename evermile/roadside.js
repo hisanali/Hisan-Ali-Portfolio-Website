@@ -1,10 +1,10 @@
-import {RoadsideModels} from './roadside-models.js?v=20260927-toyota1';
+import {RoadsideModels} from './roadside-models.js?v=20260927-tunnel1';
 import * as T from './vendor/three.module.js';
-import {random, noise, smooth, lerp, clamp} from './math.js?v=20260927-toyota1';
-import {GlowPoints} from './glow.js?v=20260927-toyota1';
-import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260927-toyota1';
-import {sheltered} from './atmosphere.js?v=20260927-toyota1';
-import {ZONE, TYPES, SEA} from './network.js?v=20260927-toyota1';
+import {random, noise, smooth, lerp, clamp} from './math.js?v=20260927-tunnel1';
+import {GlowPoints} from './glow.js?v=20260927-tunnel1';
+import {Batch, frame, UNIT, FLAT, PLANE, canvasTexture} from './scenery.js?v=20260927-tunnel1';
+import {sheltered} from './atmosphere.js?v=20260927-tunnel1';
+import {ZONE, TYPES, SEA} from './network.js?v=20260927-tunnel1';
 
 // Everything built along the road network itself: tunnels, motorway furniture, junction signs, the railway and its
 // level crossings, petrol stations, cafés and viewpoints, lighthouses on the coast, snowbanks up high and farm fields.
@@ -46,6 +46,8 @@ export class Roadside {
       concrete: {material: std({vertexColors: true, roughness: .92}), cast: true},
       tile: {material: sheltered(std({vertexColors: true, roughness: .45, metalness: .05}), .2), cast: true},
       tunnelShell: {material: sheltered(std({vertexColors: true, roughness: .92})), cast: true},
+      tunnelArch: {material: sheltered(std({vertexColors: true, roughness: .92, side: T.DoubleSide}))},
+      tileArch: {material: sheltered(std({vertexColors: true, roughness: .45, metalness: .05, side: T.DoubleSide}), .2)},
       metal: {material: std({vertexColors: true, metalness: .6, roughness: .4}), cast: true},
       paint: {material: std({vertexColors: true, roughness: .6}), cast: true},
       ballast: {material: std({map: gravel, roughness: 1})},
@@ -123,46 +125,35 @@ export class Roadside {
 
   segsIn(z0, z1) { const r = this.world.road, out = new Set(); for (let z = z0; z <= z1; z += 60) out.add(r.segAt(z)); return [...out]; }
 
-  // Tunnel: tiled walls and an arched ceiling with lights, concrete portals set into the hillside at each end.
+  // Tunnel: an arched tube (dark kerb band, tiled walls, a vaulted ceiling) on a full-width floor, lamps along the vault,
+  // and at each end an arched concrete portal set low into the hillside, with grass and rock rising above it.
   tunnel(batch, group, t, z0, z1) {
     const r = this.world.road, a = Math.max(t.start, z0), b = Math.min(t.end, z1), step = 4;
+    // The tube is swept continuously along the road, so on tight bends its walls bend with it instead of opening gaps.
+    const rows = [];
+    for (let z = a; ; z = Math.min(z + 2, b)) { const yaw = Math.atan(r.tangent(z)); rows.push({x: r.x(z), y: r.y(z), z, c: Math.cos(yaw), s: Math.sin(yaw), arch: tunnelArch(r.width(z))}); if (z >= b) break; }
+    if (rows.length > 1) for (const band of rows[0].arch.bands) batch.add(band.key, sweep(rows, band), 0, 0, 0, 0, band.color, 1, 1, 1);
     for (let z = a; z < b; z += step) {
       const zm = Math.min(z + step / 2, b), len = Math.min(step, b - z) + .05, half = r.width(zm), x = r.x(zm), y = r.y(zm), yaw = Math.atan(r.tangent(zm)), pitch = -Math.atan(r.slope(zm)), L = len * Math.sqrt(1 + r.tangent(zm) ** 2);
-      const put = frame(batch, x, y, zm, yaw);
-      for (const s of [-1, 1]) {
-        put('tile', UNIT, s * (half + .8), 3.25, 0, 0xc9c2b2, .5, 4.1, L, 0, pitch);
-        put('tunnelShell', UNIT, s * (half + .78), .7, 0, 0x4d4f52, .5, 1.3, L, 0, pitch);
-        put('tunnelShell', UNIT, s * (half + .45), .45, 0, 0x55575a, .25, .9, L, 0, pitch);
-        // The vault: panels sloping up from the tops of the walls to the crown, closed off above.
-        put('tunnelShell', UNIT, s * (half * .5 + .45), 6.15, 0, 0x9f9c94, half + 1.1, .35, L, 0, pitch, -s * .36);
-        put('tunnelShell', UNIT, s * (half + 1.15), 6.6, 0, 0x8d8a82, .7, 2.9, L, 0, pitch);
-      }
-      put('tunnelShell', UNIT, 0, 6.75, 0, 0xb2afa6, half * .95, .35, L, 0, pitch);
-      put('tunnelShell', UNIT, 0, 7.6, 0, 0x8d8a82, 2 * half + 3, 1.3, L, 0, pitch);
+      const put = frame(batch, x, y, zm, yaw), arch = tunnelArch(half);
+      for (const s of [-1, 1]) put('tunnelShell', UNIT, s * (half + .45), .12, 0, 0x6a6c6e, .7, .24, L, 0, pitch);
       if (Math.round(z / step) % 2 === 0) for (const s of [-1, 1]) {
-        const ly = 6.15 - (half * .62 - (half * .5 + .45)) * .376 - .24;
-        put('tunnelLamp', UNIT, s * (half * .62), ly, 0, 0xffffff, .26, .08, 1.4, 0, pitch, -s * .36);
-        const [lx, lz] = put.world(s * half * .62, 0); group.userData.tunnelLamps.push({x: lx, y: y + ly - .1, z: lz});
+        const lx = s * arch.W * .42, [ly, slope] = arch.at(lx);
+        put('tunnelLamp', UNIT, lx, ly - .06, 0, 0xffffff, .26, .08, 1.4, 0, pitch, Math.atan(slope));
+        const [wx, wz] = put.world(lx, 0); group.userData.tunnelLamps.push({x: wx, y: y + ly - .2, z: wz});
       }
     }
     for (const [zp, dir] of [[t.start, 1], [t.end, -1]]) {
       if (zp < z0 || zp >= z1) continue;
-      const half = r.width(zp), x = r.x(zp), y = r.y(zp), yaw = Math.atan(r.tangent(zp)), put = frame(batch, x, y, zp + dir * 2.5, yaw);
-      // The portal face follows the hillside above it, in steps, so it sits into the slope instead of standing up out of it.
-      const W = half + 12, c = Math.cos(yaw), sn = Math.sin(yaw);
-      for (let lx = -W; lx < W - .01; lx += 2) {
-        const mid = lx + 1, wx = x + mid * c, wz = zp + dir * 4 - mid * sn, ground = r.terrain(wx, wz) - y;
-        const H = clamp(ground + 1.2, Math.abs(mid) < half + 1.6 ? 8.2 : 1.5, 42);
-        if (Math.abs(mid) < half + 1.6) put('concrete', UNIT, mid, (H + 6.9) / 2, 0, 0xa9a59b, 2.02, H - 6.9, 7);
-        else put('concrete', UNIT, mid, H / 2 - .5, 0, 0xa9a59b, 2.02, H + 1, 7);
-      }
-      put('concrete', UNIT, 0, 7.3, -dir * 3.4, 0x8f8b82, 2 * half + 5, .7, .9);
-      for (const s of [-1, 1]) {
-        // Wing walls holding back the cutting.
-        put('concrete', UNIT, s * (half + 3.2), 2.8, -dir * 11, 0x9d998f, .8, 5.6, 16, s * dir * -.18);
-      }
-      put('concrete', UNIT, 0, 7.05, -dir * 3.6, 0x77746c, 2 * half + 3.4, .5, .6);
-      put('dark', UNIT, 0, 3.4, dir * 3.2, 0xffffff, 2 * half + 1.5, 6.8, .1);
+      const half = r.width(zp), x = r.x(zp), y = r.y(zp), yaw = Math.atan(r.tangent(zp)), arch = tunnelArch(half), put = frame(batch, x, y, zp, yaw);
+      // The face only rises as high as the hillside at the portal, so grass and rock sit right above the arch.
+      const Wf = arch.W + 4.5, c = Math.cos(yaw), sn = Math.sin(yaw), top = [];
+      for (let lx = Wf; lx >= -Wf - .01; lx -= Wf / 8) top.push([lx, clamp(r.terrain(x + lx * c, zp - lx * sn + dir * .6) - y + .35, arch.crown + 1.1, arch.crown + 7)]);
+      put('concrete', portalFace(Wf, top, arch, dir), 0, 0, 0, 0xa9a59b, 1, 1, 1);
+      put('concrete', portalRing(arch), 0, 0, -dir * 1.55, 0x8b877e, 1, 1, 1);
+      // A concrete apron in front of the portal meets the road edges and the foot of the face.
+      put('concrete', UNIT, 0, -.12, -dir * 3, 0x9d998f, 2 * Wf, .3, 6.2);
+      for (const s of [-1, 1]) put('concrete', UNIT, s * (arch.W + 2.6), 1.1, -dir * 7.5, 0x9d998f, .7, 2.4, 13, s * dir * -.2);
     }
   }
 
@@ -281,7 +272,7 @@ export class Roadside {
       // The central barrier follows whichever road here is the motorway: the one you are on, or the one you are leaving.
       const zm = R.z + 2.5, main = r.segAt(zm), here = main.typeAt(zm);
       const seg = here !== 'highway' ? null : main.type === 'highway' ? main : r.stubs(zm).map((q) => q.seg).find((q) => q.type === 'highway');
-      if (!seg) continue;
+      if (!seg || r.medianGap(zm)) continue;
       const onMain = seg === main;
       const x = seg.x(zm), y = seg.y(zm), t = seg.x(zm + .5) - seg.x(zm - .5), yaw = Math.atan(t), pitch = -Math.atan(seg.y(zm + .5) - seg.y(zm - .5)), L = 5 * Math.sqrt(1 + t * t) + .03;
       const put = frame(batch, x, y + .05, zm, yaw);
@@ -427,4 +418,59 @@ export class Roadside {
     near.sort((a, b) => a[0] - b[0]);
     this.tunnelLights.forEach((light, i) => { const l = near[i * 2]?.[1]; light.intensity = l ? 18 : 0; if (l) light.position.set(l.x, l.y - .4, l.z); });
   }
+}
+
+// Cross-section of a tunnel for a road of half-width `half`: straight walls, then an elliptical vault.
+const ARCHES = new Map();
+function tunnelArch(half) {
+  const key = Math.round(half * 10) / 10; if (ARCHES.has(key)) return ARCHES.get(key);
+  const W = key + .9, h0 = 2.2, Rv = Math.min(W, 5), crown = h0 + Rv, pts = [[-W, -.2], [-W, h0]];
+  for (let i = 1; i < 24; i++) { const th = Math.PI * (1 - i / 24); pts.push([W * Math.cos(th), h0 + Rv * Math.sin(th)]); }
+  pts.push([W, h0], [W, -.2]);
+  // Bands of the profile: kerb, tiled walls and vault (index ranges into pts), and a floor under the road.
+  const bands = [], kind = (py) => (py < 1 ? 'kerb' : py < 4.4 ? 'tile' : 'vault'), look = {kerb: ['tunnelArch', 0x4d4f52], tile: ['tileArch', 0xc9c2b2], vault: ['tunnelArch', 0x9f9c94]};
+  let from = 0, current = kind((pts[0][1] + pts[1][1]) / 2);
+  for (let i = 1; i <= pts.length; i++) {
+    const k = i < pts.length ? kind((pts[i - 1][1] + pts[i][1]) / 2) : null;
+    if (k !== current) { bands.push({key: look[current][0], color: look[current][1], from, to: i - 1}); from = i - 1; current = k; }
+  }
+  bands.push({key: 'tunnelArch', color: 0x3c3e40, floor: true});
+  const at = (lx) => { const u = clamp(lx / W, -.999, .999), root = Math.sqrt(1 - u * u); return [h0 + Rv * root, -Rv * u / (W * root)]; };
+  const arch = {W, h0, Rv, crown, pts, bands, at}; ARCHES.set(key, arch); return arch;
+}
+// Sweep one band of the profile along rows of the road ({x, y, z, c, s, arch}), in world coordinates.
+function sweep(rows, band) {
+  const pos = [], nor = [], uv = [];
+  const pts = (arch) => (band.floor ? [[arch.W, -.03], [-arch.W, -.03]] : arch.pts.slice(band.from, band.to + 1));
+  const at = (R, [px, py]) => [R.x + px * R.c, R.y + py, R.z - px * R.s];
+  for (let i = 1; i < rows.length; i++) {
+    const A = rows[i - 1], B = rows[i], pa = pts(A.arch), pb = pts(B.arch);
+    for (let k = 1; k < pa.length; k++) {
+      const [x0, y0] = pa[k - 1], [x1, y1] = pa[k], l = Math.hypot(x1 - x0, y1 - y0), nx = (y1 - y0) / l, ny = -(x1 - x0) / l;
+      const quad = [[A, pa[k - 1]], [A, pa[k]], [B, pb[k]], [A, pa[k - 1]], [B, pb[k]], [B, pb[k - 1]]];
+      for (const [R, pt] of quad) { pos.push(...at(R, pt)); nor.push(nx * R.c, ny, -nx * R.s); uv.push(R.z * .25, (pt[0] + pt[1]) * .25); }
+    }
+  }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new T.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+  return g;
+}
+// The arch-shaped opening, as a path (clockwise for holes).
+function archPath(W, h0, Rv, bottom, P = new T.Path()) {
+  P.moveTo(-W, bottom); P.lineTo(-W, h0);
+  for (let i = 1; i <= 24; i++) { const th = Math.PI * (1 - i / 24); P.lineTo(W * Math.cos(th), h0 + Rv * Math.sin(th)); }
+  P.lineTo(W, bottom); P.lineTo(-W, bottom); return P;
+}
+function extrude(shape, depth) { return new T.ExtrudeGeometry(shape, {depth, bevelEnabled: false, curveSegments: 1}); }
+// Headwall: its top follows the hillside; an arch is cut out for the road. It runs 6 m back over the tube, roofing the
+// strip where the ground opens for the mouth; its opening is a touch wider than the tube so the two never overlap.
+function portalFace(Wf, top, arch, dir) {
+  const s = new T.Shape(); s.moveTo(-Wf, -.6); s.lineTo(Wf, -.6); for (const [lx, h] of top) s.lineTo(lx, h); s.lineTo(-Wf, -.6);
+  s.holes.push(archPath(arch.W + .06, arch.h0, arch.Rv + .06, -.4));
+  return extrude(s, 7.5).translate(0, 0, dir > 0 ? -1.2 : -6.3);
+}
+// A raised ring framing the arch.
+function portalRing(arch) {
+  const s = new T.Shape(), o = .75; archPath(arch.W + o, arch.h0, arch.Rv + o, -.6, s);
+  s.holes.push(archPath(arch.W, arch.h0, arch.Rv, -.4));
+  return extrude(s, .7).translate(0, 0, -.35);
 }
