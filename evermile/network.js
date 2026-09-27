@@ -1,5 +1,5 @@
-import {DESTINATIONS, DISTRICT_END, DISTRICT_START, DISTRICT_GRID, DISTRICT_LEVEL, PLACE_KINDS} from './destinations.js?v=20260926-supplied7';
-import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260926-supplied7';
+import {DESTINATIONS, DISTRICT_END, DISTRICT_START, DISTRICT_GRID, DISTRICT_LEVEL, PLACE_KINDS} from './destinations.js?v=20260927-toyota1';
+import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260927-toyota1';
 
 /*
   The road network. The world is still laid out along z, but the road is now a chain of segments, each of a kind

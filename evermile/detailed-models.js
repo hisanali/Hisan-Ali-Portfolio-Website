@@ -1,12 +1,12 @@
-import {citizenAssets,citizenKey,fitCitizen} from './citizen-assets.js?v=20260926-supplied7';
-import {animalAssets,animatedAnimal} from './animated-assets.js?v=20260926-supplied7';
-import {TrafficModels} from './traffic-models.js?v=20260926-supplied7';
+import {citizenAssets,citizenKey,fitCitizen} from './citizen-assets.js?v=20260927-toyota1';
+import {animalAssets,animatedAnimal} from './animated-assets.js?v=20260927-toyota1';
+import {TrafficModels} from './traffic-models.js?v=20260927-toyota1';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
-import {addMicroSurface} from './surface-detail.js?v=20260926-supplied7';
-import {reachHand} from './pedestrian-motion.js?v=20260926-supplied7';
-import {batchStatic} from './mesh-batching.js?v=20260926-supplied7';
+import {addMicroSurface} from './surface-detail.js?v=20260927-toyota1';
+import {reachHand} from './pedestrian-motion.js?v=20260927-toyota1';
+import {batchStatic} from './mesh-batching.js?v=20260927-toyota1';
 
 const box=new T.Box3();
 export class DetailedModels{
@@ -37,7 +37,7 @@ export class DetailedModels{
  update(dt,state,traffic,people,world,animals=[],town=null){
   for(const a of animals)if(this.loaded[a.kind]&&!this.animalModels.has(a))this.makeAnimal(a);
   const high=this.settings.quality==='high'||this.settings.quality==='ultra';
-  this.trafficModels.update(dt,state,traffic,high);
+  this.trafficModels.update(dt,state,traffic,high,this.settings.quality==='ultra');
   for(const a of animals){if(!a.detailModel)continue;const use=Math.abs(a.z-state.z)<(high?220:90)&&a.g.position.y>-400;a.detailModel.visible=use;a.detailFallback.forEach(o=>o.visible=!use);if(!use){if(a.detailLast)Object.assign(a.detailLast,{x:a.x,z:a.z});continue;}if(a.detailAnimation){const speed=dt>0?Math.hypot(a.x-a.detailLast.x,a.z-a.detailLast.z)/dt:0;a.detailAnimation.update(dt,speed<10?speed:0,!!a.graze);Object.assign(a.detailLast,{x:a.x,z:a.z});continue;}for(const key of ['neck','head','tail'])if(a[key]&&a.detailControls[key])a.detailControls[key].quaternion.copy(a[key].quaternion);a.legs?.forEach((leg,i)=>{if(leg.hip){a.detailControls.legs[i].hip.quaternion.copy(leg.hip.quaternion);a.detailControls.legs[i].knee.quaternion.copy(leg.knee.quaternion);}});}
 
   for(const p of people){

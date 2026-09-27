@@ -1,12 +1,12 @@
-import {addMicroSurface} from './surface-detail.js?v=20260926-supplied7';
-import {batchStatic} from './mesh-batching.js?v=20260926-supplied7';
+import {addMicroSurface} from './surface-detail.js?v=20260927-toyota1';
+import {batchStatic} from './mesh-batching.js?v=20260927-toyota1';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
-import {GlowPoints} from './glow.js?v=20260926-supplied7';
-import {clamp} from './math.js?v=20260926-supplied7';
-import {canvasTexture} from './scenery.js?v=20260926-supplied7';
-import {ZONE} from './network.js?v=20260926-supplied7';
+import {GlowPoints} from './glow.js?v=20260927-toyota1';
+import {clamp} from './math.js?v=20260927-toyota1';
+import {canvasTexture} from './scenery.js?v=20260927-toyota1';
+import {ZONE} from './network.js?v=20260927-toyota1';
 
 // Life around the road: grazing cows, horses and bighorns, dogs and cats by the verge, and traffic: cars, buses that stop at bus
 // stops, delivery trucks and cyclists, on every kind of road, taking their own way at junctions.
@@ -340,7 +340,7 @@ export class Life {
   }
 
   car(type) {
-    const requestedStyle=type;if(type==='mercedes')type='sedan';
+    const requestedStyle=type;type={mercedes:'sedan',grcorolla:'hatch',landcruiser:'suv'}[type]||type;
     const specs = {
       sedan: {L: 4.6, W: 1.8, clear: .26, belt: .95, wheelbase: 1.38, top: [[1, .62], [.93, .84], [.62, .95], [.38, .99], [.1, 1.42], [-.36, 1.44], [-.6, 1.04], [-.9, .99], [-1, .8]], glass: {front: [.36, .12], rear: [-.38, -.58], side: [.33, -.56], b: [-.08, -.16]}},
       hatch: {L: 4.1, W: 1.74, clear: .26, belt: .97, wheelbase: 1.24, top: [[1, .62], [.93, .83], [.64, .95], [.42, .99], [.13, 1.46], [-.74, 1.45], [-.9, 1.2], [-.97, .95], [-1, .76]], glass: {front: [.4, .15], rear: [-.73, -.94], side: [.38, -.72], b: [-.1, -.19]}},
@@ -507,7 +507,7 @@ export class Life {
     const spokes = []; for (let i = 0; i < 5; i++) spokes.push(new T.BoxGeometry(.02, .36, .045).rotateX(i * Math.PI * 2 / 5));
     this.g.spokes = mergeGeometries(spokes);
     this.glow = new GlowPoints(this.scene, 110, {fade: 1100});
-    const types = ['mercedes', 'hatch', 'suv', 'van', 'wagon', 'pickup', 'hatch', 'sedan'];
+    const types = ['mercedes', 'grcorolla', 'suv', 'landcruiser', 'hatch', 'wagon', 'van', 'pickup', 'sedan'];
     const add = (v, dir, pool, cooldown = 0) => { v.dir = dir; v.pool = pool; v.z = -1e9; v.cooldown = cooldown; v.g.visible = false; this.scene.add(v.g); this.traffic.push(v); v.id = this.traffic.length; };
     for (let i = 0; i < 6; i++) add(this.car(types[i % types.length]), -1, 'oncoming');
     add(this.bus(), -1, 'oncoming', 20); add(this.truck(), -1, 'oncoming', 12); add(this.cyclist(), -1, 'bike', 30);
@@ -517,8 +517,8 @@ export class Life {
     const t = this.truck(); t.z = -1e9; t.beam.visible = false; t.delivery = true; this.scene.add(t.g); this.parked.push(t);
   }
 
-  playerLength() { return this.settings.vehicle === 'coach' ? 12 : this.settings.vehicle === 'bike' ? 2.2 : 4.6; }
-  playerWidth() { return this.settings.vehicle === 'coach' ? 2.6 : this.settings.vehicle === 'bike' ? .9 : 1.95; }
+  playerLength() { return {coach: 12, bike: 2.2, landcruiser: 5, grcorolla: 4.4}[this.settings.vehicle] || 4.6; }
+  playerWidth() { return {coach: 2.6, bike: .9, landcruiser: 1.98}[this.settings.vehicle] || 1.95; }
 
   // Honking: oncoming drivers flash back, and a driver you are stuck behind may signal and move over to let you by.
   honk() {

@@ -186,3 +186,15 @@ All five scenes are by **dasy444** on Sketchfab and were supplied as GLB downloa
 Runtime: `assets/models/city-kit.glb` (37 distinct buildings from the three street scenes, rescaled to metres per scene, duplicates removed, dense shopfronts decimated, open-topped towers given roofs, single facade sheets given a textured building volume behind them, textures reduced to 768 px JPEG) and `assets/models/forest-kit.glb` (pines, spruces, a boulder and undergrowth cards, cut-out alpha, 512 px WebP). They furnish Eastgate City, Pinecrest Forest and stands on mountain passes.
 
 The Sketchfab Standard licence allows use in a project like this but not redistribution of the files themselves, so the original downloads are **not** committed: the import script reads them from the git-ignored `scripts/evermile/source/maps/` (or `~/Downloads`).
+
+## User-supplied models — 27 September 2026
+
+**2023 Toyota GR Corolla** by **XENVOR creations** (https://sketchfab.com/srineshchethiya), **CC BY 4.0**, supplied as `2023_toyota_gr_corolla.glb`.
+
+- Source embedded in the file: https://sketchfab.com/3d-models/2023-toyota-gr-corolla-204283fa663d4ccea7f3bdfd1ba6680e
+- Adaptation (`scripts/evermile/import-toyotas.mjs`): turned to +Z forward, 4.41 m metre scale, grounded and centred; named wheel groups with separate calipers; recolourable paint, transparent glass instead of transmission, brake-lit tail lamps; meshes simplified (482k to 209k triangles), 1024 px WebP textures, Draco geometry. Playable car, and traffic on Ultra graphics.
+
+**2022 Toyota Land Cruiser 300 VX.R** by **Ddiaz Design** (https://sketchfab.com/ddiaz-design), marked **CC BY-NC-SA 4.0** in the supplied GLB, supplied as `2022_toyota_land_cruiser_300_vxr.glb`.
+
+- Source embedded in the file: https://sketchfab.com/3d-models/2022-toyota-land-cruiser-300-vxr-3dfcd7904cdb4e52afa3ce59fa59e1a5
+- Adaptation (same script): 4.985 m metre scale, named wheel groups with fixed calipers, recolourable paint, transparent glass, brake-lit tail lamps; 409k to 260k triangles, WebP textures, Draco geometry. Playable car, and traffic on Ultra graphics. The original non-commercial, share-alike license designation is retained; this adapted model is shared under the same license.
