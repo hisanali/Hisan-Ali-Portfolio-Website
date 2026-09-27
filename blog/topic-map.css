@@ -121,3 +121,6 @@ body.tm-page :is(.tm-btn, .tm-problem, .tm-steps a, .tm-guide a, .tm-done, .tm-t
 body.tm-page .tm-problem b { flex: 0 0 auto; color: var(--ix-orange); font: 800 12px/1 var(--ix-sans); letter-spacing: .08em; }
 body.tm-page .tm-problem[aria-selected="true"] b { color: var(--tm-accent); }
 body.tm-page .tm-tool em { margin-top: auto; padding-top: 8px; color: var(--ix-orange); font: 800 13px/1 var(--ix-sans); font-style: normal; }
+
+/* The hero is the first thing on screen: show it immediately instead of fading it in (the fade read as a flicker). */
+html body.tm-page .tm-hero, html body.tm-page .tm-hero.interior-motion-target { opacity: 1 !important; translate: none !important; transform: none !important; transition: none !important; animation: none !important; }
