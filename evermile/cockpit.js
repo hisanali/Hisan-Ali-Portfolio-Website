@@ -118,7 +118,7 @@ export class Mirror {
 
   render(state, vehicle, every = 1, camera = null) {
     const r = this.renderer, size = r.getSize(new T.Vector2());
-    const fit = camera && vehicle.detailed ? this.fitted(vehicle, camera, size) : null;
+    const fit = camera && vehicle.detailed && !vehicle.ownMirror ? this.fitted(vehicle, camera, size) : null;
     const w = fit ? fit.w : Math.min(Math.max(size.x * .24, 210), 380), h = fit ? fit.h : w / 3.05, aspect = w / h;
     if (Math.abs(aspect - this.camera.aspect) > .08) { this.camera.aspect = aspect; this.camera.updateProjectionMatrix(); this.target.setSize(512, Math.round(512 / aspect)); }
     if (this.frame++ % every === 0) {

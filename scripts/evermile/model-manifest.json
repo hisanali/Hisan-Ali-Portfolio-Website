@@ -6,6 +6,16 @@
       "sha256": "0dab81866e9a5d848059cce35850659e6d19d8a3d94f0143e77b7005f7cc9984"
     },
     {
+      "path": "evermile/assets/models/car-gr-corolla.glb",
+      "bytes": 1249560,
+      "sha256": "3f868aa198c514e79aff82ad5a33bce74c2c702f64a8bc3031bc22af8764ab2c"
+    },
+    {
+      "path": "evermile/assets/models/car-land-cruiser.glb",
+      "bytes": 1767768,
+      "sha256": "a2e8d40d1d617b57dda55b0f2a9359596fa84028c8ef740cc41e1cb5f663e530"
+    },
+    {
       "path": "evermile/assets/models/cat-imported.glb",
       "bytes": 2297972,
       "sha256": "4b395ba943d647f4c490c982a70fa2175ef91569615773da7ef3429e427ed21a"

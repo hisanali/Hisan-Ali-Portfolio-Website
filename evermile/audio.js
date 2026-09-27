@@ -4,12 +4,16 @@
 // Engine rpm per m/s in each gear, and the automatic gearbox's shift points (they rise with throttle, so flooring it holds gears and kicks down).
 const GEARS = {
   mercedes: {ratio: [430,260,175,128,103], up: [2100,3700], down: [1000,1900]},
+  grcorolla: {ratio: [470, 300, 215, 170, 140, 118], up: [2400, 6300], down: [1300, 3000]},
+  landcruiser: {ratio: [520, 330, 240, 190, 155, 128, 108, 92, 80, 70], up: [1700, 4200], down: [1000, 2200]},
   coupe: {ratio: [490, 330, 245, 190, 155, 128, 105], up: [2300, 5200], down: [1250, 2600]},
   coach: {ratio: [480, 280, 175, 125, 95, 78], up: [1650, 800], down: [900, 550]},
   bike: {ratio: [680, 500, 400, 340, 300, 265], up: [5200, 5600], down: [2800, 2400]},
 };
 const ENGINE = {
   mercedes: {idle: 780, red: 6200, firing: 2, falloff: 1.15, sub: .3, drive: 1.6, reson: [125,510], bright: .7, pops: false, level: .05},
+  grcorolla: {idle: 900, red: 7000, firing: 1.5, falloff: 1.1, sub: .34, drive: 2.4, reson: [170, 700], bright: 1.15, pops: true, level: .058},
+  landcruiser: {idle: 650, red: 5600, firing: 3, falloff: .95, sub: .4, drive: 2.6, reson: [120, 480], bright: .75, pops: false, level: .06},
   coupe: {idle: 850, red: 7800, firing: 4, falloff: 1.05, sub: .42, drive: 2.2, reson: [150, 620], bright: 1, pops: true, level: .062},
   coach: {idle: 650, red: 2600, firing: 3, falloff: .8, sub: .25, drive: 3.4, reson: [95, 420], bright: .55, pops: false, level: .07, clatter: true},
   bike: {idle: 1300, red: 11500, firing: 2, falloff: .82, sub: .18, drive: 1.8, reson: [210, 900], bright: 1.3, pops: true, level: .05},

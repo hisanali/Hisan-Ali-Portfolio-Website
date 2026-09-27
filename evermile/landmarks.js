@@ -1,11 +1,11 @@
-import {ArchitectureModels} from './architecture-models.js?v=20260926-supplied7';
+import {ArchitectureModels} from './architecture-models.js?v=20260927-toyota1';
 import {MapKits} from './map-kits.js?v=20260926-maps1';
 import * as T from './vendor/three.module.js';
-import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260926-supplied7';
-import {scanned} from './materials.js?v=20260926-supplied7';
-import {DESTINATIONS} from './destinations.js?v=20260926-supplied7';
-import {random, clamp} from './math.js?v=20260926-supplied7';
-import {SEA} from './network.js?v=20260926-supplied7';
+import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260927-toyota1';
+import {scanned} from './materials.js?v=20260927-toyota1';
+import {DESTINATIONS} from './destinations.js?v=20260927-toyota1';
+import {random, clamp} from './math.js?v=20260927-toyota1';
+import {SEA} from './network.js?v=20260927-toyota1';
 
 const CYLINDER = new T.CylinderGeometry(1, 1, 1, 12).toNonIndexed();
 const SPHERE = new T.SphereGeometry(1, 12, 8).toNonIndexed();

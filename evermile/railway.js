@@ -1,11 +1,11 @@
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
-import {prepareTrain} from './train-model.js?v=20260926-supplied7';
-import {batchStatic} from './mesh-batching.js?v=20260926-supplied7';
+import {prepareTrain} from './train-model.js?v=20260927-toyota1';
+import {batchStatic} from './mesh-batching.js?v=20260927-toyota1';
 import * as T from './vendor/three.module.js';
 import {RoundedBoxGeometry} from './vendor/geometries/RoundedBoxGeometry.js';
-import {GlowPoints} from './glow.js?v=20260926-supplied7';
-import {clamp} from './math.js?v=20260926-supplied7';
-import {canvasTexture} from './scenery.js?v=20260926-supplied7';
+import {GlowPoints} from './glow.js?v=20260927-toyota1';
+import {clamp} from './math.js?v=20260927-toyota1';
+import {canvasTexture} from './scenery.js?v=20260927-toyota1';
 
 /*
   Trains on the line beside the road. A train comes out of the tunnel at one end of the line, runs along the valley and
