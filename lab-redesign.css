@@ -2045,6 +2045,7 @@ html.theme-dark .lx-tile-growth {
 .lx-bars li:nth-child(2) i::after { transition-delay: .1s; }
 .lx-bars li:nth-child(3) i::after { transition-delay: .2s; }
 .lx-bars li:nth-child(4) i::after { transition-delay: .3s; }
+.lx-bars li:nth-child(5) i::after { transition-delay: .4s; }
 
 .lx-tile-growth.is-in .lx-bars i::after,
 .lx-page:not(.lx-js) .lx-bars i::after {
