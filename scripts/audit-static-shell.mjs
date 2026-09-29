@@ -29,7 +29,7 @@ for (const pagePath of pages) {
   const isHome = relative === 'index.html';
   const isBlogArticle = relative.startsWith(`blog${path.sep}`) && relative !== path.join('blog', 'index.html');
   const checks = [
-    ['shared header', count(source, /class="ua-header"/g) === 1],
+    ['shared header', count(source, /class="ua-header hd"/g) === 1],
     ['shared footer', count(source, /class="ua-footer"/g) === 1],
     ['theme initializer', count(source, /id="theme-init"/g) === 1],
     ['light default', source.includes("const dark=savedTheme==='dark'")],
@@ -41,7 +41,9 @@ for (const pagePath of pages) {
     ['mobile menu control', count(source, /data-ua-menu-button/g) === 1],
     ['Work navigation', source.includes('href="/work/"')],
     ['Lab navigation', source.includes('href="/lab/"')],
-    ['Lab submenu', source.includes('class="ua-lab-popover"') && source.includes('class="ua-mobile-lab"')],
+    ['Mega menu panels', ['services', 'insights', 'lab'].every((name) => source.includes(`data-hd-panel="${name}"`)) && source.includes('class="hd-mobile"')],
+    ['site-header stylesheet', count(source, /href="\/site-header\.css/g) === 1],
+    ['site-header script', count(source, /src="\/site-header\.js/g) === 1],
     ['Growth diagnostic path', source.includes('href="/growth-diagnostic/"')],
     ['Contact navigation', source.includes('href="/contact/"')],
     ['no emoji theme glyphs', !/<button[^>]*theme-toggle[^>]*>[^<]*[☀☾]/u.test(source)]
