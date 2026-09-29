@@ -49,10 +49,10 @@ export function sharedHeader(pathname: string) {
     <nav class="hd-nav" aria-label="Primary navigation" data-hd-nav>
       <ul>
         <li><a class="hd-link" href="/work/">Work</a></li>
-        <li><button class="hd-link hd-trigger" type="button" aria-expanded="false" aria-controls="hd-p-services" data-hd-trigger="services">Services<svg class="hd-i hd-chev" aria-hidden="true"><use href="#hd-chev"/></svg></button></li>
-        <li><button class="hd-link hd-trigger" type="button" aria-expanded="false" aria-controls="hd-p-insights" data-hd-trigger="insights">Insights<svg class="hd-i hd-chev" aria-hidden="true"><use href="#hd-chev"/></svg></button></li>
+        <li class="hd-has" data-hd-item="services"><a class="hd-link hd-trigger" href="/services/" data-hd-trigger="services">Services</a><button class="hd-caret" type="button" aria-expanded="false" aria-controls="hd-p-services" aria-label="Show Services menu" data-hd-caret="services"><svg class="hd-i hd-chev" aria-hidden="true"><use href="#hd-chev"/></svg></button></li>
+        <li class="hd-has" data-hd-item="insights"><a class="hd-link hd-trigger" href="/blog/" data-hd-trigger="insights">Insights</a><button class="hd-caret" type="button" aria-expanded="false" aria-controls="hd-p-insights" aria-label="Show Insights menu" data-hd-caret="insights"><svg class="hd-i hd-chev" aria-hidden="true"><use href="#hd-chev"/></svg></button></li>
         <li><a class="hd-link" href="/about/">About</a></li>
-        <li><button class="hd-link hd-trigger" type="button" aria-expanded="false" aria-controls="hd-p-lab" data-hd-trigger="lab">Lab<svg class="hd-i hd-chev" aria-hidden="true"><use href="#hd-chev"/></svg></button></li>
+        <li class="hd-has" data-hd-item="lab"><a class="hd-link hd-trigger" href="/lab/" data-hd-trigger="lab">Lab</a><button class="hd-caret" type="button" aria-expanded="false" aria-controls="hd-p-lab" aria-label="Show Lab menu" data-hd-caret="lab"><svg class="hd-i hd-chev" aria-hidden="true"><use href="#hd-chev"/></svg></button></li>
         <li><a class="hd-link" href="/contact/">Contact</a></li>
       </ul>
       <span class="hd-pill" aria-hidden="true" data-hd-pill></span>
@@ -196,7 +196,7 @@ ${readingControl}
     if (isActive(pathname, href)) header = header.replace(`<a class="hd-link" href="${href}">`, `<a class="hd-link is-active" href="${href}" aria-current="page">`);
   }
   for (const [name, prefixes] of Object.entries(sectionPrefixes)) {
-    if (prefixes.some((prefix) => isActive(pathname, prefix))) header = header.replace(`class="hd-link hd-trigger" type="button" aria-expanded="false" aria-controls="hd-p-${name}"`, `class="hd-link hd-trigger is-active" type="button" aria-expanded="false" aria-controls="hd-p-${name}"`);
+    if (prefixes.some((prefix) => isActive(pathname, prefix))) header = header.replace(new RegExp(`class="hd-link hd-trigger"( href="[^"]+" data-hd-trigger="${name}")`), 'class="hd-link hd-trigger is-active"$1');
   }
   return header;
 }
@@ -264,8 +264,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=1"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260906-4"></script><script src="/site-header.js?v=1"></script></body>');
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=2"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20260906-4"></script><script src="/site-header.js?v=2"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {

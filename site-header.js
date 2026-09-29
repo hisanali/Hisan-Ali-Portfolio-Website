@@ -7,24 +7,23 @@
   const nav = header.querySelector('[data-hd-nav]');
   const pill = header.querySelector('[data-hd-pill]');
   const sheet = header.querySelector('[data-hd-sheet]');
-  const inner = header.querySelector('[data-hd-sheet-inner]');
   const scrim = header.querySelector('[data-hd-scrim]');
-  const triggers = [...header.querySelectorAll('[data-hd-trigger]')];
+  const items = [...header.querySelectorAll('[data-hd-item]')];
   const panels = Object.fromEntries([...header.querySelectorAll('[data-hd-panel]')].map((panel) => [panel.dataset.hdPanel, panel]));
-  const order = triggers.map((trigger) => trigger.dataset.hdTrigger);
+  const order = items.map((item) => item.dataset.hdItem);
+  const itemFor = (name) => items.find((item) => item.dataset.hdItem === name);
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   let current = null;
   let openTimer = 0;
   let closeTimer = 0;
+  let lastInput = 'mouse';
 
-  /* Mark the current section */
+  /* Mark the current page (the generator also marks the active section) */
   const path = location.pathname;
-  const sections = { services: ['/services/'], insights: ['/blog/'], lab: ['/lab/', '/tools/', '/games/', '/growth-diagnostic/', '/speed-test/'] };
   header.querySelectorAll('.hd-nav a.hd-link').forEach((link) => {
-    if (path.startsWith(link.getAttribute('href'))) { link.classList.add('is-active'); link.setAttribute('aria-current', 'page'); }
-  });
-  triggers.forEach((trigger) => {
-    if ((sections[trigger.dataset.hdTrigger] || []).some((prefix) => path.startsWith(prefix))) trigger.classList.add('is-active');
+    const href = link.getAttribute('href');
+    if (path === href) link.setAttribute('aria-current', 'page');
+    if (path.startsWith(href) && !link.classList.contains('hd-trigger')) link.classList.add('is-active');
   });
 
   /* Sliding pill */
@@ -36,8 +35,8 @@
     pill.style.transform = `translateX(${a.left - b.left}px)`;
     pill.classList.add('is-on');
   };
-  nav.addEventListener('pointerover', (event) => { const link = event.target.closest('.hd-link'); if (link) movePill(link); });
-  nav.addEventListener('pointerleave', () => movePill(current ? triggers.find((t) => t.dataset.hdTrigger === current) : null));
+  nav.addEventListener('pointerover', (event) => { const target = event.target.closest('.hd-has, .hd-link'); if (target) movePill(target.closest('.hd-has') || target); });
+  nav.addEventListener('pointerleave', () => movePill(current ? itemFor(current) : null));
 
   /* Mega sheet */
   const setHeight = () => { if (current) sheet.style.setProperty('--hd-sheet-h', `${panels[current].offsetHeight}px`); };
@@ -46,47 +45,67 @@
     if (current === name) return;
     const previous = current;
     current = name;
-    triggers.forEach((trigger) => trigger.setAttribute('aria-expanded', String(trigger.dataset.hdTrigger === name)));
+    items.forEach((item) => {
+      const on = item.dataset.hdItem === name;
+      item.classList.toggle('is-open', on);
+      item.querySelector('[data-hd-caret]').setAttribute('aria-expanded', String(on));
+    });
     Object.entries(panels).forEach(([key, panel]) => {
       panel.hidden = key !== name;
       if (key === name) panel.dataset.dir = previous ? (order.indexOf(name) > order.indexOf(previous) ? 'right' : 'left') : '';
     });
     header.classList.add('has-panel');
     setHeight();
-    movePill(triggers.find((t) => t.dataset.hdTrigger === name));
+    movePill(itemFor(name));
     if (focus) panels[name].querySelector('a')?.focus();
   };
   const close = ({ returnFocus = false } = {}) => {
     clearTimeout(openTimer);
     if (!current) return;
-    const trigger = triggers.find((t) => t.dataset.hdTrigger === current);
+    const caret = itemFor(current)?.querySelector('[data-hd-caret]');
     current = null;
-    triggers.forEach((t) => t.setAttribute('aria-expanded', 'false'));
+    items.forEach((item) => {
+      item.classList.remove('is-open');
+      item.querySelector('[data-hd-caret]').setAttribute('aria-expanded', 'false');
+    });
     header.classList.remove('has-panel');
     sheet.style.setProperty('--hd-sheet-h', '0px');
     movePill(null);
     setTimeout(() => { if (!current) Object.values(panels).forEach((panel) => { panel.hidden = true; }); }, 300);
-    if (returnFocus) trigger?.focus();
+    if (returnFocus) caret?.focus();
   };
   const scheduleClose = () => { clearTimeout(openTimer); clearTimeout(closeTimer); closeTimer = setTimeout(close, 220); };
 
-  triggers.forEach((trigger) => {
-    const name = trigger.dataset.hdTrigger;
-    trigger.addEventListener('click', () => (current === name ? close() : open(name)));
-    trigger.addEventListener('pointerenter', (event) => {
+  header.addEventListener('pointerdown', (event) => { lastInput = event.pointerType || 'mouse'; }, true);
+  header.addEventListener('keydown', () => { lastInput = 'keyboard'; }, true);
+
+  items.forEach((item) => {
+    const name = item.dataset.hdItem;
+    const link = item.querySelector('[data-hd-trigger]');
+    const caret = item.querySelector('[data-hd-caret]');
+    // Mouse: hover shows the menu and a click goes to the page.
+    // Touch/pen: the first tap opens the menu, a second tap goes to the page.
+    link.addEventListener('click', (event) => {
+      if ((lastInput === 'touch' || lastInput === 'pen' || !finePointer.matches) && lastInput !== 'keyboard' && current !== name) {
+        event.preventDefault();
+        open(name);
+      }
+    });
+    caret.addEventListener('click', () => (current === name ? close() : open(name)));
+    item.addEventListener('pointerenter', (event) => {
       if (event.pointerType !== 'mouse' || !finePointer.matches) return;
       clearTimeout(closeTimer);
       clearTimeout(openTimer);
       // Open instantly when switching between panels, with a short intent delay otherwise.
       openTimer = setTimeout(() => open(name), current ? 0 : 90);
     });
-    trigger.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') scheduleClose(); });
-    trigger.addEventListener('keydown', (event) => {
+    item.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') scheduleClose(); });
+    [link, caret].forEach((control) => control.addEventListener('keydown', (event) => {
       if (event.key === 'ArrowDown') { event.preventDefault(); open(name, { focus: true }); }
-    });
+    }));
   });
   // Plain links in the bar close any open panel when hovered.
-  nav.querySelectorAll('a.hd-link').forEach((link) => link.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse' && current) scheduleClose(); }));
+  nav.querySelectorAll('li:not(.hd-has) > a.hd-link').forEach((link) => link.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse' && current) scheduleClose(); }));
   sheet.addEventListener('pointerenter', () => clearTimeout(closeTimer));
   sheet.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') scheduleClose(); });
   scrim.addEventListener('click', () => close());

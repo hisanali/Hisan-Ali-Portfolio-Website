@@ -53,10 +53,16 @@ html.theme-dark .hd { --hd-card: color-mix(in srgb, var(--ua-paper) 80%, #fff 6%
   font: 700 14px/1 var(--ua-sans) !important; white-space: nowrap; cursor: pointer;
   transition: color .2s;
 }
-.hd-link:hover, .hd-link[aria-expanded="true"], .hd-link.is-active { color: var(--ua-ink) !important; }
+.hd-link:hover, .hd-link.is-active { color: var(--ua-ink) !important; }
 .hd-link.is-active::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--ua-orange); }
 .hd-chev { width: 15px; height: 15px; opacity: .6; transition: transform .3s var(--hd-bounce), opacity .2s; }
-.hd-link[aria-expanded="true"] .hd-chev { transform: rotate(180deg); opacity: 1; }
+/* Dropdown items: the label is a real link, the chevron is its own toggle button. */
+.hd-has { position: relative; z-index: 1; display: flex; align-items: center; }
+.hd-has .hd-link { padding-right: 2px; }
+.hd-caret { display: grid; width: 28px; height: 40px; margin-right: 6px; padding: 0; place-items: center; color: var(--ua-muted); border: 0; border-radius: 99px; background: none; cursor: pointer; transition: color .2s; }
+.hd-has:hover .hd-caret, .hd-has.is-open .hd-caret, .hd-has .hd-link.is-active + .hd-caret { color: var(--ua-ink); }
+.hd-has:hover .hd-link, .hd-has.is-open .hd-link { color: var(--ua-ink) !important; }
+.hd-has.is-open .hd-chev { transform: rotate(180deg); opacity: 1; }
 /* Sliding pill that follows the hovered / open item */
 .hd-pill { position: absolute; z-index: 0; top: 50%; left: 0; height: 40px; width: 0; margin-top: -20px; border-radius: 99px; background: var(--hd-soft); opacity: 0; transition: transform .35s var(--hd-ease), width .35s var(--hd-ease), opacity .2s; pointer-events: none; }
 .hd-pill.is-on { opacity: 1; }
