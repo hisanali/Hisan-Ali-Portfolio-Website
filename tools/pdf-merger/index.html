@@ -36,84 +36,7 @@
     <link rel="stylesheet" href="../../style.css?v=20260823-brand3">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .tool-hero { min-height: 55vh; display: flex; align-items: center; position: relative; overflow: hidden; padding: 140px 0 70px; background: linear-gradient(135deg, #0D0614 0%, #1A0B2E 50%, #0D0614 100%); }
-        .tool-hero .hero-bg { position: absolute; inset: 0; }
-        .tool-hero-content { position: relative; z-index: 1; text-align: center; max-width: 820px; margin: 0 auto; }
-        .tool-hero-content h1 { font-size: 50px; color: white; margin-bottom: 12px; }
-        .tool-hero-content p { font-size: 18px; color: rgba(255, 255, 255, 0.8); line-height: 1.8; }
-        .tool-section { padding: 90px 0; background: var(--bg); }
-        .tool-panel { background: var(--bg-light); border-radius: 26px; padding: 36px; box-shadow: var(--shadow-lg); border: 1px solid rgba(217, 82, 45, 0.1); }
-        .drop-zone { border: 2px dashed rgba(217, 82, 45, 0.35); border-radius: 20px; padding: 32px; text-align: center; background: rgba(217, 82, 45, 0.05); transition: border-color 0.3s ease, background 0.3s ease; }
-        .drop-zone.dragover { border-color: var(--primary); background: rgba(217, 82, 45, 0.12); }
-        .drop-zone h3 { color: var(--dark); margin-bottom: 8px; }
-        .drop-zone p { color: var(--text-light); margin-bottom: 16px; }
-        .drop-zone input { display: none; }
-        .summary-bar { margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-        .summary-card { background: white; border-radius: 16px; padding: 16px; border: 1px solid rgba(217, 82, 45, 0.08); box-shadow: var(--shadow-sm); }
-        .summary-card label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-light); margin-bottom: 8px; }
-        .summary-card strong { font-size: 24px; color: var(--dark); }
-        .summary-card span { display: block; color: var(--text-light); font-size: 13px; margin-top: 6px; }
-        .file-list { margin-top: 24px; display: grid; gap: 12px; }
-        .file-item { background: white; border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow-sm); border: 1px solid rgba(217, 82, 45, 0.1); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .file-preview { display: flex; align-items: center; gap: 14px; min-width: 0; }
-        .file-badge { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; background: linear-gradient(135deg, #D9522D, #F47A52); color: white; box-shadow: 0 10px 20px rgba(217, 82, 45, 0.22); }
-        .file-meta { min-width: 0; }
-        .file-name { display: block; color: var(--dark); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-detail { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; color: var(--text-light); font-size: 13px; }
-        .file-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-        .mini-btn { border: none; border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
-        .mini-btn:hover { transform: translateY(-1px); }
-        .mini-btn.move { background: rgba(217, 82, 45, 0.12); color: var(--primary); }
-        .mini-btn.remove { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
-        .empty-state { margin-top: 24px; padding: 28px; border-radius: 18px; text-align: center; background: white; border: 1px dashed rgba(217, 82, 45, 0.18); color: var(--text-light); }
-        .action-row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-        .btn-secondary-tool { border: none; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 14px 20px; font-weight: 700; font-size: 14px; cursor: pointer; background: rgba(15, 23, 42, 0.08); color: var(--dark); }
-        .btn-secondary-tool:disabled, .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .status-text { font-size: 14px; color: var(--text-light); }
-        .helper-note { margin-top: 16px; font-size: 13px; color: var(--text-light); }
-        .tool-extras { padding: 70px 0; background: var(--bg-light); }
-        .tips-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; align-items: center; }
-        .tips-art { background: linear-gradient(135deg, #101625, #2A2D72); border-radius: 22px; padding: 28px; display: grid; place-items: center; min-height: 220px; position: relative; overflow: hidden; }
-        .tips-art::after { content: ""; position: absolute; inset: 20px; border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.2); }
-        .tips-icons { display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
-        .tips-icon { width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 26px; }
-        .tips-connector { width: 34px; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.6); }
-        .tips-steps h3 { font-size: 22px; color: var(--dark); margin-bottom: 16px; }
-        .step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-        .step-list li { display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; font-size: 14px; color: var(--text-light); }
-        .step-num { width: 28px; height: 28px; border-radius: 50%; background: rgba(217, 82, 45, 0.12); color: var(--primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
-        .more-tools { padding: 60px 0 90px; background: var(--bg); }
-        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
-        .tool-card { background: #ffffff; border-radius: 22px; box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08); border: 1px solid rgba(148, 163, 184, 0.18); display: flex; flex-direction: column; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
-        .tool-card:hover { transform: translateY(-6px); box-shadow: 0 22px 46px rgba(15, 23, 42, 0.14); border-color: rgba(217, 82, 45, 0.32); }
-        .tool-card-hero { padding: 22px; display: flex; align-items: center; justify-content: center; min-height: 110px; }
-        .tool-card[data-theme="sunset"] .tool-card-hero { background: linear-gradient(135deg, #2A0F44, #5B1466); }
-        .tool-card[data-theme="ocean"] .tool-card-hero { background: linear-gradient(135deg, #0B233F, #0F4C5C); }
-        .tool-card[data-theme="ember"] .tool-card-hero { background: linear-gradient(135deg, #2E1A10, #7C2D12); }
-        .tool-card[data-theme="mint"] .tool-card-hero { background: linear-gradient(135deg, #0F2A2A, #1E7666); }
-        .tool-visual { display: flex; align-items: center; gap: 14px; }
-        .tool-connector { width: 26px; height: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.6); }
-        .icon-badge { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: white; font-size: 20px; background: linear-gradient(135deg, #D9522D, #F47A52); box-shadow: 0 10px 22px rgba(217, 82, 45, 0.25); }
-        .icon-badge.alt { background: linear-gradient(135deg, #0EA5E9, #22D3EE); box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22); }
-        .tool-body { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 10px; }
-        .tool-card h3 { font-size: 20px; letter-spacing: -0.01em; color: var(--dark); margin: 0; }
-        .tool-summary { color: var(--text-light); font-size: 13px; line-height: 1.6; }
-        .tool-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .tool-tag { background: rgba(217, 82, 45, 0.08); color: var(--primary); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
-        .tool-link { margin-top: 6px; display: inline-flex; align-items: center; gap: 8px; color: white; font-weight: 700; font-size: 13px; background: linear-gradient(135deg, #0F172A, #334155); padding: 10px 16px; border-radius: 999px; width: fit-content; letter-spacing: 0.01em; }
-        @media (max-width: 768px) { .tool-hero-content h1 { font-size: 36px; } .tool-panel { padding: 24px; } .file-item { flex-direction: column; align-items: stretch; } .file-actions { justify-content: flex-start; } }
-        .theme-dark .tool-panel { background: #0F172A; border-color: #1F2937; }
-        .theme-dark .drop-zone { background: rgba(217, 82, 45, 0.08); border-color: rgba(217, 82, 45, 0.45); }
-        .theme-dark .drop-zone h3, .theme-dark .summary-card strong, .theme-dark .file-name, .theme-dark .tips-steps h3, .theme-dark .tool-card h3 { color: #F8FAFC; }
-        .theme-dark .drop-zone p, .theme-dark .summary-card label, .theme-dark .summary-card span, .theme-dark .file-detail, .theme-dark .empty-state, .theme-dark .status-text, .theme-dark .helper-note, .theme-dark .step-list li, .theme-dark .tool-summary { color: #94A3B8; }
-        .theme-dark .summary-card, .theme-dark .file-item, .theme-dark .empty-state, .theme-dark .tool-card { background: #0B1220; border-color: #1F2937; }
-        .theme-dark .btn-secondary-tool { background: #111827; color: #E2E8F0; }
-        .theme-dark .mini-btn.move { background: rgba(217, 82, 45, 0.18); color: #F4B29C; }
-        .theme-dark .mini-btn.remove { background: rgba(239, 68, 68, 0.18); color: #FCA5A5; }
-        .theme-dark .tool-link { background: #111827; }
-    </style>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=7"></head>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=7"><link rel="stylesheet" href="/tools/_kit/tool-kit.css?v=20260930"></head>
 <body class="redesign-interior page-tools page-tool-detail">
     <header class="ua-header hd" data-ua-header data-hd>
   <svg class="hd-sprite" aria-hidden="true" focusable="false">
@@ -265,78 +188,87 @@
   </nav>
 </header>
 
-    <section class="tool-hero">
-        <div class="hero-bg"><div class="gradient-orb orb-1"></div><div class="gradient-orb orb-2"></div><div class="gradient-orb orb-3"></div></div>
-        <div class="container tool-hero-content">
-            <div class="breadcrumb"><a href="/">Home</a><i class="fas fa-chevron-right"></i><a href="/tools/">Tools</a><i class="fas fa-chevron-right"></i><span>PDF Merger</span></div>
-            <h1>Merge PDF Files Instantly</h1>
-            <p>Combine multiple PDFs in the right order without uploading them anywhere. Everything runs directly in your browser.</p>
+<main class="tk" id="main" data-tool="pdf-merger">
+  <section class="tk-hero">
+    <div class="tk-wrap">
+      <ol class="tk-crumbs" aria-label="Breadcrumb"><li><a href="/">Home</a></li><li><a href="/tools/">Tools</a></li><li aria-current="page">PDF Merger</li></ol>
+      <div class="tk-hero-grid">
+        <div>
+          <p class="tk-eyebrow">PDF tool</p>
+          <h1>Merge PDFs, <em>in the right order.</em></h1>
+          <p class="tk-lede">Drop in your PDFs, drag them into order, pick exact pages and rotate where needed. One clean file comes out — nothing is uploaded.</p>
         </div>
-    </section>
+        <ul class="tk-trust"><li><span class="fas fa-lock" aria-hidden="true"></span> Files never leave your device</li><li><span class="fas fa-bolt" aria-hidden="true"></span> Free, no sign-up</li></ul>
+      </div>
+    </div>
+  </section>
+  <section class="tk-app" aria-label="PDF Merger workspace">
+    <div class="tk-wrap">
+<div class="tk-layout">
+  <div class="tk-stack">
 
-    <section class="tool-section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Browser Tool</span>
-                <h2 class="section-title">Merge PDFs in One Click</h2>
-                <p class="section-subtitle">Add files, set the order, and download one combined PDF.</p>
-            </div>
-            <div class="tool-panel">
-                <div class="drop-zone" id="dropZone">
-                    <i class="fas fa-file-circle-plus" style="font-size: 42px; color: var(--primary); margin-bottom: 14px;"></i>
-                    <h3>Drop PDF files here</h3>
-                    <p>Select multiple PDFs from your device and arrange them before merging.</p>
-                    <label class="btn-primary" for="pdfFiles" style="display: inline-flex; gap: 8px; cursor: pointer;"><i class="fas fa-folder-open"></i><span>Choose PDFs</span></label>
-                    <input type="file" id="pdfFiles" accept="application/pdf,.pdf" multiple>
-                </div>
-                <div class="summary-bar">
-                    <div class="summary-card"><label>Files Added</label><strong id="fileCount">0</strong><span>PDFs ready to merge</span></div>
-                    <div class="summary-card"><label>Total Size</label><strong id="totalSize">0 B</strong><span>Combined original file size</span></div>
-                    <div class="summary-card"><label>Merge Order</label><strong id="mergeOrder">Waiting</strong><span>Use move buttons to reorder files</span></div>
-                </div>
-                <div class="empty-state" id="emptyState">Add at least two PDF files to create one merged document.</div>
-                <div class="file-list" id="fileList" hidden></div>
-                <div class="action-row">
-                    <button class="btn-primary" id="mergeBtn"><i class="fas fa-object-group"></i><span>Merge PDFs</span></button>
-                    <button class="btn-secondary-tool" id="clearBtn" type="button"><i class="fas fa-trash"></i><span>Clear All</span></button>
-                    <span class="status-text" id="statusText">Select PDF files to begin.</span>
-                </div>
-                <p class="helper-note">Tip: the final merged PDF follows the exact order shown below.</p>
-            </div>
+      <div class="tk-drop" id="mgDrop" tabindex="0" role="button" aria-label="Drop PDFs here or browse">
+        <input type="file" accept="application/pdf,.pdf" multiple tabindex="-1" aria-hidden="true">
+        <span class="tk-drop-icon"><span class="fas fa-file-circle-plus" aria-hidden="true"></span></span>
+        <p class="tk-drop-title">Drop PDFs here or <u>browse</u></p>
+        <p class="tk-drop-hint">Add as many as you need — you can keep adding more.</p>
+      </div>
+    <div id="mgListWrap" hidden>
+      <div class="tk-list-head">
+        <div><strong>Merge order</strong> <span id="mgCount"></span></div>
+        <div class="tk-actions">
+          <button class="tk-btn tk-btn-sm tk-btn-ghost" type="button" id="mgSortAz"><span class="fas fa-arrow-down-a-z" aria-hidden="true"></span> Sort by name</button>
+          <button class="tk-btn tk-btn-sm tk-btn-ghost" type="button" id="mgReverse"><span class="fas fa-arrow-right-arrow-left fa-rotate-90" aria-hidden="true"></span> Reverse</button>
+          <button class="tk-btn tk-btn-sm tk-btn-ghost" type="button" id="mgClear"><span class="fas fa-trash-can" aria-hidden="true"></span> Clear</button>
         </div>
-    </section>
+      </div>
+      <ul class="tk-list" id="mgList"></ul>
+      <p class="tk-help" style="margin-top:10px">Drag the <span class="fas fa-grip-vertical" aria-hidden="true"></span> handle (or focus it and use <span class="tk-kbd">↑</span> <span class="tk-kbd">↓</span>) to reorder.</p>
+    </div>
+  </div>
+  <aside class="tk-side">
+    <div class="tk-card tk-pad">
+      <div class="tk-card-head"><h2 class="tk-card-title">Output</h2></div>
+      <div class="tk-stats">
+        <div class="tk-stat"><b id="mgStatFiles">0</b><span>Files</span></div>
+        <div class="tk-stat is-accent"><b id="mgStatPages">0</b><span>Pages</span></div>
+      </div>
+      <div class="tk-stat" style="margin-top:10px"><b id="mgStatSize">0 B</b><span>Input size</span></div>
+      <hr class="tk-divider">
+      <div class="tk-field">
+        <label class="tk-label" for="mgName">File name</label>
+        <input class="tk-input" id="mgName" placeholder="merged" autocomplete="off">
+      </div>
+      <hr class="tk-divider">
+      <button class="tk-btn tk-btn-primary tk-btn-block" type="button" id="mgRun" disabled><span class="fas fa-object-group" aria-hidden="true"></span> Merge PDFs</button>
+      <p class="tk-help" id="mgHint" style="margin-top:10px;text-align:center">Add two or more PDFs to get started.</p>
 
-    <section class="tool-extras">
-        <div class="container">
-            <div class="section-header"><span class="section-badge">Tips</span><h2 class="section-title">How to Merge PDFs</h2><p class="section-subtitle">Fast workflow for contracts, reports, proposals, and scanned pages.</p></div>
-            <div class="tips-grid">
-                <div class="tips-art"><div class="tips-icons"><div class="tips-icon"><i class="fas fa-file-pdf"></i></div><div class="tips-connector"></div><div class="tips-icon"><i class="fas fa-layer-group"></i></div></div></div>
-                <div class="tips-steps">
-                    <h3>Quick steps</h3>
-                    <ol class="step-list">
-                        <li><span class="step-num">1</span><span>Add all PDF files you want to combine.</span></li>
-                        <li><span class="step-num">2</span><span>Move files up or down until the order is correct.</span></li>
-                        <li><span class="step-num">3</span><span>Click Merge PDFs to generate one combined file.</span></li>
-                        <li><span class="step-num">4</span><span>Download the merged PDF instantly to your device.</span></li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="tk-progress" id="mgProgress" hidden aria-live="polite">
+        <div class="tk-progress-label"><span data-progress-label>Working…</span><span data-progress-pct>0%</span></div>
+        <div class="tk-progress-bar"><i></i></div>
+      </div>
+    </div>
 
-    <section class="more-tools">
-        <div class="container">
-            <div class="section-header"><span class="section-badge">Explore</span><h2 class="section-title">More Tools</h2><p class="section-subtitle">Jump to another free file tool in one click.</p></div>
-            <div class="tools-grid">
-                <a class="tool-card" href="/tools/image-to-pdf/" data-theme="sunset"><div class="tool-card-hero"><div class="tool-visual"><span class="icon-badge"><i class="fas fa-image"></i></span><span class="tool-connector"></span><span class="icon-badge alt"><i class="fas fa-file-pdf"></i></span></div></div><div class="tool-body"><h3>Image to PDF</h3><p class="tool-summary">Combine images into one clean PDF.</p><div class="tool-tags"><span class="tool-tag">JPG</span><span class="tool-tag">PNG</span><span class="tool-tag">WebP</span></div><span class="tool-link">Open tool</span></div></a>
-                <a class="tool-card" href="/tools/pdf-to-image/" data-theme="ocean"><div class="tool-card-hero"><div class="tool-visual"><span class="icon-badge"><i class="fas fa-file-pdf"></i></span><span class="tool-connector"></span><span class="icon-badge alt"><i class="fas fa-image"></i></span></div></div><div class="tool-body"><h3>PDF to Image</h3><p class="tool-summary">Export PDF pages as images.</p><div class="tool-tags"><span class="tool-tag">PNG</span><span class="tool-tag">JPEG</span></div><span class="tool-link">Open tool</span></div></a>
-                <a class="tool-card" href="/tools/pdf-compressor/" data-theme="ember"><div class="tool-card-hero"><div class="tool-visual"><span class="icon-badge"><i class="fas fa-file-pdf"></i></span><span class="tool-connector"></span><span class="icon-badge alt"><i class="fas fa-compress-alt"></i></span></div></div><div class="tool-body"><h3>PDF Compressor</h3><p class="tool-summary">Reduce PDF size with a quality slider.</p><div class="tool-tags"><span class="tool-tag">PDF</span><span class="tool-tag">Quality</span></div><span class="tool-link">Open tool</span></div></a>
-                <a class="tool-card" href="/tools/favicon-generator/" data-theme="mint"><div class="tool-card-hero"><div class="tool-visual"><span class="icon-badge"><i class="fas fa-image"></i></span><span class="tool-connector"></span><span class="icon-badge alt"><i class="fas fa-icons"></i></span></div></div><div class="tool-body"><h3>Favicon Generator</h3><p class="tool-summary">Create favicon sizes and get the HTML snippet.</p><div class="tool-tags"><span class="tool-tag">PNG</span><span class="tool-tag">ICO</span></div><span class="tool-link">Open tool</span></div></a>
-            </div>
-        </div>
-    </section>
+      <div class="tk-result" id="mgResult" hidden>
+        <div class="tk-result-head"><span class="fas fa-check" aria-hidden="true"></span><div><strong>Your merged PDF is ready</strong><span id="mgResultMeta"></span></div></div>
+        <div class="tk-actions"><button class="tk-btn tk-btn-dark" type="button" id="mgDownload"><span class="fas fa-download" aria-hidden="true"></span> Download again</button><button class="tk-btn tk-btn-ghost" type="button" id="mgAgain"><span class="fas fa-rotate-left" aria-hidden="true"></span> Start over</button></div>
+      </div>
+  </aside>
+</div>
+    </div>
+  </section>
+  <section class="tk-info">
+    <div class="tk-wrap tk-info-grid">
+      <div><h2 class="tk-h2">How it works</h2><ol class="tk-steps"><li><b>Add your PDFs</b>Drop them onto the page or browse. Each file shows its page count and a preview of page one.</li><li><b>Arrange and trim</b>Drag to reorder, rotate sideways scans, and type page ranges like <code>1-3, 7</code> to include only what you need.</li><li><b>Merge and download</b>The merged PDF is built in your browser and downloads immediately.</li></ol></div>
+      <div><h2 class="tk-h2">Questions</h2><div class="tk-faq"><details><summary>Are my files uploaded anywhere?</summary><p>No. Merging happens entirely inside your browser using JavaScript — the files never leave your device.</p></details><details><summary>Is there a file size or count limit?</summary><p>There is no fixed limit. Very large documents (hundreds of MB) depend on your device memory.</p></details><details><summary>Why is a file marked as password-protected?</summary><p>Encrypted PDFs can’t be merged until the password is removed. Open it in a PDF reader, save an unlocked copy, and add that instead.</p></details><details><summary>Will links and text stay selectable?</summary><p>Yes. Pages are copied as-is, so text, vector graphics and most links are preserved.</p></details></div></div>
+    </div>
+  </section>
+  <section class="tk-more" aria-label="More tools">
+    <div class="tk-wrap"><h2 class="tk-h2">More free tools</h2><div class="tk-more-grid"><a href="/tools/pdf-compressor/"><span class="fas fa-compress" aria-hidden="true"></span><span><b>PDF Compressor</b><small>Shrink PDF file size</small></span></a><a href="/tools/pdf-to-image/"><span class="fas fa-file-image" aria-hidden="true"></span><span><b>PDF to Image</b><small>Export pages as images</small></span></a><a href="/tools/image-to-pdf/"><span class="fas fa-file-pdf" aria-hidden="true"></span><span><b>Image to PDF</b><small>Turn images into a PDF</small></span></a><a href="/tools/image-converter/"><span class="fas fa-arrows-rotate" aria-hidden="true"></span><span><b>Image Converter</b><small>Convert, resize, compress</small></span></a><a href="/tools/favicon-generator/"><span class="fas fa-icons" aria-hidden="true"></span><span><b>Favicon Generator</b><small>Every icon size + ICO</small></span></a><a href="/tools/qr-code-generator/"><span class="fas fa-qrcode" aria-hidden="true"></span><span><b>QR Code Generator</b><small>Styled QR codes</small></span></a><a href="/tools/utm-builder/"><span class="fas fa-link" aria-hidden="true"></span><span><b>UTM Builder</b><small>Campaign tracking links</small></span></a><a href="/tools/content-analyzer/"><span class="fas fa-align-left" aria-hidden="true"></span><span><b>Content Analyzer</b><small>Readability and keywords</small></span></a></div></div>
+  </section>
+</main>
 
-    <footer class="ua-footer" data-ua-footer>
+<footer class="ua-footer" data-ua-footer>
   <div class="ua-footer-shell">
     <div class="ua-footer-intro">
       <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
@@ -368,151 +300,9 @@
   </div>
 </footer>
 
-    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
-
-    <script src="../../script.js?v=20260903-shell3"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const pdfInput = document.getElementById('pdfFiles');
-        const fileList = document.getElementById('fileList');
-        const emptyState = document.getElementById('emptyState');
-        const fileCount = document.getElementById('fileCount');
-        const totalSize = document.getElementById('totalSize');
-        const mergeOrder = document.getElementById('mergeOrder');
-        const mergeBtn = document.getElementById('mergeBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const statusText = document.getElementById('statusText');
-        let selectedFiles = [];
-
-        const formatBytes = (bytes) => {
-            if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
-            const units = ['B', 'KB', 'MB', 'GB'];
-            let idx = 0;
-            let value = bytes;
-            while (value >= 1024 && idx < units.length - 1) { value /= 1024; idx += 1; }
-            return value.toFixed(value >= 10 || idx === 0 ? 0 : 1) + ' ' + units[idx];
-        };
-
-        const updateStatus = (message) => { statusText.textContent = message; };
-        const isPdfFile = (file) => !!file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name));
-
-        const syncSummary = () => {
-            const totalBytes = selectedFiles.reduce((sum, item) => sum + item.file.size, 0);
-            fileCount.textContent = String(selectedFiles.length);
-            totalSize.textContent = formatBytes(totalBytes);
-            mergeOrder.textContent = selectedFiles.length > 0 ? 'Custom' : 'Waiting';
-            emptyState.hidden = selectedFiles.length > 0;
-            fileList.hidden = selectedFiles.length === 0;
-            mergeBtn.disabled = selectedFiles.length === 0;
-            clearBtn.disabled = selectedFiles.length === 0;
-        };
-
-        const moveFile = (index, direction) => {
-            const target = index + direction;
-            if (target < 0 || target >= selectedFiles.length) return;
-            const item = selectedFiles[index];
-            selectedFiles[index] = selectedFiles[target];
-            selectedFiles[target] = item;
-            renderFileList();
-            updateStatus('Merge order updated.');
-        };
-
-        const removeFile = (index) => {
-            selectedFiles.splice(index, 1);
-            renderFileList();
-            updateStatus(selectedFiles.length ? 'File removed.' : 'Select PDF files to begin.');
-        };
-
-        const renderFileList = () => {
-            fileList.innerHTML = '';
-            selectedFiles.forEach((item, index) => {
-                const row = document.createElement('div');
-                row.className = 'file-item';
-                row.innerHTML = `
-                    <div class="file-preview">
-                        <div class="file-badge"><i class="fas fa-file-pdf"></i></div>
-                        <div class="file-meta">
-                            <span class="file-name">${item.file.name}</span>
-                            <div class="file-detail"><span>#${index + 1} in merge</span><span>${formatBytes(item.file.size)}</span></div>
-                        </div>
-                    </div>
-                    <div class="file-actions">
-                        <button class="mini-btn move" type="button" data-action="up" ${index === 0 ? 'disabled' : ''}><i class="fas fa-arrow-up"></i> Up</button>
-                        <button class="mini-btn move" type="button" data-action="down" ${index === selectedFiles.length - 1 ? 'disabled' : ''}><i class="fas fa-arrow-down"></i> Down</button>
-                        <button class="mini-btn remove" type="button" data-action="remove"><i class="fas fa-trash"></i> Remove</button>
-                    </div>`;
-                row.querySelector('[data-action="up"]').addEventListener('click', () => moveFile(index, -1));
-                row.querySelector('[data-action="down"]').addEventListener('click', () => moveFile(index, 1));
-                row.querySelector('[data-action="remove"]').addEventListener('click', () => removeFile(index));
-                fileList.appendChild(row);
-            });
-            syncSummary();
-        };
-
-        const addFiles = (fileListLike) => {
-            const incomingFiles = Array.from(fileListLike || []).filter(isPdfFile);
-            if (incomingFiles.length === 0) { updateStatus('Please choose valid PDF files.'); return; }
-            incomingFiles.forEach((file, index) => selectedFiles.push({ id: Date.now() + index + Math.random(), file }));
-            renderFileList();
-            updateStatus(incomingFiles.length + ' PDF file(s) added.');
-        };
-
-        const handleDropZoneClick = (event) => {
-            const target = event.target && event.target.nodeType === 1 ? event.target : event.target.parentElement;
-            if (target && target.closest('label, input, button, a')) return;
-            pdfInput.click();
-        };
-
-        dropZone.addEventListener('click', handleDropZoneClick);
-        dropZone.addEventListener('dragover', (event) => { event.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
-        dropZone.addEventListener('drop', (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); addFiles(event.dataTransfer.files); });
-        pdfInput.addEventListener('change', (event) => { addFiles(event.target.files); pdfInput.value = ''; });
-        clearBtn.addEventListener('click', () => { selectedFiles = []; renderFileList(); updateStatus('Select PDF files to begin.'); });
-
-        mergeBtn.addEventListener('click', async () => {
-            if (!window.PDFLib || !window.PDFLib.PDFDocument) { updateStatus('PDF merge library failed to load. Refresh and try again.'); return; }
-            if (selectedFiles.length === 0) { updateStatus('Please add at least one PDF file.'); return; }
-            mergeBtn.disabled = true;
-            clearBtn.disabled = true;
-            mergeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Merging...</span>';
-            updateStatus('Preparing merged PDF...');
-            try {
-                const mergedPdf = await window.PDFLib.PDFDocument.create();
-                let totalPages = 0;
-                for (let i = 0; i < selectedFiles.length; i += 1) {
-                    const current = selectedFiles[i];
-                    updateStatus('Merging ' + (i + 1) + ' of ' + selectedFiles.length + ': ' + current.file.name);
-                    const bytes = await current.file.arrayBuffer();
-                    const sourcePdf = await window.PDFLib.PDFDocument.load(bytes);
-                    const pageIndices = sourcePdf.getPageIndices();
-                    const copiedPages = await mergedPdf.copyPages(sourcePdf, pageIndices);
-                    copiedPages.forEach((page) => mergedPdf.addPage(page));
-                    totalPages += copiedPages.length;
-                }
-                const mergedBytes = await mergedPdf.save();
-                const blob = new Blob([mergedBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'merged-' + Date.now() + '.pdf';
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                URL.revokeObjectURL(url);
-                updateStatus('Merged ' + selectedFiles.length + ' file(s) into ' + totalPages + ' page(s). Download started.');
-            } catch (error) {
-                console.error(error);
-                updateStatus('Unable to merge these PDFs. One file may be encrypted or invalid.');
-            } finally {
-                mergeBtn.disabled = false;
-                clearBtn.disabled = selectedFiles.length === 0;
-                mergeBtn.innerHTML = '<i class="fas fa-object-group"></i><span>Merge PDFs</span>';
-            }
-        });
-
-        syncSummary();
-    </script>
+<button class="back-to-top" id="backToTop" aria-label="Back to top"><span class="fas fa-arrow-up" aria-hidden="true"></span></button>
+<script src="../../script.js?v=20260903-shell3"></script>
+<script src="/tools/_kit/tool-kit.js?v=20260930"></script>
+<script src="/tools/pdf-merger/app.js?v=20260930"></script>
 <script src="/interior-redesign.js?v=34"></script><script src="/site-shell.js?v=20260906-4"></script><script src="/site-header.js?v=6"></script></body>
 </html>
