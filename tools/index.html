@@ -39,259 +39,6 @@
     }
     </script>
 
-    <link rel="stylesheet" href="../style.css?v=20260823-brand3">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .tools-hero {
-            min-height: 60vh;
-            display: flex;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            padding: 140px 0 80px;
-            background: linear-gradient(135deg, #0D0614 0%, #1A0B2E 50%, #0D0614 100%);
-        }
-        .tools-hero .hero-bg {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-        }
-        .tools-hero-content {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            max-width: 860px;
-            margin: 0 auto;
-        }
-        .tools-hero-content h1 {
-            font-size: 54px;
-            color: white;
-            margin-bottom: 16px;
-        }
-        .tools-hero-content p {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.72);
-            line-height: 1.8;
-        }
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            font-size: 14px;
-        }
-        .breadcrumb a {
-            color: rgba(255, 255, 255, 0.7);
-            transition: color 0.3s ease;
-        }
-        .breadcrumb a:hover {
-            color: white;
-        }
-        .breadcrumb span {
-            color: var(--primary);
-        }
-        .breadcrumb i {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 10px;
-        }
-        .tools-section {
-            padding: 80px 0 110px;
-            background: var(--bg);
-        }
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 26px;
-        }
-        .tool-card {
-            background: #ffffff;
-            border-radius: 22px;
-            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            overflow: hidden;
-            position: relative;
-        }
-        .tool-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 22px 46px rgba(15, 23, 42, 0.14);
-            border-color: rgba(217, 82, 45, 0.32);
-        }
-        .tool-card-hero {
-            padding: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 128px;
-            border-radius: 22px 22px 0 0;
-            background-size: 300% 300%;
-            background-position: 0% 50%;
-            position: relative;
-            overflow: hidden;
-        }
-        .tool-card-hero::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0) 60%);
-            transform: translateX(-120%);
-            opacity: 0;
-        }
-        .tool-card[data-theme="sunset"] .tool-card-hero {
-            background: linear-gradient(135deg, #2A0F44, #5B1466, #D946EF);
-        }
-        .tool-card[data-theme="ocean"] .tool-card-hero {
-            background: linear-gradient(135deg, #0B233F, #0F4C5C, #22D3EE);
-        }
-        .tool-card[data-theme="forest"] .tool-card-hero {
-            background: linear-gradient(135deg, #12323A, #1F6E4F, #34D399);
-        }
-        .tool-card[data-theme="ember"] .tool-card-hero {
-            background: linear-gradient(135deg, #2E1A10, #7C2D12, #F97316);
-        }
-        .tool-card[data-theme="mint"] .tool-card-hero {
-            background: linear-gradient(135deg, #0F2A2A, #1E7666, #2DD4BF);
-        }
-        .tool-card[data-theme="cosmos"] .tool-card-hero {
-            background: linear-gradient(135deg, #101625, #2A2D72, #60A5FA);
-        }
-        .tool-card[data-theme="fire"] .tool-card-hero {
-            background: linear-gradient(135deg, #3B0A05, #E25822, #FBBF24);
-        }
-        .tool-card:hover .tool-card-hero {
-            animation: gradientDrift 1.4s ease-in-out 1;
-            animation-fill-mode: both;
-        }
-        .tool-card:hover .tool-card-hero::after {
-            animation: sheenMove 1.2s linear 1;
-            animation-fill-mode: both;
-            opacity: 0.85;
-        }
-        @keyframes gradientDrift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        @keyframes sheenMove {
-            0% { transform: translateX(-120%); }
-            100% { transform: translateX(120%); }
-        }
-        .tool-visual {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .tool-visual.single .tool-connector,
-        .tool-visual.single .icon-badge.alt {
-            display: none;
-        }
-        .tool-connector {
-            width: 26px;
-            height: 2px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.5);
-        }
-        .icon-badge {
-            width: 54px;
-            height: 54px;
-            border-radius: 14px;
-            display: grid;
-            place-items: center;
-            color: white;
-            font-size: 22px;
-            background: linear-gradient(135deg, #D9522D, #F47A52);
-            box-shadow: 0 10px 22px rgba(217, 82, 45, 0.25);
-        }
-        .icon-badge.alt {
-            background: linear-gradient(135deg, #0EA5E9, #22D3EE);
-            box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22);
-        }
-        .tool-body {
-            padding: 24px 26px 26px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border-radius: 0 0 22px 22px;
-            background: #ffffff;
-        }
-        .tool-card h3 {
-            font-size: 22px;
-            letter-spacing: -0.01em;
-            color: var(--dark);
-            margin: 0;
-        }
-        .tool-summary {
-            color: var(--text-light);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .tool-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .tool-tag {
-            background: rgba(217, 82, 45, 0.08);
-            color: var(--primary);
-            font-size: 12px;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 999px;
-        }
-        .tool-link {
-            margin-top: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: white;
-            font-weight: 700;
-            font-size: 13px;
-            background: linear-gradient(135deg, #0F172A, #334155);
-            padding: 10px 16px;
-            border-radius: 999px;
-            width: fit-content;
-            letter-spacing: 0.01em;
-        }
-        .tools-note {
-            margin-top: 48px;
-            text-align: center;
-            color: var(--text-light);
-            font-size: 14px;
-        }
-        .theme-dark .tool-card {
-            background: #0F172A;
-            border-color: rgba(148, 163, 184, 0.25);
-        }
-        .theme-dark .tool-body {
-            background: #0F172A;
-        }
-        .theme-dark .tool-card h3 {
-            color: #F8FAFC;
-        }
-        .theme-dark .tool-summary {
-            color: #CBD5E1;
-        }
-        .theme-dark .tool-tag {
-            background: rgba(248, 250, 252, 0.08);
-            color: #E2E8F0;
-        }
-        .theme-dark .tool-link {
-            background: #111827;
-        }
-        @media (max-width: 768px) {
-            .tools-hero-content h1 {
-                font-size: 38px;
-            }
-            .tools-hero-content p {
-                font-size: 16px;
-            }
-        }
-    </style>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-DDNBW2YBFL"></script>
     <script>
@@ -307,7 +54,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-PNT5FCX5');</script>
 <!-- End Google Tag Manager -->
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=7"></head>
+<link rel="stylesheet" href="/tools/shared/tool-kit.css?v=20260930b"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=7"></head>
 <body class="redesign-interior page-tools">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5"
@@ -463,385 +210,175 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </nav>
 </header>
 
-    <section class="tools-hero">
-        <div class="hero-bg">
-            <div class="gradient-orb orb-1"></div>
-            <div class="gradient-orb orb-2"></div>
-            <div class="gradient-orb orb-3"></div>
-        </div>
-        <div class="container tools-hero-content">
-            <div class="breadcrumb">
-                <a href="/">Home</a>
-                <i class="fas fa-chevron-right"></i>
-                <span>Tools</span>
-            </div>
-            <div class="tools-hero-copy">
-                <span class="interior-hero-kicker">03 · Browser utility desk</span>
-                <h1>Useful tools, <em>without the clutter.</em></h1>
-                <p>Fast utilities for documents, images, marketing, writing, and website checks—free to use in your browser, without accounts or clutter.</p>
-                <a class="interior-hero-link" href="#tool-library">Open the tool library <span aria-hidden="true">↓</span></a>
-            </div>
-            <div class="interior-minimal-rail tools-minimal-rail" aria-label="Quick access tools">
-                <div class="minimal-rail-head"><span><i></i> Ready in your browser</span><small>12 tools · no login</small></div>
-                <div class="minimal-rail-grid">
-                    <a href="/tools/image-to-pdf/"><b>01</b><strong>Image to PDF</strong><small>Combine images <em>↗</em></small></a>
-                    <a href="/tools/image-converter/"><b>02</b><strong>Convert images</strong><small>Change formats <em>↗</em></small></a>
-                    <a href="/tools/qr-code-generator/"><b>03</b><strong>Create a QR</strong><small>Generate and save <em>↗</em></small></a>
-                </div>
-            </div>
-        </div>
+<main class="tk tk-hub" id="main" style="--tk-c:#dfff63">
+<svg class="tk-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><symbol id="tk-i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol><symbol id="tk-i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol><symbol id="tk-i-file" viewBox="0 0 24 24"><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></symbol><symbol id="tk-i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol><symbol id="tk-i-images" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="3"/><path d="M17 21H6a3 3 0 0 1-3-3V7"/><circle cx="12" cy="8" r="1.6"/><path d="m21 13-4-4-6 6"/></symbol><symbol id="tk-i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/></symbol><symbol id="tk-i-compress" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol><symbol id="tk-i-zip" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/></symbol><symbol id="tk-i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol><symbol id="tk-i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol><symbol id="tk-i-rotate" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 1-2.3-5.6L20 8"/><path d="M20 3v5h-5"/></symbol><symbol id="tk-i-undo" viewBox="0 0 24 24"><path d="M4 11a8 8 0 1 0 2.3-5.6L4 8"/><path d="M4 3v5h5"/></symbol><symbol id="tk-i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol><symbol id="tk-i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol><symbol id="tk-i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="tk-i-out" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol><symbol id="tk-i-grip" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></g></symbol><symbol id="tk-i-sort" viewBox="0 0 24 24"><path d="M4 7h9M4 12h6M4 17h4"/><path d="M17 5v14M14 16l3 3 3-3"/></symbol><symbol id="tk-i-swap" viewBox="0 0 24 24"><path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3"/></symbol><symbol id="tk-i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol><symbol id="tk-i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol><symbol id="tk-i-alert" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19Z"/><path d="M12 10v4M12 17h.01"/></symbol><symbol id="tk-i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol><symbol id="tk-i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol><symbol id="tk-i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="tk-i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6Z"/></symbol><symbol id="tk-i-sparkle" viewBox="0 0 24 24"><path d="M11 3c.5 4.5 2.5 6.5 7 7-4.5.5-6.5 2.5-7 7-.5-4.5-2.5-6.5-7-7 4.5-.5 6.5-2.5 7-7Z"/><path d="M19 15v5M16.5 17.5h5"/></symbol><symbol id="tk-i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol><symbol id="tk-i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol><symbol id="tk-i-qr" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2M20 14v.01M18 18h2v2M14 18v2h2"/></symbol><symbol id="tk-i-wifi" viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></symbol><symbol id="tk-i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></symbol><symbol id="tk-i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></symbol><symbol id="tk-i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12Z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></symbol><symbol id="tk-i-whatsapp" viewBox="0 0 24 24"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-2-2l.8-1-1-2Z"/></symbol><symbol id="tk-i-contact" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.5a3.4 3.4 0 0 1 6.4 0M14.5 10h3.5M14.5 13.5h3.5"/></symbol><symbol id="tk-i-text" viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></symbol><symbol id="tk-i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol><symbol id="tk-i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.5-1.9-.3-1 .4-2.1 1.5-2.1H17a4 4 0 0 0 4-4 9 9 0 0 0-9-10Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></symbol><symbol id="tk-i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol><symbol id="tk-i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="tk-i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="tk-i-chart" viewBox="0 0 24 24"><path d="M4 20h16M7 16v-4M12 16V7M17 16v-7"/></symbol><symbol id="tk-i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="tk-i-lines" viewBox="0 0 24 24"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></symbol><symbol id="tk-i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4Z"/></symbol><symbol id="tk-i-apps" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="3.75"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="3.75"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol><symbol id="tk-i-convert" viewBox="0 0 24 24"><path d="M4 10a8 8 0 0 1 14.3-4.3L20 7.5"/><path d="M20 3v4.5h-4.5"/><path d="M20 14a8 8 0 0 1-14.3 4.3L4 16.5"/><path d="M4 21v-4.5h4.5"/></symbol><symbol id="tk-i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol><symbol id="tk-i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-9-9.3C1.9 7.1 4.3 4 7.6 4c2 0 3.4 1.1 4.4 2.6C13 5.1 14.4 4 16.4 4c3.3 0 5.7 3.1 4.6 6.7C19.5 15.4 12 20 12 20Z"/></symbol><symbol id="tk-i-gauge" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="m12 17 4-5"/><path d="M12 17h.01"/></symbol><symbol id="tk-i-pen" viewBox="0 0 24 24"><path d="m15 5 4 4L8 20H4v-4Z"/><path d="m13 7 4 4"/></symbol><symbol id="tk-i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol><symbol id="tk-i-game" viewBox="0 0 24 24"><path d="M7 8h10a4 4 0 0 1 3.9 4.8l-.8 3.7a2 2 0 0 1-3.4 1L14.5 15h-5l-2.2 2.5a2 2 0 0 1-3.4-1l-.8-3.7A4 4 0 0 1 7 8Z"/><path d="M8 11v3M6.5 12.5h3M15.5 12h.01M17.5 13.5h.01"/></symbol><symbol id="tk-i-pulse" viewBox="0 0 24 24"><path d="M2 12h4l2.5-6 4 12 3-9 1.8 3H22"/></symbol><symbol id="tk-i-clipboard" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2.5"/><path d="M9 4V3h6v1M9.5 10h5M9.5 14h5"/></symbol><symbol id="tk-i-device" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M11 18h2"/></symbol><symbol id="tk-i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/></symbol><symbol id="tk-i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></symbol><symbol id="tk-i-resize" viewBox="0 0 24 24"><path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"/></symbol><symbol id="tk-i-web" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol></svg>
+  <style>
+    .tk-hub .tk-hero { padding-bottom: 10px; }
+    .hub-search { position: relative; width: min(100%, 620px); margin-top: 26px; }
+    .hub-search .tk-i { position: absolute; top: 50%; left: 22px; width: 22px; height: 22px; color: var(--tk-muted); transform: translateY(-50%); pointer-events: none; }
+    .hub-search input { width: 100%; height: 64px; padding: 0 64px 0 58px; color: var(--tk-ink); border: 0; border-radius: 99px; background: var(--tk-card); box-shadow: var(--tk-lift), inset 0 0 0 1.5px var(--tk-line); font: 700 17px/1 var(--tk-sans); transition: box-shadow .2s; }
+    .hub-search input::placeholder { color: var(--tk-muted); font-weight: 600; opacity: .85; }
+    .hub-search input:focus { outline: none; box-shadow: var(--tk-lift), inset 0 0 0 2px var(--tk-ink), 0 0 0 6px color-mix(in srgb, var(--tk-c) 60%, transparent); }
+    .hub-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+    .hub-search kbd { position: absolute; top: 50%; right: 22px; transform: translateY(-50%); }
+    @media (max-width: 620px) { .hub-search kbd { display: none; } .hub-search input { padding-right: 20px; font-size: 16px; } }
+    .hub-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
+    .hub-chips button { min-height: 40px; padding: 0 16px; color: var(--tk-ink); border: 0; border-radius: 99px; background: var(--tk-card); box-shadow: inset 0 0 0 1.5px var(--tk-line); font: 800 13.5px/1 var(--tk-sans); transition: transform .3s var(--tk-bounce), background .2s, box-shadow .2s; }
+    .hub-chips button:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1.5px var(--tk-ink); }
+    .hub-chips button[aria-pressed=true] { color: #fff; background: var(--tk-dark); box-shadow: none; }
+    html.theme-dark .hub-chips button[aria-pressed=true] { color: #14251f; background: var(--tk-lime); }
+    .hub-list { padding: clamp(28px, 4vw, 44px) 0 0; }
+    .hub-group + .hub-group { margin-top: clamp(48px, 6vw, 72px); }
+    .hub-group-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1.5px solid var(--tk-line-2); }
+    .hub-group-head p { color: var(--tk-muted); font: 600 15px/1.4 var(--tk-sans); }
+    .hub-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+    .hub-grid > .hub-card { grid-column: span var(--span, 2); }
+    @media (max-width: 980px) { .hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hub-grid > .hub-card { grid-column: auto; } }
+    @media (max-width: 620px) { .hub-grid { grid-template-columns: 1fr; } }
+    .hub-card { display: flex; flex-direction: column; padding: 8px; color: var(--tk-ink); border-radius: 30px; background: var(--tk-card); box-shadow: inset 0 0 0 1px var(--tk-line); text-decoration: none; transition: transform .45s var(--tk-bounce), box-shadow .3s; }
+    .hub-card:hover, .hub-card:focus-visible { transform: translateY(-6px) rotate(var(--r)); box-shadow: var(--tk-shadow), inset 0 0 0 1px var(--tk-line); }
+    .hub-card-art { position: relative; display: grid; height: 150px; place-items: center; overflow: hidden; border-radius: 23px; background: var(--c); }
+    .hub-card-art::before, .hub-card-art::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .32); }
+    .hub-card-art::before { width: 170px; height: 170px; top: -70px; right: -40px; }
+    .hub-card-art::after { width: 90px; height: 90px; bottom: -40px; left: 18px; background: rgba(20, 37, 31, .07); }
+    .hub-card-ic { position: relative; z-index: 1; display: grid; width: 76px; height: 76px; place-items: center; color: #14251f; border-radius: 24px; background: rgba(255, 255, 255, .7); box-shadow: 0 14px 26px -16px rgba(20, 37, 31, .7); transform: rotate(-7deg); transition: transform .45s var(--tk-bounce); }
+    .hub-card-ic .tk-i { width: 36px; height: 36px; stroke-width: 1.8; }
+    .hub-card:hover .hub-card-ic { transform: rotate(0) scale(1.08); }
+    .hub-card-go { position: absolute; z-index: 1; top: 14px; right: 14px; display: grid; width: 38px; height: 38px; place-items: center; color: #14251f; border-radius: 50%; background: rgba(255, 255, 255, .6); transition: transform .35s var(--tk-bounce), background .2s; }
+    .hub-card-go .tk-i { width: 18px; height: 18px; }
+    .hub-card:hover .hub-card-go { background: #fff; transform: rotate(45deg); }
+    .hub-card-body { display: grid; gap: 8px; padding: 18px 14px 14px; }
+    .hub-card-body b { font: 400 27px/1.08 var(--tk-display); letter-spacing: -.01em; }
+    .hub-card-body > span:not(.hub-card-tags) { color: var(--tk-muted); font: 600 14.5px/1.5 var(--tk-sans); }
+    .hub-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .hub-card-tags i { padding: 4px 10px; color: var(--tk-muted); border-radius: 99px; background: var(--tk-soft); font: 800 11.5px/1.3 var(--tk-sans); font-style: normal; }
+    .hub-empty { display: grid; justify-items: center; gap: 12px; padding: 48px 20px; text-align: center; }
+    .hub-empty b { font: 400 30px/1.1 var(--tk-display); }
+    .hub-empty p { color: var(--tk-muted); }
+    .hub-empty-ic { display: grid; width: 72px; height: 72px; place-items: center; border-radius: 24px; background: var(--tk-lime); color: #14251f; transform: rotate(-6deg); }
+    .hub-empty-ic .tk-i { width: 34px; height: 34px; }
+    .hub-ask { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin-top: clamp(40px, 6vw, 64px); padding: 26px 28px; border-radius: 30px; background: var(--tk-card); box-shadow: inset 0 0 0 1px var(--tk-line); text-align: left; }
+    .hub-ask b { display: block; font: 400 28px/1.1 var(--tk-display); }
+    .hub-ask p { margin-top: 4px; color: var(--tk-muted); }
+  </style>
+  <div class="tk-blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+  <section class="tk-hero">
+    <div class="tk-wrap tk-hero-inner">
+      <ol class="tk-crumbs" aria-label="Breadcrumb"><li><a href="/">Home</a></li><li aria-current="page">Tools</li></ol>
+      <span class="tk-badge"><span><svg class="tk-i" aria-hidden="true"><use href="#tk-i-sparkle"/></svg></span>14 free tools · no sign-up</span>
+      <h1>Useful tools, <span class="tk-scribble">without the clutter.</span></h1>
+      <p class="tk-sub">Fast, private utilities for PDFs, images, marketing and writing. Everything runs in your browser — no uploads, no accounts, no watermarks.</p>
+      <div class="hub-search" role="search">
+        <svg class="tk-i" aria-hidden="true"><use href="#tk-i-search"/></svg>
+        <label class="tk-sr" for="hubSearch">Search tools</label>
+        <input type="search" id="hubSearch" placeholder="Search tools — e.g. compress PDF" autocomplete="off" spellcheck="false">
+        <kbd aria-hidden="true">/</kbd>
+      </div>
+      <div class="hub-chips" id="hubChips" role="group" aria-label="Filter by category">
+        <button type="button" data-cat="all" aria-pressed="true">All tools</button>
+        <button type="button" data-cat="pdf" aria-pressed="false">PDF tools</button><button type="button" data-cat="image" aria-pressed="false">Image tools</button><button type="button" data-cat="marketing" aria-pressed="false">Marketing & writing</button><button type="button" data-cat="play" aria-pressed="false">Create & play</button>
+      </div>
+    </div>
+  </section>
+  <section class="hub-list" aria-label="Tool library">
+    <div class="tk-wrap">
+      <p class="tk-sr" id="hubStatus" role="status" aria-live="polite"></p>
+
+    <section class="hub-group" data-group="pdf" aria-labelledby="hub-pdf">
+      <div class="hub-group-head"><h2 class="tk-h2" id="hub-pdf">PDF tools</h2><p>Merge, shrink and convert documents.</p></div>
+      <div class="hub-grid">
+        <a class="hub-card" href="/tools/pdf-merger/" data-cat="pdf" data-k="pdf merger combine pdfs in order  pick pages and rotate sideways scans  merge reorder page ranges merge combine join pdf documents files" style="--c:#ffb48c;--r:-1.2deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-layers"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>PDF Merger</b><span>Combine PDFs in order, pick pages and rotate sideways scans.</span><span class="hub-card-tags"><i>Merge</i><i>Reorder</i><i>Page ranges</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/pdf-compressor/" data-cat="pdf" data-k="pdf compressor make pdfs smaller for email and uploads   with honest before after sizes  compress reduce size compress reduce shrink pdf size smaller email" style="--c:#ffe27a;--r:.9deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-compress"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>PDF Compressor</b><span>Make PDFs smaller for email and uploads — with honest before/after sizes.</span><span class="hub-card-tags"><i>Compress</i><i>Reduce size</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/pdf-to-image/" data-cat="pdf" data-k="pdf to image export pages as png  jpg or webp at up to 300 dpi  png jpg webp pdf to jpg png webp image export convert pages picture" style="--c:#9dd4ff;--r:-.5deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-images"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>PDF to Image</b><span>Export pages as PNG, JPG or WebP at up to 300 DPI.</span><span class="hub-card-tags"><i>PNG</i><i>JPG</i><i>WebP</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/image-to-pdf/" data-cat="pdf" data-k="image to pdf turn photos  scans and screenshots into one tidy pdf  jpg png a4 jpg png photo scan screenshot to pdf convert images document" style="--c:#f5b9e2;--r:1.3deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-file"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Image to PDF</b><span>Turn photos, scans and screenshots into one tidy PDF.</span><span class="hub-card-tags"><i>JPG</i><i>PNG</i><i>A4</i></span></span>
+        </a>
+      </div>
     </section>
-
-    <section class="tools-launcher-section" id="tool-library" aria-labelledby="toolLauncherTitle">
-        <div class="container">
-            <header class="launcher-intro">
-                <div>
-                    <span class="launcher-eyebrow">13 useful shortcuts</span>
-                    <h2 id="toolLauncherTitle">Pick a task.<br><em>Start instantly.</em></h2>
-                </div>
-                <div class="launcher-intro-copy">
-                    <p>No downloads, accounts, or complicated dashboards. Choose what you want to do and open the workspace.</p>
-                    <div class="launcher-promises">
-                        <span><i class="fas fa-shield-halved"></i> Private</span>
-                        <span><i class="fas fa-bolt"></i> Fast</span>
-                        <span><i class="fas fa-globe"></i> Browser-based</span>
-                    </div>
-                </div>
-            </header>
-
-            <div class="tool-launcher">
-                <div class="launcher-index" aria-label="Available tools">
-                    <section class="launcher-group" aria-labelledby="launcherFiles">
-                        <header><span>01</span><h3 id="launcherFiles">Files &amp; images</h3><small>6 tools</small></header>
-                        <a class="launcher-item is-active" href="/tools/image-to-pdf/" data-icon="fas fa-file-pdf" data-title="Image to PDF" data-description="Turn photos, scans and screenshots into one PDF — reorder, rotate, pick A4, Letter or fit-to-image pages." data-tags="JPG|PNG|WebP">
-                            <span class="launcher-number">01</span><strong>Image to PDF</strong><small>Images →︎ document</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/pdf-to-image/" data-icon="fas fa-image" data-title="PDF to Image" data-description="Export all or selected pages as PNG, JPEG or WebP at up to 300 DPI, with previews and ZIP download." data-tags="PDF|PNG|JPEG">
-                            <span class="launcher-number">02</span><strong>PDF to Image</strong><small>Document →︎ images</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/image-converter/" data-icon="fas fa-retweet" data-title="Image Converter" data-description="Batch-convert to WebP, JPEG, PNG or AVIF, resize for the web and see the size saved on every file." data-tags="WebP|AVIF|Resize">
-                            <span class="launcher-number">03</span><strong>Image Converter</strong><small>Change image format</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/pdf-compressor/" data-icon="fas fa-compress-alt" data-title="PDF Compressor" data-description="Shrink PDFs with lossless optimisation or image compression presets, with an honest before/after size." data-tags="PDF|Compress|Quality">
-                            <span class="launcher-number">04</span><strong>PDF Compressor</strong><small>Reduce file size</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/pdf-merger/" data-icon="fas fa-layer-group" data-title="PDF Merger" data-description="Drag PDFs into order, choose page ranges, rotate scans and merge into one file." data-tags="PDF|Merge|Arrange">
-                            <span class="launcher-number">05</span><strong>PDF Merger</strong><small>Combine documents</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/favicon-generator/" data-icon="fas fa-icons" data-title="Favicon Generator" data-description="Build a full favicon set from a logo or letters: multi-size .ico, Apple/Android icons, manifest and HTML." data-tags="PNG|ICO|HTML">
-                            <span class="launcher-number">06</span><strong>Favicon Generator</strong><small>Create site icons</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                    </section>
-
-                    <section class="launcher-group" aria-labelledby="launcherGrowth">
-                        <header><span>02</span><h3 id="launcherGrowth">Marketing &amp; web</h3><small>4 tools</small></header>
-                        <a class="launcher-item" href="/tools/qr-code-generator/" data-icon="fas fa-qrcode" data-title="QR Code Generator" data-description="Styled QR codes for links, WhatsApp, Wi-Fi, contacts, email and SMS — with logo and scan check." data-tags="QR|PNG|SVG">
-                            <span class="launcher-number">07</span><strong>QR Code Generator</strong><small>Share anything quickly</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/utm-builder/" data-icon="fas fa-link" data-title="UTM Builder" data-description="Build GA4-ready campaign links with channel presets, auto-formatting, checks and link history." data-tags="UTM|GA4|Campaigns">
-                            <span class="launcher-number">08</span><strong>UTM Builder</strong><small>Track campaign links</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/speed-test/" data-icon="fas fa-gauge-high" data-title="Page Speed Test" data-description="Check Core Web Vitals and quickly understand where a web page needs performance work." data-tags="Speed|Web|SEO">
-                            <span class="launcher-number">09</span><strong>Page Speed Test</strong><small>Check web performance</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/content-analyzer/" data-icon="fas fa-align-left" data-title="Content Analyzer" data-description="Live word count, readability score, keyword density, focus-keyword and length-limit checks." data-tags="Writing|SEO|Live">
-                            <span class="launcher-number">10</span><strong>Content Analyzer</strong><small>Review your writing</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                    </section>
-
-                    <section class="launcher-group" aria-labelledby="launcherCreate">
-                        <header><span>03</span><h3 id="launcherCreate">Create &amp; play</h3><small>3 spaces</small></header>
-                        <a class="launcher-item" href="/tools/painting-drawing/" data-icon="fas fa-pen-nib" data-title="Painting &amp; Drawing" data-description="A capable browser sketch studio with pressure-aware brushes, layers, and iPad-friendly controls." data-tags="Canvas|Layers|iPad">
-                            <span class="launcher-number">11</span><strong>Painting &amp; Drawing</strong><small>Open a blank canvas</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/tools/rubiks-cube/" data-icon="fas fa-cube" data-title="Cube Studio" data-description="Recreate your Rubik’s Cube, try photo-assisted colour entry, and follow an animated 3D solution one turn at a time." data-tags="3D|Solver|Photo assist">
-                            <span class="launcher-number">12</span><strong>Cube Studio</strong><small>Unravel your Rubik’s Cube</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                        <a class="launcher-item" href="/games/" data-icon="fas fa-gamepad" data-title="Browser Playground" data-description="Take a quick break with six polished browser games for reflexes, memory, strategy, words, and focus." data-tags="Games|Focus|Instant">
-                            <span class="launcher-number">13</span><strong>Browser Playground</strong><small>Six instant games</small><i class="fas fa-arrow-up-right"></i>
-                        </a>
-                    </section>
-                </div>
-
-                <aside class="launcher-preview" aria-live="polite">
-                    <div class="launcher-preview-top"><span>Selected tool</span><b>01 / 13</b></div>
-                    <div class="launcher-preview-icon"><i class="fas fa-file-pdf"></i></div>
-                    <div class="launcher-preview-content">
-                        <p class="launcher-preview-label">Ready when you are</p>
-                        <h3>Image to PDF</h3>
-                        <p class="launcher-preview-description">Turn photos, scans and screenshots into one PDF — reorder, rotate, pick A4, Letter or fit-to-image pages.</p>
-                        <div class="launcher-preview-tags"><span>JPG</span><span>PNG</span><span>WebP</span></div>
-                    </div>
-                    <a class="launcher-preview-link" href="/tools/image-to-pdf/"><span>Open this tool</span><i class="fas fa-arrow-up-right"></i></a>
-                </aside>
-            </div>
-
-            <div class="launcher-footnote"><i class="fas fa-lock"></i><span>Your files stay on your device. Processing happens in your browser.</span></div>
-        </div>
+    <section class="hub-group" data-group="image" aria-labelledby="hub-image">
+      <div class="hub-group-head"><h2 class="tk-h2" id="hub-image">Image tools</h2><p>Get images web-ready in seconds.</p></div>
+      <div class="hub-grid">
+        <a class="hub-card" href="/tools/image-converter/" data-cat="image" data-k="image converter batch-convert to webp  jpg  png or avif and resize in one go  webp avif resize convert webp jpg jpeg png avif resize compress image format optimize" style="--c:#a8e6c2;--r:-.9deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-convert"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Image Converter</b><span>Batch-convert to WebP, JPG, PNG or AVIF and resize in one go.</span><span class="hub-card-tags"><i>WebP</i><i>AVIF</i><i>Resize</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/favicon-generator/" data-cat="image" data-k="favicon generator every favicon size plus a real  ico  app icons and the html  ico apple android favicon ico icon website app apple touch manifest logo" style="--c:#c9b8ff;--r:-1.2deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-apps"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Favicon Generator</b><span>Every favicon size plus a real .ico, app icons and the HTML.</span><span class="hub-card-tags"><i>ICO</i><i>Apple</i><i>Android</i></span></span>
+        </a>
+      </div>
     </section>
-
-    <section class="tools-section tools-section-legacy" hidden aria-hidden="true">
-        <div class="container">
-            <div class="tools-toolbar">
-                <div>
-                    <span class="tools-kicker">Your browser toolkit</span>
-                    <h2>What do you need to do?</h2>
-                </div>
-                <div class="tools-toolbar-copy">
-                    <p>Search by task or narrow the library by category. Every tool opens instantly and keeps your files on your device.</p>
-                    <div class="tools-facts" aria-label="Tool benefits">
-                        <span><i class="fas fa-layer-group"></i> 12 focused tools</span>
-                        <span><i class="fas fa-bolt"></i> No sign-up</span>
-                        <span><i class="fas fa-lock"></i> Browser-based</span>
-                    </div>
-                </div>
-            </div>
-            <div class="tools-discovery" aria-label="Find a tool">
-                <label class="tools-search" for="toolSearch">
-                    <i class="fas fa-search" aria-hidden="true"></i>
-                    <input id="toolSearch" type="search" placeholder="Search tools — PDF, image, SEO..." autocomplete="off">
-                    <kbd>/</kbd>
-                </label>
-                <div class="tools-filters" role="group" aria-label="Filter tools by category">
-                    <button class="is-active" type="button" data-filter="all" aria-pressed="true">All <span>12</span></button>
-                    <button type="button" data-filter="files" aria-pressed="false">Files &amp; images <span>6</span></button>
-                    <button type="button" data-filter="growth" aria-pressed="false">Marketing &amp; web <span>4</span></button>
-                    <button type="button" data-filter="creative" aria-pressed="false">Creative <span>1</span></button>
-                </div>
-                <p class="tools-result-count" aria-live="polite">Showing all 12 tools</p>
-            </div>
-            <div class="tools-grid">
-                <div class="tools-group-heading">
-                    <span>01 / Files</span>
-                    <h3>Convert &amp; prepare</h3>
-                    <p>PDF and image utilities</p>
-                </div>
-                <a class="tool-card" href="/tools/image-to-pdf/" data-theme="sunset" data-category="files">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-image"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-file-pdf"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Image to PDF</h3>
-                        <p class="tool-summary">Combine images into one clean PDF.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">JPG</span>
-                            <span class="tool-tag">PNG</span>
-                            <span class="tool-tag">WebP</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/pdf-to-image/" data-theme="ocean" data-category="files">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-image"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>PDF to Image</h3>
-                        <p class="tool-summary">Export PDF pages as images.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">PNG</span>
-                            <span class="tool-tag">JPEG</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/image-converter/" data-theme="forest" data-category="files">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-image"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-retweet"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Image Converter</h3>
-                        <p class="tool-summary">Convert between PNG, JPEG, WebP, and SVG.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">PNG</span>
-                            <span class="tool-tag">JPEG</span>
-                            <span class="tool-tag">WebP</span>
-                            <span class="tool-tag">SVG</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/pdf-compressor/" data-theme="ember" data-category="files">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-compress-alt"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>PDF Compressor</h3>
-                        <p class="tool-summary">Reduce PDF size with a quality slider.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">PDF</span>
-                            <span class="tool-tag">Quality</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/pdf-merger/" data-theme="cosmos" data-category="files">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-file-pdf"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-layer-group"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>PDF Merger</h3>
-                        <p class="tool-summary">Combine multiple PDFs into one file in the right order.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">PDF</span>
-                            <span class="tool-tag">Merge</span>
-                            <span class="tool-tag">Browser</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/favicon-generator/" data-theme="mint" data-category="files">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-image"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-icons"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Favicon Generator</h3>
-                        <p class="tool-summary">Create favicon sizes and get the HTML snippet.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">PNG</span>
-                            <span class="tool-tag">ICO</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <div class="tools-group-heading">
-                    <span>02 / Growth</span>
-                    <h3>Market &amp; measure</h3>
-                    <p>Campaign, content, and website tools</p>
-                </div>
-                <a class="tool-card" href="/tools/qr-code-generator/" data-theme="cosmos" data-category="growth">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual single">
-                            <span class="icon-badge"><i class="fas fa-qrcode"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>QR Code Generator</h3>
-                        <p class="tool-summary">Generate QR for URL, WhatsApp, phone, and email.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">QR</span>
-                            <span class="tool-tag">PNG</span>
-                            <span class="tool-tag">SVG</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/utm-builder/" data-theme="fire" data-category="growth">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual single">
-                            <span class="icon-badge"><i class="fas fa-link"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>UTM Builder</h3>
-                        <p class="tool-summary">Build campaign URLs for clean analytics tracking.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">UTM</span>
-                            <span class="tool-tag">GA4</span>
-                            <span class="tool-tag">Marketing</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/speed-test/" data-theme="fire" data-category="growth">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual single">
-                            <span class="icon-badge"><i class="fas fa-gauge-high"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Page Speed Test</h3>
-                        <p class="tool-summary">Measure Core Web Vitals instantly.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">Web</span>
-                            <span class="tool-tag">SEO</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <a class="tool-card" href="/tools/content-analyzer/" data-theme="mint" data-category="growth">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-align-left"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-chart-simple"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Content Analyzer</h3>
-                        <p class="tool-summary">Count words, estimate reading time, and find repeated keywords while you write.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">Writing</span>
-                            <span class="tool-tag">SEO</span>
-                            <span class="tool-tag">Live</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <div class="tools-group-heading">
-                    <span>03 / Create</span>
-                    <h3>Sketch &amp; explore</h3>
-                    <p>A focused creative workspace</p>
-                </div>
-                <a class="tool-card" href="/tools/rubiks-cube/" data-theme="mint" data-category="creative">
-                    <div class="tool-card-hero"><div class="tool-visual"><span class="icon-badge"><i class="fas fa-cube"></i></span><span class="tool-connector"></span><span class="icon-badge alt"><i class="fas fa-rotate"></i></span></div></div>
-                    <div class="tool-body"><h3>Cube Studio</h3><p class="tool-summary">Recreate your Rubik’s Cube and follow every turn to a solution in interactive 3D.</p><div class="tool-tags"><span class="tool-tag">3D</span><span class="tool-tag">Cube solver</span><span class="tool-tag">Photo assist</span></div><span class="tool-link">Open tool</span></div>
-                </a>
-                <a class="tool-card" href="/tools/painting-drawing/" data-theme="sunset" data-category="creative">
-                    <div class="tool-card-hero">
-                        <div class="tool-visual">
-                            <span class="icon-badge"><i class="fas fa-pen-nib"></i></span>
-                            <span class="tool-connector"></span>
-                            <span class="icon-badge alt"><i class="fas fa-tablet-screen-button"></i></span>
-                        </div>
-                    </div>
-                    <div class="tool-body">
-                        <h3>Painting &amp; Drawing</h3>
-                        <p class="tool-summary">A browser sketch studio with layers, pressure-aware brushes, and iPad-friendly controls.</p>
-                        <div class="tool-tags">
-                            <span class="tool-tag">Canvas</span>
-                            <span class="tool-tag">Layers</span>
-                            <span class="tool-tag">iPad</span>
-                        </div>
-                        <span class="tool-link">Open tool</span>
-                    </div>
-                </a>
-                <div class="tools-empty" hidden>
-                    <i class="fas fa-search"></i>
-                    <h3>No matching tool</h3>
-                    <p>Try another keyword or view all tools.</p>
-                    <button type="button">Reset search</button>
-                </div>
-            </div>
-            <p class="tools-note">All tools run directly in your browser. Your files stay on your device.</p>
-        </div>
+    <section class="hub-group" data-group="marketing" aria-labelledby="hub-marketing">
+      <div class="hub-group-head"><h2 class="tk-h2" id="hub-marketing">Marketing & writing</h2><p>Small tools that make campaigns cleaner.</p></div>
+      <div class="hub-grid">
+        <a class="hub-card" href="/tools/qr-code-generator/" data-cat="marketing" data-k="qr code generator styled qr codes for links  whatsapp  wi-fi and contact cards  qr wi-fi logo qr code wifi whatsapp vcard contact link generator barcode" style="--c:#dfff63;--r:.9deg;--span:2">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-qr"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>QR Code Generator</b><span>Styled QR codes for links, WhatsApp, Wi-Fi and contact cards.</span><span class="hub-card-tags"><i>QR</i><i>Wi-Fi</i><i>Logo</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/utm-builder/" data-cat="marketing" data-k="utm builder clean  consistent campaign links for google analytics 4  utm ga4 presets utm campaign tracking link url ga4 google analytics" style="--c:#9dd4ff;--r:-.5deg;--span:2">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-link"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>UTM Builder</b><span>Clean, consistent campaign links for Google Analytics 4.</span><span class="hub-card-tags"><i>UTM</i><i>GA4</i><i>Presets</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/content-analyzer/" data-cat="marketing" data-k="content analyzer live word count  readability and keyword density  readability seo word count readability keyword density seo writing text characters" style="--c:#ffb48c;--r:1.3deg;--span:2">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-lines"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Content Analyzer</b><span>Live word count, readability and keyword density.</span><span class="hub-card-tags"><i>Readability</i><i>SEO</i></span></span>
+        </a>
+        <a class="hub-card" href="/speed-test/" data-cat="marketing" data-k="page speed test check core web vitals and see where a page needs work  speed web vitals page speed core web vitals performance website test lighthouse" style="--c:#ffe27a;--r:-.9deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-gauge"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Page Speed Test</b><span>Check Core Web Vitals and see where a page needs work.</span><span class="hub-card-tags"><i>Speed</i><i>Web vitals</i></span></span>
+        </a>
+        <a class="hub-card" href="/growth-diagnostic/" data-cat="marketing" data-k="growth check-up ten quick questions  then the one marketing fix to make first  3 min marketing marketing check-up diagnostic quiz audit growth" style="--c:#f5b9e2;--r:-1.2deg;--span:3">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-pulse"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Growth Check-up</b><span>Ten quick questions, then the one marketing fix to make first.</span><span class="hub-card-tags"><i>3 min</i><i>Marketing</i></span></span>
+        </a>
+      </div>
     </section>
+    <section class="hub-group" data-group="play" aria-labelledby="hub-play">
+      <div class="hub-group-head"><h2 class="tk-h2" id="hub-play">Create & play</h2><p>For when you need a creative break.</p></div>
+      <div class="hub-grid">
+        <a class="hub-card" href="/tools/painting-drawing/" data-cat="play" data-k="painting studio pressure-aware brushes  layers and ipad-friendly controls  canvas layers draw paint sketch canvas art brush" style="--c:#a8e6c2;--r:.9deg;--span:2">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-pen"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Painting Studio</b><span>Pressure-aware brushes, layers and iPad-friendly controls.</span><span class="hub-card-tags"><i>Canvas</i><i>Layers</i></span></span>
+        </a>
+        <a class="hub-card" href="/tools/rubiks-cube/" data-cat="play" data-k="cube studio recreate your rubik s cube and follow a 3d solution turn by turn  3d solver rubik rubiks cube solver 3d puzzle" style="--c:#c9b8ff;--r:-.5deg;--span:2">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-cube"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Cube Studio</b><span>Recreate your Rubik’s Cube and follow a 3D solution turn by turn.</span><span class="hub-card-tags"><i>3D</i><i>Solver</i></span></span>
+        </a>
+        <a class="hub-card" href="/games/" data-cat="play" data-k="game center polished browser games for reflexes  memory and strategy  games instant games play fun arcade puzzle" style="--c:#dfff63;--r:1.3deg;--span:2">
+          <span class="hub-card-art"><span class="hub-card-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-game"/></svg></span><span class="hub-card-go"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-out"/></svg></span></span>
+          <span class="hub-card-body"><b>Game Center</b><span>Polished browser games for reflexes, memory and strategy.</span><span class="hub-card-tags"><i>Games</i><i>Instant</i></span></span>
+        </a>
+      </div>
+    </section>
+      <div class="hub-empty" id="hubEmpty" hidden><span class="hub-empty-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-search"/></svg></span><b>No tool matches that — yet.</b><p>Try “pdf”, “image”, “qr” or “link”… or tell me what you need below.</p></div>
+      <div class="hub-ask"><div><b>Missing a tool you need?</b><p>Tell me what would save you time — the most-requested tools get built next.</p></div><a class="tk-btn tk-btn-dark tk-btn-lg" href="/contact/"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-chat"/></svg>Suggest a tool</a></div>
+    </div>
+  </section>
+  <section class="tk-section">
+    <div class="tk-wrap">
+      <div class="tk-band"><span class="tk-band-ic"><svg class="tk-i" aria-hidden="true"><use href="#tk-i-shield"/></svg></span><div><h2>Private by design</h2><p>Every tool runs inside your browser tab. Files and text are never uploaded, stored or seen by anyone.</p></div><ul><li><svg class="tk-i" aria-hidden="true"><use href="#tk-i-check"/></svg>No uploads</li><li><svg class="tk-i" aria-hidden="true"><use href="#tk-i-check"/></svg>No account</li><li><svg class="tk-i" aria-hidden="true"><use href="#tk-i-check"/></svg>No watermark</li><li><svg class="tk-i" aria-hidden="true"><use href="#tk-i-check"/></svg>Free forever</li></ul></div>
+      <h2 class="tk-h2" style="margin-top:clamp(56px,7vw,88px)">Questions, answered</h2>
+      <div class="tk-faq">
+        <details><summary>Are these tools really free?<span><svg class="tk-i" aria-hidden="true"><use href="#tk-i-plus"/></svg></span></summary><p>Yes. There are no trials, limits or watermarks, and you don’t need an account.</p></details>
+        <details><summary>Are my files uploaded to a server?<span><svg class="tk-i" aria-hidden="true"><use href="#tk-i-plus"/></svg></span></summary><p>No. The PDF, image and writing tools process everything inside your browser, so your files never leave your device.</p></details>
+        <details><summary>Do they work on my phone?<span><svg class="tk-i" aria-hidden="true"><use href="#tk-i-plus"/></svg></span></summary><p>Yes. Every tool is designed for touch screens as well as desktops, and works in all modern browsers.</p></details>
+        <details><summary>Can I use them offline?<span><svg class="tk-i" aria-hidden="true"><use href="#tk-i-plus"/></svg></span></summary><p>Once a tool has loaded, it keeps working even if your connection drops — processing never depends on a server.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
 
-    <footer class="ua-footer" data-ua-footer>
+<footer class="ua-footer" data-ua-footer>
   <div class="ua-footer-shell">
     <div class="ua-footer-intro">
       <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
@@ -873,9 +410,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </footer>
 
-
-    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
-
-    <script src="../script.js?v=20260903-shell3"></script>
+<script src="/tools/shared/hub.js?v=20260930b"></script>
 <script src="/interior-redesign.js?v=34"></script><script src="/site-shell.js?v=20260906-4"></script><script src="/site-header.js?v=6"></script></body>
 </html>
