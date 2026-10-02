@@ -1,0 +1,95 @@
+/* Retargeting guide: audience temperature strip, journey explorer with ad mock-ups, setup checklist. */
+.rt-guide .rt-temps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:28px 0; }
+.rt-guide .rt-temp { display:grid; gap:4px; padding:16px; border-radius:18px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); font-size:.84rem; line-height:1.45; }
+.rt-guide .rt-temp b { display:flex; align-items:center; gap:8px; font-size:1rem; }
+.rt-guide .rt-temp > span:last-child { color:var(--fe-muted); }
+.rt-guide .rt-dot { width:12px; height:12px; border-radius:50%; }
+.rt-guide .rt-temp { position:relative; padding-top:30px; }
+.rt-guide .rt-temp .rt-dot { position:absolute; top:14px; left:16px; }
+.rt-guide .rt-hot .rt-dot { background:#e0532f; box-shadow:0 0 0 4px rgba(224,83,47,.18); }
+.rt-guide .rt-warm .rt-dot { background:#e9a23b; box-shadow:0 0 0 4px rgba(233,162,59,.18); }
+.rt-guide .rt-cool .rt-dot { background:#3e9bd6; box-shadow:0 0 0 4px rgba(62,155,214,.18); }
+.rt-guide .rt-cold .rt-dot { background:#8a8f9c; box-shadow:0 0 0 4px rgba(138,143,156,.18); }
+
+/* Explorer */
+.rt-guide .rt-explorer { margin:44px 0; padding:26px; border-radius:26px; border:1px solid var(--fe-border); background:var(--fe-surface); color:var(--fe-ink); scroll-margin-top:110px; }
+.rt-guide .rt-title { margin-top:6px; font:400 clamp(1.6rem,3vw,2.1rem)/1.1 'DM Serif Display',serif; }
+.rt-guide .rt-sub { margin-top:6px; color:var(--fe-muted); font-size:.92rem; line-height:1.55; }
+.rt-guide .rt-tracks { display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 14px; padding:5px; border-radius:16px; background:var(--fe-raised); border:1px solid var(--fe-border); }
+.rt-guide .rt-tracks button { flex:1 1 200px; min-height:42px; padding:0 14px; border:0; border-radius:12px; background:transparent; color:var(--fe-muted); font:700 .88rem/1.2 'Manrope',sans-serif; cursor:pointer; transition:background .2s,color .2s; }
+.rt-guide .rt-tracks button[aria-selected=true] { background:var(--fe-accent); color:var(--fe-raised); }
+.rt-guide .rt-days { position:relative; display:flex; gap:8px; overflow-x:auto; padding:4px 2px 12px; scrollbar-width:thin; }
+.rt-guide .rt-days button { flex:1 0 108px; display:grid; gap:2px; padding:10px 12px; border:1px solid var(--fe-border); border-radius:14px; background:var(--fe-raised); color:var(--fe-ink); text-align:left; cursor:pointer; transition:transform .25s,border-color .2s,background .2s; }
+.rt-guide .rt-days button span { font:800 .95rem/1.2 'Manrope',sans-serif; }
+.rt-guide .rt-days button small { color:var(--fe-muted); font:600 .74rem/1.3 'Manrope',sans-serif; }
+.rt-guide .rt-days button:hover { transform:translateY(-2px); border-color:var(--fe-accent); }
+.rt-guide .rt-days button.is-past { border-color:color-mix(in srgb,var(--fe-accent) 40%,var(--fe-border)); }
+.rt-guide .rt-days button.is-past span::after { content:" ✓"; color:var(--fe-accent); }
+.rt-guide .rt-days button[aria-selected=true] { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.rt-guide .rt-days button[aria-selected=true] small { color:inherit; opacity:.85; }
+.rt-guide .rt-days button.is-stop[aria-selected=true] { background:#8a8f9c; border-color:#8a8f9c; }
+.rt-guide .rt-days button:focus-visible, .rt-guide .rt-tracks button:focus-visible, .rt-guide .rt-nav button:focus-visible { outline:3px solid var(--fe-accent-2); outline-offset:2px; }
+.rt-guide .rt-card { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:22px; margin-top:6px; padding:22px; border-radius:22px; background:var(--fe-raised); border:1px solid var(--fe-border); animation:rt-in .35s ease; }
+@keyframes rt-in { from { opacity:0; transform:translateY(8px); } }
+.rt-guide .rt-step { display:flex; align-items:center; gap:10px; font:400 1.5rem/1.15 'DM Serif Display',serif; }
+.rt-guide .rt-step span { padding:4px 10px; border-radius:999px; background:var(--fe-accent); color:var(--fe-raised); font:800 .72rem/1.3 'Manrope',sans-serif; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; }
+.rt-guide .rt-mood { display:flex; gap:10px; margin:14px 0; padding:12px 14px; border-radius:14px; background:var(--fe-surface); font:600 italic .95rem/1.5 'Manrope',sans-serif; }
+.rt-guide .rt-mood-ic { font-style:normal; }
+.rt-guide .rt-row { display:grid; grid-template-columns:64px minmax(0,1fr); gap:10px; padding:8px 0; border-bottom:1px solid var(--fe-border); font-size:.9rem; line-height:1.5; }
+.rt-guide .rt-row > span { color:var(--fe-muted); font-weight:800; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; padding-top:2px; }
+.rt-guide .rt-tip { margin-top:14px; padding:12px 14px; border-left:4px solid var(--fe-accent-2); border-radius:0 12px 12px 0; background:color-mix(in srgb,var(--fe-accent-2) 10%,transparent); font-size:.88rem; line-height:1.55; }
+.rt-guide .rt-tip b { display:block; margin-bottom:2px; color:var(--fe-accent-2); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; }
+.rt-guide .rt-nav { display:flex; justify-content:space-between; gap:8px; margin-top:16px; }
+.rt-guide .rt-nav button { min-height:40px; padding:0 16px; border:1px solid var(--fe-border); border-radius:999px; background:var(--fe-surface); color:var(--fe-ink); font:700 .86rem 'Manrope',sans-serif; cursor:pointer; }
+.rt-guide .rt-nav button:last-child { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.rt-guide .rt-nav button:disabled { opacity:.35; cursor:default; }
+.rt-guide .rt-preview { display:grid; place-items:center; padding:12px; border-radius:18px; background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--fe-ink) 3%,transparent) 0 10px,transparent 10px 20px); }
+
+/* Ad mock-up (always light, like a real phone feed) */
+.rt-guide .rt-ad { width:100%; max-width:300px; overflow:hidden; border-radius:16px; background:#fff; color:#111; box-shadow:0 18px 40px -18px rgba(0,0,0,.45); font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
+.rt-guide .rt-ad-top, .rt-guide .rt-wa-top { display:flex; align-items:center; gap:9px; padding:10px 12px; }
+.rt-guide .rt-ad-top b, .rt-guide .rt-wa-top b { display:block; font-size:.82rem; }
+.rt-guide .rt-ad-top small, .rt-guide .rt-wa-top small { display:block; color:#777; font-size:.7rem; }
+.rt-guide .rt-ad-av, .rt-guide .rt-wa-av { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#2b4a3c; color:#fff; font-weight:800; font-size:.8rem; }
+.rt-guide .rt-ad-more { margin-left:auto; color:#999; letter-spacing:1px; }
+.rt-guide .rt-ad-visual { position:relative; display:grid; place-items:center; aspect-ratio:1; }
+.rt-guide .rt-sand { background:linear-gradient(160deg,#f3e6d3,#e2cfb4); }
+.rt-guide .rt-green { background:linear-gradient(160deg,#d9eadf,#b8d6c3); }
+.rt-guide .rt-sky { background:linear-gradient(160deg,#dcecf8,#bcd8ee); }
+.rt-guide .rt-peach { background:linear-gradient(160deg,#fde2d2,#f7c3a6); }
+.rt-guide .rt-ad-label { position:absolute; top:12px; left:12px; padding:5px 10px; border-radius:999px; background:rgba(255,255,255,.88); font-size:.72rem; font-weight:700; }
+.rt-guide .rt-sofa { position:relative; width:62%; height:30%; margin-top:18%; }
+.rt-guide .rt-sofa i { position:absolute; display:block; border-radius:10px; background:#8b6f55; }
+.rt-guide .rt-sofa i:nth-child(1) { inset:0 6% 38% 6%; background:#9c8064; }
+.rt-guide .rt-sofa i:nth-child(2) { left:0; right:0; top:42%; bottom:12%; background:#a98b6c; }
+.rt-guide .rt-sofa i:nth-child(3) { left:8%; right:8%; bottom:0; height:12%; background:#5d4a39; border-radius:3px; }
+.rt-guide .rt-green .rt-sofa i:nth-child(1) { background:#6f8f7c; } .rt-guide .rt-green .rt-sofa i:nth-child(2) { background:#7fa08b; }
+.rt-guide .rt-sky .rt-sofa i:nth-child(1) { background:#6d8aa3; } .rt-guide .rt-sky .rt-sofa i:nth-child(2) { background:#7d9bb4; }
+.rt-guide .rt-peach .rt-sofa i:nth-child(1) { background:#c48a6a; } .rt-guide .rt-peach .rt-sofa i:nth-child(2) { background:#cf977a; }
+.rt-guide .rt-ad-copy { display:grid; gap:3px; padding:10px 12px 4px; font-size:.82rem; line-height:1.4; }
+.rt-guide .rt-ad-copy b { font-size:.92rem; }
+.rt-guide .rt-ad-copy span { color:#444; }
+.rt-guide .rt-ad-cta { display:flex; align-items:center; justify-content:space-between; margin:8px 12px 12px; padding:8px 10px; border-radius:10px; background:#f2f2f2; font-size:.74rem; color:#666; }
+.rt-guide .rt-ad-btn { padding:6px 12px; border-radius:8px; background:#2b4a3c; color:#fff; font-weight:700; }
+.rt-guide .rt-wa { width:100%; max-width:300px; overflow:hidden; border-radius:16px; background:#efe7dd; box-shadow:0 18px 40px -18px rgba(0,0,0,.45); font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
+.rt-guide .rt-wa-top { background:#1f6f5c; color:#fff; } .rt-guide .rt-wa-top small { color:rgba(255,255,255,.75); }
+.rt-guide .rt-wa-av { background:#fff; color:#1f6f5c; }
+.rt-guide .rt-wa-body { padding:16px 12px 22px; }
+.rt-guide .rt-wa-msg { display:grid; gap:4px; max-width:92%; padding:10px 12px 6px; border-radius:4px 14px 14px 14px; background:#fff; color:#111; font-size:.84rem; line-height:1.45; }
+.rt-guide .rt-wa-msg small { justify-self:end; color:#4fa3d1; font-size:.68rem; }
+.rt-guide .rt-empty { display:grid; justify-items:center; gap:6px; padding:30px 10px; text-align:center; color:var(--fe-muted); }
+.rt-guide .rt-empty span { font-size:2.2rem; }
+.rt-guide .rt-empty b { color:var(--fe-ink); font-size:1rem; }
+
+/* Setup checklist */
+.rt-guide .rt-check { display:grid; gap:10px; margin:22px 0; }
+.rt-guide .rt-check > div { display:grid; grid-template-columns:38px minmax(0,1fr); gap:14px; padding:16px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-muted); font-size:.92rem; line-height:1.6; }
+.rt-guide .rt-check b { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; background:var(--fe-accent); color:var(--fe-raised); font:800 1rem 'Manrope',sans-serif; }
+
+@media (max-width:760px) {
+  .rt-guide .rt-temps { grid-template-columns:1fr 1fr; }
+  .rt-guide .rt-explorer { padding:18px; margin-left:-6px; margin-right:-6px; }
+  .rt-guide .rt-card { grid-template-columns:1fr; padding:16px; }
+  .rt-guide .rt-preview { order:-1; }
+}
+@media (prefers-reduced-motion:reduce) { .rt-guide .rt-card { animation:none; } }
