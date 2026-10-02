@@ -132,3 +132,39 @@ html body.sb-guide .blog-post-content .sb-route-list a { display:grid !important
   .sb-guide .sb-ring { padding-left:76px; }
 }
 @media (prefers-reduced-motion:reduce) { .sb-guide .sb-myth-f, .sb-guide .sb-myth-b, .sb-guide .sb-case-item, .sb-guide .sb-mini { transition:none; animation:none; } }
+
+/* Language switcher + translated reading */
+.sb-guide .sb-lang { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:18px; }
+.sb-guide .sb-lang-k { margin-right:4px; color:var(--fe-muted); font:800 .74rem 'Manrope',sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+.sb-guide .sb-lang button { min-height:38px; padding:0 14px; border:1px solid var(--fe-border); border-radius:999px; background:var(--fe-raised); color:var(--fe-ink); font:700 .9rem/1 'Manrope','Noto Kufi Arabic','Noto Sans Malayalam','Noto Sans Devanagari',system-ui,sans-serif; cursor:pointer; transition:background .2s,color .2s; }
+.sb-guide .sb-lang button[aria-pressed=true] { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.sb-guide .sb-lang-s { color:var(--fe-accent); font:700 .8rem 'Manrope',sans-serif; }
+html body.sb-guide [lang=ar], html body.sb-guide [lang=ar] * { font-family:'Noto Kufi Arabic',system-ui,sans-serif !important; letter-spacing:0 !important; }
+html body.sb-guide [lang=ml], html body.sb-guide [lang=ml] * { font-family:'Noto Sans Malayalam',system-ui,sans-serif !important; letter-spacing:0 !important; }
+html body.sb-guide [lang=hi], html body.sb-guide [lang=hi] * { font-family:'Noto Sans Devanagari',system-ui,sans-serif !important; letter-spacing:0 !important; }
+html body.sb-guide :is([lang=ar],[lang=ml],[lang=hi]) :is(h1,h2,h3,b,.sb-cast-title,.sb-myths-title,.sb-case-item b,.sb-year b,.sb-cols b,.fe-quote blockquote) { line-height:1.45 !important; }
+html body.sb-guide :is([lang=ar],[lang=ml],[lang=hi]) :is(.fe-kicker,.sb-case-k,.sb-year-m,.sb-myth small,small) { text-transform:none !important; }
+html body.sb-guide .blog-post-header .sb-lang, html body.sb-guide .blog-post-header .sb-lang * { font-family:'Manrope','Noto Kufi Arabic','Noto Sans Malayalam','Noto Sans Devanagari',system-ui,sans-serif !important; }
+/* Right-to-left adjustments for Arabic */
+.sb-guide [dir=rtl] .sb-case-item { border-left:0; border-right:6px solid var(--sb-c); border-radius:20px 6px 6px 20px; padding:20px 26px 20px 22px; }
+.sb-guide [dir=rtl] .sb-script > div { border-left:1px solid var(--fe-border); border-right:4px solid var(--fe-accent); border-radius:18px 6px 6px 18px; }
+.sb-guide [dir=rtl] .sb-steps { padding-left:0; padding-right:62px; }
+.sb-guide [dir=rtl] .sb-steps::before { left:auto; right:23px; }
+.sb-guide [dir=rtl] .sb-steps > div > span { left:auto; right:-62px; }
+.sb-guide [dir=rtl] .sb-ring { padding:18px 86px 18px 18px; }
+.sb-guide [dir=rtl] .sb-ring::before { left:auto; right:20px; }
+.sb-guide [dir=rtl] .sb-notes > div { padding-left:18px; padding-right:48px; }
+.sb-guide [dir=rtl] .sb-notes > div::before { left:auto; right:18px; }
+.sb-guide [dir=rtl] .sb-myth { text-align:right; }
+.sb-guide [dir=rtl] .sb-myth-f::after { right:auto; left:14px; }
+.sb-guide [dir=rtl] .sb-cast-list button { text-align:right; }
+@media (max-width:600px) {
+  .sb-guide [dir=rtl] .sb-steps { padding-right:52px; } .sb-guide [dir=rtl] .sb-steps::before { right:19px; }
+  .sb-guide [dir=rtl] .sb-steps > div > span { right:-52px; }
+  .sb-guide [dir=rtl] .sb-ring { padding-right:76px; }
+}
+html body.sb-guide .sb-lang-k { color:inherit !important; opacity:.75; }
+.sb-guide .sb-lang-s { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+.sb-guide [lang=ar] .sb-myth-f::after { content:"↻ اضغط"; }
+.sb-guide [lang=ml] .sb-myth-f::after { content:"↻ ടാപ്പ്"; }
+.sb-guide [lang=hi] .sb-myth-f::after { content:"↻ टैप"; }
