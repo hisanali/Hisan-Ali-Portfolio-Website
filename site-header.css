@@ -230,6 +230,11 @@ html.theme-dark .hd-feature-dark { background: #1d3b30; }
   .hd-tile-contact { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; min-height: 0; padding: 16px 14px 16px 18px; color: #fff !important; background: var(--ua-orange); }
   .hd-tile-contact b { font-size: 24px; }
   .hd-tile-arrow { display: grid; flex: 0 0 auto; width: 46px; height: 46px; place-items: center; color: var(--ua-orange); border-radius: 50%; background: #fff; }
+  .hd-tile-mini { flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; min-height: 0; padding: 14px; color: #f2efe7 !important; background: rgba(242, 239, 231, .07); box-shadow: inset 0 0 0 1px rgba(242, 239, 231, .16); }
+  .hd-tile-mini b { font-size: 21px; }
+  .hd-tile-mini small { font-size: 11.5px; }
+  .hd-tile-ico { display: grid; flex: 0 0 auto; width: 40px; height: 40px; place-items: center; color: #14251f; border-radius: 13px; background: var(--c); transform: rotate(-6deg); }
+  .hd-tile-ico .hd-i { width: 20px; height: 20px; }
   .hd-tile.is-active { box-shadow: inset 0 0 0 3px var(--ua-lime); }
   .hd-tile.is-active::before { content: "You're here"; position: absolute; z-index: 1; top: 12px; left: 12px; padding: 5px 9px; color: var(--hd-dark); border-radius: 99px; background: var(--ua-lime); font: 800 10px/1 var(--ua-sans); letter-spacing: .06em; text-transform: uppercase; }
   .hd-tile-services.is-active { box-shadow: inset 0 0 0 3px var(--hd-dark); }

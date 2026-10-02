@@ -154,7 +154,9 @@ ${readingControl}
         <a class="hd-tile hd-tile-photo hd-tile-wide" href="/blog/" style="--i:2"><img src="/hd-m-insights-editorial.webp" alt="" width="720" height="300" loading="lazy" decoding="async"><span class="hd-tile-copy"><b>Insights</b><small>Guides &amp; research for Oman &amp; GCC</small></span><svg class="hd-i hd-tile-go" aria-hidden="true"><use href="#hd-out"/></svg></a>
         <a class="hd-tile hd-tile-photo" href="/lab/" style="--i:3"><img src="/hd-m-lab-editorial.webp" alt="" width="560" height="350" loading="lazy" decoding="async"><span class="hd-tile-copy"><b>Lab</b><small>Tools &amp; games</small></span><svg class="hd-i hd-tile-go" aria-hidden="true"><use href="#hd-out"/></svg></a>
         <a class="hd-tile hd-tile-photo" href="/about/" style="--i:4"><img src="/hd-m-about-editorial.webp" alt="" width="480" height="400" loading="lazy" decoding="async"><span class="hd-tile-copy"><b>About</b><small>Who I am</small></span><svg class="hd-i hd-tile-go" aria-hidden="true"><use href="#hd-out"/></svg></a>
-        <a class="hd-tile hd-tile-contact hd-tile-wide" href="/contact/" style="--i:5"><span class="hd-tile-copy"><b>Start a project</b><small>Tell me what you need · replies in 1–2 days</small></span><span class="hd-tile-arrow" aria-hidden="true"><svg class="hd-i"><use href="#hd-arrow"/></svg></span></a>
+        <a class="hd-tile hd-tile-mini" href="/tools/" style="--i:5;--c:#9dd4ff"><span class="hd-tile-ico" aria-hidden="true"><svg class="hd-i"><use href="#hd-tools"/></svg></span><span class="hd-tile-copy"><b>Tools</b><small>25 free utilities</small></span></a>
+        <a class="hd-tile hd-tile-mini" href="/games/" style="--i:5;--c:#dfff63"><span class="hd-tile-ico" aria-hidden="true"><svg class="hd-i"><use href="#hd-game"/></svg></span><span class="hd-tile-copy"><b>Games</b><small>Instant fun</small></span></a>
+        <a class="hd-tile hd-tile-contact hd-tile-wide" href="/contact/" style="--i:6"><span class="hd-tile-copy"><b>Start a project</b><small>Tell me what you need · replies in 1–2 days</small></span><span class="hd-tile-arrow" aria-hidden="true"><svg class="hd-i"><use href="#hd-arrow"/></svg></span></a>
       </div>
       <a class="hd-m-checkup" href="/growth-diagnostic/"><svg class="hd-i" aria-hidden="true"><use href="#hd-pulse"/></svg><span><b>Free 3-min marketing check-up</b><small>Find what to fix first</small></span><svg class="hd-i" aria-hidden="true"><use href="#hd-arrow"/></svg></a>
     </div>
@@ -244,7 +246,7 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=7"></head>`)
+    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=8"></head>`)
     .replace('</body>', '<script src="/site-shell.js?v=20260906-4"></script><script src="/site-header.js?v=6"></script></body>');
 
   if (home) {
