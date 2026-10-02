@@ -459,3 +459,4 @@ html.theme-dark .tk-band { background: #1f4536; }
 .tk a.tk-btn { color: var(--tk-ink); }
 .tk a.tk-btn-primary, .tk a.tk-btn-dark { color: #fff; }
 html.theme-dark .tk a.tk-btn-dark { color: #14251f; }
+.tk-btn[aria-pressed=true] { color: var(--tk-on-c); background: var(--tk-c); box-shadow: none; }

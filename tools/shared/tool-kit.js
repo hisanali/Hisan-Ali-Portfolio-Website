@@ -529,3 +529,28 @@
 
   window.TK = { $, $$, icon, esc, fmtBytes, plural, baseName, safeFileName, loadScript, pdfjs, pdflib, jszip, toast, download, copy, dropzone, sortable, moveItem, segmented, progress, steps, dock, parseRanges, decodeImage, canvasToBlob, canEncode, sampleImage, sampleLogo, samplePdf, nextFrame, reveal, LIBS };
 })();
+
+/* Page-thumbnail helper shared by the PDF page tools. */
+(function () {
+  'use strict';
+  /** Renders every page of a PDF (ArrayBuffer) to small canvases; onPage(i, canvas, total) fires as each finishes. */
+  async function pdfThumbs(bytes, onPage, size = 180) {
+    const lib = await window.TK.pdfjs();
+    const pdf = await lib.getDocument({ data: new Uint8Array(bytes.slice(0)) }).promise;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const vp = page.getViewport({ scale: 1 });
+      const view = page.getViewport({ scale: size / Math.max(vp.width, vp.height) });
+      const c = document.createElement('canvas');
+      c.width = Math.ceil(view.width);
+      c.height = Math.ceil(view.height);
+      await page.render({ canvasContext: c.getContext('2d'), viewport: view }).promise;
+      onPage(i - 1, c, pdf.numPages);
+      page.cleanup();
+    }
+    const n = pdf.numPages;
+    pdf.destroy();
+    return n;
+  }
+  window.TK.pdfThumbs = pdfThumbs;
+})();
