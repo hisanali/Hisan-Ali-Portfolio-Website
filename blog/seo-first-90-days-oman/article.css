@@ -1,0 +1,34 @@
+/* SEO 90-day guide: phase tabs, illustrative chart, warning cards. */
+.s9-guide .s9-road { margin:44px 0; padding:26px; border-radius:26px; border:1px solid var(--fe-border); background:var(--fe-surface); color:var(--fe-ink); scroll-margin-top:110px; }
+.s9-guide .s9-title { margin-top:6px; font:400 clamp(1.6rem,3vw,2.1rem)/1.1 'DM Serif Display',serif; }
+.s9-guide .s9-sub { margin-top:6px; color:var(--fe-muted); font-size:.92rem; line-height:1.55; }
+.s9-guide .s9-phases { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:18px; }
+.s9-guide .s9-phases button { position:relative; display:grid; gap:2px; padding:14px; border:2px solid var(--fe-border); border-radius:16px; background:var(--fe-raised); color:var(--fe-ink); text-align:left; cursor:pointer; transition:border-color .2s,background .2s; }
+.s9-guide .s9-phases button span { color:var(--fe-muted); font:800 .72rem 'Manrope',sans-serif; letter-spacing:.06em; text-transform:uppercase; }
+.s9-guide .s9-phases button b { font:400 1.15rem 'DM Serif Display',serif; }
+.s9-guide .s9-phases button.is-done { border-color:color-mix(in srgb,var(--fe-accent) 45%,var(--fe-border)); }
+.s9-guide .s9-phases button.is-done b::after { content:" ✓"; color:var(--fe-accent); font-family:'Manrope',sans-serif; font-size:.85rem; }
+.s9-guide .s9-phases button[aria-selected=true] { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.s9-guide .s9-phases button[aria-selected=true] span { color:inherit; opacity:.8; }
+.s9-guide button:focus-visible { outline:3px solid var(--fe-accent-2); outline-offset:2px; }
+.s9-guide .s9-card { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:14px; padding:22px; border-radius:22px; background:var(--fe-raised); border:1px solid var(--fe-border); animation:s9-in .3s ease; }
+@keyframes s9-in { from { opacity:0; transform:translateY(8px); } }
+.s9-guide .s9-k { color:var(--fe-accent); font:800 .72rem 'Manrope',sans-serif; letter-spacing:.1em; text-transform:uppercase; }
+.s9-guide .s9-list { display:grid; gap:8px; margin-top:10px; }
+.s9-guide .s9-list > div { position:relative; padding:10px 12px 10px 36px; border-radius:12px; background:var(--fe-surface); font-size:.9rem; line-height:1.45; }
+.s9-guide .s9-list > div::before { content:"→"; position:absolute; left:13px; top:10px; color:var(--fe-accent); font-weight:900; }
+.s9-guide .s9-get { margin-top:12px; padding:12px 14px; border-left:4px solid var(--fe-accent-2); border-radius:0 12px 12px 0; background:color-mix(in srgb,var(--fe-accent-2) 10%,transparent); font-size:.9rem; line-height:1.5; }
+.s9-guide .s9-get b { display:block; margin-bottom:2px; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--fe-accent-2); }
+.s9-guide .s9-chart { display:flex; align-items:flex-end; gap:4px; height:150px; margin-top:12px; padding:10px; border-radius:14px; background:var(--fe-surface); border-bottom:2px solid var(--fe-border); }
+.s9-guide .s9-chart i { flex:1; min-height:6px; border-radius:5px 5px 0 0; background:var(--fe-border); transition:height .5s ease,background .3s; }
+.s9-guide .s9-chart i.is-past { background:color-mix(in srgb,var(--fe-accent) 40%,var(--fe-border)); }
+.s9-guide .s9-chart i.is-now { background:var(--fe-accent); }
+.s9-guide .s9-chart-l { display:flex; justify-content:space-between; margin-top:6px; color:var(--fe-muted); font-size:.7rem; font-weight:700; }
+.s9-guide .s9-signs { margin-top:12px; font:400 1.15rem/1.4 'DM Serif Display',serif; }
+.s9-guide .s9-warn { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:22px 0; }
+.s9-guide .s9-warn > div { position:relative; display:grid; align-content:start; gap:4px; padding:16px 16px 16px 46px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-muted); font-size:.88rem; line-height:1.5; }
+.s9-guide .s9-warn > div::before { content:"!"; position:absolute; left:14px; top:15px; display:grid; place-items:center; width:22px; height:22px; border-radius:50%; background:#cc4b37; color:#fff; font-weight:900; font-size:.8rem; }
+.s9-guide .s9-warn b { color:var(--fe-ink); font-size:.98rem; }
+@media (max-width:820px) { .s9-guide .s9-phases { grid-template-columns:1fr 1fr; } .s9-guide .s9-card { grid-template-columns:1fr; } .s9-guide .s9-warn { grid-template-columns:1fr 1fr; } }
+@media (max-width:520px) { .s9-guide .s9-road { padding:16px; margin-left:-6px; margin-right:-6px; } .s9-guide .s9-card { padding:16px; } .s9-guide .s9-warn { grid-template-columns:1fr; } }
+@media (prefers-reduced-motion:reduce) { .s9-guide .s9-card { animation:none; } }

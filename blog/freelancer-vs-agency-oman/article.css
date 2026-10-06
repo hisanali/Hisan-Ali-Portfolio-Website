@@ -1,0 +1,34 @@
+/* Freelancer vs agency guide: decision path, lists. */
+.fa-guide .fa-path { margin:44px 0; padding:26px; border-radius:26px; border:1px solid var(--fe-border); background:var(--fe-surface); color:var(--fe-ink); scroll-margin-top:110px; }
+.fa-guide .fa-title { margin-top:6px; font:400 clamp(1.6rem,3vw,2.1rem)/1.1 'DM Serif Display',serif; }
+.fa-guide .fa-sub { margin-top:6px; color:var(--fe-muted); font-size:.92rem; line-height:1.55; }
+.fa-guide .fa-card { margin-top:20px; padding:24px; border-radius:22px; background:var(--fe-raised); border:1px solid var(--fe-border); animation:fa-in .35s ease; }
+@keyframes fa-in { from { opacity:0; transform:translateX(12px); } }
+.fa-guide .fa-road { display:flex; align-items:center; gap:0; margin-bottom:18px; }
+.fa-guide .fa-road span { flex:none; display:grid; place-items:center; width:32px; height:32px; border-radius:50%; border:2px solid var(--fe-border); background:var(--fe-surface); color:var(--fe-muted); font:800 .82rem 'Manrope',sans-serif; }
+.fa-guide .fa-road i { flex:1; height:3px; background:repeating-linear-gradient(90deg,var(--fe-border) 0 6px,transparent 6px 10px); }
+.fa-guide .fa-road span.is-done { background:color-mix(in srgb,var(--fe-accent) 25%,var(--fe-surface)); border-color:var(--fe-accent); color:var(--fe-ink); }
+.fa-guide .fa-road span.is-on { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.fa-guide .fa-q { font:400 clamp(1.3rem,2.6vw,1.65rem)/1.25 'DM Serif Display',serif; }
+.fa-guide .fa-opts { display:grid; gap:8px; margin-top:16px; }
+.fa-guide .fa-opts button { min-height:52px; padding:10px 18px; border:2px solid var(--fe-border); border-radius:16px; background:var(--fe-surface); color:var(--fe-ink); font:700 .95rem 'Manrope',sans-serif; text-align:left; cursor:pointer; transition:border-color .2s,transform .2s; }
+.fa-guide .fa-opts button:hover { border-color:var(--fe-accent); transform:translateX(4px); }
+.fa-guide button:focus-visible, .fa-guide .fa-link:focus-visible { outline:3px solid var(--fe-accent-2); outline-offset:2px; }
+.fa-guide .fa-trail { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
+.fa-guide .fa-trail span { padding:5px 10px; border-radius:999px; background:var(--fe-surface); color:var(--fe-muted); font-size:.76rem; font-weight:700; }
+.fa-guide .fa-k { color:var(--fe-accent); font:800 .72rem 'Manrope',sans-serif; letter-spacing:.1em; text-transform:uppercase; }
+.fa-guide .fa-r-t { margin-top:6px; font:400 clamp(1.7rem,3.4vw,2.3rem)/1.1 'DM Serif Display',serif; }
+.fa-guide .fa-bars { display:grid; gap:8px; margin:18px 0; }
+.fa-guide .fa-bars > div { display:grid; grid-template-columns:90px minmax(0,1fr); align-items:center; gap:10px; color:var(--fe-muted); font-weight:700; font-size:.84rem; }
+.fa-guide .fa-bars i { display:block; height:12px; min-width:4px; border-radius:12px; background:var(--fe-border); transition:width .6s ease; }
+.fa-guide .fa-bars .is-top { color:var(--fe-ink); } .fa-guide .fa-bars .is-top i { background:var(--fe-accent); }
+.fa-guide .fa-r-b { color:var(--fe-muted); font-size:.95rem; line-height:1.6; }
+.fa-guide .fa-r-b strong { color:var(--fe-ink); }
+html body.fa-guide .blog-post-content .fa-link { display:inline-block; margin-top:14px; color:var(--fe-accent) !important; font-weight:800 !important; text-decoration:none !important; border:0 !important; }
+.fa-guide .fa-again { display:block; margin-top:12px; min-height:42px; padding:0 18px; border:1px solid var(--fe-border); border-radius:999px; background:var(--fe-surface); color:var(--fe-ink); font:700 .86rem 'Manrope',sans-serif; cursor:pointer; }
+.fa-guide .fa-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:22px 0; }
+.fa-guide .fa-list > div { display:grid; gap:4px; padding:16px 16px 16px 48px; position:relative; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-muted); font-size:.9rem; line-height:1.55; }
+.fa-guide .fa-list > div::before { content:"✓"; position:absolute; left:16px; top:15px; display:grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--fe-accent); color:var(--fe-raised); font-size:.75rem; font-weight:800; }
+.fa-guide .fa-list b { color:var(--fe-ink); font-size:1rem; }
+@media (max-width:600px) { .fa-guide .fa-path { padding:16px; margin-left:-6px; margin-right:-6px; } .fa-guide .fa-list { grid-template-columns:1fr; } .fa-guide .fa-card { padding:18px; } }
+@media (prefers-reduced-motion:reduce) { .fa-guide .fa-card { animation:none; } }

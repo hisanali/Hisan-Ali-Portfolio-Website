@@ -1,0 +1,42 @@
+/* Audit guide: six-area explorer with expandable checks, layered stack. */
+.da-guide .da-x { margin:44px 0; padding:26px; border-radius:26px; border:1px solid var(--fe-border); background:var(--fe-surface); color:var(--fe-ink); scroll-margin-top:110px; }
+.da-guide .da-title { margin-top:6px; font:400 clamp(1.6rem,3vw,2.1rem)/1.1 'DM Serif Display',serif; }
+.da-guide .da-sub { margin-top:6px; color:var(--fe-muted); font-size:.92rem; line-height:1.55; }
+.da-guide .da-tabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; margin-top:18px; }
+.da-guide .da-tabs button { display:grid; justify-items:center; gap:4px; padding:12px 6px; border:2px solid var(--fe-border); border-radius:16px; background:var(--fe-raised); color:var(--fe-ink); cursor:pointer; transition:border-color .2s,background .2s,transform .2s; }
+.da-guide .da-tabs button span { font-size:1.4rem; }
+.da-guide .da-tabs button b { font:800 .76rem/1.2 'Manrope',sans-serif; text-align:center; }
+.da-guide .da-tabs button:hover { transform:translateY(-2px); }
+.da-guide .da-tabs button[aria-selected=true] { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.da-guide button:focus-visible { outline:3px solid var(--fe-accent-2); outline-offset:2px; }
+.da-guide .da-card { display:grid; gap:8px; margin-top:14px; animation:da-in .3s ease; }
+@keyframes da-in { from { opacity:0; transform:translateY(8px); } }
+.da-guide .da-check { border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); overflow:hidden; }
+.da-guide .da-check > button { display:flex; justify-content:space-between; align-items:center; gap:12px; width:100%; min-height:56px; padding:12px 18px; border:0; background:none; color:var(--fe-ink); text-align:left; cursor:pointer; }
+.da-guide .da-q { font:700 .98rem/1.35 'Manrope',sans-serif; }
+.da-guide .da-tog { flex:none; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--fe-surface); color:var(--fe-accent); font:800 1.1rem 'Manrope',sans-serif; }
+.da-guide .da-check.is-open { border-color:var(--fe-accent); }
+.da-guide .da-ans { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 14px 14px; animation:da-in .25s ease; }
+.da-guide .da-good, .da-guide .da-bad { padding:12px 14px; border-radius:12px; font-size:.88rem; line-height:1.5; }
+.da-guide .da-good { background:color-mix(in srgb,#2f9a63 12%,var(--fe-surface)); }
+.da-guide .da-bad { background:color-mix(in srgb,#cc4b37 11%,var(--fe-surface)); }
+.da-guide .da-good b, .da-guide .da-bad b { display:block; margin-bottom:3px; font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; }
+.da-guide .da-good b { color:#2f9a63; } .da-guide .da-bad b { color:#cc4b37; }
+.da-guide .da-nav { display:flex; justify-content:space-between; gap:8px; margin-top:6px; }
+.da-guide .da-nav button { min-height:40px; padding:0 16px; border:1px solid var(--fe-border); border-radius:999px; background:var(--fe-raised); color:var(--fe-ink); font:700 .84rem 'Manrope',sans-serif; cursor:pointer; }
+.da-guide .da-nav button[data-go="1"] { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.da-guide .da-stack { display:grid; gap:6px; max-width:620px; margin:22px auto; }
+.da-guide .da-stack > div { display:grid; grid-template-columns:40px 190px minmax(0,1fr); align-items:center; gap:12px; padding:12px 16px; border-radius:14px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-muted); font-size:.88rem; }
+.da-guide .da-stack > div:nth-child(1) { margin:0 60px; } .da-guide .da-stack > div:nth-child(2) { margin:0 48px; } .da-guide .da-stack > div:nth-child(3) { margin:0 36px; } .da-guide .da-stack > div:nth-child(4) { margin:0 24px; } .da-guide .da-stack > div:nth-child(5) { margin:0 12px; }
+.da-guide .da-stack > div:last-child { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.da-guide .da-stack > div:last-child b { color:inherit; }
+.da-guide .da-stack span { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:var(--fe-surface); color:var(--fe-accent); font:800 .85rem 'Manrope',sans-serif; }
+.da-guide .da-stack b { color:var(--fe-ink); font-size:.98rem; }
+@media (max-width:820px) { .da-guide .da-tabs { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:560px) {
+  .da-guide .da-x { padding:16px; margin-left:-6px; margin-right:-6px; }
+  .da-guide .da-ans { grid-template-columns:1fr; }
+  .da-guide .da-stack > div { grid-template-columns:36px minmax(0,1fr); margin:0 !important; }
+  .da-guide .da-stack small { grid-column:2; }
+}
+@media (prefers-reduced-motion:reduce) { .da-guide .da-card, .da-guide .da-ans { animation:none; } }

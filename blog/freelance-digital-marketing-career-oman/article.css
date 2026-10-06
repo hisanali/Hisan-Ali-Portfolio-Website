@@ -1,0 +1,34 @@
+/* Freelance career guide: legal cards, skills map, steps, rules. */
+.fc-guide .fc-legal { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:22px 0; }
+.fc-guide .fc-legal > div { display:grid; align-content:start; gap:6px; padding:18px; border-radius:18px; border:1px solid var(--fe-border); border-top:5px solid var(--fe-accent); background:var(--fe-raised); color:var(--fe-muted); font-size:.9rem; line-height:1.55; }
+.fc-guide .fc-legal b { color:var(--fe-ink); font:400 1.25rem 'DM Serif Display',serif; }
+.fc-guide .fc-map { margin:44px 0; padding:26px; border-radius:26px; border:1px solid var(--fe-border); background:var(--fe-surface); color:var(--fe-ink); scroll-margin-top:110px; }
+.fc-guide .fc-title { margin-top:6px; font:400 clamp(1.6rem,3vw,2.1rem)/1.1 'DM Serif Display',serif; }
+.fc-guide .fc-sub { margin-top:6px; color:var(--fe-muted); font-size:.92rem; line-height:1.55; }
+.fc-guide .fc-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:18px; }
+.fc-guide .fc-grid button { display:grid; justify-items:start; gap:6px; min-height:92px; padding:14px; border:2px solid var(--fe-border); border-radius:18px; background:var(--fe-raised); color:var(--fe-ink); text-align:left; cursor:pointer; transition:border-color .2s,transform .2s,background .2s; }
+.fc-guide .fc-grid button span { font-size:1.5rem; }
+.fc-guide .fc-grid button b { font:800 .86rem/1.25 'Manrope',sans-serif; }
+.fc-guide .fc-grid button:hover { transform:translateY(-3px); border-color:var(--fe-accent); }
+.fc-guide .fc-grid button[aria-selected=true] { background:var(--fe-accent); border-color:var(--fe-accent); color:var(--fe-raised); }
+.fc-guide button:focus-visible { outline:3px solid var(--fe-accent-2); outline-offset:2px; }
+.fc-guide .fc-card { margin-top:14px; padding:22px; border-radius:22px; background:var(--fe-raised); border:1px solid var(--fe-border); animation:fc-in .3s ease; }
+@keyframes fc-in { from { opacity:0; transform:translateY(8px); } }
+.fc-guide .fc-card-h { display:flex; gap:14px; align-items:center; }
+.fc-guide .fc-card-h > span { display:grid; place-items:center; width:54px; height:54px; border-radius:16px; background:var(--fe-surface); font-size:1.7rem; }
+.fc-guide .fc-card-h b { display:block; font:400 1.5rem/1.15 'DM Serif Display',serif; }
+.fc-guide .fc-card-h small { color:var(--fe-accent); font-weight:800; font-size:.8rem; }
+.fc-guide .fc-rows { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.fc-guide .fc-rows > div { padding:14px; border-radius:14px; background:var(--fe-surface); font-size:.9rem; line-height:1.55; }
+.fc-guide .fc-rows span { display:block; margin-bottom:4px; color:var(--fe-muted); font:800 .7rem 'Manrope',sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+.fc-guide .fc-tip { margin-top:12px; padding:12px 14px; border-left:4px solid var(--fe-accent-2); border-radius:0 12px 12px 0; background:color-mix(in srgb,var(--fe-accent-2) 10%,transparent); font-size:.9rem; }
+.fc-guide .fc-steps { display:grid; gap:10px; margin:22px 0; }
+.fc-guide .fc-steps > div { display:grid; grid-template-columns:44px minmax(0,1fr); grid-template-rows:auto auto; column-gap:14px; padding:16px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-muted); font-size:.9rem; line-height:1.55; }
+.fc-guide .fc-steps span { grid-row:1 / span 2; display:grid; place-items:center; width:44px; height:44px; border-radius:14px; background:var(--fe-accent); color:var(--fe-raised); font:800 1rem 'Manrope',sans-serif; }
+.fc-guide .fc-steps b { color:var(--fe-ink); font-size:1rem; }
+.fc-guide .fc-rules { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:20px 0; }
+.fc-guide .fc-rules > div { position:relative; padding:14px 14px 14px 44px; border-radius:14px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); font-size:.9rem; line-height:1.45; }
+.fc-guide .fc-rules > div::before { content:"✓"; position:absolute; left:14px; top:13px; color:var(--fe-accent); font-weight:900; }
+@media (max-width:760px) { .fc-guide .fc-grid { grid-template-columns:1fr 1fr; } .fc-guide .fc-legal { grid-template-columns:1fr; } }
+@media (max-width:520px) { .fc-guide .fc-map { padding:16px; margin-left:-6px; margin-right:-6px; } .fc-guide .fc-rows, .fc-guide .fc-rules { grid-template-columns:1fr; } }
+@media (prefers-reduced-motion:reduce) { .fc-guide .fc-card { animation:none; } }
