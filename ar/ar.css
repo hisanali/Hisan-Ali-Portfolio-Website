@@ -1,0 +1,46 @@
+/* Arabic landing pages (RTL). High specificity because interior styles force fonts with !important. */
+body.page-ar { --ar-ink: var(--ix-ink, #15201b); --ar-muted: var(--ix-muted, #5d6a63); --ar-line: var(--ix-line, #d9d3c4); --ar-paper: var(--ix-paper, #f4efe5); --ar-card: color-mix(in srgb, var(--ar-ink) 4%, var(--ar-paper)); --ar-accent: var(--ix-orange, #e2582c); background: var(--ar-paper); }
+html body.page-ar .ar, html body.page-ar .ar * { font-family: 'Noto Kufi Arabic', 'Manrope', system-ui, sans-serif !important; letter-spacing: 0 !important; }
+.ar { width: min(1100px, calc(100% - 32px)); margin: 0 auto; padding: 120px 0 70px; color: var(--ar-ink); text-align: right; }
+.ar-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 34px; }
+html body.page-ar .ar-nav a { padding: 8px 14px; border: 1px solid var(--ar-line); border-radius: 999px; color: var(--ar-ink) !important; font-size: .85rem; font-weight: 700; text-decoration: none !important; }
+html body.page-ar .ar-nav a[aria-current] { background: var(--ar-ink); border-color: var(--ar-ink); color: var(--ar-paper) !important; }
+html body.page-ar .ar-nav a.ar-en { margin-inline-start: auto; font-family: 'Manrope', sans-serif !important; }
+.ar-k { color: var(--ar-accent); font-size: .85rem; font-weight: 800; }
+html body.page-ar .ar h1 { margin: 12px 0 18px; font-size: clamp(2rem, 5vw, 3.5rem) !important; font-weight: 800 !important; line-height: 1.35 !important; color: var(--ar-ink) !important; }
+.ar h1 em { color: var(--ar-accent); font-style: normal; font-weight: 600; font-size: .78em; }
+html body.page-ar .ar-lead { max-width: 62ch; color: var(--ar-muted) !important; font-size: 1.1rem !important; line-height: 2 !important; }
+.ar-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+html body.page-ar .ar a.ar-btn { display: inline-flex; align-items: center; min-height: 52px; padding: 0 24px; border-radius: 999px; font-weight: 800; text-decoration: none !important; transition: transform .2s; }
+html body.page-ar .ar a.ar-btn-wa { background: #1fa855; color: #fff !important; box-shadow: 0 14px 30px -16px #1fa855; }
+html body.page-ar .ar a.ar-btn-2 { border: 1.5px solid var(--ar-line); color: var(--ar-ink) !important; }
+.ar-btn:hover { transform: translateY(-2px); }
+.ar-note { margin-top: 14px; color: var(--ar-muted); font-size: .85rem; }
+.ar-sec { margin-top: 64px; }
+html body.page-ar .ar h2 { margin-bottom: 20px; font-size: clamp(1.5rem, 3vw, 2.1rem) !important; font-weight: 800 !important; line-height: 1.4 !important; color: var(--ar-ink) !important; }
+.ar-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+html body.page-ar .ar-card { display: grid; align-content: start; gap: 8px; padding: 22px; border-radius: 20px; border: 1px solid var(--ar-line); background: var(--ar-card); color: var(--ar-ink) !important; text-decoration: none !important; transition: border-color .2s, transform .2s; }
+html body.page-ar a.ar-card:hover { border-color: var(--ar-accent); transform: translateY(-2px); }
+.ar-card b { font-size: 1.1rem; }
+.ar-card span { color: var(--ar-muted); font-size: .95rem; line-height: 1.9; }
+.ar-card em { color: var(--ar-accent); font-style: normal; font-weight: 800; font-size: .9rem; }
+.ar-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ar-step { display: grid; align-content: start; gap: 8px; padding: 20px; border-radius: 20px; border: 1px solid var(--ar-line); border-top: 5px solid var(--ar-accent); background: var(--ar-card); }
+.ar-step span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ar-accent); color: #fff; font-weight: 800; }
+.ar-step b { font-size: 1.02rem; }
+.ar-step small { color: var(--ar-muted); font-size: .9rem; line-height: 1.85; }
+.ar-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ar-list > div { position: relative; padding: 16px 48px 16px 18px; border-radius: 16px; border: 1px solid var(--ar-line); background: var(--ar-card); font-size: .98rem; line-height: 1.8; }
+.ar-list > div::before { content: "✓"; position: absolute; right: 16px; top: 15px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ar-accent); color: #fff; font-size: .75rem; font-weight: 900; }
+.ar-faq details { margin-bottom: 8px; border: 1px solid var(--ar-line); border-radius: 16px; background: var(--ar-card); }
+.ar-faq summary { padding: 16px 20px; font-weight: 800; cursor: pointer; list-style-position: inside; }
+.ar-faq details > div { padding: 0 20px 18px; color: var(--ar-muted); line-height: 1.9; }
+.ar-cta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 50px; padding: 26px; border-radius: 24px; background: var(--ar-ink); color: var(--ar-paper); }
+.ar-cta div { display: grid; gap: 4px; } .ar-cta b { font-size: 1.3rem; } .ar-cta span { opacity: .8; }
+.ar a:focus-visible, .ar summary:focus-visible { outline: 3px solid var(--ar-accent); outline-offset: 3px; }
+@media (max-width: 860px) { .ar-steps { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) {
+  .ar { padding-top: 100px; }
+  .ar-cards, .ar-steps, .ar-list { grid-template-columns: 1fr; }
+  html body.page-ar .ar a.ar-btn { width: 100%; justify-content: center; }
+}
