@@ -1,4 +1,4 @@
-import { applySharedShell } from './site-shell.ts';
+import { applySharedShell, ensureTracking } from './site-shell.ts';
 
 const interiorFonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">';
 const interiorStyles = '<link rel="stylesheet" href="/interior-redesign.css?v=86">';
@@ -8,8 +8,8 @@ const fieldGuideStyles = '<link rel="stylesheet" href="/blog/field-guide.css?v=2
 const interiorScript = '<script src="/interior-redesign.js?v=34"></script>';
 
 export function prepareInteriorPage(html: string, pathname: string) {
-  if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return html;
-  if (/^\/tools\/rubiks-cube\/?$/.test(pathname)) return html;
+  if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
+  if (/^\/tools\/rubiks-cube\/?$/.test(pathname)) return ensureTracking(html);
   const isFieldGuide = /\bfield-guide-page\b/i.test(html);
   const pageStyles = `${interiorStyles}${isFieldGuide ? fieldGuideStyles : ''}${experienceStyles}${qualityRepairStyles}`;
   const path = pathname.replace(/^\/+|\/+$/g, '');

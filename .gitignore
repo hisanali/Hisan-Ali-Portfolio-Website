@@ -31,3 +31,8 @@ skills-lock.json
 
 # Supplied Sketchfab Standard scenes: used in the game via import-maps.py, never redistributed
 /scripts/evermile/source/maps/
+
+# Local dev and audit output
+dev.log
+dev.err
+lh-*.json

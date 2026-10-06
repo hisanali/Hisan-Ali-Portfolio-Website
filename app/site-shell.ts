@@ -247,7 +247,7 @@ export function applySharedShell(html: string, pathname: string, home = false) {
 
   enhanced = enhanced
     .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=9"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20260906-4"></script><script src="/site-header.js?v=6"></script></body>');
+    .replace('</body>', '<script src="/site-shell.js?v=20261006-1"></script><script src="/site-header.js?v=6"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
@@ -257,5 +257,21 @@ export function applySharedShell(html: string, pathname: string, home = false) {
       return `<body class="page-home-redesign"${attributes}>`;
     });
   }
-  return enhanced;
+  return ensureTracking(enhanced);
+}
+
+// One Google Tag Manager container on every page. GA4 is configured inside the container,
+// so direct gtag.js copies are removed to avoid counting visits twice.
+const gtmId = 'GTM-PNT5FCX5';
+const gtmHead = `<!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');</script><!-- End Google Tag Manager -->`;
+const gtmBody = `<!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->`;
+
+export function ensureTracking(html: string) {
+  const cleaned = html
+    .replace(/(?:<!--\s*Google tag \(gtag\.js\)\s*-->\s*)?<script async src="https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=G-[A-Z0-9]+"><\/script>\s*<script>[\s\S]*?gtag\('config'[^<]*<\/script>\s*/gi, '')
+    .replace(/(?:<!--\s*Google Tag Manager\s*-->\s*)?<script>\(function\(w,d,s,l,i\)[\s\S]*?GTM-[A-Z0-9]+'\);<\/script>\s*(?:<!--\s*End Google Tag Manager\s*-->\s*)?/gi, '')
+    .replace(/(?:<!--\s*Google Tag Manager \(noscript\)\s*-->\s*)?<noscript><iframe src="https:\/\/www\.googletagmanager\.com\/ns\.html\?id=GTM-[A-Z0-9]+"[\s\S]*?<\/noscript>\s*(?:<!--\s*End Google Tag Manager \(noscript\)\s*-->\s*)?/gi, '');
+  return cleaned
+    .replace(/<head(\s[^>]*)?>/i, (match) => `${match}${gtmHead}`)
+    .replace(/<body(\s[^>]*)?>/i, (match) => `${match}${gtmBody}`);
 }

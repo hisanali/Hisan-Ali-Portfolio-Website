@@ -1,0 +1,143 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Oman Marketing Calendar 2027 · Hisan Ali</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@page { size: A4 landscape; margin: 0; }
+* { box-sizing: border-box; margin: 0; }
+:root { --ink:#15201b; --muted:#5d6a63; --line:#d9d3c4; --paper:#f7f2e8; --card:#fffdf8; --lime:#d8f55a; --orange:#e2582c; --green:#1f5a45; }
+body { font-family: Manrope, sans-serif; color: var(--ink); background: var(--paper); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.pg { position: relative; width: 297mm; height: 210mm; padding: 14mm 16mm 12mm; overflow: hidden; page-break-after: always; background: var(--paper); }
+.pg:last-child { page-break-after: auto; }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 7mm; display: flex; justify-content: space-between; color: var(--muted); font-size: 8pt; font-weight: 700; letter-spacing: .06em; }
+.foot b { color: var(--ink); }
+.k { color: var(--orange); font-size: 8.5pt; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+h1, h2, h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
+/* Cover */
+.cover { display: grid; grid-template-columns: 1.15fr .85fr; gap: 12mm; background: var(--green); color: #f4f0e6; }
+.cover .k { color: var(--lime); }
+.cover h1 { margin: 6mm 0 5mm; font-size: 54pt; line-height: .98; }
+.cover h1 em { color: var(--lime); }
+.cover p { max-width: 120mm; font-size: 12pt; line-height: 1.5; opacity: .88; }
+.cover .meta { display: flex; gap: 4mm; margin-top: 8mm; }
+.cover .meta span { padding: 2mm 4mm; border: 1px solid rgba(255,255,255,.3); border-radius: 99px; font-size: 9pt; font-weight: 700; }
+.cover .foot, .cover .foot b { color: rgba(255,255,255,.75); }
+.cover-l { display: flex; flex-direction: column; justify-content: center; }
+.dates { align-self: center; padding: 7mm; border-radius: 6mm; background: var(--card); color: var(--ink); }
+.dates h3 { font-size: 15pt; margin-bottom: 3mm; }
+.dates div { display: grid; grid-template-columns: 24mm 1fr; gap: 3mm; padding: 2.2mm 0; border-bottom: 1px solid var(--line); font-size: 9pt; }
+.dates div:last-child { border: 0; }
+.dates b { color: var(--orange); }
+.dates small { display: block; margin-top: 3mm; color: var(--muted); font-size: 7.5pt; line-height: 1.4; }
+/* Months */
+.mh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5mm; }
+.mh h2 { font-size: 24pt; }
+.mh span { color: var(--muted); font-size: 9pt; font-weight: 700; }
+.months { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4mm; height: 160mm; }
+.m { display: grid; grid-template-rows: auto auto auto 1fr; padding: 5mm; border-radius: 4mm; background: var(--card); border: 1px solid var(--line); }
+.m-top { display: flex; justify-content: space-between; align-items: baseline; }
+.m h3 { font-size: 19pt; }
+.m .tag { padding: 1mm 2.6mm; border-radius: 99px; background: var(--c, #eee); font-size: 7.5pt; font-weight: 800; }
+.m ul { margin: 3mm 0 0; padding-left: 4mm; font-size: 8.6pt; line-height: 1.45; }
+.m li { margin-bottom: 1mm; }
+.m .do { margin-top: 2mm; padding: 2.5mm 3mm; border-radius: 2.5mm; background: color-mix(in srgb, var(--c, #eee) 45%, #fff); font-size: 8.3pt; line-height: 1.4; }
+.m .do b { color: var(--green); }
+.m .notes { margin-top: 3mm; padding-top: 2mm; background: repeating-linear-gradient(transparent 0 5.4mm, var(--line) 5.4mm 5.7mm); background-position: 0 4mm; color: var(--muted); font-size: 7.3pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+/* Runway */
+.run { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8mm; }
+.run table { width: 100%; border-collapse: collapse; font-size: 9.5pt; background: var(--card); border-radius: 4mm; overflow: hidden; }
+.run th { padding: 3mm; background: var(--ink); color: #f4f0e6; text-align: left; font-size: 8pt; letter-spacing: .08em; text-transform: uppercase; }
+.run td { padding: 3mm; border-bottom: 1px solid var(--line); }
+.run h2 { font-size: 22pt; margin: 2mm 0 4mm; }
+.check { display: grid; gap: 2.4mm; }
+.check div { display: flex; gap: 3mm; padding: 3mm; border-radius: 3mm; background: var(--card); border: 1px solid var(--line); font-size: 9pt; line-height: 1.4; }
+.check i { flex: none; width: 4.5mm; height: 4.5mm; border: 1.5px solid var(--green); border-radius: 1mm; margin-top: .4mm; }
+.cta { margin-top: 5mm; padding: 5mm 6mm; border-radius: 4mm; background: var(--orange); color: #fff; }
+.cta h3 { font-size: 16pt; margin-bottom: 1.5mm; }
+.cta p { font-size: 9pt; line-height: 1.45; }
+.cta b { display: inline-block; margin-top: 2mm; padding: 1.5mm 3.5mm; border-radius: 99px; background: #fff; color: var(--orange); font-size: 9pt; }
+.src { margin-top: 4mm; color: var(--muted); font-size: 7.2pt; line-height: 1.45; }
+</style></head><body>
+
+<section class="pg cover">
+  <div class="cover-l">
+    <span class="k">Free planner · 2027 edition</span>
+    <h1>The Oman<br>Marketing Year<br><em>2027</em></h1>
+    <p>Every moment that moves demand in Oman, month by month: Ramadan in February, two Eids, Khareef, back to school and the November cluster. With what to do before each one.</p>
+    <div class="meta"><span>12 months</span><span>Key dates</span><span>Planning runway</span><span>Printable</span></div>
+  </div>
+  <div class="dates">
+    <h3>Key dates 2027</h3>
+    <div><b>~5 Jan</b><span>Isra &amp; Mi’raj (public holiday)</span></div>
+    <div><b>11 Jan</b><span>Sultan’s Accession Day</span></div>
+    <div><b>~8 Feb</b><span>Ramadan begins</span></div>
+    <div><b>~10 Mar</b><span>Eid al-Fitr</span></div>
+    <div><b>~16 May</b><span>Eid al-Adha (Arafah ~15 May)</span></div>
+    <div><b>~6 Jun</b><span>Islamic New Year 1449</span></div>
+    <div><b>21 Jun</b><span>Khareef season opens in Dhofar</span></div>
+    <div><b>~14 Aug</b><span>Prophet’s Birthday</span></div>
+    <div><b>Early Sep</b><span>New school year</span></div>
+    <div><b>11 Nov</b><span>Singles’ Day (11.11)</span></div>
+    <div><b>20 Nov</b><span>National Day</span></div>
+    <div><b>26 Nov</b><span>White Friday</span></div>
+    <small>~ Islamic dates are expected and confirmed by moon sighting. Official days off are announced at the start of the year and may fall on different days.</small>
+  </div>
+  <div class="foot"><span><b>Hisan Ali</b> · Digital Marketing Strategist, Muscat</span><span>hisanali.com</span></div>
+</section>
+
+<section class="pg">
+  <div class="mh"><h2>January – June</h2><span>Winter peak, Ramadan, two Eids and the start of summer</span></div>
+  <div class="months">
+    <div class="m" style="--c:#cfe9ff"><div class="m-top"><h3>January</h3><span class="tag">Winter peak</span></div><ul><li>Isra &amp; Mi’raj and Accession Day holidays</li><li>School mid-year break from 8 Jan</li><li>Outdoor festival season</li></ul><div class="do"><b>Do:</b> outdoor events, tourism and family offers. Finalise Ramadan creative now.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#e6dcff"><div class="m-top"><h3>February</h3><span class="tag">Ramadan starts</span></div><ul><li>Pre-Ramadan shopping in week one</li><li>Ramadan expected from ~8 Feb</li><li>Media use moves to late evenings</li></ul><div class="do"><b>Do:</b> shift ad schedules to evenings; lead with iftar, suhoor and giving.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#d8f55a"><div class="m-top"><h3>March</h3><span class="tag">Eid al-Fitr</span></div><ul><li>Last ten days of Ramadan: peak shopping</li><li>Eid al-Fitr expected ~10 Mar</li><li>Post-Eid trips and gatherings</li></ul><div class="do"><b>Do:</b> peak budgets in the last ten days; set delivery cut-offs before Eid.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#ffe1cf"><div class="m-top"><h3>April</h3><span class="tag">Reset</span></div><ul><li>Post-Eid spending pause</li><li>Last comfortable weeks before the heat</li><li>Pohela Boishakh (14 Apr)</li></ul><div class="do"><b>Do:</b> retention, reviews and referrals; test new offers while costs are lower.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#d8f55a"><div class="m-top"><h3>May</h3><span class="tag">Eid al-Adha</span></div><ul><li>Arafah ~15 May, Eid al-Adha ~16 May</li><li>Travel and family gatherings</li><li>Heat builds; life moves indoors</li></ul><div class="do"><b>Do:</b> travel, gifting and food offers; book summer campaigns.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#cfe9ff"><div class="m-top"><h3>June</h3><span class="tag">Summer begins</span></div><ul><li>Islamic New Year ~6 Jun</li><li>School year ends after exams</li><li>Khareef opens in Dhofar 21 Jun</li></ul><div class="do"><b>Do:</b> enrolment campaigns, summer travel and Salalah pre-bookings.</div><div class="notes">Notes</div></div>
+  </div>
+  <div class="foot"><span><b>The Oman Marketing Year 2027</b> · Hisan Ali</span><span>2</span></div>
+</section>
+
+<section class="pg">
+  <div class="mh"><h2>July – December</h2><span>Khareef, back to school, the outdoor season and the November cluster</span></div>
+  <div class="months">
+    <div class="m" style="--c:#c9efd9"><div class="m-top"><h3>July</h3><span class="tag">Khareef peak</span></div><ul><li>Many Muscat families travel</li><li>Dhofar’s busiest weeks begin</li><li>Malls, cinemas and delivery carry daily life</li></ul><div class="do"><b>Do:</b> Dhofar-targeted campaigns; indoor and delivery offers in the north.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#ffe1cf"><div class="m-top"><h3>August</h3><span class="tag">Back to school</span></div><ul><li>Khareef at full strength</li><li>Prophet’s Birthday ~14 Aug</li><li>Back-to-school shopping, last two weeks</li></ul><div class="do"><b>Do:</b> uniforms, stationery, devices, transport and tuition offers.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#e6dcff"><div class="m-top"><h3>September</h3><span class="tag">Restart</span></div><ul><li>New school year in early September</li><li>Khareef winds down</li><li>Businesses set Q4 budgets</li></ul><div class="do"><b>Do:</b> B2B outreach, Q4 planning and National Day creative briefs.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#cfe9ff"><div class="m-top"><h3>October</h3><span class="tag">Outdoor season</span></div><ul><li>Weather turns pleasant</li><li>Tourist season begins</li><li>Diwali (29 Oct)</li></ul><div class="do"><b>Do:</b> events, outdoor dining and tourism; warm up November audiences.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#d8f55a"><div class="m-top"><h3>November</h3><span class="tag">Q4 cluster</span></div><ul><li>11.11 online sales</li><li>National Day 20 Nov (days off announced for 2027)</li><li>White Friday 26 Nov</li></ul><div class="do"><b>Do:</b> give each moment its own job; don’t run one long discount.</div><div class="notes">Notes</div></div>
+    <div class="m" style="--c:#ffe1cf"><div class="m-top"><h3>December</h3><span class="tag">Year-end</span></div><ul><li>Winter tourism in full swing</li><li>Christmas for Christian communities</li><li>Year-end sales and budgets</li></ul><div class="do"><b>Do:</b> gifting, dining and travel; lock the plan for Ramadan 2028 (late January).</div><div class="notes">Notes</div></div>
+  </div>
+  <div class="foot"><span><b>The Oman Marketing Year 2027</b> · Hisan Ali</span><span>3</span></div>
+</section>
+
+<section class="pg">
+  <div class="run">
+    <div>
+      <span class="k">Planning runway</span>
+      <h2>Start before the moment starts</h2>
+      <table><thead><tr><th>Moment</th><th>Start planning</th><th>Warm up audiences</th></tr></thead><tbody>
+        <tr><td><b>Ramadan &amp; Eid al-Fitr</b></td><td>Oct–Nov 2026</td><td>Mid-January 2027</td></tr>
+        <tr><td><b>Eid al-Adha</b></td><td>March 2027</td><td>Late April 2027</td></tr>
+        <tr><td><b>Khareef (Dhofar)</b></td><td>April 2027</td><td>Late May 2027</td></tr>
+        <tr><td><b>Back to school</b></td><td>May 2027</td><td>Late July 2027</td></tr>
+        <tr><td><b>National Day &amp; White Friday</b></td><td>August 2027</td><td>Mid-October 2027</td></tr>
+      </tbody></table>
+      <p class="src">Islamic dates follow Umm al-Qura projections and are confirmed by moon sighting. National Day and Accession Day per Royal Decree; school dates from the Ministry of Education 2026/27 calendar. Since 2026, Oman announces official days off at the start of each year, and some are observed on nearby weekdays. Always confirm against official announcements before booking media. Dates checked September 27, 2026.</p>
+    </div>
+    <div>
+      <span class="k">Before each peak</span>
+      <h2>Your checklist</h2>
+      <div class="check">
+        <div><i></i>Offer and prices agreed, with stock or capacity confirmed</div>
+        <div><i></i>Creative ready in Arabic and English</div>
+        <div><i></i>Landing page and WhatsApp replies prepared</div>
+        <div><i></i>Conversion tracking tested end to end</div>
+        <div><i></i>Budget split: warm-up, peak and follow-up</div>
+        <div><i></i>Delivery cut-offs and opening hours published</div>
+        <div><i></i>Follow-up messages for after the peak</div>
+      </div>
+      <div class="cta"><h3>Want this turned into your own plan?</h3><p>I’ll map which moments your business should own in 2027, how much to put behind each and when to start.</p><b>hisanali.com/contact · WhatsApp +968 9611 0846</b></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>The Oman Marketing Year 2027</b> · Hisan Ali</span><span>4</span></div>
+</section>
+</body></html>
