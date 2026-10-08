@@ -89,6 +89,8 @@ test('realtime uses a separate 30-minute window and preserves provider failures'
     const body=JSON.parse(options.body);
     assert.deepEqual(body.minuteRanges,[{startMinutesAgo:29,endMinutesAgo:0}]);
     assert.equal(body.dateRanges,undefined);
+    // GA4 realtime rejects activeUsers when grouped by eventName.
+    if(body.dimensions.some(d=>d.name==='eventName') && body.metrics.some(m=>m.name==='activeUsers')) return new Response('{}',{status:400});
     if(body.dimensions.some(d=>d.name==='city')) return new Response('{}',{status:403});
     return Response.json({dimensionHeaders:body.dimensions,metricHeaders:body.metrics,rows:[]});
   };
@@ -96,6 +98,7 @@ test('realtime uses a separate 30-minute window and preserves provider failures'
     const data=await loadRealtime('test');
     assert.equal(data.datasets.liveCities.status,'error');
     assert.equal(data.datasets.realtime.status,'ok');
+    assert.equal(data.datasets.liveEvents.status,'ok');
     assert.equal(Object.keys(data.datasets).length,7);
   } finally {global.fetch=original;}
 });

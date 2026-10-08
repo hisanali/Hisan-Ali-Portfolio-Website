@@ -65,7 +65,7 @@ export const realtimeDefinitions = [
   { id: 'realtime', dimensions: [], metrics: ['activeUsers', 'screenPageViews', 'eventCount'] },
   { id: 'liveMinutes', dimensions: ['minutesAgo'], metrics: ['activeUsers', 'eventCount'] },
   { id: 'livePages', dimensions: ['unifiedScreenName'], metrics: ['screenPageViews', 'activeUsers'] },
-  { id: 'liveEvents', dimensions: ['eventName'], metrics: ['eventCount', 'activeUsers'] },
+  { id: 'liveEvents', dimensions: ['eventName'], metrics: ['eventCount'] },
   { id: 'liveCountries', dimensions: ['country'], metrics: ['activeUsers'] },
   { id: 'liveCities', dimensions: ['city', 'country'], metrics: ['activeUsers'] },
   { id: 'liveDevices', dimensions: ['deviceCategory'], metrics: ['activeUsers'] },
