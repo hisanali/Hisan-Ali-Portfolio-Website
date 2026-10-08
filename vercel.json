@@ -224,5 +224,31 @@
       "destination": "/blog/",
       "permanent": true
     }
+  ],
+  "framework": null,
+  "buildCommand": "npm run build:games && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && node scripts/build-static-output.mjs",
+  "outputDirectory": ".vercel/site-static",
+  "functions": {
+    "api/portfolio-admin.mjs": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/admin/",
+      "destination": "/api/portfolio-admin/?_admin_path="
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/portfolio-admin/?_admin_path="
+    },
+    {
+      "source": "/admin/:path*/",
+      "destination": "/api/portfolio-admin/?_admin_path=:path*"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/api/portfolio-admin/?_admin_path=:path*"
+    }
   ]
 }

@@ -1,5 +1,5 @@
 .vscode/
-admin/
+/admin/
 server/
 http-server.err
 http-server.log

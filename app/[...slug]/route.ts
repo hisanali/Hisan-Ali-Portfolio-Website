@@ -1,6 +1,7 @@
-import { readFile } from 'fs/promises';
+import { readFile, realpath } from 'fs/promises';
 import path from 'path';
 import { prepareInteriorPage } from '../page-renderer';
+import { isPublicAsset } from '../insights/security';
 
 type Params = {
   params: {
@@ -55,6 +56,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const root = process.cwd();
   const cleanSegments = params.slug.filter(Boolean);
+  if (!isPublicAsset(cleanSegments)) return new Response('Not found', { status: 404 });
 
   const candidates = [
     path.join(root, ...cleanSegments, 'index.html'),
@@ -68,6 +70,8 @@ export async function GET(request: Request, { params }: Params) {
     }
 
     try {
+      const actualPath = await realpath(normalized);
+      if (!actualPath.startsWith(path.normalize(root + path.sep))) continue;
       if (path.extname(normalized).toLowerCase() === '.html') {
         const html = await readFile(normalized, 'utf8');
         const enhanced = prepareInteriorPage(html, new URL(request.url).pathname);
