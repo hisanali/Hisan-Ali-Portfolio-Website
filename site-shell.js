@@ -158,25 +158,3 @@
   syncReadingMode();
   syncTheme();
 })();
-
-// Lead events for Google Tag Manager. Each contact action pushes a named event to the dataLayer,
-// e.g. { event: 'lead_whatsapp', lead_location: '/blog/seo-expert-oman/', link_text: 'WhatsApp' }.
-(() => {
-  window.dataLayer = window.dataLayer || [];
-  const push = (event, extra) => window.dataLayer.push({ event, lead_location: location.pathname, ...extra });
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest && e.target.closest('a[href]');
-    if (!a) return;
-    const href = a.getAttribute('href') || '';
-    const text = (a.getAttribute('aria-label') || a.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
-    if (/^(https?:\/\/)?(wa\.me|api\.whatsapp\.com|web\.whatsapp\.com)/i.test(href) || href.startsWith('whatsapp:')) push('lead_whatsapp', { link_text: text });
-    else if (href.startsWith('mailto:')) push('lead_email', { link_text: text });
-    else if (href.startsWith('tel:')) push('lead_phone', { link_text: text });
-    else if (/\/contact\/?(#.*)?$/.test(href)) push('cta_contact', { link_text: text });
-    else if (a.hasAttribute('download') || /\.(pdf|zip)(\?|$)/i.test(href)) push('file_download', { link_text: text, file_url: href });
-  }, true);
-  document.addEventListener('submit', (e) => {
-    const form = e.target;
-    if (form && form.matches && form.matches('form[data-lead-form]')) push('lead_form', { form_name: form.getAttribute('data-lead-form') });
-  }, true);
-})();

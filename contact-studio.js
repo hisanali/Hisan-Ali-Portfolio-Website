@@ -444,6 +444,7 @@
       error.hidden = false;
       return;
     }
+    document.dispatchEvent(new CustomEvent('portfolio:lead-submitted'));
     store.clear();
     clearComposer();
     restart.hidden = true;

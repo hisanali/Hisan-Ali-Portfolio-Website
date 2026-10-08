@@ -37,7 +37,7 @@
   const icon = (name, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
   const views = {
     overview: ['Overview', 'Understand what brings people in, and what turns visits into enquiries.', 'Portfolio intelligence'],
-    live: ['Live activity', 'Who is on your website right now, and where in the world they are. Refreshes every 30 seconds.', 'Realtime · last 30 minutes'],
+    live: ['Live activity', 'Website clicks refresh every five seconds. Google visitor and location reports refresh every 30 seconds.', 'Realtime · last 30 minutes'],
     insights: ['Insights', 'Interesting facts, biggest changes and quick wins — worked out from your data.', 'Automatic analysis'],
     audience: ['Audience & map', 'Where your visitors are, who they are, and when they arrive.', 'Audience'],
     traffic: ['Traffic & audience', 'Explore how visitors find you and where they come from.', 'Acquisition'],
@@ -47,7 +47,7 @@
     sources: ['Sources & settings', 'Connection status, reporting coverage, and the meaning behind each metric.', 'Configuration'],
   };
   const eventMeta = { lead_whatsapp: ['whatsapp', 'mint'], lead_email: ['mail', 'sky'], lead_phone: ['phone', 'peach'], lead_form: ['form', 'lilac'], cta_contact: ['cursor', 'lime'], file_download: ['download', 'pink'] };
-  const state = { view: 'overview', days: 28, report: null, live: null, liveBusy: false, liveError: '', compare: true, request: 0, controller: null, tables: {}, exporting: [], busy: false, charts: {}, animate: true };
+  const state = { view: 'overview', days: 28, report: null, live: null, liveBusy: false, liveError: '', activity: null, activityBusy: false, activityError: '', compare: true, request: 0, controller: null, tables: {}, exporting: [], busy: false, charts: {}, animate: true };
 
   const shortNames = { overview: 'Overview', live: 'Live', insights: 'Insights', audience: 'Audience', traffic: 'Traffic', leads: 'Leads', seo: 'Search', pages: 'Pages', sources: 'Settings' };
   function navMarkup(short = false) {
@@ -60,7 +60,7 @@
   }
   function renderNav() { $('#nav').innerHTML = navMarkup(); $('#tabbar').innerHTML = navMarkup(true); }
 
-  function dataset(id) { return id === 'realtime' || id.startsWith('live') ? state.live?.datasets[id] : state.report?.datasets[id]; }
+  function dataset(id) { if (id === 'websiteActivity') return { status: state.activityError ? 'error' : 'ok', error: state.activityError, rows: state.activity?.rows || [] }; return id === 'realtime' || id.startsWith('live') ? state.live?.datasets[id] : state.report?.datasets[id]; }
   function rows(id) { return dataset(id)?.status === 'ok' ? dataset(id).rows : []; }
   function summary(id, field) { const data = dataset(id); return data?.status === 'ok' ? data.rows[0]?.[field] == null && ['ctr','position','engagementRate'].includes(field) ? null : Number(data.rows[0]?.[field] ?? 0) : null; }
   function totalContacts(id = 'events') { return dataset(id)?.status === 'ok' ? rows(id).filter(row => contactNames.includes(row.eventName)).reduce((sum, row) => sum + Number(row.eventCount), 0) : null; }
@@ -353,20 +353,27 @@
 
   // ───────── Tracking health ─────────
   const todayCount = name => dataset('eventsToday')?.status === 'ok' ? Number(rows('eventsToday').find(r => r.eventName === name)?.eventCount || 0) : null;
+  const actionTime = value => value ? new Date(value).toLocaleString('en-GB', { timeZone: 'Asia/Muscat', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Not observed';
+  function activityFeed(leadsOnly = false) {
+    const data = state.activity;
+    const activityRows = (data?.rows || []).filter(row => !leadsOnly || eventLabels[row.event_name]).map(row => ({ ...row, action: eventLabels[row.event_name] || ({ page_view: 'Page opened', site_click: 'Click', control_change: 'Control changed', form_submit: 'Form submit attempt' }[row.event_name]) || row.event_name }));
+    const status = data?.mode === 'demo' ? 'Preview · website receipts appear here after connection' : state.activityError ? 'Connection interrupted · retrying automatically' : data ? `Updated ${actionTime(data.generatedAt)} · refreshes every 5s` : 'Connecting to website activity…';
+    return table('websiteActivity', leadsOnly ? 'Live contact actions' : 'Website click stream', status,
+      [col('received_at','Time · Oman',actionTime),col('action','Action'),col('page','Page'),col('label','Control'),col('target','Destination'),col('area','Area'),col('device','Device')],
+      { rows: activityRows, sort: 'received_at', note: 'Direct website events · latest 300 events from 24h · no visitor identities. Historical filters do not apply.' }) + `<div class="note">${icon('shield')}<span>${leadsOnly ? 'Contact actions indicate intent; a click does not confirm a conversation or sale.' : 'Links, buttons, menus, downloads, form actions and tool controls appear here. Typed text and personal form details are excluded.'} Times are in Oman time. Google reports below are separate and can arrive later.</span></div>`;
+  }
   function trackingHealth() {
     const lastSeen = {}; rows('eventsLastSeen').forEach(r => { if (Number(r.eventCount) > 0 && (!lastSeen[r.eventName] || r.date > lastSeen[r.eventName])) lastSeen[r.eventName] = r.date; });
-    const liveOk = dataset('liveEvents')?.status === 'ok', yearOk = dataset('eventsLastSeen')?.status === 'ok';
-    const daysAgo = date => Math.round((Date.now() - new Date(dateValue(date) + 'T12:00:00Z')) / 864e5);
+    const liveOk = dataset('liveEvents')?.status === 'ok', directOk = !!state.activity && !state.activityError;
     const items = Object.entries(eventLabels).map(([name, label]) => {
-      const today = todayCount(name), recent = liveOk ? Number(rows('liveEvents').find(r => r.eventName === name)?.eventCount || 0) : null, seen = lastSeen[name];
-      const status = recent || today ? ['ok', 'Receiving now'] : seen && daysAgo(seen) <= 7 ? ['ok', 'Working'] : seen ? ['warn', `Quiet for ${daysAgo(seen)} days`] : yearOk ? ['err', 'Never received'] : ['idle', 'Unknown'];
-      return { name, label, today, recent, seen, status };
+      const direct = state.activity?.counts?.find(row => row.event_name === name), recent = liveOk ? Number(rows('liveEvents').find(r => r.eventName === name)?.eventCount || 0) : null;
+      const website = directOk ? Number(direct?.last30 || 0) : null;
+      const status = website ? ['ok','Website receiving'] : recent ? ['ok','Google receiving'] : ['idle','No recent action'];
+      return { name, label, website, recent, today: directOk ? Number(direct?.today || 0) : null, seen: direct?.last_received, status };
     });
-    state.exporting.push(...items.map(i => ({ section: 'Tracking health', eventName: i.name, today: i.today ?? '', last30Minutes: i.recent ?? '', lastSeen: i.seen ? dateValue(i.seen) : 'never', status: i.status[1] })));
-    const missing = items.filter(i => contactNames.includes(i.name) && i.status[0] === 'err');
-    const help = missing.length ? `<div class="callout fix">${icon('alert')}<div><b>${missing.map(i => i.name).join(', ')} ${missing.length === 1 ? 'has' : 'have'} never reached Google Analytics in the last 12 months.</b><p>Your website already sends these events to Google Tag Manager when someone clicks. If a click you just made does not appear under “Last 30 min” within a few minutes, Tag Manager is not forwarding them to GA4. Fix it once in <a href="https://tagmanager.google.com/" target="_blank" rel="noopener noreferrer">Tag Manager</a>:</p><ol><li><b>Triggers → New → Custom Event</b>, event name <code>^(lead_whatsapp|lead_email|lead_phone|lead_form|cta_contact)$</code>, tick “Use regex matching”.</li><li><b>Tags → New → Google Analytics: GA4 Event</b>, Measurement ID <code>G-DDNBW2YBFL</code>, event name <code>{{Event}}</code>, add parameter <code>lead_location</code> = a Data Layer Variable named <code>lead_location</code>. Use the trigger above.</li><li>Click <b>Submit → Publish</b>. Then click WhatsApp on your site and watch this panel.</li></ol></div></div>` : '';
+    state.exporting.push(...items.map(i => ({ section: 'Tracking health', eventName: i.name, websiteLast30: i.website ?? '', websiteToday: i.today ?? '', googleLast30: i.recent ?? '', lastWebsiteReceipt: i.seen || '', status: i.status[1] })));
     const cell = value => value == null ? '<span class="faint">—</span>' : number(value);
-    return `${help}<div class="table-scroll"><table class="health"><thead><tr><th scope="col"><button>Action</button></th><th scope="col"><button>Last 30 min</button></th><th scope="col"><button>Today so far</button></th><th scope="col"><button>Last received</button></th><th scope="col"><button>Status</button></th></tr></thead><tbody>${items.map(i => `<tr><td><span class="event-pill"><i class="dot c-${eventMeta[i.name][1]}"></i>${e(i.label)}</span> <code class="evt">${i.name}</code></td><td class="numeric">${cell(i.recent)}</td><td class="numeric">${cell(i.today)}</td><td class="numeric">${i.seen ? humanDate(i.seen) : yearOk ? 'Never' : '—'}</td><td class="numeric"><span class="status ${i.status[0]}"><i class="dot"></i>${i.status[1]}</span></td></tr>`).join('')}</tbody></table></div><div class="table-foot"><span>Today uses Google's intraday data (can lag a few hours). Last 30 min comes from realtime and is the fastest way to test a click.</span><span>${errorFor('eventsLastSeen') ? 'History unavailable' : ''}</span></div>`;
+    return `<div class="note">${icon('info')}<span>Website receipts confirm that an action reached your private activity store. Google counts are separate. A missing Google event alone does not prove a tag is broken; reporting can be delayed or blocked.</span></div><div class="table-scroll"><table class="health"><thead><tr><th>Action</th><th>Website · 30 min</th><th>Website · today</th><th>Google · 30 min</th><th>Last website receipt</th><th>Status</th></tr></thead><tbody>${items.map(i => `<tr><td><span class="event-pill"><i class="dot c-${eventMeta[i.name][1]}"></i>${e(i.label)}</span><code class="evt">${i.name}</code></td><td class="numeric">${cell(i.website)}</td><td class="numeric">${cell(i.today)}</td><td class="numeric">${cell(i.recent)}</td><td>${e(actionTime(i.seen))}</td><td><span class="status ${directOk ? i.status[0] : 'idle'}"><i class="dot"></i>${directOk ? i.status[1] : 'Checking connection'}</span></td></tr>`).join('')}</tbody></table></div><div class="table-foot"><span>Website: every 5 seconds. Google realtime: every 30 seconds. Today follows Oman time.</span></div>`;
   }
 
   // ───────── Views ─────────
@@ -396,7 +403,7 @@
     const leadData = dataset('liveEvents'), contactCount = leadData?.status === 'ok' ? rows('liveEvents').filter(row => contactNames.includes(row.eventName)).reduce((sum,row) => sum + Number(row.eventCount), 0) : null;
     const liveCountries = rows('liveCountries').map(row => ({ id: row.countryId, name: row.country, value: Number(row.activeUsers) })), liveTotal = liveCountries.reduce((s, c) => s + c.value, 0);
     const side = liveCountries.length ? `<ol class="rank-list">${liveCountries.sort((a, b) => b.value - a.value).map((c, i) => `<li><span class="rank-n">${i + 1}</span><span class="flag">${flag(c.id)}</span><span class="name">${e(c.name)}</span><b>${number(c.value)}</b><small>${share(c.value, liveTotal)}</small></li>`).join('')}</ol>` : errorFor('liveCountries') || empty('Nobody on the site right now.');
-    return `<div class="live-hero"><div class="live-count"><span class="hero-live-top"><span class="pulse"></span>Active right now</span><strong>${number(summary('realtime','activeUsers'))}</strong><small>${liveStatus()}</small></div>${panel('Activity by minute','Active users · latest 30 minutes',minuteChart(),'',tag('Realtime'))}</div>
+    return `${activityFeed()}<div class="live-hero"><div class="live-count"><span class="hero-live-top"><span class="pulse"></span>Active right now</span><strong>${number(summary('realtime','activeUsers'))}</strong><small>${liveStatus()}</small></div>${panel('Activity by minute','Active users · latest 30 minutes',minuteChart(),'',tag('Realtime'))}</div>
     <section class="panel map-panel"><div class="panel-head"><div><h2>Live world map</h2><p>Each pulse is a city with visitors in the last 30 minutes</p></div>${tag('Realtime')}</div><div class="map-layout">${worldMap({ countries: liveCountries, live: liveCityList(), unit: 'active now' })}<div class="map-side"><h3>Visitors by country</h3>${side}</div></div></section>
     <div class="metrics">${metric({ label: 'Active visitors', value: summary('realtime','activeUsers'), help: 'Distinct active users across the last 30 minutes.', tone: 'mint', glyph: 'users' })}${metric({ label: 'Page views', value: summary('realtime','screenPageViews'), tone: 'sky', glyph: 'eye' })}${metric({ label: 'All events', value: summary('realtime','eventCount'), tone: 'lilac', glyph: 'zap' })}${metric({ label: 'Contact actions', value: contactCount, help: 'Recent WhatsApp, email, phone and form events. Repeated actions count.', tone: 'peach', glyph: 'leads' })}</div>
     <div class="note">${icon('info')}<span>Realtime always covers <b>all visitors</b> in the last 30 minutes. Google never shares who an individual visitor is — locations are approximate, city-level and come from Google. Filters apply to historical views only.</span></div>
@@ -442,7 +449,7 @@
     const sessions = summary('summary','sessions'), contacts = totalContacts(), previousSessions = summary('previous','sessions'), previousContacts = totalContacts('eventsPrevious');
     return `<div class="note">${icon('info')}<span><b>Contact actions, not unique leads.</b> Repeat clicks are counted. Downloads and contact CTA clicks are tracked separately. New events may take about 24 hours to appear.</span></div>
     <div class="metrics">${metric({ label: 'Contact actions', value: contacts, previous: previousContacts, series: rows('leadDaily').map(r => r.eventCount), tone: 'peach', glyph: 'leads' })}${metric({ label: 'Conversion rate', value: sessions && contacts != null ? contacts / sessions : null, previous: previousSessions && previousContacts != null ? previousContacts / previousSessions : null, format: pct, help: 'Contact actions divided by sessions.', tone: 'lime', glyph: 'target' })}${metric({ label: 'WhatsApp share', value: contacts ? Number(rows('events').find(r => r.eventName === 'lead_whatsapp')?.eventCount || 0) / contacts : null, format: pct, help: 'WhatsApp clicks as a share of all contact actions.', tone: 'mint', glyph: 'whatsapp' })}${metric({ label: 'Visits per action', value: contacts ? sessions / contacts : null, format: decimal, inverse: true, help: 'Average number of sessions for each contact action. Lower is better.', tone: 'sky', glyph: 'session', id: 'vpa' })}</div>
-    ${panel('Tracking health', 'Is every contact button reaching Google? Click one on your site and watch “Last 30 min”.', trackingHealth(), '', `<button class="text-btn" id="health-refresh">${icon('refresh')}Check now</button>`)}
+    ${activityFeed(true)}${panel('Tracking health', 'Receipts from your website, alongside Google reporting.', trackingHealth(), '', `<button class="text-btn" id="health-refresh">${icon('refresh')}Check now</button>`)}
     ${eventCards()}
     ${panel('Contact activity over time','WhatsApp, email, phone and form actions',lineChart('leadDaily','eventCount',null,'Contact actions',1200),'',tag('GA4'))}
     <div class="grid grid-2">${table('leadPages','Where contact actions happen','Page path when the contact event fired',[col('pagePath','Page'),col('eventName','Action'),col('eventCount','Events',number)])}${table('leadSources','Sources behind contact actions','Session acquisition associated with the event',[col('sessionSourceMedium','Source / medium'),col('eventName','Action'),col('eventCount','Events',number)])}</div>
@@ -476,8 +483,8 @@
     const status = isDemo ? `<span class="status idle"><i class="dot"></i>Preview only</span>` : `<span class="status ok"><i class="dot"></i>Connected</span>`;
     const source = (name, sub, tone, glyph, details, link, label) => `<section class="panel source-card"><div class="panel-head"><div class="source-title"><span class="source-logo tone-${tone}">${icon(glyph)}</span><div><h2>${name}</h2><p>${sub}</p></div></div>${status}</div><dl class="details">${details.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl><div class="panel-actions"><a class="btn btn-soft" href="${link}" target="_blank" rel="noopener noreferrer">${label} ${icon('out')}</a></div></section>`;
     const access = isDemo ? 'Preview only — not connected' : 'Read-only, authorized Google account';
-    const definitions = [['Active visitors','Distinct active users in the full date range. Daily or category user counts are not added together.'],['Contact actions','Event counts for lead_whatsapp, lead_email, lead_phone and lead_form. These measure intent, not verified sales or unique enquiries.'],['Engagement rate','Engaged sessions divided by sessions, as reported by Google Analytics.'],['Search CTR & position','Read from the aggregate Search Console report. They are not averages of the displayed query rows.'],['Previous period','The immediately preceding equal-length date range, using each source’s reporting dates.'],['Data freshness','GA4 ends yesterday; Search Console ends three days ago. Historical reports refresh every five minutes while open. Live activity refreshes every 30 seconds and covers the last 30 minutes.'],['Privacy & tracking','Only aggregate analytics are displayed. No visitor identities, message content, or new tracking scripts are added by this dashboard.']];
-    return `<div class="grid grid-2">${source('Google Analytics 4','Traffic, content and lead activity','sky','analytics',[['Property','hisanali.com · 515896463'],['Measurement ID','G-DDNBW2YBFL'],['Access',access],['Period',`${e(state.report.periods.ga.startDate)} → ${e(state.report.periods.ga.endDate)}`],['Timezone','API property timezone; periods selected in Asia/Muscat']],'https://analytics.google.com/analytics/web/#/a377276860p515896463/admin/events','Open Google Analytics')}${source('Google Search Console','Organic search visibility','pink','seo',[['Property','https://hisanali.com/'],['Search type','Web · final data'],['Access',access],['Period',`${e(state.report.periods.search.startDate)} → ${e(state.report.periods.search.endDate)}`],['Timezone','Search Console reports use Pacific Time']],'https://search.google.com/search-console?resource_id=https%3A%2F%2Fhisanali.com%2F','Open Search Console')}</div>
+    const definitions = [['Active visitors','Distinct active users in the full date range. Daily or category user counts are not added together.'],['Contact actions','Event counts for lead_whatsapp, lead_email, lead_phone and lead_form. These measure intent, not verified sales or unique enquiries.'],['Engagement rate','Engaged sessions divided by sessions, as reported by Google Analytics.'],['Search CTR & position','Read from the aggregate Search Console report. They are not averages of the displayed query rows.'],['Previous period','The immediately preceding equal-length date range, using each source’s reporting dates.'],['Data freshness','GA4 ends yesterday; Search Console ends three days ago. Historical reports refresh every five minutes while open. Google realtime refreshes every 30 seconds and covers the last 30 minutes. The private website click stream refreshes every five seconds.'],['Privacy & tracking','Google provides aggregate analytics. The separate private click stream stores page, control, action and receipt time for 30 days, without visitor IDs or form values.']];
+    return `${panel('Website activity', 'Direct, private click tracking', `<p>${state.activityError ? e(state.activityError) : state.activity ? 'Connected · last checked ' + e(actionTime(state.activity.generatedAt)) : 'Checking connection…'}</p><p>Supabase storage · owner-only read access · five-second refresh · 30-day retention. Last 24 hours, up to 300 newest events, in the click stream.</p><button class="btn btn-soft" data-view="live">Open click stream</button>`)}<div class="grid grid-2">${source('Google Analytics 4','Traffic, content and lead activity','sky','analytics',[['Property','hisanali.com · 515896463'],['Measurement ID','G-DDNBW2YBFL'],['Access',access],['Period',`${e(state.report.periods.ga.startDate)} → ${e(state.report.periods.ga.endDate)}`],['Timezone','API property timezone; periods selected in Asia/Muscat']],'https://analytics.google.com/analytics/web/#/a377276860p515896463/admin/events','Open Google Analytics')}${source('Google Search Console','Organic search visibility','pink','seo',[['Property','https://hisanali.com/'],['Search type','Web · final data'],['Access',access],['Period',`${e(state.report.periods.search.startDate)} → ${e(state.report.periods.search.endDate)}`],['Timezone','Search Console reports use Pacific Time']],'https://search.google.com/search-console?resource_id=https%3A%2F%2Fhisanali.com%2F','Open Search Console')}</div>
     ${panel('Reporting coverage','Every report has its own status; missing data is never shown as zero.',`<div class="coverage-grid">${Object.entries(state.report.datasets).map(([id,data]) => `<div class="coverage-item"><i class="dot ${isDemo ? 'demo' : data.status === 'ok' ? 'ok' : 'err'}"></i><div><b>${e(id)}</b><span class="${data.status === 'ok' ? 'good-text' : 'error-text'}" title="${e(data.error || '')}">${isDemo ? 'Sample data' : data.status === 'ok' ? data.rows.length ? `${number(data.rows.length)} rows` : 'No rows returned' : e(data.error)}</span></div>${coverage(id)}</div>`).join('')}</div>`)}
     ${panel('Metric definitions','How to read the dashboard',`<dl class="definitions">${definitions.map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl><div class="panel-actions"><a class="btn btn-soft" href="/admin/">${isDemo ? 'Set up Google connection' : 'Admin home'}</a>${isDemo ? '' : `<a class="btn btn-soft" href="/admin/login/">Reconnect Google ${icon('out')}</a>`}</div>`)}`;
   }
@@ -503,7 +510,7 @@
     $('#country').closest('.select').classList.toggle('is-active', !!$('#country').value);
     $('#device').closest('.select').classList.toggle('is-active', !!$('#device').value);
     $('#reset').hidden = !$('#country').value && !$('#device').value;
-    if (!state.report) return;
+    if (!state.report) { if (state.view === 'live') { state.exporting = []; $('#content').innerHTML = activityFeed(); $('#content').setAttribute('aria-busy','false'); } return; }
     state.exporting = []; state.charts = {};
     const failures = Object.values(state.view === 'live' ? state.live?.datasets || {} : state.report.datasets).filter(data => data.status === 'error').length;
     const content = $('#content');
@@ -555,6 +562,17 @@
     const el = $('#toast'); el.innerHTML = icon('check') + `<span>${e(message)}</span>`; el.hidden = false;
     clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
   }
+  async function loadActivity() {
+    if (state.activityBusy || document.hidden) return;
+    state.activityBusy = true;
+    try {
+      const response = await fetch('/admin/activity/' + (document.body.dataset.mode === 'demo' ? '?demo=1' : ''), { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Website activity is temporarily unavailable.');
+      state.activity = data; state.activityError = '';
+    } catch (error) { state.activityError = error.message; }
+    finally { state.activityBusy = false; if (['live','leads'].includes(state.view) && !document.activeElement?.matches('input,select')) render(); }
+  }
   async function loadLive() {
     if (state.liveBusy || document.hidden) return;
     state.liveBusy = true;
@@ -605,7 +623,7 @@
     const sort = event.target.closest('[data-sort]');
     if (sort) { const old = state.tables[sort.dataset.table] || {query:'',sort:'',desc:true}; state.tables[sort.dataset.table] = {...old,sort:sort.dataset.sort,desc:old.sort === sort.dataset.sort ? !old.desc : true}; render(); }
     if (event.target.closest('#retry')) load();
-    if (event.target.closest('#health-refresh')) { loadLive(); load(true); toast('Checking tracking — realtime and today refreshed'); }
+    if (event.target.closest('#health-refresh')) { loadActivity(); loadLive(); load(true); toast('Checking website and Google activity'); }
     const period = event.target.closest('[data-days]');
     if (period && Number(period.dataset.days) !== state.days) { state.days = Number(period.dataset.days); $('#period').value = String(state.days); render(); load(); }
   });
@@ -628,7 +646,7 @@
   ['#country','#device'].forEach(selector => $(selector).addEventListener('change', () => { render(); load(); }));
   $('#reset').addEventListener('click', () => { $('#country').value = ''; $('#device').value = ''; render(); load(); });
   $('#compare').addEventListener('change',event => { state.compare = event.target.checked; render(); });
-  $('#refresh').addEventListener('click',()=>{loadLive(); if(state.view !== 'live') load(true); else toast('Live activity refreshed');});
+  $('#refresh').addEventListener('click',()=>{loadActivity(); loadLive(); if(state.view !== 'live') load(true); else toast('Live activity refreshed');});
   $('#theme').addEventListener('click', () => {
     const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.dataset.theme = dark ? 'light' : 'dark';
@@ -644,8 +662,9 @@
     const a = document.createElement('a'); a.href = url; a.download = `hisanali-${state.view}-${state.report.mode}-${state.report.periods.ga.endDate}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
     toast(`Exported ${number(rows.length)} rows to CSV`);
   });
-  render(); load(); loadLive();
+  render(); load(); loadLive(); loadActivity();
+  setInterval(loadActivity,5000);
   setInterval(loadLive,30000);
   setInterval(()=>{if(!document.hidden && !state.busy && state.view !== 'live') load(true);},300000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden) loadLive();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden) { loadLive(); loadActivity(); }});
 })();

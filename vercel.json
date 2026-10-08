@@ -231,6 +231,9 @@
   "functions": {
     "api/portfolio-admin.mjs": {
       "maxDuration": 60
+    },
+    "api/site-activity.mjs": {
+      "maxDuration": 15
     }
   },
   "rewrites": [

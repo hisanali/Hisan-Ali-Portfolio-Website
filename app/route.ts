@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { withSiteActivity } from './site-activity-shell';
 import { applySharedShell } from './site-shell';
 
 export async function GET(request: Request) {
@@ -8,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const html = await readFile(filePath, 'utf8');
     const enhanced = applySharedShell(html, new URL(request.url).pathname, true);
-    return new Response(enhanced, {
+    return new Response(withSiteActivity(enhanced), {
       headers: { 'content-type': 'text/html; charset=utf-8' }
     });
   } catch {

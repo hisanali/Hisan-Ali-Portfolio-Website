@@ -1,5 +1,6 @@
 import { readFile, realpath } from 'fs/promises';
 import path from 'path';
+import { withSiteActivity } from '../site-activity-shell';
 import { prepareInteriorPage } from '../page-renderer';
 import { isPublicAsset } from '../insights/security';
 
@@ -76,7 +77,7 @@ export async function GET(request: Request, { params }: Params) {
         const html = await readFile(normalized, 'utf8');
         const enhanced = prepareInteriorPage(html, new URL(request.url).pathname);
 
-        return new Response(enhanced, {
+        return new Response(withSiteActivity(enhanced), {
           headers: { 'content-type': 'text/html; charset=utf-8' }
         });
       }

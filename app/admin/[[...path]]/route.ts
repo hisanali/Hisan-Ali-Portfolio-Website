@@ -2,6 +2,7 @@ import { configuration, cookie, cookieValue, equal, getSession, localPreview, re
 import { authorization, exchange, freshSession } from '../../insights/google';
 import { filtersFrom, loadReports, loadRealtime } from '../../insights/reports';
 import { demoReports, demoRealtime } from '../../insights/demo';
+import { loadActivity } from '../../insights/activity';
 import { shell } from '../../insights/shell';
 
 export const runtime = 'nodejs';
@@ -36,8 +37,13 @@ export async function GET(request: Request, { params }: Params) {
       return redirect('/admin/', [clear, cookie(SESSION_COOKIE, seal(authenticated, SESSION_COOKIE), SESSION_SECONDS)]);
     } catch (error) { return redirect('/admin/?error=' + encodeURIComponent(error instanceof Error ? error.message : 'Unable to sign in.'), [clear]); }
   }
-  if (route !== 'data' && route !== 'realtime') return json({ error: 'Not found.' }, 404);
+  if (route !== 'data' && route !== 'realtime' && route !== 'activity') return json({ error: 'Not found.' }, 404);
   if (!session && !demo) return json({ error: 'Sign in to view analytics.' }, 401);
+  if (route === 'activity') {
+    if (demo) return json({ mode: 'demo', generatedAt: new Date().toISOString(), rows: [], counts: [] });
+    try { return json(await loadActivity()); }
+    catch { return json({ error: 'Website activity is unavailable. Check storage connectivity; Google reports are separate.' }, 503); }
+  }
   if (route === 'realtime') {
     if (demo) return json(demoRealtime());
     try {

@@ -375,6 +375,19 @@ function demoRealtime() {
   return { mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), datasets };
 }
 
+// app/insights/activity.ts
+async function database(rpc, body) {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error("Activity storage is not configured.");
+  const response = await fetch(`${url}/rest/v1/rpc/${rpc}`, { method: "POST", headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(8e3), cache: "no-store" });
+  if (!response.ok) throw new Error("Activity storage is temporarily unavailable.");
+  return response.json();
+}
+async function loadActivity() {
+  return database("portfolio_read_activity", {});
+}
+
 // app/insights/shell.ts
 function escape(value) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -510,8 +523,16 @@ async function GET(request, { params }) {
       return redirect("/admin/?error=" + encodeURIComponent(error instanceof Error ? error.message : "Unable to sign in."), [clear]);
     }
   }
-  if (route !== "data" && route !== "realtime") return json({ error: "Not found." }, 404);
+  if (route !== "data" && route !== "realtime" && route !== "activity") return json({ error: "Not found." }, 404);
   if (!session && !demo) return json({ error: "Sign in to view analytics." }, 401);
+  if (route === "activity") {
+    if (demo) return json({ mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), rows: [], counts: [] });
+    try {
+      return json(await loadActivity());
+    } catch {
+      return json({ error: "Website activity is unavailable. Check storage connectivity; Google reports are separate." }, 503);
+    }
+  }
   if (route === "realtime") {
     if (demo) return json(demoRealtime());
     try {
