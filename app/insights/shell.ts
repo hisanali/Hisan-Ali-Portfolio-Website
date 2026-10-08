@@ -47,7 +47,7 @@ function app(options: { mode: 'demo' | 'live' }) {
   <nav id="nav" aria-label="Analytics views"></nav>
   <div class="side-foot">
     <div class="side-live" id="side-live"><span class="pulse"></span><span><b id="side-live-count">—</b> on site now</span></div>
-    <p class="shortcut">Press <kbd>1</kbd>–<kbd>7</kbd> to switch views</p>
+    <p class="shortcut">Press <kbd>1</kbd>–<kbd>9</kbd> to switch views</p>
   </div>
 </aside>
 <div class="main-wrap">
@@ -70,7 +70,7 @@ function app(options: { mode: 'demo' | 'live' }) {
     </div>
     <section class="toolbar" id="toolbar" aria-label="Report filters">
       <div class="segmented" role="radiogroup" aria-label="Reporting period" id="period-group">
-        <button role="radio" data-days="7" aria-checked="false">7 days</button><button role="radio" data-days="28" aria-checked="true">28 days</button><button role="radio" data-days="90" aria-checked="false">90 days</button>
+        <button role="radio" data-days="7" aria-checked="false" title="Last 7 days">7D</button><button role="radio" data-days="28" aria-checked="true" title="Last 28 days">28D</button><button role="radio" data-days="90" aria-checked="false" title="Last 90 days">90D</button><button role="radio" data-days="180" aria-checked="false" title="Last 6 months">6M</button><button role="radio" data-days="365" aria-checked="false" title="Last 12 months">12M</button>
       </div>
       <input type="hidden" id="period" value="28">
       <label class="select">${svg(icons.globe)}<span class="sr">Country</span><select id="country"><option value="">All countries</option><option value="OM">Oman</option><option value="AE">United Arab Emirates</option><option value="SA">Saudi Arabia</option><option value="QA">Qatar</option><option value="KW">Kuwait</option><option value="BH">Bahrain</option><option value="IN">India</option></select></label>

@@ -22,6 +22,15 @@ test('source files, environment files, traversal and internal trees are never pu
   for (const value of ['.env.local', '.git/config', 'app/insights/security.ts', 'scripts/test-admin.mjs', 'package.json', 'node_modules/pkg/index.js', '../secret.json', 'api/oauth.json', 'secret.pem', 'file.ts', 'admin/index.html']) assert.equal(isPublicAsset(value.split('/')), false, value);
   for (const value of ['style.css', 'gcc', 'blog/article/index.html', 'games/arcade3d.bundle.js', 'sitemap.xml', 'assets/car.glb', 'public/docs/ga-tracking-sheet.pdf']) assert.equal(isPublicAsset(value.split('/')), true, value);
 });
+test('tracking health reports ignore filters and use their own date windows', () => {
+  const filters = { days: 28, country: 'OM', device: 'mobile' }, period = periods(28, 1);
+  const today = gaRequest(definitions.find(item => item.id === 'eventsToday'), filters, period);
+  assert.deepEqual(today.dateRanges, [{ startDate: 'today', endDate: 'today' }]);
+  assert.equal(today.dimensionFilter.andGroup.expressions.length, 1);
+  const year = gaRequest(definitions.find(item => item.id === 'eventsLastSeen'), filters, period);
+  assert.equal(year.dateRanges[0].startDate, '365daysAgo');
+  assert.equal(year.orderBys[0].desc, true);
+});
 test('equal-length date windows are adjacent over year boundaries', () => {
   assert.deepEqual(periods(7, 1, new Date('2026-01-02T08:00:00Z')), { startDate:'2025-12-26',endDate:'2026-01-01',previousStart:'2025-12-19',previousEnd:'2025-12-25' });
   assert.equal(periods(7,3,new Date('2026-01-02T08:00:00Z')).endDate,'2025-12-30');
@@ -117,6 +126,6 @@ test('partial source failure preserves independent reports and distinguishes fai
     assert.equal(report.datasets.summary.status,'ok');
     assert.deepEqual(report.datasets.searchSummary.rows,[]);
     assert.equal(report.datasets.searchSummary.status,'ok');
-    assert.equal(Object.keys(report.datasets).length,25);
+    assert.equal(Object.keys(report.datasets).length,47);
   } finally { global.fetch = original; }
 });

@@ -112,9 +112,10 @@ async function googlePost(url, body, accessToken, deadline) {
 var contacts = ["lead_whatsapp", "lead_email", "lead_phone", "lead_form"];
 var trackedEvents = [...contacts, "cta_contact", "file_download"];
 var countryCodes = { OM: "omn", AE: "are", SA: "sau", QA: "qat", KW: "kwt", BH: "bhr", IN: "ind" };
+var periodOptions = [7, 28, 90, 180, 365];
 function filtersFrom(url) {
   const days = Number(url.searchParams.get("days") || 28), country = url.searchParams.get("country") || "", device = url.searchParams.get("device") || "";
-  if (![7, 28, 90].includes(days) || country && !Object.prototype.hasOwnProperty.call(countryCodes, country) || !["", "desktop", "mobile", "tablet"].includes(device)) throw new Error("Invalid report filters.");
+  if (!periodOptions.includes(days) || country && !Object.prototype.hasOwnProperty.call(countryCodes, country) || !["", "desktop", "mobile", "tablet"].includes(device)) throw new Error("Invalid report filters.");
   return { days, country, device };
 }
 function periods(days, delay, now = /* @__PURE__ */ new Date()) {
@@ -128,7 +129,7 @@ function periods(days, delay, now = /* @__PURE__ */ new Date()) {
   };
   return { startDate: shift(end, 1 - days), endDate: shift(end, 0), previousStart: shift(end, 1 - 2 * days), previousEnd: shift(end, -days) };
 }
-var summaryMetrics = ["activeUsers", "newUsers", "sessions", "engagedSessions", "screenPageViews", "engagementRate", "userEngagementDuration"];
+var summaryMetrics = ["activeUsers", "newUsers", "sessions", "engagedSessions", "screenPageViews", "engagementRate", "userEngagementDuration", "averageSessionDuration", "screenPageViewsPerSession", "bounceRate"];
 var trafficMetrics = ["sessions", "activeUsers", "engagementRate"];
 var definitions = [
   { id: "summary", dimensions: [], metrics: summaryMetrics },
@@ -136,31 +137,52 @@ var definitions = [
   { id: "daily", dimensions: ["date"], metrics: ["sessions", "activeUsers", "screenPageViews"] },
   { id: "dailyPrevious", dimensions: ["date"], metrics: ["sessions"], previous: true },
   { id: "channels", dimensions: ["sessionDefaultChannelGroup"], metrics: trafficMetrics },
+  { id: "channelsPrevious", dimensions: ["sessionDefaultChannelGroup"], metrics: ["sessions"], previous: true },
   { id: "sources", dimensions: ["sessionSourceMedium"], metrics: trafficMetrics },
-  { id: "countries", dimensions: ["country"], metrics: trafficMetrics },
-  { id: "cities", dimensions: ["city", "country"], metrics: trafficMetrics },
+  { id: "sourcesPrevious", dimensions: ["sessionSourceMedium"], metrics: ["sessions"], previous: true },
+  { id: "countries", dimensions: ["country", "countryId"], metrics: trafficMetrics, limit: 250 },
+  { id: "countriesPrevious", dimensions: ["country", "countryId"], metrics: ["sessions"], previous: true, limit: 250 },
+  { id: "regions", dimensions: ["region", "country"], metrics: trafficMetrics },
+  { id: "cities", dimensions: ["city", "country", "countryId"], metrics: trafficMetrics, limit: 250 },
   { id: "devices", dimensions: ["deviceCategory"], metrics: trafficMetrics },
   { id: "browsers", dimensions: ["browser"], metrics: trafficMetrics },
+  { id: "os", dimensions: ["operatingSystem"], metrics: trafficMetrics },
+  { id: "languages", dimensions: ["language"], metrics: ["activeUsers", "sessions"] },
+  { id: "newReturning", dimensions: ["newVsReturning"], metrics: ["activeUsers", "sessions", "engagementRate"] },
+  { id: "hourly", dimensions: ["dayOfWeek", "hour"], metrics: ["sessions"], limit: 200 },
+  // Demographics need Google signals in GA4; each report fails independently when unavailable or thresholded.
+  { id: "ageGroups", dimensions: ["userAgeBracket"], metrics: ["activeUsers"] },
+  { id: "genders", dimensions: ["userGender"], metrics: ["activeUsers"] },
+  { id: "interests", dimensions: ["brandingInterest"], metrics: ["activeUsers"], limit: 20 },
+  { id: "brands", dimensions: ["mobileDeviceBranding"], metrics: ["sessions", "activeUsers"] },
+  { id: "screens", dimensions: ["screenResolution"], metrics: ["sessions"], limit: 20 },
+  { id: "firstSources", dimensions: ["firstUserSourceMedium"], metrics: ["newUsers", "activeUsers"] },
+  { id: "referrers", dimensions: ["pageReferrer"], metrics: ["screenPageViews", "activeUsers"], limit: 150 },
+  { id: "journeys", dimensions: ["sessionSourceMedium", "landingPage"], metrics: ["sessions", "engagementRate"], limit: 150 },
   { id: "campaigns", dimensions: ["sessionCampaignName"], metrics: trafficMetrics },
   { id: "pages", dimensions: ["pagePath"], metrics: ["screenPageViews", "activeUsers", "userEngagementDuration"], limit: 250 },
+  { id: "pagesPrevious", dimensions: ["pagePath"], metrics: ["screenPageViews"], previous: true, limit: 250 },
   { id: "landing", dimensions: ["landingPage"], metrics: ["sessions", "engagementRate", "bounceRate"], limit: 250 },
   { id: "events", dimensions: ["eventName"], metrics: ["eventCount", "totalUsers"], eventFilter: trackedEvents },
   { id: "eventsPrevious", dimensions: ["eventName"], metrics: ["eventCount"], eventFilter: trackedEvents, previous: true },
+  { id: "allEvents", dimensions: ["eventName"], metrics: ["eventCount", "totalUsers"], limit: 60 },
+  { id: "eventsToday", dimensions: ["eventName"], metrics: ["eventCount"], eventFilter: trackedEvents, range: "today", unfiltered: true },
+  { id: "eventsLastSeen", dimensions: ["eventName", "date"], metrics: ["eventCount"], eventFilter: trackedEvents, range: "year", unfiltered: true, limit: 500 },
   { id: "leadDaily", dimensions: ["date"], metrics: ["eventCount"], eventFilter: contacts },
   { id: "leadPages", dimensions: ["pagePath", "eventName"], metrics: ["eventCount"], eventFilter: contacts, limit: 250 },
   { id: "leadSources", dimensions: ["sessionSourceMedium", "eventName"], metrics: ["eventCount"], eventFilter: contacts }
 ];
 function gaRequest(definition, filters, period) {
   const expressions = [];
-  if (filters.country) expressions.push({ filter: { fieldName: "countryId", stringFilter: { value: filters.country, matchType: "EXACT" } } });
-  if (filters.device) expressions.push({ filter: { fieldName: "deviceCategory", stringFilter: { value: filters.device, matchType: "EXACT" } } });
+  if (filters.country && !definition.unfiltered) expressions.push({ filter: { fieldName: "countryId", stringFilter: { value: filters.country, matchType: "EXACT" } } });
+  if (filters.device && !definition.unfiltered) expressions.push({ filter: { fieldName: "deviceCategory", stringFilter: { value: filters.device, matchType: "EXACT" } } });
   if (definition.eventFilter) expressions.push({ filter: { fieldName: "eventName", inListFilter: { values: definition.eventFilter } } });
   return {
-    dateRanges: [{ startDate: definition.previous ? period.previousStart : period.startDate, endDate: definition.previous ? period.previousEnd : period.endDate }],
+    dateRanges: [definition.range === "today" ? { startDate: "today", endDate: "today" } : definition.range === "year" ? { startDate: "365daysAgo", endDate: "today" } : { startDate: definition.previous ? period.previousStart : period.startDate, endDate: definition.previous ? period.previousEnd : period.endDate }],
     dimensions: definition.dimensions.map((name) => ({ name })),
     metrics: definition.metrics.map((name) => ({ name })),
     ...expressions.length ? { dimensionFilter: { andGroup: { expressions } } } : {},
-    orderBys: definition.dimensions.includes("date") ? [{ dimension: { dimensionName: "date" } }] : [{ metric: { metricName: definition.metrics[0] }, desc: true }],
+    orderBys: definition.dimensions.includes("date") ? [{ dimension: { dimensionName: "date" }, desc: definition.range === "year" }] : [{ metric: { metricName: definition.metrics[0] }, desc: true }],
     limit: definition.limit || 100,
     returnPropertyQuota: true
   };
@@ -178,8 +200,8 @@ var realtimeDefinitions = [
   { id: "liveMinutes", dimensions: ["minutesAgo"], metrics: ["activeUsers", "eventCount"] },
   { id: "livePages", dimensions: ["unifiedScreenName"], metrics: ["screenPageViews", "activeUsers"] },
   { id: "liveEvents", dimensions: ["eventName"], metrics: ["eventCount"] },
-  { id: "liveCountries", dimensions: ["country"], metrics: ["activeUsers"] },
-  { id: "liveCities", dimensions: ["city", "country"], metrics: ["activeUsers"] },
+  { id: "liveCountries", dimensions: ["country", "countryId"], metrics: ["activeUsers"] },
+  { id: "liveCities", dimensions: ["city", "country", "countryId"], metrics: ["activeUsers"] },
   { id: "liveDevices", dimensions: ["deviceCategory"], metrics: ["activeUsers"] }
 ];
 async function loadRealtime(accessToken) {
@@ -219,16 +241,18 @@ async function limited(jobs, concurrency = 3) {
 async function loadReports(accessToken, filters) {
   const config = configuration(), gaPeriod = periods(filters.days, 1), searchPeriod = periods(filters.days, 3);
   const deadline = AbortSignal.timeout(42e3);
-  const entries = await limited(definitions.map((definition) => async () => [definition.id, await safe(async () => gaRows(await googlePost(`https://analyticsdata.googleapis.com/v1beta/properties/${config.property}:runReport`, gaRequest(definition, filters, gaPeriod), accessToken, deadline)))]));
-  const searchDefinitions = [["searchSummary", []], ["searchPrevious", [], true], ["searchDaily", ["date"]], ["queries", ["query"]], ["searchPages", ["page"]], ["searchCountries", ["country"]], ["searchDevices", ["device"]]];
-  const searchEntries = await limited(searchDefinitions.map(([id, dimensions, previous]) => async () => [id, await safe(async () => {
+  const gaWork = limited(definitions.map((definition) => async () => [definition.id, await safe(async () => gaRows(await googlePost(`https://analyticsdata.googleapis.com/v1beta/properties/${config.property}:runReport`, gaRequest(definition, filters, gaPeriod), accessToken, deadline)))]), 4);
+  const searchDefinitions = [["searchSummary", []], ["searchPrevious", [], true], ["searchDaily", ["date"]], ["queries", ["query"]], ["queriesPrevious", ["query"], true], ["searchPages", ["page"]], ["searchPagesPrevious", ["page"], true], ["searchCountries", ["country"]], ["searchDevices", ["device"]]];
+  const searchWork = limited(searchDefinitions.map(([id, dimensions, previous]) => async () => [id, await safe(async () => {
     const result = await googlePost(`https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(config.site)}/searchAnalytics/query`, searchRequest(dimensions, filters, searchPeriod, previous), accessToken, deadline);
     return { status: "ok", rows: (result.rows || []).map((row) => ({ ...Object.fromEntries(dimensions.map((key, index) => [key, row.keys[index]])), clicks: row.clicks, impressions: row.impressions, ctr: row.ctr, position: row.position })), limited: result.rows?.length === 250 };
   })]));
+  const [entries, searchEntries] = await Promise.all([gaWork, searchWork]);
   return { mode: "live", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), filters, periods: { ga: gaPeriod, search: searchPeriod }, datasets: Object.fromEntries([...entries, ...searchEntries]) };
 }
 
 // app/insights/demo.ts
+var countryNames = { OM: "Oman", AE: "United Arab Emirates", SA: "Saudi Arabia", QA: "Qatar", KW: "Kuwait", BH: "Bahrain", IN: "India" };
 function demoReports(filters) {
   const ga = periods(filters.days, 1), search = periods(filters.days, 3);
   const scale = (filters.country ? 0.57 : 1) * (filters.device ? 0.64 : 1);
@@ -251,30 +275,64 @@ function demoReports(filters) {
   const add = (id, rows) => {
     datasets[id] = { rows, status: "ok" };
   };
-  const summary = { activeUsers: Math.round(sessions * 0.76), newUsers: Math.round(sessions * 0.61), sessions, engagedSessions: Math.round(sessions * 0.682), screenPageViews: views, engagementRate: 0.682, userEngagementDuration: sessions * 74 };
+  const growth = [1.19, 1.42, 0.86, 1.05, 2.1, 0.74, 1.3, 0.95, 1.6];
+  const summary = { activeUsers: Math.round(sessions * 0.76), newUsers: Math.round(sessions * 0.61), sessions, engagedSessions: Math.round(sessions * 0.682), screenPageViews: views, engagementRate: 0.682, userEngagementDuration: sessions * 74, averageSessionDuration: 118.4, screenPageViewsPerSession: views / sessions, bounceRate: 0.318 };
   add("summary", [summary]);
-  add("previous", [{ ...summary, activeUsers: Math.round(summary.activeUsers / 1.16), sessions: Math.round(sessions / 1.19), screenPageViews: Math.round(views / 1.14), engagementRate: 0.632 }]);
+  add("previous", [{ ...summary, activeUsers: Math.round(summary.activeUsers / 1.16), newUsers: Math.round(summary.newUsers / 1.22), sessions: Math.round(sessions / 1.19), screenPageViews: Math.round(views / 1.14), engagementRate: 0.632, averageSessionDuration: 104.2, screenPageViewsPerSession: 1.76, bounceRate: 0.368 }]);
   add("daily", daily);
   add("dailyPrevious", daily.map((row, i) => {
     const date = /* @__PURE__ */ new Date(ga.previousStart + "T00:00:00Z");
     date.setUTCDate(date.getUTCDate() + i);
     return { date: date.toISOString().slice(0, 10).replaceAll("-", ""), sessions: Math.round(Number(row.sessions) / 1.19) };
   }));
-  const breakdown = (id, field, labels, shares2) => add(id, split(sessions, shares2).map((count, i) => ({ [field]: labels[i], sessions: count, activeUsers: Math.round(count * 0.83), engagementRate: 0.54 + i * 0.035 })));
-  breakdown("channels", "sessionDefaultChannelGroup", ["Organic Search", "Direct", "Organic Social", "Referral", "Paid Search"], [0.48, 0.24, 0.14, 0.09, 0.05]);
-  breakdown("sources", "sessionSourceMedium", ["google / organic", "(direct) / (none)", "instagram / social", "linkedin.com / referral", "google / cpc"], [0.48, 0.24, 0.14, 0.09, 0.05]);
-  breakdown("countries", "country", filters.country ? [filters.country] : ["Oman", "United Arab Emirates", "Saudi Arabia", "India", "Other"], filters.country ? [1] : [0.57, 0.15, 0.12, 0.1, 0.06]);
-  breakdown("cities", "city", ["Muscat", "Seeb", "Dubai", "Riyadh", "Other"], [0.42, 0.15, 0.15, 0.12, 0.16]);
+  const breakdown = (id, field, labels, shares2, extra = () => ({})) => {
+    const counts2 = split(sessions, shares2);
+    add(id, counts2.map((count, i) => ({ [field]: labels[i], ...extra(i), sessions: count, activeUsers: Math.round(count * 0.83), engagementRate: 0.54 + i * 0.035 })));
+    return counts2;
+  };
+  const previousOf = (id, field, labels, counts2, extra = () => ({})) => add(id, counts2.map((count, i) => ({ [field]: labels[i], ...extra(i), sessions: Math.round(count / growth[i % growth.length]) })));
+  const channelLabels = ["Organic Search", "Direct", "Organic Social", "Referral", "Paid Search"];
+  previousOf("channelsPrevious", "sessionDefaultChannelGroup", channelLabels, breakdown("channels", "sessionDefaultChannelGroup", channelLabels, [0.48, 0.24, 0.14, 0.09, 0.05]));
+  const sourceLabels = ["google / organic", "(direct) / (none)", "instagram / social", "linkedin.com / referral", "google / cpc", "chatgpt.com / referral"];
+  previousOf("sourcesPrevious", "sessionSourceMedium", sourceLabels, breakdown("sources", "sessionSourceMedium", sourceLabels, [0.46, 0.24, 0.14, 0.08, 0.05, 0.03]));
+  const countryIds = filters.country ? [filters.country] : ["OM", "AE", "SA", "IN", "QA", "GB", "US", "KW", "BH", "DE"];
+  const countryLabels = countryIds.map((id) => countryNames[id] || { GB: "United Kingdom", US: "United States", DE: "Germany" }[id]);
+  const countryShares = filters.country ? [1] : [0.5, 0.14, 0.1, 0.09, 0.04, 0.04, 0.03, 0.02, 0.02, 0.02];
+  previousOf("countriesPrevious", "country", countryLabels, breakdown("countries", "country", countryLabels, countryShares, (i) => ({ countryId: countryIds[i] })), (i) => ({ countryId: countryIds[i] }));
+  breakdown("regions", "region", ["Muscat", "Dubai", "Riyadh Region", "Kerala", "Al Batinah North", "Doha"], [0.36, 0.14, 0.1, 0.09, 0.18, 0.13], (i) => ({ country: ["Oman", "United Arab Emirates", "Saudi Arabia", "India", "Oman", "Qatar"][i] }));
+  const cities = [["Muscat", "Oman", "OM"], ["Seeb", "Oman", "OM"], ["Dubai", "United Arab Emirates", "AE"], ["Riyadh", "Saudi Arabia", "SA"], ["Sohar", "Oman", "OM"], ["Kozhikode", "India", "IN"], ["Doha", "Qatar", "QA"], ["London", "United Kingdom", "GB"], ["Abu Dhabi", "United Arab Emirates", "AE"], ["Bengaluru", "India", "IN"]];
+  breakdown("cities", "city", cities.map((c) => c[0]), [0.3, 0.12, 0.11, 0.09, 0.08, 0.07, 0.06, 0.06, 0.06, 0.05], (i) => ({ country: cities[i][1], countryId: cities[i][2] }));
   breakdown("devices", "deviceCategory", filters.device ? [filters.device] : ["mobile", "desktop", "tablet"], filters.device ? [1] : [0.64, 0.32, 0.04]);
-  breakdown("browsers", "browser", ["Chrome", "Safari", "Edge", "Firefox"], [0.58, 0.29, 0.08, 0.05]);
+  breakdown("browsers", "browser", ["Chrome", "Safari", "Edge", "Firefox", "Samsung Internet"], [0.55, 0.29, 0.08, 0.04, 0.04]);
+  breakdown("os", "operatingSystem", ["Android", "iOS", "Windows", "Macintosh", "Linux"], [0.41, 0.3, 0.19, 0.08, 0.02]);
   breakdown("campaigns", "sessionCampaignName", ["(organic)", "(direct)", "portfolio-launch", "oman-seo-guide"], [0.48, 0.24, 0.18, 0.1]);
+  add("languages", split(sessions, [0.74, 0.15, 0.04, 0.04, 0.03]).map((count, i) => ({ language: ["English", "Arabic", "Hindi", "Malayalam", "French"][i], sessions: count, activeUsers: Math.round(count * 0.82) })));
+  add("newReturning", split(sessions, [0.63, 0.37]).map((count, i) => ({ newVsReturning: ["new", "returning"][i], sessions: count, activeUsers: Math.round(count * (i ? 0.55 : 0.9)), engagementRate: i ? 0.78 : 0.62 })));
+  add("hourly", Array.from({ length: 7 * 24 }, (_, i) => {
+    const day = Math.floor(i / 24), hour = i % 24;
+    const curve = Math.max(0.05, Math.exp(-((hour - 10) ** 2) / 8) + 0.8 * Math.exp(-((hour - 21) ** 2) / 6) + 0.12);
+    return { dayOfWeek: String(day), hour: String(hour).padStart(2, "0"), sessions: Math.round(sessions / 168 * curve * (day === 5 ? 0.55 : day === 6 ? 0.75 : 1.12) * 1.6) };
+  }));
+  add("ageGroups", split(summary.activeUsers, [0.09, 0.38, 0.29, 0.14, 0.07, 0.03]).map((activeUsers, i) => ({ userAgeBracket: ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"][i], activeUsers })));
+  add("genders", split(summary.activeUsers, [0.66, 0.34]).map((activeUsers, i) => ({ userGender: ["male", "female"][i], activeUsers })));
+  add("interests", ["Technology/Technophiles", "Business Professionals", "Shoppers/Value Shoppers", "Media & Entertainment/Movie Lovers", "Travel/Business Travelers", "Food & Dining/Coffee Shop Regulars", "Sports & Fitness/Health & Fitness Buffs", "Lifestyles & Hobbies/Business Professionals"].map((brandingInterest, i) => ({ brandingInterest, activeUsers: Math.round(summary.activeUsers * (0.34 - i * 0.035)) })));
+  breakdown("brands", "mobileDeviceBranding", ["Apple", "Samsung", "Xiaomi", "Huawei", "Google", "OnePlus"], [0.42, 0.27, 0.12, 0.08, 0.06, 0.05]);
+  breakdown("screens", "screenResolution", ["390x844", "1920x1080", "393x873", "1536x864", "412x915", "1440x900"], [0.24, 0.2, 0.17, 0.15, 0.13, 0.11]);
+  add("firstSources", split(summary.activeUsers, [0.47, 0.26, 0.13, 0.09, 0.05]).map((activeUsers, i) => ({ firstUserSourceMedium: ["google / organic", "(direct) / (none)", "instagram / social", "linkedin.com / referral", "chatgpt.com / referral"][i], newUsers: Math.round(activeUsers * 0.8), activeUsers })));
+  add("referrers", ["https://www.google.com/", "https://www.linkedin.com/", "https://l.instagram.com/", "https://chatgpt.com/", "https://www.bing.com/", "https://hisanali.com/", "https://www.facebook.com/", "https://duckduckgo.com/"].map((pageReferrer, i) => ({ pageReferrer, screenPageViews: Math.round(views * [0.3, 0.07, 0.06, 0.04, 0.03, 0.25, 0.02, 0.01][i]), activeUsers: Math.round(summary.activeUsers * [0.32, 0.06, 0.06, 0.04, 0.02, 0.2, 0.02, 0.01][i]) })));
+  add("journeys", ["google / organic", "(direct) / (none)", "instagram / social", "linkedin.com / referral"].flatMap((source, i) => ["/", "/seo-expert-oman/", "/gcc/", "/blog/hire-digital-marketer-oman/"].map((landingPage, j) => ({ sessionSourceMedium: source, landingPage, sessions: Math.round(sessions * [0.46, 0.24, 0.14, 0.08][i] * [0.3, 0.35, 0.2, 0.15][(i + j) % 4]), engagementRate: 0.55 + (i * 3 + j) % 7 * 0.04 }))).sort((a, b) => b.sessions - a.sessions));
   const paths = ["/", "/seo-expert-oman/", "/gcc/", "/blog/hire-digital-marketer-oman/", "/contact/", "/resources/oman-marketing-calendar-2027/"];
   const shares = [0.29, 0.23, 0.18, 0.14, 0.1, 0.06];
-  add("pages", split(views, shares).map((count, i) => ({ pagePath: paths[i], screenPageViews: count, activeUsers: Math.round(count / 1.4), userEngagementDuration: count * (39 + i * 7) })));
+  const pageViews = split(views, shares);
+  add("pages", pageViews.map((count, i) => ({ pagePath: paths[i], screenPageViews: count, activeUsers: Math.round(count / 1.4), userEngagementDuration: count * (39 + i * 7) })));
+  add("pagesPrevious", pageViews.map((count, i) => ({ pagePath: paths[i], screenPageViews: Math.round(count / growth[(i + 2) % growth.length]) })));
   add("landing", split(sessions, shares).map((count, i) => ({ landingPage: paths[i], sessions: count, engagementRate: 0.61 + i * 0.025, bounceRate: 0.39 - i * 0.025 })));
   const counts = [Math.round(sessions * 0.021), Math.round(sessions * 7e-3), Math.round(sessions * 4e-3), Math.round(sessions * 3e-3), Math.round(sessions * 0.024), Math.round(sessions * 0.016)];
   add("events", trackedEvents.map((eventName, i) => ({ eventName, eventCount: counts[i], totalUsers: Math.round(counts[i] * 0.84) })));
   add("eventsPrevious", trackedEvents.map((eventName, i) => ({ eventName, eventCount: Math.round(counts[i] * 0.78) })));
+  add("allEvents", [["page_view", views], ["user_engagement", Math.round(sessions * 1.4)], ["session_start", sessions], ["scroll", Math.round(views * 0.46)], ["first_visit", summary.newUsers], ["click", Math.round(sessions * 0.21)], ...trackedEvents.map((name, i) => [name, counts[i]])].map(([eventName, eventCount]) => ({ eventName, eventCount, totalUsers: Math.round(Number(eventCount) * 0.7) })).sort((a, b) => Number(b.eventCount) - Number(a.eventCount)));
+  add("eventsToday", [{ eventName: "lead_whatsapp", eventCount: 2 }, { eventName: "cta_contact", eventCount: 3 }, { eventName: "file_download", eventCount: 1 }]);
+  add("eventsLastSeen", trackedEvents.filter((name) => name !== "lead_phone").map((eventName, i) => ({ eventName, date: ga.endDate.replaceAll("-", ""), eventCount: 1 + i })));
   const leadCount = counts.slice(0, 4).reduce((a, b) => a + b, 0);
   add("leadDaily", split(leadCount, daily.map((row) => row.sessions / sessions)).map((eventCount, i) => ({ date: daily[i].date, eventCount })));
   add("leadPages", contacts.flatMap((eventName, i) => split(counts[i], shares).map((eventCount, j) => ({ pagePath: paths[j], eventName, eventCount }))));
@@ -287,15 +345,19 @@ function demoReports(filters) {
     date.setUTCDate(date.getUTCDate() + i);
     return { date: date.toISOString().slice(0, 10), clicks: count, impressions: Math.round(count / 0.047) };
   }));
-  const searchRows = (field, labels) => labels.map((label, i) => {
-    const count = Math.round(clicks * (0.23 - i * 0.032));
-    return { [field]: label, clicks: count, impressions: count * (13 + i * 8), ctr: 1 / (13 + i * 8), position: 4.2 + i * 4.7 };
+  const searchRows = (field, labels, previous = false) => labels.map((label, i) => {
+    const position = [3.1, 6.8, 1.2, 9.4, 14.2, 7.6, 18.5, 11.3, 4.4, 22.8][i % 10], ctr = [0.12, 0.028, 0.41, 0.018, 9e-3, 0.022, 6e-3, 0.011, 0.07, 4e-3][i % 10];
+    const shown = Math.round(impressions * [0.08, 0.14, 0.02, 0.12, 0.09, 0.07, 0.1, 0.06, 0.04, 0.05][i % 10]), count = Math.round(shown * ctr);
+    const factor = previous ? growth[(i + 4) % growth.length] : 1;
+    return { [field]: label, clicks: Math.round(count / factor), impressions: Math.round(shown / factor), ctr, position: previous ? position + 2.4 - i % 3 : position };
   });
-  add("queries", searchRows("query", ["digital marketing consultant oman", "seo expert oman", "hisan ali", "digital marketer muscat", "gcc digital marketing"]));
+  const queries = ["digital marketing consultant oman", "seo expert oman", "hisan ali", "digital marketer muscat", "gcc digital marketing", "google ads agency oman", "social media marketing oman", "freelance marketer muscat", "oman marketing calendar 2027", "website design oman"];
+  add("queries", searchRows("query", queries));
+  add("queriesPrevious", searchRows("query", queries, true));
   add("searchPages", searchRows("page", paths.map((path) => "https://hisanali.com" + path)));
+  add("searchPagesPrevious", searchRows("page", paths.map((path) => "https://hisanali.com" + path), true));
   add("searchCountries", searchRows("country", filters.country ? [filters.country] : ["omn", "are", "sau", "ind"]));
   add("searchDevices", searchRows("device", filters.device ? [filters.device] : ["MOBILE", "DESKTOP", "TABLET"]));
-  add("realtime", [{ activeUsers: 7 }]);
   return { mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), filters, periods: { ga, search }, datasets };
 }
 function demoRealtime() {
@@ -303,13 +365,13 @@ function demoRealtime() {
   const add = (id, rows) => {
     datasets[id] = { status: "ok", rows };
   };
-  add("realtime", [{ activeUsers: 7, screenPageViews: 23, eventCount: 64 }]);
-  add("liveMinutes", [{ minutesAgo: "02", activeUsers: 2, eventCount: 10 }, { minutesAgo: "06", activeUsers: 3, eventCount: 17 }, { minutesAgo: "12", activeUsers: 2, eventCount: 15 }, { minutesAgo: "18", activeUsers: 2, eventCount: 12 }, { minutesAgo: "26", activeUsers: 1, eventCount: 10 }]);
-  add("livePages", [{ unifiedScreenName: "Hisan Ali \u2014 Digital Marketing Consultant", screenPageViews: 12, activeUsers: 5 }, { unifiedScreenName: "SEO Expert Oman", screenPageViews: 8, activeUsers: 3 }, { unifiedScreenName: "GCC Digital Marketing", screenPageViews: 3, activeUsers: 2 }]);
-  add("liveEvents", [{ eventName: "page_view", eventCount: 23, activeUsers: 7 }, { eventName: "user_engagement", eventCount: 20, activeUsers: 6 }, { eventName: "scroll", eventCount: 14, activeUsers: 5 }, { eventName: "lead_whatsapp", eventCount: 5, activeUsers: 3 }, { eventName: "lead_email", eventCount: 2, activeUsers: 1 }]);
-  add("liveCountries", [{ country: "Oman", activeUsers: 5 }, { country: "United Arab Emirates", activeUsers: 2 }]);
-  add("liveCities", [{ city: "Muscat", country: "Oman", activeUsers: 4 }, { city: "Seeb", country: "Oman", activeUsers: 1 }, { city: "Dubai", country: "United Arab Emirates", activeUsers: 2 }]);
-  add("liveDevices", [{ deviceCategory: "mobile", activeUsers: 5 }, { deviceCategory: "desktop", activeUsers: 2 }]);
+  add("realtime", [{ activeUsers: 9, screenPageViews: 27, eventCount: 74 }]);
+  add("liveMinutes", [{ minutesAgo: "01", activeUsers: 3, eventCount: 12 }, { minutesAgo: "02", activeUsers: 2, eventCount: 10 }, { minutesAgo: "06", activeUsers: 3, eventCount: 17 }, { minutesAgo: "09", activeUsers: 1, eventCount: 4 }, { minutesAgo: "12", activeUsers: 2, eventCount: 15 }, { minutesAgo: "18", activeUsers: 2, eventCount: 12 }, { minutesAgo: "23", activeUsers: 1, eventCount: 6 }, { minutesAgo: "26", activeUsers: 1, eventCount: 10 }]);
+  add("livePages", [{ unifiedScreenName: "Hisan Ali \u2014 Digital Marketing Consultant", screenPageViews: 12, activeUsers: 5 }, { unifiedScreenName: "SEO Expert Oman", screenPageViews: 8, activeUsers: 3 }, { unifiedScreenName: "GCC Digital Marketing", screenPageViews: 4, activeUsers: 2 }, { unifiedScreenName: "Contact", screenPageViews: 3, activeUsers: 1 }]);
+  add("liveEvents", [{ eventName: "page_view", eventCount: 27 }, { eventName: "user_engagement", eventCount: 22 }, { eventName: "scroll", eventCount: 15 }, { eventName: "lead_whatsapp", eventCount: 5 }, { eventName: "lead_email", eventCount: 2 }]);
+  add("liveCountries", [{ country: "Oman", countryId: "OM", activeUsers: 5 }, { country: "United Arab Emirates", countryId: "AE", activeUsers: 2 }, { country: "India", countryId: "IN", activeUsers: 1 }, { country: "United Kingdom", countryId: "GB", activeUsers: 1 }]);
+  add("liveCities", [{ city: "Muscat", country: "Oman", countryId: "OM", activeUsers: 3 }, { city: "Seeb", country: "Oman", countryId: "OM", activeUsers: 1 }, { city: "Sohar", country: "Oman", countryId: "OM", activeUsers: 1 }, { city: "Dubai", country: "United Arab Emirates", countryId: "AE", activeUsers: 2 }, { city: "Kozhikode", country: "India", countryId: "IN", activeUsers: 1 }, { city: "London", country: "United Kingdom", countryId: "GB", activeUsers: 1 }]);
+  add("liveDevices", [{ deviceCategory: "mobile", activeUsers: 6 }, { deviceCategory: "desktop", activeUsers: 3 }]);
   return { mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), datasets };
 }
 
@@ -370,7 +432,7 @@ function app(options) {
   <nav id="nav" aria-label="Analytics views"></nav>
   <div class="side-foot">
     <div class="side-live" id="side-live"><span class="pulse"></span><span><b id="side-live-count">\u2014</b> on site now</span></div>
-    <p class="shortcut">Press <kbd>1</kbd>\u2013<kbd>7</kbd> to switch views</p>
+    <p class="shortcut">Press <kbd>1</kbd>\u2013<kbd>9</kbd> to switch views</p>
   </div>
 </aside>
 <div class="main-wrap">
@@ -393,7 +455,7 @@ function app(options) {
     </div>
     <section class="toolbar" id="toolbar" aria-label="Report filters">
       <div class="segmented" role="radiogroup" aria-label="Reporting period" id="period-group">
-        <button role="radio" data-days="7" aria-checked="false">7 days</button><button role="radio" data-days="28" aria-checked="true">28 days</button><button role="radio" data-days="90" aria-checked="false">90 days</button>
+        <button role="radio" data-days="7" aria-checked="false" title="Last 7 days">7D</button><button role="radio" data-days="28" aria-checked="true" title="Last 28 days">28D</button><button role="radio" data-days="90" aria-checked="false" title="Last 90 days">90D</button><button role="radio" data-days="180" aria-checked="false" title="Last 6 months">6M</button><button role="radio" data-days="365" aria-checked="false" title="Last 12 months">12M</button>
       </div>
       <input type="hidden" id="period" value="28">
       <label class="select">${svg(icons.globe)}<span class="sr">Country</span><select id="country"><option value="">All countries</option><option value="OM">Oman</option><option value="AE">United Arab Emirates</option><option value="SA">Saudi Arabia</option><option value="QA">Qatar</option><option value="KW">Kuwait</option><option value="BH">Bahrain</option><option value="IN">India</option></select></label>
