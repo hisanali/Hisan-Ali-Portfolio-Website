@@ -18,6 +18,8 @@ test('rejects cross-origin requests and oversized input before storage',async()=
 test('public script is injected once and works on pages without shared shell',()=>{
  const result=withSiteActivity(withSiteActivity('<html><head></head><body>Game</body></html>'));
  assert.equal((result.match(/site-activity\.js/g)||[]).length,1);
+ assert.ok(withSiteActivity('<!doctype html><html><title>Tool</title></html>').includes('site-activity.js'));
+ assert.equal(withSiteActivity('<footer>Fragment</footer>'), '<footer>Fragment</footer>');
 });
 function browser(path='/gcc/') {
  const listeners={},events=[];const win={dataLayer:[],addEventListener:()=>{}};
