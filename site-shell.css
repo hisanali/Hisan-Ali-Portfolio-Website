@@ -63,7 +63,7 @@ html:not(.theme-dark) body.page-home-redesign :is(.eyebrow,.hero-lead,.hero-proo
 body.page-home-redesign .service-row:hover :is(p,ul,.service-number) { color: #ff8a63 !important; opacity: 1; }
 body.page-home-redesign .service-row:hover ul li { color: #ff8a63 !important; border-color: rgba(255,138,99,.72); background: rgba(255,138,99,.08); }
 
-body.ua-menu-open { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }
+body.ua-menu-open { overflow: hidden !important; overscroll-behavior: none; }
 html { scroll-padding-top: 96px; }
 body:not(.page-home-redesign) { padding-top: 86px; }
 

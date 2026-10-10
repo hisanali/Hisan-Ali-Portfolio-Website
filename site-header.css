@@ -97,11 +97,11 @@ html.theme-dark .hd { --hd-card: color-mix(in srgb, var(--ua-paper) 80%, #fff 6%
   background: color-mix(in srgb, var(--ua-paper) 96%, transparent);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   box-shadow: 0 40px 80px -40px rgba(20, 37, 31, .5);
-  opacity: 0; visibility: hidden;
+  opacity: 0; visibility: hidden; pointer-events: none;
   transform: translate(-50%, -8px) scale(.985); transform-origin: 50% 0;
   transition: height .35s var(--hd-ease), opacity .2s, transform .3s var(--hd-ease), visibility 0s .3s;
 }
-.hd.has-panel .hd-sheet { opacity: 1; visibility: visible; transform: translate(-50%, 0) scale(1); transition: height .35s var(--hd-ease), opacity .2s, transform .3s var(--hd-ease), visibility 0s; }
+.hd.has-panel .hd-sheet { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, 0) scale(1); transition: height .35s var(--hd-ease), opacity .2s, transform .3s var(--hd-ease), visibility 0s; }
 .hd-sheet-inner { position: relative; }
 .hd-panel[hidden] { display: none !important; }
 .hd-panel { padding: 22px; animation: hd-panel-in .35s var(--hd-ease) both; }
@@ -110,8 +110,8 @@ html.theme-dark .hd { --hd-card: color-mix(in srgb, var(--ua-paper) 80%, #fff 6%
 @keyframes hd-panel-in { from { opacity: 0; transform: translateY(-6px); } }
 @keyframes hd-panel-left { from { opacity: 0; transform: translateX(-24px); } }
 @keyframes hd-panel-right { from { opacity: 0; transform: translateX(24px); } }
-.hd-scrim { position: fixed; z-index: 1; inset: 0; top: var(--hd-h); background: rgba(10, 18, 14, .28); opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s .25s; }
-.hd.has-panel .hd-scrim { opacity: 1; visibility: visible; transition: opacity .25s, visibility 0s; }
+.hd-scrim { position: fixed; z-index: 1; inset: 0; top: var(--hd-h); background: rgba(10, 18, 14, .28); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .25s, visibility 0s .25s; }
+.hd.has-panel .hd-scrim { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .25s, visibility 0s; }
 
 .hd-eyebrow, .hd-group-title { margin: 0 0 10px; color: var(--ua-muted); font: 800 11px/1 var(--ua-sans); letter-spacing: .12em; text-transform: uppercase; }
 .hd-textlink { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--ua-ink) !important; font: 800 14px/1.2 var(--ua-sans); }
@@ -198,11 +198,10 @@ html.theme-dark .hd-feature-dark { background: #1d3b30; }
     position: fixed; z-index: 2; inset: var(--hd-h) 0 0;
     display: flex; flex-direction: column;
     background: #101a14;
-    clip-path: circle(0 at calc(100% - 50px) 0);
-    visibility: hidden;
-    transition: clip-path .55s var(--hd-ease), visibility 0s .55s;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .16s var(--hd-ease), visibility 0s .16s;
   }
-  .hd-mobile.is-open { clip-path: circle(150% at calc(100% - 50px) 0); visibility: visible; transition: clip-path .6s var(--hd-ease), visibility 0s; }
+  .hd-mobile.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .16s var(--hd-ease), visibility 0s; }
   .hd-m-scroll::after { content: ""; position: sticky; display: block; bottom: -18px; height: 28px; margin: -28px -16px -18px; background: linear-gradient(180deg, rgba(16,26,20,0), #101a14); pointer-events: none; }
   .hd-m-scroll { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 18px; overscroll-behavior: contain; }
   .hd-m-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; gap: 10px; }
@@ -240,8 +239,7 @@ html.theme-dark .hd-feature-dark { background: #1d3b30; }
   .hd-tile.is-active::before { content: "You're here"; position: absolute; z-index: 1; top: 12px; left: 12px; padding: 5px 9px; color: var(--hd-dark); border-radius: 99px; background: var(--ua-lime); font: 800 10px/1 var(--ua-sans); letter-spacing: .06em; text-transform: uppercase; }
   .hd-tile-services.is-active { box-shadow: inset 0 0 0 3px var(--hd-dark); }
   .hd-tile-services.is-active::before { left: 12px; right: auto; color: var(--ua-lime); background: var(--hd-dark); }
-  .hd-mobile.is-open .hd-tile, .hd-mobile.is-open .hd-m-checkup { animation: hd-tile-in .55s var(--hd-bounce) both; animation-delay: calc(var(--i, 6) * 45ms + 80ms); }
-  @keyframes hd-tile-in { from { opacity: 0; transform: translateY(16px) scale(.94); } }
+  .hd-mobile a, .hd-burger { touch-action: manipulation; }
 
   .hd-m-checkup { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; color: #f4f4e9 !important; border: 1.5px dashed #ffffff30; border-radius: 20px; }
   .hd-m-checkup > .hd-i:first-child { width: 36px; height: 36px; padding: 8px; color: var(--hd-dark); border-radius: 12px; background: var(--ua-lime); }

@@ -16,7 +16,6 @@
   let current = null;
   let openTimer = 0;
   let closeTimer = 0;
-  let lastInput = 'mouse';
 
   /* Mark the current page (the generator also marks the active section) */
   const path = location.pathname;
@@ -76,21 +75,11 @@
   };
   const scheduleClose = () => { clearTimeout(openTimer); clearTimeout(closeTimer); closeTimer = setTimeout(close, 220); };
 
-  header.addEventListener('pointerdown', (event) => { lastInput = event.pointerType || 'mouse'; }, true);
-  header.addEventListener('keydown', () => { lastInput = 'keyboard'; }, true);
-
   items.forEach((item) => {
     const name = item.dataset.hdItem;
     const link = item.querySelector('[data-hd-trigger]');
     const caret = item.querySelector('[data-hd-caret]');
-    // Mouse: hover shows the menu and a click goes to the page.
-    // Touch/pen: the first tap opens the menu, a second tap goes to the page.
-    link.addEventListener('click', (event) => {
-      if ((lastInput === 'touch' || lastInput === 'pen' || !finePointer.matches) && lastInput !== 'keyboard' && current !== name) {
-        event.preventDefault();
-        open(name);
-      }
-    });
+    // Labels always navigate on the first tap. The separate caret opens the menu.
     caret.addEventListener('click', () => (current === name ? close() : open(name)));
     item.addEventListener('pointerenter', (event) => {
       if (event.pointerType !== 'mouse' || !finePointer.matches) return;
@@ -114,6 +103,7 @@
   header.addEventListener('focusout', () => setTimeout(() => { if (current && !header.contains(document.activeElement)) close(); }, 0));
   addEventListener('resize', () => { setHeight(); if (innerWidth <= 980) close(); });
   sheet.addEventListener('click', (event) => { if (event.target.closest('a')) close(); });
+  addEventListener('pageshow', () => close());
 
   /* Compact + hide on scroll down, reveal on scroll up */
   let lastY = scrollY;
