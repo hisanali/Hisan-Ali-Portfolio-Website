@@ -12,6 +12,6 @@ try{
  assert.deepEqual(seen[1].world,world);rooms[0].publish(pose());rooms[1].publish(pose('grcorolla'));await until(()=>seen[0].pose&&seen[1].pose,'two-way poses');assert.equal(seen[0].pose.vehicle,'grcorolla');assert.equal(seen[1].pose.vehicle,'mercedes');
  await rooms[2].open(code,false,'Third');await until(()=>rooms[2].status.includes('already has two'),'capacity rejection');assert.ok(!rooms[2].code);
  await rooms[1].leave();await until(()=>!rooms[0].peer,'guest removal');await rooms[1].open(code,false,'Guest rejoined');await until(()=>rooms[1].accepted&&rooms[0].peer,'rejoin');rooms[1].publish(pose('bike'));await until(()=>seen[0].pose?.vehicle==='bike','vehicle after rejoin');
- await rooms[1].channel.untrack();await until(()=>!rooms[0].peer,'temporary presence loss');await rooms[1].channel.track({id:rooms[1].id,host:false,name:'Guest rejoined'});await until(()=>rooms[0].peer,'presence recovery');
+ rooms[1].connected=false;await rooms[1].channel.untrack();await until(()=>!rooms[0].peer,'temporary presence loss');rooms[1].connected=true;await rooms[1].channel.track({id:rooms[1].id,host:false,name:'Guest rejoined'});await until(()=>rooms[0].peer,'presence recovery');
  await rooms[0].leave();await until(()=>rooms[1].status.includes('host ended'),'host exit');console.log('PASS: live Supabase admission, shared world, two-way movement, independent vehicles, full-room rejection, leave/rejoin, presence recovery, host exit');
 }finally{await Promise.all(rooms.map(r=>r.leave()));await Promise.all(clients.map(c=>c.removeAllChannels()));}
