@@ -226,7 +226,7 @@
     }
   ],
   "framework": null,
-  "buildCommand": "npm run build:games && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && node scripts/build-static-output.mjs",
+  "buildCommand": "npm run build:games && npm run build:evermile && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && node scripts/build-static-output.mjs",
   "outputDirectory": ".vercel/site-static",
   "functions": {
     "api/portfolio-admin.mjs": {

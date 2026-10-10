@@ -5,7 +5,7 @@
   "scripts": {
     "build:games": "esbuild games/tic-online.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/tic-online.bundle.js && esbuild games/multiplayer.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/multiplayer.bundle.js && esbuild games/snake3d.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/snake3d.bundle.js && esbuild games/arcade3d.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/arcade3d.bundle.js",
     "dev": "npm run build:games && next dev",
-    "build": "npm run build:games && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
+    "build": "npm run build:games && npm run build:evermile && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
     "start": "next start",
     "lint": "next lint",
     "sync:footer": "node scripts/sync-footer.js",
@@ -13,7 +13,8 @@
     "seo:audit": "node scripts/audit-seo.mjs",
     "build:cube": "esbuild tools/rubiks-cube/studio.js --bundle --minify --format=iife --target=es2020 --outfile=tools/rubiks-cube/studio.bundle.js && esbuild tools/rubiks-cube/solver.worker.js --bundle --minify --format=iife --target=es2020 --outfile=tools/rubiks-cube/solver.bundle.js",
     "test:cube": "node scripts/test-cube.mjs",
-    "test:cube-scan": "node scripts/test-cube-scan.mjs"
+    "test:cube-scan": "node scripts/test-cube-scan.mjs",
+    "build:evermile": "esbuild evermile/realtime-client.entry.js --bundle --minify --format=esm --target=es2020 --outfile=evermile/vendor/realtime-client.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",

@@ -1,3 +1,5 @@
+import {syncRoute} from './multiplayer-route.js?v=20261010-mp2';
+import {Multiplayer} from './multiplayer.js?v=20261010-mp2';
 import {Intro} from './loader.js?v=20260926-intro1';
 import {citizenKey} from './citizen-assets.js?v=20260927-train1';
 import {motorcycleLean} from './wheel-rig.js?v=20260927-train1';
@@ -18,7 +20,7 @@ import {Windscreen, Mirror} from './cockpit.js?v=20260927-train1';
 import {Radio, STATIONS} from './radio.js?v=20260927-train1';
 import {DriveAudio} from './audio.js?v=20260927-train1';
 import {clamp, damp, angleDifference, smooth, lerp} from './math.js?v=20260927-train1';
-import {ZONE, TYPES} from './network.js?v=20260927-train1';
+import {Network, ZONE, TYPES} from './network.js?v=20260927-train1';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from './vendor/postprocessing/UnrealBloomPass.js';
@@ -56,7 +58,9 @@ const driveOrbit = new CameraOrbit();
 let chaseOrbitRadius = 0, orbitYaw = .72, orbitPitch = .28, orbitDistance = 7.5, orbitPointer = null;
 let audioContext, windGain, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
 // High quality extras: bloom on bright lights and live reflections on your car. They switch off by themselves if the frame rate drops.
-let detailedModels, intro, starting = false;
+let detailedModels, intro, multiplayer, starting = false;
+let soloRoomSettings = null, lastRoomWorld = null;
+const SHARED_KEYS = ['destination','seed','roadStyle','location','season','planet','roadWidth','autoLane','time','clock','weather','trafficOncoming','trafficOwn','cyclists'];
 let composer = null, bloom = null, cubeRT = null, cubeCam = null, cubeFace = 0, highFx = true, slowTime = 0;
 let lastDistrict = null, lastEnv = null, envClock = 0, tunnelDim = 1, valleyY = 0, valleyClock = 0, blockedTime = 0, lastType = null, lastTown = null, cardJunction = null, stopShown = null, stopStill = 0, lastTick = null;
 
@@ -108,10 +112,11 @@ try {
   mirror = new Mirror(renderer, scene);
   reset(); world.update(state.z, camera, true); setupHighFx(); applyAtmosphere(0, true); initUI();
   intro = new Intro($('intro'), renderer, scene, () => camera);
+  multiplayer = new Multiplayer({scene,settings,setting:changeSetting,begin,paused:()=>state.paused,pause:value=>{state.paused=value;endAllTouchDrive();for(const k of Object.keys(keys))keys[k]=false;updateUI();},enter:enterRoom,leave:leaveRoom,world:roomWorld,applyWorld:applyRoomWorld,pose:roomPose,meet:meetDriver,position:()=>vehicle.group.position});
   frameId = requestAnimationFrame(frame);
 } catch (error) { console.error(error); $('fatal-message').textContent = error.message; $('fatal').hidden = false; }
 
-function save() { try { localStorage.setItem('evermile-settings', JSON.stringify(settings)); localStorage.setItem('evermile-distance', String(state.distance)); localStorage.setItem('evermile-fuel', String(state.fuel)); localStorage.setItem('evermile-hour', String(atmo.hour)); } catch {} }
+function save() { try { localStorage.setItem('evermile-settings', JSON.stringify(soloRoomSettings?{...settings,...soloRoomSettings}:settings)); localStorage.setItem('evermile-distance', String(state.distance)); localStorage.setItem('evermile-fuel', String(state.fuel)); localStorage.setItem('evermile-hour', String(atmo.hour)); } catch {} }
 
 // Your lane's offset from the road centre (the slow lane on a motorway, or the centre if you asked for it on a single-lane road).
 function ownLaneX(z, lane) { const r = world.road; if (settings.autoLane === 'center' && r.laneCount(z) === 1) return 0; return r.laneX(z, 1, lane ?? r.homeLane(z)); }
@@ -132,6 +137,7 @@ function beginWithIntro() {
 // Settings that build a new world or swap the vehicle go behind a shorter version of the same screen.
 const LOADED_SETTINGS = {destination: (v) => DESTINATIONS[v]?.name, seed: () => 'A new road', roadStyle: () => 'A new road', location: (v) => v === 'offworld' ? 'Off world' : 'The hills', planet: (v) => v, vehicle: (v) => ({coupe: 'Sports coupé', coach: 'Coach', bike: 'Motorcycle', mercedes: 'Mercedes W201', grcorolla: 'Toyota GR Corolla', landcruiser: 'Toyota Land Cruiser 300'})[v]};
 function changeSettingLoaded(key, value, after) {
+  if(multiplayer?.active&&SHARED_KEYS.includes(key)){toast('Leave the room to change the shared world.');return;}
   if (!state.started || !LOADED_SETTINGS[key] || settings[key] === value || intro.busy) { changeSetting(key, value); after?.(); return; }
   const wasPaused = state.paused; state.paused = true;
   intro.run({quick: true, minimum: 1300, label: String(LOADED_SETTINGS[key](value) || '').toUpperCase(), task: () => { changeSetting(key, value); after?.(); }}).then(() => { state.paused = wasPaused; updateUI(); });
@@ -141,6 +147,7 @@ export function toggleAuto(value = !state.auto) { state.auto = value; if (value)
 export function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').classList.remove('visible'), 2700); }
 
 export function changeSetting(key, value) {
+  if(multiplayer?.active&&SHARED_KEYS.includes(key)){toast('Leave the room to change the shared world.');return;}
   if (!(key in settings)) return;
   if (key === 'destination' && !DESTINATIONS[value]) return;
   settings[key] = value;
@@ -162,6 +169,35 @@ export function changeSetting(key, value) {
   if (key === 'camera') { releaseCameraDrag(true); positionCamera(1, true); }
   if (key === 'radioVolume') radio?.update(0);
   updateUI();
+}
+
+/* ---------- Shared driving rooms ---------- */
+function enterRoom(){
+ if(!soloRoomSettings)soloRoomSettings=Object.fromEntries(SHARED_KEYS.map(k=>[k,settings[k]]));
+ Object.assign(settings,{clock:'still',weather:'clear',trafficOncoming:'off',trafficOwn:'off',cyclists:'off'});atmo.applyWeather(true);life.clear();state.auto=false;
+}
+function leaveRoom(){
+ if(!soloRoomSettings)return;Object.assign(settings,soloRoomSettings);soloRoomSettings=null;lastRoomWorld=null;world.rebuild(false);life.clear();state.z=35;reset();atmo.setPreset(settings.time);atmo.applyWeather(true);applyAtmosphere(0,true);save();updateUI();
+}
+function roomWorld(){return {settings:Object.fromEntries(SHARED_KEYS.map(k=>[k,settings[k]])),route:world.road.route,hour:atmo.hour};}
+function roomPose(){return {x:vehicle.group.position.x,y:vehicle.group.position.y,z:vehicle.group.position.z,yaw:vehicle.group.rotation.y,pitch:vehicle.group.rotation.x,roll:vehicle.group.rotation.z,speed:state.paused||panelOpen?0:state.speed,steer:state.steer,vehicle:settings.vehicle,color:settings.color,lights:atmo.lit>.5||state.headlights,brake:!!keys.KeyS||!!keys.Space,seq:0};}
+function applyRoomWorld(data,first){
+ if(!data?.settings||!data.route||!Array.isArray(data.route.picks)||data.route.picks.length>2048)return;
+ const cfg=data.settings;for(const k of SHARED_KEYS){if(valid[k]&&!valid[k].includes(cfg[k]))return;}
+ if(typeof cfg.seed!=='string'||cfg.seed.length>60||!Number.isFinite(cfg.roadWidth)||cfg.roadWidth<4||cfg.roadWidth>25||!Number.isFinite(data.hour)||data.hour<0||data.hour>=24)return;
+ if((cfg.location==='offworld'&&data.route.picks.length)||data.route.picks.length>256||!data.route.picks.every(n=>n===0||n===1)||!Array.isArray(data.route.picked)||data.route.picked.length>256||!data.route.picked.every(n=>Number.isInteger(n)&&n>=0&&n<2048)||!Number.isInteger(data.route.done)||data.route.done<0||data.route.done>data.route.picks.length)return;
+ const key=JSON.stringify(data);if(key===lastRoomWorld)return;
+ const sameSettings=lastRoomWorld&&JSON.stringify(cfg)===JSON.stringify(settingsSnapshot());
+ Object.assign(settings,Object.fromEntries(SHARED_KEYS.map(k=>[k,cfg[k]])));
+ if(!sameSettings){world.rebuild(false);world.road=new Network(settings,data.route);life.clear();world.updatePalette();effects.refresh();}else{
+  const r=world.road;
+  syncRoute(r,data.route,j=>{world.onRouteChange(j.z+ZONE-80,state.z);life.onRouteChange(j.z);});
+ }
+ atmo.hour=data.hour;atmo.applyWeather(true);applyAtmosphere(0,true);lastRoomWorld=key;if(first){state.auto=false;begin();}updateUI();
+}
+function settingsSnapshot(){return Object.fromEntries(SHARED_KEYS.map(k=>[k,settings[k]]));}
+function meetDriver(p){
+ if(!p||!Number.isFinite(p.z)||Math.abs(p.z)>1e7)return;state.auto=false;state.z=p.z-12;world.road.extend(state.z+2000);reset();world.update(state.z,camera,true);toast('You are just behind your friend.');
 }
 
 /* ---------- Light, sky and reflections from the clock and the weather ---------- */
@@ -474,6 +510,7 @@ function toggleIndicator(side) {
   }
 }
 function chooseJunction(j, i, announce = true) {
+  if(multiplayer?.guest){toast('The host chooses the shared route.');return;}
   const r = world.road, was = j.chosen;
   if (r.choose(j, i)) { world.onRouteChange(j.z + ZONE - 80, state.z); life.onRouteChange(j.z); }
   if (announce && (was !== i || i === 1)) { const o = r.optionInfo(j, i); radio?.notify('junction', o); toast(`${o.dir === 'ahead' ? 'Straight on' : o.dir === 'left' ? 'Turning left' : 'Turning right'} · ${o.district ? 'to ' + o.label : o.label + (o.name ? ' to ' + o.name : '')}`); }
@@ -483,14 +520,14 @@ function chooseJunction(j, i, announce = true) {
 function routeWatch() {
   if (settings.location !== 'hills') return;
   const r = world.road;
-  const changed = r.commit(state.x, state.z);
+  const changed = multiplayer?.guest ? null : r.commit(state.x, state.z);
   if (changed) { world.onRouteChange(changed.z + ZONE - 80, state.z); life.onRouteChange(changed.z); }
   const j = r.junctionAhead(state.z, 950);
   if (j && state.started) {
     const ahead = j.z - state.z, o = j.options[j.chosen];
     // Autodrive picks a way now and then (sometimes the side road), and signals for it.
     // It is keener on the ways that lead somewhere: a signposted destination is taken most of the time.
-    if (state.auto && settings.autoMode !== 'speed' && !j.picked && ahead < 800) { const place = j.options.findIndex((q) => q.district); chooseJunction(j, settings.junctions === 'surprise' ? (place >= 0 && Math.random() < .65 ? place : Math.random() < .42 ? 1 : 0) : 0, true); }
+    if (!multiplayer?.guest && state.auto && settings.autoMode !== 'speed' && !j.picked && ahead < 800) { const place = j.options.findIndex((q) => q.district); chooseJunction(j, settings.junctions === 'surprise' ? (place >= 0 && Math.random() < .65 ? place : Math.random() < .42 ? 1 : 0) : 0, true); }
     if (state.auto && ahead < 260 && ahead > -10 && o.side) setIndicator(o.side > 0 ? 1 : -1, 'auto', .4);
   }
   // Indicators switch off once the turn is done.
@@ -648,6 +685,7 @@ function frame(now) {
   detailedModels ||= new DetailedModels(scene,settings);
   detailedModels.update(dt,state,life.traffic,town.people,world,life.animals,town);
   routeWatch(); stopWatch(dt);
+  multiplayer?.update(dt,now,camera);
   renderer.info.autoReset = false; renderer.info.reset();
   updateLiveReflection();
   if (composer) composer.render(dt); else renderer.render(scene, camera);
@@ -853,7 +891,7 @@ if (new URLSearchParams(location.search).has('debug')) window.evermile = {state,
 const modelContext = document.modelContext;
 if (modelContext?.registerTool) {
   const controller = new AbortController(); addEventListener('pagehide', () => controller.abort(), {once: true});
-  const read = () => ({game: 'Evermile', railway: {imported:!!railway.pool?.freight.cars[0].imported,errors:railway.importErrors||[],active:!!railway.train}, detailedModels: detailedModels ? {loaded:Object.keys(detailedModels.loaded),errors:detailedModels.errors,traffic:life.traffic.filter(c=>c.detailModel?.visible).length,people:town.people.filter(p=>p.detailed).length,pedestrianTypes:[...new Set(town.people.filter(p=>p.detailed).map(p=>citizenKey(p.i)))],trafficTypes:[...new Set(life.traffic.filter(c=>c.detailModel?.visible).map(c=>c.style))],trafficErrors:detailedModels.trafficModels.errors,architecture:{loaded:Object.keys(world.landmarks.imported.loaded),errors:world.landmarks.imported.errors},roadside:{loaded:Object.keys(world.roadsideModels.loaded),errors:world.roadsideModels.errors},motorcycleImported:!!vehicle.importedBike,animals:life.animals.filter(a=>detailedModels.animalModels.has(a)).reduce((out,a)=>(out[a.kind]=(out[a.kind]||0)+1,out),{})} : null, position: {x: state.x, y: state.y, z: state.z}, cameraPosition: camera.position.toArray(), terrainAtCamera: world.surfaceHeight(camera.position.x,camera.position.z), started: state.started, paused: state.paused || panelOpen || state.inspection, autodrive: state.auto, speedKmh: Math.round(Math.abs(state.speed) * 3.6), distanceKm: Number(state.distance.toFixed(3)), fps: state.fps, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, chunks: world.chunks.size, onRoad: !state.offroad, road: world.road.typeAt(state.z), clock: atmo.clock, vehicle: settings.vehicle, detailedCarLoaded: !!vehicle.detailed, location: settings.location, destination: settings.destination, tireSlip: state.tireSlip || 0, handling: {yaw:state.yaw, yawRate:state.yawRate || 0, steer:state.steer, lateralAcceleration:state.lateralAcceleration || 0}, season: settings.season, timeOfDay: atmo.period, weather: {cloud: Number(atmo.cloud.toFixed(2)), rain: Number(atmo.rain.toFixed(2))}, camera: settings.camera, cameraOrbit: {dragging: !!driveOrbit.pointer, yawDegrees: Number((driveOrbit.yaw * 180 / Math.PI).toFixed(1)), pitchDegrees: Number((driveOrbit.pitch * 180 / Math.PI).toFixed(1)), returning: !driveOrbit.pointer && Math.abs(driveOrbit.yaw) + Math.abs(driveOrbit.pitch) > .01}});
+  const read = () => ({game: 'Evermile', multiplayer:multiplayer?.status(), railway: {imported:!!railway.pool?.freight.cars[0].imported,errors:railway.importErrors||[],active:!!railway.train}, detailedModels: detailedModels ? {loaded:Object.keys(detailedModels.loaded),errors:detailedModels.errors,traffic:life.traffic.filter(c=>c.detailModel?.visible).length,people:town.people.filter(p=>p.detailed).length,pedestrianTypes:[...new Set(town.people.filter(p=>p.detailed).map(p=>citizenKey(p.i)))],trafficTypes:[...new Set(life.traffic.filter(c=>c.detailModel?.visible).map(c=>c.style))],trafficErrors:detailedModels.trafficModels.errors,architecture:{loaded:Object.keys(world.landmarks.imported.loaded),errors:world.landmarks.imported.errors},roadside:{loaded:Object.keys(world.roadsideModels.loaded),errors:world.roadsideModels.errors},motorcycleImported:!!vehicle.importedBike,animals:life.animals.filter(a=>detailedModels.animalModels.has(a)).reduce((out,a)=>(out[a.kind]=(out[a.kind]||0)+1,out),{})} : null, position: {x: state.x, y: state.y, z: state.z}, cameraPosition: camera.position.toArray(), terrainAtCamera: world.surfaceHeight(camera.position.x,camera.position.z), started: state.started, paused: state.paused || panelOpen || state.inspection, autodrive: state.auto, speedKmh: Math.round(Math.abs(state.speed) * 3.6), distanceKm: Number(state.distance.toFixed(3)), fps: state.fps, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, chunks: world.chunks.size, onRoad: !state.offroad, road: world.road.typeAt(state.z), clock: atmo.clock, vehicle: settings.vehicle, detailedCarLoaded: !!vehicle.detailed, location: settings.location, destination: settings.destination, tireSlip: state.tireSlip || 0, handling: {yaw:state.yaw, yawRate:state.yawRate || 0, steer:state.steer, lateralAcceleration:state.lateralAcceleration || 0}, season: settings.season, timeOfDay: atmo.period, weather: {cloud: Number(atmo.cloud.toFixed(2)), rain: Number(atmo.rain.toFixed(2))}, camera: settings.camera, cameraOrbit: {dragging: !!driveOrbit.pointer, yawDegrees: Number((driveOrbit.yaw * 180 / Math.PI).toFixed(1)), pitchDegrees: Number((driveOrbit.pitch * 180 / Math.PI).toFixed(1)), returning: !driveOrbit.pointer && Math.abs(driveOrbit.yaw) + Math.abs(driveOrbit.pitch) > .01}});
   const tools = [
     {name: 'get_drive_status', description: 'Read the current Evermile driving state and rendering performance.', inputSchema: {type: 'object', properties: {}, additionalProperties: false}, annotations: {readOnlyHint: true}, execute: () => read()},
     {name: 'start_drive', description: 'Start Evermile and optionally enable or disable autodrive, using the normal game controls.', inputSchema: {type: 'object', properties: {autodrive: {type: 'boolean'}}, required: ['autodrive'], additionalProperties: false}, annotations: {readOnlyHint: false}, execute: async (input) => { if (typeof input?.autodrive !== 'boolean') throw new Error('autodrive must be boolean'); inspectCar(false); state.paused = false; begin(); closePanel(); toggleAuto(input.autodrive); await new Promise(requestAnimationFrame); return read(); }},
