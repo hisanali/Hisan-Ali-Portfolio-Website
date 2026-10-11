@@ -12,3 +12,22 @@ const refFaces=Object.keys(refs),stableRaw=Array.from({length:6},(_,frameIndex)=
 const captured=Object.fromEntries(Object.entries(refs).map(([face,rgb])=>[face,Array.from({length:9},()=>({rgb,good:true}))]));const automatic=classifyCapturedFaces(captured,refs);assert.equal(automatic.retryFace,null);for(const face of Object.keys(refs))assert.equal(automatic.faces[face],face.repeat(9));captured.F[2]={rgb:[222,80,34],good:true};assert.equal(classifyCapturedFaces(captured,refs).retryFace,'F');
 const balanced=Object.fromEntries(Object.entries(refs).map(([face,rgb])=>[face,Array.from({length:9},()=>({rgb,good:true}))]));balanced.R[0]={rgb:[224,83,32],good:true};assert.equal(classifySample(balanced.R[0].rgb,refs).face,'L');const balancedResult=classifyCapturedFaces(balanced,refs);assert.equal(balancedResult.retryFace,'R');assert.equal(balancedResult.faces,null);
 console.log('PASS: 18 calibrated colour/exposure cases, automatic centre identification, balanced whole-cube colour assignment, full-face temporal averaging, targeted rescan, centre validation and nine-patch sampling.');
+
+// Regression: orange and white sampled from the reported iPhone screenshot.
+const cameraRefs={U:[236,231,213],R:[210,32,25],F:[1,134,56],D:[237,211,2],L:[254,80,35],B:[1,114,194]};
+for(const [face,rgb] of Object.entries(cameraRefs)){
+ const centre=identifyCenterFace(rgb);assert.equal(centre.face,face);assert.ok(centre.confident,`photo centre ${face}`);
+ for(const gain of [.6,.75,1]){const sample=rgb.map(v=>Math.round(v*gain));const match=classifySample(sample,cameraRefs);assert.equal(match.face,face,`photo ${face} at ${gain}`);assert.ok(match.confident);}
+}
+for(const white of [[245,204,155],[235,208,169],[180,170,145]]){assert.equal(identifyCenterFace(white).face,'U');assert.ok(identifyCenterFace(white).confident);}
+// A near-boundary colour is withheld rather than captured as a confident guess.
+assert.equal(identifyCenterFace([250,62,30]).confident,false);
+// Use a real scrambled sticker arrangement, varying exposure per captured face.
+const {FACES}=await import('../tools/rubiks-cube/cube-core.js');
+const {createRequire}=await import('node:module');
+const Cube=createRequire(import.meta.url)('../tools/rubiks-cube/vendor/cube.js');
+const scrambled=new Cube().move("R U F' L D B").asString();
+const photoFrames=Object.fromEntries(FACES.map((face,faceIndex)=>[face,Array.from({length:9},(_,i)=>({rgb:cameraRefs[scrambled[faceIndex*9+i]].map(v=>Math.round(v*(.65+faceIndex*.06))),good:true}))]));
+const photoCentres=Object.fromEntries(FACES.map(face=>[face,photoFrames[face][4].rgb]));
+const matched=classifyCapturedFaces(photoFrames,photoCentres);assert.equal(matched.retryFace,null);for(const [i,face] of FACES.entries())assert.equal(matched.faces[face],scrambled.slice(i*9,i*9+9));
+console.log('PASS: reported orange/white colours, warm white, exposure changes, uncertain centre guard and scrambled six-face scan.');

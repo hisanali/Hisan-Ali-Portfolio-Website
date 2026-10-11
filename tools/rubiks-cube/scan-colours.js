@@ -7,8 +7,14 @@ export function lab(rgb){
  return [116*y-16,500*(x-y),200*(y-z)];
 }
 export function distance(a,b){return Math.hypot((a[0]-b[0])*.32,a[1]-b[1],a[2]-b[2]);}
+// Compare chroma at a common exposure as well as the original sample. Phone
+// auto-exposure changes while the cube turns; it must not turn orange into red.
+export function colourDistance(rgb,reference){
+ const normalise=value=>{const peak=Math.max(...value);return value.map(channel=>channel*220/Math.max(peak,1));};
+ return .7*distance(lab(normalise(rgb)),lab(normalise(reference)))+.3*distance(lab(rgb),lab(reference));
+}
 export function classifySample(rgb,references){
- const value=lab(rgb);const scores=SCAN_FACES.filter(f=>references[f]).map(f=>({face:f,d:distance(value,lab(references[f]))})).sort((a,b)=>a.d-b.d);
+ const scores=SCAN_FACES.filter(f=>references[f]).map(f=>({face:f,d:colourDistance(rgb,references[f])})).sort((a,b)=>a.d-b.d);
  if(scores.length<6)return {face:null,confident:false};
  const [a,b]=scores,margin=(b.d-a.d)/Math.max(b.d,1);
  return {face:a.face,confident:a.d<32&&margin>.22,margin,distance:a.d};
@@ -38,11 +44,13 @@ export function stableFaceSample(history,count=6,tolerance=22){
 export function identifyCenterFace(rgb){
  const [r,g,b]=rgb.map(value=>value/255),max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min,saturation=max?delta/max:0;
  if(max<.18)return {face:null,confident:false};
- if(saturation<.28)return {face:'U',confident:max>.48};
+ // White plastic can be cream under warm indoor light. Saturated orange
+ // still has a much smaller blue channel than white.
+ if(saturation<.4&&min/max>.6)return {face:'U',confident:max>.48};
  let hue=0;if(delta){if(max===r)hue=60*((g-b)/delta%6);else if(max===g)hue=60*((b-r)/delta+2);else hue=60*((r-g)/delta+4);if(hue<0)hue+=360;}
- const ranges=[['R',hue<14||hue>=345],['L',hue>=14&&hue<42],['D',hue>=42&&hue<80],['F',hue>=80&&hue<185],['B',hue>=185&&hue<270]],match=ranges.find(([,inside])=>inside)?.[0]||null;
- const boundaries=[14,42,80,185,270,345],edge=Math.min(...boundaries.map(value=>Math.abs(hue-value)));
- return {face:match,confident:!!match&&saturation>.35&&edge>3,hue,saturation};
+ const ranges=[['R',hue<9||hue>=345],['L',hue>=9&&hue<42],['D',hue>=42&&hue<80],['F',hue>=80&&hue<185],['B',hue>=185&&hue<270]],match=ranges.find(([,inside])=>inside)?.[0]||null;
+ const boundaries=[9,42,80,185,270,345],edge=Math.min(...boundaries.map(value=>Math.abs(hue-value)));
+ return {face:match,confident:!!match&&saturation>.45&&edge>2,hue,saturation};
 }
 export function validFace(face,colours){return SCAN_FACES.includes(face)&&typeof colours==='string'&&/^[URFDLB]{9}$/.test(colours)&&colours[4]===face;}
 // Solve a square assignment matrix in O(n^3). Repeating every colour eight
@@ -57,8 +65,8 @@ function assignMinimumCost(cost){
 export function classifyCapturedFaces(frames,references){
  if(SCAN_FACES.some(face=>!references[face]||!Array.isArray(frames[face])||frames[face].length!==9))return {faces:null,retryFace:SCAN_FACES.find(face=>!frames[face])||SCAN_FACES[0]};
  const cells=[];for(const face of SCAN_FACES)for(let i=0;i<9;i++)if(i!==4)cells.push({face,index:i,sample:frames[face][i]});
- const slots=SCAN_FACES.flatMap(face=>Array(8).fill(face)),referenceLabs=Object.fromEntries(SCAN_FACES.map(face=>[face,lab(references[face])]));
- const distances=cells.map(({sample})=>Object.fromEntries(SCAN_FACES.map(face=>[face,distance(lab(sample.rgb),referenceLabs[face])])));
+ const slots=SCAN_FACES.flatMap(face=>Array(8).fill(face));
+ const distances=cells.map(({sample})=>Object.fromEntries(SCAN_FACES.map(face=>[face,colourDistance(sample.rgb,references[face])])));
  const assignment=assignMinimumCost(distances.map(scores=>slots.map(face=>scores[face]))),faces=Object.fromEntries(SCAN_FACES.map(face=>[face,Array(9).fill(face)])),risk=new Map(SCAN_FACES.map(face=>[face,0]));
  cells.forEach((cell,row)=>{const assigned=slots[assignment[row]],scores=distances[row],ordered=SCAN_FACES.map(face=>({face,d:scores[face]})).sort((a,b)=>a.d-b.d),forced=scores[assigned]-ordered[0].d,bad=!cell.sample.good||!classifySample(cell.sample.rgb,references).confident||assigned!==ordered[0].face||scores[assigned]>38||forced>8;faces[cell.face][cell.index]=assigned;if(bad)risk.set(cell.face,risk.get(cell.face)+Math.max(1,scores[assigned]/8+forced));});
  const retry=[...risk].sort((a,b)=>b[1]-a[1]).find(([,score])=>score>0)?.[0]||null;if(retry)return {faces:null,retryFace:retry};
