@@ -21,9 +21,9 @@ begin
  return jsonb_build_object('ok',true);
 end; $$;
 grant update on public.portfolio_activity to service_role;
-create function public.portfolio_read_journeys(visit uuid default null) returns jsonb
+create or replace function public.portfolio_read_journeys(visit uuid default null) returns jsonb
 language sql stable security invoker set search_path = '' as $$
-with recent as (select * from public.portfolio_activity where session_id is not null and received_at>now()-interval '24 hours'),
+with recent as (select * from public.portfolio_activity where metadata->>'environment' is distinct from 'local-preview' and session_id is not null and received_at>now()-interval '24 hours'),
 sessions as (
  select session_id, min(received_at) started_at, max(received_at) last_seen,
  (array_agg(page order by received_at desc))[1] current_page,
@@ -65,12 +65,12 @@ language sql stable security invoker set search_path = '' as $$
     'generatedAt', now(),
     'source', 'Website activity',
     'window', 'Latest 24 hours',
-    'rows', (select coalesce(jsonb_agg(r order by r.received_at desc), '[]'::jsonb) from (select * from public.portfolio_activity where event_name <> 'heartbeat' and received_at > now() - interval '24 hours' order by received_at desc limit 300) r),
+    'rows', (select coalesce(jsonb_agg(r order by r.received_at desc), '[]'::jsonb) from (select * from public.portfolio_activity where metadata->>'environment' is distinct from 'local-preview' and event_name <> 'heartbeat' and received_at > now() - interval '24 hours' order by received_at desc limit 300) r),
     'counts', (select coalesce(jsonb_agg(c), '[]'::jsonb) from (
       select event_name, count(*) filter (where received_at > now() - interval '30 minutes') as last30,
         count(*) filter (where received_at >= date_trunc('day', now() at time zone 'Asia/Muscat') at time zone 'Asia/Muscat') as today,
         max(received_at) as last_received
-      from public.portfolio_activity where received_at > now() - interval '30 days' group by event_name
+      from public.portfolio_activity where metadata->>'environment' is distinct from 'local-preview' and received_at > now() - interval '30 days' group by event_name
     ) c)
   );
 $$;

@@ -74,7 +74,9 @@ async function collectActivity(request) {
     if (!Array.isArray(data.events) || !data.events.length || data.events.length > 20) return response({ error: "Invalid events." }, 400);
     const events = data.events.map(sanitizeEvent).filter(Boolean);
     if (!events.length) return response({ error: "No valid events." }, 400);
-    for (const event of events) if (event && event.session_id) {
+    for (const event of events) if (event) {
+      event.metadata.environment = origin?.startsWith("http://") ? "local-preview" : "production";
+      if (!event.session_id) continue;
       for (const [field, header] of [["city", "x-vercel-ip-city"], ["country", "x-vercel-ip-country"], ["region", "x-vercel-ip-country-region"]]) {
         let value = request.headers.get(header) || "";
         try {

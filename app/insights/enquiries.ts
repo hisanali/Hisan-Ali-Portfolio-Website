@@ -55,5 +55,5 @@ export async function loadSheet(token:string){
  const range=encodeURIComponent("'Form responses 1'!A1:H5000");
  const response=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store',signal:AbortSignal.timeout(15000)});
  if(!response.ok)throw new Error(response.status===403?'Google Sheets read access is not connected. Enable the Sheets API and approve read-only Sheets access when reconnecting.':response.status===401?'Sign in again to read the response sheet.':'The response sheet could not be read. Try again later.');
- const data=await response.json();return{generatedAt:new Date().toISOString(),source:'Contacts Us 2 (Responses)',sheetUrl:SHEET_URL,headers:data.values?.[0]||[],rows:(data.values||[]).slice(1),limit:4999};
+ const data=await response.json();return{generatedAt:new Date().toISOString(),source:'Contacts Us 2 (Responses)',sheetUrl:SHEET_URL,headers:data.values?.[0]||[],rows:(data.values||[]).slice(1).filter((row:unknown[])=>row.some(value=>String(value??'').trim()!=='')),limit:4999};
 }

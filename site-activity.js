@@ -16,8 +16,12 @@
     session = reuse ? saved.id : crypto.randomUUID();
     touch();
   }
-  function touch() { if (session) try { sessionStorage.setItem(sessionKey,JSON.stringify({id:session,seen:Date.now()})); } catch {} }
+  function touch() { if (session) try { sessionStorage.setItem(sessionKey,JSON.stringify({id:session,seen:lastInteraction})); } catch {} }
   if (preference?.allowed && Date.now()-preference.at < 180*86400000) startSession();
+  function interaction() {
+    const expired=Date.now()-lastInteraction>1800000;lastInteraction=Date.now();
+    if(session&&expired){try{sessionStorage.removeItem(sessionKey);sessionStorage.removeItem('portfolio-journey-entry');}catch{}entry=null;startSession();pageId=crypto.randomUUID();lastTick=Date.now();maxScroll=0;emit('page_view',{label:'New visit after inactivity'});}
+  }
   const context = () => {
     const ua = navigator.userAgent;
     let referrer = ''; try { referrer = new URL(document.referrer).hostname; } catch {}
@@ -67,7 +71,7 @@
     else if (url?.protocol === 'tel:') name = 'lead_phone';
     else if (el.hasAttribute('download') || /\.(pdf|zip|docx?|xlsx?|csv|ics)$/i.test(url?.pathname || '')) name = 'file_download';
     else if (url?.origin === location.origin && /^\/contact\/?$/.test(url.pathname)) name = 'cta_contact';
-    lastInteraction = Date.now();
+    interaction();
     const detail = detailFor(el,url); emit(name, detail);
     if (session) {
       const stamp = Date.now(), key = detail.label + detail.target;
@@ -94,11 +98,11 @@
     const now = Date.now(), elapsed = Math.min(30,(now-lastTick)/1000); lastTick=now;
     emit(exit ? 'page_exit' : 'heartbeat',{label:exit?'Page left':'Visit heartbeat',metadata:{...(exit?{state:'away'}:{}),active_seconds:!document.hidden && now-lastInteraction<60000 ? Math.round(elapsed) : 0,scroll:maxScroll}});
   };
-  setInterval(()=>tick(),15000);
-  document.addEventListener('pointerdown',()=>{lastInteraction=Date.now();},{passive:true});
-  document.addEventListener('keydown',()=>{lastInteraction=Date.now();});
+  setInterval(()=>{if(!document.hidden && Date.now()-lastInteraction<1800000)tick();},15000);
+  document.addEventListener('pointerdown',()=>{interaction();},{passive:true});
+  document.addEventListener('keydown',()=>{interaction();});
   window.addEventListener('scroll',()=>{
-    lastInteraction=Date.now(); if (!session) return;
+    interaction(); if (!session) return;
     const range=document.documentElement.scrollHeight-innerHeight;
     const depth=range>0 ? Math.min(100,Math.round(scrollY/range*100)) : 100;
     const milestone=Math.floor(depth/25)*25;
@@ -112,7 +116,7 @@
     const box=document.createElement('section');box.className='journey-privacy';box.setAttribute('data-analytics-ignore','');box.setAttribute('aria-label','Website analytics privacy');
     box.innerHTML='<button class="jp-open" type="button">Privacy settings</button><div class="jp-panel" hidden><strong>Help improve this website</strong><p>Allow Hisan to see your anonymous page journey, clicks, time spent, device and approximate city in his private dashboard for 30 days. We never record what you type. Basic action counts continue without a visit ID.</p><div class="jp-actions"><button type="button" data-choice="allow">Allow journey analytics</button><button type="button" data-choice="basic">Basic only</button></div><div class="jp-location" hidden><p>Optional: share your precise location with Hisan for this visit. Your browser will ask permission. You can remove it here.</p><button type="button" data-choice="location">Share my location</button><button type="button" data-choice="revoke" hidden>Remove shared location</button></div><small class="jp-status" role="status"></small><button type="button" class="jp-close">Close</button></div>';
     document.body.append(box);const panel=box.querySelector('.jp-panel'),locationBox=box.querySelector('.jp-location'),status=box.querySelector('.jp-status');
-    const show=()=>{panel.hidden=false;locationBox.hidden=!session;};
+    const show=()=>{panel.hidden=false;locationBox.hidden=!session;box.querySelector('[data-choice="revoke"]').hidden=!session;};
     box.querySelector('.jp-open').onclick=show;box.querySelector('.jp-close').onclick=()=>{panel.hidden=true;};
     if(!preference || Date.now()-preference.at>=180*86400000)show();
     box.addEventListener('click',event=>{
@@ -137,6 +141,7 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',privacyUI);else privacyUI();
   document.addEventListener('visibilitychange', () => {
+    if (session) tick();
     if (document.hidden && queue.length && navigator.sendBeacon) {
       const batch = queue.splice(0, 20);
       if (!navigator.sendBeacon('/api/site-activity/', new Blob([JSON.stringify({ events: batch })], { type: 'application/json' }))) queue.unshift(...batch);

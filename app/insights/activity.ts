@@ -62,7 +62,9 @@ export async function collectActivity(request: Request) {
     const events = data.events.map(sanitizeEvent).filter(Boolean);
     if (!events.length) return response({ error: 'No valid events.' }, 400);
     // Vercel supplies these approximate location headers; client-provided city data is discarded.
-    for (const event of events) if (event && event.session_id) {
+    for (const event of events) if (event) {
+      event.metadata.environment = origin?.startsWith('http://') ? 'local-preview' : 'production';
+      if (!event.session_id) continue;
       for (const [field, header] of [['city','x-vercel-ip-city'],['country','x-vercel-ip-country'],['region','x-vercel-ip-country-region']]) {
         let value = request.headers.get(header) || ''; try { value = decodeURIComponent(value); } catch { value = ''; }
         event.metadata[field] = cleanText(value,80);
