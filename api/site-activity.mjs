@@ -1,6 +1,6 @@
 // app/insights/activity.ts
 import { createHash } from "node:crypto";
-var kinds = /* @__PURE__ */ new Set(["page_view", "site_click", "control_change", "form_submit", "lead_whatsapp", "lead_email", "lead_phone", "lead_form", "cta_contact", "file_download"]);
+var kinds = /* @__PURE__ */ new Set(["page_view", "site_click", "control_change", "form_submit", "lead_whatsapp", "lead_email", "lead_phone", "lead_form", "cta_contact", "file_download", "heartbeat", "scroll_depth", "page_exit", "location_shared", "location_revoked", "rage_click"]);
 var headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 var limits = /* @__PURE__ */ new Map();
 function cleanText(value, max = 100) {
@@ -19,7 +19,22 @@ function sanitizeEvent(value) {
   if (!value || typeof value !== "object") return null;
   const v = value, pathname = cleanPath(v.page);
   if (!kinds.has(String(v.event)) || !/^\/[\s\S]*$/.test(pathname) || /^\/(admin|api)(\/|$)/i.test(pathname) || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v.id))) return null;
-  return { id: v.id, event_name: v.event, page: pathname, label: cleanText(v.label), target: cleanText(v.target, 240).split(/[?#]/)[0], area: ["header", "footer", "form", "content"].includes(String(v.area)) ? v.area : "content", device: ["mobile", "tablet", "desktop"].includes(String(v.device)) ? v.device : "desktop" };
+  const uuid = (x) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x));
+  const consented = v.consent === true && uuid(v.session_id) && uuid(v.page_id);
+  const source = v.metadata && typeof v.metadata === "object" ? v.metadata : {};
+  const metadata = {};
+  if (consented) {
+    for (const key of ["browser", "os", "language", "source", "campaign", "medium", "referrer", "city", "country", "region"]) metadata[key] = cleanText(source[key], 80).split(/[?#]/)[0];
+    metadata.state = ["active", "idle", "away"].includes(String(source.state)) ? source.state : "active";
+    for (const [key, max] of [["active_seconds", 30], ["scroll", 100]]) if (typeof source[key] === "number" && Number.isFinite(source[key])) metadata[key] = Math.min(max, Math.max(0, source[key]));
+    if (v.event === "location_shared" && source.location_consent === true && typeof source.latitude === "number" && typeof source.longitude === "number" && typeof source.accuracy === "number" && Number.isFinite(source.latitude) && Number.isFinite(source.longitude) && Number.isFinite(source.accuracy) && Math.abs(source.latitude) <= 90 && Math.abs(source.longitude) <= 180 && source.accuracy >= 0) {
+      metadata.latitude = Number(source.latitude.toFixed(5));
+      metadata.longitude = Number(source.longitude.toFixed(5));
+      metadata.accuracy = Math.min(source.accuracy, 1e5);
+      metadata.location_consent = true;
+    }
+  } else if (["heartbeat", "scroll_depth", "page_exit", "location_shared", "location_revoked", "rage_click"].includes(String(v.event))) return null;
+  return { session_id: consented ? v.session_id : null, page_id: consented ? v.page_id : null, metadata, id: v.id, event_name: v.event, page: pathname, label: cleanText(v.label), target: cleanText(v.target, 240).split(/[?#]/)[0], area: ["header", "footer", "form", "content"].includes(String(v.area)) ? v.area : "content", device: ["mobile", "tablet", "desktop"].includes(String(v.device)) ? v.device : "desktop" };
 }
 async function database(rpc, body) {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -59,6 +74,17 @@ async function collectActivity(request) {
     if (!Array.isArray(data.events) || !data.events.length || data.events.length > 20) return response({ error: "Invalid events." }, 400);
     const events = data.events.map(sanitizeEvent).filter(Boolean);
     if (!events.length) return response({ error: "No valid events." }, 400);
+    for (const event of events) if (event && event.session_id) {
+      for (const [field, header] of [["city", "x-vercel-ip-city"], ["country", "x-vercel-ip-country"], ["region", "x-vercel-ip-country-region"]]) {
+        let value = request.headers.get(header) || "";
+        try {
+          value = decodeURIComponent(value);
+        } catch {
+          value = "";
+        }
+        event.metadata[field] = cleanText(value, 80);
+      }
+    }
     await database("portfolio_record_activity", { items: events });
     return response({ received: events.length }, 202);
   } catch (error) {

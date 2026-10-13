@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-const kinds = new Set(['page_view', 'site_click', 'control_change', 'form_submit', 'lead_whatsapp', 'lead_email', 'lead_phone', 'lead_form', 'cta_contact', 'file_download']);
+const kinds = new Set(['page_view', 'site_click', 'control_change', 'form_submit', 'lead_whatsapp', 'lead_email', 'lead_phone', 'lead_form', 'cta_contact', 'file_download', 'heartbeat', 'scroll_depth', 'page_exit', 'location_shared', 'location_revoked', 'rage_click']);
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const limits = new Map<string, { count: number; expires: number }>();
 export function cleanText(value: unknown, max = 100) {
@@ -17,10 +17,22 @@ export function sanitizeEvent(value: unknown) {
   if (!value || typeof value !== 'object') return null;
   const v = value as Record<string, unknown>, pathname = cleanPath(v.page);
   if (!kinds.has(String(v.event)) || !/^\/[\s\S]*$/.test(pathname) || /^\/(admin|api)(\/|$)/i.test(pathname) || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v.id))) return null;
-  // No visitor identifiers, IPs, full URLs, form values or arbitrary payload fields are stored.
-  return { id: v.id, event_name: v.event, page: pathname, label: cleanText(v.label), target: cleanText(v.target, 240).split(/[?#]/)[0], area: ['header', 'footer', 'form', 'content'].includes(String(v.area)) ? v.area : 'content', device: ['mobile', 'tablet', 'desktop'].includes(String(v.device)) ? v.device : 'desktop' };
+  const uuid = (x: unknown) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x));
+  const consented = v.consent === true && uuid(v.session_id) && uuid(v.page_id);
+  const source = v.metadata && typeof v.metadata === 'object' ? v.metadata as Record<string, unknown> : {};
+  const metadata: Record<string, unknown> = {};
+  if (consented) {
+    for (const key of ['browser', 'os', 'language', 'source', 'campaign', 'medium', 'referrer', 'city', 'country', 'region']) metadata[key] = cleanText(source[key], 80).split(/[?#]/)[0];
+    metadata.state = ['active','idle','away'].includes(String(source.state)) ? source.state : 'active';
+    for (const [key, max] of [['active_seconds',30],['scroll',100]] as const) if (typeof source[key] === 'number' && Number.isFinite(source[key])) metadata[key] = Math.min(max, Math.max(0, source[key]));
+    if (v.event === 'location_shared' && source.location_consent === true && typeof source.latitude === 'number' && typeof source.longitude === 'number' && typeof source.accuracy === 'number' && Number.isFinite(source.latitude) && Number.isFinite(source.longitude) && Number.isFinite(source.accuracy) && Math.abs(source.latitude) <= 90 && Math.abs(source.longitude) <= 180 && source.accuracy >= 0) {
+      metadata.latitude = Number(source.latitude.toFixed(5)); metadata.longitude = Number(source.longitude.toFixed(5)); metadata.accuracy = Math.min(source.accuracy,100000); metadata.location_consent = true;
+    }
+  } else if (['heartbeat','scroll_depth','page_exit','location_shared','location_revoked','rage_click'].includes(String(v.event))) return null;
+  // Anonymous session IDs are opt-in; never accept raw IPs, arbitrary metadata or form values.
+  return { session_id: consented ? v.session_id : null, page_id: consented ? v.page_id : null, metadata, id: v.id, event_name: v.event, page: pathname, label: cleanText(v.label), target: cleanText(v.target, 240).split(/[?#]/)[0], area: ['header', 'footer', 'form', 'content'].includes(String(v.area)) ? v.area : 'content', device: ['mobile', 'tablet', 'desktop'].includes(String(v.device)) ? v.device : 'desktop' };
 }
-async function database(rpc: string, body: object) {
+export async function database(rpc: string, body: object) {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) throw new Error('Activity storage is not configured.');
@@ -49,6 +61,13 @@ export async function collectActivity(request: Request) {
     if (!Array.isArray(data.events) || !data.events.length || data.events.length > 20) return response({ error: 'Invalid events.' }, 400);
     const events = data.events.map(sanitizeEvent).filter(Boolean);
     if (!events.length) return response({ error: 'No valid events.' }, 400);
+    // Vercel supplies these approximate location headers; client-provided city data is discarded.
+    for (const event of events) if (event && event.session_id) {
+      for (const [field, header] of [['city','x-vercel-ip-city'],['country','x-vercel-ip-country'],['region','x-vercel-ip-country-region']]) {
+        let value = request.headers.get(header) || ''; try { value = decodeURIComponent(value); } catch { value = ''; }
+        event.metadata[field] = cleanText(value,80);
+      }
+    }
     await database('portfolio_record_activity', { items: events });
     return response({ received: events.length }, 202);
   } catch (error) {
@@ -56,3 +75,5 @@ export async function collectActivity(request: Request) {
   }
 }
 export async function loadActivity() { return database('portfolio_read_activity', {}); }
+
+export async function loadJourneys(visit: string | null) { if (visit && !/^[0-9a-f-]{36}$/i.test(visit)) throw new Error('Invalid visit.'); return database('portfolio_read_journeys', { visit }); }

@@ -20,6 +20,7 @@
     sources: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
     insights: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/>',
     audience: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    journeys: '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M17 8h4M19 6v4"/>', enquiries: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 9h8M8 13h8M8 17h4"/>',
     pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>', language: '<path d="M4 5h9M8.5 3v2M6 5c.5 3.5 3 6.5 6 8M11 5c-.8 4-3.5 7.5-7 9M13 21l4-10 4 10M14.5 17.5h5"/>',
     refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>', shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>', sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a5.5 5.5 0 0 1 3.5 6"/>',
@@ -44,14 +45,70 @@
     leads: ['Leads & actions', 'Follow the contact actions that move a visitor toward a conversation.', 'Conversion'],
     seo: ['Search performance', 'See the searches and pages building your visibility on Google.', 'Google Search Console'],
     pages: ['Pages & content', 'Find the content people read, land on, and take action from.', 'Content'],
+    journeys: ['Visitor journeys', 'Follow anonymous opted-in visits, current pages, actions and engagement as they arrive.', 'Live · website receipts'],
+    enquiries: ['Enquiry inbox', 'Read website briefs, manage follow-up and browse your existing private response sheet.', 'Private · contact submissions'],
     sources: ['Sources & settings', 'Connection status, reporting coverage, and the meaning behind each metric.', 'Configuration'],
   };
   const eventMeta = { lead_whatsapp: ['whatsapp', 'mint'], lead_email: ['mail', 'sky'], lead_phone: ['phone', 'peach'], lead_form: ['form', 'lilac'], cta_contact: ['cursor', 'lime'], file_download: ['download', 'pink'] };
   const state = { view: 'overview', days: 28, report: null, live: null, liveBusy: false, liveError: '', activity: null, activityBusy: false, activityError: '', compare: true, request: 0, controller: null, tables: {}, exporting: [], busy: false, charts: {}, animate: true };
 
-  const shortNames = { overview: 'Overview', live: 'Live', insights: 'Insights', audience: 'Audience', traffic: 'Traffic', leads: 'Leads', seo: 'Search', pages: 'Pages', sources: 'Settings' };
+  state.journey=null;state.inbox=null;state.sheet=null;state.visit=null;state.journeyError='';state.inboxError='';state.sheetError='';state.enquiry=null;state.inboxMode='inbox';state.statusFilter='';
+  const stamp = value => value ? new Date(value).toLocaleString('en-GB',{timeZone:'Asia/Muscat',hour12:false}) : '—';
+  function journeyStatus(row){ return Date.now()-Date.parse(row.last_seen)>45000 ? 'Recent' : row.context?.state==='away' ? 'Away' : row.context?.state==='idle' ? 'Idle' : 'Active now'; }
+  function journeys(){
+    const visits=state.journey?.sessions||[], selected=visits.find(x=>x.session_id===state.visit), events=state.journey?.events||[];
+    const active=state.journey ? visits.filter(x=>journeyStatus(x)==='Active now').length : '—';
+    const warning=state.journeyError?`<div class="note warning">${e(state.journeyError)} Showing the last successful retrieval if available.</div>`:'';
+    let html=warning+`<div class="journey-summary"><article><small>Active now</small><strong>${active}</strong></article><article><small>Visits · last 24h</small><strong>${state.journey?visits.length:'—'}</strong></article><article><small>Contact actions</small><strong>${visits.reduce((n,x)=>n+Number(x.leads),0)}</strong></article><article><small>Repeated-click signals</small><strong>${visits.reduce((n,x)=>n+Number(x.frustration),0)}</strong></article></div><div class="note">${icon('shield')}<span>Anonymous, opted-in visits only · up to 200 recent visits · 30-day retention · polling every 5 seconds. City is approximate and may reflect a VPN. A visit is not a verified person. “Active” means a recent visible heartbeat.</span></div>`;
+    html+=`<div class="journey-layout"><section class="panel"><div class="panel-head"><div><h2>Visitor journeys</h2><p>Choose a visit to follow its flow. Times are Oman time.</p></div></div><div class="journey-list">${visits.length?visits.map(x=>`<button class="journey-visit ${x.session_id===state.visit?'is-selected':''}" data-visit="${e(x.session_id)}"><span class="journey-visit-title"><b>Visit ${e(x.session_id.slice(0,8))}</b><span class="health-badge ${journeyStatus(x)==='Active now'?'working':''}">${e(journeyStatus(x))}</span></span><span>${e(x.current_page)}</span><small>${e([x.context?.city,x.context?.country].filter(Boolean).join(', ')||'Location unavailable')} · ${e(x.device)} · ${x.page_views} pages · ${x.clicks} clicks · ${seconds(x.active_seconds)}</small><small>${e(x.last_action?.replaceAll('_',' '))} · ${e(stamp(x.last_seen))}</small></button>`).join(''):empty('No opted-in journeys received in the last 24 hours. Basic clicks still appear under Live activity.')}</div></section><section class="panel"><div class="panel-head"><div><h2>${selected?'Visit '+e(selected.session_id.slice(0,8)):'Visit timeline'}</h2><p>${selected?'Latest 500 events · server receipt times':'Select a visit on the left'}</p></div></div>`;
+    if(selected){
+      const c=selected.context||{},g=selected.shared_location;
+      html+=`<div class="journey-facts"><span>${icon('device')}${e(selected.device)} · ${e(c.browser)} / ${e(c.os)}</span><span>${icon('globe')}${e(c.language)} · ${e(c.city||'Unknown city')}, ${e(c.country||'unknown country')}</span><span>Source: ${e(c.source||c.referrer||'Direct / unavailable')} ${e(c.medium||'')} · Campaign: ${e(c.campaign||'None')}</span><span>${selected.page_views} page views · ${selected.clicks} clicks · ${seconds(selected.active_seconds)} active · ${selected.max_scroll}% maximum scroll</span>${g?`<span>Visitor-shared coordinates: ${e(g.latitude)}, ${e(g.longitude)} · accuracy ±${number(g.accuracy)} m <a href="https://www.google.com/maps?q=${encodeURIComponent(g.latitude+','+g.longitude)}" target="_blank" rel="noopener noreferrer">Open map ${icon('out')}</a></span>`:'<span>Precise location was not shared.</span>'}</div><ol class="journey-timeline">${events.filter(x=>x.event_name!=='heartbeat').map(x=>`<li><small>${e(stamp(x.received_at))}</small><b>${e(x.event_name.replaceAll('_',' '))}</b><span>${e(x.page)} ${x.label?' · '+e(x.label):''}</span>${x.target?`<small>Destination: ${e(x.target)}</small>`:''}</li>`).join('')||'<li>No events available for this visit.</li>'}</ol>`;
+    }else html+=empty('Select a visit to see pages, clicks, scroll milestones and contact actions.');
+    html+='</section></div>';
+    html+=table('journeyPopular','Most-clicked controls','Opted-in journeys · latest 24 hours',[{key:'page',label:'Page'},{key:'label',label:'Control'},{key:'target',label:'Destination'},{key:'clicks',label:'Clicks',format:number}],{rows:state.journey?.popular||[]});
+    return html;
+  }
+  function enquiries(){
+    const all=state.inbox?.rows||[], filtered=all.filter(x=>!state.statusFilter||x.status===state.statusFilter), selected=all.find(x=>x.id===state.enquiry);
+    let html=`<div class="panel"><div class="panel-head"><div><h2>Your enquiry workspace</h2><p>Private inbox plus your existing Google Form response sheet. Historical sheet rows and new inbox receipts are separate sources.</p></div><a class="btn btn-soft" href="https://docs.google.com/spreadsheets/d/1DJQG8YA4keIZ7mB8Esd6zrrapjdUwPTZk9Xfioe7hNA/edit#gid=599293004" target="_blank" rel="noopener noreferrer">Open original sheet ${icon('out')}</a></div><div class="enquiry-toolbar"><button class="btn ${state.inboxMode==='inbox'?'btn-primary':'btn-soft'}" data-inbox-mode="inbox">Enquiry inbox · ${all.length}</button><button class="btn ${state.inboxMode==='sheet'?'btn-primary':'btn-soft'}" data-inbox-mode="sheet">Google response sheet</button><button class="btn btn-soft" data-enquiry-refresh>Refresh</button>${state.inboxMode==='inbox'?`<label>Status <select id="enquiry-status-filter"><option value="">All statuses</option>${['new','read','contacted','qualified','won','lost','spam'].map(x=>`<option ${state.statusFilter===x?'selected':''}>${x}</option>`).join('')}</select></label>`:''}</div></div>`;
+    if(state.inboxMode==='sheet'){
+      if(state.sheetError)html+=`<div class="note warning">${e(state.sheetError)} <a class="btn btn-soft" href="/admin/login/?sheets=1">Connect Google Sheets</a></div>`;
+      html+=table('sheetInbox','Original response spreadsheet',state.sheet?`Read-only · retrieved ${stamp(state.sheet.generatedAt)} · first 4,999 responses maximum`:'Connect read-only Google Sheets to display historical responses here.',(state.sheet?.headers||[]).map((label,i)=>({key:'column'+i,label})),{rows:(state.sheet?.rows||[]).map(row=>Object.fromEntries(row.map((value,i)=>['column'+i,value])))});return html;
+    }
+    if(state.inboxError)html+=`<div class="note warning">${e(state.inboxError)}</div>`;
+    html+=`<div class="journey-summary"><article><small>New</small><strong>${all.filter(x=>x.status==='new').length}</strong></article><article><small>Qualified</small><strong>${all.filter(x=>x.status==='qualified').length}</strong></article><article><small>Won</small><strong>${all.filter(x=>x.status==='won').length}</strong></article><article><small>Sheet delivery unconfirmed</small><strong>${all.filter(x=>x.sheet_delivery!=='accepted').length}</strong></article></div>`;
+    html+=table('enquiryInbox','Submitted enquiries',`Latest 500 inbox receipts · retrieved ${state.inbox?stamp(state.inbox.generatedAt):'—'} · search and export available`,[{key:'received',label:'Received'},{key:'name',label:'Name'},{key:'email',label:'Email'},{key:'phone',label:'Phone'},{key:'service',label:'Service'},{key:'budget',label:'Budget'},{key:'status',label:'Status'},{key:'sheet',label:'Google Form delivery'}],{rows:filtered.map(x=>({...x.details,received:stamp(x.created_at),status:x.status,sheet:x.sheet_delivery==='accepted'?'HTTP accepted (sheet not checked)':x.sheet_delivery}))});
+    html+=`<section class="panel"><div class="panel-head"><div><h2>Manage enquiries</h2><p>Select a brief to read the message, set a status and save private notes.</p></div></div><div class="enquiry-picker">${filtered.map(x=>`<button class="btn ${x.id===state.enquiry?'btn-primary':'btn-soft'}" data-enquiry="${e(x.id)}">${e(x.details.name)} · ${e(x.status)} · ${e(stamp(x.created_at))}</button>`).join('')||empty('New website briefs will appear here after this version is deployed.')}</div>`;
+    if(selected){const d=selected.details;html+=`<div class="enquiry-detail"><h3>${e(d.name)}</h3><dl>${Object.entries(d).filter(([key,value])=>key!=='message'&&value).map(([key,value])=>`<div><dt>${e(key)}</dt><dd>${e(value)}</dd></div>`).join('')}</dl><p class="enquiry-message">${e(d.message)}</p>${selected.session_id?`<button class="btn btn-soft" data-linked-visit="${e(selected.session_id)}">Open consented visitor journey</button>`:'<p>No visitor journey linked to this enquiry.</p>'}<label>Status <select id="enquiry-edit-status">${['new','read','contacted','qualified','won','lost','spam'].map(x=>`<option ${selected.status===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Private notes<textarea id="enquiry-notes" maxlength="2000" rows="4">${e(selected.notes)}</textarea></label><button class="btn btn-primary" data-save-enquiry="${e(selected.id)}">Save status & notes</button><p id="enquiry-save-status" role="status"></p></div>`;}
+    return html+'</section>';
+  }
+  async function loadJourneys(){
+    if(state.journeyBusy||document.hidden)return;state.journeyBusy=true;
+    try{const query=new URLSearchParams(document.body.dataset.mode==='demo'?{demo:'1'}:{});if(state.visit)query.set('id',state.visit);const response=await fetch('/admin/journeys/?'+query,{cache:'no-store',signal:AbortSignal.timeout(10000)});const data=await response.json();if(!response.ok)throw new Error(data.error);state.journey=data;state.journeyError='';}
+    catch(error){state.journeyError=error.message;}finally{state.journeyBusy=false;if(state.view==='journeys'&&!document.activeElement?.matches('input,select,textarea'))render();}
+  }
+  async function loadInbox(sheet=false){
+    if(state.inboxBusy)return;state.inboxBusy=true;
+    try{const response=await fetch('/admin/'+(sheet?'sheet':'enquiries')+'/'+(document.body.dataset.mode==='demo'?'?demo=1':''),{cache:'no-store',signal:AbortSignal.timeout(20000)});const data=await response.json();if(!response.ok)throw new Error(data.error);state[sheet?'sheet':'inbox']=data;state[sheet?'sheetError':'inboxError']='';}
+    catch(error){state[sheet?'sheetError':'inboxError']=error.message;}finally{state.inboxBusy=false;if(state.view==='enquiries'&&!document.activeElement?.matches('input,select,textarea'))render();}
+  }
+  document.addEventListener('click',async event=>{
+    const visit=event.target.closest('[data-visit],[data-linked-visit]');if(visit){state.visit=visit.dataset.visit||visit.dataset.linkedVisit;go('journeys');loadJourneys();}
+    const mode=event.target.closest('[data-inbox-mode]');if(mode){state.inboxMode=mode.dataset.inboxMode;render();loadInbox(state.inboxMode==='sheet');}
+    const enquiry=event.target.closest('[data-enquiry]');if(enquiry){state.enquiry=enquiry.dataset.enquiry;render();}
+    if(event.target.closest('[data-enquiry-refresh]'))loadInbox(state.inboxMode==='sheet');
+    const save=event.target.closest('[data-save-enquiry]');if(save){
+      if(document.body.dataset.mode==='demo'){toast('Preview only — no real enquiry was changed.');return;}
+      const status=$('#enquiry-edit-status').value,notes=$('#enquiry-notes').value;save.disabled=true;
+      try{const response=await fetch('/admin/enquiries/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:save.dataset.saveEnquiry,status,notes})});const data=await response.json();if(!response.ok)throw new Error(data.error);state.inbox.rows=state.inbox.rows.map(x=>x.id===save.dataset.saveEnquiry?data.rows[0]:x);render();toast('Private status and notes saved.');}catch(error){$('#enquiry-save-status').textContent=error.message;save.disabled=false;}
+    }
+  });
+  document.addEventListener('change',event=>{if(event.target.id==='enquiry-status-filter'){state.statusFilter=event.target.value;render();}});
+
+  const shortNames = { overview: 'Overview', live: 'Live', insights: 'Insights', audience: 'Audience', traffic: 'Traffic', leads: 'Leads', seo: 'Search', pages: 'Pages', sources: 'Settings',journeys:'Journeys',enquiries:'Inbox' };
   function navMarkup(short = false) {
-    return Object.entries(views).map(([key, value], i) => `<button data-view="${key}" class="nav-item" aria-label="${e(value[0])}" title="${e(value[0])} (${i + 1})" ${key === state.view ? 'aria-current="page"' : ''}>${icon(key)}<span>${short ? shortNames[key] : value[0]}</span>${badge(key)}<span class="nav-key" aria-hidden="true">${i + 1}</span></button>`).join('');
+    return Object.entries(views).map(([key, value], i) => `<button data-view="${key}" class="nav-item" aria-label="${e(value[0])}" title="${e(value[0])}${i<9?` (${i+1})`:``}" ${key === state.view ? 'aria-current="page"' : ''}>${icon(key)}<span>${short ? shortNames[key] : value[0]}</span>${badge(key)}<span class="nav-key" aria-hidden="true">${i<9?i+1:''}</span></button>`).join('');
   }
   function badge(key) {
     if (key === 'live' && summary('realtime', 'activeUsers') != null && state.live) return `<span class="nav-badge is-live">${compact(summary('realtime','activeUsers'))}</span>`;
@@ -504,12 +561,14 @@
     $('#view-title').textContent = title; $('#view-description').textContent = description; $('#breadcrumb').textContent = title; $('#view-eyebrow').textContent = eyebrow;
     document.title = `${title} · Hisan Ali admin`;
     renderNav();
-    $('#toolbar').classList.toggle('is-disabled', state.view === 'live');
-    ['#country','#device','#compare'].forEach(selector => $(selector).disabled = state.view === 'live');
-    document.querySelectorAll('#period-group button').forEach(button => { button.disabled = state.view === 'live'; button.setAttribute('aria-checked', String(Number(button.dataset.days) === state.days)); button.tabIndex = Number(button.dataset.days) === state.days ? 0 : -1; });
+    const websiteOnly=['live','journeys','enquiries'].includes(state.view);
+    $('#toolbar').classList.toggle('is-disabled', websiteOnly);
+    ['#country','#device','#compare'].forEach(selector => $(selector).disabled = websiteOnly);
+    document.querySelectorAll('#period-group button').forEach(button => { button.disabled = websiteOnly; button.setAttribute('aria-checked', String(Number(button.dataset.days) === state.days)); button.tabIndex = Number(button.dataset.days) === state.days ? 0 : -1; });
     $('#country').closest('.select').classList.toggle('is-active', !!$('#country').value);
     $('#device').closest('.select').classList.toggle('is-active', !!$('#device').value);
     $('#reset').hidden = !$('#country').value && !$('#device').value;
+    if (['journeys','enquiries'].includes(state.view)) { state.exporting=[];$('#content').innerHTML=state.view==='journeys'?journeys():enquiries();$('#content').setAttribute('aria-busy','false');$('#export').disabled=false;$('#freshness').textContent='Website data is independent of Google reporting · Oman time';return; }
     if (!state.report) { if (state.view === 'live') { state.exporting = []; $('#content').innerHTML = activityFeed(); $('#content').setAttribute('aria-busy','false'); } return; }
     state.exporting = []; state.charts = {};
     const failures = Object.values(state.view === 'live' ? state.live?.datasets || {} : state.report.datasets).filter(data => data.status === 'error').length;
@@ -602,18 +661,18 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Unable to load reports.');
       if (sequence !== state.request) return;
-      state.report = data; state.animate = !silent; render();
+      state.report = data; state.animate = !silent; if(!(['journeys','enquiries'].includes(state.view) && document.activeElement?.matches('input,select,textarea')))render();
     } catch (error) {
       if (error.name === 'AbortError') return;
       if (silent && state.report) { toast('Could not refresh — showing the previous retrieval'); return; }
       $('#content').innerHTML = `<div class="panel"><div class="empty-state error">${icon('alert')}<b>Could not load analytics</b><span>${e(error.message)}</span><span class="panel-actions"><button class="btn btn-primary" id="retry">Try again</button><a class="btn btn-soft" href="/admin/">Return to sign in</a></span></div></div>`;
       $('#content').setAttribute('aria-busy','false');
-    } finally { if (sequence === state.request) { state.busy = false; $('#refresh').disabled = false; $('#refresh').classList.remove('is-spinning'); $('#export').disabled = !state.report; } }
+    } finally { if (sequence === state.request) { state.busy = false; $('#refresh').disabled = false; $('#refresh').classList.remove('is-spinning'); $('#export').disabled = !state.report && !['journeys','enquiries'].includes(state.view); } }
   }
   function go(view) {
     if (!views[view]) return;
     const changed = view !== state.view;
-    state.view = view; if (view === 'live' && !state.live) loadLive();
+    state.view = view; if(view==='journeys')loadJourneys();if(view==='enquiries')loadInbox(state.inboxMode==='sheet'); if (view === 'live' && !state.live) loadLive();
     state.animate = changed; render();
     if (changed) window.scrollTo({ top: 0, behavior: 'instant' });
   }
@@ -646,13 +705,14 @@
   ['#country','#device'].forEach(selector => $(selector).addEventListener('change', () => { render(); load(); }));
   $('#reset').addEventListener('click', () => { $('#country').value = ''; $('#device').value = ''; render(); load(); });
   $('#compare').addEventListener('change',event => { state.compare = event.target.checked; render(); });
-  $('#refresh').addEventListener('click',()=>{loadActivity(); loadLive(); if(state.view !== 'live') load(true); else toast('Live activity refreshed');});
+  $('#refresh').addEventListener('click',()=>{if(state.view==='journeys'){loadJourneys();return;}if(state.view==='enquiries'){loadInbox(state.inboxMode==='sheet');return;}loadActivity(); loadLive(); if(state.view !== 'live') load(true); else toast('Live activity refreshed');});
   $('#theme').addEventListener('click', () => {
     const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.dataset.theme = dark ? 'light' : 'dark';
     try { localStorage.setItem('admin-theme', document.documentElement.dataset.theme); } catch {}
   });
   $('#export').addEventListener('click',() => {
+    if (['journeys','enquiries'].includes(state.view)) { const rows=state.exporting,keys=[...new Set(rows.flatMap(x=>Object.keys(x)))],cell=v=>'"'+(/^[=+@\-\t\r]/.test(String(v??''))?"'":'')+String(v??'').replaceAll('"','""')+'"';const csv='﻿'+[keys.map(cell).join(','),...rows.map(x=>keys.map(k=>cell(x[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='hisanali-'+state.view+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
     if (!state.report || state.busy) return;
     const rows = state.exporting.map(row => ({ mode:state.report.mode, retrievedAt:state.view === 'live' ? state.live?.generatedAt || '' : state.report.generatedAt, country:state.view === 'live' ? 'All' : $('#country').value || 'All', device:state.view === 'live' ? 'All' : $('#device').value || 'All', realtimeWindow:state.view === 'live' ? 'Last 30 minutes' : '', gaStart:state.report.periods.ga.startDate, gaEnd:state.report.periods.ga.endDate, searchStart:state.report.periods.search.startDate, searchEnd:state.report.periods.search.endDate, ...row }));
     const keys = [...new Set(rows.flatMap(row => Object.keys(row)))];
@@ -662,7 +722,9 @@
     const a = document.createElement('a'); a.href = url; a.download = `hisanali-${state.view}-${state.report.mode}-${state.report.periods.ga.endDate}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
     toast(`Exported ${number(rows.length)} rows to CSV`);
   });
-  render(); load(); loadLive(); loadActivity();
+  render(); load(); loadLive(); loadActivity();loadJourneys();loadInbox();
+  setInterval(loadJourneys,5000);
+  setInterval(()=>{if(!document.hidden&&state.view==='enquiries'&&!document.activeElement?.matches('input,select,textarea'))loadInbox(state.inboxMode==='sheet');},30000);
   setInterval(loadActivity,5000);
   setInterval(loadLive,30000);
   setInterval(()=>{if(!document.hidden && !state.busy && state.view !== 'live') load(true);},300000);

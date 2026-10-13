@@ -64,7 +64,7 @@ function responseHeaders(contentType = "application/json; charset=utf-8") {
 
 // app/insights/google.ts
 import { createHash as createHash2, randomBytes as randomBytes2 } from "node:crypto";
-var scopes = ["openid", "email", "https://www.googleapis.com/auth/analytics.readonly", "https://www.googleapis.com/auth/webmasters.readonly"];
+var scopes = ["openid", "email", "https://www.googleapis.com/auth/analytics.readonly", "https://www.googleapis.com/auth/webmasters.readonly", "https://www.googleapis.com/auth/spreadsheets.readonly"];
 function authorization() {
   const config = configuration();
   const state = randomBytes2(32).toString("base64url");
@@ -387,6 +387,47 @@ async function database(rpc, body) {
 async function loadActivity() {
   return database("portfolio_read_activity", {});
 }
+async function loadJourneys(visit) {
+  if (visit && !/^[0-9a-f-]{36}$/i.test(visit)) throw new Error("Invalid visit.");
+  return database("portfolio_read_journeys", { visit });
+}
+
+// app/insights/journey-demo.ts
+function demoJourneys(visit) {
+  const now = Date.now(), id = "10101010-1010-4010-8010-101010101010", other = "20202020-2020-4020-8020-202020202020";
+  const events = [["page_view", "/gcc/", "Page opened", 18e4], ["scroll_depth", "/gcc/", "75% of page", 15e4], ["cta_contact", "/gcc/", "Start a conversation", 1e5], ["page_view", "/contact/", "Page opened", 95e3], ["lead_form", "/contact/", "Contact brief sent", 15e3]].map(([event_name, page, label, age], i) => ({ id: String(i), session_id: id, event_name, page, label, target: "", received_at: new Date(now - Number(age)).toISOString() }));
+  return { mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), sessions: [{ session_id: id, started_at: new Date(now - 18e4).toISOString(), last_seen: new Date(now - 1e3).toISOString(), current_page: "/contact/", last_action: "lead_form", device: "mobile", context: { state: "active", browser: "Safari", os: "iOS", language: "en-OM", city: "Muscat", country: "OM", source: "google", medium: "organic" }, page_views: 2, clicks: 4, leads: 1, frustration: 0, active_seconds: 125, max_scroll: 75 }, { session_id: other, started_at: new Date(now - 4e5).toISOString(), last_seen: new Date(now - 4e4).toISOString(), current_page: "/seo-expert-oman/", last_action: "site_click", device: "desktop", context: { state: "idle", browser: "Chrome", os: "Windows", language: "en", city: "Seeb", country: "OM", source: "linkedin", medium: "social" }, page_views: 3, clicks: 8, leads: 0, frustration: 1, active_seconds: 230, max_scroll: 100 }], events: visit === id ? events : [], popular: [{ page: "/gcc/", label: "Start a conversation", target: "/contact/", clicks: 4 }] };
+}
+function demoEnquiries() {
+  return { mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), rows: [{ id: "30303030-3030-4030-8030-303030303030", created_at: (/* @__PURE__ */ new Date()).toISOString(), details: { name: "Sample enquiry (fictional)", email: "sample@example.com", phone: "", service: "SEO and local SEO", budget: "Sample budget", message: "This is a fictional preview brief. No message was sent and no real customer is shown.", website: "https://example.com", goal: "More enquiries", reply: "Email" }, status: "new", notes: "", sheet_delivery: "accepted", session_id: "10101010-1010-4010-8010-101010101010" }] };
+}
+
+// app/insights/enquiries.ts
+var SHEET_ID = "1DJQG8YA4keIZ7mB8Esd6zrrapjdUwPTZk9Xfioe7hNA";
+var SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=599293004`;
+var uuid = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v));
+var text = (v, max) => String(v || "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, max);
+async function enquiryStore(path, method = "GET", body, prefer) {
+  const base = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!base || !key) throw new Error("Enquiry storage is not configured.");
+  const result = await fetch(`${base}/rest/v1/portfolio_enquiries${path}`, { method, headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...prefer ? { Prefer: prefer } : {} }, body: body ? JSON.stringify(body) : void 0, cache: "no-store", signal: AbortSignal.timeout(1e4) });
+  if (!result.ok) throw new Error("Enquiry storage is temporarily unavailable.");
+  return result.status === 204 ? null : result.json();
+}
+async function loadEnquiries() {
+  return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), source: "Private website inbox", rows: await enquiryStore("?select=*&order=created_at.desc&limit=500"), limit: 500, sheetUrl: SHEET_URL };
+}
+async function updateEnquiry(input) {
+  if (!uuid(input.id) || !["new", "read", "contacted", "qualified", "won", "lost", "spam"].includes(String(input.status))) throw new Error("Invalid enquiry update.");
+  return enquiryStore(`?id=eq.${input.id}`, "PATCH", { status: input.status, notes: text(input.notes, 2e3), updated_at: (/* @__PURE__ */ new Date()).toISOString() }, "return=representation");
+}
+async function loadSheet(token) {
+  const range = encodeURIComponent("'Form responses 1'!A1:H5000");
+  const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: AbortSignal.timeout(15e3) });
+  if (!response.ok) throw new Error(response.status === 403 ? "Google Sheets read access is not connected. Enable the Sheets API and approve read-only Sheets access when reconnecting." : response.status === 401 ? "Sign in again to read the response sheet." : "The response sheet could not be read. Try again later.");
+  const data = await response.json();
+  return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), source: "Contacts Us 2 (Responses)", sheetUrl: SHEET_URL, headers: data.values?.[0] || [], rows: (data.values || []).slice(1), limit: 4999 };
+}
 
 // app/insights/shell.ts
 function escape(value) {
@@ -523,8 +564,27 @@ async function GET(request, { params }) {
       return redirect("/admin/?error=" + encodeURIComponent(error instanceof Error ? error.message : "Unable to sign in."), [clear]);
     }
   }
-  if (route !== "data" && route !== "realtime" && route !== "activity") return json({ error: "Not found." }, 404);
+  if (route !== "data" && route !== "realtime" && route !== "activity" && route !== "journeys" && route !== "enquiries" && route !== "sheet") return json({ error: "Not found." }, 404);
   if (!session && !demo) return json({ error: "Sign in to view analytics." }, 401);
+  if (route === "journeys" || route === "enquiries") {
+    if (demo) return json(route === "journeys" ? demoJourneys(url.searchParams.get("id")) : demoEnquiries());
+    try {
+      return json(route === "journeys" ? await loadJourneys(url.searchParams.get("id")) : await loadEnquiries());
+    } catch {
+      return json({ error: "Private website data is temporarily unavailable." }, 503);
+    }
+  }
+  if (route === "sheet") {
+    if (demo) return json({ mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), headers: ["Timestamp", "Your Name", "Email Address", "Phone Number", "Service Interested in", "Subject", "Estimated Budget", "Your Message"], rows: [] });
+    try {
+      const refreshed = await freshSession(session);
+      const response = json(await loadSheet(refreshed.accessToken));
+      if (refreshed !== session) response.headers.append("Set-Cookie", cookie(SESSION_COOKIE, seal(refreshed, SESSION_COOKIE), Math.max(0, Math.floor((refreshed.expires - Date.now()) / 1e3))));
+      return response;
+    } catch (error) {
+      return json({ error: error instanceof Error ? error.message : "Could not read the sheet." }, 503);
+    }
+  }
   if (route === "activity") {
     if (demo) return json({ mode: "demo", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), rows: [], counts: [] });
     try {
@@ -592,6 +652,17 @@ async function GET(request, { params }) {
   }
 }
 async function POST(request, { params }) {
+  if ((params.path || []).join("/") === "enquiries") {
+    if (!getSession(request)) return json({ error: "Sign in to manage enquiries." }, 401);
+    if (request.headers.get("origin") !== configuration().origin) return json({ error: "Invalid request origin." }, 403);
+    try {
+      const body = await request.text();
+      if (body.length > 6e3) return json({ error: "Update too large." }, 413);
+      return json({ rows: await updateEnquiry(JSON.parse(body)) });
+    } catch {
+      return json({ error: "Could not update the enquiry." }, 400);
+    }
+  }
   if ((params.path || []).join("/") !== "logout") return json({ error: "Not found." }, 404);
   if (request.headers.get("origin") !== configuration().origin) return json({ error: "Invalid request origin." }, 403);
   cache.clear();

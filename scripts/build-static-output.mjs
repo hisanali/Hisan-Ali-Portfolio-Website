@@ -8,6 +8,7 @@ import { withSiteActivity } from '../app/site-activity-shell.ts';
 const root = process.cwd();
 await build({entryPoints: ['scripts/portfolio-admin-entry.ts'], outfile: 'api/portfolio-admin.mjs', bundle: true, platform: 'node', format: 'esm', target: 'node24'});
 await build({entryPoints: ['scripts/site-activity-entry.ts'], outfile: 'api/site-activity.mjs', bundle: true, platform: 'node', format: 'esm', target: 'node24'});
+await build({entryPoints: ['scripts/contact-enquiry-entry.ts'], outfile: 'api/contact-enquiry.mjs', bundle: true, platform: 'node', format: 'esm', target: 'node24'});
 const output = path.join(root, '.vercel', 'site-static');
 const internal = new Set(['app', 'components', 'api', 'server', 'scripts', 'node_modules', 'docs', 'tests']);
 await rm(output, { recursive: true, force: true });

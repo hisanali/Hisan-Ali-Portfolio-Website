@@ -2,7 +2,9 @@ import { configuration, cookie, cookieValue, equal, getSession, localPreview, re
 import { authorization, exchange, freshSession } from '../../insights/google';
 import { filtersFrom, loadReports, loadRealtime } from '../../insights/reports';
 import { demoReports, demoRealtime } from '../../insights/demo';
-import { loadActivity } from '../../insights/activity';
+import { loadJourneys, loadActivity } from '../../insights/activity';
+import { demoJourneys, demoEnquiries } from '../../insights/journey-demo';
+import { loadEnquiries, updateEnquiry, loadSheet } from '../../insights/enquiries';
 import { shell } from '../../insights/shell';
 
 export const runtime = 'nodejs';
@@ -37,8 +39,19 @@ export async function GET(request: Request, { params }: Params) {
       return redirect('/admin/', [clear, cookie(SESSION_COOKIE, seal(authenticated, SESSION_COOKIE), SESSION_SECONDS)]);
     } catch (error) { return redirect('/admin/?error=' + encodeURIComponent(error instanceof Error ? error.message : 'Unable to sign in.'), [clear]); }
   }
-  if (route !== 'data' && route !== 'realtime' && route !== 'activity') return json({ error: 'Not found.' }, 404);
+  if (route !== 'data' && route !== 'realtime' && route !== 'activity' && route !== 'journeys' && route !== 'enquiries' && route !== 'sheet') return json({ error: 'Not found.' }, 404);
   if (!session && !demo) return json({ error: 'Sign in to view analytics.' }, 401);
+  if (route === 'journeys' || route === 'enquiries') {
+    if (demo) return json(route==='journeys'?demoJourneys(url.searchParams.get('id')):demoEnquiries());
+    try { return json(route === 'journeys' ? await loadJourneys(url.searchParams.get('id')) : await loadEnquiries()); }
+    catch { return json({error:'Private website data is temporarily unavailable.'},503); }
+  }
+  if (route === 'sheet') {
+    if(demo)return json({mode:'demo',generatedAt:new Date().toISOString(),headers:['Timestamp','Your Name','Email Address','Phone Number','Service Interested in','Subject','Estimated Budget','Your Message'],rows:[]});
+    try { const refreshed=await freshSession(session!);const response=json(await loadSheet(refreshed.accessToken));
+      if(refreshed!==session)response.headers.append('Set-Cookie',cookie(SESSION_COOKIE,seal(refreshed,SESSION_COOKIE),Math.max(0,Math.floor((refreshed.expires-Date.now())/1000))));return response;
+    }catch(error){return json({error:error instanceof Error?error.message:'Could not read the sheet.'},503);}
+  }
   if (route === 'activity') {
     if (demo) return json({ mode: 'demo', generatedAt: new Date().toISOString(), rows: [], counts: [] });
     try { return json(await loadActivity()); }
@@ -81,6 +94,12 @@ export async function GET(request: Request, { params }: Params) {
   } catch { return json({ error: 'Your Google session could not be refreshed. Please sign in again.' }, 401); }
 }
 export async function POST(request: Request, { params }: Params) {
+  if ((params.path || []).join('/') === 'enquiries') {
+    if(!getSession(request))return json({error:'Sign in to manage enquiries.'},401);
+    if(request.headers.get('origin')!==configuration().origin)return json({error:'Invalid request origin.'},403);
+    try{ const body=await request.text();if(body.length>6000)return json({error:'Update too large.'},413);return json({rows:await updateEnquiry(JSON.parse(body))}); }
+    catch{return json({error:'Could not update the enquiry.'},400);}
+  }
   if ((params.path || []).join('/') !== 'logout') return json({ error: 'Not found.' }, 404);
   if (request.headers.get('origin') !== configuration().origin) return json({ error: 'Invalid request origin.' }, 403);
   cache.clear();

@@ -379,13 +379,7 @@
     if (step.type === 'choice') renderChoice(step); else renderText(step);
   };
 
-  /* Review card + submission (same Google Form and field mapping as before) */
-  const GOOGLE_FORM = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSfJndk37Z7sfGsaS8Nn3ujDMIBhU75pl0FRnykxge4fwxFfcQ/formResponse';
-  const SERVICE_MAP = {
-    seo: 'SEO Optimization', 'google-ads': 'Google ADS management', 'meta-ads': 'Social Media Marketing', 'social-media': 'Social Media Marketing',
-    content: 'Graphic Design', analytics: 'Consultation', strategy: 'Consultation', consultation: 'Consultation', other: 'Other'
-  };
-
+  /* Review card and private inbox receipt; server preserves the existing Google Form. */
   const review = async () => {
     current = STEPS.length;
     persist();
@@ -411,32 +405,22 @@
     error.setAttribute('role', 'alert');
     error.hidden = true;
     send.addEventListener('click', () => submit(send, error, card));
-    composer.append(send, note, error);
+    note.textContent = 'Your brief is saved in my private enquiry inbox and existing Google response sheet. Never added to a mailing list.';
+    const linkChoice = document.createElement('label');linkChoice.className='ct-send-note';linkChoice.setAttribute('data-analytics-private','');
+    linkChoice.innerHTML='<input type="checkbox" id="ct-link-journey"> Optional: include my anonymous page journey with this brief to help Hisan understand my project.';
+    if(!window.portfolioJourney?.session())linkChoice.hidden=true;
+    composer.append(linkChoice,send, note, error);
     send.focus({ preventScroll: true });
   };
 
+  let submissionId = crypto.randomUUID();
   const submit = async (button, error, card) => {
-    const message = [
-      state.message,
-      labels.service ? `Service: ${labels.service}` : '',
-      state.website ? `Website: ${state.website}` : '',
-      state.goal ? `Primary goal: ${state.goal}` : '',
-      labels.reply ? `Preferred reply: ${labels.reply}` : ''
-    ].filter(Boolean).join('\n\n');
-    const body = new FormData();
-    body.append('entry.975940308', state.name || '');
-    body.append('entry.974041241', state.email || '');
-    body.append('entry.1031713771', state.phone || '');
-    body.append('entry.406911209', '');
-    body.append('entry.1629603893', state.budget || '');
-    body.append('entry.1936083772', message);
-    if (SERVICE_MAP[state.service]) body.append('entry.427941684', SERVICE_MAP[state.service]);
-
     button.disabled = true;
     button.textContent = 'Sending…';
     error.hidden = true;
     try {
-      await fetch(GOOGLE_FORM, { method: 'POST', mode: 'no-cors', body });
+      const response = await fetch('/api/contact-enquiry/', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ id:submissionId, name:state.name,email:state.email,phone:state.phone,service:state.service,budget:state.budget,message:state.message,website:state.website,goal:state.goal,reply:labels.reply,link_journey:!!document.querySelector('#ct-link-journey')?.checked,session_id:window.portfolioJourney?.session() || null }) });
+      if(!response.ok)throw new Error('Unable to save enquiry.');
     } catch (_) {
       button.disabled = false;
       button.innerHTML = 'Try again <svg class="ct-i" aria-hidden="true"><use href="#ct-send"/></svg>';

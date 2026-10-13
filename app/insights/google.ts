@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { configuration, type AdminSession } from './security.ts';
 
-export const scopes = ['openid', 'email', 'https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/webmasters.readonly'];
+export const scopes = ['openid', 'email', 'https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/webmasters.readonly', 'https://www.googleapis.com/auth/spreadsheets.readonly'];
 export function authorization() {
   const config = configuration();
   const state = randomBytes(32).toString('base64url');
