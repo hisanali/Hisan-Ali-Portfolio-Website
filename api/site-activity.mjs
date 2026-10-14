@@ -1,6 +1,6 @@
 // app/insights/activity.ts
 import { createHash } from "node:crypto";
-var kinds = /* @__PURE__ */ new Set(["page_view", "site_click", "control_change", "form_submit", "lead_whatsapp", "lead_email", "lead_phone", "lead_form", "cta_contact", "file_download", "heartbeat", "scroll_depth", "page_exit", "location_shared", "location_revoked", "rage_click"]);
+var kinds = /* @__PURE__ */ new Set(["page_view", "site_click", "control_change", "form_submit", "lead_whatsapp", "lead_email", "lead_phone", "lead_form", "cta_contact", "file_download", "heartbeat", "scroll_depth", "page_exit", "rage_click"]);
 var headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 var limits = /* @__PURE__ */ new Map();
 function cleanText(value, max = 100) {
@@ -27,13 +27,9 @@ function sanitizeEvent(value) {
     for (const key of ["browser", "os", "language", "source", "campaign", "medium", "referrer", "city", "country", "region"]) metadata[key] = cleanText(source[key], 80).split(/[?#]/)[0];
     metadata.state = ["active", "idle", "away"].includes(String(source.state)) ? source.state : "active";
     for (const [key, max] of [["active_seconds", 30], ["scroll", 100]]) if (typeof source[key] === "number" && Number.isFinite(source[key])) metadata[key] = Math.min(max, Math.max(0, source[key]));
-    if (v.event === "location_shared" && source.location_consent === true && typeof source.latitude === "number" && typeof source.longitude === "number" && typeof source.accuracy === "number" && Number.isFinite(source.latitude) && Number.isFinite(source.longitude) && Number.isFinite(source.accuracy) && Math.abs(source.latitude) <= 90 && Math.abs(source.longitude) <= 180 && source.accuracy >= 0) {
-      metadata.latitude = Number(source.latitude.toFixed(5));
-      metadata.longitude = Number(source.longitude.toFixed(5));
-      metadata.accuracy = Math.min(source.accuracy, 1e5);
-      metadata.location_consent = true;
-    }
   } else if (["heartbeat", "scroll_depth", "page_exit", "location_shared", "location_revoked", "rage_click"].includes(String(v.event))) return null;
+  const occurred = Date.parse(String(v.occurred_at || ""));
+  if (Number.isFinite(occurred) && occurred <= Date.now() + 5e3 && occurred >= Date.now() - 3e5) metadata.occurred_at = new Date(occurred).toISOString();
   return { session_id: consented ? v.session_id : null, page_id: consented ? v.page_id : null, metadata, id: v.id, event_name: v.event, page: pathname, label: cleanText(v.label), target: cleanText(v.target, 240).split(/[?#]/)[0], area: ["header", "footer", "form", "content"].includes(String(v.area)) ? v.area : "content", device: ["mobile", "tablet", "desktop"].includes(String(v.device)) ? v.device : "desktop" };
 }
 async function database(rpc, body) {

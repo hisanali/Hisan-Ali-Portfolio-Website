@@ -8,7 +8,7 @@ import {withSiteActivity} from '../app/site-activity-shell.ts';
 const valid = {id:randomUUID(),event:'lead_whatsapp',page:'/gcc/?email=secret@example.com',label:'Call +968 9611 0846 or secret@example.com',target:'wa.me?text=private',area:'footer',device:'mobile'};
 test('collector stores only allowlisted, redacted fields',()=>{
  const row=sanitizeEvent({...valid,email:'private@example.com',ip:'1.2.3.4',message:'private'});
- assert.equal(row.page,'/gcc/');assert.equal(row.target,'wa.me');assert.equal(row.label,'Call [number] or [email]');assert.equal(Object.keys(row).length,7);
+ assert.equal(row.page,'/gcc/');assert.equal(row.target,'wa.me');assert.equal(row.label,'Call [number] or [email]');assert.equal(Object.keys(row).length,10);
  assert.equal(sanitizeEvent({...valid,page:'/admin/'}),null);assert.equal(sanitizeEvent({...valid,event:'unknown'}),null);assert.equal(sanitizeEvent({...valid,id:'bad'}),null);
 });
 test('rejects cross-origin requests and oversized input before storage',async()=>{
@@ -21,9 +21,10 @@ test('public script is injected once and works on pages without shared shell',()
  assert.ok(withSiteActivity('<!doctype html><html><title>Tool</title></html>').includes('site-activity.js'));
  assert.equal(withSiteActivity('<footer>Fragment</footer>'), '<footer>Fragment</footer>');
 });
-function browser(path='/gcc/') {
+function browser(path='/gcc/', consent=false) {
  const listeners={},events=[];const win={dataLayer:[],addEventListener:()=>{}};
- const context={window:win,document:{addEventListener:(type,fn)=>listeners[type]=fn},location:{pathname:path,href:'https://hisanali.com'+path,origin:'https://hisanali.com'},innerWidth:1000,crypto:{randomUUID},URL,Blob,navigator:{},setInterval:()=>{},fetch:async(_,init)=>{events.push(...JSON.parse(init.body).events);return {ok:true}}};
+ const storage=()=>({getItem:()=>null,setItem:()=>{},removeItem:()=>{}});
+ const context={window:win,document:{readyState:'loading',hidden:false,addEventListener:(type,fn)=>listeners[type]=fn},sessionStorage:storage(),localStorage:{...storage(),getItem:()=>consent?JSON.stringify({allowed:true,at:Date.now()}):null},location:{pathname:path,href:'https://hisanali.com'+path,origin:'https://hisanali.com'},innerWidth:1000,crypto:{randomUUID},URL,URLSearchParams,Blob,navigator:{userAgent:"Chrome/130 Mac",language:"en"},setInterval:()=>{},fetch:async(_,init)=>{events.push(...JSON.parse(init.body).events);return {ok:true}}};
  vm.runInNewContext(readFileSync('site-activity.js','utf8'),context);
  return {listeners,win,events};
 }
@@ -43,5 +44,18 @@ test('WhatsApp hostname matching, form redaction and button clicks',async()=>{
 });
 test('admin sends no telemetry; contact lead only dispatched after successful request attempt',()=>{
  const b=browser('/admin/');assert.equal(b.events.length,0);assert.equal(Object.keys(b.listeners).length,0);
- const form=readFileSync('contact-studio.js','utf8');assert.equal((form.match(/portfolio:lead-submitted/g)||[]).length,1);assert.ok(form.indexOf("new CustomEvent('portfolio:lead-submitted')")>form.indexOf('await fetch(GOOGLE_FORM'));
+ const form=readFileSync('contact-studio.js','utf8');assert.equal((form.match(/portfolio:lead-submitted/g)||[]).length,1);assert.ok(form.indexOf("new CustomEvent('portfolio:lead-submitted')")>form.indexOf('await fetch('));
+});
+
+test('form attempts are not counted as confirmed leads and page-background clicks are ignored',async()=>{
+ const b=browser();await new Promise(setImmediate);
+ b.listeners.submit({target:{matches:()=>true,closest:()=>null}});await new Promise(setImmediate);
+ assert.equal(b.events.at(-1).event,'form_submit');assert.equal(b.win.dataLayer.length,0);
+ const before=b.events.length;b.listeners.click({target:{closest:()=>null}});await new Promise(setImmediate);assert.equal(b.events.length,before);
+ b.listeners['portfolio:lead-submitted']();await new Promise(setImmediate);assert.equal(b.events.at(-1).event,'lead_form');assert.equal(b.win.dataLayer.length,1);
+});
+test('analytics choice gates linked visits and never requests browser location',async()=>{
+ const basic=browser(),allowed=browser('/gcc/',true);await new Promise(setImmediate);
+ assert.equal(basic.events[0].session_id,undefined);assert.ok(allowed.events[0].session_id);assert.equal(allowed.events[0].consent,true);
+ const source=readFileSync('site-activity.js','utf8');assert.doesNotMatch(source,/getCurrentPosition|navigator\.geolocation|Share my location/);
 });

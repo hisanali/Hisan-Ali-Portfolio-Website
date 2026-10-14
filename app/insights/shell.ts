@@ -46,7 +46,7 @@ function app(options: { mode: 'demo' | 'live' }) {
   <p class="nav-label">Reports</p>
   <nav id="nav" aria-label="Analytics views"></nav>
   <div class="side-foot">
-    <div class="side-live" id="side-live"><span class="pulse"></span><span><b id="side-live-count">—</b> on site now</span></div>
+    <div class="side-live" id="side-live"><span class="pulse"></span><span><b id="side-live-count">—</b> GA4 · last 30 min</span></div>
     <p class="shortcut">Press <kbd>1</kbd>–<kbd>9</kbd> to switch views</p>
   </div>
 </aside>
@@ -55,7 +55,7 @@ function app(options: { mode: 'demo' | 'live' }) {
     <a class="brand brand-mobile" href="/admin/${demo ? '?demo=1' : ''}" aria-label="Admin home"><span class="mark">h.</span></a>
     <nav class="crumbs" aria-label="Breadcrumb"><span>Workspace</span>${svg('<path d="m9 6 6 6-6 6"/>')}<b id="breadcrumb">Overview</b></nav>
     <div class="top-actions">
-      <button class="live-chip" id="live-chip" data-view="live" title="Visitors in the last 30 minutes"><span class="pulse"></span><b id="live-chip-count">—</b><span class="live-label">live</span></button>
+      <button class="live-chip" id="live-chip" data-view="live" title="GA4 active users in the last 30 minutes"><span class="pulse"></span><b id="live-chip-count">—</b><span class="live-label">GA4 · 30m</span></button>
       <span class="mode-chip ${demo ? 'is-demo' : ''}">${demo ? 'Sample data' : `${svg(icons.lock)}Private`}</span>
       <button class="icon-btn" id="theme" aria-label="Toggle dark mode" title="Toggle theme">${svg(icons.moon, 'i i-moon')}${svg(icons.sun, 'i i-sun')}</button>
       <span class="avatar" title="Hisan Ali · Administrator">HA</span>

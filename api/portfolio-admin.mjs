@@ -173,7 +173,7 @@ var definitions = [
   { id: "leadSources", dimensions: ["sessionSourceMedium", "eventName"], metrics: ["eventCount"], eventFilter: contacts }
 ];
 function gaRequest(definition, filters, period) {
-  const expressions = [];
+  const expressions = [{ filter: { fieldName: "hostName", inListFilter: { values: ["hisanali.com", "www.hisanali.com"] } } }];
   if (filters.country && !definition.unfiltered) expressions.push({ filter: { fieldName: "countryId", stringFilter: { value: filters.country, matchType: "EXACT" } } });
   if (filters.device && !definition.unfiltered) expressions.push({ filter: { fieldName: "deviceCategory", stringFilter: { value: filters.device, matchType: "EXACT" } } });
   if (definition.eventFilter) expressions.push({ filter: { fieldName: "eventName", inListFilter: { values: definition.eventFilter } } });
@@ -485,7 +485,7 @@ function app(options) {
   <p class="nav-label">Reports</p>
   <nav id="nav" aria-label="Analytics views"></nav>
   <div class="side-foot">
-    <div class="side-live" id="side-live"><span class="pulse"></span><span><b id="side-live-count">\u2014</b> on site now</span></div>
+    <div class="side-live" id="side-live"><span class="pulse"></span><span><b id="side-live-count">\u2014</b> GA4 \xB7 last 30 min</span></div>
     <p class="shortcut">Press <kbd>1</kbd>\u2013<kbd>9</kbd> to switch views</p>
   </div>
 </aside>
@@ -494,7 +494,7 @@ function app(options) {
     <a class="brand brand-mobile" href="/admin/${demo ? "?demo=1" : ""}" aria-label="Admin home"><span class="mark">h.</span></a>
     <nav class="crumbs" aria-label="Breadcrumb"><span>Workspace</span>${svg('<path d="m9 6 6 6-6 6"/>')}<b id="breadcrumb">Overview</b></nav>
     <div class="top-actions">
-      <button class="live-chip" id="live-chip" data-view="live" title="Visitors in the last 30 minutes"><span class="pulse"></span><b id="live-chip-count">\u2014</b><span class="live-label">live</span></button>
+      <button class="live-chip" id="live-chip" data-view="live" title="GA4 active users in the last 30 minutes"><span class="pulse"></span><b id="live-chip-count">\u2014</b><span class="live-label">GA4 \xB7 30m</span></button>
       <span class="mode-chip ${demo ? "is-demo" : ""}">${demo ? "Sample data" : `${svg(icons.lock)}Private`}</span>
       <button class="icon-btn" id="theme" aria-label="Toggle dark mode" title="Toggle theme">${svg(icons.moon, "i i-moon")}${svg(icons.sun, "i i-sun")}</button>
       <span class="avatar" title="Hisan Ali \xB7 Administrator">HA</span>

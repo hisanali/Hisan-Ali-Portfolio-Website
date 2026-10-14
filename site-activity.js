@@ -3,9 +3,9 @@
   if (window.__portfolioActivity || /^\/(admin|api)(\/|$)/.test(location.pathname)) return;
   window.__portfolioActivity = true;
   const queue = [];
-  let busy = false, session = null, pageId = crypto.randomUUID(), precise = false;
+  let busy = false, session = null, pageId = crypto.randomUUID();
   let lastInteraction = Date.now(), lastTick = Date.now(), maxScroll = 0;
-  let entry = null;
+  let entry = null, wasVisible = !document.hidden;
   const preferenceKey = 'portfolio-journey-choice', sessionKey = 'portfolio-journey-session';
   const read = (key) => { try { return JSON.parse(sessionStorage.getItem(key)); } catch { return null; } };
   let preference = null; try { preference = JSON.parse(localStorage.getItem(preferenceKey)); } catch {}
@@ -37,7 +37,7 @@
   const device = () => innerWidth < 768 ? 'mobile' : innerWidth < 1100 ? 'tablet' : 'desktop';
   const target = (url) => !url ? '' : /^(mailto|tel|whatsapp):$/.test(url.protocol) ? url.protocol.slice(0, -1) : url.origin === location.origin ? scrub(url.pathname, 240) : /^https?:$/.test(url.protocol) ? url.hostname : '';
   function emit(event, detail = {}) {
-    const item = { id: crypto.randomUUID(), event, page: page(), label: scrub(detail.label), target: detail.target || '', area: detail.area || 'content', device: device(), ...(session ? {consent:true, session_id:session,page_id:pageId,metadata:{...context(),...detail.metadata}} : {}) };
+    const item = { id: crypto.randomUUID(), event, occurred_at: new Date().toISOString(), page: page(), label: scrub(detail.label), target: detail.target || '', area: detail.area || 'content', device: device(), ...(session ? {consent:true, session_id:session,page_id:pageId,metadata:{...context(),...detail.metadata}} : {}) };
     touch();
     if (queue.length < 100) queue.push(item);
     if (['lead_whatsapp','lead_email','lead_phone','lead_form','cta_contact','file_download'].includes(event)) {
@@ -62,7 +62,7 @@
     return { label: sensitive ? (el.getAttribute('data-analytics-label') || `${el.tagName.toLowerCase()} control`) : (el.getAttribute('data-analytics-label') || el.getAttribute('aria-label') || (/^(INPUT|SELECT|TEXTAREA|CANVAS)$/.test(el.tagName) ? el.tagName.toLowerCase() + ' control' : el.textContent)), target: target(url), area: el.closest('header') ? 'header' : el.closest('footer') ? 'footer' : sensitive ? 'form' : 'content' };
   }
   function click(event) {
-    const el = event.target?.closest?.(controls) || event.target;
+    const el = event.target?.closest?.(controls);
     if (!el?.tagName || el.closest('[data-analytics-ignore]')) return;
     let url; try { if (el.matches('a[href]')) url = new URL(el.getAttribute('href'), location.href); } catch {}
     let name = 'site_click';
@@ -87,7 +87,7 @@
   }, true);
   document.addEventListener('submit', event => {
     if (!event.target.matches?.('form') || event.target.closest('[data-analytics-ignore]')) return;
-    emit(event.target.matches('form[data-lead-form]') ? 'lead_form' : 'form_submit', { label: 'Form submission attempt', area: 'form' });
+    emit('form_submit', { label: 'Form submission attempt', area: 'form' });
   }, true);
   document.addEventListener('portfolio:lead-submitted', () => emit('lead_form', { label: 'Contact brief sent', area: 'form' }));
   emit('page_view', { label: 'Page opened' });
@@ -95,8 +95,8 @@
   setInterval(flush, 3000);
   const tick = (exit = false) => {
     if (!session) return;
-    const now = Date.now(), elapsed = Math.min(30,(now-lastTick)/1000); lastTick=now;
-    emit(exit ? 'page_exit' : 'heartbeat',{label:exit?'Page left':'Visit heartbeat',metadata:{...(exit?{state:'away'}:{}),active_seconds:!document.hidden && now-lastInteraction<60000 ? Math.round(elapsed) : 0,scroll:maxScroll}});
+    const now = Date.now(), active = wasVisible ? Math.max(0, Math.min(now, lastInteraction + 60000) - lastTick) / 1000 : 0; lastTick=now; wasVisible=!document.hidden;
+    emit(exit ? 'page_exit' : 'heartbeat',{label:exit?'Page left':'Visit heartbeat',metadata:{...(exit?{state:'away'}:{}),active_seconds:Math.min(30, Math.round(active)),scroll:maxScroll}});
   };
   setInterval(()=>{if(!document.hidden && Date.now()-lastInteraction<1800000)tick();},15000);
   document.addEventListener('pointerdown',()=>{interaction();},{passive:true});
@@ -109,34 +109,24 @@
     if(milestone>maxScroll){maxScroll=milestone;emit('scroll_depth',{label:milestone+'% of page',metadata:{scroll:milestone}});}
   },{passive:true});
   window.addEventListener('pagehide',()=>{tick(true);beacon();});
+  window.addEventListener('pageshow',event=>{if(event.persisted){pageId=crypto.randomUUID();lastTick=Date.now();wasVisible=!document.hidden;maxScroll=0;emit('page_view',{label:'Page restored'});}});
   window.portfolioJourney = { session: () => session };
   function beacon(){ if(queue.length && navigator.sendBeacon){const batch=queue.splice(0,20);if(!navigator.sendBeacon('/api/site-activity/',new Blob([JSON.stringify({events:batch})],{type:'application/json'})))queue.unshift(...batch);} }
   function privacyUI() {
-    const style=document.createElement('link');style.rel='stylesheet';style.href='/journey-privacy.css?v=20261013';document.head.append(style);
-    const box=document.createElement('section');box.className='journey-privacy';box.setAttribute('data-analytics-ignore','');box.setAttribute('aria-label','Website analytics privacy');
-    box.innerHTML='<button class="jp-open" type="button">Privacy settings</button><div class="jp-panel" hidden><strong>Help improve this website</strong><p>Allow Hisan to see your anonymous page journey, clicks, time spent, device and approximate city in his private dashboard for 30 days. We never record what you type. Basic action counts continue without a visit ID.</p><div class="jp-actions"><button type="button" data-choice="allow">Allow journey analytics</button><button type="button" data-choice="basic">Basic only</button></div><div class="jp-location" hidden><p>Optional: share your precise location with Hisan for this visit. Your browser will ask permission. You can remove it here.</p><button type="button" data-choice="location">Share my location</button><button type="button" data-choice="revoke" hidden>Remove shared location</button></div><small class="jp-status" role="status"></small><button type="button" class="jp-close">Close</button></div>';
-    document.body.append(box);const panel=box.querySelector('.jp-panel'),locationBox=box.querySelector('.jp-location'),status=box.querySelector('.jp-status');
-    const show=()=>{panel.hidden=false;locationBox.hidden=!session;box.querySelector('[data-choice="revoke"]').hidden=!session;};
-    box.querySelector('.jp-open').onclick=show;box.querySelector('.jp-close').onclick=()=>{panel.hidden=true;};
-    if(!preference || Date.now()-preference.at>=180*86400000)show();
+    const style=document.createElement('link');style.rel='stylesheet';style.href='/journey-privacy.css?v=20261014';document.head.append(style);
+    const box=document.createElement('section');box.className='journey-privacy';box.setAttribute('data-analytics-ignore','');box.setAttribute('aria-label','Cookie preferences');
+    box.innerHTML='<button class="jp-open" type="button" aria-expanded="false">Cookie preferences</button><div class="jp-panel" hidden><div class="jp-copy"><strong>A little insight helps</strong><p>Optional analytics helps us improve pages and understand clicks. It uses anonymous visit storage. <a href="/legal/cookie-policy/">Cookie details</a></p></div><div class="jp-actions"><button type="button" data-choice="basic">Essential only</button><button type="button" data-choice="allow">Allow analytics</button></div></div>';
+    document.body.append(box);const panel=box.querySelector('.jp-panel'),opener=box.querySelector('.jp-open');
+    const show=()=>{panel.hidden=false;opener.setAttribute('aria-expanded','true');};
+    opener.onclick=()=>{panel.hidden=!panel.hidden;opener.setAttribute('aria-expanded',String(!panel.hidden));};
+    const valid=preference && typeof preference.allowed==='boolean' && Number.isFinite(preference.at) && Date.now()-preference.at<180*86400000;
+    if(!valid)show();
     box.addEventListener('click',event=>{
-      const choice=event.target.dataset.choice;if(!choice)return;
-      if(choice==='allow'||choice==='basic'){
-        if(choice==='basic'&&session)emit('location_revoked',{label:'Journey analytics disabled'});
-        preference={allowed:choice==='allow',at:Date.now()};try{localStorage.setItem(preferenceKey,JSON.stringify(preference));}catch{}
-        if(preference.allowed){if(!session){startSession();lastTick=Date.now();emit('page_view',{label:'Journey analytics enabled'});}}else{session=null;precise=false;try{sessionStorage.removeItem(sessionKey);sessionStorage.removeItem('portfolio-journey-entry');entry=null;}catch{}}
-        locationBox.hidden=!session;status.textContent=preference.allowed?'Anonymous journeys enabled. Precise location is off unless you share it.':'Basic action counts only. Your visit is not linked across pages.';panel.hidden=true;
-      }
-      if(choice==='location' && session){
-        if(!navigator.geolocation){status.textContent='Location is unavailable in this browser.';return;}
-        status.textContent='Waiting for your browser location permission…';
-        const sharingSession=session;
-        navigator.geolocation.getCurrentPosition(position=>{
-          if(!session||session!==sharingSession)return;precise=true;emit('location_shared',{label:'Visitor shared location',metadata:{location_consent:true,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy}});
-          box.querySelector('[data-choice="revoke"]').hidden=false;status.textContent='Location shared for this visit. Accuracy: approximately '+Math.round(position.coords.accuracy)+' metres.';
-        },()=>{status.textContent='Location was not shared. You can keep using the website.';},{enableHighAccuracy:true,timeout:10000,maximumAge:0});
-      }
-      if(choice==='revoke'&&session){precise=false;emit('location_revoked',{label:'Visitor removed shared location'});event.target.hidden=true;status.textContent='Shared coordinates removed from this visit.';}
+      const choice=event.target.dataset.choice;if(choice!=='allow'&&choice!=='basic')return;
+      preference={allowed:choice==='allow',at:Date.now()};try{localStorage.setItem(preferenceKey,JSON.stringify(preference));}catch{}
+      if(preference.allowed){if(!session){startSession();lastTick=Date.now();wasVisible=!document.hidden;emit('page_view',{label:'Analytics enabled'});}}
+      else{session=null;try{sessionStorage.removeItem(sessionKey);sessionStorage.removeItem('portfolio-journey-entry');}catch{}entry=null;}
+      panel.hidden=true;opener.setAttribute('aria-expanded','false');opener.focus();
     });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',privacyUI);else privacyUI();

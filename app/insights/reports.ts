@@ -64,7 +64,7 @@ export const definitions: Definition[] = [
   { id: 'leadSources', dimensions: ['sessionSourceMedium', 'eventName'], metrics: ['eventCount'], eventFilter: contacts },
 ];
 export function gaRequest(definition: Definition, filters: Filters, period: ReturnType<typeof periods>) {
-  const expressions: object[] = [];
+  const expressions: object[] = [{ filter: { fieldName: 'hostName', inListFilter: { values: ['hisanali.com','www.hisanali.com'] } } }];
   if (filters.country && !definition.unfiltered) expressions.push({ filter: { fieldName: 'countryId', stringFilter: { value: filters.country, matchType: 'EXACT' } } });
   if (filters.device && !definition.unfiltered) expressions.push({ filter: { fieldName: 'deviceCategory', stringFilter: { value: filters.device, matchType: 'EXACT' } } });
   if (definition.eventFilter) expressions.push({ filter: { fieldName: 'eventName', inListFilter: { values: definition.eventFilter } } });

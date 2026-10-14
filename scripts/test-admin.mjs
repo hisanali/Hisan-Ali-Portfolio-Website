@@ -26,7 +26,8 @@ test('tracking health reports ignore filters and use their own date windows', ()
   const filters = { days: 28, country: 'OM', device: 'mobile' }, period = periods(28, 1);
   const today = gaRequest(definitions.find(item => item.id === 'eventsToday'), filters, period);
   assert.deepEqual(today.dateRanges, [{ startDate: 'today', endDate: 'today' }]);
-  assert.equal(today.dimensionFilter.andGroup.expressions.length, 1);
+  assert.deepEqual(today.dimensionFilter.andGroup.expressions[0].filter.inListFilter.values,['hisanali.com','www.hisanali.com']);
+  assert.equal(today.dimensionFilter.andGroup.expressions.length, 2);
   const year = gaRequest(definitions.find(item => item.id === 'eventsLastSeen'), filters, period);
   assert.equal(year.dateRanges[0].startDate, '365daysAgo');
   assert.equal(year.orderBys[0].desc, true);
@@ -41,7 +42,7 @@ test('filters reject arbitrary inputs and apply consistently to both Google sour
   const filters = filtersFrom(new URL('http://localhost/admin/data/?days=7&country=OM&device=mobile'));
   const period = periods(7,1), request = gaRequest(definitions.find(item => item.id === 'eventsPrevious'), filters, period);
   assert.equal(request.dateRanges[0].endDate, period.previousEnd);
-  assert.equal(request.dimensionFilter.andGroup.expressions.length,3);
+  assert.equal(request.dimensionFilter.andGroup.expressions.length,4);
   const search = searchRequest(['query'], filters, period);
   assert.deepEqual(search.dimensionFilterGroups[0].filters.map(item => item.expression), ['omn','MOBILE']);
   assert.equal(search.dataState,'final');
