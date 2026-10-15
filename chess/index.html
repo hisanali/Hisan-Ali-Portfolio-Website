@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PNT5FCX5');</script><!-- End Google Tag Manager --><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>3D Chess — Play the Computer or a Friend Online | Hisan Ali</title>
+  <meta name="description" content="Play free 3D chess in your browser on a hand-finished walnut, marble or tournament board. Challenge the computer at four levels, pass and play, or invite a friend online with a room code.">
+  <link rel="canonical" href="https://hisanali.com/chess/">
+  <meta name="theme-color" content="#0d0a08">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hisanali.com/chess/">
+  <meta property="og:title" content="3D Chess — Play the Computer or a Friend Online">
+  <meta property="og:description" content="A realistic 3D chessboard with smooth animations. Play the computer, pass and play, or invite a friend online.">
+  <meta property="og:image" content="https://hisanali.com/hd-thumb-games.webp">
+  <meta property="og:site_name" content="Hisan Ali - Digital Marketing Expert">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="3D Chess — Play the Computer or a Friend Online">
+  <meta name="twitter:description" content="A realistic 3D chessboard with smooth animations. Play the computer, pass and play, or invite a friend online.">
+  <meta name="twitter:image" content="https://hisanali.com/hd-thumb-games.webp">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230d0a08'/%3E%3Cpath d='M22 50h20l-3-6H25zM26 44l2-14h8l2 14M24 30h16M27 30c-3-4-2-10 5-12 7 2 8 8 5 12M32 12v6M29 15h6' fill='none' stroke='%23e6cb9d' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"3D Chess","url":"https://hisanali.com/chess/","description":"Free browser chess on a realistic 3D board. Play the computer, pass and play, or a friend online.","genre":["Board game","Strategy"],"gamePlatform":"Web browser","playMode":["SinglePlayer","MultiPlayer"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/"}}</script>
+</head>
+<body><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
+<canvas id="scene" aria-label="3D chess board"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="back" href="/games/" aria-label="Back to the Game Center"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Game Center</span></a>
+  <div class="mark" aria-hidden="true">Chess<sup>3D</sup></div>
+  <div class="top-actions">
+    <button id="btn-theme" type="button" aria-label="Change board style" title="Board style"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/><path d="M4 4h8v8H4zM12 12h8v8h-8z" class="fill"/></svg></button>
+    <button id="btn-sound" type="button" aria-label="Sound" title="Sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h3l5-4v12l-5-4H4z"/><path class="wave" d="M16 9c1.3 1.6 1.3 4.4 0 6M18.5 6.5c2.8 3 2.8 8 0 11"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg></button>
+    <button id="btn-full" type="button" aria-label="Toggle full screen" title="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="btn-menu" class="menu" type="button">Menu</button>
+  </div>
+</header>
+
+<section class="card player top" id="card-top" aria-label="Opponent">
+  <span class="avatar"></span><div class="who"><strong class="name"></strong><small class="sub"></small><div class="caps"></div></div><span class="clock" hidden></span>
+</section>
+<section class="card player bottom" id="card-bottom" aria-label="You">
+  <span class="avatar"></span><div class="who"><strong class="name"></strong><small class="sub"></small><div class="caps"></div></div><span class="clock" hidden></span>
+</section>
+
+<aside class="side" aria-label="Game panel">
+  <p class="status" id="status" aria-live="polite"></p>
+  <ol class="moves" id="moves" aria-label="Move list"></ol>
+  <div class="actions">
+    <button id="btn-undo" type="button" title="Take back (Ctrl+Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span>Undo</span></button>
+    <button id="btn-hint" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.6 1 2.5h6c0-.9.3-1.8 1-2.5A6 6 0 0 0 12 3Z"/></svg><span>Hint</span></button>
+    <button id="btn-flip" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg><span>Flip</span></button>
+    <button id="btn-draw" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg><span>Draw</span></button>
+    <button id="btn-resign" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></svg><span>Resign</span></button>
+    <button id="btn-new" type="button" class="accent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg><span>New game</span></button>
+  </div>
+  <div class="room-bar" id="room-bar" hidden><span>Room <b id="room-code"></b></span><button id="room-copy" type="button">Copy invite</button></div>
+</aside>
+
+<section class="start" id="start" aria-label="Start a game">
+  <div class="start-copy">
+    <p class="eyebrow">Hisan’s Lab · Game Center</p>
+    <h1>Chess<em>.</em></h1>
+    <p class="lede">A hand-finished board, weighted pieces and every rule of the game. Play the computer, pass the board, or invite a friend from anywhere.</p>
+    <ul class="facts"><li><b>4</b> computer levels</li><li><b>3</b> board styles</li><li>Live online rooms</li></ul>
+  </div>
+  <div class="start-card">
+    <div class="tabs" role="tablist" aria-label="Game mode">
+      <button type="button" role="tab" data-mode="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="7" width="14" height="11" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9.5 15h5"/></svg>Computer</button>
+      <button type="button" role="tab" data-mode="local"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20a5 5 0 0 1 10 0M11 20a5 5 0 0 1 10 0"/></svg>Pass &amp; play</button>
+      <button type="button" role="tab" data-mode="online"><i class="live" aria-hidden="true"></i>Online</button>
+    </div>
+
+    <div class="tab-body" data-tab="ai">
+      <div class="field"><span>Difficulty</span><div class="seg" data-setting="difficulty"><button type="button" data-value="casual">Casual</button><button type="button" data-value="club">Club</button><button type="button" data-value="expert">Expert</button><button type="button" data-value="master">Master</button></div></div>
+      <div class="field"><span>Play as</span><div class="seg" data-setting="color"><button type="button" data-value="white"><i class="chip w"></i>White</button><button type="button" data-value="random"><i class="chip r"></i>Random</button><button type="button" data-value="black"><i class="chip b"></i>Black</button></div></div>
+    </div>
+
+    <div class="tab-body" data-tab="local" hidden>
+      <div class="field"><span>Clock</span><div class="seg" data-setting="clock"><button type="button" data-value="none">No clock</button><button type="button" data-value="3+2">3 + 2</button><button type="button" data-value="5+0">5 min</button><button type="button" data-value="10+0">10 min</button></div></div>
+      <div class="field"><span>After each move</span><div class="seg" data-setting="rotate"><button type="button" data-value="off">Keep the view</button><button type="button" data-value="on">Turn the board</button></div></div>
+    </div>
+
+    <div class="tab-body" data-tab="online" hidden>
+      <label class="field"><span>Your name</span><input id="online-name" maxlength="24" autocomplete="nickname" placeholder="Player name"></label>
+      <div class="field"><span>Clock</span><div class="seg" data-setting="onlineClock"><button type="button" data-value="none">None</button><button type="button" data-value="3+2">3 + 2</button><button type="button" data-value="5+0">5 min</button><button type="button" data-value="10+0">10 min</button></div></div>
+      <div class="field"><span>You play</span><div class="seg" data-setting="onlineColor"><button type="button" data-value="white"><i class="chip w"></i>White</button><button type="button" data-value="random"><i class="chip r"></i>Random</button><button type="button" data-value="black"><i class="chip b"></i>Black</button></div></div>
+      <button id="online-create" class="primary" type="button">Create a room <span aria-hidden="true">↗</span></button>
+      <div class="join"><input id="online-code" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Room code" aria-label="Room code"><button id="online-join" type="button">Join</button></div>
+      <p class="note" id="online-note" aria-live="polite">Private six-character room · no account needed</p>
+    </div>
+
+    <div class="field"><span>Board</span><div class="seg" data-setting="theme"><button type="button" data-value="walnut"><i class="sw walnut"></i>Walnut</button><button type="button" data-value="marble"><i class="sw marble"></i>Marble</button><button type="button" data-value="tournament"><i class="sw tournament"></i>Tournament</button></div></div>
+    <button id="start-btn" class="primary" type="button">Start game <span aria-hidden="true">→</span></button>
+  </div>
+</section>
+
+<section class="waiting" id="waiting" hidden aria-live="polite">
+  <div class="waiting-card">
+    <span class="pulse" aria-hidden="true"></span>
+    <h2 id="waiting-title">Your room is ready</h2>
+    <p id="waiting-text"></p>
+    <strong class="code" id="waiting-code">——————</strong>
+    <div class="waiting-actions"><button id="waiting-share" class="primary" type="button">Share invite</button><button id="waiting-copy" type="button">Copy link</button><button id="waiting-cancel" type="button">Cancel</button></div>
+  </div>
+</section>
+
+<div class="promo" id="promo" hidden><div class="promo-card"><p>Promote your pawn</p><div class="promo-row"></div></div></div>
+
+<section class="result" id="result" hidden aria-live="assertive">
+  <div class="result-card">
+    <small id="result-label"></small>
+    <h2 id="result-title"></h2>
+    <p id="result-reason"></p>
+    <div class="result-actions"><button id="again" class="primary" type="button">Play again</button><button id="review" type="button">View board</button><button id="to-menu" type="button">Menu</button></div>
+  </div>
+</section>
+
+<div class="offer" id="offer" hidden><span id="offer-text"></span><button id="offer-accept" type="button">Accept</button><button id="offer-decline" type="button">Decline</button></div>
+<div class="toast" id="toast" role="status"></div>
+<noscript><p class="noscript">Chess needs JavaScript and WebGL to run.</p></noscript>
+<script type="module" src="main.js?v=1"></script>
+</body>
+</html>

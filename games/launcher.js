@@ -178,7 +178,7 @@
     });
     const externals = $$('.game-pick.is-external', picker);
     externals.forEach((card) => {
-      card.hidden = !(filter === 'all' || card.dataset.category === filter);
+      card.hidden = !(filter === 'all' || card.dataset.category === filter || (filter === 'online' && card.dataset.online === 'true'));
       card.classList.toggle('is-search-miss', Boolean(query) && !`${card.dataset.title} ${card.textContent}`.toLowerCase().includes(query));
     });
     const shown = visiblePicks().length + externals.filter((card) => !card.hidden && !card.classList.contains('is-search-miss')).length;
