@@ -1,1 +1,1 @@
-{"shots":81,"maxTargetErrorMetres":0.0004126418276208758,"drag":"opposes motion","spin":"symmetric Magnus bend","bounce":"no added kinetic energy","rolling":"comes to rest"}
+{"shots":81,"maxTargetErrorMetres":0.0004126418276208758,"drag":"opposes motion","spin":"symmetric Magnus bend","bounce":"no added kinetic energy","rolling":"comes to rest","continuousContacts":"fast crossing, miss, capsule end and departing overlap passed"}

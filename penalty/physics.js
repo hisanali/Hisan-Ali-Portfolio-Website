@@ -62,3 +62,21 @@ export function reflectContact(velocity,normal,restitution=.65,surfaceVelocity=n
  if(vn>=0)return;
  relative.addScaledVector(normal,-(1+restitution)*vn);velocity.copy(relative).add(surfaceVelocity);
 }
+
+// Earliest continuous contact of a moving sphere against a finite capsule.
+// Tests both the cylindrical span and its spherical ends, avoiding tunnelling.
+export function sweepSphereSegment(start,end,a,b,radius){
+ const motion=end.clone().sub(start),axis=b.clone().sub(a),length=axis.length();
+ const unit=length>1e-8?axis.clone().divideScalar(length):new Vector3(0,1,0),origin=start.clone().sub(a),times=[];
+ const md=motion.dot(unit),od=origin.dot(unit),perpMotion=motion.clone().addScaledVector(unit,-md),perpOrigin=origin.clone().addScaledVector(unit,-od);
+ const roots=(A,B,C)=>{if(A<1e-12)return [];const D=B*B-4*A*C;if(D<0)return [];const q=Math.sqrt(D);return [(-B-q)/(2*A),(-B+q)/(2*A)];};
+ if(length>1e-8)for(const t of roots(perpMotion.lengthSq(),2*perpMotion.dot(perpOrigin),perpOrigin.lengthSq()-radius*radius))if(t>=0&&t<=1&&od+t*md>=0&&od+t*md<=length)times.push(t);
+ for(const endpoint of [a,b]){const offset=start.clone().sub(endpoint);for(const t of roots(motion.lengthSq(),2*motion.dot(offset),offset.lengthSq()-radius*radius))if(t>=0&&t<=1)times.push(t);}
+ const closest=start.clone().sub(a).dot(unit),initial=a.clone().addScaledVector(unit,Math.max(0,Math.min(length,closest)));
+ if(start.distanceToSquared(initial)<radius*radius)times.push(0);
+ times.sort((x,y)=>x-y);
+ for(const time of times){const center=start.clone().addScaledVector(motion,time),point=a.clone().addScaledVector(unit,Math.max(0,Math.min(length,center.clone().sub(a).dot(unit)))),normal=center.clone().sub(point).normalize();
+  if(motion.dot(normal)<-1e-8)return {time,center,point,normal};
+ }
+ return null;
+}

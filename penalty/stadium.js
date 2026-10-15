@@ -3,10 +3,10 @@ import { mergeGeometries } from '../evermile/vendor/utils/BufferGeometryUtils.js
 
 // A closed elliptical bowl: the seats, spectators, concourses and roof share
 // the same parametric footprint, so there are no open corners or floating rows.
-export function buildStadium(scene, atlas) {
+export function buildStadium(scene, atlas,materials={}) {
   const centreZ=35, rows=25, columns=440, crowdTime={value:0}, cheer={value:0};
-  const concrete=new T.MeshStandardMaterial({color:'#35404a',roughness:.92});
-  const roofMat=new T.MeshStandardMaterial({color:'#465360',metalness:.55,roughness:.52,side:T.DoubleSide});
+  const concrete=new T.MeshStandardMaterial({color:'#929795',map:materials.concrete,normalMap:materials.normal,normalScale:new T.Vector2(.2,.2),roughness:.92,side:T.DoubleSide});
+  const roofMat=new T.MeshStandardMaterial({color:'#b8bec0',metalness:.55,roughness:.52,side:T.DoubleSide});
   const steel=new T.MeshStandardMaterial({color:'#8795a1',metalness:.72,roughness:.38});
   const structureParts=[],concreteParts=[],roofParts=[],lampParts=[];
   const bankMat=new T.MeshBasicMaterial({color:new T.Color('#e9f2ff').multiplyScalar(3),toneMapped:false});
@@ -23,7 +23,7 @@ export function buildStadium(scene, atlas) {
     if(material===concrete)concreteParts.push(geo);else if(material===steel)structureParts.push(geo);else if(material===roofMat)roofParts.push(geo);else scene.add(mesh);return mesh;
   }
   function beam(a,b,r=.07){const d=new T.Vector3().subVectors(b,a),m=new T.Mesh(new T.CylinderGeometry(r,r,d.length(),6),steel);m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());m.updateMatrix();structureParts.push(m.geometry.toNonIndexed().applyMatrix4(m.matrix));}
-  const fanMat=new T.MeshStandardMaterial({map:atlas,color:'#bac2c9',alphaTest:.38,side:T.DoubleSide,roughness:.95});
+  const fanMat=new T.MeshBasicMaterial({map:atlas,color:'#aeb4b6',alphaTest:.45,side:T.DoubleSide});
   fanMat.onBeforeCompile=shader=>{
     shader.uniforms.crowdTime=crowdTime;shader.uniforms.cheer=cheer;
     shader.vertexShader='attribute float variant; varying float vVariant; uniform float crowdTime; uniform float cheer;\n'+shader.vertexShader;
@@ -33,12 +33,12 @@ export function buildStadium(scene, atlas) {
       transformed.y+=.012*sin(crowdTime*1.6+seed)+cheer*.18*abs(sin(crowdTime*5.5+seed));`);
     shader.fragmentShader='varying float vVariant;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`
-      vec2 tile=vec2(mod(vVariant,4.0),1.0-floor(vVariant/4.0));
-      vec4 sampledDiffuseColor=texture2D(map,(vMapUv+tile)/vec2(4.0,2.0));
+      vec2 tile=vec2(mod(vVariant,8.0),3.0-floor(vVariant/8.0));
+      vec4 sampledDiffuseColor=texture2D(map,(vMapUv+tile)/vec2(8.0,4.0));
       diffuseColor*=sampledDiffuseColor;`);
   };
-  const capacity=rows*columns, fanGeo=new T.PlaneGeometry(.90,.97);
-  fanGeo.translate(0,.86,0);const variants=new Float32Array(capacity);
+  const capacity=rows*columns, fanGeo=new T.PlaneGeometry(.76,1.32);
+  fanGeo.translate(0,.94,0);const variants=new Float32Array(capacity);
   const fans=new T.InstancedMesh(fanGeo,fanMat,capacity);
   fanGeo.setAttribute('variant',new T.InstancedBufferAttribute(variants,1));
   const seats=new T.InstancedMesh(new T.BoxGeometry(.49,.1,.46),seatMat,capacity);
@@ -51,13 +51,18 @@ export function buildStadium(scene, atlas) {
     for(let col=0;col<columns;col++){
       if(col%55<4||Math.random()<.035)continue;const a=(col+(row%2)*.5)/columns*Math.PI*2;
       const x=Math.sin(a)*rx,z=centreZ+Math.cos(a)*rz,rot=Math.atan2(-x,centreZ-z);
-      dummy.position.set(x,y,z);dummy.rotation.set(0,rot,0);dummy.scale.setScalar(.91+Math.random()*.11);dummy.updateMatrix();fans.setMatrixAt(count,dummy.matrix);variants[count]=Math.random()<.65?(Math.random()<.5?0:4):Math.floor(Math.random()*8);
+      dummy.position.set(x,y,z);dummy.rotation.set(0,rot,0);dummy.scale.setScalar(.91+Math.random()*.11);dummy.updateMatrix();fans.setMatrixAt(count,dummy.matrix);variants[count]=Math.floor(Math.random()*32);
       dummy.position.y=y+.36;dummy.scale.set(1,1,1);dummy.updateMatrix();seats.setMatrixAt(count,dummy.matrix);seats.setColorAt(count,new T.Color(colors[Math.floor(col/55)%4]));
       dummy.position.add(new T.Vector3(-Math.sin(rot)*.2,.2,-Math.cos(rot)*.2));dummy.updateMatrix();backs.setMatrixAt(count,dummy.matrix);backs.setColorAt(count,new T.Color(colors[Math.floor(col/55)%4]));count++;
     }
     if(row===10||row===19){ring(rx-.5,rz-.5,y-.5,rx-.5,rz-.5,y-.1,steel);}
   }
+  fans.layers.set(2);
   for(const mesh of [fans,seats,backs]){mesh.count=count;mesh.frustumCulled=false;scene.add(mesh);}
+  const glass=new T.MeshPhysicalMaterial({color:'#294858',metalness:.2,roughness:.22,transparent:true,opacity:.72});
+  ring(52,66,10.9,52,66,12.5,glass);
+  for(let i=0;i<88;i++){const a=i/88*Math.PI*2;beam(new T.Vector3(Math.sin(a)*52,10.8,centreZ+Math.cos(a)*66),new T.Vector3(Math.sin(a)*52,12.7,centreZ+Math.cos(a)*66),.035);}
+  ring(65,79,0,65,79,23,concrete);
   // Roof skin, structural ring beams, radial cantilevers and outer columns.
   ring(40,54,18.4,65,79,23,roofMat);
   ring(40,54,18.05,40,54,18.5,steel);
@@ -74,5 +79,15 @@ export function buildStadium(scene, atlas) {
   // Dark safety mesh and pitch-side barrier establish the real scale of the bowl.
   ring(40.5,54.5,.1,40.5,54.5,.8,new T.MeshStandardMaterial({color:'#111c29',roughness:.72}));
   for(const [parts,material]of [[structureParts,steel],[concreteParts,concrete],[roofParts,roofMat],[lampParts,bankMat]])if(parts.length){const mesh=new T.Mesh(mergeGeometries(parts,false),material);mesh.receiveShadow=true;scene.add(mesh);parts.forEach(g=>g.dispose());}
-  return {update(time,goal,dt){crowdTime.value=time;cheer.value=T.MathUtils.damp(cheer.value,goal?1:0,3,dt);}};
+  const display=document.createElement('canvas');display.width=1024;display.height=512;const g=display.getContext('2d'),displayMap=new T.CanvasTexture(display);displayMap.colorSpace=T.SRGBColorSpace;
+  const screen=new T.Mesh(new T.BoxGeometry(10.5,5.25,.3),[0,0,0,0,1,0].map(front=>front?new T.MeshBasicMaterial({map:displayMap,toneMapped:false}):new T.MeshStandardMaterial({color:'#15212a',roughness:.65})));screen.position.set(0,17.2,-34);scene.add(screen);
+  function updateScore(home,away,round){
+    g.fillStyle='#101c24';g.fillRect(0,0,1024,512);g.fillStyle='#c4decb';g.fillRect(0,0,1024,8);
+    g.textAlign='center';g.fillStyle='#a5b7c4';g.font='600 26px Arial';g.fillText('MATCHDAY  /  PENALTY SERIES',512,67);
+    g.fillStyle='#f4f7f7';g.font='700 150px Arial';g.fillText(home+'  :  '+away,512,269);
+    g.font='700 31px Arial';g.fillText('HOME',220,345);g.fillText('AWAY',805,345);
+    g.fillStyle='#86a297';g.font='24px Arial';g.fillText('ROUND '+round+'   •   HISANALI.COM',512,444);displayMap.needsUpdate=true;
+  }
+  updateScore(0,0,1);
+  return {updateScore,update(time,goal,dt){crowdTime.value=time;cheer.value=T.MathUtils.damp(cheer.value,goal?1:0,3,dt);}};
 }

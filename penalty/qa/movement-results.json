@@ -1,20 +1,20 @@
 {
   "approach": {
     "triggerDisplacement": 0,
-    "distance": 0.0781545898235358,
-    "clipTime": 0.7666666666666664
+    "distance": 0.09473262164845797,
+    "clipTime": 1.1083333333333318
   },
   "celebration": {
-    "maxFrameDisplacement": 0.014062518636913119,
-    "minimumSoleHeight": 0.008932958016428703
+    "maxFrameDisplacement": 0.012082814573552867,
+    "minimumSoleHeight": 0.0032771732186318223
   },
   "recovery": {
     "recoveryAtNaturalSpeed": true,
-    "sampleCount": 147,
+    "sampleCount": 157,
     "root": [
-      2.287937230605377,
+      2.276127289801953,
       0,
-      0.3499999979006429
+      0.34999999769070717
     ]
   },
   "errors": []

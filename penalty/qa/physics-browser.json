@@ -3,42 +3,42 @@
     {
       "x": -2.5,
       "y": 0.3,
-      "minimumClearance": 0.005999999999999936,
-      "maxRootY": 0.053319710424206586,
-      "landingFootHeight": 0.13433555443092035,
-      "hipsY": 0.4627524387379211
+      "minimumClearance": 0.00599999999999995,
+      "maxRootY": 0.05355168146662725,
+      "landingFootHeight": 0.13823853788260648,
+      "hipsY": 0.5892722190615651
     },
     {
       "x": -2.5,
       "y": 2.2,
       "minimumClearance": 0.005999999999999964,
-      "maxRootY": 0.562294565621267,
-      "landingFootHeight": 0.0933843749652691,
-      "hipsY": 0.3863670830873954
+      "maxRootY": 0.47619868431483187,
+      "landingFootHeight": 0.11837730065747927,
+      "hipsY": 0.46412686515842383
     },
     {
       "x": 2.5,
       "y": 0.3,
-      "minimumClearance": 0.005999999999999978,
-      "maxRootY": 0.1167394058943737,
-      "landingFootHeight": 0.08923264377919883,
-      "hipsY": 0.4601197383520258
+      "minimumClearance": 0.00599999999999995,
+      "maxRootY": 0.2864665346537072,
+      "landingFootHeight": 0.09146798308177857,
+      "hipsY": 0.5314138420273333
     },
     {
       "x": 2.5,
       "y": 2.2,
-      "minimumClearance": 0.005999999999999978,
-      "maxRootY": 0.881104484252575,
-      "landingFootHeight": 0.06268397899074842,
-      "hipsY": 0.239979008785256
+      "minimumClearance": 0.005999999999999964,
+      "maxRootY": 0.7585786322303908,
+      "landingFootHeight": 0.09153501563501074,
+      "hipsY": 0.32830442096053836
     },
     {
       "x": 0,
       "y": 2.2,
-      "minimumClearance": 0.013031695852387379,
+      "minimumClearance": 0.06937853792849306,
       "maxRootY": 0,
-      "landingFootHeight": 0.12317022718735166,
-      "hipsY": 0.8015625911933696
+      "landingFootHeight": 0.13593619014838937,
+      "hipsY": 0.8948673096925888
     }
   ],
   "cancelledSwipe": "passed",

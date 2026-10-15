@@ -3,24 +3,32 @@
     "label": "desktop",
     "loaded": [
       {
-        "ms": 3.5,
-        "bytes": 1002560
+        "ms": 17.80000001192093,
+        "bytes": 1579504
       }
     ],
     "tint": "1d4fb8",
     "save": "saved",
+    "replayStages": [
+      "strike",
+      "save"
+    ],
     "errors": []
   },
   {
     "label": "mobile",
     "loaded": [
       {
-        "ms": 1.7999999970197678,
-        "bytes": 1002560
+        "ms": 11.399999991059303,
+        "bytes": 1579504
       }
     ],
     "tint": "1d4fb8",
     "save": "saved",
+    "replayStages": [
+      "strike",
+      "save"
+    ],
     "errors": []
   }
 ]

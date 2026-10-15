@@ -12,7 +12,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');
   while(!window.strikeSample)await new Promise(requestAnimationFrame);
   return {triggerDisplacement,...window.strikeSample};
  });
- assert(approach.triggerDisplacement<.001,'approach teleported');assert(approach.distance<.13,'boot misses ball at contact');assert(Math.abs(approach.clipTime-.76)<.02);
+ assert(approach.triggerDisplacement<.001,'approach teleported');assert(approach.distance<.13,'boot misses ball at contact');assert(Math.abs(approach.clipTime-1.10)<.02);
  await page.waitForFunction(()=>penaltyQA.state.phase==='replay');await page.click('#replay-skip');
  const celebration=await page.evaluate(async()=>{
   let r=penaltyQA.rigs.shooter,last=r.bone('Hips'),maxStep=0,minSole=1,start=performance.now();

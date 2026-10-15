@@ -1,0 +1,17 @@
+{
+  "viewport": "390x844 at DPR 2 (renderer capped at 1.5)",
+  "network": "10 Mbps / 80ms, cold cache; third-party analytics and fonts excluded",
+  "model": {
+    "durationMs": 2737.2000000029802,
+    "bytes": 1579504,
+    "requests": 1
+  },
+  "pageReadyMs": 8932,
+  "frame": {
+    "medianFrameMs": 16.69999998807907,
+    "p95FrameMs": 18.5,
+    "samples": 211
+  },
+  "errors": [],
+  "limitation": "Desktop Chrome emulation; no mobile CPU throttle or physical handset measurement"
+}

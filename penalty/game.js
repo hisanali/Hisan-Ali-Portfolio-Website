@@ -1,6 +1,9 @@
 import * as T from '../evermile/vendor/three.module.js';
-import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact } from './physics.js?v=5';
-import { buildStadium } from './stadium.js?v=5';
+import { fittedGloves } from './equipment.js?v=6';
+import { FootContacts, reachBall, solveLimb } from './motion.js?v=6';
+import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=6';
+import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact, sweepSphereSegment } from './physics.js?v=6';
+import { buildStadium } from './stadium.js?v=6';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
 import { EffectComposer } from '../evermile/vendor/postprocessing/EffectComposer.js';
 import { RenderPass } from '../evermile/vendor/postprocessing/RenderPass.js';
@@ -22,34 +25,32 @@ const KITS = { red: ['#c8102e', '#1b1b1b'], white: ['#f3f3f3', '#1b1b1b'], blue:
 const canvas = $('scene');
 const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth<600?1.5:2)); renderer.outputColorSpace = T.SRGBColorSpace;
-renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = .88;
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.toneMapping = T.AgXToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;renderer.shadowMap.autoUpdate=false; renderer.shadowMap.type = T.PCFSoftShadowMap;
 const scene = new T.Scene();
-scene.fog = new T.Fog('#101c2a', 60, 210);
-const camera = new T.PerspectiveCamera(42, 1, .05, 400);
+scene.fog = new T.Fog('#94a6b1', 90, 300);
+const camera = new T.PerspectiveCamera(42, 1, .05, 300);camera.layers.enable(2);
 const renderTarget=new T.WebGLRenderTarget(1,1,{samples:Math.min(4,renderer.capabilities.maxSamples),type:T.HalfFloatType});
 const composer = new EffectComposer(renderer,renderTarget);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new T.Vector2(innerWidth, innerHeight), .26, .45, 1.6);
+const occlusion=contactShading(scene,camera);composer.addPass(occlusion);
+const lens=broadcastLens(scene,camera);composer.addPass(lens.pass);
+const bloom = new UnrealBloomPass(new T.Vector2(innerWidth, innerHeight), .06, .3, 2.5);
 composer.addPass(bloom); composer.addPass(new OutputPass());
+const grade=broadcastGrade();composer.addPass(grade);
 
 const tex = (cv, srgb = true) => { const t = new T.CanvasTexture(cv); if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t; };
 const canvas2d = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; };
 
-// Night sky
-scene.background = new T.Color('#091421');
-{ // reflections from floodlights
-  const env = new T.Scene(); env.add(new T.Mesh(new T.BoxGeometry(60, 30, 60), new T.MeshBasicMaterial({ color: '#10182a', side: T.BackSide })));
-  for (const [x, z] of [[-25, -25], [25, -25], [-25, 25], [25, 25]]) { const m = new T.Mesh(new T.PlaneGeometry(8, 4), new T.MeshBasicMaterial({ color: new T.Color('#fff6e6').multiplyScalar(6) })); m.position.set(x, 14, z); m.lookAt(0, 0, 0); env.add(m); }
-  const pm = new T.PMREMGenerator(renderer); scene.environment = pm.fromScene(env, .04).texture; pm.dispose();
-}
-
-scene.add(new T.HemisphereLight('#bdcfe3', '#495342', .82));
-const flood = new T.DirectionalLight('#fff4e2', 2.6); flood.position.set(-18, 30, 22); flood.castShadow = true;
-Object.assign(flood.shadow.camera, { left: -14, right: 14, top: 14, bottom: -6, near: 5, far: 80 }); flood.shadow.mapSize.set(innerWidth<600?2048:4096, innerWidth<600?2048:4096); flood.shadow.bias = -.0004; flood.shadow.normalBias = .03;
-flood.target.position.set(0, 0, 4); scene.add(flood, flood.target);
-const fill = new T.DirectionalLight('#cfe0ff', 1.0); fill.position.set(20, 22, 10); scene.add(fill);
-const rim = new T.DirectionalLight('#e5efff',1.35);rim.position.set(0,18,-18);scene.add(rim);
+// Captured environment lighting supplies the subtle sky and stand reflections.
+scene.background=new T.Color('#8a9fac');
+const environmentReady=stadiumLighting(renderer,scene);
+scene.add(new T.HemisphereLight('#d5e2eb','#566044',.28));
+const flood=new T.DirectionalLight('#fff2db',2.2);flood.position.set(-28,38,22);flood.castShadow=true;
+Object.assign(flood.shadow.camera,{left:-18,right:18,top:20,bottom:-12,near:1,far:100});
+flood.shadow.mapSize.set(innerWidth<600?2048:4096,innerWidth<600?2048:4096);flood.shadow.bias=-.00015;flood.shadow.normalBias=.018;flood.shadow.radius=3;
+flood.target.position.set(0,0,7);scene.add(flood,flood.target);
+const fill=new T.DirectionalLight('#c7def1',.4);fill.position.set(18,20,-14);scene.add(fill);
 
 /* ---------- Pitch ---------- */
 const materialJobs=[];
@@ -59,15 +60,16 @@ function assetTexture(name, srgb=true, repeats=null, gltfUV=false){
   if(srgb)map.colorSpace=T.SRGBColorSpace;map.flipY=!gltfUV;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   if(repeats){map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(...repeats);}return map;
 }
-const grassTex=assetTexture('grass-color',true,[55,70]),grassNormal=assetTexture('grass-normal',false,[55,70]);
-const grassMaterial=new T.MeshStandardMaterial({map:grassTex,normalMap:grassNormal,normalScale:new T.Vector2(.34,.34),roughnessMap:assetTexture('grass-roughness',false,[55,70]),roughness:1,color:'#7d9a69'});
+const grassTex=assetTexture('pitch-color',true,[55,70]),grassNormal=assetTexture('pitch-normal',false,[55,70]);
+const grassMaterial=new T.MeshStandardMaterial({map:grassTex,normalMap:grassNormal,normalScale:new T.Vector2(.18,.18),roughnessMap:assetTexture('pitch-roughness',false,[55,70]),aoMap:assetTexture('pitch-ao',false,[55,70]),aoMapIntensity:.45,roughness:1,color:'#c7d2ad'});
 grassMaterial.onBeforeCompile=shader=>{
  shader.vertexShader='varying vec3 vPitchWorld;\n'+shader.vertexShader;
  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vPitchWorld=(modelMatrix*vec4(position,1.0)).xyz;');
  shader.fragmentShader='varying vec3 vPitchWorld;\n'+shader.fragmentShader;
  shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
   float stripe=mod(floor((vPitchWorld.z+2.5)/5.0),2.0);
-  diffuseColor.rgb*=mix(.91,1.055,stripe);
+  diffuseColor.rgb*=mix(.96,1.025,stripe);
+  float variation=sin(vPitchWorld.x*.18+sin(vPitchWorld.z*.31))*sin(vPitchWorld.z*.12);diffuseColor.rgb*=1.+variation*.035;
  `);
 };
 const pitch=new T.Mesh(new T.PlaneGeometry(110,140),grassMaterial);pitch.rotation.x=-Math.PI/2;pitch.position.z=40;pitch.receiveShadow=true;scene.add(pitch);
@@ -119,18 +121,23 @@ const farNet=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(GOAL_W,GOA
 
 class NetPanel {
   constructor(corner, u, v, nu, nv) {
-    this.base = []; const idx = [];
+    this.base = []; const idx = [];this.nu=nu;this.nv=nv;this.pinned=[];
     for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) this.base.push(new T.Vector3().copy(corner).addScaledVector(u, i / nu).addScaledVector(v, j / nv));
     for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) { const k = j * (nu + 1) + i; if (i < nu) idx.push(k, k + 1); if (j < nv) idx.push(k, k + nu + 1); }
-    this.geo = new T.BufferGeometry().setFromPoints(this.base); this.geo.setIndex(idx);
-    this.mesh = new T.LineSegments(this.geo, new T.LineBasicMaterial({ color: '#e9eef5', transparent: true, opacity: .55 })); scene.add(this.mesh);
+    this.edges=idx;this.points=this.base.map(p=>p.clone());
+    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++)this.pinned.push(i===0||i===nu||j===0||j===nv);
+    this.mesh=new T.InstancedMesh(new T.CylinderGeometry(.0028,.0028,1,4),new T.MeshStandardMaterial({color:'#cbd0cb',roughness:.86}),idx.length/2);this.mesh.frustumCulled=false;scene.add(this.mesh);this.draw();
     this.offset = this.base.map(() => new T.Vector3()); this.vel = this.base.map(() => new T.Vector3());
   }
-  hit(point, push) { this.base.forEach((b, k) => { const d = b.distanceToSquared(point); this.vel[k].addScaledVector(push, Math.exp(-d / .6) * 9); }); }
+  hit(point, push) { this.base.forEach((b, k) => { const d = b.distanceToSquared(point); this.vel[k].addScaledVector(push, (this.pinned[k]?0:Math.exp(-d / .6)) * 9); }); }
+  draw(){
+    const dummy=new T.Object3D(),up=new T.Vector3(0,1,0);
+    for(let i=0;i<this.edges.length;i+=2){const a=this.points[this.edges[i]],b=this.points[this.edges[i+1]],d=b.clone().sub(a);dummy.position.copy(a).add(b).multiplyScalar(.5);dummy.quaternion.setFromUnitVectors(up,d.clone().normalize());dummy.scale.set(1,d.length(),1);dummy.updateMatrix();this.mesh.setMatrixAt(i/2,dummy.matrix);}this.mesh.instanceMatrix.needsUpdate=true;
+  }
   update(dt) {
-    const pos = this.geo.attributes.position; let moving = false;
-    this.base.forEach((b, k) => { const o = this.offset[k], v = this.vel[k]; v.addScaledVector(o, -60 * dt).multiplyScalar(Math.exp(-6 * dt)); o.addScaledVector(v, dt); if (o.lengthSq() > 1e-6) moving = true; pos.setXYZ(k, b.x + o.x, b.y + o.y, b.z + o.z); });
-    if (moving) pos.needsUpdate = true;
+    let moving=false;dt=Math.min(dt,.035);
+    this.base.forEach((b,k)=>{const o=this.offset[k],v=this.vel[k];if(this.pinned[k]){o.set(0,0,0);v.set(0,0,0);}else{v.addScaledVector(o,-60*dt).multiplyScalar(Math.exp(-6*dt));o.addScaledVector(v,dt);if(o.lengthSq()>1e-6)moving=true;}this.points[k].copy(b).add(o);});
+    if(moving||this.lastMoving)this.draw();this.lastMoving=moving;
   }
 }
 const nets = [
@@ -141,7 +148,7 @@ const nets = [
 ];
 
 /* ---------- Stadium ---------- */
-const stadium=buildStadium(scene,assetTexture('spectators'));
+const stadium=buildStadium(scene,assetTexture('crowd-fans'),{concrete:assetTexture('concrete-color',true,[48,1]),normal:assetTexture('concrete-normal',false,[48,1])});
 // LED advertising boards
 const adCanvas = canvas2d(2048, 64, (g, w, h) => {
   g.fillStyle = '#05070d'; g.fillRect(0, 0, w, h);
@@ -179,38 +186,41 @@ function panel(points,black){const center=points.reduce((a,b)=>a.add(b),new T.Ve
 for(const f of faces){const points=[];for(let j=0;j<3;j++){const a=verts[f[j]],b=verts[f[(j+1)%3]];points.push(a.clone().lerp(b,1/3).normalize(),a.clone().lerp(b,2/3).normalize());}panel(points,false);}
 verts.forEach((v,i)=>{const neighbors=new Set();for(const f of faces)if(f.includes(i))f.forEach(n=>{if(n!==i)neighbors.add(n);});const axis=new T.Vector3(0,1,0);if(Math.abs(v.y)>.9)axis.set(1,0,0);const u=new T.Vector3().crossVectors(v,axis).normalize(),w=new T.Vector3().crossVectors(v,u);
  const points=[...neighbors].map(n=>v.clone().lerp(verts[n],1/3).normalize());points.sort((a,b)=>Math.atan2(a.dot(w),a.dot(u))-Math.atan2(b.dot(w),b.dot(u)));panel(points,true);});
-const shotTrail=new T.Line(new T.BufferGeometry().setFromPoints(Array.from({length:14},()=>new T.Vector3())),new T.LineBasicMaterial({color:'#e8f1ff',transparent:true,opacity:.24,depthWrite:false,blending:T.AdditiveBlending}));scene.add(shotTrail);
-let shotPositions=[];
+const shotTrail=new T.Line(new T.BufferGeometry().setFromPoints(Array.from({length:14},()=>new T.Vector3())),new T.LineBasicMaterial({color:'#e8f1ff',transparent:true,opacity:.13,depthWrite:false,blending:T.AdditiveBlending}));scene.add(shotTrail);
 function updateShotTrail(){
- const fast=ballState&&!ballState.result&&ballState.v.length()>12;
- shotTrail.visible=!!fast;if(!fast){shotPositions=[];return;}
- shotPositions.unshift(ball.position.clone());shotPositions.length=Math.min(shotPositions.length,14);
- const attr=shotTrail.geometry.attributes.position;for(let i=0;i<14;i++)attr.setXYZ(i,...(shotPositions[Math.min(i,shotPositions.length-1)]||ball.position).toArray());attr.needsUpdate=true;shotTrail.geometry.computeBoundingSphere();
+ const fast=ballState&&!ballState.result&&ballState.v.length()>20;
+ shotTrail.visible=!!fast;if(!fast)return;
+ // A short shutter-length smear, rather than a multi-metre arcade trail.
+ const attr=shotTrail.geometry.attributes.position;
+ for(let i=0;i<14;i++){const p=ball.position.clone().addScaledVector(ballState.v,-i/13/120);attr.setXYZ(i,p.x,p.y,p.z);}attr.needsUpdate=true;shotTrail.geometry.computeBoundingSphere();
 }
 
 /* ---------- People ---------- */
-// One cached, Draco-compressed Mixamo footballer, cloned with independent skeletons.
+// One cached Meshopt-compressed athlete package, cloned with independent skeletons.
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 let footballer;
-const playerMaps={color:assetTexture('player-color',true,null,true),normal:assetTexture('player-normal',false,null,true),hair:assetTexture('hair-color',true,null,true),hairNormal:assetTexture('hair-normal',false,null,true)};
-const modelReady = loader.loadAsync('./assets/footballer.glb?v=4', e => {
+const playerMaps={color:assetTexture('player-detail',true,null,true),normal:assetTexture('player-normal',false,null,true),hair:assetTexture('hair-color',true,null,true),hairNormal:assetTexture('hair-normal',false,null,true)};
+const modelReady = loader.loadAsync('./assets/athlete.glb?v=6', e => {
   if(e.total) $('load-progress').textContent = `${Math.round(e.loaded/e.total*100)}%`;
 }).then(g => { footballer=g; });
-const bodiesReady=Promise.all([modelReady,...materialJobs]);
-const CONTACT = .76; // Toe reaches the ball at this timestamp in the converted 30fps capture.
+const bodiesReady=Promise.all([modelReady,environmentReady,...materialJobs]);
+const KICK_CLIP='kick-pro',CONTACT=1.10; // Ground-contact event after capture retargeting and strike IK.
+const footShadowGeometry=new T.PlaneGeometry(.34,.48);
+const footShadowMap=tex(canvas2d(64,64,(g,w,h)=>{const gradient=g.createRadialGradient(w/2,h/2,2,w/2,h/2,w/2);gradient.addColorStop(0,'rgba(0,0,0,.6)');gradient.addColorStop(.45,'rgba(0,0,0,.25)');gradient.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gradient;g.fillRect(0,0,w,h);}));
 class Rig {
   constructor(kind, shirt, shorts, gloves) {
     this.ownedGeometries=new Set();this.ownedTextures=new Set();
+    this.footShadows=['Left','Right'].map(side=>{const mesh=new T.Mesh(footShadowGeometry,new T.MeshBasicMaterial({map:footShadowMap,transparent:true,depthWrite:false,opacity:.45}));mesh.rotation.x=-Math.PI/2;mesh.renderOrder=2;mesh.layers.set(2);scene.add(mesh);return {side,mesh};});
     const model = cloneSkinned(footballer.scene); this.root=new T.Group();this.root.add(model);this.kind=kind;
     model.updateMatrixWorld(true); model.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
-    const k=1; // Source is authored in metres; preserve skeleton and mesh scale together.
+    const k=kind==='keeper'?1.10:1.045; // Athletic scale: roughly 1.88 m keeper and 1.79 m taker.
     model.scale.setScalar(k);model.position.y=0;this.k=k;this.model=model;
     model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
-      const name=o.name.toLowerCase();o.material=o.material.clone();o.material.color.set('#ffffff');o.material.map=playerMaps.color;o.material.normalMap=playerMaps.normal;o.material.normalScale.set(.7,.7);o.material.roughness=.65;
-      if(name.includes('shirt')){o.material.color.set(shirt);o.material.roughness=.85;}
-      if(name.includes('shorts')){o.material.color.set(shorts);o.material.roughness=.87;}
+      const name=o.name.toLowerCase();o.material=new T.MeshPhysicalMaterial({color:'#ffffff',roughness:.54,metalness:0,envMapIntensity:.85,reflectivity:.28});o.material.color.set('#ffffff');o.material.map=playerMaps.color;o.material.normalMap=playerMaps.normal;o.material.normalScale.set(.7,.7);o.material.roughness=.65;
+      if(name.includes('shirt')){o.material.color.set(shirt);o.material.roughness=.83;o.material.sheen=.7;o.material.sheenRoughness=.8;o.material.sheenColor.set(shirt);}
+      if(name.includes('shorts')){o.material.color.set(shorts);o.material.roughness=.88;o.material.sheen=.5;o.material.sheenColor.set(shorts);}
       if(name.includes('socks')){o.material.color.set(shirt);o.material.roughness=.95;}
-      if(name.includes('shoes')){o.material.color.set('#c4c8cc');o.material.roughness=.35;}
+      if(name.includes('shoes')){o.material.color.set('#c4c8cc');o.material.roughness=.32;o.material.clearcoat=.25;}
       if(name.includes('hair')||name.includes('eyelashes')){o.material.map=playerMaps.hair;o.material.normalMap=playerMaps.hairNormal;o.material.alphaTest=.32;o.material.side=T.DoubleSide;o.material.roughness=.8;}
     });
     this.bones={};model.traverse(o=>{if(o.isBone)this.bones[o.name]=o;});
@@ -230,24 +240,18 @@ class Rig {
       }
       if(!['idle','run','ready'].includes(clip.name)){action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;}
     }
-    // Gloves follow the captured hand and finger motion, including the thumb.
-    const gloveUnits=this.bones.LeftHand.getWorldScale(new T.Vector3()).x;
-    if(gloves)for(const side of ['Left','Right']){
-      const mat=new T.MeshStandardMaterial({color:gloves,roughness:.62});
-      const palm=new T.Mesh(new T.BoxGeometry(.095/gloveUnits,.115/gloveUnits,.048/gloveUnits),mat);this.ownedGeometries.add(palm.geometry);palm.position.y=.045/gloveUnits;this.bones[side+'Hand'].add(palm);
-      for(const finger of ['Thumb','Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++){
-        const bone=this.bones[side+'Hand'+finger+j];if(!bone)continue;
-        const f=new T.Mesh(new T.CapsuleGeometry(.012/gloveUnits,.023/gloveUnits,3,5),mat);this.ownedGeometries.add(f.geometry);f.position.y=.014/gloveUnits;bone.add(f);
-      }
+    if(gloves){const fitted=fittedGloves(model,gloves);if(fitted)this.ownedGeometries.add(fitted.geometry);
+      const units=this.bones.LeftHand.getWorldScale(new T.Vector3()).x;
+      for(const side of ['Left','Right']){const cuff=new T.Mesh(new T.CylinderGeometry(.036/units,.031/units,.045/units,10),new T.MeshStandardMaterial({color:'#17282c',roughness:.85}));cuff.position.y=-.016/units;this.bones[side+'Hand'].add(cuff);this.ownedGeometries.add(cuff.geometry);}
     }
     // The original kit atlas supplies its number, stitching, boot and skin detail.
-    this.current=null;this.event=null;scene.add(this.root);
+    this.current=null;this.event=null;this.contacts=new FootContacts(this);scene.add(this.root);
   }
   play(name, speed=1, fade=.16, anchored=false) {
     const action=this.clips[name];if(!action)return;
     if(this.current===action)return;
     const previous=this.current;
-    this.rootTransition=null;
+    this.contacts?.reset();this.rootTransition=null;
     if(anchored&&previous){
       // Captures have different root origins. Blend an equal and opposite
       // world offset alongside the bones so the hips do not slide backwards.
@@ -271,10 +275,22 @@ class Rig {
       let sole=Infinity;for(const [name,radius]of [['LeftToeBase',.025],['RightToeBase',.025],['LeftFoot',.045],['RightFoot',.045]])sole=Math.min(sole,this.bone(name).y-radius);
       this.groundLift=Math.max(0,.001-sole);this.root.position.y+=this.groundLift;
     }
+    this.contacts.update(dt,this.kind==='shooter'&&['idle','kick','kick-pro'].includes(this.anim)||this.kind==='keeper'&&this.anim==='ready');
+    if(this.kind==='shooter'&&this.anim===KICK_CLIP){
+      const t=this.current.time;
+      const plant=T.MathUtils.smoothstep(t,CONTACT-.32,CONTACT-.12)*(1-T.MathUtils.smoothstep(t,CONTACT+.12,CONTACT+.35));
+      if(this.plantAnchor)solveLimb(this.bones.LeftUpLeg,this.bones.LeftLeg,this.bones.LeftFoot,this.plantAnchor,plant);
+      const strike=Math.max(0,1-Math.abs(t-CONTACT)/.19),weight=strike*strike*(3-2*strike);
+      const offset=this.bone('RightToeBase').sub(this.bone('RightFoot'));
+      const contact=new T.Vector3(0,R,SPOT).sub(offset);
+      solveLimb(this.bones.RightUpLeg,this.bones.RightLeg,this.bones.RightFoot,contact,weight);
+    }
+    this.updateContactShadows();
     if(this.event&&this.current.time>=this.event.at){const fn=this.event.fn;this.event=null;fn();}}
+  updateContactShadows(){for(const {side,mesh}of this.footShadows){const ankle=this.bone(side+'Foot'),toe=this.bone(side+'ToeBase'),p=ankle.clone().lerp(toe,.6);mesh.position.set(p.x,.008,p.z);mesh.rotation.z=-Math.atan2(toe.x-ankle.x,toe.z-ankle.z);mesh.material.opacity=.4*T.MathUtils.clamp(1-(ankle.y-.08)/.32,0,1);}}
   hand(side){const bone=this.bones[side+'Hand'];return bone.localToWorld(new T.Vector3(0,4,0));}
   bone(name){return this.bones[name].getWorldPosition(new T.Vector3());}
-  dispose(){this.mixer.stopAllAction();this.mixer.uncacheRoot(this.model);scene.remove(this.root);this.model.traverse(o=>{if(o.isMesh)o.material.dispose();});this.ownedGeometries.forEach(g=>g.dispose());this.ownedTextures.forEach(t=>t.dispose());}
+  dispose(){for(const {mesh}of this.footShadows){scene.remove(mesh);mesh.material.dispose();}this.mixer.stopAllAction();this.mixer.uncacheRoot(this.model);scene.remove(this.root);this.model.traverse(o=>{if(o.isMesh)o.material.dispose();});this.ownedGeometries.forEach(g=>g.dispose());this.ownedTextures.forEach(t=>t.dispose());}
 }
 let keeper, shooter;
 function dressTeams(youShoot) {
@@ -289,14 +305,14 @@ function dressTeams(youShoot) {
 const sound = {
   loadRecordings(){
     if(this.loading||!settings.sound)return;const c=this.ctx();if(!c)return;
-    this.loading=Promise.all(['stadium-bed','crowd-reaction','referee-whistle'].map(name=>fetch(`./assets/${name}.mp3?v=4`).then(r=>{if(!r.ok)throw new Error('audio');return r.arrayBuffer();}).then(bytes=>c.decodeAudioData(bytes)))).then(([bed,reaction,whistle])=>{
-      this.bed=bed;this.reaction=reaction;this.recordedWhistle=whistle;if(this.ambSource)this.ambSource.stop();if(this.amb)this.amb.disconnect();this.amb=null;if(mode&&settings.sound){this.ambience();this.setAmbience(true);}
+    this.loading=Promise.all(['stadium-bed','crowd-reaction','referee-whistle','ball-kick'].map(name=>fetch(`./assets/${name}.mp3?v=4`).then(r=>{if(!r.ok)throw new Error('audio');return r.arrayBuffer();}).then(bytes=>c.decodeAudioData(bytes)))).then(([bed,reaction,whistle,kick])=>{
+      this.recordedKick=kick;this.bed=bed;this.reaction=reaction;this.recordedWhistle=whistle;if(this.ambSource)this.ambSource.stop();if(this.amb)this.amb.disconnect();this.amb=null;if(mode&&settings.sound){this.ambience();this.setAmbience(true);}
     }).catch(()=>{});
   },
   sample(buffer,volume,offset=0,duration=buffer.duration){if(!settings.sound)return;const c=this.ctx(),source=c.createBufferSource(),gain=c.createGain();source.buffer=buffer;const t=c.currentTime,len=Math.min(duration,buffer.duration-offset);gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(volume,t+.04);gain.gain.setValueAtTime(volume,t+Math.max(.04,len-.2));gain.gain.linearRampToValueAtTime(0,t+len);source.connect(gain).connect(this.master);source.onended=()=>{source.disconnect();gain.disconnect();};source.start(0,offset,len);},
   ctx() { if (!this.c) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; this.c = new A();this.master=this.c.createGain();this.master.gain.value=settings.sound?1:0;this.master.connect(this.c.destination); this.crowdGain = null; } if (this.c.state === 'suspended') this.c.resume(); return this.c; },
   noise(len, vol, type, freq, q = 1) { if (!settings.sound) return; const c = this.ctx(); if (!c) return; const b = c.createBuffer(1, Math.floor(c.sampleRate * len), c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = c.createBufferSource(); s.buffer = b; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = c.createGain(), t = c.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + Math.min(.3, len * .25)); g.gain.exponentialRampToValueAtTime(.001, t + len); s.connect(f).connect(g).connect(this.master); s.start(); },
-  kick() { if (!settings.sound) return; const c = this.ctx(); if (!c) return; const t = c.currentTime, o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + .12); g.gain.setValueAtTime(.7, t); g.gain.exponentialRampToValueAtTime(.001, t + .16); o.connect(g).connect(this.master); o.start(); o.stop(t + .2); this.noise(.06, .4, 'bandpass', 900, 1.5); },
+  kick() { if(this.recordedKick){this.sample(this.recordedKick,.7);return;}if (!settings.sound) return; const c = this.ctx(); if (!c) return; const t = c.currentTime, o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + .12); g.gain.setValueAtTime(.7, t); g.gain.exponentialRampToValueAtTime(.001, t + .16); o.connect(g).connect(this.master); o.start(); o.stop(t + .2); this.noise(.06, .4, 'bandpass', 900, 1.5); },
   whistle() { if(this.recordedWhistle){this.sample(this.recordedWhistle,.35);return;}if (!settings.sound) return; const c = this.ctx(); if (!c) return; const t = c.currentTime, o = c.createOscillator(), lfo = c.createOscillator(), lg = c.createGain(), g = c.createGain(); o.frequency.value = 2900; lfo.frequency.value = 38; lg.gain.value = 140; lfo.connect(lg).connect(o.frequency); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12, t + .02); g.gain.setValueAtTime(.12, t + .32); g.gain.linearRampToValueAtTime(0, t + .4); o.connect(g).connect(this.master); o.start(); lfo.start(); o.stop(t + .45); lfo.stop(t + .45); },
   cheer() { if(this.bed){this.sample(this.bed,.32,Math.random()*Math.max(0,this.bed.duration-4),3.6);return;}this.noise(3.2,.3,'bandpass',1100,.5); },
   groan() { if(this.reaction){this.sample(this.reaction,.28);return;}this.noise(1.8,.2,'lowpass',380); },
@@ -320,9 +336,12 @@ function setupKick(youShoot) {
   shooter.root.rotation.set(0,Math.PI,0);
   // The kick capture already travels from the waiting stance to the ball.
   // Align its contact once, then begin the idle at that same world origin.
-  shooter.mixer.stopAllAction();shooter.current=null;shooter.play('kick',1,0);shooter.mixer.update(CONTACT);
+  shooter.mixer.stopAllAction();shooter.current=null;shooter.play(KICK_CLIP,1,0);shooter.mixer.update(CONTACT);
   shooter.root.position.set(0,0,0);shooter.root.updateMatrixWorld(true);
+  const lateral=shooter.bone('LeftUpLeg').sub(shooter.bone('RightUpLeg')),forward=lateral.cross(new T.Vector3(0,1,0)).normalize();
+  shooter.root.rotation.y+=Math.PI-Math.atan2(forward.x,forward.z);shooter.root.updateMatrixWorld(true);
   const toe=shooter.bone('RightToeBase');shooter.root.position.set(-toe.x,0,SPOT-toe.z);
+  shooter.plantAnchor=shooter.bone('LeftFoot');shooter.plantAnchor.y=.105;
   shooter.mixer.stopAllAction();shooter.current=null;shooter.play('idle',1,0);shooter.mixer.update(0);
   shooter.root.visible = true;
   ballState = null; timeScale = 1; tapAim = null;
@@ -338,7 +357,7 @@ function kick(target, flight, curl, byYou) {
   // Solve the launch so the ball reaches `target` (on the goal plane) after `flight` seconds with sideways curl acceleration.
   const p0=ball.position.clone(),spin=new T.Vector3(5,-curl*3.2,0);
   const v=launchVelocity(p0,target,flight,spin);
-  ballState={goalTarget:target.clone(),v,curl,spin,time:0,crossed:false,result:null,byYou,done:false,rest:0,touched:false,hitPost:false};
+  ballState={goalTarget:target.clone(),v,curl,spin,time:0,launchTime:simTime,crossed:false,result:null,byYou,done:false,rest:0,touched:false,hitPost:false};
   sound.kick(); phase = 'flight';
 
   // Keeper reaction
@@ -367,7 +386,10 @@ function dive(aim, reach) {
   const left=keeper.hand('Left'),right=keeper.hand('Right');
   k.hand=high?(left.y>right.y?'Left':'Right'):(left.y<right.y?'Left':'Right');
   const sample=keeper.hand(k.hand);
-  k.shiftX=dx-sample.x;k.jump=T.MathUtils.clamp(dy-sample.y,-.12,1.05);
+  k.shiftX=dx-sample.x;k.sampleHipX=keeper.bone('Hips').x-k.origin.x;
+  k.jump=T.MathUtils.clamp(dy-sample.y,0,.85);
+  k.takeoff=.07;const airborne=Math.max(.12,k.dur-k.takeoff);
+  k.verticalSpeed=(k.jump+.5*G*airborne*airborne)/airborne;
   keeper.mixer.stopAllAction();
   // Restore the live ready pose after calibration, then blend into the push-off.
   if(previousAction){previousAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).play();previousAction.time=previousTime;keeper.current=previousAction;keeper.mixer.update(0);}
@@ -391,7 +413,7 @@ function cpuShoot() {
 function runUp(then) {
   // Use the continuous approach, plant, strike and follow-through from the
   // same capture. An unrelated jog inserted here caused a visible hitch.
-  shooter.play('kick',1,.12);
+  shooter.play(KICK_CLIP,1,.12);
   shooter.event={at:CONTACT,fn:()=>{then?.();}};
 }
 
@@ -442,13 +464,14 @@ function fadeTrail() { trail.style.transition = 'opacity .4s'; trail.style.opaci
 function showAim(x, y) { const a = $('aim'); a.style.left = x + 'px'; a.style.top = y + 'px'; a.classList.remove('is-on'); void a.offsetWidth; a.classList.add('is-on'); }
 
 /* ---------- Simulation ---------- */
-let simTime = 0, replay=null, replayHistory=[];
+let simTime=0,replay=null,replayHistory=[],cameraCut=false;
 function snapshotRig(r){return {p:r.root.position.clone(),q:r.root.quaternion.clone(),b:Object.values(r.bones).map(b=>[b.position.clone(),b.quaternion.clone()])};}
 function snapshot(){return {t:simTime,ball:ball.position.clone(),q:ball.quaternion.clone(),s:snapshotRig(shooter),k:snapshotRig(keeper)};}
 function restoreRig(r,a,b,t){r.root.position.lerpVectors(a.p,b.p,t);r.root.quaternion.slerpQuaternions(a.q,b.q,t);Object.values(r.bones).forEach((bone,i)=>{bone.position.lerpVectors(a.b[i][0],b.b[i][0],t);bone.quaternion.slerpQuaternions(a.b[i][1],b.b[i][1],t);});}
 function updateReplay(raw){
- replay.elapsed+=raw*.32;const frames=replay.frames,target=frames[0].t+replay.elapsed;
+ replay.elapsed+=raw*.40;const frames=replay.frames,target=frames[0].t+replay.elapsed;
  let i=0;while(i<frames.length-2&&frames[i+1].t<target)i++;
+ const stage=target<ballState.launchTime+.10?'strike':'save';if(stage!==replay.stage){replay.stage=stage;cameraCut=true;}
  const a=frames[i],b=frames[i+1],t=T.MathUtils.clamp((target-a.t)/Math.max(.001,b.t-a.t),0,1);
  ball.position.lerpVectors(a.ball,b.ball,t);ball.quaternion.slerpQuaternions(a.q,b.q,t);restoreRig(shooter,a.s,b.s,t);restoreRig(keeper,a.k,b.k,t);
  if(target>=frames.at(-1).t)endReplay();
@@ -456,7 +479,7 @@ function updateReplay(raw){
 function endReplay(){
  const live=replay?.live;
  if(live){restoreRig(shooter,live.s,live.s,0);restoreRig(keeper,live.k,live.k,0);ball.position.copy(live.ball);ball.quaternion.copy(live.q);}
- replay=null;$('replay-skip').hidden=true;phase='celebration';
+ replay=null;cameraCut=true;$('replay-skip').hidden=true;phase='celebration';
  const goal=ballState?.result==='goal';
  shooter.play(goal?'celebrate':'disappointed',1,.25,true);
  // Keep the dive capture playing through landing and getting back up. It
@@ -468,13 +491,13 @@ $('replay-skip').onclick=endReplay;
 function updateBall(dt) {
   const s = ballState; if (!s || s.done) return;
   s.time += dt; const p = ball.position, previous=p.clone(), prevZ = p.z;
-  advance(p,s.v,s.spin,dt);groundContact(p,s.v,s.spin,dt);
+  advance(p,s.v,s.spin,dt);const groundSpeed=s.v.y;const grounded=groundContact(p,s.v,s.spin,dt);if(grounded&&groundSpeed< -1.8&&sound.recordedKick)sound.sample(sound.recordedKick,Math.min(.25,-groundSpeed*.025));
   const rotation=s.spin.length()*dt;if(rotation>1e-7)ball.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(s.spin.clone().normalize(),rotation));
   // Physical glove/body contact, with a parry reflected from the actual surface.
   if(!s.result&&!s.touched&&p.z<1.8&&p.z>-.4){
     const contact=keeperContact(previous,p);
     if(contact){
-      s.touched=true;const normal=contact.ball.clone().sub(contact.point).normalize();
+      s.touched=true;if(sound.recordedKick)sound.sample(sound.recordedKick,.2);const normal=contact.ball.clone().sub(contact.point).normalize();
       if(normal.lengthSq()<.5)normal.set(0,0,1);
       p.copy(contact.ball).addScaledVector(normal,.012);reflectContact(s.v,normal,.35);s.spin.multiplyScalar(.6);
     }
@@ -483,7 +506,9 @@ function updateBall(dt) {
   // impacts. A post rebound can still become a goal before the ball is dead.
   if(!s.result&&!s.postCooldown){
     const frameParts=[new T.Line3(new T.Vector3(-HALF_W-POST,0,0),new T.Vector3(-HALF_W-POST,GOAL_H+POST,0)),new T.Line3(new T.Vector3(HALF_W+POST,0,0),new T.Vector3(HALF_W+POST,GOAL_H+POST,0)),new T.Line3(new T.Vector3(-HALF_W-POST,GOAL_H+POST,0),new T.Vector3(HALF_W+POST,GOAL_H+POST,0))];
-    for(const frame of frameParts){const center=frame.closestPointToPoint(p,true,new T.Vector3()),d=p.clone().sub(center);if(d.length()<R+POST){const normal=d.normalize();p.copy(center).addScaledVector(normal,R+POST+.002);reflectContact(s.v,normal,.76);s.hitPost=true;s.postCooldown=.08;sound.post();break;}}
+    let earliest=null;
+    for(const frame of frameParts){const hit=sweepSphereSegment(previous,p,frame.start,frame.end,R+POST);if(hit&&(!earliest||hit.time<earliest.time))earliest=hit;}
+    if(earliest){p.copy(earliest.center).addScaledVector(earliest.normal,.002);reflectContact(s.v,earliest.normal,.76);p.addScaledVector(s.v,dt*(1-earliest.time));s.hitPost=true;s.postCooldown=.025;sound.post();}
   }
   s.postCooldown=Math.max(0,(s.postCooldown||0)-dt);
   if (!s.crossed && p.z <= -R) {
@@ -496,7 +521,7 @@ function updateBall(dt) {
   // Net
   if (s.result === 'goal') {
     if (p.z < -NET_D + R) { nets[0].hit(p.clone(), new T.Vector3(0, 0, -1).multiplyScalar(Math.min(1.4, Math.abs(s.v.z) * .1))); p.z = -NET_D + R; s.v.z = Math.abs(s.v.z) * .15; s.v.x *= .4; sound.net(); }
-    if (p.y > GOAL_H - .3 - (-p.z) * .12 && p.z < 0 && s.v.y > 0) { nets[1].hit(p.clone(), new T.Vector3(0, 1, 0).multiplyScalar(.6)); s.v.y *= -.3; }
+    const ceiling=GOAL_H+p.z*(.24/NET_D)-R;if(p.y>ceiling&&p.z<0&&s.v.y>0){nets[1].hit(p.clone().add(new T.Vector3(0,R,0)),new T.Vector3(0,.6,0));p.y=ceiling;reflectContact(s.v,new T.Vector3(0,-1,.24/NET_D).normalize(),.25);}
     if (Math.abs(p.x) > HALF_W - R && p.z < 0) { nets[p.x < 0 ? 2 : 3].hit(p.clone(), new T.Vector3(Math.sign(p.x), 0, 0).multiplyScalar(.8)); p.x = Math.sign(p.x) * (HALF_W - R); s.v.x *= -.2; }
   }
   // Resolve a parry only after it has actually left the goalmouth. A touch
@@ -530,36 +555,49 @@ function updateKeeper(dt,now) {
     if(phase==='celebration'&&ballState?.result==='saved')return;
     return; // The ready capture supplies its own weight shift; do not slide the root.
   }
-  const p=Math.max(0,(simTime-k.start)/k.dur),e=T.MathUtils.smoothstep(Math.min(1,p),0,1);
-  const lift=Math.max(0,(p-.2)/.8),arc=Math.max(0,2*lift-lift*lift);
-  kp.root.position.copy(k.origin);kp.root.position.x+=k.shiftX*e;kp.root.position.y=k.jump*Math.max(0,arc);
+  const elapsed=Math.max(0,simTime-k.start),nativeHipX=kp.bone('Hips').x-kp.root.position.x;
+  const reachProgress=Math.abs(k.sampleHipX)>.1?T.MathUtils.clamp(nativeHipX/k.sampleHipX,0,1.3):T.MathUtils.smoothstep(elapsed/k.dur,0,1);
+  const airborne=Math.max(0,elapsed-k.takeoff);
+  kp.root.position.copy(k.origin);kp.root.position.x+=k.shiftX*reachProgress;
+  kp.root.position.y=k.jump>.025?Math.max(0,k.verticalSpeed*airborne-.5*G*airborne*airborne):0;
   kp.root.updateMatrixWorld(true);
   // Ground support is derived from the body, including the landing hip and
   // shoulder. Only the small penetration correction is applied to the capture.
   const supports=[['Hips',.13],['Head',.11],['Spine2',.13],['LeftLeg',.08],['RightLeg',.08],['LeftFoot',.045],['RightFoot',.045],['LeftHand',.035],['RightHand',.035]];
   let lowest=Infinity;for(const [bone,r]of supports)lowest=Math.min(lowest,kp.bone(bone).y-r);
   if(lowest<.006){kp.root.position.y+=.006-lowest;kp.root.updateMatrixWorld(true);}
+  if(ballState&&!ballState.result&&ball.position.z<1.8&&ball.position.z>-.2){
+    const side=k.hand||'Left',hand=kp.hand(side),distance=hand.distanceTo(ball.position);
+    if(distance<.32){const normal=hand.clone().sub(ball.position).normalize(),offset=hand.clone().sub(kp.bone(side+'Hand'));
+      const target=ball.position.clone().addScaledVector(normal,R+.045).sub(offset);reachBall(kp,side,target,1-distance/.32);
+    }
+  }
 }
 
 // The shot and the displayed keeper share these anatomical capsules. Four
 // fixed physics substeps make the visible catch and collision use the same pose.
 function keeperContact(previous,position){
- const trajectory=new T.Line3(previous,position),capsules=[
+ const capsules=[
   ['Spine','Spine2',.20],['Hips','Spine',.20],['Head','HeadTop_End',.115],
   ['LeftUpLeg','LeftLeg',.105],['RightUpLeg','RightLeg',.105],['LeftLeg','LeftFoot',.08],['RightLeg','RightFoot',.08],
   ['LeftArm','LeftForeArm',.07],['RightArm','RightForeArm',.07],['LeftForeArm','LeftHand',.065],['RightForeArm','RightHand',.065]
  ];
- const points=[{p:keeper.hand('Left'),r:.095},{p:keeper.hand('Right'),r:.095}];
- for(const [a,b,r]of capsules){const segment=new T.Line3(keeper.bone(a),keeper.bone(b));points.push({p:segment.closestPointToPoint(position,true,new T.Vector3()),r});}
- for(const {p,r}of points){const nearest=trajectory.closestPointToPoint(p,true,new T.Vector3());if(nearest.distanceToSquared(p)<(R+r)**2)return {point:p,ball:nearest};}
+ let earliest=null;
+ const test=(a,b,r)=>{const hit=sweepSphereSegment(previous,position,a,b,R+r);if(hit&&(!earliest||hit.time<earliest.time))earliest=hit;};
+ for(const side of ['Left','Right']){const hand=keeper.hand(side);test(hand,hand,.095);}
+ for(const [a,b,r]of capsules)test(keeper.bone(a),keeper.bone(b),r);
+ if(earliest)return {point:earliest.point,ball:earliest.center};
  return null;
 }
 
 function updateCamera(dt) {
   if (!camTarget) return;
-  const k = 1 - Math.exp(-dt * 3);
+  const k=cameraCut?1:1-Math.exp(-dt*3);cameraCut=false;
   let pos = camTarget.pos.clone(), look = camTarget.look.clone();
-  if(phase==='replay'){pos.copy(replay.cameraPos);look.copy(replay.cameraLook);}
+  if(phase==='replay'){
+    if(replay.stage==='strike'){pos.set(-2.4,1.05,SPOT+1.4);look.set(0,.65,SPOT-.2);}
+    else{pos.copy(replay.cameraPos);look.copy(replay.cameraLook);}
+  }
   else if(phase==='celebration'){
     const r=ballState?.result==='goal'?shooter:keeper,focus=r.bones.Head.getWorldPosition(new T.Vector3());
     const goal=ballState?.result==='goal';
@@ -573,6 +611,15 @@ function updateCamera(dt) {
   camera.position.lerp(pos, k);
   camTarget.cur = camTarget.cur ? camTarget.cur.lerp(look, k) : look; camera.lookAt(camTarget.cur);
 }
+function updateLens(now){
+ const close=phase==='celebration'||phase==='replay';
+ let focus=new T.Vector3(0,1,0);
+ if(phase==='celebration')focus.copy((ballState?.result==='goal'?shooter:keeper).bone('Spine2'));
+ else if(phase==='replay')focus.copy(replay.stage==='strike'?shooter.bone('RightFoot'):keeper.bone('Spine2'));
+ else if(phase==='menu')focus.copy(shooter?.bone('Spine2')||focus);
+ else focus.set(0,.7,SPOT-3);
+ lens.update(camera.position.distanceTo(focus),close||phase==='menu');grade.uniforms.time.value=now;
+}
 const THREE_lerp = (a, b, t) => a + (b - a) * t;
 
 /* ---------- Results & flow ---------- */
@@ -580,7 +627,7 @@ function finishKick(result) {
   const youScored = youShooting && result === 'goal', youSaved = !youShooting && result !== 'goal';
   const good = youScored || youSaved;
   const text = { goal: 'GOAL!', saved: youShooting ? 'Saved!' : 'Great save!', post: 'Off the post!', miss: 'Missed!' }[result];
-  if(result==='goal'||result==='saved')replay={pending:.65,elapsed:0};
+  if(result==='goal'||result==='saved')replay={pending:.65,elapsed:0,resultTime:simTime};
   if (result === 'goal') sound.cheer(); else if (good) sound.cheer(); else sound.groan();
   banner(youShooting ? text : (result === 'goal' ? 'They scored' : text), good);
   if (mode === 'practice') { streak = result === 'goal' ? streak + 1 : 0; if (streak > best) { best = streak; localStorage.setItem('penalty-best', best); } }
@@ -636,6 +683,7 @@ function hud() {
   document.body.classList.toggle('is-playing', !!mode);
   document.body.dataset.mode = mode || '';
   const ga = score.you.filter(Boolean).length, gb = score.cpu.filter(Boolean).length, n = Math.max(5, score.you.length, score.cpu.length);
+  stadium.updateScore(ga,gb,Math.min(5,Math.min(score.you.length,score.cpu.length)+1));
   $('board').innerHTML = `<div class="sb-heading">${mode==='practice'?'Training':'Penalty series'}<span>${mode==='practice'?'Personal best':score.you.length>=5&&score.cpu.length>=5?'Sudden death':`Round ${Math.min(5,Math.min(score.you.length,score.cpu.length)+1)} / 5`}</span></div>` + (mode === 'practice'
     ? `<div class="sb-practice"><span>Streak</span><b>${streak}</b><span>Best ${best}</span></div>`
     : `<div class="sb-row"><span class="sb-team"><i style="background:${KITS[settings.kit][0]}"></i>You</span><span class="sb-dots">${dots(score.you, n)}</span><b>${ga}</b></div><div class="sb-row"><span class="sb-team"><i style="background:#f3f3f3"></i>CPU</span><span class="sb-dots">${dots(score.cpu, n)}</span><b>${gb}</b></div>`);
@@ -663,33 +711,33 @@ $('btn-menu').onclick = () => { if (mode && phase !== 'over' && !confirm('Leave 
 $('btn-sound').onclick = () => { settings.sound = !settings.sound; save(); syncSegments();if(settings.sound)sound.loadRecordings(); sound.setAmbience(!!mode); };
 $('btn-full').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {});
 
-function setupMenuView() { setupKick(true); phase = 'menu'; camTarget = { pos: new T.Vector3(6, 2.6, SPOT + 5), look: new T.Vector3(0, 1, 2) }; }
+function setupMenuView() { setupKick(true); phase = 'menu'; camTarget = { pos: new T.Vector3(2.8,1.55,SPOT-2),look:shooter.bone('Spine2') }; }
 
 /* ---------- Loop ---------- */
 const clock = new T.Clock();
 let after = 0,accumulator=0;
 renderer.setAnimationLoop(() => {
   const raw = Math.min(clock.getDelta(), .1), now = performance.now() / 1000, dt = raw * timeScale;
-  if(phase==='replay'){updateReplay(raw);updateCamera(raw);stadium.update(now,ballState?.result==='goal',raw);composer.render();return;}
+  if(phase==='replay'){updateReplay(raw);updateCamera(raw);stadium.update(now,ballState?.result==='goal',raw);shooter.updateContactShadows();keeper.updateContactShadows();updateLens(now);renderer.shadowMap.needsUpdate=true;composer.render();return;}
   accumulator+=dt;while(accumulator>=1/120){const step=1/120;simTime+=step;updateKeeper(step,now);shooter?.update(step);
-    if(shooter?.anim==='kick'&&shooter.current.time>=shooter.current.getClip().duration-.001)shooter.play('idle',1,.3,true);
+    if(shooter?.anim===KICK_CLIP&&shooter.current.time>=shooter.current.getClip().duration-.001)shooter.play('idle',1,.3,true);
     if(ballState)updateBall(step);accumulator-=step;}
   updateShotTrail();
-  if(shooter&&keeper&&phase==='flight'){
-    replayHistory.push(snapshot());while(replayHistory.length>160||replayHistory.length>2&&simTime-replayHistory[0].t>1.4)replayHistory.shift();
+  if(shooter&&keeper&&['runup','cpu-kick','flight'].includes(phase)){
+    replayHistory.push(snapshot());while(replayHistory.length>250||replayHistory.length>2&&simTime-replayHistory[0].t>2.8)replayHistory.shift();
     if(replay?.pending!==undefined){replay.pending-=raw;if(replay.pending<=0&&replayHistory.length>2){replay.live=snapshot();
       const focus=keeperState.to||ball.position;
       replay.cameraPos=new T.Vector3(focus.x>0?-6:6,2,5.5);replay.cameraLook=new T.Vector3(T.MathUtils.clamp(focus.x*.65,-2,2),1,.3);
-      replay.frames=replayHistory.filter(f=>f.ball.z<4);if(replay.frames.length<2)replay.frames=replayHistory.slice();replay.elapsed=0;delete replay.pending;phase='replay';shotTrail.visible=false;$('replay-skip').hidden=false;}}
+      replay.frames=replayHistory.filter(f=>f.t>=ballState.launchTime-.35&&f.t<=replay.resultTime+.32);if(replay.frames.length<2)replay.frames=replayHistory.slice();replay.elapsed=0;delete replay.pending;phase='replay';updateReplay(0);cameraCut=true;shotTrail.visible=false;$('replay-skip').hidden=false;}}
   }
   nets.forEach(n => n.update(raw));
   adTex.offset.x = (adTex.offset.x + raw * .04) % 1;
   effects = effects.filter(f => { f.life += raw; f.update(raw); if (f.life > f.max) { f.dispose(); return false; } return true; });
-  if (phase === 'menu' && camTarget) { const a = now * .12; camTarget.pos.set(Math.sin(a) * 9, 2.8, SPOT + Math.cos(a) * 6); }
+  if (phase === 'menu' && camTarget) { const a=now*.08,focus=shooter.bone('Spine2');camTarget.pos.copy(focus).add(new T.Vector3(2.8+Math.sin(a)*.5,.3,-3.6));camTarget.look.copy(focus).add(new T.Vector3(0,-.12,0)); }
   updateCamera(raw);
   if (ballState?.done && phase === 'flight') { phase = 'between'; after = setTimeout(nextKick, 300); }
   stadium.update(now,ballState?.result==='goal',raw);
-  composer.render();
+  updateLens(now);renderer.shadowMap.needsUpdate=true;composer.render();
 });
 
 syncSegments(); hud();
@@ -698,4 +746,4 @@ $('load-retry').onclick=()=>location.reload();
 camera.position.set(8, 3, SPOT + 6);
 setTimeout(() => document.body.classList.add('is-ready'), 50);
 // Local QA only; unavailable on the public site.
-if(['localhost','127.0.0.1'].includes(location.hostname))window.penaltyQA={get state(){return {phase,score,mode,sound:{enabled:settings.sound,masterGain:sound.master?.gain.value,recorded:!!sound.bed},queuedDive:!!tapAim,ball:ball.position.toArray(),clip:shooter?.anim,keeperClip:keeperState?.clip,result:ballState?.result,streak,replay:!!replay,glove:keeper?keeperHand().toArray():null,modelScale:shooter?.model.scale.toArray(),bounds:shooter?new T.Box3().setFromObject(shooter.model).getSize(new T.Vector3()).toArray():null,hips:shooter?.bones.Hips.getWorldPosition(new T.Vector3()).toArray(),foot:shooter?.bones.RightToeBase.getWorldPosition(new T.Vector3()).toArray()};},shoot:(x,y,aim=null)=>{phase='runup';hud();runUp(()=>{kick(new T.Vector3(x,y,0),.7,0,true);if(aim)keeperState.pending={at:simTime+.04,aim:new T.Vector3(...aim),reach:3.5};});},dive:(x,y)=>dive(new T.Vector3(x,y,0),3.3),start,next:nextKick,winner:shootoutWinner,setScore:(you,cpu)=>{score={you,cpu};return shootoutWinner();}, get simulation(){return {keeperState,ballState,simTime};},get rigs(){return {shooter,keeper};}};
+if(['localhost','127.0.0.1'].includes(location.hostname))window.penaltyQA={get state(){return {phase,score,mode,sound:{enabled:settings.sound,masterGain:sound.master?.gain.value,recorded:!!sound.bed},queuedDive:!!tapAim,ball:ball.position.toArray(),clip:shooter?.anim,keeperClip:keeperState?.clip,result:ballState?.result,streak,replay:!!replay,replayStage:replay?.stage,glove:keeper?keeperHand().toArray():null,modelScale:shooter?.model.scale.toArray(),bounds:shooter?new T.Box3().setFromObject(shooter.model).getSize(new T.Vector3()).toArray():null,hips:shooter?.bones.Hips.getWorldPosition(new T.Vector3()).toArray(),foot:shooter?.bones.RightToeBase.getWorldPosition(new T.Vector3()).toArray()};},shoot:(x,y,aim=null)=>{phase='runup';hud();runUp(()=>{kick(new T.Vector3(x,y,0),.7,0,true);if(aim)keeperState.pending={at:simTime+.04,aim:new T.Vector3(...aim),reach:3.5};});},dive:(x,y)=>dive(new T.Vector3(x,y,0),3.3),start,next:nextKick,winner:shootoutWinner,setScore:(you,cpu)=>{score={you,cpu};return shootoutWinner();}, get simulation(){return {keeperState,ballState,simTime};},get rigs(){return {shooter,keeper};}};

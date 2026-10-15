@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { Vector3 } from '../../evermile/vendor/three.module.js';
-import { BALL,acceleration,advance,launchVelocity,groundContact,reflectContact } from '../physics.js';
+import { BALL,acceleration,advance,launchVelocity,groundContact,reflectContact,sweepSphereSegment } from '../physics.js';
 let shots=0,maxError=0;
 for(const duration of [.42,.65,.9])for(const x of [-3,0,3])for(const y of [.25,1.2,2.2])for(const curl of [-12,0,12]){
  const start=new Vector3(0,.11,11),target=new Vector3(x,y,0),spin=new Vector3(5,-curl*3.2,0),v=launchVelocity(start,target,duration,spin),p=start.clone(),w=spin.clone();
@@ -15,4 +15,11 @@ for(const spin of [new Vector3(),new Vector3(80,25,0),new Vector3(-80,-20,20)]){
 }
 const reflected=new Vector3(0,0,-25);reflectContact(reflected,new Vector3(0,0,1),.76);assert.equal(reflected.z,19);
 const slow=new Vector3(.5,0,0),p=new Vector3(0,.11,0),spin=new Vector3();for(let i=0;i<240;i++){advance(p,slow,spin,1/120);groundContact(p,slow,spin,1/120);}assert(slow.length()<.01);
-console.log(JSON.stringify({shots,maxTargetErrorMetres:maxError,drag:'opposes motion',spin:'symmetric Magnus bend',bounce:'no added kinetic energy',rolling:'comes to rest'}));
+const postA=new Vector3(3.72,0,0),postB=new Vector3(3.72,2.5,0);
+const fastHit=sweepSphereSegment(new Vector3(3.7,1,1),new Vector3(3.7,1,-1),postA,postB,.17);
+assert(fastHit&&fastHit.time>0&&fastHit.time<1,'fast shot tunnels through a post');
+assert(Math.abs(fastHit.center.distanceTo(fastHit.point)-.17)<1e-8);
+assert.equal(sweepSphereSegment(new Vector3(4,1,1),new Vector3(4,1,-1),postA,postB,.17),null);
+const capHit=sweepSphereSegment(new Vector3(3.72,2.6,1),new Vector3(3.72,2.6,-1),postA,postB,.17);assert(capHit,'post/bar junction endpoint missed');
+assert.equal(sweepSphereSegment(new Vector3(3.72,1,.16),new Vector3(3.72,1,.5),postA,postB,.17),null,'departing ball must not bounce twice');
+console.log(JSON.stringify({shots,maxTargetErrorMetres:maxError,drag:'opposes motion',spin:'symmetric Magnus bend',bounce:'no added kinetic energy',rolling:'comes to rest',continuousContacts:'fast crossing, miss, capsule end and departing overlap passed'}));
