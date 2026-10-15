@@ -1,0 +1,19 @@
+.mb-guide .mb-bands { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:24px 0; }
+.mb-guide .mb-band { padding:22px 20px; border-radius:18px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.mb-guide .mb-band b { display:block; font-family:'DM Serif Display',serif; font-size:2.3rem; font-weight:400; line-height:1; color:var(--fe-accent); }
+.mb-guide .mb-band:nth-child(2) b { color:var(--fe-accent-2); }
+.mb-guide .mb-band span { display:block; margin:6px 0 8px; font-weight:800; font-size:.8rem; letter-spacing:.07em; text-transform:uppercase; }
+html body.fe-page.page-blog-article .blog-post-content .mb-band p { margin:0 !important; color:var(--fe-muted) !important; font-size:.9rem !important; line-height:1.55 !important; max-width:none; }
+.mb-guide .mb-split { display:flex; height:44px; margin:18px 0 8px; border-radius:12px; overflow:hidden; font-size:.78rem; font-weight:800; }
+.mb-guide .mb-split div { display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; white-space:nowrap; color:#fff; }
+.mb-guide .mb-split div:nth-child(1) { background:var(--fe-accent); }
+.mb-guide .mb-split div:nth-child(2) { background:var(--fe-accent-2); color:#1f1606; }
+.mb-guide .mb-split div:nth-child(3) { background:color-mix(in srgb,var(--fe-accent) 55%,var(--fe-ink)); }
+.mb-guide .mb-split div:nth-child(4) { background:color-mix(in srgb,var(--fe-ink) 70%,var(--fe-surface)); }
+.mb-guide .mb-legend { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:.82rem; color:var(--fe-muted); }
+.mb-guide .mb-legend i { display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:3px; vertical-align:-1px; }
+.mb-guide .mb-months { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:6px; align-items:end; height:150px; margin:18px 0 6px; }
+.mb-guide .mb-months div { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; height:100%; font-size:.68rem; font-weight:800; color:var(--fe-muted); }
+.mb-guide .mb-months i { display:block; width:72%; height:var(--h); min-height:4px; border-radius:6px 6px 2px 2px; background:var(--fe-accent); transition:height .35s ease; }
+.mb-guide .mb-months div.is-peak i { background:var(--fe-accent-2); }
+@media(max-width:640px) { .mb-guide .mb-bands { grid-template-columns:1fr; } .mb-guide .mb-months { gap:3px; height:120px; } .mb-guide .mb-months div { font-size:.58rem; } .mb-guide .mb-split { font-size:.66rem; } }
