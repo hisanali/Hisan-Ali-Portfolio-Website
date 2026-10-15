@@ -1,5 +1,10 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
+import { EffectComposer } from '../evermile/vendor/postprocessing/EffectComposer.js';
+import { RenderPass } from '../evermile/vendor/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from '../evermile/vendor/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from '../evermile/vendor/postprocessing/OutputPass.js';
+import { DRACOLoader } from '../evermile/vendor/loaders/DRACOLoader.js';
 import { clone as cloneSkinned } from '../evermile/vendor/utils/SkeletonUtils.js';
 
 /* ---------- Constants (metres, seconds) ---------- */
@@ -14,12 +19,16 @@ const KITS = { red: ['#c8102e', '#1b1b1b'], white: ['#f3f3f3', '#1b1b1b'], blue:
 /* ---------- Renderer & scene ---------- */
 const canvas = $('scene');
 const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = T.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth<600?1.5:2)); renderer.outputColorSpace = T.SRGBColorSpace;
 renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
 const scene = new T.Scene();
 scene.fog = new T.Fog('#0b1220', 45, 140);
 const camera = new T.PerspectiveCamera(42, 1, .05, 400);
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new T.Vector2(innerWidth, innerHeight), .26, .45, 1.6);
+composer.addPass(bloom); composer.addPass(new OutputPass());
 
 const tex = (cv, srgb = true) => { const t = new T.CanvasTexture(cv); if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t; };
 const canvas2d = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; };
@@ -40,12 +49,25 @@ const fill = new T.DirectionalLight('#cfe0ff', .7); fill.position.set(20, 22, 10
 
 /* ---------- Pitch ---------- */
 const grassTex = tex(canvas2d(1024, 1024, (g, w, h) => {
-  for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#2f7d32' : '#37893a'; g.fillRect(0, i * h / 8, w, h / 8); }
+  for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#245f2c' : '#2c7133'; g.fillRect(0, i * h / 8, w, h / 8); }
   for (let i = 0; i < 90000; i++) { const s = Math.random(); g.fillStyle = s < .5 ? 'rgba(20,60,20,.18)' : 'rgba(150,210,120,.12)'; g.fillRect(Math.random() * w, Math.random() * h, 1, 2 + Math.random() * 3); }
 }));
 grassTex.wrapS = grassTex.wrapT = T.RepeatWrapping; grassTex.repeat.set(6, 6);
-const pitch = new T.Mesh(new T.PlaneGeometry(90, 90), new T.MeshStandardMaterial({ map: grassTex, roughness: .95 }));
+const grassNormal = tex(canvas2d(512, 512, (g, w, h) => {
+  g.fillStyle = '#8080ff'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 55000; i++) { g.fillStyle = `rgb(${100 + Math.random()*55},${100 + Math.random()*55},245)`; g.fillRect(Math.random()*w, Math.random()*h, 1, 3); }
+}), false);
+grassNormal.wrapS = grassNormal.wrapT = T.RepeatWrapping; grassNormal.repeat.set(90,90);
+const pitch = new T.Mesh(new T.PlaneGeometry(90, 90), new T.MeshStandardMaterial({ map: grassTex, normalMap: grassNormal, normalScale: new T.Vector2(.22,.22), roughness: .98 }));
 pitch.rotation.x = -Math.PI / 2; pitch.position.z = 20; pitch.receiveShadow = true; scene.add(pitch);
+const wear = new T.Mesh(new T.PlaneGeometry(2.8, 3.5), new T.MeshStandardMaterial({
+  map: tex(canvas2d(256,256,(g,w,h) => {
+    for(let i=0;i<7000;i++) { const x=Math.random()*w,y=Math.random()*h, d=Math.hypot((x-w/2)/(w/2),(y-h/2)/(h/2));
+      g.fillStyle=`rgba(112,91,48,${Math.max(0,1-d)*Math.random()*.45})`;g.fillRect(x,y,2,5); }
+  })), transparent:true, depthWrite:false, roughness:1
+}));
+wear.rotation.x=-Math.PI/2;wear.position.set(0,.004,SPOT);scene.add(wear);
+
 { // markings: penalty area, goal area, spot, arc, goal line
   const PX = 40, W = 46, D = 24, cv = canvas2d(W * PX, D * PX, (g) => {
     g.strokeStyle = 'rgba(255,255,255,.92)'; g.fillStyle = 'rgba(255,255,255,.92)'; g.lineWidth = .12 * PX;
@@ -93,33 +115,53 @@ const nets = [
 ];
 
 /* ---------- Stadium ---------- */
-const crowdTex = tex(canvas2d(2048, 512, (g, w, h) => {
-  const rows = 4, rh = h / rows, shirts = ['#c8102e', '#c8102e', '#e9e9e9', '#c8102e', '#1d4fb8', '#d8d8d8', '#0f7a3e', '#f2c230', '#2a2a2a', '#c8102e'], skins = ['#d9a982', '#a8744f', '#7a4f31', '#eac4a3'];
-  for (let r = 0; r < rows; r++) {
-    g.fillStyle = r % 2 ? '#1a2238' : '#151c30'; g.fillRect(0, r * rh, w, rh);
-    for (let x = -20; x < w + 20; x += 52 + Math.random() * 18) {
-      if (Math.random() < .08) continue;
-      const cx = x + Math.random() * 10, base = (r + 1) * rh - 6, tall = rh * (.62 + Math.random() * .12), shirt = shirts[Math.floor(Math.random() * shirts.length)];
-      g.fillStyle = shirt; g.beginPath(); g.roundRect(cx - 21, base - tall * .55, 42, tall * .55, 14); g.fill();
-      g.fillStyle = skins[Math.floor(Math.random() * 4)]; g.beginPath(); g.arc(cx, base - tall * .7, 14, 0, 7); g.fill();
-      if (Math.random() < .3) { g.fillStyle = shirt; g.fillRect(cx + 16, base - tall * 1.05, 9, tall * .5); }
-    }
-  }
-}));
-crowdTex.wrapS = T.RepeatWrapping;
-const stand = (w, h, pos, rotY) => {
-  const t = crowdTex.clone(); t.needsUpdate = true; t.repeat.set(w / 20, h / 5);
-  const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshStandardMaterial({ map: t, roughness: 1, emissive: '#ffffff', emissiveMap: t, emissiveIntensity: .38 }));
-  m.position.copy(pos); m.rotation.set(-.55, rotY, 0, 'YXZ'); scene.add(m); return m;
+// Instanced spectators: separate skin, hair, shirts and arms; one GPU jump wave.
+const crowdUniforms = { time: {value:0}, cheer: {value:0} };
+const fanMat = new T.MeshStandardMaterial({roughness:.95});
+fanMat.onBeforeCompile = shader => {
+  Object.assign(shader.uniforms,crowdUniforms);
+  shader.vertexShader = 'uniform float time; uniform float cheer;\n' + shader.vertexShader;
+  shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `
+    #ifdef USE_INSTANCING
+    float seed = instanceMatrix[3].x * 4.1 + instanceMatrix[3].z * 2.7;
+    transformed.y += .025*sin(time*2.0+seed) + cheer * abs(sin(time*6.0+seed))*.48;
+    #endif
+    #include <project_vertex>`);
 };
-stand(110, 26, new T.Vector3(0, 9, -22), 0);
-stand(80, 26, new T.Vector3(-34, 9, 12), Math.PI / 2);
-stand(80, 26, new T.Vector3(34, 9, 12), -Math.PI / 2);
-stand(110, 26, new T.Vector3(0, 9, 58), Math.PI);
+const fanParts = [new T.BoxGeometry(.43,.56,.24),new T.SphereGeometry(.13,6,5),new T.BoxGeometry(.12,.46,.12),new T.BoxGeometry(.12,.46,.12)];
+const fans = Array.from({length:4},(_,i)=>new T.InstancedMesh(fanParts[i],fanMat,3600));
+const dummy=new T.Object3D(), fanColors=['#a32237','#e4e7e4','#1c426b','#c2a745','#143f32','#252b39'];
+let fi=0;
+for(let side=0;side<4;side++) for(let row=0;row<12;row++) for(let col=0;col<75;col++) {
+  const along=(col-37)*.85, dist=15+row*.85, y=.7+row*.65;
+  const x=side<2?along:(side===2?-dist-13:dist+13), z=side<2?(side===0?-dist:dist+42):along+20;
+  const rot=side===0?0:side===1?Math.PI:side===2?Math.PI/2:-Math.PI/2;
+  fans.forEach((mesh,j)=>{dummy.position.set(x+(j===2?-.27:j===3?.27:0),y+(j===1?.43:0),z);dummy.rotation.set(0,rot,j>1?(j===2?-.25:.25):0);dummy.updateMatrix();mesh.setMatrixAt(fi,dummy.matrix);mesh.setColorAt(fi,new T.Color(j===1?['#bd8d69','#85583d','#d8ae8a'][fi%3]:fanColors[fi%fanColors.length]));});fi++;
+}
+fans.forEach(m=>{m.frustumCulled=false;scene.add(m);});
+// Concrete seating tiers and cantilevered roof with steel triangulated trusses.
+const concrete=new T.MeshStandardMaterial({color:'#293442',roughness:.88});
+const steel=new T.MeshStandardMaterial({color:'#6e7e8b',metalness:.65,roughness:.45});
+function beam(a,b,r=.07) { const d=new T.Vector3().subVectors(b,a),m=new T.Mesh(new T.CylinderGeometry(r,r,d.length(),6),steel);m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());scene.add(m); }
+for(const side of [-1,1]) {
+ for(let row=0;row<12;row++){const t=new T.Mesh(new T.BoxGeometry(85,.5,1),concrete);t.position.set(0,.25+row*.65,side<0?-15-row*.85:57+row*.85);scene.add(t);}
+ const roof=new T.Mesh(new T.BoxGeometry(91,.22,16),concrete);roof.position.set(0,13,side<0?-23:65);scene.add(roof);
+ for(let x=-44;x<=44;x+=8){const z=side<0?-30:72,front=z-side*15;
+  beam(new T.Vector3(x,0,z),new T.Vector3(x,15,z),.16);
+  beam(new T.Vector3(x,15,z),new T.Vector3(x,12.7,front));
+  beam(new T.Vector3(x,12.7,z),new T.Vector3(x,12.7,front));
+  for(let k=0;k<5;k++)beam(new T.Vector3(x,15-k*.46,z-side*k*3),new T.Vector3(x,12.7,z-side*(k+1)*3));
+ }
+}
+// Roof-mounted floodlight banks illuminate the pitch beneath the canopy.
+for(const z of [-15,57])for(let x=-36;x<=36;x+=9){
+ const bank=new T.Mesh(new T.BoxGeometry(4,.55,.22),new T.MeshBasicMaterial({color:new T.Color('#dcecff').multiplyScalar(4),toneMapped:false}));
+ bank.position.set(x,12.5,z);bank.rotation.x=z<0?.25:-.25;scene.add(bank);
+}
 { // roof edge & floodlight towers
   for (const [x, z] of [[-30, -20], [30, -20], [-34, 34], [34, 34]]) {
     const pole = new T.Mesh(new T.CylinderGeometry(.35, .5, 30, 8), new T.MeshStandardMaterial({ color: '#3a4256', roughness: .6 })); pole.position.set(x, 15, z); scene.add(pole);
-    const lamp = new T.Mesh(new T.BoxGeometry(6, 3, .5), new T.MeshBasicMaterial({ color: '#fffbea' })); lamp.position.set(x, 30, z); lamp.lookAt(0, 0, 6); scene.add(lamp);
+    const lamp = new T.Mesh(new T.BoxGeometry(6, 3, .5), new T.MeshBasicMaterial({ color: new T.Color('#fffbea').multiplyScalar(5), toneMapped:false })); lamp.position.set(x, 30, z); lamp.lookAt(0, 0, 6); scene.add(lamp);
     const glow = new T.Sprite(new T.SpriteMaterial({ map: tex(canvas2d(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,250,230,1)'); gr.addColorStop(.25, 'rgba(255,240,200,.45)'); gr.addColorStop(1, 'rgba(255,240,200,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); })), transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
     glow.scale.set(22, 22, 1); glow.position.copy(lamp.position); scene.add(glow);
   }
@@ -136,55 +178,124 @@ const boards = new T.Mesh(new T.BoxGeometry(60, .9, .15), [0, 0, 0, 0, 1, 0].map
 boards.position.set(0, .45, -5.5); scene.add(boards);
 
 /* ---------- Ball ---------- */
-const ballTex = tex(canvas2d(1024, 512, (g, w, h) => {
-  g.fillStyle = '#f7f7f4'; g.fillRect(0, 0, w, h);
-  g.lineCap = 'round';
-  for (let k = 0; k < 6; k++) { g.strokeStyle = ['#111', '#c8102e', '#111', '#1d4fb8', '#111', '#c8102e'][k]; g.lineWidth = 26; g.beginPath(); const y0 = 60 + k * 75; for (let x = 0; x <= w; x += 16) { const y = y0 + Math.sin(x / w * Math.PI * 4 + k) * 40; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
-}));
-const ball = new T.Mesh(new T.SphereGeometry(R, 48, 32), new T.MeshPhysicalMaterial({ map: ballTex, roughness: .4, clearcoat: .8, clearcoatRoughness: .2 }));
-ball.castShadow = true; scene.add(ball);
+// Truncated-icosahedron panel construction: twelve pentagons, twenty hexagons.
+const ico=new T.IcosahedronGeometry(1,0),verts=[],faces=[];
+for(let i=0;i<ico.attributes.position.count;i+=3){const face=[];for(let j=0;j<3;j++){
+ const v=new T.Vector3().fromBufferAttribute(ico.attributes.position,i+j);let n=verts.findIndex(p=>p.distanceToSquared(v)<1e-8);if(n<0){n=verts.length;verts.push(v);}face.push(n);
+}faces.push(face);}
+const ball=new T.Group();scene.add(ball);
+const panelMat=[new T.MeshPhysicalMaterial({color:'#f5f3e9',roughness:.5,clearcoat:.25}),new T.MeshPhysicalMaterial({color:'#111820',roughness:.4,clearcoat:.35})];
+const ballBump=tex(canvas2d(128,128,(g,w,h)=>{g.fillStyle='#999';g.fillRect(0,0,w,h);for(let i=0;i<10000;i++){g.fillStyle=Math.random()<.5?'#777':'#bbb';g.fillRect(Math.random()*w,Math.random()*h,1,1);}}),false);
+for(const m of panelMat){m.bumpMap=ballBump;m.bumpScale=.0006;}
+ball.add(new T.Mesh(new T.SphereGeometry(R*.94,32,24),new T.MeshStandardMaterial({color:'#353d42',roughness:.85})));
+function panel(points,black){const center=points.reduce((a,b)=>a.add(b),new T.Vector3()).normalize(),sorted=points;
+ const p=[],uv=[];for(let i=0;i<sorted.length;i++){
+ const a=sorted[i].clone().lerp(center,.045).normalize(),b=sorted[(i+1)%sorted.length].clone().lerp(center,.045).normalize();
+ // Radial subdivisions keep each panel spherical, with dark recessed seams.
+ for(let k=0;k<4;k++){
+  const q=a.clone().lerp(b,k/4).normalize(),r=a.clone().lerp(b,(k+1)/4).normalize();
+  for(const v of [center,q,r]){p.push(...v.clone().multiplyScalar(R).toArray());uv.push(v.x*3,v.y*3);}
+ }
+ }const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(p,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.computeVertexNormals();
+ // Winding follows the original icosahedron faces.
+ const mesh=new T.Mesh(geo,panelMat[black?1:0]);mesh.material.side=T.DoubleSide;mesh.castShadow=true;ball.add(mesh);
+}
+for(const f of faces){const points=[];for(let j=0;j<3;j++){const a=verts[f[j]],b=verts[f[(j+1)%3]];points.push(a.clone().lerp(b,1/3).normalize(),a.clone().lerp(b,2/3).normalize());}panel(points,false);}
+verts.forEach((v,i)=>{const neighbors=new Set();for(const f of faces)if(f.includes(i))f.forEach(n=>{if(n!==i)neighbors.add(n);});const axis=new T.Vector3(0,1,0);if(Math.abs(v.y)>.9)axis.set(1,0,0);const u=new T.Vector3().crossVectors(v,axis).normalize(),w=new T.Vector3().crossVectors(v,u);
+ const points=[...neighbors].map(n=>v.clone().lerp(verts[n],1/3).normalize());points.sort((a,b)=>Math.atan2(a.dot(w),a.dot(u))-Math.atan2(b.dot(w),b.dot(u)));panel(points,true);});
+const shotTrail=new T.Line(new T.BufferGeometry().setFromPoints(Array.from({length:14},()=>new T.Vector3())),new T.LineBasicMaterial({color:'#e8f1ff',transparent:true,opacity:.24,depthWrite:false,blending:T.AdditiveBlending}));scene.add(shotTrail);
+let shotPositions=[];
+function updateShotTrail(){
+ const fast=ballState&&!ballState.result&&ballState.v.length()>12;
+ shotTrail.visible=!!fast;if(!fast){shotPositions=[];return;}
+ shotPositions.unshift(ball.position.clone());shotPositions.length=Math.min(shotPositions.length,14);
+ const attr=shotTrail.geometry.attributes.position;for(let i=0;i<14;i++)attr.setXYZ(i,...(shotPositions[Math.min(i,shotPositions.length-1)]||ball.position).toArray());attr.needsUpdate=true;shotTrail.geometry.computeBoundingSphere();
+}
 
 /* ---------- People ---------- */
-// Realistic rigged humans (MakeHuman CC0 bodies from Evermile), recoloured into football kits and posed bone by bone.
-const BODY = { shooter: 'pedestrian-0', keeper: 'pedestrian-0' }, gltfs = {};
-const bodiesReady = Promise.all(Object.entries(BODY).map(([k, f]) => new Promise((res, rej) => new GLTFLoader().load(`../evermile/assets/models/${f}.glb?v=1`, g => { gltfs[k] = g; res(); }, undefined, rej))));
+// One cached, Draco-compressed Mixamo footballer, cloned with independent skeletons.
+const draco = new DRACOLoader().setDecoderPath('../evermile/vendor/draco/');
+const loader = new GLTFLoader().setDRACOLoader(draco);
+let footballer;
+const bodiesReady = loader.loadAsync('./assets/footballer.glb?v=3', e => {
+  if(e.total) $('load-progress').textContent = `${Math.round(e.loaded/e.total*100)}%`;
+}).then(g => { footballer=g; draco.dispose(); });
+const CONTACT = .76; // Toe reaches the ball at this timestamp in the converted 30fps capture.
+const fabric=tex(canvas2d(128,128,(g,w,h)=>{g.fillStyle='#fafafa';g.fillRect(0,0,w,h);for(let y=0;y<h;y+=2){g.fillStyle=y%4?'#dedede':'#eeeeee';g.fillRect(0,y,w,1);}}));
+fabric.wrapS=fabric.wrapT=T.RepeatWrapping;fabric.repeat.set(10,10);
 class Rig {
-  constructor(kind, shirt, trousers, gloves) {
-    const g = gltfs[kind], model = cloneSkinned(g.scene); this.root = new T.Group(); this.root.add(model);
-    const box = new T.Box3().setFromObject(model), h = box.max.y - box.min.y, k = 1.82 / h; model.scale.setScalar(k); model.position.y = -box.min.y * k; this.k = k; this.model = model;
-    model.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false;
-      o.material = (Array.isArray(o.material) ? o.material : [o.material]).map(m => { const c = m.clone(); const n = m.name;
-        if (n.startsWith('Cloth_Shirt')) { c.color.set(shirt); c.roughness = .62; c.map = null; }
-        else if (n.startsWith('Cloth_Trousers')) { c.color.set(trousers); c.roughness = .7; c.map = null; }
-        else if (n.startsWith('Leather_Shoes')) { c.color.set('#111'); c.roughness = .35; }
-        else if (n.startsWith('Hair')) c.visible = false;
-        return c; });
-      if (o.material.length === 1) o.material = o.material[0]; });
-    this.bones = {}; model.traverse(o => { if (o.isBone) this.bones[o.name] = o; });
-    this.rest = Object.fromEntries(Object.entries(this.bones).map(([n, b]) => [n, b.quaternion.clone()]));
-    this.restHips = this.bones.Hips.position.clone();
-    this.mixer = new T.AnimationMixer(model); this.clips = Object.fromEntries(g.animations.map(a => [a.name, this.mixer.clipAction(a)]));
-    if (gloves) for (const hand of ['lHand', 'rHand']) { const m = new T.Mesh(new T.SphereGeometry(.07 / k, 16, 12), new T.MeshStandardMaterial({ color: gloves, roughness: .5 })); m.scale.set(1, 1.35, .7); m.position.y = .06 / k; m.castShadow = true; this.bones[hand].add(m); }
-    this.anim = null; scene.add(this.root);
+  constructor(kind, shirt, shorts, gloves) {
+    this.ownedGeometries=new Set();this.ownedTextures=new Set();
+    const model = cloneSkinned(footballer.scene); this.root=new T.Group();this.root.add(model);this.kind=kind;
+    model.updateMatrixWorld(true); model.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
+    const k=1; // Source is authored in metres; preserve skeleton and mesh scale together.
+    model.scale.setScalar(k);model.position.y=0;this.k=k;this.model=model;
+    model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.frustumCulled=false;
+      const name=o.name.toLowerCase();o.material=o.material.clone();
+      if(name.includes('shirt')){o.material.color.set(shirt);o.material.map=fabric;o.material.roughness=.86;}
+      if(name.includes('shorts'))o.material.color.set(shorts);
+      if(name.includes('socks')){o.material.color.set(shirt);o.material.map=fabric;}
+      if(name.includes('shoes')){o.material.color.set('#171b22');o.material.roughness=.28;}
+    });
+    this.bones={};model.traverse(o=>{if(o.isBone)this.bones[o.name]=o;});
+    this.mixer=new T.AnimationMixer(model);this.clips={};
+    for(const original of footballer.animations){
+      const clip=original.clone();
+      // Locomotion is in-place; keep the captured root motion for strikes and dives.
+      if(['idle','run','ready','celebrate','disappointed'].includes(clip.name)){
+        for(const track of clip.tracks)if(track.name==='Hips.position'){
+          for(let i=0;i<track.values.length;i+=3){track.values[i]=track.values[0];track.values[i+1]=track.values[1];}
+        }
+      }
+      const action=this.mixer.clipAction(clip);this.clips[clip.name]=action;
+      if(['dive','dive2'].includes(clip.name))for(const height of ['low','high']){
+        const variant=clip.clone();variant.name=`dive-${clip.name==='dive'?'right':'left'}-${height}`;
+        const diveAction=this.mixer.clipAction(variant);diveAction.setLoop(T.LoopOnce,1);diveAction.clampWhenFinished=true;this.clips[variant.name]=diveAction;
+      }
+      if(!['idle','run','ready'].includes(clip.name)){action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;}
+    }
+    // Gloves follow the captured hand and finger motion, including the thumb.
+    if(gloves)for(const side of ['Left','Right']){
+      const mat=new T.MeshStandardMaterial({color:gloves,roughness:.62});
+      const palm=new T.Mesh(new T.BoxGeometry(.095/k,.12/k,.045/k),mat);this.ownedGeometries.add(palm.geometry);palm.position.y=.045/k;this.bones[side+'Hand'].add(palm);
+      for(const finger of ['Thumb','Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++){
+        const bone=this.bones[side+'Hand'+finger+j];if(!bone)continue;
+        const f=new T.Mesh(new T.CapsuleGeometry(.012/k,.023/k,3,5),mat);this.ownedGeometries.add(f.geometry);f.position.y=.014/k;bone.add(f);
+      }
+    }
+    // Skinned number decal copied from shirt weights, projected across its back.
+    const shirtMesh=model.getObjectByName('Ch38_Shirt');
+    if(shirtMesh){
+      const geo=shirtMesh.geometry.clone(),pos=geo.attributes.position;
+      const uv=new Float32Array(pos.count*2),bb=new T.Box3().setFromBufferAttribute(pos);
+      for(let i=0;i<pos.count;i++){uv[i*2]=1-(pos.getX(i)-bb.min.x)/(bb.max.x-bb.min.x);uv[i*2+1]=(pos.getY(i)-bb.min.y)/(bb.max.y-bb.min.y);}
+      for(let i=0;i<pos.count;i++)if(geo.attributes.normal.getZ(i)>0){uv[i*2]=-1;uv[i*2+1]=-1;}
+      geo.setAttribute('uv',new T.BufferAttribute(uv,2));
+      const number=tex(canvas2d(512,512,(g,w,h)=>{g.fillStyle='#fff';g.textAlign='center';g.font='bold 105px Arial';g.fillText(kind==='keeper'?'1':'10',w/2,h*.46);g.font='bold 20px Arial';g.fillText('HISAN FC',w/2,h*.23);}));
+      this.ownedGeometries.add(geo);this.ownedTextures.add(number);
+      const decal=new T.SkinnedMesh(geo,new T.MeshStandardMaterial({map:number,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,roughness:.85,side:T.FrontSide}));
+      decal.bind(shirtMesh.skeleton,shirtMesh.bindMatrix);decal.frustumCulled=false;shirtMesh.parent.add(decal);
+    }
+    this.current=null;this.event=null;scene.add(this.root);
   }
-  play(name, speed = 1) { this.anim = name; Object.values(this.clips).forEach(a => a.stop()); const a = this.clips[name]; a.reset().play(); a.timeScale = speed; }
-  // Sets bones to rest pose plus Euler offsets (radians); stops clip playback.
-  pose(offsets, hipsDrop = 0) {
-    if (this.anim) { Object.values(this.clips).forEach(a => a.stop()); this.anim = null; }
-    for (const [n, b] of Object.entries(this.bones)) { b.quaternion.copy(this.rest[n]); const o = offsets[n]; if (o) b.quaternion.multiply(new T.Quaternion().setFromEuler(new T.Euler(o[0] || 0, o[1] || 0, o[2] || 0))); }
-    this.bones.Hips.position.copy(this.restHips); this.bones.Hips.position.y -= hipsDrop / this.k;
+  play(name, speed=1, fade=.16) {
+    const action=this.clips[name];if(!action)return;
+    if(this.current===action&&action.isRunning())return;
+    const previous=this.current;action.enabled=true;action.reset().setEffectiveTimeScale(speed).setEffectiveWeight(1).play();
+    if(previous&&previous!==action)previous.crossFadeTo(action,fade,false);
+    this.current=action;this.anim=name;this.event=null;
   }
-  update(dt) { if (this.anim) this.mixer.update(dt); }
-  dispose() { scene.remove(this.root); }
+  update(dt){this.mixer.update(dt);if(this.event&&this.current.time>=this.event.at){const fn=this.event.fn;this.event=null;fn();}}
+  hand(side){this.root.updateMatrixWorld(true);return this.bones[side+'Hand'].getWorldPosition(new T.Vector3());}
+  dispose(){this.mixer.stopAllAction();this.mixer.uncacheRoot(this.model);scene.remove(this.root);this.model.traverse(o=>{if(o.isMesh)o.material.dispose();});this.ownedGeometries.forEach(g=>g.dispose());this.ownedTextures.forEach(t=>t.dispose());}
 }
-const mix = (a, b, t) => a + (b - a) * t;
 let keeper, shooter;
 function dressTeams(youShoot) {
   keeper?.dispose(); shooter?.dispose();
   const [you, youShorts] = KITS[settings.kit] || KITS.red, cpu = settings.kit === 'white' ? ['#1d1d1d', '#1d1d1d'] : ['#f3f3f3', '#1d1d1d'];
   keeper = new Rig('keeper', youShoot ? '#f2c230' : '#22c46e', '#1b1b1b', '#f4f4f4');
-  shooter = new Rig('shooter', youShoot ? you : cpu[0], '#141414');
-  shooter.play('Idle');
+  shooter = new Rig('shooter', youShoot ? you : cpu[0], youShoot ? youShorts : cpu[1]);
+  shooter.play('idle'); keeper.play('ready');
 }
 
 /* ---------- Sound ---------- */
@@ -207,14 +318,14 @@ let ballState = null, keeperState = null, timeScale = 1, camTarget = null, swipe
 const level = () => LEVELS[settings.level] || LEVELS.normal;
 
 function setupKick(youShoot) {
-  youShooting = youShoot; dressTeams(youShoot);
+  animationToken++; replay=null;replayHistory=[];$('replay-skip').hidden=true; youShooting = youShoot; dressTeams(youShoot);
   ball.position.set(0, R, SPOT); ball.rotation.set(0, 0, 0);
   keeperState = { x: 0, y: 0, start: 0, from: new T.Vector3(0, 1, 0), to: null, dur: .6, diving: false, t: 0 };
   keeper.root.position.set(0, 0, .35); keeper.root.rotation.set(0, 0, 0);
-  shooter.root.position.set(youShoot ? -.95 : -1.4, 0, SPOT + (youShoot ? 1.0 : 2.6)); shooter.root.rotation.set(0, Math.PI + (youShoot ? .35 : .45), 0);
+  shooter.root.position.set(youShoot ? -.95 : -1.4, 0, SPOT + 3.2); shooter.root.rotation.set(0, Math.PI + (youShoot ? .35 : .45), 0);
   shooter.root.visible = true;
   ballState = null; timeScale = 1; tapAim = null;
-  camTarget = youShoot ? { pos: new T.Vector3(.5, 2.35, SPOT + 7), look: new T.Vector3(0, .9, 0) } : { pos: new T.Vector3(1.1, 2.0, -4.3), look: new T.Vector3(-.2, .85, SPOT) };
+  camTarget = youShoot ? { pos: new T.Vector3(innerWidth<600?-.55:.5, 2.5, SPOT + 8.5), look: new T.Vector3(0, .9, 0) } : { pos: new T.Vector3(1.1, 2.0, -4.3), look: new T.Vector3(-.2, .85, SPOT) };
   if (mode) { camera.position.copy(camTarget.pos); camTarget.cur = camTarget.look.clone(); camera.lookAt(camTarget.cur); }
   phase = youShoot ? 'aim' : 'cpu-runup';
   if (!youShoot) setTimeout(() => cpuShoot(), 1600);
@@ -228,7 +339,7 @@ function kick(target, flight, curl, byYou) {
   const v = new T.Vector3((target.x - p0.x - .5 * curl * t * t) / t, (target.y - p0.y + .5 * G * t * t) / t, dz / t);
   ballState = { v, curl, spin: new T.Vector3(-v.z * 3, curl * 2, 0), time: 0, crossed: false, result: null, byYou, done: false, rest: 0 };
   sound.kick(); phase = 'flight';
-  if (byYou) strike();
+
   // Keeper reaction
   if (byYou) {
     const L = level(), guessRight = Math.random() < L.save, side = Math.random() < .5 ? -1 : 1;
@@ -243,6 +354,12 @@ function dive(aim, reach) {
   const dx = Math.max(-reach, Math.min(reach, aim.x)), dy = Math.max(.25, Math.min(2.4, aim.y));
   keeperState.diving = true; keeperState.start = simTime; keeperState.to = new T.Vector3(dx, dy, 0);
   keeperState.dur = .32 + Math.abs(dx) * .08;
+  const central=Math.abs(dx)<.65;
+  const clip=central?'jump':`dive-${dx<0?'left':'right'}-${dy>1.25?'high':'low'}`;
+  keeperState.clip=clip;
+  keeperState.handStart=keeper.hand(dx<0?'Right':'Left');
+  // The capture reaches extension at ~0.9s. Retiming matches arrival at the ball.
+  keeper.play(clip,(central?.76:dy>1.25?.82:1.15)/keeperState.dur,.06);
 }
 
 function cpuShoot() {
@@ -256,35 +373,35 @@ function cpuShoot() {
   });
 }
 
-// Run-up with the walk cycle sped up to a jog, then a real striking motion.
+// The penalty clip includes its final strides. Sample its boot at the contact
+// marker to place the whole captured motion precisely against the stationary ball.
+let animationToken=0;
 function runUp(then) {
-  const start = shooter.root.position.clone(), end = new T.Vector3(-.55, 0, SPOT + .55), t0 = performance.now(), dur = 1100;
-  shooter.root.rotation.y = Math.atan2(end.x - start.x, end.z - start.z); shooter.play('Walk', 2.1);
-  const step = () => {
-    const t = Math.min(1, (performance.now() - t0) / dur); shooter.root.position.lerpVectors(start, end, t);
-    if (t < 1) requestAnimationFrame(step); else { shooter.root.rotation.y = Math.PI + .3; strike(then); }
-  };
-  step();
+  const token=++animationToken;
+  shooter.root.rotation.set(0,Math.PI,0);
+  shooter.mixer.stopAllAction();shooter.current=null;
+  shooter.play('kick',1,0);shooter.mixer.update(CONTACT);shooter.root.position.set(0,0,0);shooter.root.updateMatrixWorld(true);
+  const boot=shooter.bones.RightToeBase.getWorldPosition(new T.Vector3());
+  const strikeOrigin=new T.Vector3(-boot.x,0,SPOT-boot.z);
+  shooter.mixer.stopAllAction();shooter.current=null;shooter.play('run',1.25,0);
+  const start=strikeOrigin.clone().add(new T.Vector3(-.18,0,.75));
+  shooter.root.position.copy(start);
+  const t0=performance.now();
+  const step=()=>{
+    if(token!==animationToken||!mode)return;
+    const t=Math.min(1,(performance.now()-t0)/450);shooter.root.position.lerpVectors(start,strikeOrigin,t);
+    if(t<1)requestAnimationFrame(step);else strike(then);
+  };step();
 }
 function strike(then) {
-  const t0 = performance.now(), dur = 520; let fired = false;
-  const step = () => {
-    const t = Math.min(1, (performance.now() - t0) / dur);
-    const back = t < .4 ? t / .4 : 1 - (t - .4) / .6, through = t < .4 ? 0 : Math.min(1, (t - .4) / .25);
-    shooter.pose({
-      rThigh: [mix(.9 * back, -1.25, through), 0, .05], rShin: [mix(1.5 * back, .15, through), 0, 0], rFoot: [.4, 0, 0],
-      lThigh: [-.25, 0, -.08], lShin: [.35, 0, 0], Chest: [mix(.15, -.25, through), 0, 0], lArm: [0, 0, -1.0], rArm: [0, 0, .55]
-    }, .05);
-    if (!fired && t >= .45) { fired = true; then?.(); }
-    if (t < 1) requestAnimationFrame(step); else setTimeout(() => shooter.play('Idle'), 500);
-  };
-  step();
+  shooter.play('kick',1,.08);
+  shooter.event={at:CONTACT,fn:()=>{then?.();}};
 }
 
 /* ---------- Swipe input ---------- */
 const trail = $('trail'), tg = trail.getContext('2d');
 function resize() {
-  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); composer.setSize(w,h); camera.aspect = w / h;
   camera.fov = w / h < .8 ? 58 : 42; camera.updateProjectionMatrix();
   trail.width = w * devicePixelRatio; trail.height = h * devicePixelRatio; trail.style.width = w + 'px'; trail.style.height = h + 'px';
 }
@@ -315,7 +432,8 @@ canvas.addEventListener('pointerup', () => {
   const wobble = Math.max(0, power - 1.05) * 1.6; tx += (Math.random() - .5) * wobble; ty += Math.random() * wobble * .8;
   const curl = Math.max(-14, Math.min(14, -dev / W * 90));
   tx += .5 * curl * flight * flight * .25;
-  kick(new T.Vector3(tx, Math.max(.12, ty), 0), flight, curl, true);
+  phase='runup'; hud();
+  runUp(()=>kick(new T.Vector3(tx, Math.max(.12, ty), 0), flight, curl, true));
 });
 function drawTrail() {
   const d = devicePixelRatio, pts = swipe.pts; tg.clearRect(0, 0, trail.width, trail.height); tg.lineCap = 'round'; tg.lineJoin = 'round';
@@ -325,7 +443,26 @@ function fadeTrail() { trail.style.transition = 'opacity .4s'; trail.style.opaci
 function showAim(x, y) { const a = $('aim'); a.style.left = x + 'px'; a.style.top = y + 'px'; a.classList.remove('is-on'); void a.offsetWidth; a.classList.add('is-on'); }
 
 /* ---------- Simulation ---------- */
-let simTime = 0;
+let simTime = 0, replay=null, replayHistory=[];
+function snapshotRig(r){return {p:r.root.position.clone(),q:r.root.quaternion.clone(),b:Object.values(r.bones).map(b=>[b.position.clone(),b.quaternion.clone()])};}
+function snapshot(){return {t:simTime,ball:ball.position.clone(),q:ball.quaternion.clone(),s:snapshotRig(shooter),k:snapshotRig(keeper)};}
+function restoreRig(r,a,b,t){r.root.position.lerpVectors(a.p,b.p,t);r.root.quaternion.slerpQuaternions(a.q,b.q,t);Object.values(r.bones).forEach((bone,i)=>{bone.position.lerpVectors(a.b[i][0],b.b[i][0],t);bone.quaternion.slerpQuaternions(a.b[i][1],b.b[i][1],t);});}
+function updateReplay(raw){
+ replay.elapsed+=raw*.32;const frames=replay.frames,target=frames[0].t+replay.elapsed;
+ let i=0;while(i<frames.length-2&&frames[i+1].t<target)i++;
+ const a=frames[i],b=frames[i+1],t=T.MathUtils.clamp((target-a.t)/Math.max(.001,b.t-a.t),0,1);
+ ball.position.lerpVectors(a.ball,b.ball,t);ball.quaternion.slerpQuaternions(a.q,b.q,t);restoreRig(shooter,a.s,b.s,t);restoreRig(keeper,a.k,b.k,t);
+ if(target>=frames.at(-1).t)endReplay();
+}
+function endReplay(){
+ replay=null;$('replay-skip').hidden=true;phase='celebration';
+ const goal=ballState?.result==='goal';
+ shooter.play(goal?'celebrate':'disappointed',1,.2);
+ if(!goal){keeperState.diving=false;keeper.root.position.set(T.MathUtils.clamp(keeper.root.position.x,-3,3),0,.35);keeper.play('celebrate',1,.18);}
+ after=setTimeout(nextKick,1900);
+}
+$('replay-skip').onclick=endReplay;
+
 function updateBall(dt) {
   const s = ballState; if (!s || s.done) return;
   s.time += dt; const p = ball.position, prevZ = p.z;
@@ -367,40 +504,38 @@ function updateBall(dt) {
 }
 
 function keeperHand() {
-  const k = keeperState, p = Math.min(1, (simTime - k.start) / k.dur), e = 1 - Math.pow(1 - p, 2.2);
-  return new T.Vector3().lerpVectors(k.from, k.to, e).add(new T.Vector3(0, 0, .35));
+  if(!keeper)return new T.Vector3(0,1,.35);
+  return keeper.hand(keeperState?.to?.x<0?'Right':'Left');
 }
-
-function updateKeeper(dt, now) {
-  const k = keeperState, kp = keeper; if (!k || !kp) return;
-  if (k.pending && simTime >= k.pending.at) { const pd = k.pending; k.pending = null; dive(pd.aim, pd.reach); }
-  if (!k.diving) {
-    const sway = Math.sin(now * 2.2) * .22, bob = Math.sin(now * 4.4) * .03; kp.root.position.set(sway, 0, .35); kp.root.rotation.set(0, 0, 0); k.from.set(sway, 1.1, 0);
-    kp.pose({ lThigh: [-.55, 0, -.22], rThigh: [-.55, 0, .22], lShin: [1.05, 0, 0], rShin: [1.05, 0, 0], lFoot: [-.45, 0, 0], rFoot: [-.45, 0, 0],
-      Chest: [.32, 0, 0], lArm: [-.35, 0, -.95], rArm: [-.35, 0, .95], lForearm: [-.5, 0, 0], rForearm: [-.5, 0, 0] }, .2 + bob);
-    return;
+function updateKeeper(dt,now) {
+  const k=keeperState,kp=keeper;if(!k||!kp)return;
+  if(k.pending&&simTime>=k.pending.at){const pd=k.pending;k.pending=null;dive(pd.aim,pd.reach);}
+  kp.update(dt);
+  if(!k.diving){
+    if(ballState?.result==='saved'){kp.play('celebrate');return;}
+    kp.root.position.set(Math.sin(now*2.2)*.12,0,.35);return;
   }
-  const p = Math.min(1, (simTime - k.start) / k.dur), e = 1 - Math.pow(1 - p, 2.2), hand = keeperHand();
-  const side = Math.sign(k.to.x) || 0, high = Math.min(1, k.to.y / 2.2), lateral = Math.abs(k.to.x);
-  const roll = side * Math.min(1.35, lateral / 2.3) * (1.15 - high * .4) * e;
-  kp.root.position.x = k.from.x + (hand.x - k.from.x) * (lateral > .6 ? .62 : .25);
-  kp.root.position.y = Math.max(0, Math.sin(Math.min(1, p * 1.15) * Math.PI) * (.2 + high * .55) + (lateral > 1 ? .25 * e : 0));
-  kp.root.rotation.z = -roll;
-  const up = side === 0 ? 2.7 : 2.85, lead = side >= 0 ? 'l' : 'r';
-  // Arms stretch overhead towards the ball; the trailing leg tucks, the leading leg extends.
-  kp.pose({
-    lArm: [-.2 * (1 - e), 0, -mix(.95, up, e)], rArm: [-.2 * (1 - e), 0, mix(.95, up, e)], lForearm: [0, 0, 0], rForearm: [0, 0, 0],
-    Chest: [mix(.32, .05, e), 0, -side * .45 * e],
-    lThigh: [mix(-.55, lead === 'l' ? -.1 : -.9, e), 0, mix(-.22, -.5, e)], rThigh: [mix(-.55, lead === 'r' ? -.1 : -.9, e), 0, mix(.22, .5, e)],
-    lShin: [mix(1.05, lead === 'l' ? .15 : 1.3, e), 0, 0], rShin: [mix(1.05, lead === 'r' ? .15 : 1.3, e), 0, 0]
-  }, mix(.2, 0, e));
+  const p=Math.min(1,(simTime-k.start)/k.dur),e=p*p*(3-2*p);
+  // Warp the captured reach onto the gameplay target, keeping the visible glove
+  // and collision point identical. Captured recovery/landing continues afterwards.
+  const side=k.to.x<0?'Right':'Left',hand=kp.hand(side);
+  if(p<1||!ballState?.result){
+    const desired=new T.Vector3().lerpVectors(k.handStart,k.to.clone().add(new T.Vector3(0,0,.35)),e);
+    kp.root.position.add(desired.sub(hand));
+    kp.root.updateMatrixWorld(true);
+  }
 }
 
 function updateCamera(dt) {
   if (!camTarget) return;
   const k = 1 - Math.exp(-dt * 3);
   let pos = camTarget.pos.clone(), look = camTarget.look.clone();
-  if (ballState && youShooting && ballState.result !== 'miss') { pos.z = THREE_lerp(camTarget.pos.z, 9.5, Math.min(1, ballState.time * 1.2)); look.lerp(new T.Vector3(ball.position.x * .6, 1.1, ball.position.z), .3); }
+  if(phase==='replay'){pos.set(ball.position.x>0?6.5:-6.5,2.1,5.8);look.set(ball.position.x*.4,1,0);}
+  else if(phase==='celebration'){
+    const r=ballState?.result==='goal'?shooter:keeper,focus=r.bones.Head.getWorldPosition(new T.Vector3());
+    pos.copy(r.root.position).add(new T.Vector3(2,1.65,-3.5));look.copy(focus).add(new T.Vector3(0,-.3,0));
+  }
+  else if (ballState && youShooting && ballState.result !== 'miss') { pos.z = THREE_lerp(camTarget.pos.z, 9.5, Math.min(1, ballState.time * 1.2)); look.lerp(new T.Vector3(ball.position.x * .6, 1.1, ball.position.z), .3); }
   camera.position.lerp(pos, k);
   camTarget.cur = camTarget.cur ? camTarget.cur.lerp(look, k) : look; camera.lookAt(camTarget.cur);
 }
@@ -411,10 +546,12 @@ function finishKick(result) {
   const youScored = youShooting && result === 'goal', youSaved = !youShooting && result !== 'goal';
   const good = youScored || youSaved;
   const text = { goal: 'GOAL!', saved: youShooting ? 'Saved!' : 'Great save!', post: 'Off the post!', miss: 'Missed!' }[result];
+  if(result==='goal'||result==='saved')replay={pending:.65,elapsed:0};
   if (result === 'goal') sound.cheer(); else if (good) sound.cheer(); else sound.groan();
   banner(youShooting ? text : (result === 'goal' ? 'They scored' : text), good);
   if (mode === 'practice') { streak = result === 'goal' ? streak + 1 : 0; if (streak > best) { best = streak; localStorage.setItem('penalty-best', best); } }
   else (youShooting ? score.you : score.cpu).push(result === 'goal');
+  setTimeout(()=>{if(!shooter||ballState?.result!==result||phase==='replay')return;shooter.play(result==='goal'?'celebrate':'disappointed');},350);
   hud();
 }
 
@@ -478,6 +615,7 @@ function syncSegments() {
 }
 document.querySelectorAll('.seg[data-setting]').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button[data-value]'); if (!b) return; settings[seg.dataset.setting] = b.dataset.value; save(); syncSegments(); }));
 function start(m) {
+  clearTimeout(after);
   if (!keeper) return;
   sound.ctx(); sound.ambience(); sound.setAmbience(true); sound.whistle();
   mode = m; score = { you: [], cpu: [] }; streak = 0; $('start').hidden = true; $('result').hidden = true; setupKick(true);
@@ -485,7 +623,7 @@ function start(m) {
 $('play-shootout').onclick = () => start('shootout');
 $('play-practice').onclick = () => start('practice');
 $('again').onclick = () => start(mode);
-const toMenu = () => { mode = null; phase = 'menu'; $('result').hidden = true; $('start').hidden = false; sound.setAmbience(false); setupMenuView(); hud(); };
+const toMenu = () => { animationToken++;clearTimeout(after);replay=null;$('replay-skip').hidden=true; mode = null; phase = 'menu'; $('result').hidden = true; $('start').hidden = false; sound.setAmbience(false); setupMenuView(); hud(); };
 $('to-menu').onclick = toMenu;
 $('btn-menu').onclick = () => { if (mode && phase !== 'over' && !confirm('Leave this match?')) return; toMenu(); };
 $('btn-sound').onclick = () => { settings.sound = !settings.sound; save(); syncSegments(); sound.setAmbience(!!mode); };
@@ -498,19 +636,29 @@ const clock = new T.Clock();
 let after = 0;
 renderer.setAnimationLoop(() => {
   const raw = Math.min(clock.getDelta(), .05), now = performance.now() / 1000, dt = raw * timeScale;
+  if(phase==='replay'){updateReplay(raw);updateCamera(raw);composer.render();return;}
   simTime += dt;
   if (ballState) { const sub = 4; for (let i = 0; i < sub; i++) updateBall(dt / sub); }
-  updateKeeper(dt, now); shooter?.update(raw);
+  updateKeeper(dt, now); shooter?.update(dt);
+  updateShotTrail();
+  if(shooter&&keeper&&phase==='flight'){
+    replayHistory.push(snapshot());while(replayHistory.length>160||replayHistory.length>2&&simTime-replayHistory[0].t>1.4)replayHistory.shift();
+    if(replay?.pending!==undefined){replay.pending-=raw;if(replay.pending<=0&&replayHistory.length>2){replay.frames=replayHistory.filter(f=>f.ball.z<4);if(replay.frames.length<2)replay.frames=replayHistory.slice();replay.elapsed=0;delete replay.pending;phase='replay';shotTrail.visible=false;$('replay-skip').hidden=false;}}
+  }
   nets.forEach(n => n.update(raw));
   adTex.offset.x = (adTex.offset.x + raw * .04) % 1;
   effects = effects.filter(f => { f.life += raw; f.update(raw); if (f.life > f.max) { f.dispose(); return false; } return true; });
   if (phase === 'menu' && camTarget) { const a = now * .12; camTarget.pos.set(Math.sin(a) * 9, 2.8, SPOT + Math.cos(a) * 6); }
   updateCamera(raw);
   if (ballState?.done && phase === 'flight') { phase = 'between'; after = setTimeout(nextKick, 300); }
-  renderer.render(scene, camera);
+  crowdUniforms.time.value=now; crowdUniforms.cheer.value=T.MathUtils.damp(crowdUniforms.cheer.value, ballState?.result==='goal'?1:0,3,raw);
+  composer.render();
 });
 
 syncSegments(); hud();
-bodiesReady.then(() => { setupMenuView(); document.body.classList.add('is-loaded'); }).catch(() => toast('Could not load the players. Please refresh.'));
+bodiesReady.then(() => { setupMenuView(); $('loading').hidden=true; document.body.classList.add('is-loaded'); }).catch(error => { console.error(error); $('load-progress').textContent='Unable to load players'; $('load-retry').hidden=false; });
+$('load-retry').onclick=()=>location.reload();
 camera.position.set(8, 3, SPOT + 6);
 setTimeout(() => document.body.classList.add('is-ready'), 50);
+// Local QA only; unavailable on the public site.
+if(['localhost','127.0.0.1'].includes(location.hostname))window.penaltyQA={get state(){return {phase,score,mode,ball:ball.position.toArray(),clip:shooter?.anim,keeperClip:keeperState?.clip,result:ballState?.result,streak,replay:!!replay,glove:keeper?keeperHand().toArray():null,modelScale:shooter?.model.scale.toArray(),bounds:shooter?new T.Box3().setFromObject(shooter.model).getSize(new T.Vector3()).toArray():null,hips:shooter?.bones.Hips.getWorldPosition(new T.Vector3()).toArray(),foot:shooter?.bones.RightToeBase.getWorldPosition(new T.Vector3()).toArray()};},shoot:(x,y,aim=null)=>{phase='runup';hud();runUp(()=>{kick(new T.Vector3(x,y,0),.7,0,true);if(aim)keeperState.pending={at:simTime+.04,aim:new T.Vector3(...aim),reach:3.5};});},dive:(x,y)=>dive(new T.Vector3(x,y,0),3.3),start,next:nextKick,winner:shootoutWinner,setScore:(you,cpu)=>{score={you,cpu};return shootoutWinner();}, get rigs(){return {shooter,keeper};}};

@@ -258,3 +258,9 @@ body:not(.is-playing) .board, body:not(.is-playing) .hint { opacity: 0; pointer-
 .mode-btn.primary { background: var(--lime); color: #17200a; }
 .mode-btn.primary small { color: rgba(23,32,10,.7); }
 @media (max-width: 600px) { .board { top: 60px; min-width: 0; width: calc(100% - 20px); } .sb-dots i { width: 11px; height: 11px; } .hint { white-space: normal; text-align: center; width: calc(100% - 24px); } }
+
+.loading { position:fixed;inset:0;background:#080f19;z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#f6f8ec;font-family:Manrope,sans-serif; }
+.loading[hidden],.replay-skip[hidden] {display:none}
+.loading-ball {font-size:48px;animation:loading-spin 2s linear infinite}.loading p{font-size:20px;font-weight:800;margin:24px 0 8px}.loading small{color:#a8b7c4}.loading button{margin-top:24px;padding:12px 24px}
+@keyframes loading-spin{to{transform:rotate(360deg)}}
+.replay-skip{position:fixed;right:20px;bottom:max(28px,env(safe-area-inset-bottom));z-index:20;background:#101c2ade;border:1px solid #83909e66;border-radius:24px;color:white;padding:12px 20px;font:700 12px Manrope,sans-serif;letter-spacing:.06em}

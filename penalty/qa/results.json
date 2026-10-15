@@ -1,0 +1,26 @@
+[
+  {
+    "label": "desktop",
+    "loaded": [
+      {
+        "ms": 2.6000000089406967,
+        "bytes": 1557376
+      }
+    ],
+    "tint": "1d4fb8",
+    "save": "saved",
+    "errors": []
+  },
+  {
+    "label": "mobile",
+    "loaded": [
+      {
+        "ms": 3.0999999940395355,
+        "bytes": 1557376
+      }
+    ],
+    "tint": "1d4fb8",
+    "save": "saved",
+    "errors": []
+  }
+]
