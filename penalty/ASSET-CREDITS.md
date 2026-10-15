@@ -88,6 +88,9 @@ The public site has no build or conversion step.
   Exact prompt: [crowd-fans.prompt.txt](assets/crowd-fans.prompt.txt).
   Packing utility: `tools/pack-crowd.py`.
 
+The visible sky uses Three.js atmospheric scattering; the HDR provides lighting
+and reflections without projecting a duplicate photographed stadium.
+
 The stadium bowl, seats, glazed hospitality level, trusses, roof, electronic
 scoreboard, advertising boards and goal frame are original procedural geometry.
 The net uses volumetric cord instances with pinned edges and damped deformation.

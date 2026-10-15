@@ -1,7 +1,7 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { fittedGloves } from './equipment.js?v=6';
 import { FootContacts, reachBall, solveLimb } from './motion.js?v=6';
-import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=7';
+import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=8';
 import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact, sweepSphereSegment } from './physics.js?v=6';
 import { buildStadium } from './stadium.js?v=6';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
@@ -328,6 +328,12 @@ let mode = null, phase = 'menu', score = { you: [], cpu: [] }, youShooting = tru
 let ballState = null, keeperState = null, timeScale = 1, camTarget = null, swipe = null, tapAim = null;
 const level = () => LEVELS[settings.level] || LEVELS.normal;
 
+function keeperView(){
+  // Fit the entire goal mouth, so every legal dive destination can be tapped.
+  const horizontal=Math.tan(T.MathUtils.degToRad(camera.fov*.5))*camera.aspect;
+  const distance=T.MathUtils.clamp((GOAL_W+1.2)/(2*horizontal),6.5,17);
+  return {pos:new T.Vector3(0,2.3+Math.max(0,distance-8)*.46,-distance),look:new T.Vector3(0,.95,SPOT)};
+}
 function setupKick(youShoot) {
   clearTimeout(cpuTimer); replay=null;replayHistory=[];$('replay-skip').hidden=true; youShooting = youShoot; dressTeams(youShoot);
   ball.position.set(0, R, SPOT); ball.rotation.set(0, 0, 0);
@@ -345,7 +351,7 @@ function setupKick(youShoot) {
   shooter.mixer.stopAllAction();shooter.current=null;shooter.play('idle',1,0);shooter.mixer.update(0);
   shooter.root.visible = true;
   ballState = null; timeScale = 1; tapAim = null;
-  camTarget = youShoot ? { pos: new T.Vector3(innerWidth<600?-.55:.5, 2.5, SPOT + 8.5), look: new T.Vector3(0, .9, 0) } : { pos: new T.Vector3(1.1, 2.0, -4.3), look: new T.Vector3(-.2, .85, SPOT) };
+  camTarget = youShoot ? { pos: new T.Vector3(innerWidth<600?-.55:.5, 2.5, SPOT + 8.5), look: new T.Vector3(0, .9, 0) } : keeperView();
   if (mode) { camera.position.copy(camTarget.pos); camTarget.cur = camTarget.look.clone(); camera.lookAt(camTarget.cur); camera.updateMatrixWorld(true); }
   phase = youShoot ? 'aim' : 'cpu-runup';
   if (!youShoot) cpuTimer=setTimeout(() => cpuShoot(), 1400);
@@ -423,6 +429,9 @@ function resize() {
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); composer.setSize(w,h); camera.aspect = w / h;
   camera.fov = w / h < .8 ? 58 : 42; camera.updateProjectionMatrix();
   trail.width = w * devicePixelRatio; trail.height = h * devicePixelRatio; trail.style.width = w + 'px'; trail.style.height = h + 'px';
+  if(mode&&!youShooting&&camTarget){const view=keeperView();camTarget.pos.copy(view.pos);camTarget.look.copy(view.look);
+    if(['cpu-runup','cpu-kick','flight'].includes(phase)){camera.position.copy(view.pos);camTarget.cur=view.look.clone();camera.lookAt(view.look);camera.updateMatrixWorld(true);}
+  }
 }
 addEventListener('resize', resize); resize();
 
@@ -606,7 +615,7 @@ function updateCamera(dt) {
     pos.copy(focus).add(goal?new T.Vector3(2,.15,-3.5):new T.Vector3(-2.7,.2,4.5));pos.y=Math.max(1.6,pos.y);
     look.copy(focus).add(new T.Vector3(0,-.3,0));
   }
-  else if(ballState?.result==='saved'){look.copy(keeper.bone('Spine2'));pos.set(camTarget.pos.x,2.3,9.5);}
+  else if(ballState?.result==='saved'&&youShooting){look.copy(keeper.bone('Spine2'));pos.set(camTarget.pos.x,2.3,9.5);}
   else if (ballState && youShooting && !ballState.result) { pos.z = THREE_lerp(camTarget.pos.z, 9.5, Math.min(1, ballState.time * 1.2)); look.lerp(new T.Vector3(ball.position.x * .6, 1.1, ball.position.z), .3); }
   camera.position.lerp(pos, k);
   camTarget.cur = camTarget.cur ? camTarget.cur.lerp(look, k) : look; camera.lookAt(camTarget.cur);
@@ -746,4 +755,4 @@ $('load-retry').onclick=()=>location.reload();
 camera.position.set(8, 3, SPOT + 6);
 setTimeout(() => document.body.classList.add('is-ready'), 50);
 // Local QA only; unavailable on the public site.
-if(['localhost','127.0.0.1'].includes(location.hostname))window.penaltyQA={get state(){return {phase,score,mode,sound:{enabled:settings.sound,masterGain:sound.master?.gain.value,recorded:!!sound.bed},queuedDive:!!tapAim,ball:ball.position.toArray(),clip:shooter?.anim,keeperClip:keeperState?.clip,result:ballState?.result,streak,replay:!!replay,replayStage:replay?.stage,glove:keeper?keeperHand().toArray():null,modelScale:shooter?.model.scale.toArray(),bounds:shooter?new T.Box3().setFromObject(shooter.model).getSize(new T.Vector3()).toArray():null,hips:shooter?.bones.Hips.getWorldPosition(new T.Vector3()).toArray(),foot:shooter?.bones.RightToeBase.getWorldPosition(new T.Vector3()).toArray()};},shoot:(x,y,aim=null)=>{phase='runup';hud();runUp(()=>{kick(new T.Vector3(x,y,0),.7,0,true);if(aim)keeperState.pending={at:simTime+.04,aim:new T.Vector3(...aim),reach:3.5};});},dive:(x,y)=>dive(new T.Vector3(x,y,0),3.3),start,next:nextKick,winner:shootoutWinner,setScore:(you,cpu)=>{score={you,cpu};return shootoutWinner();}, get simulation(){return {keeperState,ballState,simTime};},get rigs(){return {shooter,keeper};}};
+if(['localhost','127.0.0.1'].includes(location.hostname))window.penaltyQA={get state(){return {phase,score,mode,sound:{enabled:settings.sound,masterGain:sound.master?.gain.value,recorded:!!sound.bed},queuedDive:!!tapAim,ball:ball.position.toArray(),clip:shooter?.anim,keeperClip:keeperState?.clip,result:ballState?.result,streak,replay:!!replay,replayStage:replay?.stage,glove:keeper?keeperHand().toArray():null,modelScale:shooter?.model.scale.toArray(),bounds:shooter?new T.Box3().setFromObject(shooter.model).getSize(new T.Vector3()).toArray():null,hips:shooter?.bones.Hips.getWorldPosition(new T.Vector3()).toArray(),foot:shooter?.bones.RightToeBase.getWorldPosition(new T.Vector3()).toArray()};},shoot:(x,y,aim=null)=>{phase='runup';hud();runUp(()=>{kick(new T.Vector3(x,y,0),.7,0,true);if(aim)keeperState.pending={at:simTime+.04,aim:new T.Vector3(...aim),reach:3.5};});},dive:(x,y)=>dive(new T.Vector3(x,y,0),3.3),start,next:nextKick,winner:shootoutWinner,setScore:(you,cpu)=>{score={you,cpu};return shootoutWinner();}, get simulation(){return {keeperState,ballState,simTime};},get view(){return camera;},get rigs(){return {shooter,keeper};}};

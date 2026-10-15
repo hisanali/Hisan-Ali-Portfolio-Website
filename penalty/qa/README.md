@@ -1,4 +1,4 @@
-# Verification — 16 October 2026, version 7
+# Verification — 16 October 2026, version 8
 
 The game remains static ES modules, with no game build step. Tests use headless
 Google Chrome against `python3 -m http.server 8765`.
@@ -71,6 +71,7 @@ With Playwright installed and Chrome available:
 node penalty/tools/test-game.cjs
 node penalty/tools/test-movement.cjs
 node penalty/tools/test-equipment.cjs
+node penalty/tools/test-keeper-view.cjs
 node penalty/tools/test-browser-physics.cjs
 node penalty/tools/test-performance.cjs
 node penalty/tools/test-physics.mjs
@@ -89,3 +90,8 @@ The shared site route permits `.bin` assets but rejects `.hdr`. The environment
 is therefore stored as `stadium-light.bin` with unchanged Radiance HDR bytes.
 An optional-lighting fallback also keeps the loading screen from blocking play
 if that download fails. Production verification checks the actual public route.
+
+`keeper-view-results.json` projects all four goal corners into desktop, portrait
+and landscape views, then taps the projected upper-right destination through
+the real pointer handler and verifies the resulting right/high dive. Keeper
+framing recomputes on orientation changes.

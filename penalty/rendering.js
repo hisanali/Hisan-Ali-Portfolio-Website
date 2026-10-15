@@ -1,15 +1,17 @@
 import * as T from '../evermile/vendor/three.module.js';
+import { Sky } from './vendor/three-addons/objects/Sky.js';
 import { HDRLoader } from './vendor/three-addons/loaders/HDRLoader.js';
 import { SSAOPass } from './vendor/three-addons/postprocessing/SSAOPass.js';
 import { BokehPass } from './vendor/three-addons/postprocessing/BokehPass.js';
 import { ShaderPass } from './vendor/three-addons/postprocessing/ShaderPass.js';
 
 export function stadiumLighting(renderer,scene){
+ const sky=new Sky();sky.scale.setScalar(250);sky.material.uniforms.turbidity.value=7;sky.material.uniforms.rayleigh.value=1.7;sky.material.uniforms.mieCoefficient.value=.004;sky.material.uniforms.mieDirectionalG.value=.8;sky.material.uniforms.sunPosition.value.set(-28,38,22);scene.add(sky);
  return new HDRLoader().loadAsync('./assets/stadium-light.bin?v=7').then(hdr=>{
   hdr.mapping=T.EquirectangularReflectionMapping;
   const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(hdr).texture;
-  scene.environmentIntensity=.5;scene.background=hdr;scene.backgroundBlurriness=.055;scene.backgroundIntensity=.3;
-  scene.backgroundRotation.y=scene.environmentRotation.y=.8;pmrem.dispose();
+  scene.environmentIntensity=.5;scene.background=new T.Color('#b9cbd7');hdr.dispose();
+  scene.environmentRotation.y=.8;pmrem.dispose();
  }).catch(()=>{
   // Lighting is optional. A failed environment download must not prevent play.
   scene.background=new T.Color('#9facb5');scene.add(new T.HemisphereLight('#c7d9e8','#52603d',.7));
