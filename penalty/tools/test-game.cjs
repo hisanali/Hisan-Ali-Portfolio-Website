@@ -26,9 +26,9 @@ for(const size of [{width:1280,height:760},{width:390,height:844}]){
  // Goal mode still accepts a tap to queue the player keeper's dive.
  await page.evaluate(()=>{window.penaltyQA.start('shootout');window.penaltyQA.setScore([true],[]);window.penaltyQA.next();});
  await page.mouse.click(size.width*.75,size.height*.45);await page.waitForFunction(()=>window.penaltyQA.state.phase==='flight');assert(await page.evaluate(()=>!!window.penaltyQA.state.keeperClip));
- await page.click('#btn-sound');assert(await page.locator('#btn-sound').getAttribute('class').then(c=>c.includes('is-off')));
+ await page.click('#btn-sound');assert(await page.locator('#btn-sound').getAttribute('class').then(c=>c.includes('is-off')));assert.equal(await page.evaluate(()=>window.penaltyQA.state.sound.masterGain),0);
  // Rotate and return to menu to verify control layout in landscape.
- if(label==='mobile'){await page.setViewportSize({width:844,height:390});page.on('dialog',d=>d.accept());await page.click('#btn-menu');await page.screenshot({path:'penalty/qa/mobile-landscape-menu.png'});const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false);}
+ if(label==='mobile'){await page.setViewportSize({width:844,height:390});page.on('dialog',d=>d.accept());await page.click('#btn-menu');await page.waitForTimeout(500);await page.screenshot({path:'penalty/qa/mobile-landscape-menu.png'});const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false);}
  reports.push({label,loaded,tint,save:save.result,errors});assert.equal(errors.length,0);await page.close();
 }
 fs.writeFileSync('penalty/qa/results.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports,null,2));await browser.close();})();

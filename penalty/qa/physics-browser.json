@@ -1,0 +1,47 @@
+{
+  "supports": [
+    {
+      "x": -2.5,
+      "y": 0.3,
+      "minimumClearance": 0.005999999999999936,
+      "maxRootY": 0.05324961683656329,
+      "landingFootHeight": 0.13076155302399278,
+      "hipsY": 0.8262500859119077
+    },
+    {
+      "x": -2.5,
+      "y": 2.2,
+      "minimumClearance": 0.005999999999999964,
+      "maxRootY": 0.954297170336143,
+      "landingFootHeight": 0.13076155302399278,
+      "hipsY": 0.8262500859119077
+    },
+    {
+      "x": 2.5,
+      "y": 0.3,
+      "minimumClearance": 0.005999999999999964,
+      "maxRootY": 0.11677876462959232,
+      "landingFootHeight": 0.14081174179550054,
+      "hipsY": 0.8362500870319789
+    },
+    {
+      "x": 2.5,
+      "y": 2.2,
+      "minimumClearance": 0.005999999999999978,
+      "maxRootY": 1.0496416893154432,
+      "landingFootHeight": 0.14031259734740092,
+      "hipsY": 0.8327402382978499
+    },
+    {
+      "x": 0,
+      "y": 2.2,
+      "minimumClearance": 0.013031695852387379,
+      "maxRootY": 0,
+      "landingFootHeight": 0.1258117401153938,
+      "hipsY": 0.8212500853518722
+    }
+  ],
+  "cancelledSwipe": "passed",
+  "cancelledCpuTurn": "passed",
+  "errors": []
+}

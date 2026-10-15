@@ -264,3 +264,15 @@ body:not(.is-playing) .board, body:not(.is-playing) .hint { opacity: 0; pointer-
 .loading-ball {font-size:48px;animation:loading-spin 2s linear infinite}.loading p{font-size:20px;font-weight:800;margin:24px 0 8px}.loading small{color:#a8b7c4}.loading button{margin-top:24px;padding:12px 24px}
 @keyframes loading-spin{to{transform:rotate(360deg)}}
 .replay-skip{position:fixed;right:20px;bottom:max(28px,env(safe-area-inset-bottom));z-index:20;background:#101c2ade;border:1px solid #83909e66;border-radius:24px;color:white;padding:12px 20px;font:700 12px Manrope,sans-serif;letter-spacing:.06em}
+
+/* Match broadcast: keep the player and ball unobstructed. */
+:root{--ink:#f4f7fa;--muted:rgba(232,241,247,.65);--glass:rgba(8,17,26,.74);--glass-strong:rgba(8,17,26,.88);--line:rgba(210,231,244,.15)}
+body{user-select:none;-webkit-user-select:none}
+.board{left:24px;top:80px;transform:none;min-width:244px;padding:12px 16px;border-radius:7px;border-top:2px solid #dfff63;box-shadow:0 8px 32px #0004}
+.sb-heading{display:flex;justify-content:space-between;gap:16px;text-transform:uppercase;letter-spacing:.14em;font-size:9px;font-weight:800;color:#bdcbd6;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #ffffff19}
+.sb-row{grid-template-columns:60px 1fr 24px;gap:8px}.sb-row b{font-size:20px}.sb-dots{gap:5px}.sb-dots i{width:10px;height:10px;border-width:1px}.sb-team{font-size:12px}.sb-team i{width:8px;height:8px}
+.sb-practice{font-size:11px}.sb-practice b{font-size:22px}
+.banner{top:max(170px,23vh);font-family:var(--sans);font-size:clamp(26px,4vw,48px);font-weight:800;letter-spacing:.04em;background:#09131be8;border:1px solid #ffffff26;border-radius:6px;padding:10px 26px;box-shadow:0 8px 40px #0004}
+.hint{font-size:12px;font-weight:500;background:#08111ac9;max-width:520px;bottom:max(20px,env(safe-area-inset-bottom));border-radius:7px}
+@media(max-width:600px){.board{left:12px;top:64px;width:220px;min-width:0;padding:10px 12px}.sb-heading{font-size:8px}.sb-practice b{font-size:20px}.banner{top:182px}.hint{width:calc(100% - 32px);font-size:11px}.replay-skip{bottom:76px;right:16px}}
+@media(max-height:480px) and (orientation:landscape){.board{left:16px;top:62px;padding:8px 12px;width:225px}.banner{top:92px;left:56%;font-size:25px}.hint{bottom:10px;padding:7px 14px}.start{grid-template-columns:1fr 1.15fr;gap:24px;padding:70px 24px 20px}.start h1{font-size:62px}.start .lede{font-size:13px;line-height:1.6}.start .facts{display:none}.start-card{padding:14px;gap:10px}.start-card .field{gap:5px}.mode-btn{padding:10px 12px}.mode-btn b{font-size:13px}.mode-btn small,.start .note{font-size:10px}}

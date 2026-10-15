@@ -22,17 +22,29 @@ with `python3 -m http.server 8765`. No game bundler or build is required.
 - Landscape menu has no horizontal overflow.
 
 `results.json` records model request sizes, kit tint, save outcome and browser errors.
-The character GLB is **1,557,376 bytes**, downloaded once for both characters.
-A cold-cache simulation at **6 Mbps / 80 ms latency** downloaded the model in
-**2.17 seconds**, and the Draco decoder in **0.44 seconds**. Entire page readiness
-was 6.56 seconds on the uncompressed local server;
-that includes the existing Three.js dependency chain and scene initialization.
-This is network emulation on a desktop, not a physical handset measurement.
+The character GLB is **1,002,560 bytes**, downloaded once for both characters.
+External character textures are shared. Local resource timings are not mobile
+network benchmarks; a three-second load is not guaranteed on every connection.
+
+Physics runs at a fixed 120 Hz with gravity, aerodynamic drag, spin-dependent
+Magnus force, turf bounce/friction, rolling resistance and round post contacts.
+Goals require the whole ball to cross the line. A glove or post touch can still
+deflect into the goal. Visible glove/body capsules supply save contacts.
+`physics-results.json` records 81 target trajectories and conservation/contact
+checks. `physics-browser.json` records left/right low/high and central landing
+checks, cancelled swipe handling and cancelled CPU turn handling.
+
+These are practical game approximations, not a professional football simulator.
+Keeper root adaptation and capsule collisions do not model every joint or net
+thread physically. Tests use desktop Chrome and mobile viewport emulation;
+physical handset performance and touch feel still need device testing.
 
 To repeat with Playwright available, start the static server and run:
 
 ```sh
 node penalty/tools/test-game.cjs
+node penalty/tools/test-browser-physics.cjs
+node penalty/tools/test-physics.mjs
 ```
 
 The test uses a localhost-only inspection interface. It is unavailable on public
