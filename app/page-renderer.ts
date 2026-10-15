@@ -10,6 +10,7 @@ const interiorScript = '<script src="/interior-redesign.js?v=34"></script>';
 export function prepareInteriorPage(html: string, pathname: string) {
   if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/chess(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
+  if (/^\/ludo(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/tools\/rubiks-cube\/?$/.test(pathname)) return ensureTracking(html);
   const isFieldGuide = /\bfield-guide-page\b/i.test(html);
   const pageStyles = `${interiorStyles}${isFieldGuide ? fieldGuideStyles : ''}${experienceStyles}${qualityRepairStyles}`;
