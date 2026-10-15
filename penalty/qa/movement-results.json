@@ -1,0 +1,21 @@
+{
+  "approach": {
+    "triggerDisplacement": 0,
+    "distance": 0.0781545898235358,
+    "clipTime": 0.7666666666666664
+  },
+  "celebration": {
+    "maxFrameDisplacement": 0.014062518636913119,
+    "minimumSoleHeight": 0.008932958016428703
+  },
+  "recovery": {
+    "recoveryAtNaturalSpeed": true,
+    "sampleCount": 147,
+    "root": [
+      2.287937230605377,
+      0,
+      0.3499999979006429
+    ]
+  },
+  "errors": []
+}

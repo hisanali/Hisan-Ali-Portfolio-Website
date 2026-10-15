@@ -1,6 +1,6 @@
 import * as T from '../evermile/vendor/three.module.js';
-import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact } from './physics.js?v=4';
-import { buildStadium } from './stadium.js?v=4';
+import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact } from './physics.js?v=5';
+import { buildStadium } from './stadium.js?v=5';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
 import { EffectComposer } from '../evermile/vendor/postprocessing/EffectComposer.js';
 import { RenderPass } from '../evermile/vendor/postprocessing/RenderPass.js';
@@ -243,14 +243,35 @@ class Rig {
     // The original kit atlas supplies its number, stitching, boot and skin detail.
     this.current=null;this.event=null;scene.add(this.root);
   }
-  play(name, speed=1, fade=.16) {
+  play(name, speed=1, fade=.16, anchored=false) {
     const action=this.clips[name];if(!action)return;
     if(this.current===action)return;
-    const previous=this.current;action.enabled=true;action.reset().setEffectiveTimeScale(speed).setEffectiveWeight(1).play();
+    const previous=this.current;
+    this.rootTransition=null;
+    if(anchored&&previous){
+      // Captures have different root origins. Blend an equal and opposite
+      // world offset alongside the bones so the hips do not slide backwards.
+      this.root.updateMatrixWorld(true);
+      const old=this.bone('Hips'),track=action.getClip().tracks.find(t=>t.name==='Hips.position');
+      if(track){const next=this.bones.Hips.parent.localToWorld(new T.Vector3().fromArray(track.values));
+        const offset=old.sub(next);offset.y=0;
+        this.rootTransition={from:this.root.position.clone(),to:this.root.position.clone().add(offset),time:0,duration:Math.max(.001,fade)};
+      }
+    }
+    action.enabled=true;action.reset().setEffectiveTimeScale(speed).setEffectiveWeight(1).play();
     if(previous&&previous!==action)previous.crossFadeTo(action,fade,false);
     this.current=action;this.anim=name;this.event=null;
   }
-  update(dt){this.mixer.update(dt);if(this.event&&this.current.time>=this.event.at){const fn=this.event.fn;this.event=null;fn();}}
+  update(dt){
+    this.root.position.y-=this.groundLift||0;this.groundLift=0;
+    this.mixer.update(dt);
+    if(this.rootTransition){const t=this.rootTransition;t.time+=dt;this.root.position.lerpVectors(t.from,t.to,Math.min(1,t.time/t.duration));if(t.time>=t.duration)this.rootTransition=null;}
+    if(this.kind==='shooter'){
+      this.root.updateMatrixWorld(true);
+      let sole=Infinity;for(const [name,radius]of [['LeftToeBase',.025],['RightToeBase',.025],['LeftFoot',.045],['RightFoot',.045]])sole=Math.min(sole,this.bone(name).y-radius);
+      this.groundLift=Math.max(0,.001-sole);this.root.position.y+=this.groundLift;
+    }
+    if(this.event&&this.current.time>=this.event.at){const fn=this.event.fn;this.event=null;fn();}}
   hand(side){const bone=this.bones[side+'Hand'];return bone.localToWorld(new T.Vector3(0,4,0));}
   bone(name){return this.bones[name].getWorldPosition(new T.Vector3());}
   dispose(){this.mixer.stopAllAction();this.mixer.uncacheRoot(this.model);scene.remove(this.root);this.model.traverse(o=>{if(o.isMesh)o.material.dispose();});this.ownedGeometries.forEach(g=>g.dispose());this.ownedTextures.forEach(t=>t.dispose());}
@@ -292,11 +313,17 @@ let ballState = null, keeperState = null, timeScale = 1, camTarget = null, swipe
 const level = () => LEVELS[settings.level] || LEVELS.normal;
 
 function setupKick(youShoot) {
-  clearTimeout(cpuTimer);animationToken++; replay=null;replayHistory=[];$('replay-skip').hidden=true; youShooting = youShoot; dressTeams(youShoot);
+  clearTimeout(cpuTimer); replay=null;replayHistory=[];$('replay-skip').hidden=true; youShooting = youShoot; dressTeams(youShoot);
   ball.position.set(0, R, SPOT); ball.rotation.set(0, 0, 0);
   keeperState = { x: 0, y: 0, start: 0, from: new T.Vector3(0, 1, 0), to: null, dur: .6, diving: false, t: 0 };
   keeper.root.position.set(0, 0, .35); keeper.root.rotation.set(0, 0, 0);
-  shooter.root.position.set(youShoot ? -.95 : -1.4, 0, SPOT + 3.2); shooter.root.rotation.set(0, Math.PI + (youShoot ? .35 : .45), 0);
+  shooter.root.rotation.set(0,Math.PI,0);
+  // The kick capture already travels from the waiting stance to the ball.
+  // Align its contact once, then begin the idle at that same world origin.
+  shooter.mixer.stopAllAction();shooter.current=null;shooter.play('kick',1,0);shooter.mixer.update(CONTACT);
+  shooter.root.position.set(0,0,0);shooter.root.updateMatrixWorld(true);
+  const toe=shooter.bone('RightToeBase');shooter.root.position.set(-toe.x,0,SPOT-toe.z);
+  shooter.mixer.stopAllAction();shooter.current=null;shooter.play('idle',1,0);shooter.mixer.update(0);
   shooter.root.visible = true;
   ballState = null; timeScale = 1; tapAim = null;
   camTarget = youShoot ? { pos: new T.Vector3(innerWidth<600?-.55:.5, 2.5, SPOT + 8.5), look: new T.Vector3(0, .9, 0) } : { pos: new T.Vector3(1.1, 2.0, -4.3), look: new T.Vector3(-.2, .85, SPOT) };
@@ -325,6 +352,7 @@ function kick(target, flight, curl, byYou) {
 
 function dive(aim, reach) {
   const k=keeperState;if(!k||k.diving)return;
+  const previousAction=keeper.current,previousTime=previousAction?.time||0;
   const incoming=ballState?.v.z<0?ballState:null;
   const prediction=incoming?predictAtPlane(ball.position,incoming.v,incoming.spin,.9):null;
   const bias=prediction?prediction.position.clone().sub(incoming.goalTarget):new T.Vector3();
@@ -336,9 +364,15 @@ function dive(aim, reach) {
   // Calibrate one absolute trajectory from the captured extension. Never drag
   // the entire actor upwards every frame to force its glove onto a target.
   keeper.mixer.stopAllAction();keeper.current=null;keeper.play(clip,1,0);keeper.mixer.update(reachTime);
-  const sample=keeper.hand(dx<0?'Right':'Left');
+  const left=keeper.hand('Left'),right=keeper.hand('Right');
+  k.hand=high?(left.y>right.y?'Left':'Right'):(left.y<right.y?'Left':'Right');
+  const sample=keeper.hand(k.hand);
   k.shiftX=dx-sample.x;k.jump=T.MathUtils.clamp(dy-sample.y,-.12,1.05);
-  keeper.mixer.stopAllAction();keeper.current=null;keeper.play(clip,reachTime/k.dur,0);keeper.mixer.update(0);
+  keeper.mixer.stopAllAction();
+  // Restore the live ready pose after calibration, then blend into the push-off.
+  if(previousAction){previousAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).play();previousAction.time=previousTime;keeper.current=previousAction;keeper.mixer.update(0);}
+  else keeper.current=null;
+  keeper.play(clip,reachTime/k.dur,.09);keeper.mixer.update(0);
 }
 
 function cpuShoot() {
@@ -354,26 +388,10 @@ function cpuShoot() {
 
 // The penalty clip includes its final strides. Sample its boot at the contact
 // marker to place the whole captured motion precisely against the stationary ball.
-let animationToken=0;
 function runUp(then) {
-  const token=++animationToken;
-  shooter.root.rotation.set(0,Math.PI,0);
-  shooter.mixer.stopAllAction();shooter.current=null;
-  shooter.play('kick',1,0);shooter.mixer.update(CONTACT);shooter.root.position.set(0,0,0);shooter.root.updateMatrixWorld(true);
-  const boot=shooter.bones.RightToeBase.getWorldPosition(new T.Vector3());
-  const strikeOrigin=new T.Vector3(-boot.x,0,SPOT-boot.z);
-  shooter.mixer.stopAllAction();shooter.current=null;shooter.play('run',1.25,0);
-  const start=strikeOrigin.clone().add(new T.Vector3(-.18,0,.75));
-  shooter.root.position.copy(start);
-  const t0=performance.now();
-  const step=()=>{
-    if(token!==animationToken||!mode)return;
-    const t=Math.min(1,(performance.now()-t0)/450);shooter.root.position.lerpVectors(start,strikeOrigin,t);
-    if(t<1)requestAnimationFrame(step);else strike(then);
-  };step();
-}
-function strike(then) {
-  shooter.play('kick',1,.08);
+  // Use the continuous approach, plant, strike and follow-through from the
+  // same capture. An unrelated jog inserted here caused a visible hitch.
+  shooter.play('kick',1,.12);
   shooter.event={at:CONTACT,fn:()=>{then?.();}};
 }
 
@@ -436,10 +454,13 @@ function updateReplay(raw){
  if(target>=frames.at(-1).t)endReplay();
 }
 function endReplay(){
+ const live=replay?.live;
+ if(live){restoreRig(shooter,live.s,live.s,0);restoreRig(keeper,live.k,live.k,0);ball.position.copy(live.ball);ball.quaternion.copy(live.q);}
  replay=null;$('replay-skip').hidden=true;phase='celebration';
  const goal=ballState?.result==='goal';
- shooter.play(goal?'celebrate':'disappointed',1,.2);
- if(!goal){keeperState.diving=false;keeper.root.position.set(T.MathUtils.clamp(keeper.root.position.x,-3,3),0,.35);keeper.play('celebrate',1,.18);}
+ shooter.play(goal?'celebrate':'disappointed',1,.25,true);
+ // Keep the dive capture playing through landing and getting back up. It
+ // cannot be replaced by a standing celebration while the keeper is prone.
  after=setTimeout(nextKick,1900);
 }
 $('replay-skip').onclick=endReplay;
@@ -490,15 +511,24 @@ function updateBall(dt) {
 
 function keeperHand() {
   if(!keeper)return new T.Vector3(0,1,.35);
-  return keeper.hand(keeperState?.to?.x<0?'Right':'Left');
+  return keeper.hand(keeperState?.hand||(keeperState?.to?.x<0?'Right':'Left'));
 }
 function updateKeeper(dt,now) {
   const k=keeperState,kp=keeper;if(!k||!kp)return;
   if(k.pending&&simTime>=k.pending.at){const pd=k.pending;k.pending=null;dive(pd.aim,pd.reach);}
   kp.update(dt);
+  if(k.diving&&kp.current){
+    const marker=k.clip==='jump'?.76:k.clip?.endsWith('high')?.88:1.22;
+    if(kp.current.time>=marker)kp.current.setEffectiveTimeScale(1);
+  }
+  if(k.diving&&kp.current.time>=kp.current.getClip().duration-.001){
+    k.diving=false;
+    kp.play(phase==='celebration'&&ballState?.result==='saved'?'celebrate':'ready',1,.3,true);
+    if(kp.rootTransition)kp.rootTransition.to.y=0;
+  }
   if(!k.diving){
     if(phase==='celebration'&&ballState?.result==='saved')return;
-    kp.root.position.set(Math.sin(now*2.2)*.1,0,.35);return;
+    return; // The ready capture supplies its own weight shift; do not slide the root.
   }
   const p=Math.max(0,(simTime-k.start)/k.dur),e=T.MathUtils.smoothstep(Math.min(1,p),0,1);
   const lift=Math.max(0,(p-.2)/.8),arc=Math.max(0,2*lift-lift*lift);
@@ -529,12 +559,17 @@ function updateCamera(dt) {
   if (!camTarget) return;
   const k = 1 - Math.exp(-dt * 3);
   let pos = camTarget.pos.clone(), look = camTarget.look.clone();
-  if(phase==='replay'){pos.set(ball.position.x>0?6.5:-6.5,2.1,5.8);look.set(ball.position.x*.4,1,0);}
+  if(phase==='replay'){pos.copy(replay.cameraPos);look.copy(replay.cameraLook);}
   else if(phase==='celebration'){
     const r=ballState?.result==='goal'?shooter:keeper,focus=r.bones.Head.getWorldPosition(new T.Vector3());
-    pos.copy(r.root.position).add(new T.Vector3(2,1.65,-3.5));look.copy(focus).add(new T.Vector3(0,-.3,0));
+    const goal=ballState?.result==='goal';
+    // A keeper faces the pitch; a camera behind him puts the net and posts
+    // across his recovery. Show both actors from their front instead.
+    pos.copy(focus).add(goal?new T.Vector3(2,.15,-3.5):new T.Vector3(-2.7,.2,4.5));pos.y=Math.max(1.6,pos.y);
+    look.copy(focus).add(new T.Vector3(0,-.3,0));
   }
-  else if (ballState && youShooting && ballState.result !== 'miss') { pos.z = THREE_lerp(camTarget.pos.z, 9.5, Math.min(1, ballState.time * 1.2)); look.lerp(new T.Vector3(ball.position.x * .6, 1.1, ball.position.z), .3); }
+  else if(ballState?.result==='saved'){look.copy(keeper.bone('Spine2'));pos.set(camTarget.pos.x,2.3,9.5);}
+  else if (ballState && youShooting && !ballState.result) { pos.z = THREE_lerp(camTarget.pos.z, 9.5, Math.min(1, ballState.time * 1.2)); look.lerp(new T.Vector3(ball.position.x * .6, 1.1, ball.position.z), .3); }
   camera.position.lerp(pos, k);
   camTarget.cur = camTarget.cur ? camTarget.cur.lerp(look, k) : look; camera.lookAt(camTarget.cur);
 }
@@ -550,7 +585,7 @@ function finishKick(result) {
   banner(youShooting ? text : (result === 'goal' ? 'They scored' : text), good);
   if (mode === 'practice') { streak = result === 'goal' ? streak + 1 : 0; if (streak > best) { best = streak; localStorage.setItem('penalty-best', best); } }
   else (youShooting ? score.you : score.cpu).push(result === 'goal');
-  if(result==='miss'||result==='post')shooter.play('disappointed',1,.25);
+  if(result==='miss'||result==='post')shooter.play('disappointed',1,.25,true);
   hud();
 }
 
@@ -622,7 +657,7 @@ function start(m) {
 $('play-shootout').onclick = () => start('shootout');
 $('play-practice').onclick = () => start('practice');
 $('again').onclick = () => start(mode);
-const toMenu = () => { animationToken++;clearTimeout(after);replay=null;$('replay-skip').hidden=true; mode = null; phase = 'menu'; $('result').hidden = true; $('start').hidden = false; sound.setAmbience(false); setupMenuView(); hud(); };
+const toMenu = () => { clearTimeout(after);replay=null;$('replay-skip').hidden=true; mode = null; phase = 'menu'; $('result').hidden = true; $('start').hidden = false; sound.setAmbience(false); setupMenuView(); hud(); };
 $('to-menu').onclick = toMenu;
 $('btn-menu').onclick = () => { if (mode && phase !== 'over' && !confirm('Leave this match?')) return; toMenu(); };
 $('btn-sound').onclick = () => { settings.sound = !settings.sound; save(); syncSegments();if(settings.sound)sound.loadRecordings(); sound.setAmbience(!!mode); };
@@ -636,11 +671,16 @@ let after = 0,accumulator=0;
 renderer.setAnimationLoop(() => {
   const raw = Math.min(clock.getDelta(), .1), now = performance.now() / 1000, dt = raw * timeScale;
   if(phase==='replay'){updateReplay(raw);updateCamera(raw);stadium.update(now,ballState?.result==='goal',raw);composer.render();return;}
-  accumulator+=dt;while(accumulator>=1/120){const step=1/120;simTime+=step;updateKeeper(step,now);shooter?.update(step);if(ballState)updateBall(step);accumulator-=step;}
+  accumulator+=dt;while(accumulator>=1/120){const step=1/120;simTime+=step;updateKeeper(step,now);shooter?.update(step);
+    if(shooter?.anim==='kick'&&shooter.current.time>=shooter.current.getClip().duration-.001)shooter.play('idle',1,.3,true);
+    if(ballState)updateBall(step);accumulator-=step;}
   updateShotTrail();
   if(shooter&&keeper&&phase==='flight'){
     replayHistory.push(snapshot());while(replayHistory.length>160||replayHistory.length>2&&simTime-replayHistory[0].t>1.4)replayHistory.shift();
-    if(replay?.pending!==undefined){replay.pending-=raw;if(replay.pending<=0&&replayHistory.length>2){replay.frames=replayHistory.filter(f=>f.ball.z<4);if(replay.frames.length<2)replay.frames=replayHistory.slice();replay.elapsed=0;delete replay.pending;phase='replay';shotTrail.visible=false;$('replay-skip').hidden=false;}}
+    if(replay?.pending!==undefined){replay.pending-=raw;if(replay.pending<=0&&replayHistory.length>2){replay.live=snapshot();
+      const focus=keeperState.to||ball.position;
+      replay.cameraPos=new T.Vector3(focus.x>0?-6:6,2,5.5);replay.cameraLook=new T.Vector3(T.MathUtils.clamp(focus.x*.65,-2,2),1,.3);
+      replay.frames=replayHistory.filter(f=>f.ball.z<4);if(replay.frames.length<2)replay.frames=replayHistory.slice();replay.elapsed=0;delete replay.pending;phase='replay';shotTrail.visible=false;$('replay-skip').hidden=false;}}
   }
   nets.forEach(n => n.update(raw));
   adTex.offset.x = (adTex.offset.x + raw * .04) % 1;

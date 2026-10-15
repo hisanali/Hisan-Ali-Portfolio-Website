@@ -44,9 +44,32 @@ To repeat with Playwright available, start the static server and run:
 ```sh
 node penalty/tools/test-game.cjs
 node penalty/tools/test-browser-physics.cjs
+node penalty/tools/test-movement.cjs
 node penalty/tools/test-physics.mjs
 ```
 
 The test uses a localhost-only inspection interface. It is unavailable on public
 hostnames. The test writes fresh PNG captures; the checked-in captures are WebP
 encodings at the same pixel dimensions.
+
+## Movement correction, version 5
+
+The kicker uses the approach, plant, contact and follow-through from one capture.
+The separate procedural jog and its world-position reset were removed. The
+waiting position is calibrated to that capture before the round starts.
+Transitions out of the kick compensate for different captured root origins.
+Sole support prevents the kick and celebration from penetrating the pitch.
+
+The keeper blends out of the live ready stance into the push-off, targets the
+appropriate high/low glove, and returns to the capture's normal playback speed
+after extension. The captured landing and get-up continue after a save. Replays
+restore the live poses before resuming; they do not substitute an upright pose
+for a prone keeper. A fixed replay angle and a keeper-focused save camera keep
+the movement visible.
+
+`movement-results.json` checks approach continuity, boot/ball contact, celebration
+continuity and normal recovery playback. These address specific motion bugs;
+they do not certify natural movement in every scenario or replace visual review.
+
+`movement-demo.mp4` shows a controlled goal and save with the corrected approach,
+replay transitions and recovery. It is a browser capture, not rendered concept art.
