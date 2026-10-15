@@ -69,7 +69,9 @@ The public site has no build or conversion step.
 
 - **Stadium 01 HDRI**, Sergej Majboroda / Poly Haven, CC0.
   https://polyhaven.com/a/stadium_01
-  1K HDR is used for captured sky/stand reflections and environmental lighting.
+  1K Radiance HDR is used for captured sky/stand reflections and environmental
+  lighting. It is stored as `stadium-light.bin` to use the site’s supported binary
+  asset route; the file contents remain Radiance HDR.
 - **Concrete Wall 006**, Poly Haven, CC0.
   https://polyhaven.com/a/concrete_wall_006
   1K color and OpenGL normal maps converted to WebP.

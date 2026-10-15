@@ -1,7 +1,7 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { fittedGloves } from './equipment.js?v=6';
 import { FootContacts, reachBall, solveLimb } from './motion.js?v=6';
-import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=6';
+import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=7';
 import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact, sweepSphereSegment } from './physics.js?v=6';
 import { buildStadium } from './stadium.js?v=6';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';

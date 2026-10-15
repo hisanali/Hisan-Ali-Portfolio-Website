@@ -1,4 +1,4 @@
-# Verification — 16 October 2026, version 6
+# Verification — 16 October 2026, version 7
 
 The game remains static ES modules, with no game build step. Tests use headless
 Google Chrome against `python3 -m http.server 8765`.
@@ -82,3 +82,10 @@ checks; it is unavailable on public hostnames.
 
 Asset sources, licences, exact generation prompts and the offline Blender /
 Meshopt pipeline are documented in [ASSET-CREDITS.md](../ASSET-CREDITS.md).
+
+## Production asset delivery
+
+The shared site route permits `.bin` assets but rejects `.hdr`. The environment
+is therefore stored as `stadium-light.bin` with unchanged Radiance HDR bytes.
+An optional-lighting fallback also keeps the loading screen from blocking play
+if that download fails. Production verification checks the actual public route.

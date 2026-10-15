@@ -5,11 +5,14 @@ import { BokehPass } from './vendor/three-addons/postprocessing/BokehPass.js';
 import { ShaderPass } from './vendor/three-addons/postprocessing/ShaderPass.js';
 
 export function stadiumLighting(renderer,scene){
- return new HDRLoader().loadAsync('./assets/stadium-light.hdr?v=6').then(hdr=>{
+ return new HDRLoader().loadAsync('./assets/stadium-light.bin?v=7').then(hdr=>{
   hdr.mapping=T.EquirectangularReflectionMapping;
   const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(hdr).texture;
   scene.environmentIntensity=.5;scene.background=hdr;scene.backgroundBlurriness=.055;scene.backgroundIntensity=.3;
   scene.backgroundRotation.y=scene.environmentRotation.y=.8;pmrem.dispose();
+ }).catch(()=>{
+  // Lighting is optional. A failed environment download must not prevent play.
+  scene.background=new T.Color('#9facb5');scene.add(new T.HemisphereLight('#c7d9e8','#52603d',.7));
  });
 }
 export function contactShading(scene,camera){
