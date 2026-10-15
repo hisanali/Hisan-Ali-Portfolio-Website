@@ -1,4 +1,6 @@
 import * as T from '../evermile/vendor/three.module.js';
+import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from '../evermile/vendor/utils/SkeletonUtils.js';
 
 /* ---------- Constants (metres, seconds) ---------- */
 const GOAL_W = 7.32, GOAL_H = 2.44, HALF_W = GOAL_W / 2, SPOT = 11, R = .11, POST = .06, G = 9.81, NET_D = 2.1;
@@ -143,27 +145,46 @@ const ball = new T.Mesh(new T.SphereGeometry(R, 48, 32), new T.MeshPhysicalMater
 ball.castShadow = true; scene.add(ball);
 
 /* ---------- People ---------- */
-function person(shirt, shorts, keeper) {
-  const root = new T.Group(), body = new T.Group(); root.add(body);
-  const mat = c => new T.MeshStandardMaterial({ color: c, roughness: .75 });
-  const skin = mat('#b27a55'), shirtM = mat(shirt), shortM = mat(shorts), sockM = mat(keeper ? '#222' : shirt), shoe = mat('#111');
-  const part = (geo, m, x, y, z, parent = body) => { const p = new T.Mesh(geo, m); p.position.set(x, y, z); p.castShadow = true; parent.add(p); return p; };
-  const pivot = (x, y, z, parent = body) => { const p = new T.Group(); p.position.set(x, y, z); parent.add(p); return p; };
-  part(new T.CapsuleGeometry(.19, .42, 6, 16), shirtM, 0, 1.28, 0).scale.set(1.08, 1, .72);
-  part(new T.CapsuleGeometry(.16, .12, 6, 16), shortM, 0, .98, 0).scale.set(1.15, 1, .8);
-  const head = pivot(0, 1.72, 0); part(new T.SphereGeometry(.115, 24, 16), skin, 0, 0, 0, head); part(new T.SphereGeometry(.118, 24, 16, 0, Math.PI * 2, 0, 1.3), mat('#1a120c'), 0, .015, -.01, head);
-  part(new T.CylinderGeometry(.05, .055, .1, 12), skin, 0, 1.6, 0);
-  const arms = [-1, 1].map(s => { const a = pivot(s * .27, 1.5, 0); part(new T.CapsuleGeometry(.055, .28, 4, 10), shirtM, 0, -.17, 0, a); const fore = pivot(0, -.34, 0, a); part(new T.CapsuleGeometry(.048, .26, 4, 10), keeper ? shirtM : skin, 0, -.15, 0, fore); part(new T.SphereGeometry(keeper ? .085 : .05, 14, 10), keeper ? mat('#f2f2f2') : skin, 0, -.32, 0, fore); a.rotation.z = s * .12; return { a, fore }; });
-  const legs = [-1, 1].map(s => { const l = pivot(s * .11, .95, 0); part(new T.CapsuleGeometry(.075, .34, 4, 10), skin, 0, -.22, 0, l); const shin = pivot(0, -.44, 0, l); part(new T.CapsuleGeometry(.065, .32, 4, 10), sockM, 0, -.2, 0, shin); part(new T.BoxGeometry(.1, .07, .26), shoe, 0, -.43, .05, shin); return { l, shin }; });
-  scene.add(root);
-  return { root, body, head, arms, legs };
+// Realistic rigged humans (MakeHuman CC0 bodies from Evermile), recoloured into football kits and posed bone by bone.
+const BODY = { shooter: 'pedestrian-0', keeper: 'pedestrian-0' }, gltfs = {};
+const bodiesReady = Promise.all(Object.entries(BODY).map(([k, f]) => new Promise((res, rej) => new GLTFLoader().load(`../evermile/assets/models/${f}.glb?v=1`, g => { gltfs[k] = g; res(); }, undefined, rej))));
+class Rig {
+  constructor(kind, shirt, trousers, gloves) {
+    const g = gltfs[kind], model = cloneSkinned(g.scene); this.root = new T.Group(); this.root.add(model);
+    const box = new T.Box3().setFromObject(model), h = box.max.y - box.min.y, k = 1.82 / h; model.scale.setScalar(k); model.position.y = -box.min.y * k; this.k = k; this.model = model;
+    model.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false;
+      o.material = (Array.isArray(o.material) ? o.material : [o.material]).map(m => { const c = m.clone(); const n = m.name;
+        if (n.startsWith('Cloth_Shirt')) { c.color.set(shirt); c.roughness = .62; c.map = null; }
+        else if (n.startsWith('Cloth_Trousers')) { c.color.set(trousers); c.roughness = .7; c.map = null; }
+        else if (n.startsWith('Leather_Shoes')) { c.color.set('#111'); c.roughness = .35; }
+        else if (n.startsWith('Hair')) c.visible = false;
+        return c; });
+      if (o.material.length === 1) o.material = o.material[0]; });
+    this.bones = {}; model.traverse(o => { if (o.isBone) this.bones[o.name] = o; });
+    this.rest = Object.fromEntries(Object.entries(this.bones).map(([n, b]) => [n, b.quaternion.clone()]));
+    this.restHips = this.bones.Hips.position.clone();
+    this.mixer = new T.AnimationMixer(model); this.clips = Object.fromEntries(g.animations.map(a => [a.name, this.mixer.clipAction(a)]));
+    if (gloves) for (const hand of ['lHand', 'rHand']) { const m = new T.Mesh(new T.SphereGeometry(.07 / k, 16, 12), new T.MeshStandardMaterial({ color: gloves, roughness: .5 })); m.scale.set(1, 1.35, .7); m.position.y = .06 / k; m.castShadow = true; this.bones[hand].add(m); }
+    this.anim = null; scene.add(this.root);
+  }
+  play(name, speed = 1) { this.anim = name; Object.values(this.clips).forEach(a => a.stop()); const a = this.clips[name]; a.reset().play(); a.timeScale = speed; }
+  // Sets bones to rest pose plus Euler offsets (radians); stops clip playback.
+  pose(offsets, hipsDrop = 0) {
+    if (this.anim) { Object.values(this.clips).forEach(a => a.stop()); this.anim = null; }
+    for (const [n, b] of Object.entries(this.bones)) { b.quaternion.copy(this.rest[n]); const o = offsets[n]; if (o) b.quaternion.multiply(new T.Quaternion().setFromEuler(new T.Euler(o[0] || 0, o[1] || 0, o[2] || 0))); }
+    this.bones.Hips.position.copy(this.restHips); this.bones.Hips.position.y -= hipsDrop / this.k;
+  }
+  update(dt) { if (this.anim) this.mixer.update(dt); }
+  dispose() { scene.remove(this.root); }
 }
+const mix = (a, b, t) => a + (b - a) * t;
 let keeper, shooter;
 function dressTeams(youShoot) {
-  if (keeper) scene.remove(keeper.root); if (shooter) scene.remove(shooter.root);
+  keeper?.dispose(); shooter?.dispose();
   const [you, youShorts] = KITS[settings.kit] || KITS.red, cpu = settings.kit === 'white' ? ['#1d1d1d', '#1d1d1d'] : ['#f3f3f3', '#1d1d1d'];
-  keeper = person(youShoot ? '#f2c230' : '#2bd17e', '#1d1d1d', true);
-  shooter = person(youShoot ? you : cpu[0], youShoot ? youShorts : cpu[1], false);
+  keeper = new Rig('keeper', youShoot ? '#f2c230' : '#22c46e', '#1b1b1b', '#f4f4f4');
+  shooter = new Rig('shooter', youShoot ? you : cpu[0], '#141414');
+  shooter.play('Idle');
 }
 
 /* ---------- Sound ---------- */
@@ -189,11 +210,11 @@ function setupKick(youShoot) {
   youShooting = youShoot; dressTeams(youShoot);
   ball.position.set(0, R, SPOT); ball.rotation.set(0, 0, 0);
   keeperState = { x: 0, y: 0, start: 0, from: new T.Vector3(0, 1, 0), to: null, dur: .6, diving: false, t: 0 };
-  keeper.root.position.set(0, 0, .35); keeper.root.rotation.set(0, 0, 0); keeper.body.rotation.set(0, 0, 0);
+  keeper.root.position.set(0, 0, .35); keeper.root.rotation.set(0, 0, 0);
   shooter.root.position.set(youShoot ? -.95 : -1.4, 0, SPOT + (youShoot ? 1.0 : 2.6)); shooter.root.rotation.set(0, Math.PI + (youShoot ? .35 : .45), 0);
   shooter.root.visible = true;
   ballState = null; timeScale = 1; tapAim = null;
-  camTarget = youShoot ? { pos: new T.Vector3(.5, 2.35, SPOT + 7), look: new T.Vector3(0, .9, 0) } : { pos: new T.Vector3(1.25, 2.05, -3.2), look: new T.Vector3(-.3, .9, SPOT) };
+  camTarget = youShoot ? { pos: new T.Vector3(.5, 2.35, SPOT + 7), look: new T.Vector3(0, .9, 0) } : { pos: new T.Vector3(1.1, 2.0, -4.3), look: new T.Vector3(-.2, .85, SPOT) };
   if (mode) { camera.position.copy(camTarget.pos); camTarget.cur = camTarget.look.clone(); camera.lookAt(camTarget.cur); }
   phase = youShoot ? 'aim' : 'cpu-runup';
   if (!youShoot) setTimeout(() => cpuShoot(), 1600);
@@ -207,7 +228,7 @@ function kick(target, flight, curl, byYou) {
   const v = new T.Vector3((target.x - p0.x - .5 * curl * t * t) / t, (target.y - p0.y + .5 * G * t * t) / t, dz / t);
   ballState = { v, curl, spin: new T.Vector3(-v.z * 3, curl * 2, 0), time: 0, crossed: false, result: null, byYou, done: false, rest: 0 };
   sound.kick(); phase = 'flight';
-  if (byYou) { const leg = shooter.legs[1]; leg.l.rotation.x = -1.2; setTimeout(() => { leg.l.rotation.x = .7; leg.shin.rotation.x = .1; }, 70); }
+  if (byYou) strike();
   // Keeper reaction
   if (byYou) {
     const L = level(), guessRight = Math.random() < L.save, side = Math.random() < .5 ? -1 : 1;
@@ -235,18 +256,29 @@ function cpuShoot() {
   });
 }
 
+// Run-up with the walk cycle sped up to a jog, then a real striking motion.
 function runUp(then) {
-  const start = shooter.root.position.clone(), end = new T.Vector3(-.35, 0, SPOT + .45), t0 = performance.now(), dur = 900;
-  shooter.root.rotation.y = Math.atan2(end.x - start.x, end.z - start.z);
+  const start = shooter.root.position.clone(), end = new T.Vector3(-.55, 0, SPOT + .55), t0 = performance.now(), dur = 1100;
+  shooter.root.rotation.y = Math.atan2(end.x - start.x, end.z - start.z); shooter.play('Walk', 2.1);
+  const step = () => {
+    const t = Math.min(1, (performance.now() - t0) / dur); shooter.root.position.lerpVectors(start, end, t);
+    if (t < 1) requestAnimationFrame(step); else { shooter.root.rotation.y = Math.PI + .3; strike(then); }
+  };
+  step();
+}
+function strike(then) {
+  const t0 = performance.now(), dur = 520; let fired = false;
   const step = () => {
     const t = Math.min(1, (performance.now() - t0) / dur);
-    shooter.root.position.lerpVectors(start, end, t);
-    const swing = Math.sin(t * Math.PI * 6);
-    shooter.legs[0].l.rotation.x = swing * .7; shooter.legs[1].l.rotation.x = -swing * .7; shooter.arms[0].a.rotation.x = -swing * .5; shooter.arms[1].a.rotation.x = swing * .5;
-    if (t < 1) requestAnimationFrame(step);
-    else { shooter.legs[1].l.rotation.x = -1.3; shooter.legs[1].shin.rotation.x = .2; setTimeout(() => { shooter.legs[1].l.rotation.x = .6; }, 60); then(); }
+    const back = t < .4 ? t / .4 : 1 - (t - .4) / .6, through = t < .4 ? 0 : Math.min(1, (t - .4) / .25);
+    shooter.pose({
+      rThigh: [mix(.9 * back, -1.25, through), 0, .05], rShin: [mix(1.5 * back, .15, through), 0, 0], rFoot: [.4, 0, 0],
+      lThigh: [-.25, 0, -.08], lShin: [.35, 0, 0], Chest: [mix(.15, -.25, through), 0, 0], lArm: [0, 0, -1.0], rArm: [0, 0, .55]
+    }, .05);
+    if (!fired && t >= .45) { fired = true; then?.(); }
+    if (t < 1) requestAnimationFrame(step); else setTimeout(() => shooter.play('Idle'), 500);
   };
-  shooter.root.rotation.y = Math.PI + Math.atan2(start.x - end.x, start.z - end.z); step();
+  step();
 }
 
 /* ---------- Swipe input ---------- */
@@ -340,23 +372,28 @@ function keeperHand() {
 }
 
 function updateKeeper(dt, now) {
-  const k = keeperState, kp = keeper; if (!k) return;
+  const k = keeperState, kp = keeper; if (!k || !kp) return;
   if (k.pending && simTime >= k.pending.at) { const pd = k.pending; k.pending = null; dive(pd.aim, pd.reach); }
   if (!k.diving) {
-    const sway = Math.sin(now * 2.2) * .25; kp.root.position.x = sway; k.from.set(sway, 1.1, 0);
-    kp.body.position.y = -.08 + Math.sin(now * 4.4) * .02; kp.arms.forEach((a, i) => { a.a.rotation.z = (i ? 1 : -1) * .55; a.fore.rotation.z = (i ? 1 : -1) * .2; });
-    kp.legs.forEach((l, i) => { l.l.rotation.x = -.25; l.shin.rotation.x = .45; l.l.rotation.z = (i ? -1 : 1) * .12; });
+    const sway = Math.sin(now * 2.2) * .22, bob = Math.sin(now * 4.4) * .03; kp.root.position.set(sway, 0, .35); kp.root.rotation.set(0, 0, 0); k.from.set(sway, 1.1, 0);
+    kp.pose({ lThigh: [-.55, 0, -.22], rThigh: [-.55, 0, .22], lShin: [1.05, 0, 0], rShin: [1.05, 0, 0], lFoot: [-.45, 0, 0], rFoot: [-.45, 0, 0],
+      Chest: [.32, 0, 0], lArm: [-.35, 0, -.95], rArm: [-.35, 0, .95], lForearm: [-.5, 0, 0], rForearm: [-.5, 0, 0] }, .2 + bob);
     return;
   }
   const p = Math.min(1, (simTime - k.start) / k.dur), e = 1 - Math.pow(1 - p, 2.2), hand = keeperHand();
-  const side = Math.sign(k.to.x) || 0, highness = Math.min(1, k.to.y / 2.2), lateral = Math.abs(k.to.x);
-  const roll = side * Math.min(1.45, lateral / 2.4) * (1.2 - highness * .35) * e;
-  kp.root.position.x = k.from.x + (hand.x - k.from.x) * (lateral > .6 ? .55 : .2) * 1;
-  kp.root.position.y = Math.max(0, Math.sin(Math.min(1, p * 1.2) * Math.PI) * (.25 + highness * .6) - (lateral > 1.2 ? (1 - highness) * e * .35 : 0));
+  const side = Math.sign(k.to.x) || 0, high = Math.min(1, k.to.y / 2.2), lateral = Math.abs(k.to.x);
+  const roll = side * Math.min(1.35, lateral / 2.3) * (1.15 - high * .4) * e;
+  kp.root.position.x = k.from.x + (hand.x - k.from.x) * (lateral > .6 ? .62 : .25);
+  kp.root.position.y = Math.max(0, Math.sin(Math.min(1, p * 1.15) * Math.PI) * (.2 + high * .55) + (lateral > 1 ? .25 * e : 0));
   kp.root.rotation.z = -roll;
-  kp.body.position.y = 0;
-  kp.arms.forEach((a, i) => { const s = i ? 1 : -1, reachUp = side === 0 ? 3 : (s === side ? 2.9 : 2.4); a.a.rotation.z = s * (.55 + (reachUp - .55) * e); a.fore.rotation.z = 0; });
-  kp.legs.forEach((l, i) => { l.l.rotation.x = 0; l.shin.rotation.x = .1; l.l.rotation.z = (i ? -1 : 1) * (.12 + e * .25); });
+  const up = side === 0 ? 2.7 : 2.85, lead = side >= 0 ? 'l' : 'r';
+  // Arms stretch overhead towards the ball; the trailing leg tucks, the leading leg extends.
+  kp.pose({
+    lArm: [-.2 * (1 - e), 0, -mix(.95, up, e)], rArm: [-.2 * (1 - e), 0, mix(.95, up, e)], lForearm: [0, 0, 0], rForearm: [0, 0, 0],
+    Chest: [mix(.32, .05, e), 0, -side * .45 * e],
+    lThigh: [mix(-.55, lead === 'l' ? -.1 : -.9, e), 0, mix(-.22, -.5, e)], rThigh: [mix(-.55, lead === 'r' ? -.1 : -.9, e), 0, mix(.22, .5, e)],
+    lShin: [mix(1.05, lead === 'l' ? .15 : 1.3, e), 0, 0], rShin: [mix(1.05, lead === 'r' ? .15 : 1.3, e), 0, 0]
+  }, mix(.2, 0, e));
 }
 
 function updateCamera(dt) {
@@ -441,6 +478,7 @@ function syncSegments() {
 }
 document.querySelectorAll('.seg[data-setting]').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button[data-value]'); if (!b) return; settings[seg.dataset.setting] = b.dataset.value; save(); syncSegments(); }));
 function start(m) {
+  if (!keeper) return;
   sound.ctx(); sound.ambience(); sound.setAmbience(true); sound.whistle();
   mode = m; score = { you: [], cpu: [] }; streak = 0; $('start').hidden = true; $('result').hidden = true; setupKick(true);
 }
@@ -462,16 +500,17 @@ renderer.setAnimationLoop(() => {
   const raw = Math.min(clock.getDelta(), .05), now = performance.now() / 1000, dt = raw * timeScale;
   simTime += dt;
   if (ballState) { const sub = 4; for (let i = 0; i < sub; i++) updateBall(dt / sub); }
-  updateKeeper(dt, now);
+  updateKeeper(dt, now); shooter?.update(raw);
   nets.forEach(n => n.update(raw));
   adTex.offset.x = (adTex.offset.x + raw * .04) % 1;
   effects = effects.filter(f => { f.life += raw; f.update(raw); if (f.life > f.max) { f.dispose(); return false; } return true; });
-  if (phase === 'menu') { const a = now * .12; camTarget.pos.set(Math.sin(a) * 9, 2.8, SPOT + Math.cos(a) * 6); }
+  if (phase === 'menu' && camTarget) { const a = now * .12; camTarget.pos.set(Math.sin(a) * 9, 2.8, SPOT + Math.cos(a) * 6); }
   updateCamera(raw);
   if (ballState?.done && phase === 'flight') { phase = 'between'; after = setTimeout(nextKick, 300); }
   renderer.render(scene, camera);
 });
 
-syncSegments(); setupMenuView(); hud();
+syncSegments(); hud();
+bodiesReady.then(() => { setupMenuView(); document.body.classList.add('is-loaded'); }).catch(() => toast('Could not load the players. Please refresh.'));
 camera.position.set(8, 3, SPOT + 6);
 setTimeout(() => document.body.classList.add('is-ready'), 50);
