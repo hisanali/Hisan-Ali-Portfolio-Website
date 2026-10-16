@@ -229,22 +229,22 @@ export class ChessScene {
     this.selected = plane(1, 0xdfff63, .5, squareTex); this.hover = plane(1, 0xffffff, .16);
     this.hintFrom = plane(1, 0x6ab8ff, .55, squareTex); this.hintTo = plane(1, 0x6ab8ff, .55, squareTex);
     this.checkGlow = plane(1.9, 0xff3b2f, .9, soft);
-    this.dotGeo = new T.CircleGeometry(.15, 32); this.ringGeo = new T.RingGeometry(.36, .45, 48);
-    this.dotMat = new T.MeshBasicMaterial({ color: 0x0f1a10, transparent: true, opacity: .38, depthWrite: false });
-    this.ringMat = new T.MeshBasicMaterial({ color: 0x0f1a10, transparent: true, opacity: .42, depthWrite: false });
-    this.dots = [];
+    this.legalGeo = new T.PlaneGeometry(1, 1);
+    this.legalMat = new T.MeshBasicMaterial({ color: 0xdfff63, map: squareTex, transparent: true, opacity: .58, depthWrite: false, toneMapped: false });
+    this.captureMat = new T.MeshBasicMaterial({ color: 0xff795e, map: squareTex, transparent: true, opacity: .64, depthWrite: false, toneMapped: false });
+    this.legalMarkers = [];
   }
 
   placeMark(mesh, sq, y = .006) { if (sq < 0 || sq == null) { mesh.visible = false; return; } const p = squareToWorld(sq); mesh.position.set(p.x, y, p.z); mesh.visible = true; }
 
   showLegal(moves) {
-    this.dots.forEach(d => this.marks.remove(d)); this.dots = [];
+    this.legalMarkers.forEach(d => this.marks.remove(d)); this.legalMarkers = [];
     const seen = new Set();
     for (const m of moves) {
       if (seen.has(m.to)) continue; seen.add(m.to);
-      const dot = new T.Mesh(m.captured ? this.ringGeo : this.dotGeo, m.captured ? this.ringMat : this.dotMat);
-      dot.rotation.x = -Math.PI / 2; const p = squareToWorld(m.to); dot.position.set(p.x, .008, p.z); dot.renderOrder = 3; dot.scale.setScalar(.01);
-      dot.userData.born = performance.now(); this.marks.add(dot); this.dots.push(dot);
+      const dot = new T.Mesh(this.legalGeo, m.captured ? this.captureMat : this.legalMat);
+      dot.rotation.x = -Math.PI / 2; const p = squareToWorld(m.to); dot.position.set(p.x, .008, p.z); dot.renderOrder = 3;
+      this.marks.add(dot); this.legalMarkers.push(dot);
     }
   }
 
@@ -412,7 +412,6 @@ export class ChessScene {
       const target = mesh.userData.lift || 0, cur = mesh.userData.liftNow || 0, next = cur + (target - cur) * (1 - Math.exp(-dt * 14));
       if (Math.abs(next - cur) > 1e-4 || target) { mesh.position.y += next - cur; mesh.userData.liftNow = next; }
     }
-    for (const dot of this.dots) { const t = Math.min(1, (now - dot.userData.born) / 220); dot.scale.setScalar(Math.max(.01, easeOutBack(t))); }
     if (this.checkGlow.visible) { const s = 1 + Math.sin(time * 5) * .12; this.checkGlow.scale.setScalar(s); this.checkGlow.material.opacity = .65 + Math.sin(time * 5) * .25; }
     if (this.selected.visible) this.selected.material.opacity = .42 + Math.sin(time * 4) * .12;
     if (this.cameraTween) {
