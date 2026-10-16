@@ -22,13 +22,9 @@ export function installPresentation({T,scene,camera,ball,mobile,canvasTex,LEN,HX
   const torso=new T.Mesh(new T.CapsuleGeometry(.2,.43,3,6),m);torso.position.y=1.15;root.add(torso);
   const head=new T.Mesh(new T.SphereGeometry(.13,8,6),new T.MeshStandardMaterial({color:0x9d7254}));head.position.y=1.68;root.add(head);
   for(const side of [-1,1]){const leg=new T.Mesh(new T.CylinderGeometry(.075,.055,.74,6),dark);leg.position.set(side*.12,.43,0);root.add(leg);const arm=new T.Mesh(new T.CylinderGeometry(.06,.05,.53,6),m);arm.position.set(side*.28,1.1,0);root.add(arm);}
-  root.position.set(x,0,z);scene.add(root);if(linesman){const f=new T.Mesh(new T.PlaneGeometry(.28,.22),clothMat);f.position.set(.4,.8,0);root.add(f);}return root;
+  root.position.set(x,0,z);root.visible=false;scene.add(root);if(linesman){const f=new T.Mesh(new T.PlaneGeometry(.28,.22),clothMat);f.position.set(.4,.8,0);root.add(f);}return root;
  }
  officials.push(person(-4,LEN*.45,0xe2d530),person(-HX-1,LEN*.3,0xe2d530,true),person(HX+1,LEN*.7,0xe2d530,true));
- for(const x of [-HX-5,HX+5])for(const z of [LEN*.2,LEN*.8]){
-  person(x,z,0x596877);const cam=new T.Mesh(new T.BoxGeometry(.35,.3,.6),new T.MeshStandardMaterial({color:0x1a1d23}));cam.position.set(x,1.45,z+.4);scene.add(cam);
-  for(const dx of [-.2,.2]){const tripod=new T.Mesh(new T.CylinderGeometry(.02,.02,1.3,5),poleMat);tripod.position.set(x+dx,.65,z+.4);tripod.rotation.z=dx;scene.add(tripod);}
- }
  const targetPos=new T.Vector3(),targetLook=new T.Vector3();
  function snapshot(players,B){return {ball:B.p.toArray(),rotation:ball.quaternion.toArray(),players:players.map(p=>({pos:p.root.position.toArray(),rot:p.root.quaternion.toArray(),bones:Object.values(p.bones).map(b=>b.quaternion.toArray())}))};}
  function apply(frame,players){if(!frame)return;ball.position.fromArray(frame.ball);ball.quaternion.fromArray(frame.rotation);players.forEach((p,i)=>{const f=frame.players[i];if(!f)return;p.root.position.fromArray(f.pos);p.root.quaternion.fromArray(f.rot);Object.values(p.bones).forEach((b,j)=>b.quaternion.fromArray(f.bones[j]));p.root.updateMatrixWorld(true);});}

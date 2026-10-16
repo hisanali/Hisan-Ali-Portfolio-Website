@@ -4,9 +4,9 @@ import { ShaderPass } from '../penalty/vendor/three-addons/postprocessing/Shader
 // Neutral photographic response: retain skin/grass colour instead of the
 // previous saturated S-curve. Exposure and material lighting happen in HDR.
 export function naturalGrade(){return new ShaderPass({uniforms:{tDiffuse:{value:null},time:{value:0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`uniform sampler2D tDiffuse;uniform float time;varying vec2 vUv;
-void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,.98);c=(c-.5)*1.035+.5;vec2 p=vUv-.5;c*=1.-.08*dot(p,p);gl_FragColor=vec4(clamp(c,0.,1.),1.);}`});}
+void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,1.18);c=c*c*(3.-2.*c)*.32+c*.68;c*=mix(vec3(.98,1.,1.03),vec3(1.04,1.02,.97),smoothstep(.25,.85,l));vec2 p=vUv-.5;c*=1.-.14*dot(p,p);gl_FragColor=vec4(clamp(c,0.,1.),1.);}`});}
 export function matchOptics(scene,camera,mobile){
- const ao=contactShading(scene,camera);ao.kernelRadius=.32;ao.enabled=!mobile;
+ const ao=contactShading(scene,camera);ao.kernelRadius=.32;ao.enabled=false; // screen-space AO shimmered as the camera tracked play
  const lens=broadcastLens(scene,camera);lens.pass.enabled=false;
  return {ao,lens,update(state,remaining,ball,scorer){
   const closeup=state==='goal';lens.pass.enabled=closeup&&!mobile;

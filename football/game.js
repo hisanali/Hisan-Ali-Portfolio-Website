@@ -8,12 +8,12 @@ import { OutputPass } from '../evermile/vendor/postprocessing/OutputPass.js';
 import { clone as cloneSkinned } from '../evermile/vendor/utils/SkeletonUtils.js';
 import { MeshoptDecoder } from '../penalty/vendor/meshopt_decoder.module.js';
 import { HDRLoader } from '../penalty/vendor/three-addons/loaders/HDRLoader.js';
-import { naturalGrade, matchOptics, goalCords } from './quality.js?v=9';
+import { naturalGrade, matchOptics, goalCords } from './quality.js?v=10';
 import { buildStadium } from '../penalty/stadium.js?v=9';
 import { FootContacts, solveLimb, reachBall } from '../penalty/motion.js?v=9';
 import { advance, launchVelocity, groundContact, sweepSphereSegment, reflectContact } from '../penalty/physics.js?v=9';
 import { createMatchBall } from './ball.js?v=9';
-import { installPresentation } from './presentation.js?v=9';
+import { installPresentation } from './presentation.js?v=10';
 import { fittedGloves } from '../penalty/equipment.js?v=9';
 
 /* ---------- Pitch geometry (metres). Your team attacks towards +z. ---------- */
@@ -31,7 +31,7 @@ const canvas = $('scene');
 const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });renderer.info.autoReset=false;
 const mobile = matchMedia('(pointer: coarse)').matches || innerWidth < 800;
 renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.15 : 1.5)); renderer.outputColorSpace = T.SRGBColorSpace;
-renderer.toneMapping = T.AgXToneMapping; renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08; renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
 const scene = new T.Scene(); scene.background = new T.Color('#9fb4c2'); scene.fog = new T.Fog('#9fb4c2', 120, 320);
 const camera = new T.PerspectiveCamera(40, 1, .5, 600); camera.layers.enable(2);
 const composer = new EffectComposer(renderer, new T.WebGLRenderTarget(1, 1, { type: T.HalfFloatType, samples: mobile ? 0 : 4 }));
@@ -42,7 +42,7 @@ const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v
   scene.environment = pm.fromEquirectangular(hdr).texture; scene.environmentIntensity = .42; scene.environmentRotation.y = .8; hdr.dispose(); pm.dispose();
 }).catch(() => scene.add(new T.HemisphereLight('#c7d9e8', '#52603d', .8)));
 scene.add(new T.HemisphereLight('#d5e2eb', '#566044', .25));
-const sun = new T.DirectionalLight('#fff5e6', 2.8); sun.position.set(-30, 45, CZ + 20); sun.target.position.set(0, 0, CZ); sun.castShadow = true;
+const sun = new T.DirectionalLight('#fff3dd', 3.3); sun.position.set(-30, 45, CZ + 20); sun.target.position.set(0, 0, CZ); sun.castShadow = true;
 Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 50, bottom: -50, near: 1, far: 160 }); sun.shadow.mapSize.set(mobile ? 2048 : 4096, mobile ? 2048 : 4096); sun.shadow.bias = -.0002; sun.shadow.normalBias = .012;sun.shadow.radius=2;
 scene.add(sun, sun.target);
 
@@ -97,7 +97,8 @@ const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); 
 const stadium = buildStadium(scene, asset('crowd-fans'), { concrete: asset('concrete-color', true, [48, 1]), normal: asset('concrete-normal', false, [48, 1]) });
 
 /* ---------- Ball ---------- */
-const ball=createMatchBall(R,canvasTex);scene.add(ball);
+const ball=createMatchBall(R,canvasTex);ball.scale.setScalar(1.45);scene.add(ball); // drawn larger so it reads clearly from the broadcast camera
+const ballShadow=new T.Mesh(new T.CircleGeometry(.3,24),new T.MeshBasicMaterial({color:'#000',transparent:true,opacity:.42,depthWrite:false}));ballShadow.rotation.x=-Math.PI/2;ballShadow.renderOrder=3;scene.add(ballShadow);
 const B = { p: ball.position, v: new T.Vector3(), owner: null, lastTouch: null, kicker: null, kickTime: 0, shot: null, spin:new T.Vector3() };
 
 /* ---------- Footballers ---------- */
@@ -634,7 +635,7 @@ function loop() {
   for (const p of all) p.update(paused ? 0 : dt);
   B.p.y = Math.max(B.p.y, R); updateCamera(dt); stadium.update(performance.now() / 1000, state === 'goal' && B.lastTouch?.team === user, dt);
   optics.update(state,restartT,ball,B.lastTouch);grade.uniforms.time.value = performance.now() / 1000; if ((hudT -= dt) <= 0) { hud(); hudT = .1; }
-  presentation.update(dt,all,B,state); renderer.shadowMap.needsUpdate=true; renderer.info.reset();composer.render();
+  ballShadow.position.set(ball.position.x+.06,.012,ball.position.z-.04);ballShadow.scale.setScalar(Math.max(.4,1-ball.position.y*.25));ballShadow.material.opacity=.42*Math.max(.15,1-ball.position.y*.3);presentation.update(dt,all,B,state); renderer.shadowMap.needsUpdate=true; renderer.info.reset();composer.render();
 }
 if (['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('debug')) window.fb = { get input(){return {...input,shootDown,passDown,shootHold,passHold};}, get players(){return all;}, get ball(){return B;}, get state(){return state;}, get camera(){return camera;}, action, pass, shoot, tackle, give, restartWith, foulRestart, setControlled, startMatch, goal:()=>goalScored(user), penalty:()=>startPenalty(user), get renderer(){return renderer;}, sim(seconds) { for (let i = 0; i < seconds * 60; i++) step(1 / 60); for (const p of all) p.update(0); hud(); return { state, score: teams.map(t => t.score), time: matchTime.toFixed(1), owner: B.owner ? (B.owner.team === user ? 'user' : 'cpu') + B.owner.index : null, ball: B.p.toArray().map(v => +v.toFixed(1)) }; } };
 syncSegments();

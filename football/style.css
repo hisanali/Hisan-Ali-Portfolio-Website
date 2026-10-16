@@ -34,7 +34,7 @@ body.is-playing .phase:not(:empty) { opacity: 1; }
 /* Compact match messages leave the ball and goal visible. */
 .banner,.banner.is-event{position:fixed;z-index:12;left:50%;top:82px;max-width:min(420px,85vw);transform:translate(-50%,-8px);padding:9px 18px;border-radius:8px;border-left:3px solid #efd35a;background:#0c1b25e8;font:800 17px/1.3 var(--sans);letter-spacing:.02em;white-space:normal;text-align:center;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;text-shadow:none}
 .banner.is-on{opacity:1;transform:translate(-50%,0)}.banner.is-good{border-color:var(--lime);color:var(--lime)}.banner.is-bad{border-color:#ff8a7a;color:#ff8a7a}
-#radar{position:fixed;z-index:9;bottom:72px;left:50%;transform:translateX(-50%);width:112px;height:73px;border-radius:5px;opacity:0;pointer-events:none}body.is-playing #radar{opacity:.8}
+#radar{position:fixed;z-index:9;bottom:56px;left:24px;width:112px;height:73px;border-radius:5px;opacity:0;pointer-events:none}body.is-playing #radar{opacity:.8}
 #technique{position:fixed;z-index:11;right:24px;bottom:250px;min-height:36px;border:1px solid #ffffff50;border-radius:20px;padding:8px 14px;background:#102330bc;color:#fff;font:800 10px var(--sans);letter-spacing:.1em;display:none}body.is-playing #technique{display:block}
 #replay-label{position:fixed;z-index:12;top:62px;left:50%;transform:translateX(-50%);max-width:85vw;background:#0a1a23d9;border-left:3px solid var(--lime);padding:6px 12px;font-size:10px;letter-spacing:.1em;font-weight:800;color:#fff;text-align:center}
 #player-info{display:none;position:fixed;left:24px;bottom:22px;z-index:10;font:700 10px var(--sans);letter-spacing:.06em;color:#fff;text-shadow:0 1px 4px #000}body.is-playing #player-info{display:block}
