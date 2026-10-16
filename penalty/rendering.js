@@ -10,7 +10,7 @@ export function stadiumLighting(renderer,scene){
  return new HDRLoader().loadAsync('./assets/stadium-light.bin?v=7').then(hdr=>{
   hdr.mapping=T.EquirectangularReflectionMapping;
   const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(hdr).texture;
-  scene.environmentIntensity=.5;scene.background=new T.Color('#b9cbd7');hdr.dispose();
+  scene.environmentIntensity=.36;scene.background=new T.Color('#b9cbd7');hdr.dispose();
   scene.environmentRotation.y=.8;pmrem.dispose();
  }).catch(()=>{
   // Lighting is optional. A failed environment download must not prevent play.
@@ -33,9 +33,10 @@ export function broadcastGrade(){
  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
  fragmentShader:`uniform sampler2D tDiffuse;uniform float time;varying vec2 vUv;
  void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;
- float lum=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(lum),c,.96);
- c=(c-.5)*1.035+.5;c*=vec3(1.015,1.005,.99);
- vec2 p=vUv-.5;c*=1.-.10*dot(p,p);
+ float lum=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(lum),c,1.12);
+ c=c*c*(3.-2.*c)*.38+c*.62; // filmic S-curve: deeper shadows, brighter highlights
+ c*=mix(vec3(.97,.99,1.03),vec3(1.04,1.01,.96),smoothstep(.2,.8,lum)); // cool shadows, warm highlights
+ vec2 p=vUv-.5;c*=1.-.22*dot(p,p);
  float noise=fract(sin(dot(gl_FragCoord.xy+time,vec2(12.9898,78.233)))*43758.5453)-.5;
  gl_FragColor=vec4(clamp(c+noise*.003,0.,1.),1.);}`});
 }

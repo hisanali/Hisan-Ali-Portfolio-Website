@@ -1,7 +1,7 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { fittedGloves } from './equipment.js?v=6';
 import { FootContacts, reachBall, solveLimb } from './motion.js?v=6';
-import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=8';
+import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=10';
 import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact, sweepSphereSegment } from './physics.js?v=6';
 import { buildStadium } from './stadium.js?v=6';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
@@ -45,12 +45,12 @@ const canvas2d = (w, h, draw) => { const c = document.createElement('canvas'); c
 // Captured environment lighting supplies the subtle sky and stand reflections.
 scene.background=new T.Color('#8a9fac');
 const environmentReady=stadiumLighting(renderer,scene);
-scene.add(new T.HemisphereLight('#d5e2eb','#566044',.28));
-const flood=new T.DirectionalLight('#fff2db',2.2);flood.position.set(-28,38,22);flood.castShadow=true;
+scene.add(new T.HemisphereLight('#d5e2eb','#566044',.18));
+const flood=new T.DirectionalLight('#fff0d6',3.1);flood.position.set(-28,38,22);flood.castShadow=true;
 Object.assign(flood.shadow.camera,{left:-18,right:18,top:20,bottom:-12,near:1,far:100});
-flood.shadow.mapSize.set(innerWidth<600?2048:4096,innerWidth<600?2048:4096);flood.shadow.bias=-.00015;flood.shadow.normalBias=.018;flood.shadow.radius=3;
+flood.shadow.mapSize.set(innerWidth<600?2048:4096,innerWidth<600?2048:4096);flood.shadow.bias=-.00015;flood.shadow.normalBias=.018;flood.shadow.radius=1.6;
 flood.target.position.set(0,0,7);scene.add(flood,flood.target);
-const fill=new T.DirectionalLight('#c7def1',.4);fill.position.set(18,20,-14);scene.add(fill);
+const fill=new T.DirectionalLight('#c7def1',.32);fill.position.set(18,20,-14);scene.add(fill);
 
 /* ---------- Pitch ---------- */
 const materialJobs=[];
