@@ -56,7 +56,8 @@ used for Penalty; additional source mapping is above and in
 `tools/fetch-motions.py`. Raw FBX files are deliberately not committed.
 
 ```sh
-blender -b --python football/tools/build-athlete.py -- /absolute/base /tmp/match.glb /absolute/motions
+python3 football/tools/fetch-motions.py /tmp/football-source
+blender -b --python football/tools/build-athlete.py -- /tmp/football-source /tmp/match.glb /tmp/football-source
 npx --yes --package=@gltf-transform/cli@4.5.1 gltf-transform resample /tmp/match.glb /tmp/match-resampled.glb
 npx --yes --package=@gltf-transform/cli@4.5.1 gltf-transform meshopt /tmp/match-resampled.glb football/assets/athlete-match.glb --level high
 ```

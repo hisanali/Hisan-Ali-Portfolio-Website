@@ -2,13 +2,13 @@
   {
     "width": 1280,
     "height": 640,
-    "readyMs": 3303,
-    "bytes": 6834778,
+    "readyMs": 3795,
+    "bytes": 6835239,
     "frameTimes": {
       "median": 16.69999999999709,
-      "p95": 16.700000000000728,
-      "triangles": 2226108,
-      "calls": 392
+      "p95": 16.799999999999272,
+      "triangles": 2226256,
+      "calls": 390
     },
     "fullMatch": {
       "state": "over",
@@ -17,11 +17,11 @@
         0
       ],
       "time": "240.0",
-      "owner": "user1",
+      "owner": "user8",
       "ball": [
-        21.8,
+        21.7,
         0.1,
-        54.6
+        36.9
       ]
     },
     "errors": []
@@ -29,12 +29,12 @@
   {
     "width": 844,
     "height": 390,
-    "readyMs": 1989,
-    "bytes": 6834778,
+    "readyMs": 1847,
+    "bytes": 6835239,
     "frameTimes": {
       "median": 16.700000000000728,
-      "p95": 16.700000000000728,
-      "triangles": 1117252,
+      "p95": 16.799999999999272,
+      "triangles": 1116238,
       "calls": 392
     },
     "fullMatch": {
@@ -44,11 +44,11 @@
         0
       ],
       "time": "240.0",
-      "owner": "user1",
+      "owner": "user8",
       "ball": [
-        21.9,
+        22.2,
         0.1,
-        52.3
+        34.5
       ]
     },
     "errors": []

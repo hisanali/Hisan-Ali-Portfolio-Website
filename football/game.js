@@ -7,12 +7,12 @@ import { clone as cloneSkinned } from '../evermile/vendor/utils/SkeletonUtils.js
 import { MeshoptDecoder } from '../penalty/vendor/meshopt_decoder.module.js';
 import { HDRLoader } from '../penalty/vendor/three-addons/loaders/HDRLoader.js';
 import { broadcastGrade } from '../penalty/rendering.js?v=10';
-import { buildStadium } from '../penalty/stadium.js?v=6';
+import { buildStadium } from '../penalty/stadium.js?v=7';
 import { FootContacts, solveLimb, reachBall } from '../penalty/motion.js?v=8';
 import { advance, launchVelocity, groundContact, sweepSphereSegment, reflectContact } from '../penalty/physics.js?v=8';
-import { createMatchBall } from './ball.js?v=6';
-import { installPresentation } from './presentation.js?v=6';
-import { fittedGloves } from '../penalty/equipment.js?v=6';
+import { createMatchBall } from './ball.js?v=7';
+import { installPresentation } from './presentation.js?v=7';
+import { fittedGloves } from '../penalty/equipment.js?v=7';
 
 /* ---------- Pitch geometry (metres). Your team attacks towards +z. ---------- */
 const LEN = 70, WID = 46, HX = WID / 2, CZ = LEN / 2, GOAL_HW = 3, GOAL_H = 2.2, BOX_D = 11, BOX_HW = 11, R = .11, G = 9.81;
@@ -35,7 +35,7 @@ const camera = new T.PerspectiveCamera(40, 1, .5, 600); camera.layers.enable(2);
 const composer = new EffectComposer(renderer, new T.WebGLRenderTarget(1, 1, { type: T.HalfFloatType, samples: mobile ? 0 : 4 }));
 composer.addPass(new RenderPass(scene, camera)); composer.addPass(new OutputPass()); const grade = broadcastGrade(); composer.addPass(grade);
 
-const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v=6').then(hdr => {
+const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v=7').then(hdr => {
   hdr.mapping = T.EquirectangularReflectionMapping; const pm = new T.PMREMGenerator(renderer);
   scene.environment = pm.fromEquirectangular(hdr).texture; scene.environmentIntensity = .36; scene.environmentRotation.y = .8; hdr.dispose(); pm.dispose();
 }).catch(() => scene.add(new T.HemisphereLight('#c7d9e8', '#52603d', .8)));
@@ -48,7 +48,7 @@ scene.add(sun, sun.target);
 const jobs = [];
 function asset(name, srgb = true, repeat = null, gltfUV = false) {
   let ok, bad; jobs.push(new Promise((a, b) => { ok = a; bad = b; }));
-  const t = new T.TextureLoader().load(`${['pitch-color','pitch-normal','pitch-roughness','concrete-normal','player-detail','player-normal','hair-color'].includes(name)?'./assets/':'../penalty/assets/'}${name}.webp?v=6`, ok, undefined, bad);
+  const t = new T.TextureLoader().load(`${['pitch-color','pitch-normal','pitch-roughness','concrete-normal','player-detail','player-normal','hair-color'].includes(name)?'./assets/':'../penalty/assets/'}${name}.webp?v=7`, ok, undefined, bad);
   if (srgb) t.colorSpace = T.SRGBColorSpace; t.flipY = !gltfUV; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   if (repeat) { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(...repeat); } return t;
 }
@@ -100,7 +100,7 @@ const B = { p: ball.position, v: new T.Vector3(), owner: null, lastTouch: null, 
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 let athlete;
 const maps = { color: asset('player-detail', true, null, true), normal: asset('player-normal', false, null, true), hair: asset('hair-color', true, null, true), hairNormal: asset('hair-normal', false, null, true) };
-const modelsReady = loader.loadAsync('./assets/athlete-match.glb?v=6', e => { if (e.total) $('load-progress').textContent = `${Math.round(e.loaded / e.total * 100)}%`; }).then(a => { athlete = a; });
+const modelsReady = loader.loadAsync('./assets/athlete-match.glb?v=7', e => { if (e.total) $('load-progress').textContent = `${Math.round(e.loaded / e.total * 100)}%`; }).then(a => { athlete = a; });
 
 const shadowTex = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 2, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
 const preparedClips=new Map();
@@ -304,7 +304,7 @@ const openness = m => { let d = 99; for (const o of m.team.opp.players) d = Math
 function nearest(team, point, outfield = false) { let best = null, bd = Infinity; for (const p of team.players) { if (p.sentOff || (outfield && p.keeper)) continue; const d = p.pos.distanceTo(point); if (d < bd) { bd = d; best = p; } } return best; }
 function tackle(p, effort, slide=false) {
   const o=B.owner;if(!o||o.team===p.team||p.stun>0||p.busy>0)return;
-  p.face(o.pos.x,o.pos.z);p.busy=slide?1.5:.65;p.play(slide?'slide':'tackle',1.25,.07);p.tackleEvent={at:clock+(slide?.24:.16),opponent:o,slide,effort,fromBehind:p.pos.clone().sub(o.pos).dot(new T.Vector3(Math.sin(o.facing),0,Math.cos(o.facing)))<-.3};
+  p.face(o.pos.x,o.pos.z);p.busy=Math.max(.65,p.clips[slide?'slide':'tackle'].getClip().duration/1.25);p.play(slide?'slide':'tackle',1.25,.07);p.tackleEvent={at:clock+(slide?.24:.16),opponent:o,slide,effort,fromBehind:p.pos.clone().sub(o.pos).dot(new T.Vector3(Math.sin(o.facing),0,Math.cos(o.facing)))<-.3};
   if(slide)p.vel.set(Math.sin(p.facing)*6,0,Math.cos(p.facing)*6);
 }
 function resolveTackle(p,event){
@@ -485,6 +485,7 @@ function step(dt) {
     if(p.tackleEvent&&clock>=p.tackleEvent.at){const e=p.tackleEvent;p.tackleEvent=null;resolveTackle(p,e);}
     p.busy = Math.max(0, p.busy - dt); p.stun = Math.max(0, p.stun - dt);
     if (p.stun > 0) { p.vel.multiplyScalar(Math.exp(-dt * 6)); }
+    else if(p.busy>0&&!p.keeper&&!p.strike&&!p.tackleEvent){p.vel.multiplyScalar(Math.exp(-dt*9));}
     else if (p === controlled) {
       p.jockey=inp.sprint && B.owner && B.owner.team!==p.team; const sp = (p.jockey?3.2:inp.sprint ? 8.2 : 6)*p.stats.pace * (B.owner === p ? .88 : 1), want = new T.Vector3(inp.x, 0, inp.z).multiplyScalar(sp * inp.mag);
       p.sprinting = inp.sprint; steer(p, want, dt);

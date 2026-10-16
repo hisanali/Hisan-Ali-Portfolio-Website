@@ -17,13 +17,13 @@ with touch; desktop tests use 1280×640. These are not physical phone benchmarks
 | Match flow | Both viewport tests reached full time at 240 match seconds, using `fb.sim()` for acceleration |
 | Pass timing | Ownership retained before contact, released afterward; `actions.json` |
 | Boot contact | ~0.0019 m measured separation during the contact window |
-| Late slide | Yellow card and restart; competing automatic steals cannot bypass the tackle event |
+| Late slide | Full captured recovery finishes before locomotion; yellow card and restart; competing automatic steals cannot bypass the tackle event |
 | Replays | Three successive angles, 0.4× source pose playback; returns to match |
 | Penalty | Swipe input launches the strike; in-match score and possession retained |
 | Physics | Shared SI ball integrator passes 81 target solves, drag/spin symmetry, energy-loss and swept-contact regression checks |
 | Errors | No JavaScript page errors in the two complete match flows or action tests |
-| Local cold ready time | 3.303 s desktop; 1.989 s phone emulation |
-| First-party resource bodies | 6,834,778 bytes, including loaded audio; excludes externally served fonts/tracking |
+| Local cold ready time | 3.795 s desktop; 1.847 s phone emulation |
+| First-party resource bodies | 6,835,239 bytes, including loaded audio; excludes externally served fonts/tracking |
 | 11-a-side frame sample | 180 frames per viewport; median and p95 ~16.7 ms on this Mac |
 | Geometry load | ~2.23 million triangles desktop vs ~1.12 million on phone, including shadow/postprocessing passes |
 | Slow connection | Cold 10 Mbps, 80 ms latency: ready 5.976 s, model resource 3.930 s; fonts/tracking excluded. Loading screen remains until ready |
