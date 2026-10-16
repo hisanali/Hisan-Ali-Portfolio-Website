@@ -140,13 +140,16 @@ class Player {
     const speed = Math.hypot(this.vel.x, this.vel.z);
     if (this.busy <= 0) {
       if (this.keeper && speed < 1.2) this.play('ready');
-      else if (speed > 4.2) this.play('run', T.MathUtils.clamp(speed / 6.4, .75, 1.35));
-      else if (speed > .6) this.play('walk', T.MathUtils.clamp(speed / 1.6, .8, 1.9));
+      else if (speed > 3.1) this.play('run', T.MathUtils.clamp(speed / 5.6, .62, 1.45), .25);
+      else if (speed > .45) this.play('walk', T.MathUtils.clamp(speed / 1.45, .7, 2.1), .25);
       else this.play(this.keeper ? 'ready' : 'idle');
     }
-    if (speed > .3) { const want = Math.atan2(this.vel.x, this.vel.z); let d = want - this.facing; d = Math.atan2(Math.sin(d), Math.cos(d)); this.facing += d * Math.min(1, dt * 10); }
+    if (speed > .3 && this.busy <= 0) { const want = Math.atan2(this.vel.x, this.vel.z); let d = want - this.facing; d = Math.atan2(Math.sin(d), Math.cos(d)); this.facing += d * Math.min(1, dt * 9); }
     this.mixer.update(dt);
-    this.root.position.set(this.pos.x, 0, this.pos.z); this.root.rotation.y = this.facing;
+    // Body lean: into the turn, forwards when accelerating, back when braking.
+    const lean = T.MathUtils.clamp(-(this.turnRate || 0) * speed * .018, -.3, .3), pitch = T.MathUtils.clamp((this.accel || 0) * .022, -.12, .16);
+    this.leanZ = T.MathUtils.damp(this.leanZ || 0, lean, 8, dt); this.leanX = T.MathUtils.damp(this.leanX || 0, pitch, 6, dt);
+    this.root.position.set(this.pos.x, 0, this.pos.z); this.root.rotation.set(this.leanX, this.facing, this.leanZ, 'YXZ');
     this.shadow.position.set(this.pos.x + .35, .01, this.pos.z - .3); this.ring.position.set(this.pos.x, .012, this.pos.z); this.pin.visible = this.ring.visible; this.pin.position.set(this.pos.x, 2.35 + Math.sin(performance.now() / 180) * .08, this.pos.z);
   }
   face(x, z) { this.facing = Math.atan2(x - this.pos.x, z - this.pos.z); }
@@ -182,10 +185,12 @@ function setControlled(p) { if (controlled) controlled.ring.visible = false; con
 function release(p) { if (B.owner === p) B.owner = null; B.kicker = p; B.kickTime = clock; B.lastTouch = p; }
 function kickAnim(p, power) { p.busy = .45; p.play('kick-pro', 1.7, .08, .62 + (1 - power) * .1); }
 
-function pass(p, target, lofted = false) {
+function pass(p, target, lofted = false, through = false) {
   if (!target) return;
-  const lead = target.vel.clone().multiplyScalar(.45), aim = target.pos.clone().add(lead), d = aim.clone().sub(B.p); d.y = 0; const dist = d.length();
-  const speed = T.MathUtils.clamp(7 + dist * .55, 9, 22) * (lofted ? .75 : 1); d.normalize();
+  const lead = target.vel.clone().multiplyScalar(through ? .9 : .45).add(new T.Vector3(0, 0, through ? p.team.dir * 6 : 0)), aim = target.pos.clone().add(lead);
+  if (through) target.runTo = { at: aim.clone(), until: clock + 1.6 };
+  const d = aim.clone().sub(B.p); d.y = 0; const dist = d.length();
+  const speed = T.MathUtils.clamp(6.5 + dist * .62, 8.5, 24) * (lofted ? .75 : 1); d.normalize();
   release(p); kickAnim(p, .5); p.face(aim.x, aim.z);
   B.v.set(d.x * speed, lofted ? Math.min(7, 2 + dist * .15) : .4, d.z * speed); B.passTo = target; sfx('kick', .6);
 }
@@ -198,9 +203,9 @@ function shoot(p, aimX, power, error = 0) {
 
 /* ---------- Input ---------- */
 const keys = {}, input = { x: 0, y: 0, sprint: false };
-let shootHold = 0, shootDown = false;
-addEventListener('keydown', e => { if (e.repeat) return; keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') action('pass'); if (e.code === 'KeyK' || e.code === 'KeyL') shootDown = true; if (e.code === 'Escape') togglePause(); if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault(); });
-addEventListener('keyup', e => { keys[e.code] = false; if ((e.code === 'KeyK' || e.code === 'KeyL') && shootDown) { shootDown = false; action('shoot'); } });
+let shootHold = 0, shootDown = false, passHold = 0, passDown = false;
+addEventListener('keydown', e => { if (e.repeat) return; keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') { passDown = true; passHold = 0; } if (e.code === 'KeyK' || e.code === 'KeyL') shootDown = true; if (e.code === 'Escape') togglePause(); if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup', e => { keys[e.code] = false; if ((e.code === 'KeyK' || e.code === 'KeyL') && shootDown) { shootDown = false; action('shoot'); } if ((e.code === 'Space' || e.code === 'KeyJ') && passDown) { passDown = false; action('pass'); } });
 const stick = $('stick'), knob = stick.querySelector('i'); let stickId = null, stickC = null;
 stick.addEventListener('pointerdown', e => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); const r = stick.getBoundingClientRect(); stickC = [r.left + r.width / 2, r.top + r.height / 2]; moveStick(e); });
 stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
@@ -208,7 +213,7 @@ const endStick = () => { stickId = null; input.x = input.y = 0; knob.style.trans
 stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
 function moveStick(e) { let dx = e.clientX - stickC[0], dy = e.clientY - stickC[1]; const r = 52, l = Math.hypot(dx, dy); if (l > r) { dx *= r / l; dy *= r / l; } knob.style.transform = `translate(${dx}px,${dy}px)`; input.x = dx / r; input.y = -dy / r; }
 const hold = (id, down, up) => { const el = $(id); el.addEventListener('pointerdown', e => { e.preventDefault(); el.classList.add('is-down'); down(); }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, () => { if (el.classList.contains('is-down')) { el.classList.remove('is-down'); up?.(); } }); };
-hold('btn-a', () => action('pass')); hold('btn-b', () => { shootDown = true; }, () => { if (shootDown) { shootDown = false; action('shoot'); } }); hold('btn-c', () => { input.sprint = true; }, () => { input.sprint = false; });
+hold('btn-a', () => { passDown = true; passHold = 0; }, () => { if (passDown) { passDown = false; action('pass'); } }); hold('btn-b', () => { shootDown = true; }, () => { if (shootDown) { shootDown = false; action('shoot'); } }); hold('btn-c', () => { input.sprint = true; }, () => { input.sprint = false; });
 
 function readInput() {
   let x = input.x, y = input.y;
@@ -221,7 +226,7 @@ function action(kind) {
   if (state !== 'play' || !controlled) return; sfx('ctx');
   const attacking = B.owner?.team === user;
   if (kind === 'pass') {
-    if (B.owner === controlled) { const inp = readInput(); pass(controlled, bestTarget(controlled, inp.mag > .2 ? new T.Vector3(inp.x, 0, inp.z) : null)); }
+    if (B.owner === controlled) { const inp = readInput(), through = passHold > .28; pass(controlled, bestTarget(controlled, inp.mag > .2 ? new T.Vector3(inp.x, 0, inp.z) : null), false, through); if (through) toast('Through ball'); }
     else if (!attacking) setControlled(nearest(user, B.p, true));
   } else if (kind === 'shoot') {
     const power = T.MathUtils.clamp(.35 + shootHold * 1.3, .35, 1); shootHold = 0;
@@ -248,10 +253,24 @@ function tackle(p, effort) {
 
 /* ---------- AI ---------- */
 function teamTarget(p) {
-  const t = p.team, [bx, bz] = SHAPE[p.index], own = t.dir > 0 ? B.p.z : LEN - B.p.z, attacking = B.owner?.team === t;
-  let z = bz + (own - CZ) * .55 + (attacking ? 6 : -3), x = bx + (t.dir > 0 ? B.p.x : -B.p.x) * .35;
-  if (p.index >= 3 && attacking) z += 4; z = T.MathUtils.clamp(z, p.index >= 3 ? 14 : 4, p.index >= 3 ? LEN - 6 : LEN - 22);
-  return toWorld(t, T.MathUtils.clamp(x, -HX + 2, HX - 2), z);
+  const t = p.team, [bx] = SHAPE[p.index], ball = t.dir > 0 ? B.p.z : LEN - B.p.z, bxl = t.dir > 0 ? B.p.x : -B.p.x, attacking = B.owner?.team === t, forward = p.index >= 3;
+  let x, z;
+  if (attacking) {
+    // Forwards run beyond the ball into the channels; defenders step up behind play.
+    x = forward ? bx * 1.25 + bxl * .25 + Math.sin(clock * .7 + p.index) * 3 : bx + bxl * .3;
+    z = forward ? Math.max(ball + 9 + (p.index === 3 ? 3 : 0), 22) : Math.max(ball - 12, 8);
+  } else {
+    // A flat back line, stepping with the ball, and forwards dropping to screen the middle.
+    x = forward ? bx * .7 + bxl * .3 : bx * .9 + bxl * .35; z = forward ? Math.max(ball - 3, 16) : T.MathUtils.clamp(ball - 9, 5, 30);
+    const mark = forward ? null : nearestAttacker(p);
+    if (mark) { const m = t.dir > 0 ? mark.pos.z : LEN - mark.pos.z, mx = t.dir > 0 ? mark.pos.x : -mark.pos.x; if (m < ball + 2 && m < 34) { x = mx * .8 + bxl * .2; z = m - 1.6; } }
+  }
+  return toWorld(t, T.MathUtils.clamp(x, -HX + 1.5, HX - 1.5), T.MathUtils.clamp(z, 3, LEN - 4));
+}
+function nearestAttacker(p) {
+  const side = Math.sign(SHAPE[p.index][0]) * p.team.dir; let best = null, bd = Infinity;
+  for (const o of p.team.opp.players) { if (o.keeper || o === B.owner) continue; const score = o.pos.distanceTo(p.pos) + (Math.sign(o.pos.x) === side ? 0 : 6); if (score < bd) { bd = score; best = o; } }
+  return best;
 }
 function think(p, dt) {
   const t = p.team, L = t.human ? LEVELS.normal : level(), goalZ = attackGoalZ(t);
@@ -265,11 +284,13 @@ function think(p, dt) {
       if (press < 3 && Math.random() < .75) return pass(p, bestTarget(p, null));
     }
     const dodge = t.opp.players.reduce((acc, o) => { const d = p.pos.clone().sub(o.pos); const l = d.length(); return l < 5 ? acc.add(d.multiplyScalar(1 / (l * l + .5))) : acc; }, new T.Vector3());
-    p.target.set(p.pos.x * .9 + dodge.x * 6, 0, goalZ).add(new T.Vector3(dodge.x * 4, 0, 0)); return seek(p, p.target, 5.6 * L.speed, dt);
+    p.target.set(p.pos.x * .85 + dodge.x * 10, 0, p.pos.z + t.dir * 12); return seek(p, p.target, (press < 4 ? 6.6 : 5.4) * L.speed, dt);
   }
+  if (p.runTo && clock < p.runTo.until && !B.owner) return seek(p, p.runTo.at, 7.8 * L.speed, dt);
   const chaser = t.chaser === p;
   if (chaser) { seek(p, B.owner ? B.owner.pos.clone().addScaledVector(new T.Vector3(0, 0, t.dir), -.6) : B.p.clone().addScaledVector(B.v, .25), 7 * L.speed, dt); if (B.owner && B.owner.team !== t && p.pos.distanceTo(B.owner.pos) < 1.6 && Math.random() < dt * L.tackle * 1.4) tackle(p, L.tackle * .6); return; }
-  seek(p, teamTarget(p), (B.owner?.team === t ? 5.5 : 6) * L.speed, dt);
+  if (B.owner && B.owner.team !== t && t.cover === p) { const g = new T.Vector3(0, 0, ownGoalZ(t)), c = B.owner.pos.clone().lerp(g, .28); return seek(p, c, 6.4 * L.speed, dt); }
+  const tgt = teamTarget(p), far = tgt.distanceTo(p.pos); seek(p, tgt, (far > 8 ? 7.2 : far > 3 ? 5.6 : 3) * L.speed, dt);
 }
 function keeperAI(p, dt, L) {
   const t = p.team, gz = ownGoalZ(t), towards = t.dir > 0 ? -B.v.z : B.v.z;
@@ -287,8 +308,20 @@ function keeperAI(p, dt, L) {
   }
 }
 function seek(p, target, maxSpeed, dt) {
-  const d = target.clone().sub(p.pos); d.y = 0; const dist = d.length(), want = dist < .3 ? 0 : Math.min(maxSpeed, dist * 2.2);
-  if (dist > .001) d.multiplyScalar(want / dist); p.vel.lerp(d, Math.min(1, dt * 4));
+  const d = target.clone().sub(p.pos); d.y = 0; const dist = d.length(), want = dist < .3 ? 0 : Math.min(maxSpeed, dist * 1.8);
+  steer(p, dist > .001 ? d.multiplyScalar(want / dist) : d, dt);
+}
+// Human-like locomotion: limited acceleration, braking, and a turning circle that widens with speed.
+function steer(p, want, dt) {
+  const s = Math.hypot(p.vel.x, p.vel.z), ws = Math.hypot(want.x, want.z);
+  let h = s > .25 ? Math.atan2(p.vel.x, p.vel.z) : (ws > .01 ? Math.atan2(want.x, want.z) : p.facing);
+  const wh = ws > .01 ? Math.atan2(want.x, want.z) : h; let diff = Math.atan2(Math.sin(wh - h), Math.cos(wh - h));
+  const maxTurn = T.MathUtils.lerp(13, 2.6, Math.min(1, s / 8.2)) * dt, turn = T.MathUtils.clamp(diff, -maxTurn, maxTurn); h += turn;
+  let target = ws * Math.max(0, Math.cos(Math.min(Math.abs(diff), Math.PI / 2)));
+  if (Math.abs(diff) > 2.1 && s > 3.5) target = 0; // plant and turn
+  const rate = target > s ? 5.2 * (s < 4 ? 1.35 : 1) : 11;
+  const ns = s + T.MathUtils.clamp(target - s, -rate * dt, rate * dt);
+  p.vel.set(Math.sin(h) * ns, 0, Math.cos(h) * ns); p.turnRate = turn / Math.max(dt, 1e-4); p.accel = (ns - s) / Math.max(dt, 1e-4);
 }
 
 /* ---------- Match flow ---------- */
@@ -336,24 +369,21 @@ function step(dt) {
   }
   if (state !== 'play') return;
   matchTime += dt; if (matchTime >= matchLength() * half / 2) return endHalf();
-  for (const t of teams) { let best = null, bd = Infinity; for (const p of t.players) { if (p.keeper) continue; const d = p.pos.distanceTo(B.owner ? B.owner.pos : B.p); if (d < bd) { bd = d; best = p; } } t.chaser = best; }
+  for (const t of teams) { let best = null, bd = Infinity; const order = t.players.filter(p => !p.keeper).sort((a, b) => a.pos.distanceTo(B.owner ? B.owner.pos : B.p) - b.pos.distanceTo(B.owner ? B.owner.pos : B.p)); t.chaser = order[0]; t.cover = order[1]; }
   if (!B.owner && B.lastTouch?.team !== user && controlled && user.chaser !== controlled && controlled.pos.distanceTo(B.p) > user.chaser.pos.distanceTo(B.p) + 4) setControlled(user.chaser);
-  const inp = readInput(); if (shootDown) shootHold += dt;
+  const inp = readInput(); if (shootDown) shootHold += dt; if (passDown) passHold += dt;
   for (const p of all) {
     p.busy = Math.max(0, p.busy - dt); p.stun = Math.max(0, p.stun - dt);
     if (p.stun > 0) { p.vel.multiplyScalar(Math.exp(-dt * 6)); }
     else if (p === controlled) {
-      const sp = (inp.sprint ? 8 : 6.2) * (B.owner === p ? .9 : 1), want = new T.Vector3(inp.x, 0, inp.z).multiplyScalar(sp * inp.mag);
-      p.vel.lerp(want, Math.min(1, dt * (inp.mag > .1 ? 6 : 8)));
+      const sp = (inp.sprint ? 8.2 : 6) * (B.owner === p ? .88 : 1), want = new T.Vector3(inp.x, 0, inp.z).multiplyScalar(sp * inp.mag);
+      p.sprinting = inp.sprint; steer(p, want, dt);
     } else think(p, dt);
     if (p.busy > 0 && !p.keeper) p.vel.multiplyScalar(Math.exp(-dt * 3));
     p.pos.addScaledVector(p.vel, dt); p.pos.x = T.MathUtils.clamp(p.pos.x, -HX - 1, HX + 1); p.pos.z = T.MathUtils.clamp(p.pos.z, -1, LEN + 1);
   }
   for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) { const a = all[i], b = all[j], d = a.pos.clone().sub(b.pos); d.y = 0; const l = d.length(); if (l < .7 && l > .001) { d.multiplyScalar((.7 - l) / l / 2); a.pos.add(d); b.pos.sub(d); } }
-  if (B.owner) {
-    const p = B.owner, f = new T.Vector3(Math.sin(p.facing), 0, Math.cos(p.facing)), sp = Math.hypot(p.vel.x, p.vel.z), want = p.pos.clone().addScaledVector(f, .55 + sp * .06); want.y = R;
-    B.v.copy(want).sub(B.p).multiplyScalar(12); B.p.lerp(want, Math.min(1, dt * 12)); ball.rotation.x += sp * dt / R;
-  } else moveBallLoose(dt);
+  if (B.owner) dribble(dt); else moveBallLoose(dt);
   if (!B.owner) for (const p of all) {
     if (p.stun > 0 || (p === B.kicker && clock - B.kickTime < .35)) continue;
     const reach = p.keeper && inOwnBox(p) ? 1.25 : .75, d = Math.hypot(B.p.x - p.pos.x, B.p.z - p.pos.z), fast = Math.hypot(B.v.x, B.v.z);
@@ -362,6 +392,27 @@ function step(dt) {
       if (p.keeper && B.shot && B.shot.team !== p.team) { sfx('save'); toast('Saved!'); }
       give(p); B.v.set(0, 0, 0); sfx('touch'); break;
     }
+  }
+}
+// The carrier pushes the ball ahead with each touch and runs onto it; it is only close-controlled when slow.
+function dribble(dt) {
+  const p = B.owner, sp = Math.hypot(p.vel.x, p.vel.z), heading = sp > .3 ? Math.atan2(p.vel.x, p.vel.z) : p.facing, f = new T.Vector3(Math.sin(heading), 0, Math.cos(heading));
+  const foot = p.pos.clone().addScaledVector(f, .42), toBall = B.p.clone().sub(p.pos); toBall.y = 0; const d = toBall.length();
+  if (p.keeper || sp < 1.3) {
+    const want = foot.clone(); want.y = R; B.v.copy(want).sub(B.p).multiplyScalar(6); B.v.y = 0; B.p.lerp(want, Math.min(1, dt * 7)); B.p.y = R;
+    ball.rotation.x += B.v.z * dt / R; ball.rotation.z -= B.v.x * dt / R;
+  } else {
+    const ahead = d > .01 ? toBall.dot(f) / d : 1, near = B.p.distanceTo(foot.setY(R));
+    if (near < .5 && ahead > -.2 && clock - (p.touchT || 0) > .16) {
+      const push = sp * 1.22 + (p.sprinting || sp > 7 ? 2.4 : 1.1); B.v.set(f.x * push, .25, f.z * push); p.touchT = clock; B.lastTouch = p; sfx('touch', .25);
+    }
+    moveBallLoose(dt);
+  }
+  if (!B.owner) return;
+  if (d > 3.2) { B.owner = null; return; }
+  for (const o of p.team.opp.players) {
+    if (o.stun > 0) continue; const od = Math.hypot(B.p.x - o.pos.x, B.p.z - o.pos.z);
+    if (od < .62 && d > .5 && Math.random() < dt * 9) { give(o); B.v.set(0, 0, 0); sfx('touch'); return; }
   }
 }
 const inOwnBox = p => Math.abs(p.pos.x) < BOX_HW && Math.abs(p.pos.z - ownGoalZ(p.team)) < BOX_D;
@@ -385,7 +436,7 @@ function updateCamera(dt) {
   const portrait = innerHeight > innerWidth, t = B.p;
   const z = T.MathUtils.clamp(t.z, portrait ? 8 : 14, LEN - (portrait ? 8 : 14)), x = T.MathUtils.clamp(t.x, -HX, HX);
   const want = new T.Vector3(-HX - (portrait ? 10 : 4) + x * .45, portrait ? 18 : 11.5, z), look = new T.Vector3(x * .7 + 3.5, 0, z);
-  const k = 1 - Math.exp(-dt * (state === 'menu' ? .6 : 2.6)); camPos.lerp(want, k); camLook.lerp(look, k); camera.position.copy(camPos); camera.lookAt(camLook);
+  const k = 1 - Math.exp(-dt * (state === 'menu' ? .6 : 3.4)); camPos.lerp(want, k); camLook.lerp(look, k); camera.position.copy(camPos); camera.lookAt(camLook);
 }
 
 /* ---------- Sound ---------- */
