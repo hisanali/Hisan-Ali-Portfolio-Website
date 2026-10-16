@@ -236,13 +236,23 @@ function setStatus(text) { $('status').textContent = text; }
 let insetKey = '';
 function layout(force = false) {
   const w = innerWidth, phone = matchMedia('(max-width: 900px) and (orientation: portrait), (max-width: 600px)').matches;
-  const insets = !started ? {} : phone ? { top: 128, bottom: mode === 'online' ? 236 : 196 } : w <= 980 && w > innerHeight ? { right: 252 } : { right: w <= 1180 ? 300 : 340, left: w >= 1500 ? 0 : 40 };
+  if (phone) document.body.style.setProperty('--mobile-panel-height', `${document.querySelector('.side').getBoundingClientRect().height}px`);
+  const insets = !started ? {} : phone ? { top: $('card-top').getBoundingClientRect().bottom + 12, bottom: innerHeight - $('card-bottom').getBoundingClientRect().top + 12 } : w <= 980 && w > innerHeight ? { right: 252 } : { right: w <= 1180 ? 300 : 340, left: w >= 1500 ? 0 : 40 };
   const key = JSON.stringify(insets) + w + 'x' + innerHeight;
   if (key === insetKey && !force) return;
   insetKey = key; view.setInsets(insets);
-  if (started && !view.cameraTween) view.moveCamera(view.viewFor(bottom), 500);
+  if (started && (force || !view.cameraTween)) view.moveCamera(view.viewFor(bottom), 500);
 }
 addEventListener('resize', () => layout());
+$('panel-toggle').onclick = () => {
+  const panel = document.querySelector('.side'), expanded = panel.dataset.collapsed === 'true';
+  panel.dataset.collapsed = String(!expanded);
+  $('panel-toggle').setAttribute('aria-expanded', String(expanded));
+  $('panel-toggle').setAttribute('aria-label', expanded ? 'Collapse game controls' : 'Expand game controls');
+  layout(true);
+};
+const hudObserver = new ResizeObserver(() => layout());
+for (const el of [document.querySelector('.side'), $('card-top'), $('card-bottom')]) hudObserver.observe(el);
 function render() {
   if (document.body.classList.contains('is-playing') !== started) { document.body.classList.toggle('is-playing', started); layout(); }
   document.body.dataset.mode = mode || '';

@@ -226,3 +226,19 @@ body:not(.is-playing) .player, body:not(.is-playing) .side { opacity: 0; pointer
   .actions button { padding: 7px 4px; font-size: 11px; gap: 3px; }
   .room-bar { padding: 7px 10px; }
 }
+
+/* A compact mobile dock gives the board priority; desktop controls stay open. */
+.panel-heading, .panel-details { display: contents; }
+.panel-toggle { display: none; }
+@media (max-width: 900px) and (orientation: portrait), (max-width: 600px) {
+  .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
+  .panel-heading .status { text-align: left; flex: 1; }
+  .panel-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.05); font-size: 11px; font-weight: 800; }
+  .panel-toggle svg { width: 16px; height: 16px; }
+  .panel-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .panel-toggle:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+  .panel-details { display: flex; flex-direction: column; gap: 8px; }
+  .side[data-collapsed="true"] .panel-details { display: none; }
+  .player.bottom, body[data-mode="online"] .player.bottom { bottom: calc(var(--mobile-panel-height, 58px) + 20px + env(safe-area-inset-bottom)); }
+  .side:has(.actions button:nth-child(6):not([hidden])) .actions { grid-template-columns: repeat(6, 1fr); }
+}
