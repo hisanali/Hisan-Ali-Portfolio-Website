@@ -13,7 +13,7 @@ const out=path.resolve('football/qa');
   if(!mobile){await page.keyboard.down('KeyD');await page.keyboard.down('ShiftLeft');await page.waitForTimeout(1800);await page.keyboard.up('ShiftLeft');await page.keyboard.up('KeyD');}
   else{const r=await page.locator('#stick').boundingBox();await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(r.x+r.width*.85,r.y+r.height*.5);await page.waitForTimeout(1400);await page.mouse.move(r.x+r.width*.7,r.y+r.height*.25);await page.waitForTimeout(700);await page.mouse.up();}
   await page.screenshot({path:`${out}/${width}-dribble.png`});
-  const pass=await page.evaluate(()=>{const p=fb.ball.owner||fb.players[3];p.busy=0;p.strike=null;fb.give(p);fb.ball.p.copy(p.pos);fb.ball.p.y=.11;fb.pass(p,p.team.players.find(x=>x!==p&&!x.keeper),false,false,.5);return {pending:!!p.strike,owner:fb.ball.owner===p};});assert(pass.pending&&pass.owner,'pass must wait for contact');
+  const pass=await page.evaluate(()=>{const p=fb.ball.owner||fb.players[3];p.busy=0;p.strike=null;fb.ball.v.set(0,0,0);fb.give(p);fb.ball.p.copy(p.pos);fb.ball.p.y=.11;fb.pass(p,p.team.players.find(x=>x!==p&&!x.keeper),false,false,.5);return {pending:!!p.strike,owner:fb.ball.owner===p};});assert(pass.pending&&pass.owner,'pass must wait for contact');
   await page.waitForTimeout(180);await page.screenshot({path:`${out}/${width}-pass.png`});await page.waitForTimeout(1100);
   // Team size selects actual 14/22 players rather than cosmetic text.
   for(const size of ['7','11']){

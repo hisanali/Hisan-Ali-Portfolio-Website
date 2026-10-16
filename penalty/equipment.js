@@ -1,8 +1,8 @@
 import * as T from '../evermile/vendor/three.module.js';
 // A fitted, skinned latex shell follows the existing hand and every finger.
 // This replaces rigid palm boxes and finger capsules.
-export function fittedGloves(model,color){
- const body=model.getObjectByName('Ch38_Body');if(!body?.isSkinnedMesh)return null;
+export function fittedGloves(model,color,bodyName='Ch38_Body'){
+ const body=model.getObjectByName(bodyName);if(!body?.isSkinnedMesh)return null;
  // The compressed mesh is in normalized bind space; its inverse-bind
  // matrices carry the dequantization scale. Match that space when inflating.
  const inflation=.003;

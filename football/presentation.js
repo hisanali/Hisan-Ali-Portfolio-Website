@@ -11,6 +11,7 @@ export function installPresentation({T,scene,camera,ball,mobile,canvasTex,LEN,HX
   const flag=new T.Mesh(new T.PlaneGeometry(.5,.32,3,1),clothMat);flag.position.set(x+.25,1.3,z);scene.add(flag);
  }
  const boards=canvasTex(1024,128,(g,w,h)=>{g.fillStyle='#102231';g.fillRect(0,0,w,h);g.fillStyle='#fff';g.textAlign='center';g.font='bold 58px Arial';g.fillText('HISAN ALI  •  HISANALI.COM',w/2,85);});
+ boards.wrapS=T.RepeatWrapping;boards.repeat.set(8,1);
  for(const x of [-HX-2,HX+2]){
   const board=new T.Mesh(new T.PlaneGeometry(LEN,1),new T.MeshStandardMaterial({map:boards,emissive:0xffffff,emissiveMap:boards,emissiveIntensity:.25,side:T.FrontSide}));board.rotation.y=x>0?-Math.PI/2:Math.PI/2;board.position.set(x,.6,LEN/2);scene.add(board);
  }
@@ -40,7 +41,7 @@ export function installPresentation({T,scene,camera,ball,mobile,canvasTex,LEN,HX
     const t=3.5-remaining;targetPos.set(-9+t*2,2.5,LEN/2-6);targetLook.set(0,1,LEN/2);label.hidden=false;label.textContent='MATCHDAY • '+teams[0].players.length+' A SIDE';
    }else if(state==='goal'&&replay){
     replay.elapsed+=dt;const t=replay.elapsed,angle=Math.min(2,Math.floor(Math.max(0,t-1.5)/2));
-    if(t<1.5){const p=goalPlayer?.pos||ball.position;targetPos.copy(p).add(new T.Vector3(-3,1.9,-3));targetLook.copy(p).y=1.15;label.textContent='GOAL • '+(goalPlayer?.number||'');}
+    if(t<1.5){const p=goalPlayer?.pos||ball.position;const heading=goalPlayer?.facing||0;targetPos.copy(p).add(new T.Vector3(Math.sin(heading)*3.4+Math.cos(heading)*2,1.8,Math.cos(heading)*3.4-Math.sin(heading)*2));targetLook.copy(p).y=1.15;label.textContent='GOAL • '+(goalPlayer?.number||'');}
     else{const phase=(t-1.5)%2,frame=replay.frames[Math.min(replay.frames.length-1,Math.floor(phase*.4*24))],p=frame?new T.Vector3().fromArray(frame.ball):ball.position;targetLook.copy(p);if(angle===0)targetPos.copy(p).add(new T.Vector3(-7,3,-9));else if(angle===1)targetPos.set(HX+3,7,p.z);else targetPos.set(0,1.1,p.z>LEN/2?LEN+3:-3);label.textContent='REPLAY 0.4× • '+(angle+1)+'/3';}
    }else{if(replay){replay=null;}return false;}
    camera.position.lerp(targetPos,1-Math.exp(-dt*5));camera.lookAt(targetLook);return true;

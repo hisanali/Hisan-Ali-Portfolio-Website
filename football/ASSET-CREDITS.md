@@ -7,8 +7,9 @@ included. Runtime is static ES modules with no build step.
 ## Footballer and animations
 
 `assets/athlete-match.glb`: Adobe Mixamo Ch38, shirt, shorts, socks, boots and
-hair, with an independent mixer per player. The package includes full and 42-percent
-triangle-count skinned meshes; 7/11-a-side matches on phones select the lighter set. Four lightweight face-width, hair
+hair, with an independent mixer per player. The 3.18 MB meshopt package includes subdivided close-up meshes, original match
+meshes, and 42-percent triangle-count meshes for 7/11-a-side matches on phones.
+Distance selects the close-up tier; all three share the same skeleton and clips. Four lightweight face-width, hair
 shape, height, skin-tone and boot-colour variations share geometry caches.
 Numbers are drawn over the authored shirt UV island at runtime. Goalkeeper
 latex gloves are generated from the hand-weighted mesh using the original
@@ -70,10 +71,12 @@ npx --yes --package=@gltf-transform/cli@4.5.1 gltf-transform meshopt /tmp/match-
   edit prompt: [player-detail.prompt.txt](../penalty/assets/player-detail.prompt.txt).
   No new generative artwork was created for this Football update.
 - `assets/pitch-color.webp`, `pitch-normal.webp`, `pitch-roughness.webp`:
-  resized derivatives of TextureCan **Ground 0040**, CC0.
-  <https://www.texturecan.com/details/469/>,
-  <https://www.texturecan.com/terms/>. Original green turf shading, fine blade
-  grain and broad circular mowing bands are applied in the material shader.
+  resized WebP derivatives of ambientCG **Grass004**, CC0.
+  <https://ambientcg.com/view?id=Grass004>,
+  <https://docs.ambientcg.com/license/>. Source: `Grass004_1K-JPG.zip`;
+  Color 1024px, NormalGL 512px, Roughness 256px. Broad mowing bands,
+  a green tint, dry blade roughness and subtle penalty-spot wear are applied
+  in the material shader. Source download and conversion: `tools/fetch-turf.py`.
 - `assets/concrete-normal.webp` and shared `penalty/assets/concrete-color.webp`:
   Poly Haven **Concrete Wall 006**, CC0.
   <https://polyhaven.com/a/concrete_wall_006>.

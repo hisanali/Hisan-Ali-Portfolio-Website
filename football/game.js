@@ -1,4 +1,4 @@
-import { bindHold, guardGameGestures } from './touch.js?v=8';
+import { bindHold, guardGameGestures } from './touch.js?v=9';
 guardGameGestures();
 import * as T from '../evermile/vendor/three.module.js';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
@@ -8,13 +8,13 @@ import { OutputPass } from '../evermile/vendor/postprocessing/OutputPass.js';
 import { clone as cloneSkinned } from '../evermile/vendor/utils/SkeletonUtils.js';
 import { MeshoptDecoder } from '../penalty/vendor/meshopt_decoder.module.js';
 import { HDRLoader } from '../penalty/vendor/three-addons/loaders/HDRLoader.js';
-import { broadcastGrade } from '../penalty/rendering.js?v=10';
-import { buildStadium } from '../penalty/stadium.js?v=8';
-import { FootContacts, solveLimb, reachBall } from '../penalty/motion.js?v=8';
-import { advance, launchVelocity, groundContact, sweepSphereSegment, reflectContact } from '../penalty/physics.js?v=8';
-import { createMatchBall } from './ball.js?v=8';
-import { installPresentation } from './presentation.js?v=8';
-import { fittedGloves } from '../penalty/equipment.js?v=8';
+import { naturalGrade, matchOptics, goalCords } from './quality.js?v=9';
+import { buildStadium } from '../penalty/stadium.js?v=9';
+import { FootContacts, solveLimb, reachBall } from '../penalty/motion.js?v=9';
+import { advance, launchVelocity, groundContact, sweepSphereSegment, reflectContact } from '../penalty/physics.js?v=9';
+import { createMatchBall } from './ball.js?v=9';
+import { installPresentation } from './presentation.js?v=9';
+import { fittedGloves } from '../penalty/equipment.js?v=9';
 
 /* ---------- Pitch geometry (metres). Your team attacks towards +z. ---------- */
 const LEN = 70, WID = 46, HX = WID / 2, CZ = LEN / 2, GOAL_HW = 3, GOAL_H = 2.2, BOX_D = 11, BOX_HW = 11, R = .11, G = 9.81;
@@ -35,22 +35,22 @@ renderer.toneMapping = T.AgXToneMapping; renderer.shadowMap.enabled = true; rend
 const scene = new T.Scene(); scene.background = new T.Color('#9fb4c2'); scene.fog = new T.Fog('#9fb4c2', 120, 320);
 const camera = new T.PerspectiveCamera(40, 1, .5, 600); camera.layers.enable(2);
 const composer = new EffectComposer(renderer, new T.WebGLRenderTarget(1, 1, { type: T.HalfFloatType, samples: mobile ? 0 : 4 }));
-composer.addPass(new RenderPass(scene, camera)); composer.addPass(new OutputPass()); const grade = broadcastGrade(); composer.addPass(grade);
+composer.addPass(new RenderPass(scene,camera));const optics=matchOptics(scene,camera,mobile);composer.addPass(optics.ao);composer.addPass(optics.lens.pass);composer.addPass(new OutputPass());const grade=naturalGrade();composer.addPass(grade);
 
-const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v=8').then(hdr => {
+const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v=9').then(hdr => {
   hdr.mapping = T.EquirectangularReflectionMapping; const pm = new T.PMREMGenerator(renderer);
-  scene.environment = pm.fromEquirectangular(hdr).texture; scene.environmentIntensity = .36; scene.environmentRotation.y = .8; hdr.dispose(); pm.dispose();
+  scene.environment = pm.fromEquirectangular(hdr).texture; scene.environmentIntensity = .42; scene.environmentRotation.y = .8; hdr.dispose(); pm.dispose();
 }).catch(() => scene.add(new T.HemisphereLight('#c7d9e8', '#52603d', .8)));
-scene.add(new T.HemisphereLight('#d5e2eb', '#566044', .2));
-const sun = new T.DirectionalLight('#fff0d6', 3.1); sun.position.set(-30, 45, CZ + 20); sun.target.position.set(0, 0, CZ); sun.castShadow = true;
-Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 50, bottom: -50, near: 1, far: 160 }); sun.shadow.mapSize.set(mobile ? 2048 : 4096, mobile ? 2048 : 4096); sun.shadow.bias = -.0002; sun.shadow.normalBias = .03;
+scene.add(new T.HemisphereLight('#d5e2eb', '#566044', .25));
+const sun = new T.DirectionalLight('#fff5e6', 2.8); sun.position.set(-30, 45, CZ + 20); sun.target.position.set(0, 0, CZ); sun.castShadow = true;
+Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 50, bottom: -50, near: 1, far: 160 }); sun.shadow.mapSize.set(mobile ? 2048 : 4096, mobile ? 2048 : 4096); sun.shadow.bias = -.0002; sun.shadow.normalBias = .012;sun.shadow.radius=2;
 scene.add(sun, sun.target);
 
 /* ---------- Textures ---------- */
 const jobs = [];
 function asset(name, srgb = true, repeat = null, gltfUV = false) {
   let ok, bad; jobs.push(new Promise((a, b) => { ok = a; bad = b; }));
-  const t = new T.TextureLoader().load(`${['pitch-color','pitch-normal','pitch-roughness','concrete-normal','player-detail','player-normal','hair-color'].includes(name)?'./assets/':'../penalty/assets/'}${name}.webp?v=8`, ok, undefined, bad);
+  const t = new T.TextureLoader().load(`${['pitch-color','pitch-normal','pitch-roughness','concrete-normal','player-detail','player-normal','hair-color'].includes(name)?'./assets/':'../penalty/assets/'}${name}.webp?v=9`, ok, undefined, bad);
   if (srgb) t.colorSpace = T.SRGBColorSpace; t.flipY = !gltfUV; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   if (repeat) { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(...repeat); } return t;
 }
@@ -58,13 +58,15 @@ const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); 
 
 /* ---------- Pitch, markings and goals ---------- */
 {
-  const grass = new T.MeshStandardMaterial({ map: asset('pitch-color', true, [14, 18]), normalMap: asset('pitch-normal', false, [14, 18]), roughnessMap: asset('pitch-roughness', false, [14, 18]), normalScale:new T.Vector2(.16,.16), roughness: 1, color: '#ffffff' });
+  const grass = new T.MeshStandardMaterial({ map: asset('pitch-color', true, [45, 55]), normalMap: asset('pitch-normal', false, [45, 55]), roughnessMap: asset('pitch-roughness', false, [45, 55]), normalScale:new T.Vector2(.28,.28), roughness: 1, color: '#83bc52' });
   grass.onBeforeCompile=shader=>{
     shader.vertexShader='varying vec2 vTurf;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvTurf=(modelMatrix*vec4(transformed,1.0)).xz;');
-    shader.fragmentShader='varying vec2 vTurf;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
-      float detail=dot(diffuseColor.rgb,vec3(.3,.5,.2));
-      float bands=step(.5,fract(length(vTurf-vec2(0.,35.))/8.));
-      diffuseColor.rgb=vec3(.105,.25,.024)*(.70+sqrt(detail)*.9)*(1.-bands*.10)*( .97+.06*fract(sin(dot(floor(vTurf*90.),vec2(12.9898,78.233)))*43758.5453));`);
+    shader.fragmentShader='varying vec2 vTurf;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=mix(.88,1.,roughnessFactor);');shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+      vec3 source=diffuseColor.rgb;float detail=dot(source,vec3(.25,.65,.1));
+      vec3 turf=mix(source,vec3(detail*.42,detail*1.25,detail*.17),.45);
+      float bands=step(.5,fract(vTurf.y/14.));
+      float wear=exp(-dot(vTurf-vec2(0.,8.),vTurf-vec2(0.,8.))/1.3)+exp(-dot(vTurf-vec2(0.,62.),vTurf-vec2(0.,62.))/1.3);
+      diffuseColor.rgb=turf*1.05*(1.-bands*.11);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(detail*.9,detail*.8,detail*.44),wear*.16);`);
   };
   const pitch = new T.Mesh(new T.PlaneGeometry(90, 110), grass); pitch.rotation.x = -Math.PI / 2; pitch.position.z = CZ; pitch.receiveShadow = true; scene.add(pitch);
   const PX = 24, lines = canvasTex((WID + 2) * PX, (LEN + 2) * PX, g => {
@@ -80,7 +82,7 @@ const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); 
   });
   const mark = new T.Mesh(new T.PlaneGeometry(WID + 2, LEN + 2), new T.MeshStandardMaterial({ map: lines, transparent: true, depthWrite: false, roughness: .9 }));
   mark.rotation.x = -Math.PI / 2; mark.position.set(0, .006, CZ); mark.receiveShadow = true; scene.add(mark);
-  const white = new T.MeshPhysicalMaterial({ color: '#ffffff', roughness: .25, clearcoat: 1 }), netMat = new T.LineBasicMaterial({ color: '#eef2f6', transparent: true, opacity: .55 });
+  const white = new T.MeshPhysicalMaterial({ color: '#ffffff', roughness: .25, clearcoat: 1 });
   for (const [z, dir] of [[0, -1], [LEN, 1]]) {
     for (const x of [-GOAL_HW - .06, GOAL_HW + .06]) { const p = new T.Mesh(new T.CylinderGeometry(.06, .06, GOAL_H + .06, 16), white); p.position.set(x, (GOAL_H + .06) / 2, z); p.castShadow = true; scene.add(p); }
     const bar = new T.Mesh(new T.CylinderGeometry(.06, .06, GOAL_HW * 2 + .24, 16), white); bar.rotation.z = Math.PI / 2; bar.position.set(0, GOAL_H + .06, z); bar.castShadow = true; scene.add(bar);
@@ -89,7 +91,7 @@ const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); 
     for (let y = 0; y <= GOAL_H * .85 + .01; y += step) pts.push(-GOAL_HW, y, z + dir * D, GOAL_HW, y, z + dir * D);
     for (let k = 0; k <= D + .01; k += step) { const y = GOAL_H - (GOAL_H * .15) * (k / D); pts.push(-GOAL_HW, y, z + dir * k, GOAL_HW, y, z + dir * k); for (const x of [-GOAL_HW, GOAL_HW]) pts.push(x, 0, z + dir * k, x, y, z + dir * k); }
     for (const x of [-GOAL_HW, GOAL_HW]) for (let y = 0; y <= GOAL_H; y += step) pts.push(x, y, z, x, y * .85, z + dir * D);
-    const net = new T.LineSegments(new T.BufferGeometry().setAttribute('position', new T.Float32BufferAttribute(pts, 3)), netMat); scene.add(net);
+    goalCords(scene,pts);
   }
 }
 const stadium = buildStadium(scene, asset('crowd-fans'), { concrete: asset('concrete-color', true, [48, 1]), normal: asset('concrete-normal', false, [48, 1]) });
@@ -102,7 +104,7 @@ const B = { p: ball.position, v: new T.Vector3(), owner: null, lastTouch: null, 
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 let athlete;
 const maps = { color: asset('player-detail', true, null, true), normal: asset('player-normal', false, null, true), hair: asset('hair-color', true, null, true), hairNormal: asset('hair-normal', false, null, true) };
-const modelsReady = loader.loadAsync('./assets/athlete-match.glb?v=8', e => { if (e.total) $('load-progress').textContent = `${Math.round(e.loaded / e.total * 100)}%`; }).then(a => { athlete = a; });
+const modelsReady = loader.loadAsync('./assets/athlete-match.glb?v=9', e => { if (e.total) $('load-progress').textContent = `${Math.round(e.loaded / e.total * 100)}%`; }).then(a => { athlete = a; });
 
 const shadowTex = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 2, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
 const preparedClips=new Map();
@@ -114,29 +116,29 @@ function prepareClip(src){if(preparedClips.has(src.name))return preparedClips.ge
 }
 class Player {
   constructor(team, index, keeper, shirt, shorts) {
-    this.team = team; this.index = index; this.stats = { pace: .9 + (index * 7 % 11) / 55, passing: .72 + (index * 3 % 7) / 28, shooting: .7 + (index * 5 % 7) / 26, defending: .7 + (index * 2 % 7) / 24 }; this.number = keeper ? 1 : index + 6; this.cards = 0; this.keeper = keeper; this.pos = new T.Vector3(); this.vel = new T.Vector3(); this.facing = 0; this.target = new T.Vector3(); this.busy = 0; this.stun = 0;
+    this.team = team; this.index = index; this.surfaces=[]; this.stats = { pace: .9 + (index * 7 % 11) / 55, passing: .72 + (index * 3 % 7) / 28, shooting: .7 + (index * 5 % 7) / 26, defending: .7 + (index * 2 % 7) / 24 }; this.number = keeper ? 1 : index + 6; this.cards = 0; this.keeper = keeper; this.pos = new T.Vector3(); this.vel = new T.Vector3(); this.facing = 0; this.target = new T.Vector3(); this.busy = 0; this.stun = 0;
     const model = cloneSkinned(athlete.scene); this.root = new T.Group(); this.root.add(model); model.scale.setScalar(keeper ? 1.09 : [1.01, 1.045, 1.075, 1.03][index % 4]); this.model = model;
     model.traverse(o => {
-      if (!o.isMesh) return; o.visible=o.name.endsWith('__LOD') === (mobile&&Number(settings.size)>5); o.castShadow = true; o.receiveShadow = !mobile; o.frustumCulled = false;
+      if (!o.isMesh) return; o.userData.matchLOD=o.name.endsWith('__LOD')?'low':o.name.endsWith('__MID')?'mid':'high';o.visible=o.userData.matchLOD==='mid'; o.castShadow = true; o.receiveShadow = !mobile; o.frustumCulled = false;
       const n = o.name.toLowerCase();
       if(n.includes('hair')||n.includes('body')){const key=o.name+index%4;if(!variants.has(key)){const geo=o.geometry.clone(),a=geo.attributes.position,skin=geo.attributes.skinIndex,weights=geo.attributes.skinWeight;geo.computeBoundingBox();const box=geo.boundingBox,cy=(box.max.y+box.min.y)/2,cx=(box.max.x+box.min.x)/2;for(let i=0;i<a.count;i++){let w=n.includes('hair')?1:0;if(n.includes('body')&&skin)for(let k=0;k<4;k++){const bone=o.skeleton.bones[skin.getComponent(i,k)];if(bone?.name==='Head')w+=weights.getComponent(i,k);}if(w>.01){a.setX(i,a.getX(i)+(a.getX(i)-cx)*[-.035,.035,0,.018][index%4]*w);if(n.includes('hair'))a.setY(i,cy+(a.getY(i)-cy)*[1,.82,1.1,.92][index%4]);}}a.needsUpdate=true;variants.set(key,geo);}o.geometry=variants.get(key);}
-      const m = new T.MeshStandardMaterial({ map: maps.color, normalMap: maps.normal, roughness: .65, envMapIntensity: .85 });
+      const m = new T.MeshPhysicalMaterial({ map: maps.color, normalMap: maps.normal, normalScale:new T.Vector2(.65,.65), roughness: .67, envMapIntensity: .7, specularIntensity:.45 });
       if (n.includes('body')) m.color.set(['#ffffff', '#d6b59b', '#a17859', '#e8c9ac'][index % 4]);
-      if (n.includes('shirt')) { m.map = numberedKit(this.number); m.color.set(shirt); m.roughness = .85; } if (n.includes('shorts')) { m.color.set(shorts); m.roughness = .88; }
+      if (n.includes('shirt')) { m.map = numberedKit(this.number); m.color.set(shirt); m.roughness = .86;m.sheen=.65;m.sheenRoughness=.9;m.sheenColor.set(shirt); } if (n.includes('shorts')) { m.color.set(shorts); m.roughness = .88; }
       if (n.includes('socks')) { m.color.set(keeper?shirt:'#f2f3ed'); m.roughness = .95; } if (n.includes('shoes')) m.color.set(['#e8e8dd','#e4988a','#d5eea4','#a5c4df'][index%4]);
       if (n.includes('hair') || n.includes('eyelashes')) { m.map = maps.hair; m.normalMap = maps.hairNormal; m.color.set(['#211811','#5b3c23','#121314','#34271c'][index%4]); m.alphaTest = .32; m.side = T.DoubleSide; }
-      o.material = m;
+      o.material = m;this.surfaces.push(o);
     });
-    if (keeper) fittedGloves(model, '#f4f4f4');
+    if (keeper) fittedGloves(model, '#f4f4f4','Ch38_Body__MID');
     this.bones = {}; model.traverse(o => { if (o.isBone) this.bones[o.name] = o; });
     this.mixer = new T.AnimationMixer(model); this.clips = {};
     for (const src of athlete.animations) {
       const clip=prepareClip(src);
       const a = this.mixer.clipAction(clip); if (!['idle', 'jog', 'sprint', 'dribble-jog', 'backpedal', 'strafe-left', 'strafe-right', 'turn90', 'turn180', 'ready'].includes(clip.name)) { a.setLoop(T.LoopOnce, 1); a.clampWhenFinished = true; } this.clips[clip.name] = a;
     }
-    this.shadow = new T.Mesh(new T.PlaneGeometry(1.2, 1.2), new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })); this.shadow.rotation.x = -Math.PI / 2; scene.add(this.shadow);
-    this.ring = new T.Mesh(new T.RingGeometry(.55, .68, 40), new T.MeshBasicMaterial({ color: '#dfff63', transparent: true, opacity: .9, depthWrite: false, toneMapped: false })); this.ring.rotation.x = -Math.PI / 2; this.ring.visible = false; scene.add(this.ring);
-    this.pin = new T.Mesh(new T.ConeGeometry(.22, .45, 16), new T.MeshBasicMaterial({ color: '#39e07a', toneMapped: false })); this.pin.rotation.x = Math.PI; this.pin.visible = false; scene.add(this.pin);
+    this.shadow = new T.Mesh(new T.PlaneGeometry(1.2, 1.2), new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })); this.shadow.layers.set(2);this.shadow.rotation.x = -Math.PI / 2; scene.add(this.shadow);
+    this.ring = new T.Mesh(new T.RingGeometry(.55, .68, 40), new T.MeshBasicMaterial({ color: '#dfff63', transparent: true, opacity: .9, depthWrite: false, toneMapped: false })); this.ring.layers.set(2);this.ring.rotation.x = -Math.PI / 2; this.ring.visible = false; scene.add(this.ring);
+    this.pin = new T.Mesh(new T.ConeGeometry(.22, .45, 16), new T.MeshBasicMaterial({ color: '#39e07a', toneMapped: false })); this.pin.layers.set(2);this.pin.rotation.x = Math.PI; this.pin.visible = false; scene.add(this.pin);
     this.contacts = new FootContacts(this); this.blend = {}; this.current = null; this.play(keeper ? 'ready' : 'idle'); scene.add(this.root);
   }
   play(name, speed = 1, fade = .2, from = 0) {
@@ -148,6 +150,7 @@ class Player {
   }
   get dir() { return this.team.dir; }
   update(dt) {
+    const distance=this.root.position.distanceTo(camera.position),detail=distance<18?'high':mobile&&Number(settings.size)>5?'low':'mid';for(const mesh of this.surfaces)mesh.visible=mesh.userData.matchLOD===detail;
     const speed = Math.hypot(this.vel.x, this.vel.z);
     if (this.busy <= 0) {
       const jockey = this.jockey && B.owner && B.owner.team !== this.team;
@@ -171,14 +174,14 @@ class Player {
     // Body lean: into the turn, forwards when accelerating, back when braking.
     const lean = T.MathUtils.clamp(-(this.turnRate || 0) * speed * .018, -.3, .3), pitch = T.MathUtils.clamp((this.accel || 0) * .022, -.12, .16);
     this.leanZ = T.MathUtils.damp(this.leanZ || 0, lean, 8, dt); this.leanX = T.MathUtils.damp(this.leanX || 0, pitch, 6, dt);
-    this.root.position.set(this.pos.x, 0, this.pos.z); this.root.rotation.set(this.leanX, this.facing, this.leanZ, 'YXZ');
+    this.root.position.set(this.pos.x, -.03, this.pos.z); this.root.rotation.set(this.leanX, this.facing, this.leanZ, 'YXZ');
     this.root.updateMatrixWorld(true);
-    if(this.anim==='slide'||this.anim==='dive'||this.anim==='dive2'){const floor=Math.min(...['Hips','Spine2','Head'].map(n=>this.bones[n].getWorldPosition(new T.Vector3()).y-(n==='Head'?.11:.18)));if(floor<0){this.root.position.y=-floor;this.root.updateMatrixWorld(true);}}
+    if(this.anim==='slide'||this.anim==='dive'||this.anim==='dive2'){const floor=Math.min(...['Hips','Spine2','Head'].map(n=>this.bones[n].getWorldPosition(new T.Vector3()).y-(n==='Head'?.11:.18)));if(floor<0){this.root.position.y-=floor;this.root.updateMatrixWorld(true);}}
     if(this.keeper&&B.owner===this&&!this.strike){for(const [side,dx]of [['Left',-.1],['Right',.1]])reachBall(this,side,B.p.clone().add(new T.Vector3(dx,0,0)),.8);}
     if(this.keeper && B.shot && B.shot.team!==this.team){for(const side of ['Left','Right']){const h=this.bones[side+'Hand'].getWorldPosition(new T.Vector3());if(h.distanceTo(B.p)<.6)reachBall(this,side,B.p,Math.min(.65,(.6-h.distanceTo(B.p))*2));}}
     this.contacts.update(dt, (this.busy <= 0 || this.strike) && !this.keeper);
     if (this.strike && this.strike.at - clock < .12 && this.strike.at > clock-.04) { const side=this.strike.clip==='pass-short'?'Left':'Right',foot=this.bones[side+'Foot'],target=B.p.clone(); target.y=.1; if(!['throw-in','keeper-throw'].includes(this.strike.clip))solveLimb(this.bones[side+'UpLeg'],this.bones[side+'Leg'],foot,target,1); }
-    this.shadow.position.set(this.pos.x + .35, .01, this.pos.z - .3); this.ring.position.set(this.pos.x, .012, this.pos.z); this.pin.visible = this.ring.visible; this.pin.position.set(this.pos.x, 2.35 + Math.sin(performance.now() / 180) * .08, this.pos.z);
+    this.shadow.position.set(this.pos.x, .012, this.pos.z); this.ring.position.set(this.pos.x, .012, this.pos.z); this.pin.visible = this.ring.visible; this.pin.position.set(this.pos.x, 2.35 + Math.sin(performance.now() / 180) * .08, this.pos.z);
   }
   face(x, z) { this.facing = Math.atan2(x - this.pos.x, z - this.pos.z); }
 }
@@ -193,10 +196,10 @@ const formations = {
 const kitMaps = new Map(); const variants=new Map();
 function numberedKit(number){
  if(kitMaps.has(number))return kitMaps.get(number);
- const size=512, map=canvasTex(size,size,g=>{
+ const size=mobile?512:1024, map=canvasTex(size,size,g=>{
   const image=maps.color.image;g.drawImage(image,0,0,size,size);
   g.drawImage(image,image.width*.565,image.height*.81,image.width*.075,image.height*.085,size*.50,size*.70,size*.09,size*.11);
-  g.fillStyle='#101419';g.textAlign='center';g.font='900 48px Arial';g.fillText(String(number),size*.55,size*.805);
+  g.fillStyle='#101419';g.textAlign='center';g.font=`900 ${size*.094}px Arial`;g.fillText(String(number),size*.55,size*.805);
  });map.flipY=false;kitMaps.set(number,map);return map;
 }
 let SHAPE = [[0, 1.2], [-8, 12], [8, 12], [-7, 26], [7, 26]];
@@ -630,7 +633,7 @@ function loop() {
   if (!paused && state !== 'menu') { accumulator+=dt;while(accumulator>=1/120){step(1/120);accumulator-=1/120;} }
   for (const p of all) p.update(paused ? 0 : dt);
   B.p.y = Math.max(B.p.y, R); updateCamera(dt); stadium.update(performance.now() / 1000, state === 'goal' && B.lastTouch?.team === user, dt);
-  grade.uniforms.time.value = performance.now() / 1000; if ((hudT -= dt) <= 0) { hud(); hudT = .1; }
+  optics.update(state,restartT,ball,B.lastTouch);grade.uniforms.time.value = performance.now() / 1000; if ((hudT -= dt) <= 0) { hud(); hudT = .1; }
   presentation.update(dt,all,B,state); renderer.shadowMap.needsUpdate=true; renderer.info.reset();composer.render();
 }
 if (['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('debug')) window.fb = { get input(){return {...input,shootDown,passDown,shootHold,passHold};}, get players(){return all;}, get ball(){return B;}, get state(){return state;}, get camera(){return camera;}, action, pass, shoot, tackle, give, restartWith, foulRestart, setControlled, startMatch, goal:()=>goalScored(user), penalty:()=>startPenalty(user), get renderer(){return renderer;}, sim(seconds) { for (let i = 0; i < seconds * 60; i++) step(1 / 60); for (const p of all) p.update(0); hud(); return { state, score: teams.map(t => t.score), time: matchTime.toFixed(1), owner: B.owner ? (B.owner.team === user ? 'user' : 'cpu') + B.owner.index : null, ball: B.p.toArray().map(v => +v.toFixed(1)) }; } };

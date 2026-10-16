@@ -26,6 +26,15 @@ for original in list(bpy.data.objects):
   bpy.context.collection.objects.link(low)
   mod=low.modifiers.new('Mobile match LOD','DECIMATE');mod.ratio=.42
   bpy.context.view_layer.objects.active=low;bpy.ops.object.modifier_apply(modifier=mod.name)
+# Retain the original match mesh as a middle LOD, and refine the close-up
+# face/cloth surface without changing its UV layout, skeleton or animations.
+for original in list(bpy.data.objects):
+ if original.type=='MESH' and not original.name.endswith('__LOD'):
+  mid=original.copy();mid.data=original.data.copy();mid.name=original.name+'__MID'
+  bpy.context.collection.objects.link(mid)
+  if original.name.split('_')[-1] in ['Body','Shirt','Shorts']:
+   mod=original.modifiers.new('Close-up surface','SUBSURF');mod.levels=1;mod.render_levels=1
+   bpy.context.view_layer.objects.active=original;bpy.ops.object.modifier_apply(modifier=mod.name)
 # No original huge embedded textures are needed by the new PBR materials.
 if rig.animation_data:rig.animation_data_clear()
 for a in list(bpy.data.actions):bpy.data.actions.remove(a)

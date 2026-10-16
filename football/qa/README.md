@@ -16,22 +16,22 @@ with touch; desktop tests use 1280×640. These are not physical phone benchmarks
 | Team sizes | 10, 14, 22 actual independently animated players |
 | Match flow | Both viewport tests reached full time at 240 match seconds, using `fb.sim()` for acceleration |
 | Pass timing | Ownership retained before contact, released afterward; `actions.json` |
-| Boot contact | ~0.0019 m measured separation during the contact window |
+| Boot contact | ~0.010 m measured separation during the contact window |
 | Late slide | Full captured recovery finishes before locomotion; yellow card and restart; competing automatic steals cannot bypass the tackle event |
 | Replays | Three successive angles, 0.4× source pose playback; returns to match |
 | Penalty | Swipe input launches the strike; in-match score and possession retained |
 | Physics | Shared SI ball integrator passes 81 target solves, drag/spin symmetry, energy-loss and swept-contact regression checks |
 | Errors | No JavaScript page errors in the two complete match flows or action tests |
-| Local cold ready time | 3.795 s desktop; 1.847 s phone emulation |
-| First-party resource bodies | 6,835,239 bytes, including loaded audio; excludes externally served fonts/tracking |
+| Local cold ready time | 2.426 s desktop; 2.041 s phone emulation |
+| First-party resource bodies | 8,030,306 bytes, including loaded audio; excludes externally served fonts/tracking |
 | 11-a-side frame sample | 180 frames per viewport; median and p95 ~16.7 ms on this Mac |
-| Geometry load | ~2.23 million triangles desktop vs ~1.12 million on phone, including shadow/postprocessing passes |
-| Slow connection | Cold 10 Mbps, 80 ms latency: ready 5.976 s, model resource 3.930 s; fonts/tracking excluded. Loading screen remains until ready |
+| Geometry load | ~3.46 million triangles desktop vs ~1.12 million on phone, including shadow/postprocessing passes |
+| Slow connection | Cold 10 Mbps, 80 ms latency: ready 7.161 s, model resource 6.508 s; fonts/tracking excluded. Loading screen remains until ready |
 | Static delivery | GLB, HDR-as-bin and JS paths pass the production route allowlist |
 
-The single player package is 2,350,048 bytes and contains 28 clips, shared full
+The single player package is 3,180,708 bytes and contains 28 clips, shared close-up, match
 and reduced mesh sets. Character action data is prepared once and shared across
-mixers; shirt number textures are cached at 512px. The ball's 32 panels are
+mixers; shirt number textures are cached at 1024px desktop / 512px mobile. The ball's 32 panels are
 merged into two surface draws. The page remains plain static ES modules.
 
 ## Screenshots and video
@@ -106,3 +106,18 @@ errors. Results: `touch-results.json`; screenshots: `touch-*-menu.webp`,
 - Pause, menu, focus loss, visibility changes and rotation clear held controls.
 
 Physical Safari/iOS long-press behaviour has not been tested on a device.
+
+## Rendering follow-up — version 9
+
+- Refined close-up face and cloth topology; three distance/device mesh tiers.
+- Higher-resolution character colour/normal maps and cloth sheen.
+- CC0 ambientCG Grass004 colour/normal/roughness maps, broad mowing stripes
+  and subtle penalty-spot wear. Roughness is raised for dry football turf.
+- Neutral colour response, softer contact grounding and desktop ambient occlusion.
+- Celebration camera faces the scorer; desktop close-ups use depth of field.
+- Goal nets now use shaded cord geometry; advertising repeats at readable scale.
+- `*-render-pitch.webp` and `*-render-closeup.webp` show the final art comparison.
+
+Both full match flows and six touch layouts passed again. These improvements do
+not establish parity with DLS or eFootball. Mobile disables ambient occlusion
+and depth of field; high-detail close-up meshes still work on both platforms.

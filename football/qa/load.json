@@ -1,11 +1,11 @@
 {
   "profile": "10 Mbps down, 80 ms latency, cold context; third party analytics/fonts excluded",
-  "readyMs": 5976,
+  "readyMs": 7161,
   "model": [
     {
       "name": "/football/assets/athlete-match.glb",
-      "durationMs": 3929.5,
-      "bytes": 2350048
+      "durationMs": 6508.299999982119,
+      "bytes": 3180708
     }
   ]
 }
