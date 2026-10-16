@@ -1,3 +1,5 @@
+import { bindHold, guardGameGestures } from './touch.js?v=8';
+guardGameGestures();
 import * as T from '../evermile/vendor/three.module.js';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
 import { EffectComposer } from '../evermile/vendor/postprocessing/EffectComposer.js';
@@ -7,12 +9,12 @@ import { clone as cloneSkinned } from '../evermile/vendor/utils/SkeletonUtils.js
 import { MeshoptDecoder } from '../penalty/vendor/meshopt_decoder.module.js';
 import { HDRLoader } from '../penalty/vendor/three-addons/loaders/HDRLoader.js';
 import { broadcastGrade } from '../penalty/rendering.js?v=10';
-import { buildStadium } from '../penalty/stadium.js?v=7';
+import { buildStadium } from '../penalty/stadium.js?v=8';
 import { FootContacts, solveLimb, reachBall } from '../penalty/motion.js?v=8';
 import { advance, launchVelocity, groundContact, sweepSphereSegment, reflectContact } from '../penalty/physics.js?v=8';
-import { createMatchBall } from './ball.js?v=7';
-import { installPresentation } from './presentation.js?v=7';
-import { fittedGloves } from '../penalty/equipment.js?v=7';
+import { createMatchBall } from './ball.js?v=8';
+import { installPresentation } from './presentation.js?v=8';
+import { fittedGloves } from '../penalty/equipment.js?v=8';
 
 /* ---------- Pitch geometry (metres). Your team attacks towards +z. ---------- */
 const LEN = 70, WID = 46, HX = WID / 2, CZ = LEN / 2, GOAL_HW = 3, GOAL_H = 2.2, BOX_D = 11, BOX_HW = 11, R = .11, G = 9.81;
@@ -35,7 +37,7 @@ const camera = new T.PerspectiveCamera(40, 1, .5, 600); camera.layers.enable(2);
 const composer = new EffectComposer(renderer, new T.WebGLRenderTarget(1, 1, { type: T.HalfFloatType, samples: mobile ? 0 : 4 }));
 composer.addPass(new RenderPass(scene, camera)); composer.addPass(new OutputPass()); const grade = broadcastGrade(); composer.addPass(grade);
 
-const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v=7').then(hdr => {
+const environmentReady = new HDRLoader().loadAsync('./assets/stadium-light.bin?v=8').then(hdr => {
   hdr.mapping = T.EquirectangularReflectionMapping; const pm = new T.PMREMGenerator(renderer);
   scene.environment = pm.fromEquirectangular(hdr).texture; scene.environmentIntensity = .36; scene.environmentRotation.y = .8; hdr.dispose(); pm.dispose();
 }).catch(() => scene.add(new T.HemisphereLight('#c7d9e8', '#52603d', .8)));
@@ -48,7 +50,7 @@ scene.add(sun, sun.target);
 const jobs = [];
 function asset(name, srgb = true, repeat = null, gltfUV = false) {
   let ok, bad; jobs.push(new Promise((a, b) => { ok = a; bad = b; }));
-  const t = new T.TextureLoader().load(`${['pitch-color','pitch-normal','pitch-roughness','concrete-normal','player-detail','player-normal','hair-color'].includes(name)?'./assets/':'../penalty/assets/'}${name}.webp?v=7`, ok, undefined, bad);
+  const t = new T.TextureLoader().load(`${['pitch-color','pitch-normal','pitch-roughness','concrete-normal','player-detail','player-normal','hair-color'].includes(name)?'./assets/':'../penalty/assets/'}${name}.webp?v=8`, ok, undefined, bad);
   if (srgb) t.colorSpace = T.SRGBColorSpace; t.flipY = !gltfUV; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   if (repeat) { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(...repeat); } return t;
 }
@@ -100,7 +102,7 @@ const B = { p: ball.position, v: new T.Vector3(), owner: null, lastTouch: null, 
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 let athlete;
 const maps = { color: asset('player-detail', true, null, true), normal: asset('player-normal', false, null, true), hair: asset('hair-color', true, null, true), hairNormal: asset('hair-normal', false, null, true) };
-const modelsReady = loader.loadAsync('./assets/athlete-match.glb?v=7', e => { if (e.total) $('load-progress').textContent = `${Math.round(e.loaded / e.total * 100)}%`; }).then(a => { athlete = a; });
+const modelsReady = loader.loadAsync('./assets/athlete-match.glb?v=8', e => { if (e.total) $('load-progress').textContent = `${Math.round(e.loaded / e.total * 100)}%`; }).then(a => { athlete = a; });
 
 const shadowTex = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 2, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
 const preparedClips=new Map();
@@ -262,13 +264,20 @@ let shootHold = 0, shootDown = false, passHold = 0, passDown = false;
 addEventListener('keydown', e => { if (e.repeat) return; if(e.code==='KeyQ') $('technique').click(); keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') { passDown = true; passHold = 0; } if (e.code === 'KeyK' || e.code === 'KeyL') {shootDown = true;shootHold=0;} if (e.code === 'Escape') togglePause(); if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup', e => { keys[e.code] = false; if ((e.code === 'KeyK' || e.code === 'KeyL') && shootDown) { shootDown = false; action('shoot'); } if ((e.code === 'Space' || e.code === 'KeyJ') && passDown) { passDown = false; action('pass'); } });
 const stick = $('stick'), knob = stick.querySelector('i'); let stickId = null, stickC = null;
-stick.addEventListener('pointerdown', e => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); const r = stick.getBoundingClientRect(); stickC = [r.left + r.width / 2, r.top + r.height / 2]; moveStick(e); });
+stick.addEventListener('pointerdown', e => { if(stickId!==null)return;e.preventDefault();stickId = e.pointerId; stick.setPointerCapture(e.pointerId); const r = stick.getBoundingClientRect(); stickC = [r.left + r.width / 2, r.top + r.height / 2]; moveStick(e); });
 stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
-const endStick = () => { stickId = null; input.x = input.y = 0; knob.style.transform = ''; };
-stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
-function moveStick(e) { let dx = e.clientX - stickC[0], dy = e.clientY - stickC[1]; const r = 52, l = Math.hypot(dx, dy); if (l > r) { dx *= r / l; dy *= r / l; } knob.style.transform = `translate(${dx}px,${dy}px)`; input.x = dx / r; input.y = -dy / r; }
-const hold = (id, down, up) => { const el = $(id); el.addEventListener('pointerdown', e => { e.preventDefault(); el.classList.add('is-down'); down(); }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, () => { if (el.classList.contains('is-down')) { el.classList.remove('is-down'); up?.(); } }); };
-hold('btn-a', () => { passDown = true; passHold = 0; }, () => { if (passDown) { passDown = false; action('pass'); } }); hold('btn-b', () => { shootDown = true; }, () => { if (shootDown) { shootDown = false; action('shoot'); } }); hold('btn-c', () => { input.sprint = true; }, () => { input.sprint = false; });
+const endStick = () => { const id=stickId;stickId = null;if(id!==null&&stick.hasPointerCapture(id))stick.releasePointerCapture(id); input.x = input.y = 0; knob.style.transform = ''; };
+for(const event of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(event,e=>{if(e.pointerId===stickId)endStick();});
+function moveStick(e) { let dx = e.clientX - stickC[0], dy = e.clientY - stickC[1]; const r = Math.min(52,stick.clientWidth*.35), l = Math.hypot(dx, dy); if (l > r) { dx *= r / l; dy *= r / l; } knob.style.transform = `translate(${dx}px,${dy}px)`; input.x = dx / r; input.y = -dy / r; }
+const cancelHolds=[
+ bindHold($('btn-a'),{down:()=>{passDown=true;passHold=0;},release:()=>{passDown=false;action('pass');},cancel:()=>{passDown=false;passHold=0;}}),
+ bindHold($('btn-b'),{down:()=>{shootDown=true;shootHold=0;},release:()=>{shootDown=false;action('shoot');},cancel:()=>{shootDown=false;shootHold=0;}}),
+ bindHold($('btn-c'),{down:()=>input.sprint=true,release:()=>input.sprint=false,cancel:()=>input.sprint=false})
+];
+function resetControls(){cancelHolds.forEach(cancel=>cancel());endStick();shootDown=passDown=false;shootHold=passHold=0;input.sprint=false;for(const k of Object.keys(keys))keys[k]=false;}
+addEventListener('blur',resetControls);
+addEventListener('orientationchange',resetControls);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)resetControls();});
 
 function readInput() {
   let x = input.x, y = input.y;
@@ -405,6 +414,7 @@ function steer(p, want, dt) {
 let state = 'menu', clock = 0, matchTime = 0, half = 1, restartT = 0, pending = null, paused = false;
 const matchLength = () => Number(settings.length) * 60;
 function startMatch() {
+  resetControls();
   buildTeams(); clock = 0; matchTime = 0; half = 1; teams.forEach(t => t.score = 0); stadium.updateScore(0, 0, 1);
   $('start').hidden = true; $('result').hidden = true; document.body.classList.add('is-playing'); kickoffPositions(teams[0]); state = 'walkout'; restartT = 3.5; for(const p of all){p.pos.set((p.index-(SHAPE.length-1)/2)*1.3,0,CZ-8+(p.team===user?-2:2));p.vel.set(0,0,1.8);p.facing=0;} pending=()=>{kickoffPositions(user);state='kickoff';restartT=1.2;};whistle();hud();
 }
@@ -584,6 +594,7 @@ let bannerT = 0, toastT = 0;
 function banner(text, good) { const b = $('banner'); b.textContent = text; b.className = 'banner is-on' + (good==null?' is-event':'') + (good === true ? ' is-good' : good === false ? ' is-bad' : ''); clearTimeout(bannerT); bannerT = setTimeout(() => b.classList.remove('is-on'), 1800); }
 function toast(text) { const el = $('toast'); el.textContent = text; el.classList.add('is-on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('is-on'), 1400); }
 function hud() {
+  document.body.dataset.matchState=state;
   if (!teams.length) return;
   const mins = Math.floor(matchTime / matchLength() * 90), shown = Math.min(mins, half === 1 ? 45 : 90);
   $('sb-home').textContent = teams[0].name; $('sb-away').textContent = teams[1].name; $('sb-score').textContent = `${teams[0].score} – ${teams[1].score}`; $('sb-time').textContent = `${String(shown).padStart(2,'0')}:${String(Math.floor((matchTime/matchLength()*90%1)*60)).padStart(2,'0')}`;
@@ -599,10 +610,11 @@ function syncSegments() { document.querySelectorAll('.seg[data-setting]').forEac
 document.querySelectorAll('.seg[data-setting]').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button[data-value]'); if (!b) return; settings[seg.dataset.setting] = b.dataset.value; save(); syncSegments(); }));
 $('play').onclick = () => { sfx('ctx'); startMatch(); };
 $('again').onclick = () => startMatch();
-const toMenu = () => { state = 'menu'; paused = false; $('pause').hidden = true; $('result').hidden = true; $('start').hidden = false; document.body.classList.remove('is-playing'); };
+const toMenu = () => { resetControls();state = 'menu'; paused = false; $('pause').hidden = true; $('result').hidden = true; $('start').hidden = false; document.body.classList.remove('is-playing'); };
 $('to-menu').onclick = toMenu; $('quit').onclick = toMenu;
-addEventListener('blur',()=>{endStick();shootDown=passDown=false;input.sprint=false;for(const k of Object.keys(keys))keys[k]=false;});
-function togglePause() { if (state === 'menu' || state === 'over') return; shootDown=passDown=false;input.sprint=false;endStick();paused = !paused; $('pause').hidden = !paused; }
+
+function togglePause() { if (state === 'menu' || state === 'over') return; resetControls();paused = !paused; $('pause').hidden = !paused; }
+$('skip-replay').onclick=()=>{if(state==='goal')restartT=.01;};
 $('btn-pause').onclick = togglePause; $('resume').onclick = togglePause;
 $('btn-sound').onclick = () => { settings.sound = !settings.sound; bed.muted=!settings.sound; save(); syncSegments(); };
 $('btn-full').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {});
@@ -621,7 +633,7 @@ function loop() {
   grade.uniforms.time.value = performance.now() / 1000; if ((hudT -= dt) <= 0) { hud(); hudT = .1; }
   presentation.update(dt,all,B,state); renderer.shadowMap.needsUpdate=true; renderer.info.reset();composer.render();
 }
-if (['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('debug')) window.fb = { get players(){return all;}, get ball(){return B;}, get state(){return state;}, get camera(){return camera;}, action, pass, shoot, tackle, give, restartWith, foulRestart, setControlled, startMatch, goal:()=>goalScored(user), penalty:()=>startPenalty(user), get renderer(){return renderer;}, sim(seconds) { for (let i = 0; i < seconds * 60; i++) step(1 / 60); for (const p of all) p.update(0); hud(); return { state, score: teams.map(t => t.score), time: matchTime.toFixed(1), owner: B.owner ? (B.owner.team === user ? 'user' : 'cpu') + B.owner.index : null, ball: B.p.toArray().map(v => +v.toFixed(1)) }; } };
+if (['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('debug')) window.fb = { get input(){return {...input,shootDown,passDown,shootHold,passHold};}, get players(){return all;}, get ball(){return B;}, get state(){return state;}, get camera(){return camera;}, action, pass, shoot, tackle, give, restartWith, foulRestart, setControlled, startMatch, goal:()=>goalScored(user), penalty:()=>startPenalty(user), get renderer(){return renderer;}, sim(seconds) { for (let i = 0; i < seconds * 60; i++) step(1 / 60); for (const p of all) p.update(0); hud(); return { state, score: teams.map(t => t.score), time: matchTime.toFixed(1), owner: B.owner ? (B.owner.team === user ? 'user' : 'cpu') + B.owner.index : null, ball: B.p.toArray().map(v => +v.toFixed(1)) }; } };
 syncSegments();
 Promise.all([modelsReady, environmentReady, ...jobs]).then(() => {
   buildTeams(); kickoffPositions(teams[0]); state = 'menu'; $('loading').hidden = true; document.body.classList.add('is-ready'); renderer.setAnimationLoop(loop);

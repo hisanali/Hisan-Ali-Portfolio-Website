@@ -86,3 +86,23 @@ a Chrome screencast issue that clips the bottom controls in mobile landscape.
   and lose the current match.
 - This is a DLS-inspired browser game; equivalent DLS production quality is not
   established by these tests.
+
+## Touch and layout follow-up — version 8
+
+`test-touch.cjs` exercises 844×390, 390×844, 667×375, 568×320,
+768×1024 and 1280×640 in Chrome touch emulation. All six passed with no page
+errors. Results: `touch-results.json`; screenshots: `touch-*-menu.webp`,
+`touch-*-play.webp`, `touch-*-goal.webp`.
+
+- Long holds and simultaneous joystick/action touches retain their pointer.
+- Moving outside a held button does not release it prematurely.
+- Pointer cancellation clears input without firing a pass or shot.
+- Repeated taps retain viewport scale 1 and leave no selected text.
+- Gameplay disables selection, callouts and browser gesture handling; setup
+  panels retain normal vertical scrolling and pinch accessibility.
+- All action controls fit, do not overlap, and the header elements do not overlap.
+- Goal/event messages are compact badges; setup and pause headings are smaller.
+- Goal presentation hides gameplay HUD clutter and exposes a working Skip replay button.
+- Pause, menu, focus loss, visibility changes and rotation clear held controls.
+
+Physical Safari/iOS long-press behaviour has not been tested on a device.

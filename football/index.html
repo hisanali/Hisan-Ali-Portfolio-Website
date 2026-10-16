@@ -17,9 +17,9 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f7a3e'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%23fff'/%3E%3Cpath d='M32 22l8 6-3 9h-10l-3-9z' fill='%23111'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../chess/style.css?v=7">
-  <link rel="stylesheet" href="style.css?v=7">
-  <link rel="preload" href="assets/athlete-match.glb?v=7" as="fetch" crossorigin fetchpriority="high">
+  <link rel="stylesheet" href="../chess/style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="preload" href="assets/athlete-match.glb?v=8" as="fetch" crossorigin fetchpriority="high">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Football 3D","url":"https://hisanali.com/football/","description":"A free 5-, 7- or 11-a-side 3D football match in the browser. Dribble, pass, shoot and tackle against computer teams.","genre":["Sports","Football"],"gamePlatform":"Web browser","playMode":"SinglePlayer","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/"}}</script>
 </head>
 <body><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
@@ -47,6 +47,7 @@
 <canvas id="radar" width="160" height="104" aria-label="Match radar"></canvas><button id="technique" type="button" aria-label="Cycle pass and shot technique">DRIVEN</button><span id="replay-label" hidden></span>
 <p class="keys-hint">WASD / arrows move · Space pass or switch · K hold to shoot or tackle · Shift sprint / jockey · Q technique · Esc pause</p>
 <div id="player-info"></div><div class="phase" id="phase"></div>
+<button id="skip-replay" type="button">Skip replay ›</button>
 <div class="banner" id="banner" aria-live="assertive"></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -70,6 +71,6 @@
 <section class="result" id="pause" hidden><div class="result-card"><small>Paused</small><h2>Take a breather</h2><div class="result-actions"><button id="resume" class="primary" type="button">Resume</button><button id="quit" type="button" style="grid-column:1/-1">Quit to menu</button></div></div></section>
 <section class="result" id="result" hidden aria-live="assertive"><div class="result-card"><small id="result-label"></small><h2 id="result-title"></h2><p id="result-reason"></p>
   <div class="result-actions"><button id="again" class="primary" type="button">Rematch</button><button id="to-menu" type="button" style="grid-column:1/-1">Menu</button></div></div></section>
-<script type="module" src="game.js?v=7"></script>
+<script type="module" src="game.js?v=8"></script>
 </body>
 </html>

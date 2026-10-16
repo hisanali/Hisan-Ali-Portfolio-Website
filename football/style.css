@@ -1,3 +1,9 @@
+/* Browser gestures belong to the game surface, not held button labels. */
+html,body{overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button,a{touch-action:manipulation}button>*{pointer-events:none}
+body.is-playing{touch-action:none}#scene,.controls,.controls *{touch-action:none}
+.start,.result{touch-action:pan-y pinch-zoom;overscroll-behavior:contain}
 .loading { position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; text-align: center; gap: 6px; background: #0b1a12; color: var(--ink); }
 .loading b { font-size: 42px; animation: spin 1.4s linear infinite; } .loading p { margin: 0; font-weight: 800; } .loading small { color: var(--muted); }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -24,23 +30,39 @@ body.is-playing .phase:not(:empty) { opacity: 1; }
 @media (pointer: fine) { .phase { bottom: 56px; } }
 .keys-hint { position: fixed; z-index: 10; left: 50%; bottom: 16px; transform: translateX(-50%); margin: 0; padding: 8px 14px; border-radius: 999px; background: var(--glass); font-size: 12px; color: var(--muted); white-space: nowrap; opacity: 0; transition: opacity .3s; }
 @media (pointer: fine) { body.is-playing .keys-hint { opacity: 1; } .controls { display: none; } }
-.banner { position: fixed; z-index: 12; left: 50%; top: 38%; transform: translate(-50%, -50%) scale(.6); font-family: var(--serif); font-size: clamp(44px, 10vw, 110px); opacity: 0; pointer-events: none; text-shadow: 0 8px 40px rgba(0,0,0,.6); transition: opacity .25s, transform .45s cubic-bezier(.2,1.4,.3,1); white-space: nowrap; }
-.banner.is-on { opacity: 1; transform: translate(-50%, -50%) scale(1); } .banner.is-good { color: var(--lime); } .banner.is-bad { color: #ff8a7a; }
-@media (max-width: 700px) {
-  .act { width: 80px; height: 80px; } .act span { font-size: 32px; } .pad { width: 196px; height: 180px; } #btn-b { right: 98px; } #btn-c { bottom: 98px; }
-  .scorebug { left: 60px; top: 12px; font-size: 11px; gap: 7px; padding: 6px 10px; } .scorebug b { font-size: 15px; }
-  .stick { width: 128px; height: 128px; } .stick i { width: 54px; height: 54px; }
+
+/* Compact match messages leave the ball and goal visible. */
+.banner,.banner.is-event{position:fixed;z-index:12;left:50%;top:82px;max-width:min(420px,85vw);transform:translate(-50%,-8px);padding:9px 18px;border-radius:8px;border-left:3px solid #efd35a;background:#0c1b25e8;font:800 17px/1.3 var(--sans);letter-spacing:.02em;white-space:normal;text-align:center;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;text-shadow:none}
+.banner.is-on{opacity:1;transform:translate(-50%,0)}.banner.is-good{border-color:var(--lime);color:var(--lime)}.banner.is-bad{border-color:#ff8a7a;color:#ff8a7a}
+#radar{position:fixed;z-index:9;bottom:72px;left:50%;transform:translateX(-50%);width:112px;height:73px;border-radius:5px;opacity:0;pointer-events:none}body.is-playing #radar{opacity:.8}
+#technique{position:fixed;z-index:11;right:24px;bottom:250px;min-height:36px;border:1px solid #ffffff50;border-radius:20px;padding:8px 14px;background:#102330bc;color:#fff;font:800 10px var(--sans);letter-spacing:.1em;display:none}body.is-playing #technique{display:block}
+#replay-label{position:fixed;z-index:12;top:62px;left:50%;transform:translateX(-50%);max-width:85vw;background:#0a1a23d9;border-left:3px solid var(--lime);padding:6px 12px;font-size:10px;letter-spacing:.1em;font-weight:800;color:#fff;text-align:center}
+#player-info{display:none;position:fixed;left:24px;bottom:22px;z-index:10;font:700 10px var(--sans);letter-spacing:.06em;color:#fff;text-shadow:0 1px 4px #000}body.is-playing #player-info{display:block}
+.start h1{font-size:clamp(42px,6vw,78px);line-height:1.05}.start .lede{font-size:14px;line-height:1.5;margin-top:14px}.start .eyebrow{font-size:10px}.start .facts{margin-top:16px}.start .facts li{font-size:11px;padding:6px 10px}
+.start-card{gap:12px}.start .note{font-size:11px;line-height:1.5}.result-card{padding:22px;max-height:calc(100dvh - 24px);overflow:auto}.result-card h2{font:800 26px/1.2 var(--sans)}.result-card p{font-size:13px;margin-bottom:16px}
+body:not(.is-ready)>.loading{opacity:1}
+@media(pointer:fine){#technique{bottom:82px}.phase{bottom:42px}.keys-hint{font-size:10px;padding:6px 10px}}
+@media(pointer:coarse){#player-info{bottom:174px}.keys-hint{display:none}#radar{bottom:18px}.phase{bottom:100px;font-size:9px;padding:4px 10px}}
+@media(max-width:900px){
+ .topbar{padding:10px 12px;gap:8px}.back{padding:9px}.back span{display:none}.top-actions{gap:6px}.top-actions button{width:34px;height:34px}.top-actions .menu{font-size:11px;padding:0 10px}
+ .scorebug{left:60px;right:146px;top:10px;gap:5px;padding:5px 7px;font-size:9px;justify-content:center;min-width:0}.scorebug>span{min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:100px}.scorebug i{width:6px;height:14px;flex-shrink:0}.scorebug b{font-size:14px;padding:2px 6px;flex-shrink:0}.scorebug em{font-size:10px;min-width:30px}
+ .start{padding:68px 16px 20px;gap:18px}.start h1{font-size:42px}.start .lede{font-size:13px;margin:8px 0 0}.start .eyebrow{margin-bottom:8px}.start .facts{display:none}.start-card{padding:16px;gap:10px}.field{gap:5px}.field>span{font-size:10px}.seg button{font-size:11px;padding:9px 6px;min-height:36px}.primary{font-size:13px;padding:12px}.start .note{font-size:10px}
+ .stick{width:112px;height:112px}.stick i{width:46px;height:46px}.act{width:68px;height:68px}.act span{font-size:27px;margin-top:10px}.act b{font-size:8px;top:8px}.pad{width:152px;height:148px}#btn-b{right:78px}#btn-c{bottom:78px}.controls{padding:0 14px max(14px,env(safe-area-inset-bottom))}.power{left:14px;right:14px;bottom:11px;height:4px}
 }
-body:not(.is-ready) > .loading { opacity: 1; }
+@media(orientation:portrait) and (max-width:900px){
+ .scorebug{top:54px;left:14px;right:14px;font-size:10px}.scorebug>span{max-width:110px}.banner,.banner.is-event{top:94px;font-size:14px}#replay-label{top:92px}
+ #radar{bottom:184px;width:88px;height:57px}.phase{top:92px;bottom:auto;font-size:9px}#technique{right:16px;bottom:174px}#player-info{left:16px;bottom:144px;font-size:9px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .topbar{padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left))}.back{padding:8px}.back span{display:none}.top-actions{gap:5px}.top-actions button{width:32px;height:32px}.top-actions .menu{font-size:10px;padding:0 9px}
+ .scorebug{left:max(58px,calc(env(safe-area-inset-left) + 48px));right:148px;top:8px;max-width:460px;gap:6px;padding:5px 8px;font-size:10px;justify-content:center}.scorebug>span{min-width:0;max-width:115px;overflow:hidden;text-overflow:ellipsis}.scorebug i{width:6px;height:14px;flex-shrink:0}.scorebug b{font-size:14px;padding:1px 7px}.scorebug em{font-size:10px}
+ .start{grid-template-columns:minmax(0,1fr) minmax(280px,340px);align-content:center;gap:20px;padding:50px max(20px,env(safe-area-inset-right)) 12px max(20px,env(safe-area-inset-left))}.start h1{font-size:40px;margin:0}.start .lede{font-size:12px;max-width:300px}.start .facts{display:none}.start .eyebrow{font-size:9px;margin-bottom:10px}.start-card{padding:12px;gap:7px;max-width:none;width:100%;border-radius:16px}.field{gap:3px}.field>span{font-size:9px}.seg button{min-height:30px;font-size:10px;padding:6px}.start .primary{padding:9px;min-height:34px}.start .note{font-size:9px;line-height:1.35}
+ .stick{width:104px;height:104px}.stick i{width:44px;height:44px}.act{width:64px;height:64px}.act span{font-size:25px}.act b{font-size:8px;top:7px}.pad{width:144px;height:136px}#btn-b{right:74px}#btn-c{bottom:72px}.controls{padding:0 max(14px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+ #technique{right:max(88px,calc(env(safe-area-inset-right) + 84px));bottom:92px;min-height:30px;padding:6px 10px;font-size:9px}#radar{bottom:12px;width:96px;height:62px}.phase{bottom:82px;font-size:8px;padding:3px 9px}#player-info{left:max(16px,env(safe-area-inset-left));bottom:124px;font-size:8px}.banner,.banner.is-event{top:54px;font-size:14px;padding:7px 12px}#replay-label{top:48px;font-size:9px}.keys-hint{display:none}.result-card{max-width:330px;padding:16px}.result-card h2{font-size:23px}
+}
+@media(max-height:350px) and (orientation:landscape){.start{grid-template-columns:1fr 300px;padding-top:44px;gap:12px}.start h1{font-size:32px}.start .lede{font-size:11px}.start-card{padding:9px;gap:5px}.start .note{display:none}.seg button{min-height:28px;padding:5px}.start .primary{padding:8px}.stick{width:92px;height:92px}.act{width:58px;height:58px}.pad{width:130px;height:124px}#btn-b{right:68px}#btn-c{bottom:66px}#technique{bottom:80px;right:80px}#player-info{bottom:110px}}
+body.is-playing:has(#replay-label:not([hidden])) :is(.controls,#radar,#player-info,.phase,#technique,.keys-hint){opacity:0;pointer-events:none}
 
-#radar{position:fixed;z-index:9;bottom:22px;left:50%;transform:translateX(-50%);width:144px;height:94px;border-radius:5px;opacity:0;pointer-events:none}body.is-playing #radar{opacity:.85}
-#technique{position:fixed;z-index:11;right:24px;bottom:250px;border:1px solid #ffffff50;border-radius:20px;padding:10px 16px;background:#102330bc;color:white;font:800 10px Manrope;letter-spacing:.12em;display:none;touch-action:manipulation}body.is-playing #technique{display:block}
-#replay-label{position:fixed;z-index:12;top:72px;left:50%;transform:translateX(-50%);background:#0a1a23c9;border-left:3px solid #dfff63;padding:7px 18px;font-size:10px;letter-spacing:.14em;font-weight:800;color:white}
-@media(pointer:fine){#radar{bottom:88px;width:128px;height:83px}#technique{bottom:90px;right:30px}}
-@media(max-height:500px) and (orientation:landscape){.start{padding:65px 30px 12px;gap:24px;align-items:center}.start-copy h1{font-size:48px;margin:8px 0}.start-copy .lede{font-size:13px;max-width:320px}.start-copy .facts{margin-top:10px;font-size:10px}.start-card{padding:16px;width:350px;gap:8px}.field{margin-bottom:8px}.field>span{font-size:10px;margin-bottom:4px}.seg button{padding:6px 8px;font-size:10px}.start-card .primary{padding:10px;font-size:13px}.note{font-size:9px!important;line-height:1.4!important;margin:6px 0 0!important}.stick{width:112px;height:112px}.stick i{width:46px;height:46px}.act{width:68px;height:68px}.act span{font-size:27px}.act b{font-size:8px;top:8px}.pad{width:168px;height:148px}#btn-b{right:84px}#btn-c{bottom:80px}.controls{padding-bottom:12px}#technique{right:110px;bottom:108px;padding:7px 12px}#radar{width:112px;height:73px;bottom:12px}.phase{bottom:92px;font-size:9px;padding:4px 10px}.scorebug{left:70px;top:12px;font-size:10px;gap:6px}.scorebug b{font-size:14px}.topbar .back span{display:none}.top-actions button{width:34px;height:34px}.top-actions .menu{font-size:10px;padding:0 10px}#replay-label{top:54px;font-size:8px}.keys-hint{display:none}}
+body[data-match-state="goal"] :is(.controls,#radar,#player-info,.phase,#technique,.keys-hint),body[data-match-state="walkout"] :is(.controls,#radar,#player-info,.phase,#technique,.keys-hint){opacity:0;pointer-events:none}
 
-#player-info{display:none;position:fixed;left:30px;bottom:24px;z-index:10;font:700 10px Manrope;letter-spacing:.08em;color:#fff;text-shadow:0 1px 4px #000}body.is-playing #player-info{display:block}@media(pointer:coarse){#player-info{left:26px;bottom:155px;font-size:9px}}@media(max-height:500px){#player-info{bottom:133px;left:20px;font-size:8px}}
-@media(max-height:500px) and (orientation:landscape){.start{grid-template-columns:minmax(0,1fr) minmax(300px,350px);align-content:center;gap:28px;padding-top:58px;padding-bottom:12px}.start-card{gap:6px;padding:13px 16px;width:100%;max-width:none}.field{gap:3px;margin:0}.start .facts{margin-top:14px}.facts li{padding:6px 8px;font-size:10px}.start .note{font-size:8.5px!important}.start .primary{margin-top:2px}.start-copy .eyebrow{font-size:10px}}
-body.is-playing:has(#replay-label:not([hidden])) .controls,body.is-playing:has(#replay-label:not([hidden])) #radar,body.is-playing:has(#replay-label:not([hidden])) #player-info,body.is-playing:has(#replay-label:not([hidden])) .phase,body.is-playing:has(#replay-label:not([hidden])) #technique,body.is-playing:has(#replay-label:not([hidden])) .keys-hint{opacity:0;pointer-events:none}
-
-.banner.is-event{font:800 clamp(15px,2.5vw,24px) Manrope,sans-serif;top:24%;padding:12px 22px;border-left:3px solid #efd35a;border-radius:5px;background:#0c1b25df;text-shadow:none;letter-spacing:.02em;max-width:85vw;white-space:normal;text-align:center}
+#skip-replay{display:none;position:fixed;z-index:16;right:max(16px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));min-height:38px;padding:8px 14px;border:1px solid #ffffff55;border-radius:20px;background:#102330dd;color:#fff;font:700 11px var(--sans)}body[data-match-state="goal"] #skip-replay{display:block}

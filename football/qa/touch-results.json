@@ -1,0 +1,68 @@
+[
+  {
+    "width": 844,
+    "height": 390,
+    "selection": false,
+    "zoom": 1,
+    "multitouch": true,
+    "cancel": true,
+    "controlsFit": true,
+    "compactBanner": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "selection": false,
+    "zoom": 1,
+    "multitouch": true,
+    "cancel": true,
+    "controlsFit": true,
+    "compactBanner": true,
+    "errors": []
+  },
+  {
+    "width": 667,
+    "height": 375,
+    "selection": false,
+    "zoom": 1,
+    "multitouch": true,
+    "cancel": true,
+    "controlsFit": true,
+    "compactBanner": true,
+    "errors": []
+  },
+  {
+    "width": 568,
+    "height": 320,
+    "selection": false,
+    "zoom": 1,
+    "multitouch": true,
+    "cancel": true,
+    "controlsFit": true,
+    "compactBanner": true,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "selection": false,
+    "zoom": 1,
+    "multitouch": true,
+    "cancel": true,
+    "controlsFit": true,
+    "compactBanner": true,
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "height": 640,
+    "selection": false,
+    "zoom": 1,
+    "multitouch": true,
+    "cancel": true,
+    "controlsFit": true,
+    "compactBanner": true,
+    "errors": []
+  }
+]
