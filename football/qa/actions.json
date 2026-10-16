@@ -1,0 +1,54 @@
+{
+  "clips": [
+    "backpedal",
+    "catch",
+    "celebrate",
+    "celebrate2",
+    "celebrate3",
+    "dive",
+    "dive2",
+    "dribble-jog",
+    "goal-kick",
+    "header",
+    "idle",
+    "jog",
+    "keeper-throw",
+    "pass-ground",
+    "pass-long",
+    "pass-short",
+    "punch",
+    "ready",
+    "slide",
+    "sprint",
+    "strafe-left",
+    "strafe-right",
+    "strike",
+    "tackle",
+    "throw-in",
+    "trap",
+    "turn180",
+    "turn90"
+  ],
+  "contact": {
+    "before": true,
+    "after": true,
+    "footError": 0.00185313833451154,
+    "velocity": 15.308911189123753
+  },
+  "foul": {
+    "cards": 1,
+    "state": "restart",
+    "event": null,
+    "position": [
+      0.002566033042959516,
+      0,
+      35.98153274332025
+    ],
+    "other": [
+      0.02998303331433243,
+      0,
+      36.49055315803308
+    ]
+  },
+  "errors": []
+}

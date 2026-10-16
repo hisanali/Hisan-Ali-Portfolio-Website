@@ -1,0 +1,56 @@
+[
+  {
+    "width": 1280,
+    "height": 640,
+    "readyMs": 3303,
+    "bytes": 6834778,
+    "frameTimes": {
+      "median": 16.69999999999709,
+      "p95": 16.700000000000728,
+      "triangles": 2226108,
+      "calls": 392
+    },
+    "fullMatch": {
+      "state": "over",
+      "score": [
+        1,
+        0
+      ],
+      "time": "240.0",
+      "owner": "user1",
+      "ball": [
+        21.8,
+        0.1,
+        54.6
+      ]
+    },
+    "errors": []
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "readyMs": 1989,
+    "bytes": 6834778,
+    "frameTimes": {
+      "median": 16.700000000000728,
+      "p95": 16.700000000000728,
+      "triangles": 1117252,
+      "calls": 392
+    },
+    "fullMatch": {
+      "state": "over",
+      "score": [
+        1,
+        0
+      ],
+      "time": "240.0",
+      "owner": "user1",
+      "ball": [
+        21.9,
+        0.1,
+        52.3
+      ]
+    },
+    "errors": []
+  }
+]
