@@ -1,11 +1,11 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { OrbitControls } from '../evermile/vendor/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from '../evermile/vendor/geometries/RoundedBoxGeometry.js';
-import { pieceGeometry } from './pieces.js?v=1';
+import { pieceGeometry } from './pieces.js?v=2';
 import { typeOf, colorOf, KNIGHT, WHITE } from './engine.js?v=1';
 
 export const THEMES = {
-  walnut: { label: 'Walnut', kind: 'wood', light: '#e3c497', lightGrain: '#a87a46', dark: '#5a3420', darkGrain: '#2c170b', frame: '#3b2416', frameGrain: '#1d0f07', inlay: '#d4ad62', white: '#f1e6cf', black: '#2a201c', table: '#17110d', fog: '#0d0a08' },
+  walnut: { label: 'Walnut', kind: 'wood', light: '#e3c497', lightGrain: '#a87a46', dark: '#5a3420', darkGrain: '#2c170b', frame: '#3b2416', frameGrain: '#1d0f07', inlay: '#d4ad62', white: '#e9d9ba', black: '#241f1b', table: '#17110d', fog: '#0d0a08' },
   marble: { label: 'Marble', kind: 'marble', light: '#efece6', lightGrain: '#9b9890', dark: '#33403b', darkGrain: '#9fb3a8', frame: '#1d2220', frameGrain: '#0b0d0c', inlay: '#c8c0a8', white: '#f6f3ec', black: '#18191b', table: '#101413', fog: '#090b0b' },
   tournament: { label: 'Tournament', kind: 'flat', light: '#ecebd0', lightGrain: '#d8d6b6', dark: '#6f9450', darkGrain: '#5c7d41', frame: '#2b3122', frameGrain: '#15190f', inlay: '#e8e0b8', white: '#f4f0e6', black: '#26221f', table: '#12150f', fog: '#0a0c08' }
 };
@@ -154,8 +154,8 @@ export class ChessScene {
     pool.rotation.x = -Math.PI / 2; pool.position.y = -.455; scene.add(pool);
 
     this.pieceMats = [
-      new T.MeshPhysicalMaterial({ roughness: .26, clearcoat: 1, clearcoatRoughness: .05, sheen: .25, sheenRoughness: .5, envMapIntensity: 1.25 }),
-      new T.MeshPhysicalMaterial({ roughness: .2, clearcoat: 1, clearcoatRoughness: .04, envMapIntensity: 1.5 })
+      new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .32, clearcoat: .48, clearcoatRoughness: .23, envMapIntensity: .85 }),
+      new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .29, clearcoat: .55, clearcoatRoughness: .2, envMapIntensity: 1.05 })
     ];
     this.pieces = new Map(); this.captured = [[], []];
     this.tweens = []; this.effects = [];
