@@ -1,0 +1,11 @@
+Football and Penalty cover artwork
+
+Original Three.js scenes built for this project, 2026-10-16.
+Source: scripts/artwork/sports-covers.html
+
+Serve the repository root over HTTP, then open:
+/scripts/artwork/sports-covers.html?mode=football
+/scripts/artwork/sports-covers.html?mode=penalty
+
+Render canvas: 1000 x 750 CSS pixels. Covers exported as WebP.
+No stock photographs or AI-generated images are used in these two covers.

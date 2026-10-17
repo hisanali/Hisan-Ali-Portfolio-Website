@@ -1,11 +1,11 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { OrbitControls } from '../evermile/vendor/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from '../evermile/vendor/geometries/RoundedBoxGeometry.js';
-import { pieceGeometry } from './pieces.js?v=2';
+import { pieceGeometry } from './pieces.js?v=3';
 import { typeOf, colorOf, KNIGHT, WHITE } from './engine.js?v=1';
 
 export const THEMES = {
-  walnut: { label: 'Walnut', kind: 'wood', light: '#e3c497', lightGrain: '#a87a46', dark: '#5a3420', darkGrain: '#2c170b', frame: '#3b2416', frameGrain: '#1d0f07', inlay: '#d4ad62', white: '#e9d9ba', black: '#241f1b', table: '#17110d', fog: '#0d0a08' },
+  walnut: { label: 'Walnut', kind: 'wood', light: '#e3c497', lightGrain: '#a87a46', dark: '#5a3420', darkGrain: '#2c170b', frame: '#3b2416', frameGrain: '#1d0f07', inlay: '#d4ad62', white: '#ede1c9', black: '#171719', table: '#17110d', fog: '#0d0a08' },
   marble: { label: 'Marble', kind: 'marble', light: '#efece6', lightGrain: '#9b9890', dark: '#33403b', darkGrain: '#9fb3a8', frame: '#1d2220', frameGrain: '#0b0d0c', inlay: '#c8c0a8', white: '#f6f3ec', black: '#18191b', table: '#101413', fog: '#090b0b' },
   tournament: { label: 'Tournament', kind: 'flat', light: '#ecebd0', lightGrain: '#d8d6b6', dark: '#6f9450', darkGrain: '#5c7d41', frame: '#2b3122', frameGrain: '#15190f', inlay: '#e8e0b8', white: '#f4f0e6', black: '#26221f', table: '#12150f', fog: '#0a0c08' }
 };
@@ -108,6 +108,7 @@ function environment(renderer) {
   panel(6, 10, '#ffd7a8', 1.6, [-14.9, 6, 2], [0, Math.PI / 2, 0]);
   panel(6, 10, '#bcd4ff', 1.1, [14.9, 6, -3], [0, -Math.PI / 2, 0]);
   panel(18, 3, '#ffffff', .8, [0, 4, -14.9], [0, 0, 0]);
+  panel(8, 6, '#fff7ed', 1.7, [-4, 7, 14.9], [0, Math.PI, 0]);
   const pmrem = new T.PMREMGenerator(renderer);
   const texture = pmrem.fromScene(env, .035).texture; pmrem.dispose();
   return texture;
@@ -130,7 +131,7 @@ export class ChessScene {
 
     scene.add(new T.HemisphereLight(0xfff1dd, 0x1a120c, .55));
     const key = this.key = new T.SpotLight(0xfff0dc, 520, 60, .58, .55, 1.6);
-    key.position.set(5, 20, 8); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -.0002; key.shadow.normalBias = .02; key.shadow.radius = 5;
+    key.position.set(5, 20, 8); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -.00008; key.shadow.normalBias = .008; key.shadow.radius = 5;
     key.shadow.camera.near = 8; key.shadow.camera.far = 40;
     scene.add(key, key.target);
     const rim = new T.DirectionalLight(0xa9c4ff, .55); rim.position.set(-9, 7, -10); scene.add(rim);
@@ -154,9 +155,12 @@ export class ChessScene {
     pool.rotation.x = -Math.PI / 2; pool.position.y = -.455; scene.add(pool);
 
     this.pieceMats = [
-      new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .32, clearcoat: .48, clearcoatRoughness: .23, envMapIntensity: .85 }),
-      new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .29, clearcoat: .55, clearcoatRoughness: .2, envMapIntensity: 1.05 })
+      new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .22, clearcoat: .85, clearcoatRoughness: .13, envMapIntensity: 1.0 }),
+      new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .18, clearcoat: 1, clearcoatRoughness: .10, envMapIntensity: 1.2 })
     ];
+    this.contactGeo = new T.PlaneGeometry(1, 1);
+    this.contactMat = new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .30, depthWrite: false,
+      map: radialTexture([[0, 'rgba(255,255,255,1)'], [.52, 'rgba(255,255,255,.9)'], [.78, 'rgba(255,255,255,.25)'], [1, 'rgba(255,255,255,0)']]) });
     this.pieces = new Map(); this.captured = [[], []];
     this.tweens = []; this.effects = [];
     this.marks = new T.Group(); scene.add(this.marks);
@@ -225,22 +229,22 @@ export class ChessScene {
     this.selected = plane(1, 0xdfff63, .5, squareTex); this.hover = plane(1, 0xffffff, .16);
     this.hintFrom = plane(1, 0x6ab8ff, .55, squareTex); this.hintTo = plane(1, 0x6ab8ff, .55, squareTex);
     this.checkGlow = plane(1.9, 0xff3b2f, .9, soft);
-    this.dotGeo = new T.CircleGeometry(.15, 32); this.ringGeo = new T.RingGeometry(.36, .45, 48);
-    this.dotMat = new T.MeshBasicMaterial({ color: 0x0f1a10, transparent: true, opacity: .38, depthWrite: false });
-    this.ringMat = new T.MeshBasicMaterial({ color: 0x0f1a10, transparent: true, opacity: .42, depthWrite: false });
-    this.dots = [];
+    this.legalGeo = new T.PlaneGeometry(1, 1);
+    this.legalMat = new T.MeshBasicMaterial({ color: 0xdfff63, map: squareTex, transparent: true, opacity: .58, depthWrite: false, toneMapped: false });
+    this.captureMat = new T.MeshBasicMaterial({ color: 0xff795e, map: squareTex, transparent: true, opacity: .64, depthWrite: false, toneMapped: false });
+    this.legalMarkers = [];
   }
 
   placeMark(mesh, sq, y = .006) { if (sq < 0 || sq == null) { mesh.visible = false; return; } const p = squareToWorld(sq); mesh.position.set(p.x, y, p.z); mesh.visible = true; }
 
   showLegal(moves) {
-    this.dots.forEach(d => this.marks.remove(d)); this.dots = [];
+    this.legalMarkers.forEach(d => this.marks.remove(d)); this.legalMarkers = [];
     const seen = new Set();
     for (const m of moves) {
       if (seen.has(m.to)) continue; seen.add(m.to);
-      const dot = new T.Mesh(m.captured ? this.ringGeo : this.dotGeo, m.captured ? this.ringMat : this.dotMat);
-      dot.rotation.x = -Math.PI / 2; const p = squareToWorld(m.to); dot.position.set(p.x, .008, p.z); dot.renderOrder = 3; dot.scale.setScalar(.01);
-      dot.userData.born = performance.now(); this.marks.add(dot); this.dots.push(dot);
+      const dot = new T.Mesh(this.legalGeo, m.captured ? this.captureMat : this.legalMat);
+      dot.rotation.x = -Math.PI / 2; const p = squareToWorld(m.to); dot.position.set(p.x, .008, p.z); dot.renderOrder = 3;
+      this.marks.add(dot); this.legalMarkers.push(dot);
     }
   }
 
@@ -252,6 +256,11 @@ export class ChessScene {
     const mesh = new T.Mesh(pieceGeometry(typeOf(piece)), this.pieceMats[colorOf(piece)]);
     mesh.castShadow = true; mesh.receiveShadow = true;
     if (typeOf(piece) === KNIGHT) mesh.rotation.y = KNIGHT_TURN + (colorOf(piece) === WHITE ? 0 : Math.PI);
+    const contact = new T.Mesh(this.contactGeo, this.contactMat);
+    contact.rotation.x = -Math.PI / 2; contact.position.y = .006;
+    const bounds = mesh.geometry.boundingBox, diameter = Math.max(bounds.max.x - bounds.min.x, bounds.max.z - bounds.min.z) * 1.22;
+    contact.scale.setScalar(diameter); contact.renderOrder = 1; mesh.add(contact);
+    mesh.userData.contact = contact;
     mesh.userData.piece = piece; this.scene.add(mesh); return mesh;
   }
 
@@ -309,6 +318,7 @@ export class ChessScene {
   }
 
   async capture(mesh, capturer, fast) {
+    mesh.userData.contact.visible = false;
     const start = mesh.position.clone(), slot = this.trayPosition(capturer, this.captured[capturer].length);
     this.captured[capturer].push(mesh);
     if (!fast) this.burst(start, colorOf(mesh.userData.piece) === WHITE ? 0xfff2d6 : 0x8b6a4c, 26);
@@ -397,11 +407,11 @@ export class ChessScene {
     this.tweens = this.tweens.filter(tw => { const t = Math.min(1, (now - tw.start) / tw.duration); tw.update(t); if (t >= 1) { tw.done(); return false; } return true; });
     this.effects = this.effects.filter(fx => { fx.life += dt; fx.update(dt, fx); if (fx.life >= fx.max) { fx.dispose(); return false; } return true; });
     for (const mesh of this.pieces.values()) {
+      mesh.userData.contact.visible = mesh !== this.dragging && Math.abs(mesh.position.y) < .025;
       if (mesh === this.dragging) continue;
       const target = mesh.userData.lift || 0, cur = mesh.userData.liftNow || 0, next = cur + (target - cur) * (1 - Math.exp(-dt * 14));
       if (Math.abs(next - cur) > 1e-4 || target) { mesh.position.y += next - cur; mesh.userData.liftNow = next; }
     }
-    for (const dot of this.dots) { const t = Math.min(1, (now - dot.userData.born) / 220); dot.scale.setScalar(Math.max(.01, easeOutBack(t))); }
     if (this.checkGlow.visible) { const s = 1 + Math.sin(time * 5) * .12; this.checkGlow.scale.setScalar(s); this.checkGlow.material.opacity = .65 + Math.sin(time * 5) * .25; }
     if (this.selected.visible) this.selected.material.opacity = .42 + Math.sin(time * 4) * .12;
     if (this.cameraTween) {

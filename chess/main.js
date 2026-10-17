@@ -1,5 +1,5 @@
 import { Chess, WHITE, BLACK, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, typeOf, colorOf, makePiece } from './engine.js?v=1';
-import { ChessScene, THEMES, squareToWorld } from './scene.js?v=2';
+import { ChessScene, THEMES, squareToWorld } from './scene.js?v=4';
 import { Room, cleanCode, makeCode, playerId } from './online.js?v=1';
 
 const $ = id => document.getElementById(id);

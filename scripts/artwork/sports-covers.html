@@ -1,0 +1,52 @@
+<!doctype html><html><head><style>html,body{margin:0;background:#061b23}canvas{display:block;width:1000px;height:750px}</style></head><body><canvas></canvas><script type="module">
+import * as T from '/evermile/vendor/three.module.js';
+import {RoundedBoxGeometry} from '/evermile/vendor/geometries/RoundedBoxGeometry.js';
+const penalty=new URL(location.href).searchParams.get('mode')==='penalty';
+const renderer=new T.WebGLRenderer({canvas:document.querySelector('canvas'),antialias:true});renderer.setSize(1000,750);renderer.setPixelRatio(1.5);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+const scene=new T.Scene();scene.background=new T.Color(penalty?'#091a34':'#061e25');scene.fog=new T.Fog(scene.background,13,38);
+const camera=new T.PerspectiveCamera(34,4/3,.1,100);camera.position.set(...(penalty?[4.2,3.2,2.5]:[3.4,2.1,5.5]));camera.lookAt(...(penalty?[.7,2,-4.6]:[0,.75,0]));
+scene.add(new T.HemisphereLight(0xb5dfed,0x183c24,1.25));
+const light=new T.SpotLight(0xffefce,320,35,.8,.8,1.5);light.position.set(-3,7,6);light.target.position.set(0,0,-1);light.castShadow=true;light.shadow.mapSize.set(2048,2048);light.shadow.normalBias=.01;scene.add(light,light.target);
+const rim=new T.DirectionalLight(0x9bcfff,3.5);rim.position.set(4,6,-7);scene.add(rim);
+const mat=(color,roughness=.65)=>new T.MeshStandardMaterial({color,roughness});
+function mesh(geo,material,parent=scene){const m=new T.Mesh(geo,material);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function box(w,h,d,material,x,y,z,r=.02){const m=mesh(new RoundedBoxGeometry(w,h,d,2,r),material);m.position.set(x,y,z);return m;}
+function rod(a,b,r,material){const p=new T.Vector3(...a),q=new T.Vector3(...b),delta=q.clone().sub(p);const m=mesh(new T.CylinderGeometry(r,r,delta.length(),12),material);m.position.copy(p.add(q).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());return m;}
+// Deterministic fine grass texture: no photographs or generated-image inputs.
+const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const ctx=canvas.getContext('2d');ctx.fillStyle='#174b31';ctx.fillRect(0,0,512,512);let seed=7;const random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
+for(let i=0;i<32000;i++){const x=random()*512,y=random()*512;ctx.strokeStyle=['#286c3e','#1c5633','#347a44','#103b29'][i%4];ctx.lineWidth=.5+random();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(random()-.5)*3,y-2-random()*5);ctx.stroke();}
+const turf=new T.CanvasTexture(canvas);turf.colorSpace=T.SRGBColorSpace;turf.wrapS=turf.wrapT=T.RepeatWrapping;turf.repeat.set(12,12);turf.anisotropy=8;
+const field=mesh(new T.PlaneGeometry(70,70),new T.MeshStandardMaterial({color:'#7aae80',map:turf,roughness:.93,bumpMap:turf,bumpScale:.018}));field.rotation.x=-Math.PI/2;field.position.y=-.01;
+const chalk=mat('#dcebd8');rod([-15,.006,1.2],[15,.006,1.2],.025,chalk);
+// Stadium tiers and small luminous seat highlights stay in the background.
+for(let row=0;row<7;row++){box(28,.35,.55,mat('#102d3c'),0,1+row*.5,-9-row*.65);for(let j=0;j<65;j++){const seat=box(.08,.08,.03,mat(j%5===0?'#ffe0a0':'#6298a8'),-13+j*.41,1.25+row*.5,-8.71-row*.65,.005);}}
+const emissive=new T.MeshBasicMaterial({color:'#e7f7ff'});
+for(const x of [-8,8]){box(3,.09,.06,emissive,x,6.3,-8,.01);for(let i=0;i<9;i++)box(.19,.18,.1,emissive,x-1.2+i*.3,6.3,-7.95,.02);}
+// Actual truncated-icosahedron topology: twelve pentagons and twenty hexagons.
+function football(radius){
+ const group=new T.Group(),base=new T.IcosahedronGeometry(1),vertices=[],faces=[];
+ const p=base.attributes.position;
+ for(let i=0;i<p.count;i+=3){const face=[];for(let j=0;j<3;j++){const v=new T.Vector3().fromBufferAttribute(p,i+j).normalize();let idx=vertices.findIndex(q=>q.distanceToSquared(v)<1e-8);if(idx<0){idx=vertices.length;vertices.push(v);}face.push(idx);}faces.push(face);}
+ const neighbors=vertices.map(()=>new Set());for(const [a,b,c] of faces){neighbors[a].add(b).add(c);neighbors[b].add(a).add(c);neighbors[c].add(a).add(b);}
+ const edge=(a,b)=>vertices[a].clone().multiplyScalar(2).add(vertices[b]).multiplyScalar(1/3).normalize();
+ const black=new T.MeshPhysicalMaterial({color:'#10171d',roughness:.43,clearcoat:.32,clearcoatRoughness:.3});const ivory=new T.MeshPhysicalMaterial({color:'#f0ede0',roughness:.48,clearcoat:.22,clearcoatRoughness:.35});
+ mesh(new T.SphereGeometry(radius*.999,48,32),black,group);
+ function panel(outline,material){const center=outline.reduce((s,v)=>s.add(v),new T.Vector3()).normalize();const inset=outline.map(v=>v.clone().lerp(center,.018).normalize());const positions=[],normals=[];const emit=v=>{const n=v.clone().normalize();positions.push(...n.clone().multiplyScalar(radius*1.003).toArray());normals.push(...n.toArray());};
+ for(let side=0;side<inset.length;side++){const a=center,b=inset[side],c=inset[(side+1)%inset.length],steps=8;for(let i=0;i<steps;i++)for(let j=0;j<steps-i;j++){
+ const point=(u,v)=>a.clone().multiplyScalar(1-u-v).addScaledVector(b,u).addScaledVector(c,v);
+ const aa=point(i/steps,j/steps),bb=point((i+1)/steps,j/steps),cc=point(i/steps,(j+1)/steps);for(const q of [aa,bb,cc])emit(q);
+ if(j<steps-i-1)for(const q of [bb,point((i+1)/steps,(j+1)/steps),cc])emit(q);
+ }}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));const m=mesh(g,material,group);m.material.side=T.DoubleSide;}
+ vertices.forEach((n,a)=>{const u=new T.Vector3().crossVectors(n,new T.Vector3(0,1,0)).normalize(),w=new T.Vector3().crossVectors(n,u);const outline=[...neighbors[a]].map(b=>edge(a,b));outline.sort((a,b)=>Math.atan2(a.dot(w),a.dot(u))-Math.atan2(b.dot(w),b.dot(u)));panel(outline,black);});
+ for(const [a,b,c] of faces)panel([edge(a,b),edge(b,a),edge(b,c),edge(c,b),edge(c,a),edge(a,c)],ivory);
+ group.rotation.set(.22,.4,-.16);scene.add(group);return group;
+}
+const white=new T.MeshPhysicalMaterial({color:'#edf4f0',roughness:.3,metalness:.05});const netMat=new T.MeshStandardMaterial({color:'#d8e8e5',roughness:.8});
+function goal(){const z=-5.2;rod([-3,0,z],[-3,3,z],.075,white);rod([3,0,z],[3,3,z],.075,white);rod([-3,3,z],[3,3,z],.075,white);
+ for(let i=0;i<=24;i++){const x=-3+i*.25;rod([x,0,z-.8],[x,3,z-.8],.012,netMat);rod([x,3,z-.8],[x,3,z],.012,netMat);}for(let i=0;i<=12;i++){const y=i*.25;rod([-3,y,z-.8],[3,y,z-.8],.012,netMat);}rod([-3,0,z],[-3,0,z-.8],.04,white);rod([3,0,z],[3,0,z-.8],.04,white);}
+goal();
+if(penalty){const ball=football(.65);ball.position.set(2.0,2.23,-4.6);
+ const path=new T.CatmullRomCurve3([new T.Vector3(-2,.45,.5),new T.Vector3(-.7,1.3,-1.7),new T.Vector3(.4,1.95,-3)]);const trail=mesh(new T.TubeGeometry(path,50,.027,8,false),new T.MeshBasicMaterial({color:'#a7dcff',transparent:true,opacity:.35}));
+}else{const ball=football(.91);ball.position.set(-.25,.905,.2);const mark=mesh(new T.RingGeometry(.03,.09,32),chalk);mark.rotation.x=-Math.PI/2;mark.position.set(.8,.008,-1.2);}
+renderer.render(scene,camera);document.title='Football cover ready';
+</script></body></html>

@@ -6,9 +6,9 @@ const SEGMENTS = 48;
 const v = (r, y) => new T.Vector2(r, y);
 
 // A turned Staunton foot: rounded plinth, recessed bead and a broad shoulder.
-const base = r => [[0, 0], [r * .88, 0], [r * .97, .016], [r, .042], [r, .065], [r * .97, .087],
-  [r * .88, .105], [r * .87, .122], [r * .93, .14], [r * .93, .159], [r * .86, .18],
-  [r * .79, .19], [r * .75, .221], [r * .70, .245]];
+const base = r => [[0, 0], [r * .83, 0], [r * .95, .014], [r, .037], [r, .057],
+  [r * .94, .079], [r * .81, .096], [r * .81, .116], [r * .98, .144],
+  [r * .99, .158], [r * .91, .18], [r * .76, .222], [r * .70, .245]];
 
 function turned(profile) {
   const curve = new T.CatmullRomCurve3(profile.map(([r, y]) => new T.Vector3(r, y, 0)), false, 'centripetal');
@@ -40,24 +40,25 @@ function pawn() {
 }
 
 function rook() {
-  const parts = [turned([...base(.365), [.25, .28], [.229, .34], [.218, .46], [.215, .68], [.23, .79],
-    [.27, .82], [.303, .845], [.305, .875], [.275, .9], [.29, .935], [.29, 1.025], [.221, 1.025], [.22, .957], [0, .957]])];
-  // Radial wedge battlements follow the circular wall, instead of rectangular pegs.
-  for (let i = 0; i < 6; i++) {
-    const a = i * Math.PI / 3, width = .61;
+  const parts = [turned([...base(.365), [.25, .27], [.263, .29], [.263, .315], [.23, .335],
+    [.222, .38], [.198, .66], [.186, .96], [.21, 1.015], [.295, 1.045],
+    [.305, 1.066], [.305, 1.11], [.231, 1.11], [.231, 1.065], [0, 1.065]])];
+  // Four wide, gently beveled battlements match a traditional carved rook.
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 2, width = 1.05;
     const shape = new T.Shape();
-    shape.absarc(0, 0, .29, a - width / 2, a + width / 2, false);
-    shape.absarc(0, 0, .22, a + width / 2, a - width / 2, true); shape.closePath();
-    const g = new T.ExtrudeGeometry(shape, { depth: .115, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: .008, bevelThickness: .008, curveSegments: 8 });
-    g.rotateX(-Math.PI / 2); g.translate(0, 1.02, 0); parts.push(g);
+    shape.absarc(0, 0, .305, a - width / 2, a + width / 2, false);
+    shape.absarc(0, 0, .231, a + width / 2, a - width / 2, true); shape.closePath();
+    const g = new T.ExtrudeGeometry(shape, { depth: .12, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: .006, bevelThickness: .006, curveSegments: 10 });
+    g.rotateX(-Math.PI / 2); g.translate(0, 1.105, 0); parts.push(g);
   }
   return finish(parts);
 }
 
 // Elliptical horizontal sections give the neck actual volume from every angle.
 function neck() {
-  const sections = [[.32, -.035, .245, .183], [.40, -.055, .25, .18], [.54, -.10, .222, .16],
-    [.70, -.137, .183, .137], [.86, -.135, .166, .12], [1.0, -.09, .17, .126],
+  const sections = [[.32, -.035, .245, .183], [.40, -.055, .25, .18], [.54, -.115, .242, .168],
+    [.70, -.153, .205, .145], [.86, -.145, .183, .128], [1.0, -.09, .17, .126],
     [1.12, -.028, .154, .128], [1.23, .02, .10, .105], [1.28, .015, .015, .02]];
   const centers = new T.CatmullRomCurve3(sections.map(([y, x, rx]) => new T.Vector3(x, y, rx)), false, 'centripetal');
   const widths = new T.SplineCurve(sections.map(([y, x, rx, rz], i) => v(i / (sections.length - 1), rz)));
@@ -78,21 +79,21 @@ function tube(points, radius, segments = 32) {
 }
 function knight() {
   const parts = [turned([...base(.365), [.26, .272], [.285, .29], [.288, .318], [.25, .345], [0, .347]]), neck(),
-    sphere(.105, 1.135, 0, .233, .137, .128, -.45), // forehead and long nasal bridge
-    sphere(.035, 1.075, 0, .143, .17, .143, -.25), // rounded cheek and jaw
-    sphere(.305, .99, 0, .149, .095, .117, -.4)]; // tapered muzzle
+    sphere(.105, 1.155, 0, .243, .15, .135, -.38), // forehead and long nasal bridge
+    sphere(.025, 1.10, 0, .16, .17, .148, -.25), // rounded cheek and jaw
+    sphere(.32, 1.025, 0, .155, .10, .125, -.30)]; // tapered muzzle
   for (const side of [-1, 1]) {
     const ear = new T.ConeGeometry(.052, .17, 20, 6); ear.scale(.75, 1, .65); ear.rotateZ(-.18);
     ear.translate(-.048, 1.32, side * .075); parts.push(ear);
-    parts.push(sphere(.115, 1.167, side * .119, .044, .037, .022, -.3));
-    parts.push(shade(sphere(.122, 1.167, side * .137, .019, .021, .01), .16));
-    parts.push(shade(sphere(.368, 1.012, side * .098, .022, .014, .009, -.4), .24));
-    parts.push(shade(tube([[.291, .933, side * .093], [.35, .929, side * .091], [.412, .956, side * .072]], .005, 12), .35));
+    parts.push(sphere(.115, 1.19, side * .126, .044, .037, .022, -.3));
+    parts.push(shade(sphere(.122, 1.19, side * .145, .019, .021, .01), .16));
+    parts.push(shade(sphere(.392, 1.038, side * .106, .022, .014, .009, -.4), .24));
+    parts.push(shade(tube([[.307, .963, side * .101], [.373, .966, side * .096], [.443, .993, side * .076]], .005, 12), .35));
   }
-  parts.push(tube([[-.255, .42, 0], [-.317, .62, 0], [-.30, .84, 0], [-.24, 1.04, 0], [-.128, 1.25, 0]], .041));
+  parts.push(tube([[-.28, .42, 0], [-.365, .62, 0], [-.34, .84, 0], [-.26, 1.04, 0], [-.128, 1.27, 0]], .052));
   // Small carved ridges along the mane, embedded into the curved neck.
   for (let i = 0; i < 9; i++) {
-    const t = i / 8, y = .53 + t * .62, x = -.31 + .14 * t * t;
+    const t = i / 8, y = .53 + t * .62, x = -.36 + .19 * t * t;
     parts.push(tube([[x + .028, y - .027, -.029], [x - .02, y, 0], [x + .028, y + .027, .029]], .012, 8));
   }
   // Match the game's established forward direction and knight animation orientation.
