@@ -1,0 +1,32 @@
+[
+  {
+    "width": 568,
+    "height": 320,
+    "nativeFullscreen": true,
+    "blockedFullscreenHelp": true,
+    "cameraModes": 3,
+    "clearViews": 9,
+    "animatedDisplays": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "nativeFullscreen": true,
+    "blockedFullscreenHelp": true,
+    "cameraModes": 3,
+    "clearViews": 9,
+    "animatedDisplays": true,
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "nativeFullscreen": true,
+    "blockedFullscreenHelp": true,
+    "cameraModes": 3,
+    "clearViews": 9,
+    "animatedDisplays": true,
+    "errors": []
+  }
+]

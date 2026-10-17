@@ -11,11 +11,22 @@ export function installPresentation({T,scene,camera,ball,mobile,canvasTex,LEN,HX
   const pole=new T.Mesh(new T.CylinderGeometry(.018,.018,1.5,6),poleMat);pole.position.set(x,.75,z);scene.add(pole);
   const flag=new T.Mesh(new T.PlaneGeometry(.5,.32,3,1),clothMat);flag.position.set(x+.25,1.3,z);scene.add(flag);flags.push(flag);
  }
- const boards=canvasTex(1024,128,(g,w,h)=>{g.fillStyle='#102231';g.fillRect(0,0,w,h);g.fillStyle='#fff';g.textAlign='center';g.font='bold 58px Arial';g.fillText('HISAN ALI  •  HISANALI.COM',w/2,85);});
- boards.wrapS=T.RepeatWrapping;boards.repeat.set(8,1);
- for(const x of [-HX-2,HX+2]){
-  const board=new T.Mesh(new T.PlaneGeometry(LEN,1),new T.MeshStandardMaterial({map:boards,emissive:0xffffff,emissiveMap:boards,emissiveIntensity:.25,side:T.FrontSide}));board.rotation.y=x>0?-Math.PI/2:Math.PI/2;board.position.set(x,.6,LEN/2);scene.add(board);
+ const boardCanvas=document.createElement('canvas');boardCanvas.width=1024;boardCanvas.height=128;
+ const bg=boardCanvas.getContext('2d'),boards=new T.CanvasTexture(boardCanvas);boards.colorSpace=T.SRGBColorSpace;boards.wrapS=T.RepeatWrapping;boards.repeat.set(4,1);
+ let boardTick=-1,boardTime=0;
+ const boardMaterial=new T.MeshBasicMaterial({map:boards,toneMapped:false,side:T.FrontSide});
+ function updateBoards(dt,state,players){
+  boardTime+=dt;if(Math.floor(boardTime*8)===boardTick)return;boardTick=Math.floor(boardTime*8);
+  const home=players.find(p=>p.team.human)?.team,away=home?.opp,phase=Math.floor(boardTime/7)%5;
+  const messages=[`${home?.name||'HOME'}  v  ${away?.name||'AWAY'}`,'MAKE EVERY TOUCH COUNT',`${home?.code||'HOME'}  ${home?.score||0} — ${away?.score||0}  ${away?.code||'AWAY'}`,'PLAY  •  CREATE  •  COMPETE','HISANALI.COM / FOOTBALL'];
+  const accent=state==='goal'?'#d4ff59':['#61dcf0','#d4ff59','#edf4fa','#5be0b1','#aed6ff'][phase];
+  bg.fillStyle='#071b2a';bg.fillRect(0,0,1024,128);bg.fillStyle=accent;
+  const shift=boardTime*35%180;for(let x=-180;x<1100;x+=180){bg.globalAlpha=.13;bg.beginPath();bg.moveTo(x+shift,0);bg.lineTo(x+shift+65,0);bg.lineTo(x+shift-10,128);bg.lineTo(x+shift-75,128);bg.fill();}bg.globalAlpha=1;
+  bg.fillRect(0,0,1024,5);bg.fillRect(0,123,1024,5);bg.font='800 48px Arial';bg.textAlign='center';bg.textBaseline='middle';bg.fillText(state==='goal'?'GOAL!  •  WHAT A FINISH!':messages[phase].toUpperCase(),512+Math.sin(boardTime*.7)*14,68,940);boards.needsUpdate=true;
  }
+ updateBoards(.2,'menu',[]);
+ for(const x of [-HX-2,HX+2]){const board=new T.Mesh(new T.PlaneGeometry(LEN,1),boardMaterial);board.rotation.y=x>0?-Math.PI/2:Math.PI/2;board.position.set(x,.6,LEN/2);scene.add(board);}
+ for(const z of [-3,LEN+3]){const board=new T.Mesh(new T.PlaneGeometry(HX*2,1),boardMaterial);board.rotation.y=z<0?0:Math.PI;board.position.set(0,.6,z);scene.add(board);}
  // Match officials and broadcast operators: economical articulated silhouettes.
  const officials=[];
  function person(x,z,color,linesman=false){
@@ -69,7 +80,7 @@ export function installPresentation({T,scene,camera,ball,mobile,canvasTex,LEN,HX
    camera.position.lerp(targetPos,1-Math.exp(-dt*5));camera.lookAt(targetLook);return true;
   },
   update(dt,players,B,state){
-   lastPlayers=players;
+   lastPlayers=players;updateBoards(dt,state,players);
    for(const flag of flags){const a=flag.geometry.attributes.position;for(let i=0;i<a.count;i++)a.setZ(i,Math.sin(performance.now()*.003+a.getX(i)*9)*.045*(a.getX(i)+.25));a.needsUpdate=true;}
    if(state==='play')playTime+=dt;
    if(state==='play'&&(recording+=dt)>=1/24){recording%=1/24;history.push(snapshot(players,B));if(history.length>120)history.shift();}

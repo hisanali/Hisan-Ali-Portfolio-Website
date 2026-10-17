@@ -1,7 +1,7 @@
 [
   {
     "width": 1280,
-    "maxDribbleGap": 0.5820627791929597,
+    "maxDribbleGap": 0.5906645781488163,
     "hold": {
       "pos": [
         22.82,
@@ -14,7 +14,7 @@
     },
     "throwSocket": 0,
     "hands": {
-      "height": 1.087569438172012,
+      "height": 1.0881021381618927,
       "error": 0
     },
     "boundary": {
@@ -26,7 +26,7 @@
   },
   {
     "width": 844,
-    "maxDribbleGap": 0.5887167200099102,
+    "maxDribbleGap": 0.579290967068105,
     "hold": {
       "pos": [
         22.82,
@@ -39,7 +39,7 @@
     },
     "throwSocket": 0,
     "hands": {
-      "height": 1.087566852610105,
+      "height": 1.0879918293928257,
       "error": 0
     },
     "boundary": {

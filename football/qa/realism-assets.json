@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 20,
   "verified": "2026-10-17",
   "files": [
     {
@@ -24,8 +24,8 @@
     },
     {
       "path": "game.js",
-      "bytes": 76919,
-      "sha256": "fb42ec5abf5119f5bd35391b28fe792644b208cb939a3061f0c445cb3ac57958"
+      "bytes": 77691,
+      "sha256": "f19de4ee6226c339e8ca0146889bd74b1ca6198efed08bd5b3f7d16a3533ed9d"
     },
     {
       "path": "control.js",
@@ -34,13 +34,13 @@
     },
     {
       "path": "stadium.js",
-      "bytes": 9526,
-      "sha256": "f99453b9bf436c84886b0726268c09c70676bbf269c609498e8a34c14ddff773"
+      "bytes": 11829,
+      "sha256": "9b9b67c0e6228e59d2893b09eef4dae5fa5173988667c1807313eac477aac426"
     },
     {
       "path": "presentation.js",
-      "bytes": 8110,
-      "sha256": "13d80fa93475eb4def3facf95da3e841445a3b7e15ae20500b9d09977d49f79a"
+      "bytes": 9514,
+      "sha256": "4c333b81c7c59104a8b096a0a3f90be0f34ba281d1ac3235578a421ac315665b"
     },
     {
       "path": "player-kits.js",
@@ -54,8 +54,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 20899,
-      "sha256": "a737848e266cf4559571e5faf1c9c15e9ab96d9d02f72d6b3a8869c9f590c00f"
+      "bytes": 21743,
+      "sha256": "71a7e7a4d47d60ad24263bd9fda84e33dde953b1c8e48f6b22c9d0c8593d7af8"
     },
     {
       "path": "style.css",
@@ -99,8 +99,38 @@
     },
     {
       "path": "touch-layout.css",
-      "bytes": 12797,
-      "sha256": "2ee59e1ece324bce0959333d96b3d54ee8e1b07dcfd65c5d583858dd61ab42e3"
+      "bytes": 13668,
+      "sha256": "2d703b9f3a071b781d7c005580ce84facea9a8c2ca54ea83377d8ba536140460"
+    },
+    {
+      "path": "passing.js",
+      "bytes": 1973,
+      "sha256": "2e16ac75494d89cc18e4673b8b52def1ca4b9afbda8a4cc73497f306058f3c9b"
+    },
+    {
+      "path": "fullscreen.js",
+      "bytes": 2265,
+      "sha256": "c458ddbc4458f38f271ac5bc2897f6347bb0dcbe4cc7f2be39737afd8dd29c1a"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 575,
+      "sha256": "d30441fac9140dae4c0e3929d19dd67a24fcd2a888fa1b3fb62f3f87369438b5"
+    },
+    {
+      "path": "app-icon-180.png",
+      "bytes": 1187,
+      "sha256": "ebcee959e10f6e584f92dd3d5602e82e579c583ab069947588f1cef22278669d"
+    },
+    {
+      "path": "app-icon-192.png",
+      "bytes": 1282,
+      "sha256": "1439d9a47b92855261e5cff4fbc27d970fa73239ad46e0d01251a9cd6abf2fe3"
+    },
+    {
+      "path": "app-icon-512.png",
+      "bytes": 3714,
+      "sha256": "3659d21b0b9d6c6ba4f34dccbf091e7e5b34c0951f24872b785ea5b89953d41e"
     }
   ]
 }

@@ -4,6 +4,7 @@ import { mergeGeometries } from '../evermile/vendor/utils/BufferGeometryUtils.js
 // Original compact stadium. Rounded rectangular tiers keep corner seats off the
 // field; a ribbed tensile canopy follows the same footprint. No Sketchfab mesh.
 export function buildStadium(scene, atlas, materials = {}) {
+  const firstObject=scene.children.length;
   const centre = 35, rows = 28, columns = 400;
   const clock = {value: 0}, cheer = {value: 0};
   const concrete = new T.MeshStandardMaterial({color: '#89918d', map: materials.concrete, normalMap: materials.normal, normalScale: new T.Vector2(.16,.16), roughness: .94, side: T.DoubleSide});
@@ -102,13 +103,30 @@ export function buildStadium(scene, atlas, materials = {}) {
   for(const [mat,parts] of groups)if(parts.length){const mesh=new T.Mesh(mergeGeometries(parts,false),mat);mesh.receiveShadow=true;mesh.castShadow=mat===membrane||mat===steel;scene.add(mesh);parts.forEach(g=>g.dispose());}
   const display=document.createElement('canvas');display.width=1024;display.height=384;const g=display.getContext('2d'),map=new T.CanvasTexture(display);map.colorSpace=T.SRGBColorSpace;
   for(const dir of [-1,1]){const screen=new T.Mesh(new T.PlaneGeometry(9,3.375),new T.MeshBasicMaterial({map,toneMapped:false}));screen.position.set(0,18.6,centre+dir*59);screen.rotation.y=dir<0?0:Math.PI;scene.add(screen);}
-  function updateScore(home,away,half) {
-    g.fillStyle='#101d27';g.fillRect(0,0,1024,384);g.fillStyle='#b5d2dc';g.textAlign='center';g.font='500 28px Arial';g.fillText('HISAN ALI  /  MATCHDAY',512,60);g.fillStyle='#fff';g.font='700 140px Arial';g.fillText(`${home}  :  ${away}`,512,235);g.font='24px Arial';g.fillText(`HOME                         HALF ${half}                         AWAY`,512,325);map.needsUpdate=true;
+  let score=[0,0,1],screenFrame=-1;
+  function updateScore(home,away,half){score=[home,away,half];screenFrame=-1;}
+  function drawScreen(time,match={}){
+    const frame=Math.floor(time*8);if(frame===screenFrame)return;screenFrame=frame;
+    const teams=match.teams||[],home=teams[0],away=teams[1],goal=match.state==='goal';
+    g.fillStyle='#071925';g.fillRect(0,0,1024,384);g.textAlign='left';g.textBaseline='middle';
+    g.fillStyle=goal?'#d4ff59':'#56dfdb';g.fillRect(26,30,10,30);g.font='700 26px Arial';g.fillText(goal?'GOAL!  THE STADIUM ERUPTS':'MATCH LIVE',52,46);g.textAlign='right';g.fillText(`${String(match.minutes||0).padStart(2,'0')}′  •  HALF ${match.half||score[2]}`,980,46);
+    g.textAlign='center';g.fillStyle='#fff';g.font='800 128px Arial';g.fillText(`${home?.score??score[0]}  :  ${away?.score??score[1]}`,335,175);g.font='700 27px Arial';g.fillText(home?.name||'HOME',177,280,290);g.fillText(away?.name||'AWAY',491,280,290);
+    g.fillStyle='#163c34';g.fillRect(688,87,300,216);g.strokeStyle='#9cccc0';g.lineWidth=2;g.strokeRect(697,96,282,198);g.beginPath();g.moveTo(838,96);g.lineTo(838,294);g.stroke();g.beginPath();g.arc(838,195,30,0,Math.PI*2);g.stroke();
+    for(const team of teams)for(const p of team.players||[]){if(p.sentOff)continue;g.fillStyle=team.human?'#ff697b':'#eaf5ff';g.beginPath();g.arc(697+p.pos.z/70*282,294-(p.pos.x+23)/46*198,5,0,Math.PI*2);g.fill();}
+    if(match.ball){g.fillStyle='#f5ed73';g.beginPath();g.arc(697+match.ball.z/70*282,294-(match.ball.x+23)/46*198,4,0,Math.PI*2);g.fill();}
+    g.fillStyle='#65e4e1';g.fillRect((time*75)%1024,334,130,3);g.font='600 22px Arial';g.textAlign='center';g.fillStyle='#bfdae5';
+    const stats=Math.floor(time/6)%2===0;g.fillText(stats?`SHOTS  ${home?.matchStats?.shots||0} — ${away?.matchStats?.shots||0}     •     PASSES  ${home?.matchStats?.completed||0} — ${away?.matchStats?.completed||0}`:'LIVE MATCH TRACKER  •  EVERY PASS. EVERY GOAL.',512,363);map.needsUpdate=true;
   }
-  updateScore(0,0,1);
-  // Broadcast cameras sit inside the stands on narrow screens. Cut away only
-  // the camera-side structure, retaining the full canopy's cast shadows.
-  const cutaway=new T.Plane(new T.Vector3(1,0,0),26);
-  const stadiumMaterials=[...groups.keys(),fanMat,seatMat];let cleared=false;
-  return {updateScore,setCameraClearance(active){if(active===cleared)return;cleared=active;for(const material of stadiumMaterials){material.clippingPlanes=active?[cutaway]:[];material.needsUpdate=true;}},update(time,goal,dt){clock.value=time;cheer.value=T.MathUtils.damp(cheer.value,goal?1:0,3,dt);}};
+  drawScreen(0);
+  // Cut the foreground stands and overhead canopy from gameplay cameras only.
+  // Clipping does not apply to shadow maps, so the roof still shades the pitch.
+  const xCut=new T.Plane(new T.Vector3(1,0,0),24.8),zCut=new T.Plane(new T.Vector3(0,0,1),3),roofCut=new T.Plane(new T.Vector3(0,-1,0),18);
+  const stadiumObjects=scene.children.slice(firstObject),stadiumMaterials=new Set();for(const object of stadiumObjects){object.userData.stadium=true;object.traverse(o=>{if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])stadiumMaterials.add(m);});}
+  let mask='';
+  return {updateScore,setCameraClearance(active,camera){
+    const x=active&&Math.abs(camera.position.x)>23,z=active&&(camera.position.z<0||camera.position.z>70),key=`${active}/${x}/${z}`;
+    xCut.normal.set(camera.position.x<0?1:-1,0,0);xCut.constant=24.8;
+    zCut.normal.set(0,0,camera.position.z<35?1:-1);zCut.constant=camera.position.z<35?3:73;
+    if(mask!==key){mask=key;const planes=active?[roofCut,...(x?[xCut]:[]),...(z?[zCut]:[])]:[];for(const material of stadiumMaterials){material.clippingPlanes=planes;material.clipShadows=false;material.needsUpdate=true;}}
+  },update(time,goal,dt,match){clock.value=time;cheer.value=T.MathUtils.damp(cheer.value,goal?1:0,3,dt);drawScreen(time,match);}};
 }

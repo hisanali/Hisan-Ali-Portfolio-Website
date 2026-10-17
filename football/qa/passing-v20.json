@@ -1,0 +1,290 @@
+[
+  {
+    "distance": 6,
+    "power": 0,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.7186574300260524
+  },
+  {
+    "distance": 6,
+    "power": 0,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.8268819407972458
+  },
+  {
+    "distance": 6,
+    "power": 0,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.8864081003482955
+  },
+  {
+    "distance": 6,
+    "power": 0.5,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.7366735217809842
+  },
+  {
+    "distance": 6,
+    "power": 0.5,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.8510560287475765
+  },
+  {
+    "distance": 6,
+    "power": 0.5,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.8864081003482955
+  },
+  {
+    "distance": 6,
+    "power": 1,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.7220489887218322
+  },
+  {
+    "distance": 6,
+    "power": 1,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.8387280125833001
+  },
+  {
+    "distance": 6,
+    "power": 1,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.8864081003482955
+  },
+  {
+    "distance": 12,
+    "power": 0,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.8068094964099808
+  },
+  {
+    "distance": 12,
+    "power": 0,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.8406525510740716
+  },
+  {
+    "distance": 12,
+    "power": 0,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 1.118869561112847
+  },
+  {
+    "distance": 12,
+    "power": 0.5,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.8354885607222357
+  },
+  {
+    "distance": 12,
+    "power": 0.5,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.779347913418313
+  },
+  {
+    "distance": 12,
+    "power": 0.5,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.9283710941231955
+  },
+  {
+    "distance": 12,
+    "power": 1,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.8566858433418733
+  },
+  {
+    "distance": 12,
+    "power": 1,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.8172692179388034
+  },
+  {
+    "distance": 12,
+    "power": 1,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.9139850656305956
+  },
+  {
+    "distance": 22,
+    "power": 0,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.8946775066943273
+  },
+  {
+    "distance": 22,
+    "power": 0,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.855880702649509
+  },
+  {
+    "distance": 22,
+    "power": 0,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.9371662751506383
+  },
+  {
+    "distance": 22,
+    "power": 0.5,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.803401511637638
+  },
+  {
+    "distance": 22,
+    "power": 0.5,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.6743575808875453
+  },
+  {
+    "distance": 22,
+    "power": 0.5,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 1.1254943074766521
+  },
+  {
+    "distance": 22,
+    "power": 1,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.6881395042771502
+  },
+  {
+    "distance": 22,
+    "power": 1,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.7298885923577357
+  },
+  {
+    "distance": 22,
+    "power": 1,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.9204212413331123
+  },
+  {
+    "distance": 32,
+    "power": 0,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.7468190366541853
+  },
+  {
+    "distance": 32,
+    "power": 0,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.8913251913839176
+  },
+  {
+    "distance": 32,
+    "power": 0,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 0.89067052374655
+  },
+  {
+    "distance": 32,
+    "power": 0.5,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.8648803992654166
+  },
+  {
+    "distance": 32,
+    "power": 0.5,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.6981167481835998
+  },
+  {
+    "distance": 32,
+    "power": 0.5,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 1.0208167167052025
+  },
+  {
+    "distance": 32,
+    "power": 1,
+    "mode": "ground",
+    "released": true,
+    "received": true,
+    "closest": 0.8449734766442047
+  },
+  {
+    "distance": 32,
+    "power": 1,
+    "mode": "through",
+    "released": true,
+    "received": true,
+    "closest": 0.7437923295400068
+  },
+  {
+    "distance": 32,
+    "power": 1,
+    "mode": "lob",
+    "released": true,
+    "received": true,
+    "closest": 1.0044982496329027
+  }
+]
