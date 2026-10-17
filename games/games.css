@@ -1099,3 +1099,5 @@ a.game-pick { color: var(--gc-ink); text-decoration: none; }
  .gc-play-caption { flex-wrap: wrap; padding-top: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .orbit-pad { animation: none; } }
+/* Shared site section gaps must keep the same Game Center surface. */
+body.page-games main { background: var(--gc-bg); }
