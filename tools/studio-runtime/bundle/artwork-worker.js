@@ -1,0 +1,1 @@
+import{a as e}from"./chunk-F7XKTR4X.js";import"./chunk-3RNHDNP5.js";self.onmessage=r=>{try{let{pixels:s,width:t,height:a,scale:n}=r.data;self.postMessage({result:e(new Uint8ClampedArray(s),t,a,n)})}catch{self.postMessage({error:"Artwork extraction failed. Your current project is unchanged."})}};

@@ -1,0 +1,1 @@
+import React from "react";export const useAppLocale=()=>({language:"en"});export const translateUi=(s:string)=>s;export function Localized({as:Tag="span",children,...props}:any){return React.createElement(Tag,props,children);}

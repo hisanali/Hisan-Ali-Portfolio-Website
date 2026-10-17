@@ -1,0 +1,23 @@
+{
+  "base": "http://localhost:8766",
+  "editedPdfPages": 2,
+  "ocr": "HISAN TOOLS OCR TEST",
+  "projectRoundtrip": true,
+  "localSavedProjectReopened": true,
+  "artworkUpload": true,
+  "printPdf": true,
+  "privateRequests": [],
+  "errors": [],
+  "sizes": [
+    {
+      "tool": "pdf-editor",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "tool": "packaging-studio",
+      "width": 390,
+      "overflow": false
+    }
+  ]
+}

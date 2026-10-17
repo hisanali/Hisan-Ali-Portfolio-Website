@@ -1,0 +1,3 @@
+import{build}from'esbuild';import{resolve}from'node:path';import{rmSync}from'node:fs';
+rmSync('tools/studio-runtime/bundle',{recursive:true,force:true});
+await build({entryPoints:{pdf:'tools/studio-src/pdf-entry.tsx',packaging:'tools/studio-src/package-entry.tsx','artwork-worker':'tools/studio-src/package/packaging/artwork-worker.ts'},outdir:'tools/studio-runtime/bundle',bundle:true,minify:true,splitting:true,format:'esm',target:'es2022',jsx:'automatic',nodePaths:[resolve('tools/studio-src/node_modules')],alias:{'next/link':resolve('tools/studio-src/link.tsx')},external:['canvas','/tools/*'],loader:{'.woff': 'file','.woff2':'file','.ttf':'file','.otf':'file'},define:{'process.env.NODE_ENV':'"production"'},logLevel:'info'});

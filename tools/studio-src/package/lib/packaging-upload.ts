@@ -1,0 +1,3 @@
+/** Keep imported artwork self-contained in local projects and portable exports. */
+export function createAssetUploader(_options:any={}){return async(blob:Blob,_name:string)=>{if(blob.size>25*1024*1024)throw Error('Choose artwork smaller than 25 MB.');return new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(Error('Could not read this artwork.'));r.readAsDataURL(blob);});};}
+export async function finishUploads<T>(jobs:Promise<T>[]):Promise<T[]>{const results=await Promise.allSettled(jobs);const failed=results.find((r):r is PromiseRejectedResult=>r.status==='rejected');if(failed)throw failed.reason;return results.map(r=>(r as PromiseFulfilledResult<T>).value);}

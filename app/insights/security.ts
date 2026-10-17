@@ -64,8 +64,9 @@ export function responseHeaders(contentType = 'application/json; charset=utf-8')
 
 // The legacy static route must never serve source files, secrets, or dependency trees.
 export function isPublicAsset(segments: string[]) {
-  const blocked = new Set(['app', 'components', 'server', 'scripts', 'node_modules', 'api', 'admin', 'package.json', 'package-lock.json', 'tsconfig.json', 'vercel.json']);
+  const blocked = new Set(['app', 'components', 'server', 'scripts', 'node_modules', 'studio-src', 'api', 'admin', 'package.json', 'package-lock.json', 'tsconfig.json', 'vercel.json']);
   if (!segments.length || segments.some(segment => segment.startsWith('.') || segment.includes('\\') || blocked.has(segment))) return false;
   const last = segments[segments.length - 1];
+  if (segments[0] === 'tools' && segments[1] === 'studio-runtime' && /\.(bcmap|pfb|gz)$/i.test(last)) return true;
   return !last.includes('.') || /\.(html|css|js|json|xml|txt|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|otf|pdf|glb|gltf|bin|wasm|mp3|mp4|webm|ogg|wav)$/i.test(last);
 }

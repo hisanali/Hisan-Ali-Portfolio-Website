@@ -14,6 +14,7 @@ export function prepareInteriorPage(html: string, pathname: string) {
   if (/^\/penalty(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/football(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/tools\/rubiks-cube\/?$/.test(pathname)) return ensureTracking(html);
+  if (/^\/tools\/(?:pdf-editor|packaging-studio)(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   const isFieldGuide = /\bfield-guide-page\b/i.test(html);
   const pageStyles = `${interiorStyles}${isFieldGuide ? fieldGuideStyles : ''}${experienceStyles}${qualityRepairStyles}`;
   const path = pathname.replace(/^\/+|\/+$/g, '');

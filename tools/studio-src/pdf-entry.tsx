@@ -1,0 +1,1 @@
+import React from 'react';import{createRoot}from'react-dom/client';import PdfEditor from './pdf/pdf-editor/pdf-editor';import './surface.css';createRoot(document.getElementById('studio-root')!).render(<PdfEditor/>);

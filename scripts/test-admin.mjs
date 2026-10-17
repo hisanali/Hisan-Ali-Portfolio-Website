@@ -19,8 +19,8 @@ test('sessions reject tampering, expired data, wrong purpose and missing secrets
   assert.equal(equal('abc', 'abc'), true);
 });
 test('source files, environment files, traversal and internal trees are never public assets', () => {
-  for (const value of ['.env.local', '.git/config', 'app/insights/security.ts', 'scripts/test-admin.mjs', 'package.json', 'node_modules/pkg/index.js', '../secret.json', 'api/oauth.json', 'secret.pem', 'file.ts', 'admin/index.html']) assert.equal(isPublicAsset(value.split('/')), false, value);
-  for (const value of ['style.css', 'gcc', 'blog/article/index.html', 'games/arcade3d.bundle.js', 'sitemap.xml', 'assets/car.glb', 'public/docs/ga-tracking-sheet.pdf']) assert.equal(isPublicAsset(value.split('/')), true, value);
+  for (const value of ['.env.local', '.git/config', 'app/insights/security.ts', 'scripts/test-admin.mjs', 'package.json', 'node_modules/pkg/index.js', '../secret.json', 'api/oauth.json', 'secret.pem', 'file.ts', 'admin/index.html', 'tools/studio-src/storage.ts', 'tools/studio-src/package/lib/studio-package-profiles.json', 'elsewhere/engine.gz']) assert.equal(isPublicAsset(value.split('/')), false, value);
+  for (const value of ['style.css', 'gcc', 'blog/article/index.html', 'games/arcade3d.bundle.js', 'sitemap.xml', 'assets/car.glb', 'public/docs/ga-tracking-sheet.pdf', 'tools/studio-runtime/bundle/pdf.js', 'tools/studio-runtime/datasheets/ocr/eng.traineddata.gz']) assert.equal(isPublicAsset(value.split('/')), true, value);
 });
 test('tracking health reports ignore filters and use their own date windows', () => {
   const filters = { days: 28, country: 'OM', device: 'mobile' }, period = periods(28, 1);

@@ -1,0 +1,1 @@
+{"private":true,"name":"hisan-browser-studios","type":"module","dependencies":{"@pdf-lib/fontkit":"1.1.1","fabric":"7.4.0","fflate":"0.8.2","jspdf":"4.2.1","lucide-react":"1.28.0","pdf-lib":"1.17.1","pdfjs-dist":"4.8.69","react":"19.2.6","react-dom":"19.2.6","svg2pdf.js":"2.8.1","tesseract.js":"7.0.0","three":"0.186.1"}}

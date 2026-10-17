@@ -1,0 +1,52 @@
+[
+  {
+    "id": "Paper006",
+    "source": "https://ambientcg.com/view?id=Paper006",
+    "license": "CC0-1.0",
+    "maps": [
+      "Paper006_1K-JPG_Color.jpg",
+      "Paper006_1K-JPG_NormalGL.jpg",
+      "Paper006_1K-JPG_Roughness.jpg"
+    ]
+  },
+  {
+    "id": "Paper001",
+    "source": "https://ambientcg.com/view?id=Paper001",
+    "license": "CC0-1.0",
+    "maps": [
+      "Paper001_1K-JPG_Color.jpg",
+      "Paper001_1K-JPG_NormalGL.jpg",
+      "Paper001_1K-JPG_Roughness.jpg"
+    ]
+  },
+  {
+    "id": "Concrete034",
+    "source": "https://ambientcg.com/view?id=Concrete034",
+    "license": "CC0-1.0",
+    "maps": [
+      "Concrete034_1K-JPG_Color.jpg",
+      "Concrete034_1K-JPG_NormalGL.jpg",
+      "Concrete034_1K-JPG_Roughness.jpg"
+    ]
+  },
+  {
+    "id": "Wood095",
+    "source": "https://ambientcg.com/view?id=Wood095",
+    "license": "CC0-1.0",
+    "maps": [
+      "Wood095_1K-JPG_Color.jpg",
+      "Wood095_1K-JPG_NormalGL.jpg",
+      "Wood095_1K-JPG_Roughness.jpg"
+    ]
+  },
+  {
+    "id": "Marble012",
+    "source": "https://ambientcg.com/view?id=Marble012",
+    "license": "CC0-1.0",
+    "maps": [
+      "Marble012_1K-JPG_Color.jpg",
+      "Marble012_1K-JPG_NormalGL.jpg",
+      "Marble012_1K-JPG_Roughness.jpg"
+    ]
+  }
+]
