@@ -1,0 +1,86 @@
+/* Scoped to the October articles: component colours must not inherit the page palette. */
+html body.october-guide.page-blog-article .blog-post-content .pocket-note :is(p,strong,b,a,em,span) {
+ color: #17392f !important;
+ -webkit-text-fill-color: currentColor !important;
+}
+html body.october-guide.page-blog-article .blog-post-content .checklist-board input {
+ accent-color: #17392f;
+ color-scheme: light;
+ margin-top: 3px;
+}
+html body.october-guide.page-blog-article .blog-post-content .checklist-board label { cursor: pointer; }
+html body.october-guide.page-blog-article .blog-post-content :is(a,input):focus-visible {
+ outline: 3px solid #bd642e;
+ outline-offset: 4px;
+}
+html body.october-guide.page-blog-article .blog-post-content table caption {
+ color: var(--ix-ink);
+ text-align: left;
+ font: 600 13px/1.6 Manrope,sans-serif;
+ padding: 14px 16px;
+}
+html body.october-guide.page-blog-article .blog-post-content table th { min-width: 110px; }
+@media(max-width: 600px) {
+ html body.october-guide.page-blog-article .blog-post-content :is(th,td) {
+  min-width: 0; padding: 12px 10px !important; overflow-wrap: anywhere;
+ }
+ html body.october-guide.page-blog-article .blog-post-content table { display: table; table-layout: fixed; }
+}
+html:not(.theme-dark) body.october-guide .author-title { color: #89351e !important; }
+html.reading-mode body.october-guide.page-blog-article .blog-post-content :is(table,caption,td,ul,ol) {
+ background: #f6f1e7 !important;
+ color: #352017 !important;
+}
+html.reading-mode body.october-guide.page-blog-article .blog-post-content :is(li,li strong,td strong) { color: #352017 !important; }
+/* The cover already includes its own footer; avoid placing a badge over it. */
+html body.october-guide .blog-featured-image::after { display: none !important; }
+html:not(.theme-dark) body.october-guide.field-guide-page.redesign-interior.page-blog-article .blog-sidebar .author-card p.author-title { color: #76321e !important; }
+/* October editorial modules: explicit surface/text pairs across every palette. */
+body.october-guide .og-opening { margin: 38px 0 48px; padding-bottom: 28px; border-bottom: 1px solid var(--ix-line); }
+body.october-guide .og-eyebrow { display:block; margin-bottom:15px; color:var(--ix-ink); font:800 10px/1.5 Manrope,sans-serif; letter-spacing:.16em; }
+body.october-guide .og-audience { font:600 12px/1.8 Manrope,sans-serif; color:var(--ix-muted); }
+html body.october-guide.page-blog-article .blog-post-content .og-opening h2 { margin-top:0 !important; }
+body.october-guide .og-panel { margin:48px 0; padding:30px; border-radius:22px; background:#e7f0d0; border:1px solid #9aa986; box-shadow:7px 7px 0 #294638; }
+html body.october-guide.page-blog-article .blog-post-content .og-panel :is(h2,h3,p,label,span,output,button) { color:#17392f !important; -webkit-text-fill-color:currentColor !important; }
+html body.october-guide.page-blog-article .blog-post-content .og-panel h2 { margin:10px 0 20px !important; font-size:32px !important; }
+html body.october-guide.page-blog-article .blog-post-content .og-panel p { font-size:14px !important; line-height:1.7 !important; }
+body.october-guide .og-controls { display:grid; gap:0; margin:20px 0; }
+body.october-guide .og-controls label { display:flex; align-items:flex-start; gap:13px; padding:14px 0; border-top:1px solid #bcc9aa; font:600 14px/1.6 Manrope,sans-serif; cursor:pointer; }
+body.october-guide .og-controls input { width:20px; height:20px; flex:0 0 20px; accent-color:#17392f; color-scheme:light; margin-top:2px; }
+body.october-guide .og-result { display:block; padding:20px; border-radius:12px; background:#fffdf4; font:700 16px/1.7 Manrope,sans-serif; border:1px solid #a0af8a; }
+body.october-guide .og-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:32px 0; }
+body.october-guide .og-cards section { padding:22px 18px; background:#17392f; border:1px solid #5b7769; border-radius:16px; }
+html body.october-guide.page-blog-article .blog-post-content .og-cards :is(h3,p) { color:#f7f2e6 !important; }
+html body.october-guide.page-blog-article .blog-post-content .og-cards h3 { font-size:23px !important; margin:14px 0 !important; }
+html body.october-guide.page-blog-article .blog-post-content .og-cards p { font-size:13px !important; line-height:1.7 !important; margin:0 !important; }
+body.october-guide .og-cards span { color:#ddff69; font:800 9px/1.5 Manrope,sans-serif; letter-spacing:.12em; }
+body.october-guide .og-workflow { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; border:1px solid #acb19d; margin:32px 0; background:#f6f1e7; }
+body.october-guide .og-workflow>div { padding:24px; border:1px solid #d6d8c8; }
+html body.october-guide.page-blog-article .blog-post-content .og-workflow :is(b,p) { color:#17392f !important; font-size:14px !important; }
+body.october-guide .og-workflow b { font-family:Manrope,sans-serif; }
+html body.october-guide.page-blog-article .blog-post-content .og-workflow p { margin:10px 0 0 !important; }
+body.october-guide .og-callout { padding:28px; border-left:5px solid #c98259; background:#17392f; margin:32px 0; }
+html body.october-guide.page-blog-article .blog-post-content .og-callout :is(h3,p) { color:#f7f2e6 !important; }
+html body.october-guide.page-blog-article .blog-post-content .og-callout h3 { margin-top:0 !important; }
+body.october-guide .og-tabs { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0; }
+body.october-guide .og-tabs button { border:1px solid #17392f; border-radius:999px; padding:11px 15px; background:#fffdf4; font:700 12px/1.4 Manrope,sans-serif; cursor:pointer; }
+html body.october-guide.page-blog-article .blog-post-content .og-tabs button[aria-pressed=true] { background:#17392f; color:#fffdf4 !important; }
+body.october-guide .og-conversation { display:grid; gap:14px; }
+html body.october-guide.page-blog-article .blog-post-content .og-conversation p { margin:0 !important; padding:18px; border-radius:16px; }
+body.october-guide .og-customer { background:#fffdf4; margin-right:22px !important; }
+body.october-guide .og-reply { background:#c7e6aa; margin-left:22px !important; }
+body.october-guide .og-rule { border-top:1px solid #9aa986; border-radius:0 !important; }
+body.october-guide .og-inputs { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:24px 0; }
+body.october-guide .og-inputs label { display:grid; gap:8px; font:700 12px/1.5 Manrope,sans-serif; }
+body.october-guide .og-inputs input { width:100%; min-width:0; box-sizing:border-box; padding:12px; border:1px solid #718264; border-radius:8px; color:#17392f; background:#fffdf4; font:600 17px/1.4 Manrope,sans-serif; color-scheme:light; }
+body.october-guide .og-faq details { padding:20px 0; border-bottom:1px solid var(--ix-line); }
+body.october-guide .og-faq summary { cursor:pointer; color:var(--ix-ink); font:700 16px/1.6 Manrope,sans-serif; }
+html body.october-guide.page-blog-article .blog-post-content .og-faq p { margin:16px 0 0 !important; font-size:14px !important; }
+body.october-guide :is(.og-tabs button,.og-faq summary):focus-visible { outline:3px solid #b85e2e; outline-offset:4px; }
+@media(max-width:700px) {
+ body.october-guide .og-cards { grid-template-columns:1fr; }
+ body.october-guide .og-panel { padding:22px 18px; box-shadow:4px 4px 0 #294638; }
+ body.october-guide .og-workflow { grid-template-columns:1fr; }
+ body.october-guide .og-inputs { gap:12px; }
+ html body.october-guide.page-blog-article .blog-post-content .og-panel h2 { font-size:28px !important; }
+}
