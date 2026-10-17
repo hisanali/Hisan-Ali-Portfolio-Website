@@ -1,0 +1,38 @@
+[
+  {
+    "width": 1440,
+    "height": 900,
+    "tutorial": "all six completed with keyboard",
+    "settingsPersist": true,
+    "pause": true,
+    "players": 22,
+    "errors": []
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "tutorial": "opened",
+    "settingsPersist": true,
+    "pause": true,
+    "players": 22,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "tutorial": "opened",
+    "settingsPersist": true,
+    "pause": true,
+    "players": 22,
+    "errors": []
+  },
+  {
+    "width": 568,
+    "height": 320,
+    "tutorial": "opened",
+    "settingsPersist": true,
+    "pause": true,
+    "players": 22,
+    "errors": []
+  }
+]

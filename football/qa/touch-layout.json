@@ -1,0 +1,236 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "size": "normal",
+    "minButton": 52,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "size": "large",
+    "minButton": 55,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "size": "normal",
+    "minButton": 55,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "size": "large",
+    "minButton": 60,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 430,
+    "height": 932,
+    "size": "normal",
+    "minButton": 55,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 430,
+    "height": 932,
+    "size": "large",
+    "minButton": 60,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 568,
+    "height": 320,
+    "size": "normal",
+    "minButton": 56,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 568,
+    "height": 320,
+    "size": "large",
+    "minButton": 60,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 667,
+    "height": 375,
+    "size": "normal",
+    "minButton": 56,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 667,
+    "height": 375,
+    "size": "large",
+    "minButton": 60,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "size": "normal",
+    "minButton": 56,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "size": "large",
+    "minButton": 60,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 932,
+    "height": 430,
+    "size": "normal",
+    "minButton": 56,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 932,
+    "height": 430,
+    "size": "large",
+    "minButton": 60,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "size": "normal",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "size": "large",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "size": "normal",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "size": "large",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 820,
+    "height": 1180,
+    "size": "normal",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 820,
+    "height": 1180,
+    "size": "large",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1180,
+    "height": 820,
+    "size": "normal",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1180,
+    "height": 820,
+    "size": "large",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 1366,
+    "size": "normal",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 1366,
+    "size": "large",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 1024,
+    "size": "normal",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 1024,
+    "size": "large",
+    "minButton": 66,
+    "edgeClearance": true,
+    "noOverlap": true,
+    "errors": []
+  }
+]

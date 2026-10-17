@@ -1,0 +1,121 @@
+/* Touch geometry is laid out at its real size, with thumb clearance around it.
+   maxTouchPoints also enables this on iPads whose trackpad is the primary pointer. */
+body[data-touch="true"]{
+ --touch-x:clamp(34px,6vw,88px);
+ --touch-y:clamp(32px,7vh,72px);
+ --touch-u:1px;
+ --stick-size:124px;
+ --radar-width:104px;
+ --radar-height:68px;
+}
+body[data-touch="true"][data-button-size="large"]{--touch-u:1.08px;--stick-size:134px}
+body[data-touch="true"] .controls{
+ display:flex;left:0;right:0;bottom:0;
+ padding:0 max(var(--touch-x),calc(env(safe-area-inset-right) + 20px)) max(var(--touch-y),calc(env(safe-area-inset-bottom) + 20px)) max(var(--touch-x),calc(env(safe-area-inset-left) + 20px));
+}
+body[data-touch="true"] .controls .pad{width:calc(220 * var(--touch-u));height:calc(190 * var(--touch-u));transform:none;opacity:max(.8,var(--pad-opacity));overflow:visible}
+body[data-touch="true"] .act{min-width:52px;min-height:52px;width:calc(64 * var(--touch-u));height:calc(64 * var(--touch-u));display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:8px 3px 10px;border:1px solid #c7d8e58c;background:linear-gradient(145deg,#263e50e8,#102331d9);box-shadow:0 5px 16px #0004,inset 0 1px #ffffff25;backdrop-filter:none;color:#f4f8fb;transition:background .1s,transform .1s,border-color .1s}
+body[data-touch="true"] .act b{position:static;inset:auto;align-self:auto;font-size:clamp(9px,calc(10 * var(--touch-u)),12px);font-weight:800;letter-spacing:.02em;line-height:1.15;padding:0;text-shadow:none}
+body[data-touch="true"] .act svg{width:calc(23 * var(--touch-u));height:calc(23 * var(--touch-u));stroke-width:1.7;opacity:.95;flex:none}
+body[data-touch="true"] .act span{display:none}
+body[data-touch="true"] #btn-a{right:0;bottom:0;width:calc(72 * var(--touch-u));height:calc(72 * var(--touch-u));border-color:#b8d9f5;background:linear-gradient(145deg,#31536bec,#16364cde)}
+body[data-touch="true"] #btn-b{right:0;top:0;bottom:auto;width:calc(76 * var(--touch-u));height:calc(76 * var(--touch-u));border-color:#dcf9a0;background:linear-gradient(145deg,#647d31ed,#314a1ce6)}
+body[data-touch="true"] #btn-through{right:calc(88 * var(--touch-u));bottom:calc(58 * var(--touch-u))}
+body[data-touch="true"] #btn-lob{right:calc(160 * var(--touch-u));bottom:0;width:calc(60 * var(--touch-u));height:calc(60 * var(--touch-u))}
+body[data-touch="true"] #btn-c{right:calc(160 * var(--touch-u));bottom:calc(108 * var(--touch-u));width:calc(60 * var(--touch-u));height:calc(60 * var(--touch-u))}
+body[data-touch="true"] .controls[data-phase="defence"] #btn-b{background:linear-gradient(145deg,#744b3eeb,#49332de6);border-color:#efb8a1}
+body[data-touch="true"] .act.is-down,body[data-touch="true"] .act.is-active{background:#789d31ed;border-color:#e1ffae;box-shadow:0 0 0 3px #d9ffa126,inset 0 1px #ffffff55;transform:translateY(2px)}
+body[data-touch="true"] .act .power{left:18%;right:18%;bottom:8px;height:3px;background:#020b1266}
+body[data-touch="true"] .stick{width:var(--stick-size);height:var(--stick-size);flex-shrink:0;border:1px solid #d1e4ed8c;background:radial-gradient(circle,#b5d6ea10 0 38%,#142c3e80 39% 67%,#c5deed30 68% 69%,#10233380 70%);box-shadow:inset 0 0 25px #07111b44,0 5px 18px #0002;opacity:max(.8,var(--pad-opacity));position:relative;backdrop-filter:none}
+body[data-touch="true"] .stick:before,body[data-touch="true"] .stick:after{content:'';position:absolute;background:#d1e4ed21;pointer-events:none}.stick:before{width:1px;height:75%}.stick:after{height:1px;width:75%}
+body[data-touch="true"] .stick i{z-index:1;width:42%;height:42%;background:linear-gradient(145deg,#b8cddbe8,#667f94e8);border:1px solid #edf8ffba;box-shadow:0 4px 10px #0005,inset 0 1px 3px #fff7}
+body[data-touch="true"] #technique{right:calc(max(var(--touch-x),env(safe-area-inset-right) + 20px) + 80 * var(--touch-u));bottom:calc(max(var(--touch-y),env(safe-area-inset-bottom) + 20px) + 8 * var(--touch-u));width:calc(70 * var(--touch-u));min-width:0;min-height:32px;padding:7px 3px;border-radius:8px;font-size:9px;letter-spacing:.04em;border:1px solid #b5cbd678;background:#132b3be6;color:#e2ecf3;text-align:center}
+body[data-touch="true"] #player-info{left:max(var(--touch-x),env(safe-area-inset-left) + 20px);bottom:calc(var(--control-bottom) + var(--stick-size) + 18px);min-width:145px;max-width:205px;padding:9px 12px;font-size:10px;border-radius:4px;background:#112737e8}
+body[data-touch="true"] #action-meter{left:max(var(--touch-x),env(safe-area-inset-left) + 20px);bottom:calc(var(--control-bottom) + var(--stick-size) + 65px);width:145px;border-radius:4px}
+body[data-touch="true"] #opponent-info,body[data-touch="true"] .keys-hint,body[data-touch="true"] #mentality-bar{display:none!important}
+body[data-touch="true"] #radar{left:50%;right:auto;transform:translateX(-50%);bottom:var(--control-bottom);top:auto;width:var(--radar-width);height:var(--radar-height);border:1px solid #d7e7dd4a;background:#10281c66;border-radius:5px;opacity:.8}
+/* Short codes are deliberate labels, rather than clipped club names. */
+body[data-touch="true"] .scorebug>span{font-size:0;max-width:none;overflow:visible;width:30px;text-align:center}
+body[data-touch="true"] .scorebug>span:after{content:attr(data-short);font-size:11px;letter-spacing:.06em}
+body[data-touch="true"] .scorebug{left:70px;right:auto;top:20px;height:36px;gap:8px;padding:0 8px}
+body[data-touch="true"] .scorebug b{font-size:16px;padding:7px 9px}
+body[data-touch="true"] .scorebug em{font-size:11px;min-width:38px}
+body[data-touch="true"] .topbar{padding:20px max(24px,env(safe-area-inset-right) + 12px) 0 max(24px,env(safe-area-inset-left) + 12px)}
+body[data-touch="true"] .top-actions button{width:36px;height:36px}
+body[data-touch="true"] .top-actions .menu{width:auto;padding:0 12px}
+body[data-touch="true"] .top-actions #btn-camera{width:auto;min-width:68px;padding:0 8px}
+@media(min-width:1000px) and (min-height:600px), (min-width:700px) and (min-height:900px){
+ body[data-touch="true"]{--touch-u:1.14px;--stick-size:148px;--touch-x:clamp(64px,7vw,104px);--touch-y:clamp(56px,8vh,90px);--radar-width:120px;--radar-height:78px}
+ body[data-touch="true"][data-button-size="large"]{--touch-u:1.24px;--stick-size:160px}
+ body[data-touch="true"] .topbar{padding:26px 36px 0}
+ body[data-touch="true"] .scorebug{top:26px;left:82px}
+ body[data-touch="true"] .top-actions button{width:42px;height:42px}
+ body[data-touch="true"] #technique{font-size:10px;min-height:36px}
+}
+@media(max-height:450px) and (orientation:landscape){
+ body[data-touch="true"]{--touch-x:clamp(34px,6vw,60px);--touch-y:32px;--touch-u:.94px;--stick-size:108px}
+ body[data-touch="true"][data-button-size="large"]{--touch-u:1px;--stick-size:116px}
+ body[data-touch="true"] .topbar{padding-top:14px}
+ body[data-touch="true"] .scorebug{top:14px}
+ body[data-touch="true"] #player-info{font-size:9px;padding:7px 9px;min-width:135px}
+ body[data-touch="true"] #coach{top:64px;width:min(430px,66vw)}
+}
+@media(max-width:700px) and (orientation:landscape){
+ body[data-touch="true"]{--radar-width:80px;--radar-height:52px}
+ body[data-touch="true"] #radar{top:76px;bottom:auto}
+ body[data-touch="true"] .scorebug{gap:5px;left:66px;padding:0 6px;height:34px}
+ body[data-touch="true"] .scorebug>span{width:25px}
+ body[data-touch="true"] .scorebug>span:after{font-size:10px}
+ body[data-touch="true"] .scorebug b{font-size:14px;padding:6px}
+ body[data-touch="true"] .top-actions{gap:5px}
+ body[data-touch="true"] #btn-full{display:none}
+ body[data-touch="true"] .top-actions #btn-camera{min-width:60px;font-size:9px}
+ body[data-touch="true"] .top-actions .menu{font-size:11px;padding:0 9px}
+ body[data-touch="true"] .top-actions button{width:34px;height:34px}
+ body[data-touch="true"].is-training #radar{display:none}
+}
+@media(max-width:600px) and (orientation:portrait){
+ body[data-touch="true"]{--touch-x:24px;--touch-y:44px;--touch-u:.92px;--stick-size:104px}
+ body[data-touch="true"][data-button-size="large"]{--touch-u:1px;--stick-size:108px}
+ body[data-touch="true"] .scorebug{left:24px;right:24px;top:66px;height:36px;justify-content:center}
+ body[data-touch="true"] .scorebug>span{width:44px}
+ body[data-touch="true"] .scorebug>span:after{font-size:12px}
+ body[data-touch="true"] .top-actions{margin-left:auto;gap:8px}
+ body[data-touch="true"] .topbar{padding-top:20px}
+ body[data-touch="true"] #player-info{bottom:calc(var(--control-bottom) + 190 * var(--touch-u) + 22px);left:24px;max-width:170px;min-width:0;width:calc(100vw - 168px);font-size:9px}
+ body[data-touch="true"] #action-meter{bottom:calc(var(--control-bottom) + 190 * var(--touch-u) + 68px);left:24px;width:140px}
+ body[data-touch="true"] #radar{bottom:calc(var(--control-bottom) + 190 * var(--touch-u) + 16px);top:auto;left:auto;right:24px;transform:none;width:88px;height:57px}
+ body[data-touch="true"] #coach{top:116px;width:calc(100% - 48px)}
+ body[data-touch="true"] .banner{top:116px}
+}
+@media(max-width:375px) and (orientation:portrait){
+ body[data-touch="true"]{--touch-u:.86px;--stick-size:90px}
+ body[data-touch="true"][data-button-size="large"]{--touch-u:.92px;--stick-size:92px}
+ body[data-touch="true"] #technique{font-size:8px}
+ body[data-touch="true"] .top-actions{gap:5px}
+}
+.fixture-teams>div{min-width:0;flex:1}.fixture-teams strong{letter-spacing:.03em;text-align:center;font-size:clamp(11px,1.1vw,14px)}.fixture-teams small{text-align:center}.club-crest{flex-shrink:0}.hub .seg button{gap:5px}.hub .chip{flex-shrink:0}
+body[data-touch="true"]{--hud-top:max(20px,calc(env(safe-area-inset-top) + 10px));--hud-left:max(24px,calc(env(safe-area-inset-left) + 12px));--control-bottom:max(var(--touch-y),calc(env(safe-area-inset-bottom) + 20px))}
+body[data-touch="true"] .topbar{padding-top:var(--hud-top);padding-left:var(--hud-left)}
+body[data-touch="true"] .scorebug{top:var(--hud-top);left:calc(var(--hud-left) + 46px)}
+body[data-touch="true"] .controls .pad,body[data-touch="true"] .stick{opacity:var(--pad-opacity)}
+@media(min-width:1000px) and (min-height:600px), (min-width:700px) and (min-height:900px){body[data-touch="true"]{--hud-top:max(26px,calc(env(safe-area-inset-top) + 10px));--hud-left:max(36px,calc(env(safe-area-inset-left) + 12px))}}
+@media(max-height:450px) and (orientation:landscape){body[data-touch="true"]{--hud-top:max(14px,calc(env(safe-area-inset-top) + 10px))}}
+@media(max-width:600px) and (orientation:portrait){body[data-touch="true"] .scorebug{top:calc(var(--hud-top) + 46px);left:24px;right:24px}}
+body[data-touch="true"][data-match-state="goal"] :is(.controls,#radar,#technique,#player-info,#action-meter),body[data-touch="true"][data-match-state="walkout"] :is(.controls,#radar,#technique,#player-info,#action-meter){opacity:0;pointer-events:none}
+@media(max-width:700px) and (orientation:landscape){body[data-touch="true"] #radar{left:43%}}
+@media(min-width:601px) and (orientation:portrait){body[data-touch="true"] #radar{left:44%}}
+@media(max-height:450px) and (orientation:landscape){body[data-touch="true"] #coach{top:calc(var(--hud-top) + 50px)}}
+@media(max-width:600px) and (orientation:portrait){body[data-touch="true"] #coach,body[data-touch="true"] .banner{top:calc(var(--hud-top) + 96px)}}
+.act .defence-icon{display:none!important}
+.controls[data-phase="defence"] .act .attack-icon{display:none!important}
+body[data-touch="true"] .controls[data-phase="defence"] .act .defence-icon{display:block!important}
+/* Brief, non-blocking feedback for a deliberate kick-style change. */
+#technique-hint{position:fixed;z-index:22;left:50%;top:72px;transform:translateX(-50%);width:min(320px,calc(100vw - 48px));padding:12px 16px;border:1px solid #93b0c453;border-left:3px solid var(--lime);border-radius:8px;background:#0b1c2bf2;box-shadow:0 6px 24px #0003;color:#f1f6fa;pointer-events:none}
+#technique-hint strong{font-size:13px;line-height:1.3}#technique-hint p{font-size:12px;line-height:1.5;margin:5px 0;color:#deE8f0}#technique-hint small{display:block;margin-top:6px;font-size:9px;line-height:1.4;color:#a5b7c6}
+body:not(.is-playing) #technique-hint,body[data-match-state="goal"] #technique-hint,body[data-match-state="walkout"] #technique-hint{display:none}
+body[data-touch="true"] #technique-hint{top:calc(var(--hud-top) + 50px)}
+body:has(#technique-hint:not([hidden])) #coach{visibility:hidden}
+@media(max-width:600px) and (orientation:portrait){body[data-touch="true"] #technique-hint{top:calc(var(--hud-top) + 96px)}}
+@media(max-width:700px) and (orientation:landscape){body:has(#technique-hint:not([hidden])) #radar{visibility:hidden}#technique-hint{padding:9px 13px}#technique-hint small{display:none}}
+@media(max-height:350px) and (orientation:landscape){#technique-hint{padding:6px 14px}#technique-hint strong{display:block;font-size:11px;line-height:1.2}#technique-hint p{font-size:11px;line-height:1.3;margin:3px 0 0}}

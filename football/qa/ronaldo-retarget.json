@@ -1,0 +1,152 @@
+{
+  "version": 15,
+  "assetSha256": "681c4c7b0cfd832335d53c0c5f4ff8c348aa645c820ce642563cb902a7c5378c",
+  "comparison": "Upper-arm and forearm world-space directions versus licensed source motion on both sides, every baked frame",
+  "clips": [
+    {
+      "clip": "walk",
+      "frames": 26,
+      "maxArmDirectionErrorDegrees": 0.603
+    },
+    {
+      "clip": "idle",
+      "frames": 318,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "ready",
+      "frames": 140,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "dive",
+      "frames": 103,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "dive2",
+      "frames": 98,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "celebrate",
+      "frames": 136,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "sprint",
+      "frames": 17,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "jog",
+      "frames": 26,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "backpedal",
+      "frames": 25,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "strafe-left",
+      "frames": 22,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "strafe-right",
+      "frames": 23,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "pass-short",
+      "frames": 18,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "pass-long",
+      "frames": 16,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "strike",
+      "frames": 40,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "trap",
+      "frames": 155,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "slide",
+      "frames": 83,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "tackle",
+      "frames": 54,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "header",
+      "frames": 58,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "throw-in",
+      "frames": 84,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "catch",
+      "frames": 39,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "punch",
+      "frames": 80,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "keeper-throw",
+      "frames": 86,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "goal-kick",
+      "frames": 118,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "celebrate2",
+      "frames": 136,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "celebrate3",
+      "frames": 257,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "turn90",
+      "frames": 24,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "turn180",
+      "frames": 21,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "dribble-jog",
+      "frames": 53,
+      "maxArmDirectionErrorDegrees": 0.358
+    },
+    {
+      "clip": "pass-ground",
+      "frames": 49,
+      "maxArmDirectionErrorDegrees": 0.358
+    }
+  ]
+}

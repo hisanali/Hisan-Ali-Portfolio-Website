@@ -27,13 +27,14 @@
     "throw-in",
     "trap",
     "turn180",
-    "turn90"
+    "turn90",
+    "walk"
   ],
   "contact": {
     "before": true,
     "after": true,
-    "footError": 0.010005934494337738,
-    "velocity": 15.381378019957733
+    "footError": 0.010012875110721492,
+    "velocity": 14.51280866003983
   },
   "foul": {
     "recoveryRemaining": 1.903333346048992,

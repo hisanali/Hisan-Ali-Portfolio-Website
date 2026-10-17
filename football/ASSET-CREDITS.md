@@ -1,8 +1,8 @@
 # Football 3D — assets and offline pipeline
 
-Free assets only. Players and teams are fictional. Dream League Soccer is a
-visual/gameplay reference; no DLS assets, branding, players, audio or code are
-included. Runtime is static ES modules with no build step.
+Free assets only. Teams and supporting players are fictional; Ronaldo and
+Messi use the credited community likenesses below. Dream League Soccer is a
+visual/gameplay reference; no DLS assets, branding, audio or code are included. Runtime is static ES modules with no build step.
 
 ## Footballer and animations
 
@@ -120,3 +120,76 @@ All recordings are CC0; shared with Penalty. No commercial commentary or music.
 - Manrope and DM Serif Display: SIL Open Font License, served by Google Fonts.
   <https://fonts.google.com/specimen/Manrope>,
   <https://fonts.google.com/specimen/DM+Serif+Display>.
+
+## October 2026 stadium and control revision
+
+- `stadium.js`: original rounded-rectangle seating bowl, curved tensile roof,
+  radial supports, dugouts and score screens. The visual brief referenced
+  [Al Wakrah Stadium Worldcup 2022 by Ninh Phạm](https://sketchfab.com/3d-models/al-wakrah-stadium-worldcup-2022-d7452e247d55493e8e6a9c086a4eafe6).
+  Sketchfab's public API lists 1,168,874 triangles and CC BY-NC-SA 4.0;
+  this revision does not use its download. No geometry or textures from
+  that model are included. This is an original stadium concept, not an exact
+  reconstruction of Al Janoub.
+- The existing licensed Mixamo athlete and clips remain for teammates and
+  referees. Captains use the separately credited community models below.
+- Existing CC0 turf, concrete and environment maps above are retained. Turf
+  mowing, crowd variation, lighting, canopy, net deformation and camera work
+  are implemented in code. No new raster asset was generated; the daylight sky is the CC0 HDR below.
+- `control.js` applies discrete touch impulses and the shared SI-unit ball
+  integrator between contacts. Player acceleration/turning remain simulated;
+  ball reception cushions incoming speed. These are game approximations,
+  not motion-capture-derived or experimentally validated sports models.
+- Replays interpolate root transforms and every recorded bone's translation
+  and rotation using actual snapshot timestamps. Replay state is cleared when
+  starting a new match, including a different team size.
+
+## Real-player captains (October 17, 2026)
+
+- `assets/ronaldo.glb`: [Cristiano Ronaldo Rigged](https://sketchfab.com/3d-models/cristiano-ronaldo-rigged-66bb90f3f8d043eab3ab1e05ada4caba)
+  by [lolohno75](https://sketchfab.com/lolohno75),
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  Downloaded using Sketchfab's authenticated GLB download. Normalized to 1.87m,
+  baked the authored T-pose into the mesh and skeleton before retargeting,
+  rotated to match game coordinates, renamed joints, retargeted 28 existing
+  licensed Mixamo actions, generated reduced geometry, compressed mesh/textures.
+- `assets/messi.glb`: [3D Lionel Messi Barca Jersey](https://sketchfab.com/3d-models/3d-lionel-messi-barca-jersey-7a2877c80f7a49018b425f223fb11049)
+  by [caonghia2009](https://sketchfab.com/caonghia2009),
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  Downloaded using Sketchfab's authenticated GLB download. Repaired Character
+  Creator bind pose, normalized to 1.70m, retargeted the same motions, added
+  socks and fitted the boot mesh from the credited Ronaldo model. Reduced
+  geometry and compressed mesh/textures.
+- `player-kits.js` adapts authored garment maps to selected team colors; face,
+  skin and hair maps are retained. These are community likenesses in fictional
+  exhibition teams, not official rosters, endorsements or live player ratings.
+- `assets/daylight-sky.bin`: [Kloofendal 48d Partly Cloudy Puresky](https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky),
+  Greg Zaal and Jarod Guest, Poly Haven, CC0. Original 1K HDR retained.
+  MD5: `c69498687e876bf68d2a8b8a62234eb9`.
+- Rebuild models with `tools/retarget-player.py` using Blender 4.5+, first
+  Ronaldo, then Messi in the same output directory (the latter fits his boots).
+  Supply the downloaded GLBs and the previously credited FBX motion folders.
+  The importer checks both upper-arm and forearm directions against every source
+  motion frame; preserving the authored pose prevents folded-arm regressions.
+  Compress with glTF Transform `optimize --compress meshopt --texture-compress webp --texture-size 1024`.
+  User-facing attribution is available in [credits.html](credits.html).
+
+## Full-squad replacement (October 17, 2026)
+
+- `assets/squad.glb`: [Man Player](https://sketchfab.com/3d-models/man-player-4c7133dbb06e4136891d59231372d818)
+  by [RiverofCreative](https://sketchfab.com/RiverofCreative),
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  Downloaded through the authenticated Sketchfab download. Replaced the previous
+  stylized supporting athletes and officials. Normalized to 1.82m, baked the
+  authored T-pose, retargeted motion, split sock cuffs, fitted the above-credited
+  Ronaldo boots, created reduced geometry, compressed textures and mesh.
+  `squad.js` varies adult builds, face geometry, skin/hair tint and shirt numbers.
+  Retains the author's skin, eye, hair, fabric and normal maps.
+- Walking motion: Adobe Mixamo's Walk clip, supplied in the official Three.js
+  [Soldier sample](https://github.com/mrdoob/three.js/blob/dev/examples/models/gltf/Soldier.glb)
+  and demonstrated by its [animation blending example](https://threejs.org/examples/webgl_animation_skinning_blending.html).
+  Only animation is used; no soldier geometry is included in football. Copy the
+  source GLB to the motion folder as `walk.glb` before running the retarget tool.
+  Its authored T-pose defines the source rest rotations and coordinate alignment.
+- Each player asset now contains 29 actions. Walking, jogging and sprinting share
+  phase-aligned blends calibrated from each model's feet. Ground contact, turning,
+  acceleration and head tracking are shared by all players in `locomotion.js`.

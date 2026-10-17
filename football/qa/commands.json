@@ -1,0 +1,9 @@
+{
+  "finesseSwipe": true,
+  "loftedThroughSwipe": true,
+  "giveAndGo": true,
+  "contextualDefence": true,
+  "pauseClears": true,
+  "controllerEngine": true,
+  "errors": []
+}

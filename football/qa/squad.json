@@ -1,0 +1,185 @@
+{
+  "players": 22,
+  "squad": 20,
+  "profiles": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    9,
+    11
+  ],
+  "motion": [
+    {
+      "kind": "squad",
+      "speed": 1.7,
+      "locked": 130,
+      "maxPlantError": 0.03388692121394019,
+      "maxFrameDisplacement": 0.039099819410476154,
+      "phases": [
+        0.36960713457689165
+      ],
+      "finite": true
+    },
+    {
+      "kind": "squad",
+      "speed": 3.8,
+      "locked": 61,
+      "maxPlantError": 0.04273673334111986,
+      "maxFrameDisplacement": 0.08451220622417538,
+      "phases": [
+        0.7408399304079516
+      ],
+      "finite": true
+    },
+    {
+      "kind": "squad",
+      "speed": 5.5,
+      "locked": 76,
+      "maxPlantError": 0.05208132998085433,
+      "maxFrameDisplacement": 0.10587324378899982,
+      "phases": [
+        0.08359770390900056,
+        0.08359770390900056
+      ],
+      "finite": true
+    },
+    {
+      "kind": "squad",
+      "speed": 7.6,
+      "locked": 61,
+      "maxPlantError": 0.04073886275151504,
+      "maxFrameDisplacement": 0.14624238628385156,
+      "phases": [
+        0.773437276101511
+      ],
+      "finite": true
+    },
+    {
+      "kind": "squad",
+      "speed": 0,
+      "locked": 183,
+      "maxPlantError": 0.026139500487562226,
+      "maxFrameDisplacement": 0.05659245075969992,
+      "phases": [],
+      "finite": true
+    },
+    {
+      "kind": "ronaldo",
+      "speed": 1.7,
+      "locked": 84,
+      "maxPlantError": 0.033583284866905226,
+      "maxFrameDisplacement": 0.035868279502842965,
+      "phases": [
+        0.33982359096260484
+      ],
+      "finite": true
+    },
+    {
+      "kind": "ronaldo",
+      "speed": 3.8,
+      "locked": 53,
+      "maxPlantError": 0.016077332237413065,
+      "maxFrameDisplacement": 0.08437988359798988,
+      "phases": [
+        0.7967666611817493
+      ],
+      "finite": true
+    },
+    {
+      "kind": "ronaldo",
+      "speed": 5.5,
+      "locked": 50,
+      "maxPlantError": 0.008403312679600391,
+      "maxFrameDisplacement": 0.10392321236710951,
+      "phases": [
+        0.26292132080682573,
+        0.26292132080682573
+      ],
+      "finite": true
+    },
+    {
+      "kind": "ronaldo",
+      "speed": 7.6,
+      "locked": 52,
+      "maxPlantError": 0.011004805000875953,
+      "maxFrameDisplacement": 0.13989043394460599,
+      "phases": [
+        0.10907516696067376
+      ],
+      "finite": true
+    },
+    {
+      "kind": "ronaldo",
+      "speed": 0,
+      "locked": 17,
+      "maxPlantError": 0.00865516550158442,
+      "maxFrameDisplacement": 0.04108615530500535,
+      "phases": [],
+      "finite": true
+    },
+    {
+      "kind": "messi",
+      "speed": 1.7,
+      "locked": 145,
+      "maxPlantError": 0.03386952149906126,
+      "maxFrameDisplacement": 0.034261676035891024,
+      "phases": [
+        0.055431374363964725
+      ],
+      "finite": true
+    },
+    {
+      "kind": "messi",
+      "speed": 3.8,
+      "locked": 59,
+      "maxPlantError": 0.04280202249927706,
+      "maxFrameDisplacement": 0.08025735628142347,
+      "phases": [
+        0.7702127045148368
+      ],
+      "finite": true
+    },
+    {
+      "kind": "messi",
+      "speed": 5.5,
+      "locked": 46,
+      "maxPlantError": 0.054284646614055646,
+      "maxFrameDisplacement": 0.10607770343815652,
+      "phases": [
+        0.4079309411424492,
+        0.4079309411424492
+      ],
+      "finite": true
+    },
+    {
+      "kind": "messi",
+      "speed": 7.6,
+      "locked": 66,
+      "maxPlantError": 0.04753386727544016,
+      "maxFrameDisplacement": 0.14876803720397064,
+      "phases": [
+        0.2540847872962977
+      ],
+      "finite": true
+    },
+    {
+      "kind": "messi",
+      "speed": 0,
+      "locked": 192,
+      "maxPlantError": 0.029077860711706642,
+      "maxFrameDisplacement": 0.0436283400611626,
+      "phases": [],
+      "finite": true
+    }
+  ],
+  "garmentsOpaque": true,
+  "shirtSourcesUnique": true,
+  "errors": []
+}

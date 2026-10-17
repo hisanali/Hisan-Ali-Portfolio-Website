@@ -1,19 +1,21 @@
 // Each control owns its pointer, so a joystick and a held action work together.
 // Cancellation clears the hold without firing a pass/shot.
 export function bindHold(element, { down, release, cancel }) {
- let pointer=null;
+ let pointer=null,start=null,last=null;
  const finish=(e,commit)=>{
   if(pointer===null||(e&&e.pointerId!==pointer))return;
   const id=pointer;pointer=null;element.classList.remove('is-down');
   if(element.hasPointerCapture(id))element.releasePointerCapture(id);
-  (commit?release:cancel)?.();
+  const dx=(last?.[0]||0)-(start?.[0]||0),dy=(last?.[1]||0)-(start?.[1]||0);const gesture=Math.hypot(dx,dy)<24?'tap':Math.abs(dy)>Math.abs(dx)?(dy<0?'up':'down'):(dx<0?'left':'right');
+  (commit?release:cancel)?.(gesture);
  };
  element.addEventListener('pointerdown',e=>{
   if(pointer!==null||(e.pointerType==='mouse'&&e.button!==0))return;
-  e.preventDefault();pointer=e.pointerId;element.setPointerCapture(pointer);
+  e.preventDefault();start=last=[e.clientX,e.clientY];pointer=e.pointerId;element.setPointerCapture(pointer);
   element.classList.add('is-down');down();
  });
- element.addEventListener('pointerup',e=>finish(e,true));
+ element.addEventListener('pointermove',e=>{if(e.pointerId===pointer)last=[e.clientX,e.clientY];});
+ element.addEventListener('pointerup',e=>{if(e.pointerId===pointer)last=[e.clientX,e.clientY];finish(e,true);});
  element.addEventListener('pointercancel',e=>finish(e,false));
  element.addEventListener('lostpointercapture',e=>finish(e,false));
  return ()=>finish(null,false);

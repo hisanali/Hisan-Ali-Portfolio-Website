@@ -66,3 +66,13 @@ body.is-playing:has(#replay-label:not([hidden])) :is(.controls,#radar,#player-in
 body[data-match-state="goal"] :is(.controls,#radar,#player-info,.phase,#technique,.keys-hint),body[data-match-state="walkout"] :is(.controls,#radar,#player-info,.phase,#technique,.keys-hint){opacity:0;pointer-events:none}
 
 #skip-replay{display:none;position:fixed;z-index:16;right:max(16px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));min-height:38px;padding:8px 14px;border:1px solid #ffffff55;border-radius:20px;background:#102330dd;color:#fff;font:700 11px var(--sans)}body[data-match-state="goal"] #skip-replay{display:block}
+/* Camera choice stays reachable alongside pause on every supported viewport. */
+.top-actions #btn-camera{width:auto;min-width:78px;padding:0 10px;font:700 10px var(--sans);border-radius:20px}
+@media(max-width:900px){.top-actions #btn-camera{min-width:64px;padding:0 6px;font-size:9px}.scorebug{right:220px}}
+@media(orientation:portrait) and (max-width:900px){.scorebug{right:14px}}
+@media(max-height:500px) and (orientation:landscape){.scorebug{right:220px}.scorebug>span{max-width:80px}}
+
+.asset-note{font-size:10px;color:#7f8f84;margin:12px 0 0;text-align:center}.asset-note a{color:inherit;text-underline-offset:3px}
+
+@media(max-height:420px) and (orientation:landscape){.start .note{display:none}.start-card{gap:5px}.field>span{line-height:1.2}.seg button{min-height:28px}.asset-note{margin:2px 0 0;font-size:8px}}
+@media(max-height:350px) and (orientation:landscape){.asset-note{display:none}.field:first-child>span{display:none}.field{gap:2px}.seg button{min-height:26px;padding:4px}.start-card{gap:4px}.start .primary{min-height:30px}}

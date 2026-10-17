@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { createGamepad } from '../gamepad.js';
+let pad=null,layout='classic',events=[],paused=false;
+Object.defineProperty(globalThis,'navigator',{value:{getGamepads:()=>[pad]},configurable:true});
+const controller=createGamepad({press:x=>events.push('down:'+x),release:x=>events.push('up:'+x),cancel:()=>events.push('cancel'),pause:()=>paused=!paused,mentality:x=>events.push('mentality:'+x),layout:()=>layout,onStatus:x=>events.push(x)});
+pad={index:0,connected:true,mapping:'standard',axes:[.08,-.6],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};
+let state=controller.poll();assert.equal(state.x,0);assert(state.y>.5);
+pad.buttons[1].pressed=true;controller.poll();controller.poll();pad.buttons[1].pressed=false;controller.poll();assert.equal(events.filter(x=>x==='down:shoot').length,1);assert(events.includes('up:shoot'));
+layout='alternate';pad.buttons[2].pressed=true;controller.poll();pad.buttons[2].pressed=false;controller.poll();assert.equal(events.filter(x=>x==='down:shoot').length,2);
+pad.buttons[7].value=.9;assert(controller.poll().sprint);pad.buttons[6].pressed=true;assert(controller.poll().jockey);
+controller.reset();assert.equal(controller.poll().sprint,false,'held controls must be released after reset');pad.buttons.forEach(b=>{b.value=0;b.pressed=false;});controller.poll();pad.buttons[9].pressed=true;controller.poll();assert(paused);pad=null;assert.equal(controller.poll().x,0);assert(events.includes('cancel'));
+console.log('Gamepad mapping, deadzone, edges, modifiers, reset and disconnect passed.');

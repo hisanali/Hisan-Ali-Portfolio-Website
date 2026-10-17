@@ -1,0 +1,106 @@
+{
+  "version": 19,
+  "verified": "2026-10-17",
+  "files": [
+    {
+      "path": "assets/squad.glb",
+      "bytes": 5341256,
+      "sha256": "8ad6e97f854ef04e618ee8d2605e61faad2978273430b492619e5fd8d1456aa2"
+    },
+    {
+      "path": "assets/ronaldo.glb",
+      "bytes": 2392272,
+      "sha256": "681c4c7b0cfd832335d53c0c5f4ff8c348aa645c820ce642563cb902a7c5378c"
+    },
+    {
+      "path": "assets/messi.glb",
+      "bytes": 5662616,
+      "sha256": "13516565d56ed7e1c9bc6469da18e7dce8c63c02c4a8e7eca945d6f17e9eedc1"
+    },
+    {
+      "path": "assets/daylight-sky.bin",
+      "bytes": 1435119,
+      "sha256": "fd94c84997b8a3c353b62c2125a9b44e19509956986a126e472684432a02d798"
+    },
+    {
+      "path": "game.js",
+      "bytes": 76919,
+      "sha256": "fb42ec5abf5119f5bd35391b28fe792644b208cb939a3061f0c445cb3ac57958"
+    },
+    {
+      "path": "control.js",
+      "bytes": 1837,
+      "sha256": "9db71e7908f57c860b3c1271f8f16b67a4988ae68b75825e3084694e8e0f1803"
+    },
+    {
+      "path": "stadium.js",
+      "bytes": 9526,
+      "sha256": "f99453b9bf436c84886b0726268c09c70676bbf269c609498e8a34c14ddff773"
+    },
+    {
+      "path": "presentation.js",
+      "bytes": 8110,
+      "sha256": "13d80fa93475eb4def3facf95da3e841445a3b7e15ae20500b9d09977d49f79a"
+    },
+    {
+      "path": "player-kits.js",
+      "bytes": 1418,
+      "sha256": "a54d68dd6d1738a1ad44095938e6ccc9351e6a949509976f872527aa0cda6d7a"
+    },
+    {
+      "path": "quality.js",
+      "bytes": 3644,
+      "sha256": "39bb39a40bf42e6ba60798b836df15657b5d98618a2eb7ab1e418555afd38987"
+    },
+    {
+      "path": "index.html",
+      "bytes": 20899,
+      "sha256": "a737848e266cf4559571e5faf1c9c15e9ab96d9d02f72d6b3a8869c9f590c00f"
+    },
+    {
+      "path": "style.css",
+      "bytes": 12697,
+      "sha256": "7b1519a0cf9f5bcdec3dfbf9a4070408109cb71c26abaa426d8a44fc1fe229d4"
+    },
+    {
+      "path": "squad.js",
+      "bytes": 4145,
+      "sha256": "5fdae475aeee5647173925b9affd7e4e0d7d6fdf82aeefb82d69b044f656281a"
+    },
+    {
+      "path": "locomotion.js",
+      "bytes": 5365,
+      "sha256": "a9a32ae951af675a2df47fd0afd6f222c3baf624c7eb8121354cf8d801c89b91"
+    },
+    {
+      "path": "experience.js",
+      "bytes": 7064,
+      "sha256": "1f9c7c2b0a848abdfba31db5919c9243523547238af9a21ada2cbab651575da9"
+    },
+    {
+      "path": "experience.css",
+      "bytes": 19226,
+      "sha256": "7e01d98feaf70d14d89034855879d1423db244e365e8442666d0c36a4f277f3a"
+    },
+    {
+      "path": "gamepad.js",
+      "bytes": 1562,
+      "sha256": "426a92d8ff9b2b136b627814f95168f512cd5222086c34083e6641fef017ff8d"
+    },
+    {
+      "path": "touch.js",
+      "bytes": 1809,
+      "sha256": "48a20e66f21cd27f169c13fe094fd7570bda0bcb43be6794585ebdc02bf2ab99"
+    },
+    {
+      "path": "clubs.js",
+      "bytes": 683,
+      "sha256": "f44cc8dc5531131234329a3270fa14351ed76f4037e6d667e12b71d057829189"
+    },
+    {
+      "path": "touch-layout.css",
+      "bytes": 12797,
+      "sha256": "2ee59e1ece324bce0959333d96b3d54ee8e1b07dcfd65c5d583858dd61ab42e3"
+    }
+  ]
+}

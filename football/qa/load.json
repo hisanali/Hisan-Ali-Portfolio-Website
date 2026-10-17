@@ -1,11 +1,31 @@
 {
   "profile": "10 Mbps down, 80 ms latency, cold context; third party analytics/fonts excluded",
-  "readyMs": 7161,
+  "readyMs": 19379,
   "model": [
     {
-      "name": "/football/assets/athlete-match.glb",
-      "durationMs": 6508.299999982119,
-      "bytes": 3180708
+      "name": "/football/squad.js",
+      "durationMs": 581.0999999940395,
+      "bytes": 4145
+    },
+    {
+      "name": "/football/assets/daylight-sky.bin",
+      "durationMs": 6624.699999988079,
+      "bytes": 1435119
+    },
+    {
+      "name": "/football/assets/squad.glb",
+      "durationMs": 13567.299999982119,
+      "bytes": 5341256
+    },
+    {
+      "name": "/football/assets/ronaldo.glb",
+      "durationMs": 8849.800000011921,
+      "bytes": 2392272
+    },
+    {
+      "name": "/football/assets/messi.glb",
+      "durationMs": 13826.300000011921,
+      "bytes": 5662616
     }
   ]
 }

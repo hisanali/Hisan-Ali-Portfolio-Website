@@ -1,0 +1,19 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'/Users/hisan/.npm/_npx/5e2e484947874241/node_modules/playwright');
+(async()=>{const browser=await chromium.launch({channel:'chrome'}),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],results=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto('http://localhost:8765/football/?debug');await page.waitForFunction(()=>document.body.classList.contains('is-ready'));
+for(const captain of ['ronaldo','messi']){
+ await page.locator(`[data-setting="captain"] [data-value="${captain}"]`).click();await page.click('#play');await page.waitForTimeout(2850);await page.screenshot({path:`football/qa/intro-${captain}.png`});await page.waitForFunction(()=>fb.state==='play',null,{timeout:20000});
+ const result=await page.evaluate(async(captain)=>{const T=await import('/evermile/vendor/three.module.js');fb.renderer.setAnimationLoop(null);const stars=fb.players.filter(p=>p.star);const p=fb.players[3];const record={captain:p.star,counts:stars.map(p=>p.star),clips:Object.keys(p.clips).length,poses:[]};
+ for(const s of stars){s.pos.set(s.team.human?-.8:.8,0,35);s.facing=0;s.vel.set(0,0,0);s.busy=10;}
+ fb.camera.position.set(3,1.9,39.6);fb.camera.lookAt(0,1,35);
+ for(const clip of ['idle','walk','jog','sprint','strike','pass-ground','header','slide','throw-in','celebrate2','turn180']){p.play(clip,1,0);p.mixer.setTime(.4);p.update(0);const box=new T.Box3().setFromObject(p.model,true),extent=box.getSize(new T.Vector3());record.poses.push({clip,extent:extent.toArray(),finite:Object.values(p.bones).every(b=>b.matrixWorld.elements.every(Number.isFinite))});}
+ for(const s of stars){s.play('idle',1,0);s.mixer.setTime(.25);s.update(0);}
+ record.armAnatomy=stars.flatMap(s=>['Left','Right'].map(side=>{const shoulder=s.bones[side+'Arm'].getWorldPosition(new T.Vector3()),elbow=s.bones[side+'ForeArm'].getWorldPosition(new T.Vector3()),wrist=s.bones[side+'Hand'].getWorldPosition(new T.Vector3());return{star:s.star,side,elbowDrop:shoulder.y-elbow.y,upperArm:shoulder.distanceTo(elbow),forearm:elbow.distanceTo(wrist)};}));
+ record.geometryFinite=stars.every(s=>s.surfaces.every(mesh=>Object.values(mesh.geometry.attributes).every(a=>{for(let i=0;i<a.count;i++)for(let c=0;c<a.itemSize;c++)if(!Number.isFinite(a.getComponent(i,c)))return false;return true;})));
+ record.visible=stars.map(s=>({star:s.star,meshes:s.surfaces.filter(m=>m.visible).length,total:s.surfaces.length,hips:s.bones.Hips.getWorldPosition(new T.Vector3()).y}));
+ fb.renderer.render(p.root.parent,fb.camera);return record;},captain);
+ assert(result.geometryFinite,'exported vertex attributes are finite');for(const arm of result.armAnatomy){assert(arm.elbowDrop>.1,arm.star+' idle upper arms must hang below shoulders');assert(arm.upperArm>.18&&arm.upperArm<.42,'upper arm proportions');assert(arm.forearm>.18&&arm.forearm<.45,'forearm proportions');}assert.equal(result.captain,captain);assert.equal(result.clips,29);assert.equal(new Set(result.counts).size,2);for(const pose of result.poses){assert(pose.finite,pose.clip+' is finite');assert(pose.extent.every(n=>n>0&&n<4),pose.clip+' anatomy bounds');}for(const p of result.visible){assert(p.hips>.6&&p.hips<1.4,'normalized hips');assert(p.meshes>5,'visible model parts');}
+ await page.screenshot({path:`football/qa/captains-${captain}.png`});results.push(result);await page.reload();await page.waitForFunction(()=>document.body.classList.contains('is-ready'));assert.equal(await page.locator(`[data-setting="captain"] [data-value="${captain}"]`).getAttribute('aria-pressed'),'true');
+}
+assert.deepEqual(errors,[]);fs.writeFileSync('football/qa/players.json',JSON.stringify({results,errors},null,2));console.log(results);await browser.close();})().catch(e=>{console.error(e);process.exit(1)});
