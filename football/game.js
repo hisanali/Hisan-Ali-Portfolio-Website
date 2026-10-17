@@ -97,7 +97,7 @@ const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); 
 const stadium = buildStadium(scene, asset('crowd-fans'), { concrete: asset('concrete-color', true, [48, 1]), normal: asset('concrete-normal', false, [48, 1]) });
 
 /* ---------- Ball ---------- */
-const ball=createMatchBall(R,canvasTex);ball.scale.setScalar(1.45);scene.add(ball); // drawn larger so it reads clearly from the broadcast camera
+const ball=createMatchBall(R,canvasTex);scene.add(ball); // visual radius matches the collision radius
 const ballShadow=new T.Mesh(new T.CircleGeometry(.3,24),new T.MeshBasicMaterial({color:'#000',transparent:true,opacity:.42,depthWrite:false}));ballShadow.rotation.x=-Math.PI/2;ballShadow.renderOrder=3;scene.add(ballShadow);
 const B = { p: ball.position, v: new T.Vector3(), owner: null, lastTouch: null, kicker: null, kickTime: 0, shot: null, spin:new T.Vector3() };
 
@@ -178,7 +178,7 @@ class Player {
     this.root.position.set(this.pos.x, -.03, this.pos.z); this.root.rotation.set(this.leanX, this.facing, this.leanZ, 'YXZ');
     this.root.updateMatrixWorld(true);
     if(this.anim==='slide'||this.anim==='dive'||this.anim==='dive2'){const floor=Math.min(...['Hips','Spine2','Head'].map(n=>this.bones[n].getWorldPosition(new T.Vector3()).y-(n==='Head'?.11:.18)));if(floor<0){this.root.position.y-=floor;this.root.updateMatrixWorld(true);}}
-    if(this.keeper&&B.owner===this&&!this.strike){for(const [side,dx]of [['Left',-.1],['Right',.1]])reachBall(this,side,B.p.clone().add(new T.Vector3(dx,0,0)),.8);}
+    if(this.keeper&&B.owner===this&&!this.strike&&!this.restartType){const chest=this.pos.clone().add(new T.Vector3(Math.sin(this.facing)*.32,1.12,Math.cos(this.facing)*.32));for(const [side,dx]of [['Left',-.1],['Right',.1]])reachBall(this,side,chest.clone().add(new T.Vector3(dx,0,0)),.9);}
     if(this.keeper && B.shot && B.shot.team!==this.team){for(const side of ['Left','Right']){const h=this.bones[side+'Hand'].getWorldPosition(new T.Vector3());if(h.distanceTo(B.p)<.6)reachBall(this,side,B.p,Math.min(.65,(.6-h.distanceTo(B.p))*2));}}
     this.contacts.update(dt, (this.busy <= 0 || this.strike) && !this.keeper);
     if (this.strike && this.strike.at - clock < .12 && this.strike.at > clock-.04) { const side=this.strike.clip==='pass-short'?'Left':'Right',foot=this.bones[side+'Foot'],target=B.p.clone(); target.y=.1; if(!['throw-in','keeper-throw'].includes(this.strike.clip))solveLimb(this.bones[side+'UpLeg'],this.bones[side+'Leg'],foot,target,1); }
@@ -222,13 +222,13 @@ const toWorld = (t, x, z) => new T.Vector3(t.dir > 0 ? x : -x, 0, t.dir > 0 ? z 
 function kickoffPositions(kicking) {
   for (const t of teams) t.players.forEach((p, i) => {
     let [x, z] = SHAPE[i]; z = Math.min(z, CZ - 1.5); if (i >= Math.ceil(SHAPE.length*.55)) { z = CZ - (t === kicking ? 1.2 : 8); x = t === kicking ? (i === Math.ceil(SHAPE.length*.55) ? -.6 : SHAPE[i][0]) : x; }
-    p.pos.copy(toWorld(t, x, z)); p.vel.set(0, 0, 0); p.face(0, CZ); p.busy = 0; p.stun = 0;p.strike=null;p.tackleEvent=null;p.dived=false;p.jockey=false;p.restartType=null;
+    p.pos.copy(toWorld(t, x, z)); p.vel.set(0, 0, 0); p.face(0, CZ); p.busy = 0; p.stun = 0;p.strike=null;p.tackleEvent=null;p.dived=false;p.jockey=false;p.restartType=null;p.restartAt=null;
   });
   B.p.set(0, R, CZ); B.v.set(0, 0, 0); B.owner = null; B.shot = null; give(kicking.players[3]);
 }
 
 /* ---------- Ball control ---------- */
-function give(p) { if (B.owner !== p && !p.keeper && B.v.length()>4 && p.busy<=0) { p.busy=.3; p.play('trap',1.4,.08,.4); } B.owner = p; B.lastTouch = p; B.shot = null; if (p.team === user && !p.keeper) setControlled(p); }
+function give(p) { if(B.owner!==p){if(B.owner){B.owner.strike=null;B.owner.restartType=null;B.owner.restartAt=null;}p.restartType=null;p.restartAt=null;p.holdT=0;B.passTo=null;B.spin.set(0,0,0);} if (B.owner !== p && !p.keeper && B.v.length()>4 && p.busy<=0) { p.busy=.3; p.play('trap',1.4,.08,.4); } B.owner = p; B.lastTouch = p; B.shot = null; if (p.team === user && !p.keeper) setControlled(p); }
 function setControlled(p) { if (controlled) controlled.ring.visible = false; controlled = p; if (p) p.ring.visible = true; }
 function release(p) { if (B.owner === p) B.owner = null; B.kicker = p; B.kickTime = clock; B.lastTouch = p; }
 // Ball release is a simulation event at the captured foot/hand contact, not button-down.
@@ -237,7 +237,7 @@ function scheduleKick(p, clip, emit) {
   if (p.strike || p.busy>0 || B.owner!==p) return false;
   const contact = CONTACT[clip] || .23, speed = clip==='strike'?1.3:clip==='pass-ground'?1.6:1.15;
   p.busy=Math.max(.4,p.clips[clip].getClip().duration/speed); p.play(clip,speed,.07);
-  p.strike={ at:clock+contact/speed, clip, emit }; return true;
+  p.vel.set(0,0,0);p.strike={ at:clock+contact/speed, clip, emit }; return true;
 }
 const distSafe=(a,b)=>a.distanceTo(b);
 function pass(p, target, lofted = false, through = false, power = .5) {
@@ -248,11 +248,13 @@ function pass(p, target, lofted = false, through = false, power = .5) {
     const lead=target.vel.clone().multiplyScalar(through?1:.3).add(new T.Vector3(0,0,through?p.team.dir*5:0)), aim=target.pos.clone().add(lead);aim.x+=(Math.random()-.5)*(1-p.stats.passing)*distSafe(target.pos,p.pos)*.045;
     if (isOffside(target,p)) { foulRestart(p.team.opp,target.pos,'Offside'); return; }
     if (through) target.runTo={at:aim.clone(),until:clock+2};
-    const d=aim.sub(B.p).setY(0),dist=d.length(),speed=T.MathUtils.clamp(7+dist*.6+power*5,8,27)*(lofted?.8:1);
-    release(p);d.normalize();B.v.set(d.x*speed,lofted||clip==='throw-in'||clip==='goal-kick'?Math.min(9,2.5+dist*.16):clip==='keeper-throw'?3:.25,d.z*speed); B.spin.set(0,0,0);B.passTo=target;p.restartType=null;sfx('kick',.6);
+    if(['throw-in','keeper-throw'].includes(clip))B.p.copy(handBallPoint(p,clip));
+    const destination=aim.clone().setY(.3),d=aim.sub(B.p).setY(0),dist=d.length(),speed=T.MathUtils.clamp(7+dist*.6+power*5,8,27)*(lofted?.8:1);
+    release(p);d.normalize();if(['throw-in','keeper-throw'].includes(clip)){B.spin.set(0,0,0);B.v.copy(launchVelocity(B.p,destination,Math.max(.45,dist/(10+power*8)),B.spin));}else B.v.set(d.x*speed,lofted||clip==='goal-kick'?Math.min(9,2.5+dist*.16):.25,d.z*speed); B.spin.set(0,0,0);B.passTo=target;p.restartType=null;p.restartAt=null;sfx('kick',.6);
   });
 }
 function shoot(p, aimX, power, error = 0, type='driven') {
+  if(p.restartType==='throw'||(p.keeper&&!p.restartType))return pass(p,bestTarget(p,null),false,false,power);
   if(p.strike)return;const gz=attackGoalZ(p.team);p.face(aimX,gz);
   scheduleKick(p,p.restartType==='goal-kick'?'goal-kick':'strike',()=>{
     const accuracy=(1-p.stats.shooting)*1.8+error,tx=T.MathUtils.clamp(aimX,-GOAL_HW+.3,GOAL_HW-.3)+(Math.random()-.5)*accuracy*3;
@@ -390,7 +392,7 @@ function keeperAI(p,dt,L){
  if(p.busy<=0)seek(p,new T.Vector3(tx,0,tz),rush?6.2:4.2,dt);else if(p.dived){p.vel.x=T.MathUtils.clamp((tx-p.pos.x)*4,-5,5);p.vel.z=0;}
  if(!incoming&&p.busy<=0)p.dived=false;
  const hands=['LeftHand','RightHand'].map(n=>p.bones[n].getWorldPosition(new T.Vector3()));const reach=Math.min(...hands.map(h=>h.distanceTo(B.p)));
- if(inOwnBox(p)&&reach<.48&&B.p.y<2.7&&B.p.y>.15){
+ if((B.kicker!==p||clock-B.kickTime>.5)&&inOwnBox(p)&&reach<.48&&B.p.y<2.7&&B.p.y>.15){
   const speed=B.v.length();B.lastTouch=p;B.shot=null;sfx('save');toast(speed>21?'Parried away':'Keeper holds it');
   if(speed>21){B.v.set((B.p.x>=p.pos.x?1:-1)*7,3,t.dir*8);B.owner=null;p.busy=.8;p.play('punch',1.5,.05);}
   else{give(p);B.v.set(0,0,0);p.vel.set(0,0,0);if(!p.dived){p.busy=.8;p.play('catch',1.2,.05);}}p.dived=false;
@@ -432,15 +434,17 @@ function goalScored(team) {
 function outOfPlay() {
   const p = B.p, last = B.lastTouch?.team || teams[0];
   B.owner = null; B.shot = null; state = 'restart'; restartT = 1.1;
-  if (Math.abs(p.x) > HX) { const t = last.opp, x = Math.sign(p.x) * (HX - .3), z = T.MathUtils.clamp(p.z, 1, LEN - 1); banner('Throw-in', null); pending = () => { restartWith(t, new T.Vector3(x, R, z)); B.owner.restartType='throw'; };  return; }
+  if (Math.abs(p.x) > HX) { const t = last.opp, x = Math.sign(p.x) * (HX + .2), z = T.MathUtils.clamp(p.z, 1, LEN - 1); banner('Throw-in', null); pending = () => { restartWith(t, new T.Vector3(x, R, z)); B.owner.restartType='throw'; };  return; }
   const endTeam = p.z < CZ ? teams.find(t => ownGoalZ(t) === 0) : teams.find(t => ownGoalZ(t) === LEN), endZ = p.z < CZ ? 0 : LEN;
   if (last === endTeam) { const t = endTeam.opp; banner('Corner', null); pending = () => {restartWith(t, new T.Vector3(Math.sign(p.x || 1) * (HX - .5), R, endZ + (endZ ? -.5 : .5)));B.owner.restartType='corner';}; }
   else { banner('Goal kick', null); pending = () => restartWith(endTeam, new T.Vector3(0, R, endZ + (endZ ? -2 : 2)), endTeam.players[0]); }
 }
 function restartWith(team, spot, taker = null) {
+  for(const p of all){p.strike=null;p.tackleEvent=null;p.restartType=null;p.restartAt=null;}
+  B.owner=null;B.shot=null;B.passTo=null;B.spin.set(0,0,0);
   B.p.copy(spot); B.v.set(0, 0, 0); taker ||= nearest(team, spot, true);
   for (const p of all) if (p !== taker && p.pos.distanceTo(spot) < 4 && p.team !== team) p.pos.add(p.pos.clone().sub(spot).setY(0).normalize().multiplyScalar(4 - p.pos.distanceTo(spot)));
-  taker.pos.copy(spot).addScaledVector(new T.Vector3(-Math.sign(spot.x) * .2, 0, team.dir), -.6); taker.pos.y = 0; taker.vel.set(0, 0, 0); give(taker); if(taker.keeper)taker.restartType='goal-kick'; state='play';
+  taker.pos.copy(spot).addScaledVector(new T.Vector3(-Math.sign(spot.x) * .2, 0, team.dir), -.6); taker.pos.y = 0; taker.vel.set(0, 0, 0);taker.busy=0;taker.stun=0; give(taker);taker.restartAt=clock+1.2;taker.face(0,CZ); if(taker.keeper)taker.restartType='goal-kick'; state='play';
 }
 function endHalf() {
   if (half === 1) { half = 2; for(const t of teams)t.dir*=-1; state = 'restart'; restartT = 2.5; banner('Half-time', null); whistle(); pending = () => { kickoffPositions(teams[1]); state = 'kickoff'; restartT = 1.2; whistle(); }; return; }
@@ -498,7 +502,9 @@ function step(dt) {
     if(p.strike && clock>=p.strike.at){const e=p.strike;p.strike=null;if(B.owner===p)e.emit();}
     if(p.tackleEvent&&clock>=p.tackleEvent.at){const e=p.tackleEvent;p.tackleEvent=null;resolveTackle(p,e);}
     p.busy = Math.max(0, p.busy - dt); p.stun = Math.max(0, p.stun - dt);
-    if (p.stun > 0) { p.vel.multiplyScalar(Math.exp(-dt * 6)); }
+    if(B.owner===p && p.restartType){p.vel.set(0,0,0);if(!p.strike && clock>=(p.restartAt??clock)){p.busy=0;pass(p,bestTarget(p,null),p.restartType==='corner',false,.5);}}
+    else if (p.strike) {p.vel.set(0,0,0);}
+    else if (p.stun > 0) { p.vel.multiplyScalar(Math.exp(-dt * 6)); }
     else if(p.busy>0&&!p.keeper&&!p.strike&&!p.tackleEvent){p.vel.multiplyScalar(Math.exp(-dt*9));}
     else if (p === controlled) {
       p.jockey=inp.sprint && B.owner && B.owner.team!==p.team; const sp = (p.jockey?3.2:inp.sprint ? 8.2 : 6)*p.stats.pace * (B.owner === p ? .88 : 1), want = new T.Vector3(inp.x, 0, inp.z).multiplyScalar(sp * inp.mag);
@@ -522,23 +528,35 @@ function step(dt) {
     }
   }
 }
-// The carrier pushes the ball ahead with each touch and runs onto it; it is only close-controlled when slow.
+// Possession uses a bounded touch target; only released balls use flight physics.
+function handBallPoint(p,clip){
+ p.root.position.set(p.pos.x,-.03,p.pos.z);p.root.updateMatrixWorld(true);
+ const right=p.bones.RightHand.getWorldPosition(new T.Vector3());
+ return clip==='throw-in'?right.add(p.bones.LeftHand.getWorldPosition(new T.Vector3())).multiplyScalar(.5):right;
+}
+function attachHeldBall(){
+ const p=B.owner;if(!p)return;
+ const clip=p.strike?.clip;
+ if(clip==='throw-in'||clip==='keeper-throw')B.p.copy(handBallPoint(p,clip));
+ else if(p.restartType==='throw'){
+  const hold=p.pos.clone().add(new T.Vector3(0,1.65,0));for(const side of ['Left','Right'])reachBall(p,side,hold,.9);B.p.copy(hold);
+ }else if(p.keeper&&!p.restartType)B.p.copy(p.bones.LeftHand.getWorldPosition(new T.Vector3()).add(p.bones.RightHand.getWorldPosition(new T.Vector3())).multiplyScalar(.5));
+}
 function dribble(dt) {
-  const p = B.owner; if(p.strike){ B.v.set(0,0,0);if(['throw-in','keeper-throw'].includes(p.strike.clip)){p.root.updateMatrixWorld(true);const left=p.bones.LeftHand.getWorldPosition(new T.Vector3()),right=p.bones.RightHand.getWorldPosition(new T.Vector3());B.p.copy(p.strike.clip==='throw-in'?left.add(right).multiplyScalar(.5):right);} return; } const sp = Math.hypot(p.vel.x, p.vel.z), heading = sp > .3 ? Math.atan2(p.vel.x, p.vel.z) : p.facing, f = new T.Vector3(Math.sin(heading), 0, Math.cos(heading));
-  const foot = p.pos.clone().addScaledVector(f, .42), toBall = B.p.clone().sub(p.pos); toBall.y = 0; const d = toBall.length();
-  if(p.keeper){const left=p.bones.LeftHand.getWorldPosition(new T.Vector3()),right=p.bones.RightHand.getWorldPosition(new T.Vector3());B.p.lerp(left.add(right).multiplyScalar(.5),1-Math.exp(-dt*20));B.v.set(0,0,0);return;}
-  if (sp < 1.3) {
-    const want = foot.clone(); want.y = p.keeper ? 1.1 : R; B.v.copy(want).sub(B.p).multiplyScalar(6); B.v.y = 0; B.p.lerp(want, Math.min(1, dt * 7)); B.p.y = want.y;
-    ball.rotation.x += B.v.z * dt / R; ball.rotation.z -= B.v.x * dt / R;
-  } else {
-    const ahead = d > .01 ? toBall.dot(f) / d : 1, near = Math.min(...['LeftToeBase','RightToeBase'].map(n=>{const toe=p.bones[n].getWorldPosition(new T.Vector3());return toe.y<.32?toe.distanceTo(B.p):99;}));
-    if (near < .65 && ahead > -.2 && clock - (p.touchT || 0) > .24) {
-      const push = sp + (p.sprinting || sp > 7 ? .9 : .55); B.v.set(f.x * push, .25, f.z * push); p.touchT = clock; B.lastTouch = p; sfx('touch', .25);
-    }
-    moveBallLoose(dt);
-  }
-  if (!B.owner) return;
-  if (d > 3.2) { B.owner = null; return; }
+ const p=B.owner;
+ if(p.strike||p.restartType||p.keeper){B.v.set(0,0,0);attachHeldBall();return;}
+ const sp=Math.hypot(p.vel.x,p.vel.z),heading=sp>.3?Math.atan2(p.vel.x,p.vel.z):p.facing;
+ const f=new T.Vector3(Math.sin(heading),0,Math.cos(heading));
+ const lead=.38+Math.min(.3,sp*.045),want=p.pos.clone().addScaledVector(f,lead).setY(R);
+ const before=B.p.clone();B.p.lerp(want,1-Math.exp(-dt*24));B.p.y=R;
+ // Turns and collisions cannot leave a claimed ball metres behind the player.
+ const gap=B.p.clone().sub(p.pos).setY(0);if(gap.length()>1.05)B.p.copy(p.pos).add(gap.setLength(1.05)).setY(R);
+ B.v.copy(B.p).sub(before).divideScalar(Math.max(dt,1e-4));B.spin.set(0,0,0);
+ ball.rotation.x+=(B.p.z-before.z)/R;ball.rotation.z-=(B.p.x-before.x)/R;
+ if(sp>.8&&clock-(p.touchT||0)>.3){p.touchT=clock;sfx('touch',.2);}
+ const d=Math.hypot(B.p.x-p.pos.x,B.p.z-p.pos.z);
+ for(const gz of [0,LEN]){const line=gz===0?-R:LEN+R;if((before.z-line)*(B.p.z-line)<=0&&before.z!==B.p.z&&Math.abs(B.p.x)+R<GOAL_HW){goalScored(teams.find(t=>attackGoalZ(t)===gz));return;}}
+ if(Math.abs(B.p.x)>HX+R||B.p.z < -R||B.p.z>LEN+R){outOfPlay();return;}
   for (const o of p.team.opp.players) {
     if (o.stun > 0 || o.tackleEvent || o.sentOff) continue; const od = Math.hypot(B.p.x - o.pos.x, B.p.z - o.pos.z);
     if (od < .62 && d > .5 && Math.random() < dt * 9) { give(o); B.v.set(0, 0, 0); sfx('touch'); return; }
@@ -633,6 +651,7 @@ function loop() {
   presentation.restore();
   if (!paused && state !== 'menu') { accumulator+=dt;while(accumulator>=1/120){step(1/120);accumulator-=1/120;} }
   for (const p of all) p.update(paused ? 0 : dt);
+  if(state==='play'||state==='penalty')attachHeldBall();
   B.p.y = Math.max(B.p.y, R); updateCamera(dt); stadium.update(performance.now() / 1000, state === 'goal' && B.lastTouch?.team === user, dt);
   optics.update(state,restartT,ball,B.lastTouch);grade.uniforms.time.value = performance.now() / 1000; if ((hudT -= dt) <= 0) { hud(); hudT = .1; }
   ballShadow.position.set(ball.position.x+.06,.012,ball.position.z-.04);ballShadow.scale.setScalar(Math.max(.4,1-ball.position.y*.25));ballShadow.material.opacity=.42*Math.max(.15,1-ball.position.y*.3);presentation.update(dt,all,B,state); renderer.shadowMap.needsUpdate=true; renderer.info.reset();composer.render();

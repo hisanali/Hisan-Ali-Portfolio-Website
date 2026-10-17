@@ -32,8 +32,8 @@
   "contact": {
     "before": true,
     "after": true,
-    "footError": 0.01000668491244041,
-    "velocity": 15.38957214025083
+    "footError": 0.010005934494337738,
+    "velocity": 15.381378019957733
   },
   "foul": {
     "recoveryRemaining": 1.903333346048992,

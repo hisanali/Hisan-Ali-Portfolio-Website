@@ -121,3 +121,30 @@ Physical Safari/iOS long-press behaviour has not been tested on a device.
 Both full match flows and six touch layouts passed again. These improvements do
 not establish parity with DLS or eFootball. Mobile disables ambient occlusion
 and depth of field; high-detail close-up meshes still work on both platforms.
+
+## Possession and restarts — version 11, 17 October 2026
+
+User story: load the static game → move/turn/stop with possession → pass or
+shoot at clip contact → recover possession or cross a boundary → take the
+correct restart → keeper catches and distributes → continue to full time.
+No gameplay API, database, or credentials are involved.
+
+- Controlled balls follow a bounded, smoothed ground target. Released passes
+  and shots retain the SI flight solver. Turns no longer strand the carrier's ball.
+- Throw-in and corner takers remain at their restart until distribution; stale
+  strike, tackle, spin and restart state is cleared when setting up a new restart.
+- Touchline takers stand outside the line. Throw-ins hold overhead and follow
+  the captured hand motion; keeper throws leave the hand toward the receiver.
+- Keeper possession follows the hands after animation/IK. Goal kicks remain on
+  the ground. A keeper cannot immediately recatch his own release.
+- Pass/strike preparation stops player drift; throw-in shot input distributes
+  by hand instead of starting an illegal ground shot.
+- Ball rendering now uses the same radius as collision/ground contact.
+
+`tools/test-possession.cjs` tests turns, stops, thrower input lock, automatic
+throw release, hand attachment, goal-kick height, goalkeeper distribution,
+actual touchline transitions and dribble goals at both landscape sizes.
+Results: `possession.json`; screenshots: `*-close-control.webp`,
+`*-throw-in.webp`, `*-throw-motion.webp`, `*-goal-kick.webp`,
+`*-keeper-hold.webp`, `*-keeper-throw.webp`. Updated full-match, action and
+six-layout touch checks are recorded separately in the corresponding JSON files.
