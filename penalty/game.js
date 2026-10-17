@@ -1,7 +1,7 @@
 import * as T from '../evermile/vendor/three.module.js';
 import { fittedGloves } from './equipment.js?v=6';
 import { FootContacts, reachBall, solveLimb } from './motion.js?v=6';
-import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=10';
+import { stadiumLighting, contactShading, broadcastLens, broadcastGrade } from './rendering.js?v=11';
 import { advance, launchVelocity, predictAtPlane, groundContact, reflectContact, sweepSphereSegment } from './physics.js?v=6';
 import { buildStadium } from './stadium.js?v=6';
 import { GLTFLoader } from '../evermile/vendor/loaders/GLTFLoader.js';
@@ -25,7 +25,7 @@ const KITS = { red: ['#c8102e', '#1b1b1b'], white: ['#f3f3f3', '#1b1b1b'], blue:
 const canvas = $('scene');
 const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth<600?1.5:2)); renderer.outputColorSpace = T.SRGBColorSpace;
-renderer.toneMapping = T.AgXToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.06;
 renderer.shadowMap.enabled = true;renderer.shadowMap.autoUpdate=false; renderer.shadowMap.type = T.PCFSoftShadowMap;
 const scene = new T.Scene();
 scene.fog = new T.Fog('#94a6b1', 90, 300);
@@ -33,7 +33,7 @@ const camera = new T.PerspectiveCamera(42, 1, .05, 300);camera.layers.enable(2);
 const renderTarget=new T.WebGLRenderTarget(1,1,{samples:Math.min(4,renderer.capabilities.maxSamples),type:T.HalfFloatType});
 const composer = new EffectComposer(renderer,renderTarget);
 composer.addPass(new RenderPass(scene, camera));
-const occlusion=contactShading(scene,camera);composer.addPass(occlusion);
+const occlusion=contactShading(scene,camera);occlusion.enabled=false;composer.addPass(occlusion);
 const lens=broadcastLens(scene,camera);composer.addPass(lens.pass);
 const bloom = new UnrealBloomPass(new T.Vector2(innerWidth, innerHeight), .06, .3, 2.5);
 composer.addPass(bloom); composer.addPass(new OutputPass());
@@ -46,7 +46,7 @@ const canvas2d = (w, h, draw) => { const c = document.createElement('canvas'); c
 scene.background=new T.Color('#8a9fac');
 const environmentReady=stadiumLighting(renderer,scene);
 scene.add(new T.HemisphereLight('#d5e2eb','#566044',.18));
-const flood=new T.DirectionalLight('#fff0d6',3.1);flood.position.set(-28,38,22);flood.castShadow=true;
+const flood=new T.DirectionalLight('#fff1d8',3.6);flood.position.set(-28,38,22);flood.castShadow=true;
 Object.assign(flood.shadow.camera,{left:-18,right:18,top:20,bottom:-12,near:1,far:100});
 flood.shadow.mapSize.set(innerWidth<600?2048:4096,innerWidth<600?2048:4096);flood.shadow.bias=-.00015;flood.shadow.normalBias=.018;flood.shadow.radius=1.6;
 flood.target.position.set(0,0,7);scene.add(flood,flood.target);
@@ -61,14 +61,14 @@ function assetTexture(name, srgb=true, repeats=null, gltfUV=false){
   if(repeats){map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(...repeats);}return map;
 }
 const grassTex=assetTexture('pitch-color',true,[55,70]),grassNormal=assetTexture('pitch-normal',false,[55,70]);
-const grassMaterial=new T.MeshStandardMaterial({map:grassTex,normalMap:grassNormal,normalScale:new T.Vector2(.18,.18),roughnessMap:assetTexture('pitch-roughness',false,[55,70]),aoMap:assetTexture('pitch-ao',false,[55,70]),aoMapIntensity:.45,roughness:1,color:'#c7d2ad'});
+const grassMaterial=new T.MeshStandardMaterial({map:grassTex,normalMap:grassNormal,normalScale:new T.Vector2(.18,.18),roughnessMap:assetTexture('pitch-roughness',false,[55,70]),aoMap:assetTexture('pitch-ao',false,[55,70]),aoMapIntensity:.45,roughness:1,color:'#a9d08a'});
 grassMaterial.onBeforeCompile=shader=>{
  shader.vertexShader='varying vec3 vPitchWorld;\n'+shader.vertexShader;
  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vPitchWorld=(modelMatrix*vec4(position,1.0)).xyz;');
  shader.fragmentShader='varying vec3 vPitchWorld;\n'+shader.fragmentShader;
  shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
   float stripe=mod(floor((vPitchWorld.z+2.5)/5.0),2.0);
-  diffuseColor.rgb*=mix(.96,1.025,stripe);
+  diffuseColor.rgb*=mix(.9,1.07,stripe);
   float variation=sin(vPitchWorld.x*.18+sin(vPitchWorld.z*.31))*sin(vPitchWorld.z*.12);diffuseColor.rgb*=1.+variation*.035;
  `);
 };
@@ -76,7 +76,7 @@ const pitch=new T.Mesh(new T.PlaneGeometry(110,140),grassMaterial);pitch.rotatio
 // Short cut grass at the action area, tapering into the scanned surface.
 const bladeGeo=new T.BufferGeometry();bladeGeo.setAttribute('position',new T.Float32BufferAttribute([-.006,0,0,.006,0,0,.002,.034,.003],3));bladeGeo.computeVertexNormals();
 const blades=new T.InstancedMesh(bladeGeo,new T.MeshBasicMaterial({color:'#9daf82',side:T.DoubleSide}),6500),bladeDummy=new T.Object3D();
-for(let i=0;i<blades.count;i++){bladeDummy.position.set((Math.random()-.5)*14,.002,10+Math.random()*13);bladeDummy.rotation.y=Math.random()*Math.PI*2;bladeDummy.scale.setScalar(.55+Math.random()*.85);bladeDummy.updateMatrix();blades.setMatrixAt(i,bladeDummy.matrix);blades.setColorAt(i,new T.Color().setHSL(.21+Math.random()*.035,.27,.3+Math.random()*.1));}scene.add(blades);
+for(let i=0;i<blades.count;i++){bladeDummy.position.set((Math.random()-.5)*14,.002,10+Math.random()*13);bladeDummy.rotation.y=Math.random()*Math.PI*2;bladeDummy.scale.setScalar(.55+Math.random()*.85);bladeDummy.updateMatrix();blades.setMatrixAt(i,bladeDummy.matrix);blades.setColorAt(i,new T.Color().setHSL(.25+Math.random()*.035,.45,.28+Math.random()*.1));}scene.add(blades);
 const wear = new T.Mesh(new T.PlaneGeometry(2.8, 3.5), new T.MeshStandardMaterial({
   map: tex(canvas2d(256,256,(g,w,h) => {
     for(let i=0;i<7000;i++) { const x=Math.random()*w,y=Math.random()*h, d=Math.hypot((x-w/2)/(w/2),(y-h/2)/(h/2));

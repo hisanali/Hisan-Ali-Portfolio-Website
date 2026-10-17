@@ -33,10 +33,10 @@ export function broadcastGrade(){
  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
  fragmentShader:`uniform sampler2D tDiffuse;uniform float time;varying vec2 vUv;
  void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;
- float lum=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(lum),c,1.12);
+ float lum=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(lum),c,1.2);
  c=c*c*(3.-2.*c)*.38+c*.62; // filmic S-curve: deeper shadows, brighter highlights
  c*=mix(vec3(.97,.99,1.03),vec3(1.04,1.01,.96),smoothstep(.2,.8,lum)); // cool shadows, warm highlights
- vec2 p=vUv-.5;c*=1.-.22*dot(p,p);
+ vec2 p=vUv-.5;c*=1.-.3*dot(p,p);
  float noise=fract(sin(dot(gl_FragCoord.xy+time,vec2(12.9898,78.233)))*43758.5453)-.5;
  gl_FragColor=vec4(clamp(c+noise*.003,0.,1.),1.);}`});
 }
