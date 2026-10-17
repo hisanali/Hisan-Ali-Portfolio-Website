@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#17382d">
   
   <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="/games/games.css?v=89">
+  <link rel="stylesheet" href="/games/games.css?v=90">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/interior-redesign.css?v=86"><link rel="stylesheet" href="/experience-upgrades.css?v=1"><link rel="stylesheet" href="/quality-repairs.css?v=2"><script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><link rel="stylesheet" href="/site-shell.css?v=20260906-7"><link rel="stylesheet" href="/site-header.css?v=9"></head>
 <body class="redesign-interior page-games"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) --><a class="game-skip" href="#game-library">Skip to games</a>
   <header class="ua-header hd" data-ua-header data-hd>
@@ -173,11 +173,22 @@
           <div class="gc-play-links"><a class="gc-btn gc-btn-primary" href="#signature-games">Find your game <span aria-hidden="true">↗</span></a><a href="#game-library">Explore the library <span aria-hidden="true">↓</span></a></div>
           <ul class="gc-play-facts" aria-label="At a glance"><li><b>19</b> free games</li><li>Solo &amp; with friends</li><li>No sign-up</li></ul>
         </div>
-        <div class="gc-play-covers" aria-label="Jump into a game">
-          <a class="gc-cover gc-cover-chess" href="/chess/" target="_blank" rel="noopener"><img src="/games/thumbs/chess.webp?v=2" alt="" width="1000" height="750" fetchpriority="high"><span class="gc-cover-label"><small>Your next move</small><b>Chess <i aria-hidden="true">↗</i></b></span></a>
-          <a class="gc-cover gc-cover-drive" href="/evermile/" target="_blank" rel="noopener"><img src="/games/thumbs/evermile.webp?v=4" alt="" width="1000" height="750"><span class="gc-cover-label"><small>Take the long way</small><b>Evermile <i aria-hidden="true">↗</i></b></span></a>
-          <a class="gc-cover gc-cover-cube" href="/tools/rubiks-cube/"><img src="/games/thumbs/cube.webp?v=4" alt="" width="1000" height="750"><span class="gc-cover-label"><b>Cube Studio <i aria-hidden="true">↗</i></b></span></a>
-          <a class="gc-cover gc-cover-ludo" href="/ludo/" target="_blank" rel="noopener"><img src="/games/thumbs/ludo.webp?v=2" alt="" width="1000" height="750"><span class="gc-cover-label"><b>Ludo <i aria-hidden="true">↗</i></b></span></a>
+        <div class="gc-play-orbit" aria-hidden="true">
+          <svg viewBox="0 0 520 360" fill="none">
+            <ellipse class="orbit-line" cx="260" cy="180" rx="238" ry="94" transform="rotate(-24 260 180)"/>
+            <ellipse class="orbit-line" cx="260" cy="180" rx="216" ry="145" transform="rotate(24 260 180)"/>
+            <circle class="orbit-line" cx="260" cy="180" r="127" stroke-dasharray="3 10"/>
+            <g class="orbit-pad" transform="rotate(-12 260 180)">
+              <path d="M201 116h118c29 0 44 17 50 43l16 70c6 29-22 44-42 24l-31-32H208l-31 32c-20 20-48 5-42-24l16-70c6-26 21-43 50-43Z"/>
+              <path class="orbit-cross" d="M197 151v48m-24-24h48"/>
+              <circle class="orbit-key" cx="313" cy="159" r="10"/><circle class="orbit-key coral" cx="340" cy="187" r="10"/>
+              <path class="orbit-detail" d="M245 153h14m-22 49h44"/>
+            </g>
+            <circle class="orbit-dot" cx="59" cy="223" r="12"/>
+            <circle class="orbit-dot coral" cx="441" cy="92" r="8"/>
+            <path class="orbit-spark" d="M403 259v24m-12-12h24M110 83v16m-8-8h16"/>
+          </svg>
+          <span class="gc-orbit-note">Less scrolling. More playing.</span>
         </div>
         <div class="gc-play-caption"><span>Small breaks. Big worlds.</span><span>Strategy / Driving / Puzzle / Football / Arcade</span></div>
       </div>
