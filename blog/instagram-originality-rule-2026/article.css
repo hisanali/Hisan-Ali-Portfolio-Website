@@ -1,0 +1,17 @@
+.ig-guide .ig-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; max-width:420px; margin:26px auto 10px; }
+.ig-guide .ig-t { position:relative; aspect-ratio:1; display:grid; place-items:center; padding:8px; text-align:center; font-size:.78rem; font-weight:800; color:#fff; line-height:1.25; }
+.ig-guide .ig-t.o { background:linear-gradient(135deg,#5b3fb0,#c2502e); }
+.ig-guide .ig-t.t { background:linear-gradient(135deg,#0b7a75,#5b3fb0); }
+.ig-guide .ig-t.r { background:#9b95ab; color:#f4f2f8; }
+.ig-guide .ig-t.r::after { content:"REPOST"; position:absolute; top:6px; right:6px; padding:1px 6px; border-radius:999px; background:rgba(0,0,0,.45); font-size:.58rem; letter-spacing:.06em; }
+.ig-guide .ig-legend { display:flex; justify-content:center; flex-wrap:wrap; gap:8px 18px; font-size:.82rem; color:var(--fe-muted); }
+.ig-guide .ig-legend i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+.ig-guide .ig-scale { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:22px 0; }
+.ig-guide .ig-scale div { padding:18px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.ig-guide .ig-scale b { display:block; font-size:1.05rem; margin-bottom:6px; }
+.ig-guide .ig-scale .no { border-top:5px solid var(--fe-low); } .ig-guide .ig-scale .maybe { border-top:5px solid var(--fe-mid); } .ig-guide .ig-scale .yes { border-top:5px solid var(--fe-high); }
+html body.fe-page.page-blog-article .blog-post-content .ig-scale p { margin:0 !important; font-size:.88rem !important; line-height:1.5 !important; color:var(--fe-ink) !important; max-width:none; }
+.ig-guide .ig-meter { position:relative; height:18px; margin:18px 0 6px; border-radius:999px; background:linear-gradient(90deg,var(--fe-low) 0 50%,var(--fe-mid) 50% 70%,var(--fe-high) 70%); }
+.ig-guide .ig-meter i { position:absolute; top:-6px; width:6px; height:30px; border-radius:3px; background:var(--fe-ink); transform:translateX(-3px); transition:left .35s ease; }
+.ig-guide .ig-meter-l { display:flex; justify-content:space-between; font-size:.75rem; color:var(--fe-muted); }
+@media(max-width:640px) { .ig-guide .ig-scale { grid-template-columns:1fr; } .ig-guide .ig-t { font-size:.66rem; } }

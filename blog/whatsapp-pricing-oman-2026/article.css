@@ -1,0 +1,20 @@
+.wa-guide .wa-chat { margin:28px 0; padding:22px; border-radius:22px; background:#e9e1d6; background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1px); background-size:14px 14px; color:#111b21; }
+html.theme-dark .wa-guide .wa-chat { background-color:#0b141a; color:#e9edef; background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px); }
+.wa-guide .wa-b { position:relative; max-width:78%; margin:0 0 10px; padding:9px 12px 18px; border-radius:10px; background:#fff; font-size:.94rem; line-height:1.45; box-shadow:0 1px 1px rgba(0,0,0,.12); }
+html.theme-dark .wa-guide .wa-b { background:#202c33; }
+.wa-guide .wa-b.me { margin-left:auto; background:#d9fdd3; }
+html.theme-dark .wa-guide .wa-b.me { background:#005c4b; }
+.wa-guide .wa-b small { position:absolute; right:10px; bottom:4px; font-size:.68rem; opacity:.6; }
+.wa-guide .wa-tag { display:inline-block; margin:0 0 10px; padding:4px 10px; border-radius:999px; font-size:.74rem; font-weight:800; }
+.wa-guide .wa-free { background:#d9fdd3; color:#0a5c36; } .wa-guide .wa-paid { background:#ffe1d6; color:#9c2f12; }
+.wa-guide .wa-sys { margin:4px auto 12px; width:max-content; max-width:100%; padding:5px 12px; border-radius:8px; background:#fff3c4; color:#5c4400; font-size:.78rem; text-align:center; }
+html.theme-dark .wa-guide .wa-sys { background:#3b3016; color:#ffe3a3; }
+.wa-guide .wa-rates { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:22px 0; }
+.wa-guide .wa-rate { padding:18px 16px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.wa-guide .wa-rate span { display:block; font-size:.74rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--fe-accent); }
+.wa-guide .wa-rate b { display:block; margin:6px 0 2px; font-family:'DM Serif Display',serif; font-size:1.7rem; font-weight:400; }
+.wa-guide .wa-rate small { display:block; font-size:.8rem; color:var(--fe-muted); line-height:1.4; }
+.wa-guide .wa-rate.up { border-color:var(--fe-accent-2); }
+.wa-guide .wa-rate.up span::after { content:" ↑"; color:var(--fe-accent-2); }
+@media(max-width:860px) { .wa-guide .wa-rates { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:480px) { .wa-guide .wa-b { max-width:92%; } }
