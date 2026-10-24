@@ -1,0 +1,28 @@
+.hc-guide .hc-dials { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:24px 0; }
+.hc-guide .hc-dials article { display:flex; flex-direction:column; padding:18px 16px; border-radius:18px; background:var(--fe-raised); border:1px solid var(--fe-border); color:var(--fe-ink); }
+.hc-guide .hc-g { --v:.7; position:relative; width:96px; height:48px; margin:0 auto 12px; border-radius:96px 96px 0 0; background:conic-gradient(from -90deg at 50% 100%,var(--c,var(--fe-accent)) calc(var(--v)*180deg),var(--fe-border) 0 180deg,transparent 0); }
+.hc-guide .hc-g::after { content:""; position:absolute; left:16px; right:16px; bottom:0; height:32px; border-radius:64px 64px 0 0; background:var(--fe-raised); }
+html body.fe-page.page-blog-article .blog-post-content .hc-dials h3 { margin:0 0 6px !important; padding:0 !important; font-size:1.1rem !important; text-align:center; color:var(--fe-ink) !important; }
+html body.fe-page.page-blog-article .blog-post-content .hc-dials p { flex:1; margin:0 0 10px !important; font-size:.86rem !important; line-height:1.5 !important; color:var(--fe-muted) !important; max-width:none; }
+.hc-guide .hc-dials article > span { display:block; padding:6px 10px; border-radius:10px; background:var(--fe-surface); font-size:.74rem; font-weight:800; color:var(--fe-low); }
+.hc-guide .hc-author { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0; }
+.hc-guide .hc-author > div { position:relative; padding:22px 18px 18px; border-radius:18px; text-align:center; background:var(--fe-raised); border:1px solid var(--fe-border); color:var(--fe-ink); }
+.hc-guide .hc-author .bad { border-color:var(--fe-low); } .hc-guide .hc-author .good { border-color:var(--fe-high); }
+.hc-guide .hc-lbl { position:absolute; top:-11px; left:50%; transform:translateX(-50%); padding:3px 12px; border-radius:999px; font-size:.7rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#fff; }
+.hc-guide .bad .hc-lbl { background:var(--fe-low); } .hc-guide .good .hc-lbl { background:var(--fe-high); }
+html.theme-dark .hc-guide .hc-lbl { color:#181429; }
+.hc-guide .hc-av { display:grid; place-items:center; width:64px; height:64px; margin:4px auto 10px; border-radius:50%; font-weight:800; color:#fff; }
+.hc-guide .bad .hc-av { background:linear-gradient(135deg,#c9b6ff,#ffb3c7); position:relative; } .hc-guide .good .hc-av { background:linear-gradient(135deg,#5b3fb0,#c2502e); }
+.hc-guide .bad .hc-av::after { content:""; position:absolute; left:-6px; right:-6px; top:50%; height:4px; border-radius:2px; background:var(--fe-low); transform:rotate(-35deg); }
+.hc-guide .hc-author b { display:block; font-size:1rem; } .hc-guide .hc-author small { display:block; margin-bottom:8px; font-size:.78rem; color:var(--fe-muted); }
+html body.fe-page.page-blog-article .blog-post-content .hc-author p { margin:0 !important; font-size:.86rem !important; line-height:1.5 !important; color:var(--fe-ink) !important; max-width:none; }
+.hc-guide .hc-qs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
+.hc-guide .hc-qs label { display:flex; flex-direction:column; gap:6px; font-size:.84rem; font-weight:700; color:var(--fe-ink); }
+.hc-guide .hc-qs select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); font:inherit; font-weight:400; font-size:.9rem; }
+.hc-guide .hc-bars { display:grid; gap:10px; margin-top:12px; padding:18px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); }
+.hc-guide .hc-bar { display:grid; grid-template-columns:120px 1fr 48px; gap:12px; align-items:center; font-size:.86rem; color:var(--fe-ink); }
+.hc-guide .hc-bar i { position:relative; height:12px; border-radius:999px; background:var(--fe-border); overflow:hidden; }
+.hc-guide .hc-bar i::before { content:""; position:absolute; inset:0 auto 0 0; width:calc(var(--w)*10%); border-radius:999px; background:var(--c,var(--fe-accent)); transition:width .35s ease; }
+.hc-guide .hc-bar b { text-align:right; } .hc-guide .hc-bar.weak span { font-weight:800; color:var(--fe-low); }
+@media(max-width:860px) { .hc-guide .hc-dials { grid-template-columns:1fr 1fr; } }
+@media(max-width:560px) { .hc-guide .hc-dials, .hc-guide .hc-author, .hc-guide .hc-qs { grid-template-columns:1fr; } .hc-guide .hc-bar { grid-template-columns:96px 1fr 40px; } }
