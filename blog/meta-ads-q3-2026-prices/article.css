@@ -1,0 +1,18 @@
+.mq-guide .mq-eq { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px; margin:24px 0; }
+.mq-guide .mq-eq div { min-width:150px; padding:18px 20px; border-radius:18px; text-align:center; background:var(--fe-raised); border:1px solid var(--fe-border); color:var(--fe-ink); }
+.mq-guide .mq-eq div.r { background:var(--fe-accent); border-color:var(--fe-accent); color:#fff; }
+html.theme-dark .mq-guide .mq-eq div.r { color:#22140f; }
+.mq-guide .mq-eq b { display:block; font-family:'DM Serif Display',serif; font-size:2.2rem; font-weight:400; line-height:1; }
+.mq-guide .mq-eq span { display:block; margin-top:6px; font-size:.82rem; }
+.mq-guide .mq-eq i { font-style:normal; font-size:1.8rem; font-weight:800; color:var(--fe-accent); }
+.mq-guide .mq-bars { display:grid; gap:10px; margin-top:12px; padding:18px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); }
+.mq-guide .mq-bar { display:grid; grid-template-columns:140px 1fr 110px; gap:12px; align-items:center; font-size:.86rem; color:var(--fe-ink); }
+.mq-guide .mq-bar i { height:14px; border-radius:7px; background:linear-gradient(90deg,var(--c,var(--fe-accent)) var(--w),var(--fe-border) var(--w)); }
+.mq-guide .mq-bar b { text-align:right; font-variant-numeric:tabular-nums; }
+@media(max-width:560px) { .mq-guide .mq-bar { grid-template-columns:1fr auto; } .mq-guide .mq-bar i { grid-column:1/-1; grid-row:2; } .mq-guide .mq-eq div { min-width:120px; } }
+.mq-guide .mq-steps { display:grid; gap:10px; margin:22px 0; }
+.mq-guide .mq-steps > div { display:grid; grid-template-columns:48px 1fr; column-gap:16px; padding:18px 20px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.mq-guide .mq-steps > div > b { grid-row:span 2; display:grid; place-items:center; width:48px; height:48px; border-radius:50%; background:var(--fe-accent); color:#fff; font-family:'DM Serif Display',serif; font-size:1.4rem; font-weight:400; }
+html.theme-dark .mq-guide .mq-steps > div > b { color:#22140f; }
+html body.fe-page.page-blog-article .blog-post-content .mq-steps h3 { margin:2px 0 4px !important; padding:0 !important; font-size:1.05rem !important; color:var(--fe-ink) !important; }
+html body.fe-page.page-blog-article .blog-post-content .mq-steps p { margin:0 !important; font-size:.9rem !important; line-height:1.55 !important; color:var(--fe-muted) !important; max-width:none; }
