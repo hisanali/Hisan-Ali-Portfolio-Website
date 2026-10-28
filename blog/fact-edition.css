@@ -3,11 +3,13 @@
 .fe-page.fe-gold { --fe-accent:#a3620d; --fe-accent-2:#0b7a75; --fe-surface:#fbf4e8; --fe-border:#ead8b8; --fe-ink:#2a1d0c; --fe-muted:#6a5638; }
 .fe-page.fe-coral { --fe-accent:#b8432a; --fe-accent-2:#0b6e7a; --fe-surface:#fcf1ec; --fe-border:#efd2c6; --fe-ink:#2a140d; --fe-muted:#6e4a3e; }
 .fe-page.fe-crimson { --fe-accent:#a3162c; --fe-accent-2:#1f7a4a; --fe-surface:#fbf1f1; --fe-border:#efcfd2; --fe-ink:#2a0d12; --fe-muted:#6e3e46; }
+.fe-page.fe-blue { --fe-accent:#0a66c2; --fe-accent-2:#c7851f; --fe-surface:#eef4fb; --fe-border:#c9dcf0; --fe-ink:#0f2238; --fe-muted:#4a6079; }
 .fe-page.fe-violet { --fe-accent:#5b3fb0; --fe-accent-2:#c2502e; --fe-surface:#f3f0fb; --fe-border:#d9d0f0; --fe-ink:#1d1633; --fe-muted:#5a5270; }
 html.theme-dark .fe-page { --fe-accent:#5fd6cc; --fe-accent-2:#f3bd62; --fe-low:#ff8a7a; --fe-mid:#f5c85b; --fe-high:#6fdca0; --fe-surface:#10201e; --fe-raised:#152a27; --fe-border:#27443f; --fe-ink:#e6f5f3; --fe-muted:#a7c2bd; }
 html.theme-dark .fe-page.fe-gold { --fe-accent:#f3bd62; --fe-accent-2:#5fd6cc; --fe-surface:#211a10; --fe-raised:#2a2114; --fe-border:#4a3a22; --fe-ink:#f8eedd; --fe-muted:#cdb997; }
 html.theme-dark .fe-page.fe-coral { --fe-accent:#ff9a7a; --fe-accent-2:#5fd3dc; --fe-surface:#22140f; --fe-raised:#2c1a13; --fe-border:#4c2d22; --fe-ink:#fcece5; --fe-muted:#d6b4a7; }
 html.theme-dark .fe-page.fe-crimson { --fe-accent:#ff8597; --fe-accent-2:#6fdca0; --fe-surface:#22100f; --fe-raised:#2c1517; --fe-border:#4c2529; --fe-ink:#fce9ec; --fe-muted:#d9aab1; }
+html.theme-dark .fe-page.fe-blue { --fe-accent:#6fb1ff; --fe-accent-2:#f3bd62; --fe-surface:#0f1a28; --fe-raised:#162335; --fe-border:#2a3d58; --fe-ink:#e9f1fb; --fe-muted:#a9bcd3; }
 html.theme-dark .fe-page.fe-violet { --fe-accent:#b9a5ff; --fe-accent-2:#ff9a76; --fe-surface:#181429; --fe-raised:#1f1a35; --fe-border:#362e57; --fe-ink:#efebfd; --fe-muted:#b7add6; }
 html.reading-mode:not(.theme-dark) .fe-page { --fe-accent:#6b4a14; --fe-accent-2:#8a4a14; --fe-low:#9c3f22; --fe-mid:#8a6a10; --fe-high:#3c6b3a; --fe-surface:#ece3d1; --fe-raised:#f4ecdc; --fe-border:#bcb09a; --fe-ink:#332d24; --fe-muted:#5d5244; }
 html.reading-mode.theme-dark .fe-page { --fe-accent:#f5c85b; --fe-accent-2:#ffae7d; --fe-low:#ff9e7a; --fe-mid:#f5c85b; --fe-high:#9fd49a; --fe-surface:#2a1a13; --fe-raised:#33211a; --fe-border:#493127; --fe-ink:#f7ead3; --fe-muted:#d4c1a6; }
