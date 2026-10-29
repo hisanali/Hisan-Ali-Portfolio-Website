@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PNT5FCX5');</script><!-- End Google Tag Manager -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reef Dive — Free 3D Browser Game | Hisan Ali</title>
+  <meta name="description" content="Pilot a submersible through a living coral reef. Collect pearls, dodge jellyfish, refill your air at the bubble vents and go deeper. A free 3D underwater game in your browser.">
+  <link rel="canonical" href="https://hisanali.com/reefdive/">
+  <meta name="theme-color" content="#05070f">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hisanali.com/reefdive/">
+  <meta property="og:title" content="Reef Dive — Free 3D Browser Game">
+  <meta property="og:description" content="Pilot a submersible through a living coral reef. Collect pearls, dodge jellyfish, refill your air at the bubble vents and go deeper. A free 3D underwater game in your browser.">
+  <meta property="og:image" content="https://hisanali.com/games/thumbs/reefdive.webp">
+  <meta property="og:site_name" content="Hisan Ali - Digital Marketing Expert">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="modulepreload" href="/evermile/vendor/three.module.js">
+  <link rel="stylesheet" href="/games/neon.css?v=2">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Reef Dive","url":"https://hisanali.com/reefdive/","description":"Pilot a submersible through a living coral reef. Collect pearls, dodge jellyfish, refill your air at the bubble vents and go deeper. A free 3D underwater game in your browser.","genre":["Exploration"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/about/"},"image":"https://hisanali.com/games/thumbs/reefdive.webp"}</script>
+</head>
+<body><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
+<canvas id="scene" aria-label="Reef Dive game"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="flash" id="flash" aria-hidden="true"></div>
+<header class="topbar">
+  <a class="back" href="/games/" aria-label="Back to the Game Center"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Game Center</span></a>
+  <div class="mark" aria-hidden="true">Reef Dive<sup>DEEP</sup></div>
+  <div class="top-actions">
+    <button id="btn-sound" type="button" aria-label="Sound" title="Sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h3l5-4v12l-5-4H4z"/><path class="wave" d="M16 9c1.3 1.6 1.3 4.4 0 6M18.5 6.5c2.8 3 2.8 8 0 11"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg></button>
+    <button id="btn-full" type="button" aria-label="Toggle full screen" title="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="btn-menu" class="menu" type="button">Menu</button>
+  </div>
+</header>
+<div class="hud" id="hud" aria-live="polite" hidden></div>
+<p class="hint" id="hint"></p>
+<div class="banner" id="banner" aria-live="assertive"></div>
+<div class="touch-wheel" id="touch" aria-hidden="true"></div>
+<section class="overlay" id="start" aria-label="Start"><div class="card"><p class="eyebrow">Exploration · Hisan’s Game Center</p><h1>Reef<em>Dive</em></h1><div id="start-card"></div></div></section>
+<section class="overlay" id="result" hidden aria-live="assertive"><div class="card"><p class="eyebrow" id="result-label"></p><h2 id="result-title"></h2><p class="lede" id="result-reason"></p><div class="result-stats" id="result-stats"></div><button id="again" class="primary" type="button"><span>Play again</span><span aria-hidden="true">→</span></button><button id="to-menu" class="secondary" type="button">Menu</button></div></section>
+<div class="toast" id="toast" role="status"></div>
+<p class="credit" id="credit"></p>
+<script type="module" src="game.js?v=1"></script>
+</body>
+</html>
