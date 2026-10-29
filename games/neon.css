@@ -60,3 +60,5 @@ body:not(.is-sound) .wave { display:none; } body.is-sound .mute { display:none; 
 .touch-wheel button.wide { width:110px; border-radius:34px; font-size:14px; }
 @media (pointer:coarse) { .touch-wheel.on { display:flex; } }
 .credit { position:fixed; z-index:14; right:14px; bottom:max(14px, env(safe-area-inset-bottom)); font-size:10px; color:var(--faint, rgba(255,255,255,.35)); pointer-events:none; }
+/* Full-screen games: keep any site-wide header, footer or cookie panel injected by tag scripts off the canvas */
+body > .ua-header, body > .ua-footer, body > [data-ua-header], body > [data-ua-footer], body > .journey-privacy, body > header.hd { display:none !important; }
