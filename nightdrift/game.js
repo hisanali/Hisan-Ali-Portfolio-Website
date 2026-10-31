@@ -57,8 +57,8 @@ for (let i = 0; i < 48; i++) {
 }
 // A pool of real point lights that jumps to the lamps nearest the player.
 const lightPool = Array.from({ length: 8 }, () => { const l = new THREE.PointLight(0xffd9a0, 40, 34, 1.8); scene.add(l); return l; });
-const signTex = (text, bg, fg) => canvasTexture(256, (c, s) => { c.fillStyle = bg; c.fillRect(0, 0, s, s); c.fillStyle = fg; c.font = 'bold 54px Manrope, Arial'; c.textAlign = 'center'; c.fillText(text, s / 2, s * 0.58); });
-const signs = [['DRIFT', '#ff2d78', '#fff'], ['NEON', '#5ff2ff', '#101'], ['24H', '#ffd166', '#101'], ['OASIS', '#7dffb3', '#101'], ['KHANJAR', '#7a5bff', '#fff']];
+const signTex = (text, bg, fg) => canvasTexture(512, (c, s) => { c.fillStyle = bg; c.fillRect(0, 0, s, s / 4); c.fillStyle = fg; c.font = '600 64px Manrope, Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, s / 2, s / 8); });
+const signs = [['PHARMACY', '#1f7a3a', '#f4f4f4'], ['CAFÉ', '#3a2a20', '#f2d7a6'], ['HOTEL', '#14203a', '#f0e6c8'], ['BANK', '#0f3d6e', '#ffffff'], ['BAKERY', '#7a2e1f', '#fbe9d0'], ['SUPERMARKET', '#c8102e', '#ffffff']];
 let buildings = [];
 async function placeCity() {
   const kit = await loadModel('/evermile/assets/models/city-kit.glb?v=maps2'); const parts = kit.scene.children.slice();
@@ -77,7 +77,7 @@ async function placeCity() {
       const m = src.clone(); m.position.copy(pos); m.rotation.y = Math.atan2(-n.x * side, -n.z * side); shadowed(m, true, true);
       m.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.25; o.material.color.multiplyScalar(0.55); } });
       scene.add(m); buildings.push({ pos, r: Math.max(w, d) / 2 });
-      if (rnd() < 0.25) { const [txt, bg, fg] = signs[Math.floor(rnd() * signs.length)]; const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({ map: signTex(txt, bg, fg), emissive: new THREE.Color(bg), emissiveMap: signTex(txt, bg, fg), emissiveIntensity: 1.6, roughness: 0.4 })); sign.position.copy(pos).addScaledVector(n, -side * (Math.max(w, d) / 2 + 0.2)); sign.position.y = 6 + rnd() * 8; sign.lookAt(p.x, sign.position.y, p.z); scene.add(sign); }
+      if (rnd() < 0.25) { const [txt, bg, fg] = signs[Math.floor(rnd() * signs.length)]; const tx = signTex(txt, bg, fg); tx.repeat.set(1, 0.25); tx.offset.set(0, 0.75); const sign = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 0.3), new THREE.MeshStandardMaterial({ map: tx, emissive: 0xffffff, emissiveMap: tx, emissiveIntensity: 0.55, roughness: 0.5 })); sign.position.copy(pos).addScaledVector(n, -side * (Math.max(w, d) / 2 + 0.2)); sign.position.y = 4.2 + rnd() * 2; sign.lookAt(p.x, sign.position.y, p.z); scene.add(sign); }
     }
   }
 }
@@ -171,7 +171,7 @@ function drive(car, dt, ctrl) {
   const newF = vF + (accel - drag) * dt;
   const grip = ctrl.hand ? 1.2 : 7; const lat = vR - vR * Math.min(1, grip * dt);
   const steerMax = 0.034 + 0.03 * (1 - Math.min(1, Math.abs(vF) / 40)); const effSteer = ctrl.steer * steerMax * (ctrl.hand ? 1.5 : 1);
-  car.heading += effSteer * clamp(vF / 10, -1, 1) * 60 * dt;
+  car.heading -= effSteer * clamp(vF / 10, -1, 1) * 60 * dt;
   car.vel.copy(fwd.clone().multiplyScalar(clamp(newF, -12, maxSpeed))).addScaledVector(right, lat);
   car.speed = car.vel.dot(fwd); car.slip = Math.abs(lat); car.steer = ctrl.steer;
   car.pos.addScaledVector(car.vel, dt);
@@ -184,15 +184,15 @@ function drive(car, dt, ctrl) {
   const seg = Math.floor(near * CHECKS); if (seg === car.next % CHECKS) { car.next++; if (car.next % CHECKS === 0) { car.lap++; if (car.isPlayer) { const lt = S.raceTime - player.lapStart; player.lapTimes.push(lt); player.lapStart = S.raceTime; U.showBanner(car.lap >= S.laps ? 'Finish!' : `Lap ${car.lap + 1}`, 900); } if (car.lap >= S.laps && !car.finished) { car.finished = true; car.finishPos = cars.filter(c => c.finished).length; } } }
   car.root.position.copy(car.pos); car.root.rotation.y = car.heading;
   car.model.rotation.z = lerp(car.model.rotation.z, -lat * 0.012, 0.2); car.model.rotation.x = lerp(car.model.rotation.x, -accel * 0.003, 0.15);
-  for (const w of car.wheels) { w.rotation.x += car.speed * dt / 0.33; if (w.name[6] === 'F') w.rotation.y = ctrl.steer * 0.5; }
+  for (const w of car.wheels) { w.rotation.x += car.speed * dt / 0.33; if (w.name[6] === 'F') w.rotation.y = -ctrl.steer * 0.5; }
 }
 function nearestT(car) { let best = car.t, bd = Infinity; for (let k = -6; k <= 10; k++) { const t = ((car.t + k * 0.0025) % 1 + 1) % 1; const d = curve.getPointAt(t).distanceToSquared(car.pos); if (d < bd) { bd = d; best = t; } } return best; }
 function aiControl(car) {
   const ahead = (car.t + 0.02) % 1; const p = curve.getPointAt(ahead), tg = curve.getTangentAt(ahead), n = new THREE.Vector3(0, 1, 0).cross(tg).normalize();
   const target = p.clone().addScaledVector(n, car.laneOff); const to = target.sub(car.pos); const desired = Math.atan2(to.x, to.z); let diff = desired - car.heading; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
   const curv = curve.getTangentAt((car.t + 0.05) % 1).angleTo(tg); const throttle = curv > 0.35 ? 0.35 : curv > 0.2 ? 0.7 : 1;
-  for (const o of cars) if (o !== car) { const d = o.pos.clone().sub(car.pos); if (d.length() < 9 && d.dot(new THREE.Vector3(Math.sin(car.heading), 0, Math.cos(car.heading))) > 0) return { steer: clamp(diff * 2.5, -1, 1) + (d.dot(n) > 0 ? -0.3 : 0.3), throttle: throttle * 0.6, brake: 0, hand: false }; }
-  return { steer: clamp(diff * 2.5, -1, 1), throttle, brake: 0, hand: false };
+  for (const o of cars) if (o !== car) { const d = o.pos.clone().sub(car.pos); if (d.length() < 9 && d.dot(new THREE.Vector3(Math.sin(car.heading), 0, Math.cos(car.heading))) > 0) return { steer: clamp(-diff * 2.5, -1, 1) + (d.dot(n) > 0 ? 0.3 : -0.3), throttle: throttle * 0.6, brake: 0, hand: false }; }
+  return { steer: clamp(-diff * 2.5, -1, 1), throttle, brake: 0, hand: false };
 }
 
 // ---------- Loop ----------

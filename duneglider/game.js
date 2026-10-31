@@ -83,7 +83,7 @@ const glider = new THREE.Group(); scene.add(glider);
   // Pilot in a harness.
   const pilot = new THREE.Group(); const suit = new THREE.MeshStandardMaterial({ color: 0x1f6fd8, roughness: 0.7 });
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 1.5, 4, 10), suit); body.rotation.x = Math.PI / 2; pilot.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 })); head.position.set(0, 0.08, -1.05); pilot.add(head);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 })); head.position.set(0, 0.08, 1.05); pilot.add(head);
   pilot.position.set(0, -1.7, 0.4); pilot.castShadow = true; glider.add(pilot);
 }
 const P = { pos: new THREE.Vector3(0, 60, -40), vel: new THREE.Vector3(0, 0, -26), yaw: Math.PI, pitch: 0, roll: 0, alive: true };
@@ -149,7 +149,7 @@ function fly(dt) {
   const liftDir = new THREE.Vector3().crossVectors(dir, new THREE.Vector3().crossVectors(up, dir)).normalize();
   if (!isFinite(liftDir.x)) liftDir.copy(up);
   // Bank rolls the lift vector.
-  liftDir.applyAxisAngle(dir, -P.roll);
+  liftDir.applyAxisAngle(dir, P.roll);
   const g = -9.8; const drag = 0.012 * speed * speed + 0.3 * Math.abs(P.pitch) * speed;
   P.vel.addScaledVector(liftDir, lift * dt); P.vel.y += g * dt; P.vel.addScaledVector(dir, -drag * dt);
   // Steer velocity toward the nose.
@@ -175,7 +175,7 @@ function loop() {
   if (S.mode === 'playing') { fly(dt); if (Math.floor(S.time * 4) % 2 === 0) hud(); }
   else if (S.mode === 'menu' || S.mode === 'over') { P.pos.x = Math.sin(S.time * 0.08) * 140; P.pos.z = -60 + Math.cos(S.time * 0.08) * 140; P.pos.y = 75; P.yaw = S.time * 0.08 + Math.PI / 2; P.roll = 0.35; P.vel.set(Math.cos(P.yaw) * 22, 0, -Math.sin(P.yaw) * 22); }
   bankVis = lerp(bankVis, P.roll, 0.1);
-  glider.position.copy(P.pos); glider.rotation.set(0, 0, 0); glider.rotateY(P.yaw); glider.rotateX(-P.pitch * 0.6); glider.rotateZ(-bankVis);
+  glider.position.copy(P.pos); glider.rotation.set(0, 0, 0); glider.rotateY(P.yaw); glider.rotateX(-P.pitch * 0.6); glider.rotateZ(bankVis);
   for (const r of rings) { r.mesh.rotation.z += dt * 0.6; }
   particles.update(dt, 0.95, 3);
   for (let i = 0; i < MOTES; i++) { motePos[i * 3 + 1] += dt * 1.5; const dx = motePos[i * 3] - P.pos.x, dz = motePos[i * 3 + 2] - P.pos.z; if (Math.abs(dx) > 200) motePos[i * 3] = P.pos.x - Math.sign(dx) * 200 + (Math.random() - 0.5) * 10; if (Math.abs(dz) > 200) motePos[i * 3 + 2] = P.pos.z - Math.sign(dz) * 200; if (motePos[i * 3 + 1] > P.pos.y + 60) motePos[i * 3 + 1] = P.pos.y - 60; }
