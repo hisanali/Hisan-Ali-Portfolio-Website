@@ -194,14 +194,62 @@ const bubbles = new Particles(scene, 1400, 0xe6f8ff, 0.35);
 
 // ---------- Submersible ----------
 const sub = { root: new THREE.Group(), body: new THREE.Group(), pos: new THREE.Vector3(0, -8, 60), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, roll: 0 };
+// A two-person research submersible. Built in body space with the bow at -Z (the body group is turned to face travel).
 {
-  const hullMat = new THREE.MeshPhysicalMaterial({ color: 0xe8a21c, roughness: 0.38, metalness: 0.15, clearcoat: 0.6, clearcoatRoughness: 0.2 });
   sub.body.rotation.y = Math.PI; sub.root.add(sub.body);
-  const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.9, 2.4, 6, 16), hullMat); hull.rotation.x = Math.PI / 2; hull.castShadow = true; sub.body.add(hull);
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.75, 20, 14), new THREE.MeshPhysicalMaterial({ color: 0x8fd8ff, transmission: 0.9, roughness: 0.05, thickness: 0.4, transparent: true, opacity: 0.85 })); dome.position.set(0, 0.35, -1.5); sub.body.add(dome);
-  for (const sx of [-1, 1]) { const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1.6, 10), new THREE.MeshStandardMaterial({ color: 0x2e3440, metalness: 0.6, roughness: 0.4 })); pod.rotation.x = Math.PI / 2; pod.position.set(sx * 1.25, -0.2, 0.6); sub.body.add(pod); const prop = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.2), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.3 })); prop.position.set(sx * 1.25, -0.2, 1.5); prop.userData.prop = true; sub.body.add(prop); }
-  const lampMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff5d0, emissiveIntensity: 4 })); lampMesh.position.set(0, -0.3, -2.1); sub.body.add(lampMesh);
-  const lamp = new THREE.SpotLight(0xfff2cc, 120, 60, 0.5, 0.5, 1.4); lamp.position.set(0, -0.3, -2); lamp.target.position.set(0, -0.6, -40); lamp.castShadow = false; sub.body.add(lamp); sub.body.add(lamp.target);
+  const add = (m, cast = true) => { m.castShadow = cast; m.receiveShadow = true; sub.body.add(m); return m; };
+  // Hull skin: off-white paint with panel seams, rivet rows, a dark waterline band and a registration mark.
+  const skin = canvasTexture(1024, (c, s) => {
+    c.fillStyle = '#e9e6df'; c.fillRect(0, 0, s, s);
+    const img = c.getImageData(0, 0, s, s); for (let k = 0; k < img.data.length; k += 4) { const n = (Math.random() - 0.5) * 8; img.data[k] += n; img.data[k + 1] += n; img.data[k + 2] += n; } c.putImageData(img, 0, 0);
+    c.strokeStyle = 'rgba(70,70,70,.55)'; c.lineWidth = 2; for (const y of [0.22, 0.45, 0.68]) { c.beginPath(); c.moveTo(0, y * s); c.lineTo(s, y * s); c.stroke(); } for (let x = 0; x < 8; x++) { c.beginPath(); c.moveTo(x * s / 8, 0.22 * s); c.lineTo(x * s / 8, 0.68 * s); c.stroke(); }
+    c.fillStyle = 'rgba(60,60,60,.5)'; for (const y of [0.235, 0.665]) for (let x = 0; x < s; x += 14) { c.beginPath(); c.arc(x, y * s, 1.6, 0, 7); c.fill(); }
+    c.fillStyle = '#d4521c'; c.fillRect(0, s * 0.47, s, s * 0.035);
+    c.fillStyle = '#2b2f36'; c.font = '700 44px Manrope, Arial'; c.textAlign = 'center'; c.save(); c.translate(s * 0.25, s * 0.4); c.scale(1, 1.6); c.fillText('RV-07', 0, 0); c.restore(); c.save(); c.translate(s * 0.75, s * 0.4); c.scale(1, 1.6); c.fillText('RV-07', 0, 0); c.restore();
+    c.fillStyle = 'rgba(120,95,60,.18)'; for (let k = 0; k < 40; k++) c.fillRect(Math.random() * s, s * (0.7 + Math.random() * 0.3), 2 + Math.random() * 3, 20 + Math.random() * 60);
+  }, { repeat: 1 });
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: skin, roughness: 0.42, metalness: 0.05, clearcoat: 0.5, clearcoatRoughness: 0.25 });
+  const orange = new THREE.MeshStandardMaterial({ color: 0xd4521c, roughness: 0.5, metalness: 0.1 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x8c9096, roughness: 0.35, metalness: 0.85 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: 0.6, metalness: 0.3 });
+  // Pressure hull: a lathe profile from the stern cone to the bow ring (axis along Y, then laid along -Z).
+  const prof = [[0.05, -2.75], [0.22, -2.6], [0.45, -2.2], [0.7, -1.6], [0.84, -0.9], [0.88, 0], [0.86, 0.8], [0.8, 1.3], [0.74, 1.5]].map(([r, y]) => new THREE.Vector2(r, y));
+  const hullGeo = new THREE.LatheGeometry(prof, 48); hullGeo.rotateX(-Math.PI / 2); add(new THREE.Mesh(hullGeo, paint));
+  // Bow: steel seating ring and a thick clear acrylic sphere with the pilot visible inside.
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.06, 10, 40), steel); ring.position.z = -1.5; add(ring);
+  const acrylic = new THREE.MeshPhysicalMaterial({ color: 0xdff2f5, roughness: 0.03, metalness: 0, transparent: true, opacity: 0.22, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2, depthWrite: false, side: THREE.DoubleSide });
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 20, 0, Math.PI * 2, 0, Math.PI * 0.62), acrylic); sphere.rotation.x = -Math.PI / 2; sphere.position.z = -1.45; sphere.renderOrder = 3; add(sphere, false);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.5), dark); seat.position.set(0, -0.35, -1.45); add(seat);
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.32, 4, 10), new THREE.MeshStandardMaterial({ color: 0x2f4a6b, roughness: 0.8 })); torso.position.set(0, -0.05, -1.4); add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), new THREE.MeshStandardMaterial({ color: 0xb5835e, roughness: 0.6 })); head.position.set(0, 0.32, -1.5); add(head);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.04), new THREE.MeshStandardMaterial({ color: 0x111418, emissive: 0x3aa0ff, emissiveIntensity: 0.4 })); panel.position.set(0, -0.12, -1.9); panel.rotation.x = -0.5; add(panel);
+  // Fairing on top with the entry hatch, mast and a strobe.
+  const sail = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.9, 6, 16), paint); sail.rotation.x = Math.PI / 2; sail.scale.set(1, 1, 0.75); sail.position.set(0, 0.8, 0.1); add(sail);
+  const hatch = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.08, 24), orange); hatch.position.set(0, 1.04, -0.1); add(hatch);
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.55, 6), steel); mast.position.set(0, 1.25, 0.45); add(mast);
+  const strobe = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0 })); strobe.position.set(0, 1.53, 0.45); add(strobe, false); sub.strobe = strobe;
+  // Cruciform stern planes with a foil section.
+  const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(0.75, 0.25); fin.lineTo(0.75, 0.55); fin.lineTo(0, 0.85); fin.lineTo(0, 0);
+  const finGeo = new THREE.ExtrudeGeometry(fin, { depth: 0.04, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 }); finGeo.translate(0.2, 0, -0.02); finGeo.rotateX(Math.PI / 2); finGeo.rotateY(Math.PI / 2);
+  for (let k = 0; k < 4; k++) { const f = new THREE.Mesh(finGeo, orange); f.rotation.z = k * Math.PI / 2 + Math.PI / 4; f.position.z = 1.75; add(f); }
+  // Ducted main thruster: open shroud, stator struts and a five-blade propeller.
+  const duct = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.5, 0.45, 32, 1, true), dark); duct.material = dark.clone(); duct.material.side = THREE.DoubleSide; duct.rotation.x = Math.PI / 2; duct.position.z = 2.6; add(duct);
+  for (let k = 0; k < 3; k++) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.9, 0.04), steel); st.rotation.z = k * Math.PI / 3; st.position.z = 2.45; add(st); }
+  const makeProp = (r, n) => { const g = new THREE.Group(); g.userData.prop = true; const hub = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 12), steel); hub.rotation.x = Math.PI / 2; g.add(hub); for (let k = 0; k < n; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.11, r, 0.015), steel); bl.geometry.translate(0, r / 2 + 0.05, 0); bl.rotation.z = k / n * Math.PI * 2; bl.rotateY(0.55); g.add(bl); } return g; };
+  const mainProp = makeProp(0.36, 5); mainProp.position.z = 2.62; sub.body.add(mainProp);
+  // Battery pods on the sides with small vectored thrusters.
+  for (const sx of [-1, 1]) {
+    const pod = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 1.7, 6, 16), dark); pod.rotation.x = Math.PI / 2; pod.position.set(sx * 1.05, -0.45, 0.2); add(pod);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.18), steel); arm.position.set(sx * 0.82, -0.32, 0.2); add(arm);
+    const sd = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.26, 20, 1, true), duct.material); sd.rotation.x = Math.PI / 2; sd.position.set(sx * 1.05, -0.45, 1.25); add(sd);
+    const sp = makeProp(0.15, 4); sp.position.set(sx * 1.05, -0.45, 1.26); sub.body.add(sp);
+    // Skids.
+    const skid = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.4, 8), orange); skid.rotation.x = Math.PI / 2; skid.position.set(sx * 0.55, -1.05, 0); add(skid);
+    for (const z of [-1, 0.9]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.6, 6), orange); leg.position.set(sx * 0.48, -0.78, z); leg.rotation.z = sx * 0.25; add(leg); }
+  }
+  // LED light bars under the bow and the main search light.
+  for (const sx of [-1, 1]) { const bar = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.08), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff6e0, emissiveIntensity: 3 })); bar.position.set(sx * 0.45, -0.72, -1.55); add(bar, false); const hous = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.1, 0.16), dark); hous.position.set(sx * 0.45, -0.72, -1.48); add(hous); }
+  const lamp = new THREE.SpotLight(0xfff2cc, 120, 60, 0.5, 0.5, 1.4); lamp.position.set(0, -0.6, -1.7); lamp.target.position.set(0, -1, -40); lamp.castShadow = false; sub.body.add(lamp); sub.body.add(lamp.target);
   scene.add(sub.root);
 }
 const props = []; sub.root.traverse(o => { if (o.userData.prop) props.push(o); });
@@ -278,6 +326,7 @@ function loop() {
   boids(dt);
   sub.root.position.copy(sub.pos); sub.root.rotation.set(0, 0, 0); sub.root.rotateY(sub.yaw); sub.root.rotateX(sub.pitch); sub.root.rotateZ(sub.roll);
   for (const p of props) p.rotation.z += dt * 30;
+  sub.strobe.material.emissiveIntensity = (S.time % 1.6) < 0.08 ? 6 : 0;
   jellies.forEach((j, i) => { j.position.y += Math.sin(S.time * 1.2 + j.userData.ph) * dt * 1.5; j.position.x += Math.sin(S.time * 0.3 + i) * dt * 0.8; const pulse = Math.sin(S.time * 2.4 + j.userData.ph); j.children[0].scale.set(1 - pulse * 0.1, 1 + pulse * 0.12, 1 - pulse * 0.1); if (j.position.y > -3) j.position.y = -3; });
   for (const p of pearls) p.pearl.material.emissiveIntensity = 0.2 + Math.max(0, Math.sin(S.time * 2 + p.position.x)) * 0.25;
   for (const v of vents) if (Math.random() < 0.5) bubbles.burst(v.x + (Math.random() - 0.5) * 2, v.y + 1, v.z + (Math.random() - 0.5) * 2, 1, 0xd9f6ff, 0.3, 3);

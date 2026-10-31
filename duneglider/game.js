@@ -46,19 +46,41 @@ for (let i = 0; i < 26; i++) {
   palm.position.set(x, y, z); scene.add(palm);
 }
 
-// ---------- Rings and thermals ----------
-const ringMat = new THREE.MeshStandardMaterial({ color: 0xfff1c0, emissive: 0xffb347, emissiveIntensity: 1.6, roughness: 0.3, metalness: 0.2, transparent: true, opacity: 0.9 });
-const rings = []; const ringGeo = new THREE.TorusGeometry(9, 0.55, 12, 48);
-let route = [];
+// ---------- Thermals ----------
+// ---------- Air-race gates ----------
+// Each gate is a pair of inflatable fabric pylons standing on the sand, like an air-race course.
+// Fly between the two pylons, below their tops.
+const GATE_HALF = 11, GATE_TALL = 34;
+const bandTex = (a, b) => canvasTexture(256, (c, s) => {
+  for (let k = 0; k < 4; k++) { c.fillStyle = k % 2 ? b : a; c.fillRect(0, k * s / 4, s, s / 4); }
+  const img = c.getImageData(0, 0, s, s); for (let k = 0; k < img.data.length; k += 4) { const n = (Math.random() - 0.5) * 10; img.data[k] += n; img.data[k + 1] += n; img.data[k + 2] += n; } c.putImageData(img, 0, 0);
+  c.strokeStyle = 'rgba(0,0,0,.18)'; c.lineWidth = 2; for (let x = 0; x < s; x += s / 8) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, s); c.stroke(); }
+}, { repeat: 1 });
+const liveTex = bandTex('#d7362a', '#f3f0ea'), doneTex = bandTex('#8d8a85', '#d8d4cc');
+const skirtMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.9 });
+const rings = []; let route = [];
+function pylon(x, z, top, mat) {
+  const base = Math.max(height(x, z), -1.2), h = top - base;
+  // Fabric profile: tapered tube with a slight bulge between the internal baffles, rounded top.
+  const pts = []; for (let k = 0; k <= 40; k++) { const t = k / 40; let r = lerp(1.6, 1.15, t) + Math.abs(Math.sin(t * Math.PI * 7)) * 0.06; if (t > 0.96) r *= Math.sqrt(Math.max(0, 1 - (t - 0.96) / 0.04)); pts.push(new THREE.Vector2(r, t * h)); }
+  pts.push(new THREE.Vector2(0, h + 0.4));
+  const g = new THREE.Group(); g.position.set(x, base, z);
+  const tube = new THREE.Mesh(new THREE.LatheGeometry(pts, 28), mat); tube.castShadow = tube.receiveShadow = true; g.add(tube);
+  const skirt = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.1, 0.6, 28), skirtMat); skirt.position.y = 0.3; skirt.receiveShadow = true; g.add(skirt);
+  scene.add(g); return g;
+}
 function buildRoute() {
-  for (const r of rings) scene.remove(r.mesh); rings.length = 0; route = [];
+  for (const r of rings) for (const m of r.pylons) scene.remove(m); rings.length = 0; route = [];
   let x = 0, z = -140, dir = Math.PI; const rr = mulberry(123);
   for (let i = 0; i < 18; i++) {
     dir += (rr() - 0.5) * 1.1; x += Math.sin(dir) * 150; z += Math.cos(dir) * 150;
     if (i === 8) { x = 60; z = -420; } // through the oasis
-    const y = height(x, z) + 18 + rr() * 30;
-    const mesh = new THREE.Mesh(ringGeo, ringMat.clone()); mesh.position.set(x, y, z); mesh.rotation.y = dir; scene.add(mesh);
-    rings.push({ mesh, pos: mesh.position, dir, got: false }); route.push(mesh.position);
+    const normal = new THREE.Vector3(Math.sin(dir), 0, Math.cos(dir)), lateral = new THREE.Vector3(Math.cos(dir), 0, -Math.sin(dir));
+    const ground = Math.max(height(x, z), 0), top = ground + GATE_TALL + rr() * 8;
+    const mat = new THREE.MeshStandardMaterial({ map: liveTex, roughness: 0.75 });
+    const pylons = [-1, 1].map(sd => pylon(x + lateral.x * GATE_HALF * sd, z + lateral.z * GATE_HALF * sd, top, mat));
+    const pos = new THREE.Vector3(x, top - 12, z);
+    rings.push({ pylons, mat, pos, normal, lateral, top, got: false, ph: rr() * 6 }); route.push(pos);
   }
 }
 buildRoute();
@@ -102,11 +124,11 @@ $('#btn-menu').addEventListener('click', () => { if (S.mode === 'playing' || S.m
 function togglePause() { if (S.mode === 'playing') { S.mode = 'paused'; U.showBanner('Paused', 99999); } else if (S.mode === 'paused') { S.mode = 'playing'; U.showBanner('', 0); } }
 
 const card = $('#start-card');
-card.innerHTML = `<p class="lede">Golden hour over the Sharqiya sands. Dive to gain speed, pull up to trade it for height, and fly the glowing rings before the sun goes down. Touch the dunes and the flight is over.</p>
-<ul class="facts"><li><b>18</b> rings</li><li>Real glide physics</li><li>Ring chains multiply</li><li>Best: <b id="best-lbl">${U.best.get()}</b></li></ul>
+card.innerHTML = `<p class="lede">Golden hour over the Sharqiya sands. Dive to gain speed, pull up to trade it for height, and fly between the red pylon gates before the sun goes down. Touch the dunes and the flight is over.</p>
+<ul class="facts"><li><b>18</b> gates</li><li>Real glide physics</li><li>Gate chains multiply</li><li>Best: <b id="best-lbl">${U.best.get()}</b></li></ul>
 <div class="field"><span>Wind</span><div class="seg" id="seg-wind"></div></div>
 <button class="primary" id="play" type="button"><span>Launch<small>↑/↓ pitch · ←/→ bank · tilt your phone to steer</small></span><span aria-hidden="true">→</span></button>
-<p class="note">Rings taken in a row build a multiplier. Skimming the sand close without touching it earns a bonus.</p>`;
+<p class="note">Gates flown in a row build a multiplier. Clipping a pylon costs points. Skimming the sand close without touching it earns a bonus.</p>`;
 const getWind = seg($('#seg-wind'), [{ value: 'calm', label: 'Calm' }, { value: 'breeze', label: 'Breeze' }, { value: 'gusty', label: 'Gusty' }], 'breeze');
 $('#play').addEventListener('click', start);
 $('#again').addEventListener('click', () => { $('#result').hidden = true; start(); });
@@ -122,14 +144,14 @@ let wind = 0;
 function start() {
   if (!ready) return; snd.ensure(); wind = { calm: 0, breeze: 4, gusty: 9 }[getWind()];
   P.pos.set(0, 62, -40); P.vel.set(0, 0, -26); P.yaw = Math.PI; P.pitch = 0; P.roll = 0; P.alive = true;
-  Object.assign(S, { score: 0, got: 0, flight: 0, mult: 1, chain: 0, lastRing: 0, stall: 0 }); for (const r of rings) { r.got = false; r.mesh.material.emissiveIntensity = 1.6; r.mesh.material.opacity = 0.9; }
-  S.mode = 'playing'; $('#start').hidden = true; touch.classList.add('on'); U.showBanner('Fly the rings', 1200); hud();
+  Object.assign(S, { score: 0, got: 0, flight: 0, mult: 1, chain: 0, lastRing: 0, stall: 0 }); for (const r of rings) { r.got = false; r.mat.map = liveTex; r.mat.needsUpdate = true; } S.next = 0;
+  S.mode = 'playing'; $('#start').hidden = true; touch.classList.add('on'); U.showBanner('Fly the gates', 1200); hud();
 }
-function hud() { U.setHud([['Rings', `${S.got} / ${rings.length}`], ['Score', S.score], ['Speed', Math.round(P.vel.length() * 3.6) + ' km/h', 'speed'], ['Height', Math.max(0, Math.round(P.pos.y - height(P.pos.x, P.pos.z))) + ' m', 'drift']]); }
+function hud() { U.setHud([['Gates', `${S.got} / ${rings.length}`], ['Score', S.score], ['Speed', Math.round(P.vel.length() * 3.6) + ' km/h', 'speed'], ['Height', Math.max(0, Math.round(P.pos.y - height(P.pos.x, P.pos.z))) + ' m', 'drift']]); }
 function endGame(title, reason) {
   S.mode = 'over'; const score = Math.round(S.score + S.flight * 2); const isBest = score > U.best.get(); if (isBest) U.best.set(score);
   $('#result-label').textContent = isBest ? 'New best' : 'Flight over'; $('#result-title').textContent = title; $('#result-reason').textContent = reason;
-  $('#result-stats').innerHTML = `<div><small>Score</small><b>${score}</b></div><div><small>Rings</small><b>${S.got}/${rings.length}</b></div><div><small>Airtime</small><b>${Math.round(S.flight)}s</b></div>`;
+  $('#result-stats').innerHTML = `<div><small>Score</small><b>${score}</b></div><div><small>Gates</small><b>${S.got}/${rings.length}</b></div><div><small>Airtime</small><b>${Math.round(S.flight)}s</b></div>`;
   $('#result').hidden = false; U.setHud(null); touch.classList.remove('on');
 }
 
@@ -160,11 +182,13 @@ function fly(dt) {
   P.vel.x += wind * dt * 0.6 * Math.sin(S.time * 0.3); P.vel.z += wind * dt * 0.4 * Math.cos(S.time * 0.21);
   P.pos.addScaledVector(P.vel, dt);
   const agl = P.pos.y - terrain; S.stall = speed < 10 ? S.stall + dt : 0;
-  if (agl < 2.2 && S.mode === 'playing') { U.doFlash(); particles.burst(P.pos.x, P.pos.y, P.pos.z, 60, 0xf1b57a, 14, 1.2); snd.play(80, 0.4, 'sawtooth', 0.14, -60); endGame('Into the sand', `${S.got} rings taken in ${Math.round(S.flight)} seconds of flight.`); return; }
+  if (agl < 2.2 && S.mode === 'playing') { U.doFlash(); particles.burst(P.pos.x, P.pos.y, P.pos.z, 60, 0xf1b57a, 14, 1.2); snd.play(80, 0.4, 'sawtooth', 0.14, -60); endGame('Into the sand', `${S.got} gates flown in ${Math.round(S.flight)} seconds of flight.`); return; }
   if (agl < 7 && speed > 20) { S.score += dt * 40; if (Math.random() < 0.2) particles.burst(P.pos.x, terrain + 0.5, P.pos.z, 2, 0xf1c08a, 3, 0.6); }
   if (P.pos.y > 420) P.vel.y = Math.min(P.vel.y, -2);
-  // Rings.
-  for (const r of rings) { if (r.got) continue; if (r.pos.distanceTo(P.pos) < 9.5) { r.got = true; S.got++; S.chain = (S.time - S.lastRing < 14) ? S.chain + 1 : 1; S.lastRing = S.time; S.mult = Math.min(5, S.chain); const pts = 100 * S.mult; S.score += pts; r.mesh.material.emissiveIntensity = 0.2; r.mesh.material.opacity = 0.25; particles.burst(r.pos.x, r.pos.y, r.pos.z, 40, 0xffb347, 10, 1); snd.play(660 + S.mult * 80, 0.18, 'triangle', 0.14, 300); U.toast(`Ring +${pts}${S.mult > 1 ? ' · x' + S.mult : ''}`); if (S.got === rings.length) { endGame('Every ring', `All ${rings.length} rings before sunset, ${Math.round(S.flight)} seconds airborne.`); return; } } }
+  // Gates.
+  for (const r of rings) { if (r.got) continue; const gd = P.pos.clone().sub(r.pos); const along = gd.dot(r.normal), lat = gd.dot(r.lateral);
+    if (P.pos.y < r.top + 0.4) for (const pl of r.pylons) { const dx = P.pos.x - pl.position.x, dz = P.pos.z - pl.position.z; if (dx * dx + dz * dz < 4 && S.time - (pl.userData.hit || -9) > 2) { pl.userData.hit = S.time; S.score = Math.max(0, S.score - 50); S.chain = 0; S.mult = 1; U.doFlash(); snd.play(140, 0.25, 'square', 0.12, -40); U.toast('Pylon hit −50'); } }
+    if (Math.abs(along) < 6 && Math.abs(lat) < GATE_HALF - 1.5 && P.pos.y < r.top) { r.got = true; r.mat.map = doneTex; r.mat.needsUpdate = true; S.got++; S.chain = (S.time - S.lastRing < 14) ? S.chain + 1 : 1; S.lastRing = S.time; S.mult = Math.min(5, S.chain); const pts = 100 * S.mult; S.score += pts;  snd.play(660 + S.mult * 80, 0.18, 'triangle', 0.14, 300); U.toast(`Gate +${pts}${S.mult > 1 ? ' · x' + S.mult : ''}`); if (S.got === rings.length) { endGame('Every gate', `All ${rings.length} gates before sunset, ${Math.round(S.flight)} seconds airborne.`); return; } } }
   if (S.time - S.lastRing > 14 && S.chain) { S.chain = 0; S.mult = 1; }
   S.flight += dt;
 }
@@ -176,7 +200,8 @@ function loop() {
   else if (S.mode === 'menu' || S.mode === 'over') { P.pos.x = Math.sin(S.time * 0.08) * 140; P.pos.z = -60 + Math.cos(S.time * 0.08) * 140; P.pos.y = 75; P.yaw = S.time * 0.08 + Math.PI / 2; P.roll = 0.35; P.vel.set(Math.cos(P.yaw) * 22, 0, -Math.sin(P.yaw) * 22); }
   bankVis = lerp(bankVis, P.roll, 0.1);
   glider.position.copy(P.pos); glider.rotation.set(0, 0, 0); glider.rotateY(P.yaw); glider.rotateX(-P.pitch * 0.6); glider.rotateZ(bankVis);
-  for (const r of rings) { r.mesh.rotation.z += dt * 0.6; }
+  // Inflatables lean and wobble a little in the wind.
+  for (const r of rings) for (const [k, pl] of r.pylons.entries()) { pl.rotation.x = Math.sin(S.time * 1.3 + r.ph + k) * 0.012 * (1 + wind * 0.1); pl.rotation.z = Math.cos(S.time * 1.1 + r.ph + k * 2) * 0.012 * (1 + wind * 0.1); }
   particles.update(dt, 0.95, 3);
   for (let i = 0; i < MOTES; i++) { motePos[i * 3 + 1] += dt * 1.5; const dx = motePos[i * 3] - P.pos.x, dz = motePos[i * 3 + 2] - P.pos.z; if (Math.abs(dx) > 200) motePos[i * 3] = P.pos.x - Math.sign(dx) * 200 + (Math.random() - 0.5) * 10; if (Math.abs(dz) > 200) motePos[i * 3 + 2] = P.pos.z - Math.sign(dz) * 200; if (motePos[i * 3 + 1] > P.pos.y + 60) motePos[i * 3 + 1] = P.pos.y - 60; }
   moteGeo.attributes.position.needsUpdate = true;
