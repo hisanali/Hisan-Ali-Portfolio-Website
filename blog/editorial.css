@@ -1,0 +1,85 @@
+/* Editorial layout for long reads: open typography and hairline rules instead of boxed panels.
+   Used with .fe-page (colour tokens) plus .ed-page. Selectors are prefixed with html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article
+   so they win over the site-wide article panels in interior-redesign.css. */
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content { --ed-rule:var(--fe-border); }
+
+/* Lists: no panels. */
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content ul,
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content ol { margin:22px 0 30px !important; padding:0 0 0 1.25em !important; border:0 !important; background:none !important; box-shadow:none !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content li { padding-left:4px; font-size:15px !important; line-height:1.75 !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content li::marker { color:var(--fe-accent); }
+
+/* Tables: rules only. */
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content table { display:table; width:100%; margin:28px 0 10px !important; border:0 !important; background:none !important; border-collapse:collapse; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-table { overflow-x:auto; margin:28px 0 8px; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content th,
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content td { min-width:0; padding:14px 16px 14px 0 !important; border:0 !important; border-bottom:1px solid var(--ed-rule) !important; background:none !important; vertical-align:top; text-align:left; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content thead th { color:var(--fe-muted) !important; font-size:11px !important; font-weight:800; letter-spacing:.08em; text-transform:uppercase; border-bottom:2px solid var(--fe-ink) !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content tbody th { color:var(--fe-ink) !important; font-size:14px !important; font-weight:700; text-transform:none; letter-spacing:0; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content td { color:var(--fe-muted) !important; font-size:14px !important; line-height:1.55; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content caption { caption-side:top; padding:0 0 10px; text-align:left; color:var(--fe-muted); font-size:13px; font-weight:700; }
+
+/* Pull quote: type, not a box. */
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content blockquote.ed-pull { margin:44px 0 !important; padding:22px 0 !important; border:0 !important; border-top:1px solid var(--ed-rule) !important; border-bottom:1px solid var(--ed-rule) !important; background:none !important; box-shadow:none !important; color:var(--fe-ink) !important; overflow:visible; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content blockquote.ed-pull::before { content:none !important; display:none !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content blockquote.ed-pull p { max-width:30ch; margin:0 !important; color:var(--fe-ink) !important; font:400 clamp(26px,3vw,36px)/1.2 'DM Serif Display',serif !important; letter-spacing:-.015em; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content blockquote.ed-pull p em { color:var(--fe-accent); font-style:italic; }
+
+/* Figures in a row, divided by hairlines. */
+.ed-page .ed-figures { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:8px 0 46px; border-top:1px solid var(--fe-border); border-bottom:1px solid var(--fe-border); }
+.ed-page .ed-figures > div { padding:20px 20px 18px 0; }
+.ed-page .ed-figures > div + div { padding-left:20px; border-left:1px solid var(--fe-border); }
+.ed-page .ed-figures .fe-num { display:block; font-family:'DM Serif Display',serif; font-size:clamp(2rem,3.6vw,2.9rem); line-height:1; color:var(--fe-accent); white-space:nowrap; }
+.ed-page .ed-figures > div:nth-child(2) .fe-num { color:var(--fe-accent-2); }
+.ed-page .ed-figures small { display:block; margin-top:10px; color:var(--fe-muted); font-size:13px; line-height:1.45; }
+@media(max-width:640px) { .ed-page .ed-figures { grid-template-columns:1fr; } .ed-page .ed-figures > div + div { padding-left:0; border-left:0; border-top:1px solid var(--fe-border); } }
+
+/* In short: a kicker and a plain list. */
+.ed-page .ed-kicker { display:block; margin:0 0 6px; color:var(--fe-accent); font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-short { margin:0 0 40px !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-short ul { margin-top:8px !important; }
+
+/* Notes: a quiet line, not a box. */
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content p.ed-aside { max-width:62ch; margin:0 0 32px !important; padding-left:14px !important; border-left:2px solid var(--fe-border); color:var(--fe-muted) !important; font-size:13.5px !important; line-height:1.7 !important; font-style:italic; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content p.ed-src { margin:-2px 0 30px !important; color:var(--fe-muted) !important; font-size:12.5px !important; }
+
+/* Points: headed paragraphs separated by rules. */
+.ed-page .ed-points { margin:18px 0 34px; }
+.ed-page .ed-points > div { display:grid; grid-template-columns:44px minmax(0,1fr); gap:0 14px; padding:18px 0; border-top:1px solid var(--fe-border); }
+.ed-page .ed-points > div:last-child { border-bottom:1px solid var(--fe-border); }
+.ed-page .ed-points b.n { grid-row:span 2; font-family:'DM Serif Display',serif; font-size:1.7rem; font-weight:400; line-height:1; color:var(--fe-accent); }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-points h3 { margin:0 0 6px !important; font-size:21px !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-points p { margin:0 !important; }
+
+/* Animated figure: no frame, just a caption. */
+.ed-page .ed-figure { margin:34px 0 36px; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-figure figcaption { margin-top:12px; color:var(--fe-muted); font-size:12.5px; }
+
+/* Tool: an open section between two rules. */
+.ed-page .ed-tool { margin:50px 0 44px; padding:26px 0 30px; border-top:2px solid var(--fe-ink); border-bottom:1px solid var(--fe-border); }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-tool h3 { margin:2px 0 8px !important; }
+.ed-page .ed-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 26px; margin:22px 0 8px; }
+.ed-page .ed-fields .wide { grid-column:1 / -1; }
+.ed-page .ed-fields label { display:flex; flex-direction:column; gap:4px; color:var(--fe-muted); font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.ed-page .ed-fields input, .ed-page .ed-fields select, .ed-page .ed-fields textarea { width:100%; padding:8px 0; border:0; border-bottom:1.5px solid var(--fe-border); border-radius:0; background:transparent; color:var(--fe-ink); font:500 16px/1.4 inherit; font-family:inherit; text-transform:none; letter-spacing:0; }
+.ed-page .ed-fields input:focus, .ed-page .ed-fields select:focus, .ed-page .ed-fields textarea:focus { outline:none; border-bottom-color:var(--fe-accent); }
+.ed-page .ed-fields select option { color:#111; }
+.ed-page .ed-fields input[type=range] { padding:10px 0; border:0; accent-color:var(--fe-accent); }
+.ed-page .ed-fields output { color:var(--fe-accent); font-size:15px; font-weight:800; text-transform:none; letter-spacing:0; }
+.ed-page .ed-checks { display:grid; gap:2px; margin:18px 0 6px; }
+.ed-page .ed-checks label { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--fe-border); color:var(--fe-ink); font-size:15px; line-height:1.45; cursor:pointer; }
+.ed-page .ed-checks input { width:18px; height:18px; margin-top:2px; flex:0 0 auto; accent-color:var(--fe-accent); }
+.ed-page .ed-result { display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 22px; align-items:baseline; margin-top:24px; }
+.ed-page .ed-result .big { font-family:'DM Serif Display',serif; font-size:clamp(2.6rem,6vw,3.8rem); line-height:1; color:var(--fe-accent); white-space:nowrap; }
+.ed-page .ed-result.lo .big { color:var(--fe-low); } .ed-page .ed-result.mid .big { color:var(--fe-mid); } .ed-page .ed-result.hi .big { color:var(--fe-high); }
+.ed-page .ed-result strong { display:block; color:var(--fe-ink); font-size:18px; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-result p { margin:4px 0 0 !important; font-size:14.5px !important; line-height:1.6 !important; color:var(--fe-ink) !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-result ul { margin:10px 0 0 !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-result li { font-size:14px !important; color:var(--fe-muted) !important; }
+.ed-page .ed-result > div { min-width:0; }
+@media(max-width:560px) { .ed-page .ed-fields { grid-template-columns:1fr; } .ed-page .ed-result { grid-template-columns:1fr; } }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content p.ed-fine { margin:16px 0 0 !important; color:var(--fe-muted) !important; font-size:12.5px !important; }
+
+/* Sources: small print under a rule. */
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-sources ol { padding-left:1.2em !important; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .ed-sources li { font-size:13px !important; line-height:1.6 !important; }
