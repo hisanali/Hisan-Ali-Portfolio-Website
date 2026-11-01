@@ -1,9 +1,9 @@
-import { THREE, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
+import { THREE, Q, qualityField, beamMaterial, beamCone, waterNormals, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
 import { mergeGeometries, mergeVertices } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 
 const KEY = 'reefdive';
 const load = loadingUI('Reef Dive');
-const { renderer, scene, camera, composer } = makeWorld($('#scene'), { fov: 70, far: 260, bloom: 0.4, threshold: 0.8, radius: 0.6, exposure: 0.95 });
+const { renderer, scene, camera, composer } = makeWorld($('#scene'), { fov: 70, far: 260, bloom: 0.45, threshold: 0.78, radius: 0.65, exposure: 0.95, grade: { uVignette: 0.45, uGrain: 0.022, uContrast: 1.05, uSaturation: 0.96, uTint: new THREE.Vector3(0.9, 1.02, 1.06) } });
 const U = ui(KEY), snd = new Sound(KEY);
 $('#credit').textContent = 'Fish: Barramundi Fish, Khronos glTF Sample Assets (CC0). Rock texture: Poly Haven (CC0).';
 
@@ -32,7 +32,7 @@ causTex.repeat.set(60, 60);
 
 // ---------- Sea floor and reef ----------
 const rnd = mulberry(5);
-const SIZE = 420, RES = 140;
+const SIZE = 420, RES = Math.round(140 + 120 * Q.detail);
 function floorH(x, z) { return -24 + Math.sin(x * 0.045) * 3 + Math.cos(z * 0.05 + x * 0.02) * 3.5 + Math.sin(x * 0.17 + z * 0.13) * 0.8; }
 const floorMat = pbr('forest_ground_04', { repeat: 40, roughness: 0.95, normalScale: 0.5, color: 0xffffff });
 floorMat.map = canvasTexture(512, (c, s) => { c.fillStyle = '#d9c9a3'; c.fillRect(0, 0, s, s); const img = c.getImageData(0, 0, s, s); for (let i = 0; i < img.data.length; i += 4) { const n = (Math.random() - 0.5) * 30; img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n * 0.8; } c.putImageData(img, 0, 0); c.globalAlpha = 0.22; c.strokeStyle = '#a88f62'; c.lineWidth = 3; for (let k = 0; k < 30; k++) { c.beginPath(); for (let x = 0; x <= s; x += 12) c.lineTo(x, k * 17 + Math.sin(x * 0.04 + k * 1.3) * 5); c.stroke(); } }, { repeat: 40 }); floorMat.roughnessMap = null; floorMat.emissive = new THREE.Color(0x9fe8ff); floorMat.emissiveMap = causTex; floorMat.emissiveIntensity = 0.22; floorMat.needsUpdate = true;
@@ -192,6 +192,49 @@ const vents = []; const ventGeo = (() => { const g = new THREE.CylinderGeometry(
 for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.5, r = 70 + rnd() * 60; const x = Math.cos(a) * r, z = Math.sin(a) * r; const m = new THREE.Mesh(ventGeo, rockMat); m.position.set(x, floorH(x, z) + 0.3, z); m.castShadow = m.receiveShadow = true; scene.add(m); vents.push(m.position); }
 const bubbles = new Particles(scene, 1400, 0xe6f8ff, 0.35);
 
+// ---------- Light and water ----------
+// The surface seen from below: bright Snell's window overhead, darker total internal reflection at grazing angles,
+// broken up by two layers of moving wave normals.
+const surfNormals = waterNormals(256); surfNormals.wrapS = surfNormals.wrapT = THREE.RepeatWrapping;
+const surfMat = new THREE.ShaderMaterial({
+  uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uNormals: { value: surfNormals }, uSky: { value: new THREE.Color(0xd8f6ff) }, uDeep: { value: new THREE.Color(0x0b5a78) } }]),
+  vertexShader: `varying vec3 vWorld; varying vec2 vUv; #include <fog_pars_vertex>
+    void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition; #include <fog_vertex> }`.replace(/#include <fog_pars_vertex>/, '\n#include <fog_pars_vertex>\n').replace(/#include <fog_vertex>/, '\n#include <fog_vertex>\n'),
+  fragmentShader: `uniform float uTime; uniform sampler2D uNormals; uniform vec3 uSky, uDeep; varying vec3 vWorld; varying vec2 vUv; #include <fog_pars_fragment>
+    void main(){ vec3 n1 = texture2D(uNormals, vWorld.xz * 0.02 + vec2(uTime * 0.01, uTime * 0.006)).xyz * 2.0 - 1.0; vec3 n2 = texture2D(uNormals, vWorld.xz * 0.05 - vec2(uTime * 0.008, -uTime * 0.012)).xyz * 2.0 - 1.0;
+      vec3 n = normalize(vec3(n1.xy + n2.xy, 3.0)); vec3 v = normalize(vWorld - cameraPosition); float up = clamp(dot(v, vec3(0.0, 1.0, 0.0)) + n.x * 0.25 + n.y * 0.25, 0.0, 1.0);
+      float window = smoothstep(0.62, 0.8, up); vec3 col = mix(uDeep * 0.8, uSky * 1.6, window) + pow(max(0.0, n.x + n.y), 6.0) * 0.4 * window;
+      gl_FragColor = vec4(col, 1.0); #include <fog_fragment> }`.replace(/#include <fog_pars_fragment>/, '\n#include <fog_pars_fragment>\n').replace(/#include <fog_fragment>/, '\n#include <fog_fragment>\n'),
+  fog: true, side: THREE.DoubleSide, depthWrite: false
+});
+const surface = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), surfMat); surface.rotation.x = -Math.PI / 2; surface.position.y = 0; scene.add(surface);
+// Sun shafts: soft additive sheets hanging from the surface that sway and flicker as the waves focus the light.
+const shaftMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; varying float vD; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vD = -mv.z; gl_Position = projectionMatrix * mv; }',
+  fragmentShader: `uniform float uTime; varying vec2 vUv; varying float vD;
+    void main(){ float edge = smoothstep(0.0, 0.35, vUv.x) * smoothstep(1.0, 0.65, vUv.x); float fall = pow(vUv.y, 1.7) * smoothstep(1.0, 0.8, vUv.y);
+      float flick = 0.6 + 0.4 * sin(vUv.x * 18.0 + uTime * 1.3) * sin(vUv.x * 7.0 - uTime * 0.7); float near = smoothstep(1.5, 6.0, vD) * (1.0 - smoothstep(40.0, 90.0, vD));
+      float a = edge * fall * flick * near * 0.07; gl_FragColor = vec4(vec3(0.75, 0.95, 1.0) * a, 1.0); }`,
+  transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+});
+const shafts = []; const SHAFTS = Math.round(18 * Q.detail + 6);
+for (let i = 0; i < SHAFTS; i++) { const w = 2 + Math.random() * 6, h = 34; const g = new THREE.PlaneGeometry(w, h); g.translate(0, -h / 2, 0); const m = new THREE.Mesh(g, shaftMat); m.userData = { ox: (Math.random() - 0.5) * 70, oz: (Math.random() - 0.5) * 70, ph: Math.random() * 6, tilt: 0.18 + Math.random() * 0.08 }; m.renderOrder = 4; scene.add(m); shafts.push(m); }
+// Marine snow: fine drifting particles that give the water volume and show motion.
+const SNOW = Math.round(5000 * Q.detail), snowPos = new Float32Array(SNOW * 3); for (let i = 0; i < SNOW; i++) snowPos.set([(Math.random() - 0.5) * 60, -Math.random() * 28, (Math.random() - 0.5) * 60], i * 3);
+const snowGeo = new THREE.BufferGeometry(); snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+const snowDot = canvasTexture(32, (c, s) => { const g = c.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.clearRect(0, 0, s, s); c.fillStyle = g; c.fillRect(0, 0, s, s); }, { srgb: false });
+const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xcfe6ea, size: 0.09, map: snowDot, transparent: true, opacity: 0.55, depthWrite: false })); snow.frustumCulled = false; scene.add(snow);
+function waterFx(dt) {
+  surfMat.uniforms.uTime.value = S.time; shaftMat.uniforms.uTime.value = S.time;
+  for (const m of shafts) { const u = m.userData; let x = sub.pos.x + u.ox, z = sub.pos.z + u.oz; if (x - sub.pos.x > 35) u.ox -= 70; if (x - sub.pos.x < -35) u.ox += 70; if (z - sub.pos.z > 35) u.oz -= 70; if (z - sub.pos.z < -35) u.oz += 70;
+    m.position.set(sub.pos.x + u.ox + Math.sin(S.time * 0.3 + u.ph) * 1.5, -0.2, sub.pos.z + u.oz); m.rotation.set(0, Math.atan2(camera.position.x - m.position.x, camera.position.z - m.position.z), 0); m.rotateX(u.tilt * Math.sin(u.ph)); m.rotateZ(u.tilt); }
+  for (let i = 0; i < SNOW; i++) { const o = i * 3; snowPos[o + 1] -= dt * 0.12; snowPos[o] += Math.sin(S.time * 0.4 + i) * dt * 0.05;
+    const dx = snowPos[o] - sub.pos.x, dy = snowPos[o + 1] - sub.pos.y, dz = snowPos[o + 2] - sub.pos.z;
+    if (Math.abs(dx) > 30) snowPos[o] -= Math.sign(dx) * 60; if (Math.abs(dz) > 30) snowPos[o + 2] -= Math.sign(dz) * 60; if (dy < -14 || snowPos[o + 1] < floorH(snowPos[o], snowPos[o + 2])) snowPos[o + 1] = Math.min(-0.5, sub.pos.y + 14); if (dy > 14) snowPos[o + 1] = sub.pos.y - 14; }
+  snowGeo.attributes.position.needsUpdate = true;
+}
+
 // ---------- Submersible ----------
 const sub = { root: new THREE.Group(), body: new THREE.Group(), pos: new THREE.Vector3(0, -8, 60), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, roll: 0 };
 // A two-person research submersible. Built in body space with the bow at -Z (the body group is turned to face travel).
@@ -249,6 +292,7 @@ const sub = { root: new THREE.Group(), body: new THREE.Group(), pos: new THREE.V
   }
   // LED light bars under the bow and the main search light.
   for (const sx of [-1, 1]) { const bar = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.08), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff6e0, emissiveIntensity: 3 })); bar.position.set(sx * 0.45, -0.72, -1.55); add(bar, false); const hous = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.1, 0.16), dark); hous.position.set(sx * 0.45, -0.72, -1.48); add(hous); }
+  { const b = beamCone(7, 26, beamMaterial(0xe8fbff, 0.06)); b.position.set(0, -0.6, -1.7); b.rotation.y = Math.PI; b.rotation.x = 0.03; sub.body.add(b); }
   const lamp = new THREE.SpotLight(0xfff2cc, 120, 60, 0.5, 0.5, 1.4); lamp.position.set(0, -0.6, -1.7); lamp.target.position.set(0, -1, -40); lamp.castShadow = false; sub.body.add(lamp); sub.body.add(lamp.target);
   scene.add(sub.root);
 }
@@ -270,8 +314,10 @@ const card = $('#start-card');
 card.innerHTML = `<p class="lede">A living reef off the Daymaniyat Islands: schools of fish part around your sub, jellyfish drift through the beams and pearls glow in the coral. Air runs down. Bubble vents refill it.</p>
 <ul class="facts"><li>Pearls to collect</li><li>Fish that react to you</li><li>Air management</li><li>Best: <b id="best-lbl">${U.best.get()}</b></li></ul>
 <div class="field"><span>Air supply</span><div class="seg" id="seg-air"></div></div>
+<div id="gfx"></div>
 <button class="primary" id="play" type="button"><span>Dive<small>↑ thrust · ←/→ turn · Space dive · Shift rise</small></span><span aria-hidden="true">→</span></button>
 <p class="note">Pearls taken quickly in a row score more. Jellyfish stings cost air. Below the reef floor, pressure drains air faster.</p>`;
+qualityField($('#gfx'));
 const getAir = seg($('#seg-air'), [{ value: 'long', label: 'Generous' }, { value: 'normal', label: 'Standard' }, { value: 'short', label: 'Tight' }], 'normal');
 $('#play').addEventListener('click', start);
 $('#again').addEventListener('click', () => { $('#result').hidden = true; start(); });
@@ -323,7 +369,7 @@ function loop() {
   requestAnimationFrame(loop); const dt = Math.min(0.05, clock.getDelta()); S.time += dt;
   if (S.mode === 'playing') { pilot(dt); if (Math.floor(S.time * 4) % 2 === 0) hud(); }
   else if (S.mode === 'menu' || S.mode === 'over') { sub.yaw = Math.PI + Math.sin(S.time * 0.2) * 0.4; sub.pos.set(Math.sin(S.time * 0.15) * 30, -7 + Math.sin(S.time * 0.5) * 1.5, 40 + Math.cos(S.time * 0.15) * 30); }
-  boids(dt);
+  boids(dt); waterFx(dt);
   sub.root.position.copy(sub.pos); sub.root.rotation.set(0, 0, 0); sub.root.rotateY(sub.yaw); sub.root.rotateX(sub.pitch); sub.root.rotateZ(sub.roll);
   for (const p of props) p.rotation.z += dt * 30;
   sub.strobe.material.emissiveIntensity = (S.time % 1.6) < 0.08 ? 6 : 0;

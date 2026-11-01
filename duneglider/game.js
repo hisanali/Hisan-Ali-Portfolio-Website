@@ -1,21 +1,21 @@
-import { THREE, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, waterNormals, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
+import { THREE, Q, qualityField, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, waterNormals, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
 import { Water } from '/evermile/vendor/objects/Water.js';
 
 const KEY = 'duneglider';
 const load = loadingUI('Dune Glider');
-const { renderer, scene, camera, composer } = makeWorld($('#scene'), { fov: 64, far: 2400, bloom: 0.16, threshold: 0.96, radius: 0.5, exposure: 0.72 });
+const { renderer, scene, camera, composer } = makeWorld($('#scene'), { fov: 64, far: 2400, bloom: 0.18, threshold: 0.95, radius: 0.5, exposure: 0.74, grade: { uVignette: 0.3, uGrain: 0.018, uContrast: 1.05, uSaturation: 1.06, uTint: new THREE.Vector3(1.04, 1.0, 0.94) } });
 const U = ui(KEY), snd = new Sound(KEY);
 $('#credit').textContent = 'Terrain textures: Poly Haven (CC0). Trees: forest kit (CC BY 4.0).';
 
 // ---------- Golden hour ----------
 const sky = addSky(renderer, scene, { elevation: 10, azimuth: 215, turbidity: 6, rayleigh: 2.0, mie: 0.008, mieG: 0.82, intensity: 0.45 });
-scene.fog = new THREE.FogExp2(0xf0c9a0, 0.0007);
+scene.fog = new THREE.FogExp2(0xe9c49c, 0.00075);
 const sun = sunLight(scene, { color: 0xffc98a, intensity: 2.6, size: 260, mapSize: 2048, far: 900 });
 scene.add(new THREE.HemisphereLight(0xffd9b0, 0x8a5a2a, 0.35));
 
 // ---------- Dunes ----------
 const noise = new SimplexNoise({ random: mulberry(9) });
-const SIZE = 2400, RES = 190;
+const SIZE = 2400, RES = Math.round(190 + 190 * Q.detail);
 function height(x, z) {
   const r1 = noise.noise(x * 0.0011, z * 0.0007), r2 = noise.noise(x * 0.0032 + 7, z * 0.0021), r3 = noise.noise(x * 0.011, z * 0.009 + 3);
   // Long crescent ridges running north-south with a sharp lee side.
@@ -25,24 +25,47 @@ function height(x, z) {
   const d = Math.hypot(x, z); if (d < 110) h = lerp(14, h, Math.pow(d / 110, 2)); // flat launch pad
   return h;
 }
-const sandMat = pbr('forest_ground_04', { repeat: 70, roughness: 0.9, normalScale: 0.3, color: 0xffffff });
-sandMat.map = canvasTexture(512, (c, s) => { c.fillStyle = '#e9b97e'; c.fillRect(0, 0, s, s); const img = c.getImageData(0, 0, s, s); for (let i = 0; i < img.data.length; i += 4) { const n = (Math.random() - 0.5) * 26; img.data[i] += n; img.data[i + 1] += n * 0.9; img.data[i + 2] += n * 0.7; } c.putImageData(img, 0, 0); c.globalAlpha = 0.18; c.strokeStyle = '#b8803f'; for (let k = 0; k < 40; k++) { c.beginPath(); c.moveTo(0, k * 13 + Math.random() * 6); for (let x = 0; x <= s; x += 16) c.lineTo(x, k * 13 + Math.sin(x * 0.05 + k) * 4); c.stroke(); } }, { repeat: 70 });
-sandMat.roughnessMap = null; sandMat.needsUpdate = true;
+// Sand: fine grain colour, and a normal map of wind ripples (asymmetric: gentle windward face, steep lee face),
+// warped by noise so the ripple crests wander like real ones.
+const sandMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.93, metalness: 0, vertexColors: true });
+sandMat.map = canvasTexture(512, (c, s) => { c.fillStyle = '#e4b47c'; c.fillRect(0, 0, s, s); const img = c.getImageData(0, 0, s, s); for (let i = 0; i < img.data.length; i += 4) { const n = (Math.random() - 0.5) * 34, warm = Math.random() < 0.04 ? 18 : 0; img.data[i] += n + warm; img.data[i + 1] += n * 0.9; img.data[i + 2] += n * 0.7 - warm; } c.putImageData(img, 0, 0); }, { repeat: 160 });
+{
+  const N = 512, hgt = new Float32Array(N * N), wn = new SimplexNoise({ random: mulberry(4) });
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const u = x / N * Math.PI * 2, v = y / N * Math.PI * 2;
+    // Periodic noise so the texture tiles: sample on a torus.
+    const warp = wn.noise4d(Math.cos(u), Math.sin(u), Math.cos(v) * 0.6, Math.sin(v) * 0.6) * 0.45;
+    const ph = (y / N * 9 + warp) % 1; const r = ph < 0.75 ? ph / 0.75 : 1 - (ph - 0.75) / 0.25;
+    hgt[y * N + x] = r + wn.noise4d(Math.cos(u) * 3, Math.sin(u) * 3, Math.cos(v) * 3, Math.sin(v) * 3) * 0.08;
+  }
+  sandMat.normalMap = canvasTexture(N, (c) => { const img = c.createImageData(N, N); const n = new THREE.Vector3();
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const dx = hgt[y * N + (x + 1) % N] - hgt[y * N + (x - 1 + N) % N], dy = hgt[((y + 1) % N) * N + x] - hgt[((y - 1 + N) % N) * N + x]; n.set(-dx * 1.4, -dy * 1.4, 1).normalize(); const i = (y * N + x) * 4; img.data[i] = (n.x * 0.5 + 0.5) * 255; img.data[i + 1] = (n.y * 0.5 + 0.5) * 255; img.data[i + 2] = (n.z * 0.5 + 0.5) * 255; img.data[i + 3] = 255; }
+    c.putImageData(img, 0, 0); }, { srgb: false, repeat: 280 });
+  sandMat.normalScale = new THREE.Vector2(0.55, 0.55);
+}
 const geo = new THREE.PlaneGeometry(SIZE, SIZE, RES, RES); geo.rotateX(-Math.PI / 2);
-{ const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, height(p.getX(i), p.getZ(i))); geo.computeVertexNormals(); }
+{ const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, height(p.getX(i), p.getZ(i))); geo.computeVertexNormals();
+  // Crests are wind-scoured and paler; steep lee slopes and hollows hold darker, coarser, slightly redder sand.
+  const nrm = geo.attributes.normal, col = new Float32Array(p.count * 3), cn = new SimplexNoise({ random: mulberry(21) });
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), y = p.getY(i); const steep = 1 - nrm.getY(i); const crest = THREE.MathUtils.smoothstep(y, 30, 80);
+    const tone = 0.9 + crest * 0.14 - steep * 0.35 + cn.noise(x * 0.004, z * 0.004) * 0.06; col.set([tone * 1.0, tone * (0.97 - steep * 0.06), tone * (0.94 - steep * 0.1)], i * 3); }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); }
 const dunes = new THREE.Mesh(geo, sandMat); dunes.receiveShadow = true; dunes.castShadow = true; scene.add(dunes);
-const far = new THREE.Mesh(new THREE.PlaneGeometry(12000, 12000), new THREE.MeshStandardMaterial({ color: 0xe3ab74, roughness: 1 })); far.rotation.x = -Math.PI / 2; far.position.y = -4; scene.add(far);
+const far = new THREE.Mesh(new THREE.PlaneGeometry(12000, 12000), new THREE.MeshStandardMaterial({ color: 0xd9a46c, roughness: 1 })); far.rotation.x = -Math.PI / 2; far.position.y = -4; scene.add(far);
 
 // Oasis water + palms.
 const water = new Water(new THREE.CircleGeometry(95, 48), { textureWidth: 512, textureHeight: 512, waterNormals: waterNormals(), sunDirection: sky.sun.clone(), sunColor: 0xffe0b0, waterColor: 0x1d6f74, distortionScale: 2.2, fog: true });
 water.rotation.x = -Math.PI / 2; water.position.set(60, -1.2, -420); scene.add(water);
-const trunkMat = pbr('bark_brown_02', { repeat: 1, roughness: 0.9 }); const frondMat = new THREE.MeshStandardMaterial({ color: 0x3f8a3c, roughness: 0.8, side: THREE.DoubleSide });
+const trunkMat = pbr('bark_brown_02', { repeat: 1, roughness: 0.9, color: 0xb8a088 }); trunkMat.map.repeat.set(1, 6); trunkMat.normalMap.repeat.set(1, 6); trunkMat.roughnessMap.repeat.set(1, 6);
+const frondTex = canvasTexture(256, (c, s) => { c.clearRect(0, 0, s, s); c.strokeStyle = '#6b5a2e'; c.lineWidth = 4; c.beginPath(); c.moveTo(s / 2, s); c.lineTo(s / 2, 0); c.stroke();
+  for (let k = 0; k < 34; k++) { const y = s - k * s / 34, len = s * 0.48 * Math.sin((k + 1) / 35 * Math.PI) ** 0.7; for (const sd of [-1, 1]) { const g = c.createLinearGradient(s / 2, y, s / 2 + sd * len, y - 30); g.addColorStop(0, '#4f6b2a'); g.addColorStop(1, k % 3 ? '#6f8a3a' : '#8a8f45'); c.strokeStyle = g; c.lineWidth = 3.5; c.beginPath(); c.moveTo(s / 2, y); c.quadraticCurveTo(s / 2 + sd * len * 0.5, y - 10, s / 2 + sd * len, y - 34); c.stroke(); } } });
+const frondMat = new THREE.MeshStandardMaterial({ map: frondTex, alphaTest: 0.4, roughness: 0.75, side: THREE.DoubleSide });
 const rnd = mulberry(31);
 for (let i = 0; i < 26; i++) {
   const a = rnd() * Math.PI * 2, r = 100 + rnd() * 40; const x = 60 + Math.cos(a) * r, z = -420 + Math.sin(a) * r; const y = height(x, z);
   const palm = new THREE.Group(); const h = 9 + rnd() * 6;
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.45, h, 7), trunkMat); trunk.position.y = h / 2; trunk.rotation.z = (rnd() - 0.5) * 0.25; trunk.castShadow = true; palm.add(trunk);
-  for (let k = 0; k < 9; k++) { const f = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 5.5, 1, 4), frondMat); f.geometry.translate(0, 2.4, 0); const fp = f.geometry.attributes.position; for (let v = 0; v < fp.count; v++) fp.setZ(v, -Math.pow(fp.getY(v) / 5, 2) * 2.4); f.position.set(trunk.position.x + Math.sin(trunk.rotation.z) * -h, h, 0); f.rotation.y = k / 9 * Math.PI * 2; f.rotation.x = -0.5; f.castShadow = true; palm.add(f); }
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, h, 14, 12), trunkMat); trunk.position.y = h / 2; trunk.rotation.z = (rnd() - 0.5) * 0.25; trunk.castShadow = true; palm.add(trunk);
+  for (let k = 0; k < 14; k++) { const f = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 5.5, 2, 6), frondMat); f.geometry.translate(0, 2.4, 0); const fp = f.geometry.attributes.position; for (let v = 0; v < fp.count; v++) fp.setZ(v, -Math.pow(fp.getY(v) / 5, 2) * 2.4); f.position.set(trunk.position.x + Math.sin(trunk.rotation.z) * -h, h, 0); f.rotation.y = k / 14 * Math.PI * 2 + rnd() * 0.2; f.rotation.x = -0.35 - (k % 3) * 0.25; f.castShadow = true; palm.add(f); }
   palm.position.set(x, y, z); scene.add(palm);
 }
 
@@ -95,9 +118,13 @@ const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ color: 0xfff0
 const glider = new THREE.Group(); scene.add(glider);
 {
   const wingShape = new THREE.Shape(); wingShape.moveTo(0, 0); wingShape.lineTo(-7.5, 2.6); wingShape.lineTo(-6.8, 3.4); wingShape.lineTo(0, 1.6); wingShape.lineTo(6.8, 3.4); wingShape.lineTo(7.5, 2.6); wingShape.lineTo(0, 0);
-  const wingGeo = new THREE.ShapeGeometry(wingShape, 6); wingGeo.rotateX(-Math.PI / 2); wingGeo.translate(0, 0, -1.4);
-  const sailTex = canvasTexture(256, (c, s) => { c.fillStyle = '#f6f1e6'; c.fillRect(0, 0, s, s); c.fillStyle = '#e3482f'; c.fillRect(0, 0, s, s * 0.22); c.fillStyle = '#1e2a44'; c.fillRect(0, s * 0.22, s, s * 0.08); });
-  const sail = new THREE.Mesh(wingGeo, new THREE.MeshStandardMaterial({ map: sailTex, roughness: 0.65, side: THREE.DoubleSide })); sail.castShadow = true; glider.add(sail);
+  const wingGeo = new THREE.PlaneGeometry(1, 1, 48, 12); { const p = wingGeo.attributes.position, uv = wingGeo.attributes.uv;
+    for (let i = 0; i < p.count; i++) { const u = uv.getX(i) * 2 - 1, v = 1 - uv.getY(i), au = Math.abs(u); const le = au * 2.6, te = 1.6 + au * 1.8; const zc = le + v * (te - le);
+      // Sail camber (billow) peaks a third of the way back; washout lifts the tips; slight dihedral.
+      const camber = 0.32 * Math.sin(Math.PI * Math.pow(v, 0.8)) * (1 - au * 0.6) + au * au * 0.35;
+      p.setXYZ(i, u * 7.3, camber, -zc); } wingGeo.computeVertexNormals(); wingGeo.translate(0, 0, -1.4); }
+  const sailTex = canvasTexture(512, (c, s) => { c.fillStyle = '#f2ede2'; c.fillRect(0, 0, s, s); c.fillStyle = '#d8442c'; c.fillRect(0, s * 0.78, s, s * 0.22); c.fillStyle = '#1e2a44'; c.fillRect(0, s * 0.7, s, s * 0.08); c.strokeStyle = 'rgba(80,70,60,.35)'; c.lineWidth = 2; for (let k = 1; k < 14; k++) { c.beginPath(); c.moveTo(k * s / 14, 0); c.lineTo(k * s / 14, s); c.stroke(); } c.strokeStyle = 'rgba(80,70,60,.18)'; for (let k = 1; k < 8; k++) { c.beginPath(); c.moveTo(0, k * s / 8); c.lineTo(s, k * s / 8); c.stroke(); } });
+  const sail = new THREE.Mesh(wingGeo, new THREE.MeshPhysicalMaterial({ map: sailTex, roughness: 0.6, sheen: 0.6, sheenRoughness: 0.5, transmission: 0, side: THREE.DoubleSide })); sail.castShadow = true; glider.add(sail);
   const barMat = new THREE.MeshStandardMaterial({ color: 0xcfd3da, metalness: 0.9, roughness: 0.3 });
   const keel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 4.2, 6), barMat); keel.rotation.x = Math.PI / 2; keel.position.set(0, -0.02, 0.6); glider.add(keel);
   for (const sx of [-1, 1]) { const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.3, 6), barMat); strut.position.set(sx * 0.65, -1.0, 0.6); strut.rotation.z = sx * 0.55; glider.add(strut); }
@@ -127,8 +154,10 @@ const card = $('#start-card');
 card.innerHTML = `<p class="lede">Golden hour over the Sharqiya sands. Dive to gain speed, pull up to trade it for height, and fly between the red pylon gates before the sun goes down. Touch the dunes and the flight is over.</p>
 <ul class="facts"><li><b>18</b> gates</li><li>Real glide physics</li><li>Gate chains multiply</li><li>Best: <b id="best-lbl">${U.best.get()}</b></li></ul>
 <div class="field"><span>Wind</span><div class="seg" id="seg-wind"></div></div>
+<div id="gfx"></div>
 <button class="primary" id="play" type="button"><span>Launch<small>↑/↓ pitch · ←/→ bank · tilt your phone to steer</small></span><span aria-hidden="true">→</span></button>
 <p class="note">Gates flown in a row build a multiplier. Clipping a pylon costs points. Skimming the sand close without touching it earns a bonus.</p>`;
+qualityField($('#gfx'));
 const getWind = seg($('#seg-wind'), [{ value: 'calm', label: 'Calm' }, { value: 'breeze', label: 'Breeze' }, { value: 'gusty', label: 'Gusty' }], 'breeze');
 $('#play').addEventListener('click', start);
 $('#again').addEventListener('click', () => { $('#result').hidden = true; start(); });
