@@ -1,0 +1,6 @@
+.cp-guide .cp-phone { max-width:340px; padding:16px; border-radius:28px; background:#0f2a26; border:6px solid #1d3d38; color:#e6f5f3; }
+.cp-guide .cp-head { padding:4px 4px 12px; font-weight:800; font-size:.86rem; letter-spacing:.04em; }
+.cp-guide .cp-card { margin-bottom:10px; padding:12px 14px; border-radius:14px; background:#e6f5f3; color:#10231f; opacity:0; transform:translateX(30px) rotate(3deg); animation:cp-in 8s cubic-bezier(.2,.8,.2,1) infinite; }
+.cp-guide .cp-c2 { animation-delay:.5s; } .cp-guide .cp-c3 { animation-delay:1s; }
+@keyframes cp-in { 0%,8% { opacity:0; transform:translateX(30px) rotate(3deg); } 18%,92% { opacity:1; transform:none; } 100% { opacity:0; } }
+.cp-guide .cp-card b { display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:#0b7a75; } .cp-guide .cp-card span { font-size:.88rem; }

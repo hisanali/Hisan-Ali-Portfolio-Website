@@ -1,0 +1,32 @@
+(() => {
+  'use strict';
+  const form = document.getElementById('yt-calc');
+  const out = document.getElementById('yt-calc-result');
+  if (!form || !out) return;
+  const n = k => Math.max(0, Number(form.elements.namedItem(k).value) || 0);
+  const f = x => x >= 1e6 ? (x / 1e6).toFixed(x % 1e6 ? 1 : 0) + 'm' : x.toLocaleString('en-US');
+  const render = () => {
+    const subs = n('subs'), hours = n('hours'), shorts = n('shorts'), ypp = form.elements.namedItem('ypp').value === 'yes';
+    const nowLong = subs >= 1000 && hours >= 4000, nowShorts = subs >= 1000 && shorts >= 10e6;
+    const newLong = subs >= 1000 && hours >= 8000, newShorts = subs >= 1000 && shorts >= 20e6;
+    const pool = shorts >= 10e6;
+    const rows = [['', 'Today', 'From Feb 2027'], ['Long-form path', nowLong, newLong], ['Shorts path', nowShorts, newShorts]];
+    if (ypp) rows.push(['Shorts revenue pool (partners)', true, pool]);
+    out.innerHTML = '<div class="yt-rows"></div><div class="ed-result"><span class="big"></span><div><strong></strong><p></p></div></div>';
+    const list = out.querySelector('.yt-rows');
+    rows.forEach((r, i) => { const d = document.createElement('div'); d.className = 'yt-row' + (i ? '' : ' h'); r.forEach((c, j) => { const s = document.createElement('span'); if (i && j) { s.textContent = c ? 'Qualifies' : 'Not yet'; s.className = c ? 'ok' : 'no'; } else s.textContent = c; d.append(s); }); list.append(d); });
+    const ok27 = ypp ? pool : (newLong || newShorts);
+    const box = out.querySelector('.ed-result'); box.classList.add(ok27 ? 'hi' : (nowLong || nowShorts) ? 'mid' : 'lo');
+    box.querySelector('.big').textContent = ok27 ? 'On track' : 'Gap';
+    let msg;
+    if (ypp) msg = pool ? `You have ${f(shorts)} Shorts views in 90 days, above the 10m needed for Shorts pool revenue.` : `You need ${f(10e6 - shorts)} more Shorts views in 90 days to earn from the Shorts pool from February.`;
+    else if (newLong || newShorts) msg = 'You meet the reported 2027 thresholds. Apply before February if you can.';
+    else if (nowLong || nowShorts) msg = 'You qualify today but not under the reported 2027 rules. Apply before 1 February 2027.';
+    else msg = subs < 1000 ? `You need ${f(1000 - subs)} more subscribers, plus ${f(Math.max(0, 4000 - hours))} watch hours or ${f(Math.max(0, 10e6 - shorts))} Shorts views today.` : `You need ${f(Math.max(0, 4000 - hours))} more watch hours or ${f(Math.max(0, 10e6 - shorts))} more Shorts views to qualify today.`;
+    box.querySelector('strong').textContent = ypp ? 'Existing partner' : 'Not yet a partner';
+    box.querySelector('p').textContent = msg;
+  };
+  form.addEventListener('input', render);
+  form.addEventListener('submit', e => e.preventDefault());
+  render();
+})();

@@ -1,0 +1,11 @@
+.ig-guide .ig-stage { max-width:560px; }
+.ig-guide .ig-frame { position:relative; margin:0 auto; border-radius:14px; background:linear-gradient(135deg,#833ab4,#fd1d1d 60%,#fcb045); width:34%; aspect-ratio:9/16; animation:ig-rot 8s cubic-bezier(.6,0,.2,1) infinite; }
+@keyframes ig-rot { 0%,22% { width:34%; aspect-ratio:9/16; } 40%,94% { width:100%; aspect-ratio:16/9; } 100% { width:34%; aspect-ratio:9/16; } }
+.ig-guide .ig-play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; font-size:2rem; opacity:.9; }
+.ig-guide .ig-btn { position:absolute; left:50%; bottom:12px; transform:translateX(-50%); padding:6px 14px; border-radius:999px; background:rgba(255,255,255,.92); color:#111; font-size:.78rem; font-weight:800; white-space:nowrap; opacity:0; animation:ig-btn 8s ease infinite; }
+@keyframes ig-btn { 0%,8% { opacity:0; } 14%,26% { opacity:1; } 32%,100% { opacity:0; } }
+.ig-guide .ig-time { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; margin-top:14px; opacity:0; animation:ig-t 8s ease infinite; }
+.ig-guide .ig-time i { height:4px; border-radius:2px; background:linear-gradient(90deg,var(--fe-accent) 1%,var(--fe-border) 1%); }
+.ig-guide .ig-time b { color:var(--fe-muted); font-size:.8rem; font-variant-numeric:tabular-nums; }
+@keyframes ig-t { 0%,40% { opacity:0; } 48%,94% { opacity:1; } 100% { opacity:0; } }
+.ig-guide .ig-out { margin-top:20px; }

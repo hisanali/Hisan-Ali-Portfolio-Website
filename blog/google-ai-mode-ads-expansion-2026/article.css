@@ -1,0 +1,9 @@
+.ga-guide .ga-chat { max-width:560px; padding:18px; border-radius:18px; background:#fff; color:#1f1f1f; box-shadow:0 30px 60px -36px rgba(0,0,0,.45); }
+.ga-guide .ga-q { margin-left:auto; max-width:80%; padding:10px 14px; border-radius:18px; background:#e8f0fe; font-size:.9rem; }
+.ga-guide .ga-q2 { margin-top:12px; opacity:0; animation:ga-in 8s ease infinite; animation-delay:1.2s; }
+.ga-guide .ga-a { display:grid; gap:7px; margin:14px 0 0; } .ga-guide .ga-a span { height:10px; border-radius:6px; background:linear-gradient(90deg,#4285f4,#9b72cb,#d96570); opacity:.35; width:100%; animation:ga-type 8s ease infinite; transform-origin:left; } .ga-guide .ga-a .short { width:60%; }
+@keyframes ga-type { 0%,4% { transform:scaleX(0); } 14%,94% { transform:scaleX(1); } 100% { transform:scaleX(0); } }
+@keyframes ga-in { 0%,10% { opacity:0; transform:translateY(8px); } 18%,94% { opacity:1; transform:none; } 100% { opacity:0; } }
+.ga-guide .ga-ad { margin-top:14px; padding:12px 14px; border-radius:14px; border:1px solid #dadce0; opacity:0; animation:ga-ad 8s ease infinite; }
+@keyframes ga-ad { 0%,40% { opacity:0; transform:translateY(10px); } 48%,94% { opacity:1; transform:none; } 100% { opacity:0; } }
+.ga-guide .ga-ad small { display:block; font-size:.7rem; font-weight:800; color:#202124; } .ga-guide .ga-ad b { display:block; color:#1a0dab; font-size:.95rem; } .ga-guide .ga-ad em { font-style:normal; color:#188038; font-size:.84rem; }
