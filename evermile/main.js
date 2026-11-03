@@ -1,5 +1,5 @@
 import {syncRoute} from './multiplayer-route.js?v=20261010-mp2';
-import {Multiplayer} from './multiplayer.js?v=20261010-mp2';
+import {Multiplayer} from './multiplayer.js?v=20261103-journey1';
 import {Intro} from './loader.js?v=20260926-intro1';
 import {readGamepad, padName, BUTTON_HELP} from './gamepad.js?v=20261103-journey1';
 import {loadJourney, saveJourney, startDrive, advance, foundPlace, summary} from './journey.js?v=20261103-journey1';
