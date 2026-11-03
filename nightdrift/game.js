@@ -1,4 +1,4 @@
-import { THREE, Q, qualityField, beamMaterial, beamCone, $, makeWorld, addSky, sunLight, pbr, canvasTexture, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
+import { THREE, Q, qualityField, beamMaterial, beamCone, $, makeWorld, addSky, sunLight, pbr, canvasTexture, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js?v=5';
 
 const KEY = 'nightdrift';
 const load = loadingUI('Night Drift');

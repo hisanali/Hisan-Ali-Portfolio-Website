@@ -1,4 +1,4 @@
-import { THREE, Q, qualityField, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, waterNormals, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
+import { THREE, Q, qualityField, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, waterNormals, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js?v=5';
 import { Water } from '/evermile/vendor/objects/Water.js';
 
 const KEY = 'duneglider';
@@ -155,7 +155,7 @@ card.innerHTML = `<p class="lede">Golden hour over the Sharqiya sands. Dive to g
 <ul class="facts"><li><b>18</b> gates</li><li>Real glide physics</li><li>Gate chains multiply</li><li>Best: <b id="best-lbl">${U.best.get()}</b></li></ul>
 <div class="field"><span>Wind</span><div class="seg" id="seg-wind"></div></div>
 <div id="gfx"></div>
-<button class="primary" id="play" type="button"><span>Launch<small>↑/↓ pitch · ←/→ bank · tilt your phone to steer</small></span><span aria-hidden="true">→</span></button>
+<button class="primary" id="play" type="button"><span>Launch<small>It flies forward on its own · ↓/S dive for speed · ↑/W climb · ←/→ bank · tilt your phone to steer</small></span><span aria-hidden="true">→</span></button>
 <p class="note">Gates flown in a row build a multiplier. Clipping a pylon costs points. Skimming the sand close without touching it earns a bonus.</p>`;
 qualityField($('#gfx'));
 const getWind = seg($('#seg-wind'), [{ value: 'calm', label: 'Calm' }, { value: 'breeze', label: 'Breeze' }, { value: 'gusty', label: 'Gusty' }], 'breeze');

@@ -1,4 +1,4 @@
-import { THREE, Q, qualityField, beamMaterial, beamCone, waterNormals, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js';
+import { THREE, Q, qualityField, beamMaterial, beamCone, waterNormals, SimplexNoise, $, makeWorld, addSky, sunLight, pbr, canvasTexture, loadModel, shadowed, loadingUI, Particles, Sound, ui, seg, clamp, lerp, mulberry } from '/games/world-shared.js?v=5';
 import { mergeGeometries, mergeVertices } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 
 const KEY = 'reefdive';

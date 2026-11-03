@@ -26,6 +26,20 @@ export function qualityField(container) {
   for (const [v, l] of opts) { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.setAttribute('aria-pressed', String(v === QUALITY)); if (v === QUALITY) b.classList.add('is-on'); b.addEventListener('click', () => { if (v === QUALITY) return; try { localStorage.setItem('gfx-quality', v); } catch (e) {} location.reload(); }); segEl.append(b); }
 }
 
+// Cleans the HDR frame before bloom. On some GPUs a very bright highlight (a headlight or lamp close to the
+// camera) overflows the half-float buffer to Infinity or NaN; the bloom blur then smears that single pixel into
+// large black blocks. Replace any non-finite or negative value and cap extreme brightness.
+const SanitizeShader = {
+  uniforms: { tDiffuse: { value: null }, uMax: { value: 48.0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uMax; varying vec2 vUv;
+    bool bad(float v){ return isnan(v) || isinf(v) || !(v > -1e30 && v < 1e30); }
+    void main(){ vec4 c = texture2D(tDiffuse, vUv);
+      if (bad(c.r) || bad(c.g) || bad(c.b)) c.rgb = vec3(0.0);
+      if (bad(c.a)) c.a = 1.0;
+      gl_FragColor = vec4(clamp(c.rgb, 0.0, uMax), c.a); }`
+};
+
 // Final grade in display space: gentle filmic contrast, a lens vignette and fine animated grain.
 const GradeShader = {
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uVignette: { value: 0.32 }, uGrain: { value: 0.025 }, uContrast: { value: 1.06 }, uSaturation: { value: 1.04 }, uTint: { value: new THREE.Vector3(1, 1, 1) } },
@@ -49,6 +63,7 @@ export function makeWorld(canvas, { fov = 60, near = 0.3, far = 1200, bloom = 0.
   const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: Q.msaa });
   const composer = new EffectComposer(renderer, rt);
   composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new ShaderPass(SanitizeShader));
   const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), bloom, radius, threshold);
   composer.addPass(bloomPass); composer.addPass(new OutputPass());
   const gradePass = new ShaderPass(GradeShader); Object.entries(grade).forEach(([k, v]) => { if (gradePass.uniforms[k]) { if (v && v.isVector3) gradePass.uniforms[k].value.copy(v); else gradePass.uniforms[k].value = v; } });
