@@ -171,14 +171,15 @@ export class TownLife {
         }
         p.active = true;const oldX=p.x,oldZ=p.z;
         p.timer-=dt;
-        if(p.timer<=0){p.state=p.state==='walk'&&p.i%3!==0?'look':'walk';p.timer=p.state==='look'?3+(p.i%4):9+(p.i%7)*2;}
+        if(p.timer<=0){p.state=p.state==='walk'&&p.i%3!==0?'look':p.state==='knocked'?'walk':'walk';p.timer=p.state==='look'?3+(p.i%4):9+(p.i%7)*2;}
         let target=p.state==='walk'?p.speed:0;
+        if(p.knockX){p.knockX*=Math.exp(-dt*.5);if(Math.abs(p.knockX)<.02)p.knockX=0;}
         // Yield to a slower pedestrian ahead instead of walking through their body.
         for(const other of this.people)if(other!==p&&other.active&&other.side===p.side&&Number.isFinite(other.x)&&Math.abs(other.x-p.x)<.5){const ahead=(other.z-p.z)*p.dir;if(ahead>0&&ahead<1.3)target=Math.min(target,Math.max(0,(ahead-.55)*1.2));}
         p.walkVelocity+=(target-p.walkVelocity)*(1-Math.exp(-dt*3));p.z+=p.dir*p.walkVelocity*dt;
         if(p.z < d0 - 80 || p.z > d0 + 980) p.dir *= -1;
-        p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55 + .10*Math.sin(p.z*.08+p.i)); p.y = r.y(p.z) + .2;
-        p.yaw = p.state==='look'?Math.atan(r.tangent(p.z))+p.side*Math.PI*.35 : Number.isFinite(oldX)&&Math.abs(p.z-oldZ)>.0001?Math.atan2(p.x-oldX,p.z-oldZ):Math.atan(r.tangent(p.z))+(p.dir<0?Math.PI:0); this.pose(p, p.walkVelocity>.05, rain, dt);
+        p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55 + .10*Math.sin(p.z*.08+p.i)) + (p.knockX || 0); p.y = r.y(p.z) + .2;
+        p.yaw = p.state==='knocked'?p.knockYaw:p.state==='look'?Math.atan(r.tangent(p.z))+p.side*Math.PI*.35 : Number.isFinite(oldX)&&Math.abs(p.z-oldZ)>.0001?Math.atan2(p.x-oldX,p.z-oldZ):Math.atan(r.tangent(p.z))+(p.dir<0?Math.PI:0); this.pose(p, p.walkVelocity>.05, rain, dt);
       }
       return;
     }
@@ -202,6 +203,9 @@ export class TownLife {
         if (p.timer <= 0 && p.state === 'walk') { p.timer = rand(8, 25); if (Math.random() < .3) { p.state = 'look'; p.timer = rand(2.5, 7); } else if (Math.random() < .2) p.dir = -p.dir; }
       } else if (p.state === 'look') {
         p.timer -= dt; if (p.timer <= 0) { p.state = 'walk'; p.timer = rand(8, 25); }
+      } else if (p.state === 'knocked') {
+        // Knocked aside by a car: stagger to a stop, face it, then carry on (crossing again if that is where they were).
+        p.timer -= dt; if (p.timer <= 0) { p.state = Math.abs(p.lane) > w + .3 ? 'walk' : 'cross'; p.timer = rand(6, 20); }
       } else if (p.state === 'wait') {
         p.timer += dt;
         const cr = lay.cross, ok = p.light ? this.walk(cr, 'main') : this.safeToStep(p, s);
@@ -225,7 +229,7 @@ export class TownLife {
       const lane = p.lane;
       p.x = r.x(p.z) + p.side * lane; p.y = r.y(p.z) + (Math.abs(lane) > w ? .075 : .06);
       const along = Math.atan(r.tangent(p.z));
-      p.yaw = p.state === 'cross' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'wait' || p.state === 'bus' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'look' ? along + (p.side > 0 ? Math.PI / 2 : -Math.PI / 2) : along + (p.dir < 0 ? Math.PI : 0);
+      p.yaw = p.state === 'knocked' ? p.knockYaw : p.state === 'cross' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'wait' || p.state === 'bus' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'look' ? along + (p.side > 0 ? Math.PI / 2 : -Math.PI / 2) : along + (p.dir < 0 ? Math.PI : 0);
       this.pose(p, moving, rain, dt);
     }
   }
@@ -327,6 +331,18 @@ export class TownLife {
   }
 
   /* ---------- Queries for other systems ---------- */
+  // A car has pushed into this person: they are shoved along the contact normal (nx, nz) by `push` metres, stop,
+  // and turn towards whatever hit them. Walkers in a destination keep a sideways offset that fades as they recover.
+  knock(p, nx, nz, push, approach) {
+    if (!p || !p.active) return;
+    const r = this.world.road;
+    if (push > 0) {
+      if (p.destination) { p.knockX = (p.knockX || 0) + nx * push; p.z += nz * push; }
+      else if (p.state === 'board' || p.state === 'bus') { p.x += nx * push; p.z += nz * push; }
+      else { p.z += nz * push; p.lane = (p.x + nx * push - r.x(p.z)) * p.side; }
+    }
+    if (approach > .4 && p.state !== 'board') { p.state = 'knocked'; p.timer = Math.min(6, 1.5 + approach * .35); p.knockYaw = Math.atan2(-nx, -nz); p.walkVelocity = 0; p.knockedAt = this.time; }
+  }
   obstacles(z, range) {
     const out = [];
     for (const p of this.people) if (p.active && p.z > z - 6 && p.z < z + range && (p.state === 'cross' || p.state === 'wait' || p.state === 'board')) out.push({x: p.x, z: p.z, r: .45, vz: 0});

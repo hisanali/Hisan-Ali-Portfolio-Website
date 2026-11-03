@@ -114,7 +114,34 @@ export class DriveAudio {
   }
 
   // Returns the current gear so the HUD can show it.
+  // A collision: a low thump through the body, a short metallic clatter, and above about 40 km/h a scatter of glass.
+  // Hitting something soft (a person or an animal) is a dull thud with no clatter.
+  crash(strength = .5, soft = false) {
+    const ctx = this.ctx, t = ctx.currentTime, k = Math.max(0, Math.min(1, strength)), vol = this.lastVolume ?? .35;
+    if (!vol) return;
+    const burst = (type, freq, q, gain, length, delay = 0) => {
+      const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(gain * vol, t + delay + .008); g.gain.exponentialRampToValueAtTime(.0001, t + delay + length);
+      src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + length + .05);
+    };
+    burst('lowpass', 140 + 120 * k, .7, (soft ? .9 : 1.4) * (.3 + .7 * k), .32 + .25 * k);
+    const thump = ctx.createOscillator(), tg = ctx.createGain(); thump.type = 'sine'; thump.frequency.setValueAtTime(90 + 30 * k, t); thump.frequency.exponentialRampToValueAtTime(38, t + .25);
+    tg.gain.setValueAtTime((soft ? .5 : .7) * (.3 + .7 * k) * vol, t); tg.gain.exponentialRampToValueAtTime(.0001, t + .3); thump.connect(tg).connect(this.out); thump.start(t); thump.stop(t + .32);
+    if (!soft) { burst('bandpass', 2600, 1.2, .5 * k, .14 + .1 * k, .01); burst('highpass', 1800, .8, .22 * k, .25, .05); }
+    if (!soft && k > .45) for (let i = 0; i < 6; i++) burst('bandpass', 5200 + Math.random() * 3000, 8, .12 * k, .08, .06 + i * .05 + Math.random() * .04);
+  }
+  // Driving into water: a splash that grows with speed, then a short wash.
+  splash(strength = .5) {
+    const ctx = this.ctx, t = ctx.currentTime, k = Math.max(0, Math.min(1, strength)), vol = this.lastVolume ?? .35;
+    if (!vol) return;
+    for (const [freq, gain, len, delay] of [[900, .9, .35, 0], [2400, .5, .5, .03], [400, .6, .8, .1]]) {
+      const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = .9;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(gain * (.25 + .75 * k) * vol, t + delay + .03); g.gain.exponentialRampToValueAtTime(.0001, t + delay + len);
+      src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
+    }
+  }
   update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded}) {
+    this.lastVolume = volume;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
     const box = GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;

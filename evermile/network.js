@@ -12,6 +12,8 @@ import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260927
   country and on to the next junction, so every place is reachable by road and none is a dead end.
 */
 export const FORK = 420, ZONE = FORK + 150, RAMP = 500, CREST = 7, SEA = -8;
+// The branch not taken is drawn this far past the junction (it runs on out of sight rather than stopping at the crest).
+export const REACH = ZONE + 1100;
 
 export const TYPES = {
   country: {label: 'Hill Road', half: 5.3, lanes: [2.65], limit: 27, towns: true, rivers: true, rail: .72},
@@ -288,10 +290,10 @@ export class Network {
     this.extend(z + 6000);
     return changed;
   }
-  // The branch not taken is still drawn through the junction zone.
+  // The branch not taken is still drawn through the junction zone and well beyond it, so side roads lead somewhere.
   stubs(z) {
     const out = [];
-    for (const j of this.junctions) if (z >= j.z - 5 && z <= j.z + ZONE) out.push({seg: j.options[1 - j.chosen], j});
+    for (const j of this.junctions) if (z >= j.z - 5 && z <= j.z + REACH) out.push({seg: j.options[1 - j.chosen], j});
     return out;
   }
 
@@ -299,7 +301,7 @@ export class Network {
   roadsAt(z) {
     if (z === this.rowZ) return this.row;
     const s = this.segAt(z), rows = [{x: s.x(z), y: s.y(z), half: s.half(z) * this.stretch(s, z), seg: s, w: s.weight(z), main: true, fade: 1}];
-    for (const st of this.stubs(z)) { const u = z - st.j.z; rows.push({x: st.seg.x(z), y: st.seg.y(z), half: st.seg.half(z) * this.stretch(st.seg, z), seg: st.seg, w: 0, main: false, fade: 1 - smooth(ZONE - 70, ZONE, u), u}); }
+    for (const st of this.stubs(z)) { const u = z - st.j.z; rows.push({x: st.seg.x(z), y: st.seg.y(z), half: st.seg.half(z) * this.stretch(st.seg, z), seg: st.seg, w: 0, main: false, fade: 1 - smooth(REACH - 160, REACH, u), u}); }
     this.rowZ = z; this.row = rows;
     return rows;
   }
