@@ -60,3 +60,11 @@ Two new districts use the supplied dasy444 scenes: Eastgate City (shop rows and 
 Buses now ease out round cyclists between stops like other traffic; previously one bus behind a cyclist held every vehicle behind it at cycling pace.
 
 Validation: 93 automated checks, including 160 km network walks in three road styles (continuous road, grade under 15 %, every junction offering two ways that run on to another junction, every destination signposted, districts aligned, level and clear of tunnels, towns, rail and services). A 21 km autodrive run in the rendered game went through the airport, lake and forest districts with no errors, averaging 50 km/h. City and forest cost about the same to draw as the existing Old Town.
+
+
+## Controller, photos and the journey log
+
+- Standard-mapping game controllers now do everything the keyboard does: left stick steers with an eased dead zone, triggers drive, A autodrive, B handbrake, X horn, Y camera, bumpers indicate, Start pauses or continues, Back resets, D-pad toggles headlights and radio and adjusts cruise speed, right-stick click opens photo mode. A or Start also begins the drive from the title screen, and a toast names the controller when it connects. The mapping lives in `gamepad.js` and is listed in the help panel.
+- Photo mode (U, or the camera button in the top bar) now has Save photo and Back buttons so it works on touch devices, and Enter saves the picture: the rendered frame plus the cockpit windscreen, downloaded as a PNG named after the place and distance.
+- A journey log (`journey.js`, stored beside the settings) counts drives, lifetime distance, the longest drive and the destinations found. The title screen shows these figures, plus this drive's distance, time and new places while paused. Milestone toasts mark 5, 10, 25, 50, 100, 200, 500 and 1000 km in one drive, a new longest drive, and the first visit to each place. The old running distance becomes the lifetime total.
+- Validation: 105 automated checks (eight new ones cover the controller mapping and the journey log). A rendered headless session began the drive from a simulated controller, drove on the right trigger, changed camera, held and released the horn, indicated, paused and resumed, saved a photo with the interface hidden, and showed the seeded log on the title screen with no runtime errors.
