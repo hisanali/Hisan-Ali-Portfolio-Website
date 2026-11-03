@@ -17,7 +17,12 @@ function valueNoise(size, seed) {
 }
 function fbm(size, seed) { const layers = [1, 2, 4, 8].map((f, i) => [f, valueNoise(size, seed + i * 977)]); return (x, y) => { let v = 0, w = 0; for (const [f, n] of layers) { v += n((x * f) % size, (y * f) % size) / f; w += 1 / f; } return v / w; }; }
 const PROCEDURAL = {
- plaster(x, y, size, n) { const h = n(x, y) * .6 + n((x * 3.1) % size, (y * 3.1) % size) * .4; const streak = Math.max(0, n((x * .2) % size, (y * 6) % size) - .62) * 1.4; return {height: h * .35 + streak * .2, tone: .86 - streak * .1 - (h - .5) * .08, rough: .8 + h * .15}; },
+ plaster(x, y, size, n) {
+  // Mottled render with trowel marks and a few rain streaks, so the light catches it like a real wall.
+  const h = n(x, y) * .55 + n((x * 3.1) % size, (y * 3.1) % size) * .3 + n((x * 9) % size, (y * 9) % size) * .15;
+  const streak = Math.max(0, n((x * .25) % size, (y * 5) % size) - .6) * 2;
+  return {height: h * .5 + streak * .15, tone: .84 - streak * .22 - (h - .5) * .28, rough: .78 + h * .2};
+ },
  brick(x, y, size, n) {
   const bh = size / 10, bw = size / 4, row = Math.floor(y / bh), shift = row % 2 ? bw / 2 : 0, u = (x + shift) % bw, v = y % bh, mortar = u < bw * .07 || v < bh * .13;
   const id = row * 131 + Math.floor((x + shift) / bw) * 7, tone = mortar ? .78 : .55 + ((id * 2654435761 >>> 0) % 100) / 100 * .25;
