@@ -694,12 +694,14 @@ export class Life {
       let cruise = Math.min(c.cruise, c.kind === 'bike' ? 99 : r.limit(c.z) * 1.05 / (1 + bend * 2.5));
       if (town > .3) cruise = Math.min(cruise, c.kind === 'bike' ? 6 : 13.5);
       if (c.yielding && c.yieldPhase === 'aside') cruise *= .72;
+      if (c.hit) { c.hit.t += dt; if (c.hit.t < c.hit.hold) cruise = 0; else if (c.hit.t > c.hit.hold + 2) c.hit = null; }
       if (c.kind === 'bike') cruise *= 1 - .45 * clamp(c.road.slope(c.z) * dir * 12, 0, 1);
       // Intelligent driver model: accelerate towards cruise speed, brake to keep a time gap to whatever is in front.
       const v = c.speed, headway = c.kind === 'bike' ? .8 : 1.3, amax = c.kind === 'bus' || c.kind === 'truck' ? 1.1 : c.kind === 'bike' ? .8 : 1.7, comfort = 2.6;
       const desired = s0 + Math.max(0, v * headway + v * (v - leadSpeed) / (2 * Math.sqrt(amax * comfort)));
       let acc = amax * (1 - Math.pow(v / Math.max(cruise, 1), 4) - (gap < Infinity ? Math.pow(desired / Math.max(gap, .1), 2) : 0));
       acc = Math.max(-9, Math.min(amax, acc));
+      if (c.hit && c.hit.t < c.hit.hold && v > 0) acc = Math.min(acc, -7);
       c.speed = Math.max(0, v + acc * dt);
       c.braking = acc < -1.2 || (c.speed < .3 && gap < 12);
       c.z += dir * c.speed * dt;
@@ -714,6 +716,7 @@ export class Life {
       if (c.squeeze > 2) c.latTarget = ow * Math.max(0, c.road.half(c.z) - .3 - Math.abs(laneOff) - c.width / 2);
       this.updateYield(c, dt, s);
       this.busStops(c, dt);
+      if (c.hit && c.hit.t < c.hit.hold + 1) { const room = Math.max(0, c.road.half(c.z) - .4 - Math.abs(laneOff) - c.width / 2); c.latTarget = c.hit.side * ow * Math.min(room, 1.6) * (c.hit.t < c.hit.hold ? 1 : .35); }
       this.turnSignal(c);
       this.placeCar(c, dt);
       // Only the first oncoming car coming at you flashes, when you are in its lane.
@@ -870,7 +873,7 @@ export class Life {
     const warm = this.cWarm ||= new T.Color(1, .93, .8), red = this.cRed ||= new T.Color(1, .12, .06), amber = this.cAmber ||= new T.Color(1, .6, .12), v = this.v3 ||= new T.Vector3();
     for (const c of [...list, ...this.parked.filter((p) => p.g.visible && p.delivery)]) {
       const t = c.flashAt ? now - c.flashAt : -1, flashing = t > 0 && t < c.flashTimes * 260 && Math.floor(t / 130) % 2 === 0;
-      const hazard = c.delivery, ind = hazard ? 2 : c.indicator;
+      const hazard = c.delivery || (c.hazardUntil || 0) > now, ind = hazard ? 2 : c.indicator;
       for (const l of c.lamps.head) l.material = flashing ? this.m.flash : this.m.head;
       for (const l of c.lamps.tail) l.material = c.braking ? this.m.brake : this.m.tail;
       for (const l of c.lamps.left) l.material = (ind === 1 || ind === 2) && blink ? this.m.indicatorOn : this.m.indicatorOff;
@@ -964,6 +967,19 @@ export class Life {
     if (!a) return;
     a.x += nx * push; a.z += nz * push;
     if (approach > .3) { a.scare = Math.min(6, 2 + approach * .4); a.walking = true; a.timer = a.scare; a.targetHeading = Math.atan2(nx, nz); if (a.crossing) a.crossing.flee = Math.max(a.crossing.flee, a.scare); else a.heading = a.targetHeading; }
+  }
+
+  // The player has run into this vehicle: a shove from behind pushes it on, then it brakes hard, swerves away from
+  // the contact towards the verge, puts its hazards on and sits for a moment before driving on.
+  hitVehicle(c, {nx, nz, approach, share}) {
+    if (!c || !c.g.visible || !(approach > .3)) return;
+    const dir = c.dir, r = this.world.road, ow = r.side * dir;
+    const shove = -nz * dir * approach * (1 - share);
+    if (shove > 0) c.speed += shove * .55;
+    const side = Math.sign(-(nx * Math.cos(c.yaw) - nz * Math.sin(c.yaw)) * ow) || 1;
+    if (!c.hit || c.hit.t > c.hit.hold) c.hit = {t: 0, hold: 1.8 + Math.min(4, approach * .35), side};
+    c.hazardUntil = performance.now() + 9000;
+    c.braking = true; c.passing = null; c.yielding = false;
   }
 
   // Solid bodies near a point, for the player's collisions.

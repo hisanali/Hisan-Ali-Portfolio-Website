@@ -190,14 +190,20 @@ export class Vehicle{
  }
  setColor(color){this.body.color.set(color)}
  // Road dust and mud: builds up low on the bodywork and in blotches, dulls the paint; rain washes it away.
- setupDirt(){const u=this.dirtUniforms={dirt:{value:0},carInv:{value:new T.Matrix4()},height:{value:this.type==='coach'?3.3:this.type==='bike'?1.3:1.3}};
+ // Dents: up to ten dished panels (car-space centre and strength) pressed into the body by collisions, with scuffed paint.
+ setupDirt(){const u=this.dirtUniforms={dirt:{value:0},carInv:{value:new T.Matrix4()},height:{value:this.type==='coach'?3.3:this.type==='bike'?1.3:1.3},dents:{value:Array.from({length:10},()=>new T.Vector4())},dentCount:{value:0}};this.dents=[];
+  const DENT='uniform vec4 dents[10];uniform int dentCount;\nfloat dentMask(vec3 p){float m=0.;for(int i=0;i<10;i++){if(i>=dentCount)break;vec4 d=dents[i];m+=d.w*(1.-smoothstep(0.,.42+d.w*.4,distance(p,d.xyz)));}return min(m,1.);}\n';
   this.body.onBeforeCompile=sh=>{Object.assign(sh.uniforms,u);
-   sh.vertexShader='uniform mat4 carInv;\nvarying vec3 vCarPos;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvCarPos=(carInv*modelMatrix*vec4(transformed,1.0)).xyz;');
-   sh.fragmentShader='uniform float dirt;uniform float height;\nvarying vec3 vCarPos;\nfloat dh(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}\nfloat dn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(dh(i),dh(i+vec3(1,0,0)),f.x),mix(dh(i+vec3(0,1,0)),dh(i+vec3(1,1,0)),f.x),f.y),mix(mix(dh(i+vec3(0,0,1)),dh(i+vec3(1,0,1)),f.x),mix(dh(i+vec3(0,1,1)),dh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n'+sh.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+   sh.vertexShader='uniform mat4 carInv;\nvarying vec3 vCarPos;\n'+DENT+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nif(dentCount>0){vec3 dentPos=(carInv*modelMatrix*vec4(transformed,1.0)).xyz;float dd=dentMask(dentPos);dd=dd*dd*(3.-2.*dd);transformed-=normalize(normal)*dd*.13;}').replace('#include <project_vertex>','#include <project_vertex>\nvCarPos=(carInv*modelMatrix*vec4(transformed,1.0)).xyz;');
+   sh.fragmentShader='uniform float dirt;uniform float height;\nvarying vec3 vCarPos;\n'+DENT+'float dh(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}\nfloat dn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(dh(i),dh(i+vec3(1,0,0)),f.x),mix(dh(i+vec3(0,1,0)),dh(i+vec3(1,1,0)),f.x),f.y),mix(mix(dh(i+vec3(0,0,1)),dh(i+vec3(1,0,1)),f.x),mix(dh(i+vec3(0,1,1)),dh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n'+sh.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
     float dn1=dn(vCarPos*3.1)*.6+dn(vCarPos*9.)*.4,low=1.-smoothstep(height*.12,height*.62,vCarPos.y);
     float dm=clamp(dirt*(low*1.25+.28)*(.55+dn1*.9)-(1.-dirt)*.2,0.,.92);
-    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.46,.4,.31)*(.8+dn1*.35),dm);roughnessFactor=mix(roughnessFactor,.96,dm);`);};
+    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.46,.4,.31)*(.8+dn1*.35),dm);roughnessFactor=mix(roughnessFactor,.96,dm);
+    float dentM=dentMask(vCarPos);if(dentM>0.){float scuff=dentM*(.55+dn(vCarPos*22.)*.6);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*.45+vec3(.08),clamp(scuff,0.,.75));roughnessFactor=mix(roughnessFactor,.82,dentM);}`);};
   this.body.customProgramCacheKey=()=>'dirt';}
+ // A collision at a world point: dish the nearest panel (merging with a dent already there), strongest hits deepest.
+ dent(x,y,z,strength){const local=this.group.worldToLocal(new T.Vector3(x,y,z));local.y=Math.max(.25,Math.min(local.y,this.type==='coach'?3:1.1));let d=this.dents.find(q=>q.p.distanceTo(local)<.55);if(d){d.w=Math.min(1,d.w+strength*.6);}else{if(this.dents.length>=10)this.dents.sort((a,b)=>a.w-b.w).shift();d={p:local,w:Math.min(1,strength)};this.dents.push(d);}this.dents.forEach((q,i)=>this.dirtUniforms.dents.value[i].set(q.p.x,q.p.y,q.p.z,q.w));this.dirtUniforms.dentCount.value=this.dents.length;}
+ clearDents(){this.dents=[];this.dirtUniforms.dentCount.value=0;}
  setDirt(amount){this.dirtUniforms.dirt.value=amount;this.dirtUniforms.carInv.value.copy(this.group.matrixWorld).invert();this.body.clearcoat=1-amount*.85;}
  // Live reflection of the surroundings on the car's own materials (null returns them to the sky reflection).
  setEnvMap(texture){this.group.traverse(o=>{if(!o.isMesh)return;for(const m of Array.isArray(o.material)?o.material:[o.material])if(m&&m.isMeshStandardMaterial&&m.envMap!==texture&&!(m.emissiveIntensity>.9)){m.envMap=texture;m.needsUpdate=true;}});}

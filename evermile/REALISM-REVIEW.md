@@ -79,3 +79,11 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 - Junction side roads: the branch not taken used to fade out 570 m past the fork. It is now drawn, with its flattened terrain, for 1670 m and tapers out of sight, so every side road runs on somewhere.
 - Walls: plaster, brick and concrete surfaces are generated once on a canvas (diffuse, normal and roughness maps) and projected in world metres, replacing the flat-coloured boxes on town shops, cottages, hotels, estates and old-town buildings. Imported kit buildings keep their own materials.
 - Validation: 109 automated checks including the new impact tests (mass shares, body sample points, head-on and glancing responses, pedestrian hits, severity and jolt). Rendered checks of the extended side road, braking dive, driving into the lake, off-road impacts and the textured towns are recorded in the commit message. This is still a simplified driving simulation, not a rigid-body engine: no tyre deformation, no vehicle damage model, traffic does not swerve or dent, and the rendered checks ran on a software renderer.
+
+
+## Reacting traffic, dents, cabin look-around and the cinematic camera
+
+- Traffic reacts to being hit: a shove from behind pushes the car on, then it brakes hard, swerves away from the contact towards the verge, flashes its hazards for nine seconds and sits for a moment before driving on.
+- Dents: collisions above a light bump dish the nearest body panel in the paint shader (up to ten dents, merging when hit again in the same place), with scuffed, duller paint around them. They stay until the car is washed ("Wash and repair" in the garage) or the vehicle is changed.
+- Cockpit: dragging now turns your head round the cabin, out of the side windows and over your shoulder, instead of jumping to the chase view (bonnet and bumper still jump out). The view eases back to the road when you let go.
+- Cinematic camera (sixth view, C or the camera button): cuts between a roadside tripod the car sweeps past with a long lens, a low tracking shot from ahead, a side tracker, a slow rising helicopter orbit and a low rear quarter. Pair it with photo mode (U) for clean footage.
