@@ -655,6 +655,9 @@ function updateCar(dt) {
   const lean = settings.vehicle === 'bike' ? motorcycleLean(lateral) : clamp(lateral * (settings.vehicle === 'coach' ? .009 : .004), -.08, .08);
   vehicle.group.rotation.z = damp(vehicle.group.rotation.z, (settings.vehicle === 'bike' ? 0 : Math.atan2(hr - hl, Wd * 2)) + lean, air, dt) + (state.jolt?.roll || 0);
   vehicle.group.updateMatrixWorld(); vehicle.setDirt(state.dirt);
+  // Where the headlamp lenses are in the world this frame, so their halos sit on the lamps whatever the car is doing.
+  state.lamps ||= []; vehicle.headlights.forEach((l, i) => { const w = state.lamps[i] ||= {x: 0, y: 0, z: 0}; tmp.copy(l.position).z += .22; vehicle.group.localToWorld(tmp); w.x = tmp.x; w.y = tmp.y; w.z = tmp.z; }); state.lamps.length = vehicle.headlights.length;
+  if (settings.vehicle === 'bike' && state.lamps.length === 2) { const [a, b] = state.lamps; a.x = (a.x + b.x) / 2; a.y = (a.y + b.y) / 2; a.z = (a.z + b.z) / 2; state.lamps.length = 1; }
   const inTunnel = !!world.road.tunnelAt(state.z);
   vehicle.longAccel = state.accel || 0; vehicle.update(dt, (state.paused || panelOpen || state.inspection || !state.started) ? 0 : state.speed, state.steer, atmo.lit > .5 || state.headlights || inTunnel, keys.KeyS || keys.Space || (state.auto && state.brakeIn > .2), settings.camera === 2 && !state.inspection);
 }

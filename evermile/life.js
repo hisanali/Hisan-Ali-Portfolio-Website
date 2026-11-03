@@ -894,7 +894,8 @@ export class Life {
     }
     // Your own headlamps: a halo at night or with the lights on, brighter while flashing.
     if (s.flashing || s.headlights || lit > .5) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = (this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25) + .3, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
-      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16); }
+      if (s.lamps?.length) for (const l of s.lamps) this.glow.add(l.x, l.y, l.z, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16);
+      else for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16); }
     // Your own indicators.
     if (s.indicator && blink) for (const [lx, lz] of this.playerIndicatorSpots()) { const sx = Math.sign(lx); if (sx !== s.indicator && s.indicator !== 2) continue; const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw); this.glow.add(s.x + fx * lz + fz * lx, s.y + .8, s.z + fz * lz - fx * lx, amber, 1.1, 14); }
     this.glow.end();
