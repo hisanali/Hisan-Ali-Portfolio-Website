@@ -198,9 +198,10 @@ export class Life {
       a.timer = a.walking ? rand(2.5, 6) : rand(5, 15);
       if (a.walking) { const far = Math.hypot(a.x - a.homeX, a.z - a.homeZ) > 12; a.targetHeading = far ? Math.atan2(a.homeX - a.x, a.homeZ - a.z) : a.heading + rand(-1.3, 1.3); }
     }
-    const want = a.walking ? (a.kind === 'bighorn' ? .55 : .42) : 0;
-    a.speed += (want - a.speed) * Math.min(1, dt * 1.5);
-    a.heading += Math.atan2(Math.sin(a.targetHeading - a.heading), Math.cos(a.targetHeading - a.heading)) * Math.min(1, dt * .9);
+    const scared = (a.scare || 0) > 0; if (scared) a.scare -= dt;
+    const want = scared ? ({cow: 4.2, horse: 6, dog: 6.5, bighorn: 5}[a.kind] || 4) : a.walking ? (a.kind === 'bighorn' ? .55 : .42) : 0;
+    a.speed += (want - a.speed) * Math.min(1, dt * (scared ? 5 : 1.5));
+    a.heading += Math.atan2(Math.sin(a.targetHeading - a.heading), Math.cos(a.targetHeading - a.heading)) * Math.min(1, dt * (scared ? 4 : .9));
     if (a.speed < .01) return;
     const nx = a.x + Math.sin(a.heading) * 1.6, nz = a.z + Math.cos(a.heading) * 1.6, rise = Math.abs(h(nx, nz) - h(a.x, a.z)) / 1.6;
     if (rise > .6 || h(nx, nz) < -7.2 || r.roadUnder(nx, nz, 3) || (r.railAt(nz) && Math.abs(nx - r.railX(r.railAt(nz), nz)) < 8)) { a.targetHeading = a.heading + Math.PI * rand(.6, 1.4); a.speed *= .3; return; }
@@ -958,6 +959,13 @@ export class Life {
     return out;
   }
 
+  // A car has pushed into this animal: it is shoved along (nx, nz) and bolts away from the road for a few seconds.
+  knock(a, nx, nz, push, approach) {
+    if (!a) return;
+    a.x += nx * push; a.z += nz * push;
+    if (approach > .3) { a.scare = Math.min(6, 2 + approach * .4); a.walking = true; a.timer = a.scare; a.targetHeading = Math.atan2(nx, nz); if (a.crossing) a.crossing.flee = Math.max(a.crossing.flee, a.scare); else a.heading = a.targetHeading; }
+  }
+
   // Solid bodies near a point, for the player's collisions.
   colliders(x, z, range) {
     const out = [];
@@ -967,7 +975,7 @@ export class Life {
       const yaw = c.g.rotation.y;
       out.push({x: px, z: pz, hx: c.width / 2, hz: c.length / 2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0, vehicle: c});
     }
-    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat' && Math.abs(a.x - x) < range && Math.abs(a.z - z) < range) out.push({x: a.x, z: a.z, r: ['cow','horse'].includes(a.kind) ? 1.1 : a.kind === 'bighorn' ? .6 : .35});
+    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat' && Math.abs(a.x - x) < range && Math.abs(a.z - z) < range) out.push({x: a.x, z: a.z, r: ['cow','horse'].includes(a.kind) ? 1.1 : a.kind === 'bighorn' ? .6 : .35, animal: a, kind: a.kind});
     return out;
   }
 

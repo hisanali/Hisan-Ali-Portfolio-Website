@@ -3,6 +3,7 @@ import {Multiplayer} from './multiplayer.js?v=20261103-journey1';
 import {Intro} from './loader.js?v=20260926-intro1';
 import {readGamepad, padName, BUTTON_HELP} from './gamepad.js?v=20261103-journey1';
 import {loadJourney, saveJourney, startDrive, advance, foundPlace, summary} from './journey.js?v=20261103-journey1';
+import {massOf, pushShare, bodyPoints, respond, severity, jolt, PLAYER_MASS} from './impact.js?v=20261103-realism1';
 import {citizenKey} from './citizen-assets.js?v=20260927-train1';
 import {motorcycleLean} from './wheel-rig.js?v=20260927-train1';
 import {DetailedModels} from './detailed-models.js?v=20260927-train1';
@@ -63,7 +64,7 @@ let last = 0, accumulator = 0, hudClock = 0, fpsTime = 0, fpsFrames = 0, panelOp
 const cameraPos = new T.Vector3(), lookTarget = new T.Vector3(), tmp = new T.Vector3();
 const driveOrbit = new CameraOrbit();
 let chaseOrbitRadius = 0, orbitYaw = .72, orbitPitch = .28, orbitDistance = 7.5, orbitPointer = null;
-let audioContext, windGain, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
+let audioContext, windGain, muffle = null, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
 // High quality extras: bloom on bright lights and live reflections on your car. They switch off by themselves if the frame rate drops.
 let detailedModels, intro, multiplayer, starting = false;
 let soloRoomSettings = null, lastRoomWorld = null;
@@ -132,7 +133,7 @@ export function reset() {
   releaseCameraDrag(true);
   const r = world.road, z = state.z;
   state.laneIndex = r.homeLane(z); state.x = r.x(z) + ownLaneX(z, state.laneIndex); state.y = r.y(z); state.yaw = Math.atan(r.tangent(z));
-  state.speed = 0; state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.vy = 0; state.lastGround = undefined; state.grounded = true; state.pass = null; state.pit = null; state.viewing = null;
+  state.speed = 0; state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.vy = 0; state.lastGround = undefined; state.grounded = true; state.pass = null; state.pit = null; state.viewing = null; state.jolt = null; state.shake = 0; state.flooded = 0; state.wet = false;
   state.medianSide = Math.sign(state.x - r.x(z)) || 1;
   updateCar(1 / 60); positionCamera(1, true);
 }
@@ -266,9 +267,12 @@ function physics(dt) {
   const mu = traction({vehicle: settings.vehicle, rain: atmo.rain, snow: settings.season === 'winter', offroad: off, grip: settings.grip, handbrake: !!keys.Space});
   const fx = Math.sin(state.yaw) * 1.4, fz = Math.cos(state.yaw) * 1.4;
   const slope = state.grounded !== false ? (world.groundHeight(state.x + fx, state.z + fz) - world.groundHeight(state.x - fx, state.z - fz)) / 2.8 : 0;
-  const acceleration = longitudinal({vehicle: settings.vehicle, speed: state.speed, throttle, brake: keys.Space ? 1 : brake, mu, slope, offroad: off, speedFactor: settings.speedFactor, boost, powered: settings.fuel !== 'on' || state.fuel > 0, hold: state.auto || state.cruise, parking: !!keys.Space});
+  const waterY = settings.location === 'hills' ? world.water.position.y : -1e9, depth = Math.max(0, waterY - state.y); state.depth = depth;
+  const acceleration = longitudinal({vehicle: settings.vehicle, speed: state.speed, throttle, brake: keys.Space ? 1 : brake, mu, slope, offroad: off, speedFactor: settings.speedFactor, boost, powered: (settings.fuel !== 'on' || state.fuel > 0) && depth < 1.3, hold: state.auto || state.cruise, parking: !!keys.Space});
+  state.accel = acceleration;
   const oldSpeed = state.speed;
   state.speed = clamp(state.speed + acceleration * dt, -9, boost ? 65 : 49);
+  water(dt, depth, oldSpeed);
   if (keys.Space && oldSpeed * state.speed <= 0) state.speed = 0;
   if ((state.auto || state.cruise) && brake && !throttle && oldSpeed >= 0 && state.speed < .12) state.speed = 0;
   if (!throttle && !brake && Math.abs(state.speed) < .02 && Math.abs(slope) < .012) state.speed = 0;
@@ -282,11 +286,23 @@ function physics(dt) {
   collide();
   // Heavy car: rising ground (a kerb, the road edge, an uphill) is followed, never turned into a launch; it only leaves the ground where the ground drops away.
   const ground = world.groundHeight(state.x, state.z);
-  state.vy = (state.vy || 0) - 9.81 * dt; state.y += state.vy * dt;
+  state.vy = (state.vy || 0) - 9.81 * dt * (depth > .3 ? .22 : 1); if (depth > .3) state.vy = Math.max(state.vy, -1.6); state.y += state.vy * dt;
   if (state.y <= ground + .02) { const fall = (ground - (state.lastGround ?? ground)) / dt; state.y = ground; state.vy = Math.min(0, Math.max(fall, -8)); state.grounded = true; } else state.grounded = false;
   state.lastGround = ground; state.distance += Math.abs(state.speed) * dt / 1000; state.time += dt;
   if (session) { const note = advance(journey, session, Math.abs(state.speed) * dt, dt, settings.units); if (note) toast(note); }
   fuelAndDirt(dt, throttle, off);
+}
+
+// Water has weight: it drags the car to a crawl, the engine drowns past the sills, and a flooded car is towed back to the road.
+function water(dt, depth, oldSpeed) {
+  const wet = depth > .3;
+  if (wet && !state.wet && Math.abs(oldSpeed) > 2.5) { driveAudio?.splash(Math.min(1, Math.abs(oldSpeed) / 14)); state.shake = Math.max(state.shake || 0, Math.min(.5, Math.abs(oldSpeed) / 30)); toast(depth > 1 ? 'Splash! That’s deep.' : 'Splash!'); }
+  state.wet = wet;
+  if (!wet) { state.flooded = 0; return; }
+  const d = Math.min(depth, 3);
+  state.speed *= Math.exp(-dt * (.8 + d * 1.4));
+  if (depth > 2.2) { state.flooded = (state.flooded || 0) + dt; if (state.flooded > 3 && !state.towing) { state.towing = true; const fade = $('fade'); fade.classList.add('on'); toast('The car flooded. Towed back to the road.'); setTimeout(() => { state.flooded = 0; state.towing = false; reset(); state.speed = 0; fade.classList.remove('on'); }, 1500); } }
+  else state.flooded = Math.max(0, (state.flooded || 0) - dt);
 }
 
 // Guard rails, bridge parapets, tunnel walls and the motorway's central barrier keep you on your side.
@@ -473,32 +489,52 @@ function autoHonk(dt) {
 
 // Solid world: trees, rocks, buildings, traffic, trains, barriers, people and animals push the car back instead of passing through it.
 function collide() {
-  const bike = settings.vehicle === 'bike', coach = settings.vehicle === 'coach', R = coach ? 1.35 : bike ? .45 : .95, offsets = coach ? [-4.8, -2.4, 0, 2.4, 4.8] : bike ? [-.55, .55] : [-1.25, 0, 1.25];
-  const fx = Math.sin(state.yaw), fz = Math.cos(state.yaw);
+  const bike = settings.vehicle === 'bike', coach = settings.vehicle === 'coach', R = bike ? .3 : .32;
+  const width = coach ? 2.5 : bike ? .7 : 1.9, length = coach ? 12 : bike ? 2.1 : 4.5, playerMass = PLAYER_MASS[settings.vehicle] || 1480;
+  const fx = Math.sin(state.yaw), fz = Math.cos(state.yaw), rx = Math.cos(state.yaw), rz = -Math.sin(state.yaw);
   const nearby = [...world.collidersNear(state.x, state.z, 16), ...life.colliders(state.x, state.z, 14), ...railway.colliders(state.x, state.z, 16), ...town.colliders(state.x, state.z, 12)];
-  let impact = 0, what = null;
-  for (const o of offsets) {
-    const cx = state.x + fx * o, cz = state.z + fz * o;
+  if (!nearby.length) return;
+  const travel = Math.sign(state.speed || 1), slow = Math.abs(state.speed) < .6;
+  let worst = null;
+  for (const pt of bodyPoints(width, length, R)) {
+    const cx = state.x + fx * pt.along + rx * pt.lateral, cz = state.z + fz * pt.along + rz * pt.lateral;
     for (const k of nearby) {
-      const dx = cx - k.x, dz = cz - k.z;
+      const dx = cx - k.x, dz = cz - k.z; let nx, nz, push;
       if (k.hx) {
         const lx = dx * k.c - dz * k.s, lz = dx * k.s + dz * k.c, ex = k.hx + R, ez = k.hz + R;
-        if (Math.abs(lx) < ex && Math.abs(lz) < ez) {
-          const px = ex - Math.abs(lx), pz = ez - Math.abs(lz); let nlx = 0, nlz = 0, push;
-          if (px < pz) { nlx = Math.sign(lx) || 1; push = px; } else { nlz = Math.sign(lz) || 1; push = pz; }
-          const nx = nlx * k.c + nlz * k.s, nz = -nlx * k.s + nlz * k.c;
-          state.x += nx * push; state.z += nz * push;
-          const hit = -(fx * nx + fz * nz) * Math.sign(state.speed || 1); if (hit > impact) { impact = hit; what = k; }
-        }
-        continue;
+        if (Math.abs(lx) >= ex || Math.abs(lz) >= ez) continue;
+        const px = ex - Math.abs(lx), pz = ez - Math.abs(lz); let nlx = 0, nlz = 0;
+        if (px < pz) { nlx = Math.sign(lx) || 1; push = px; } else { nlz = Math.sign(lz) || 1; push = pz; }
+        nx = nlx * k.c + nlz * k.s; nz = -nlx * k.s + nlz * k.c;
+      } else {
+        const d = Math.hypot(dx, dz), min = R + k.r; if (d >= min || d < 1e-4) continue;
+        nx = dx / d; nz = dz / d; push = min - d;
       }
-      const d = Math.hypot(dx, dz), min = R + k.r;
-      if (d < min && d > 1e-4) { const nx = dx / d, nz = dz / d, push = min - d; state.x += nx * push; state.z += nz * push; const hit = -(fx * nx + fz * nz) * Math.sign(state.speed || 1); if (hit > impact) { impact = hit; what = k; } }
+      // Who moves: the car takes its share of the overlap by mass; a standing car is not pushed by a pedestrian at all.
+      const mass = massOf(k), share = pushShare(mass, playerMass), carShare = mass !== Infinity && slow && share < .25 ? 0 : share;
+      state.x += nx * push * carShare; state.z += nz * push * carShare;
+      const approach = -(fx * nx + fz * nz) * travel * Math.abs(state.speed);
+      if (k.person) town.knock(k.person, -nx, -nz, push * (1 - carShare), Math.max(0, approach));
+      else if (k.animal) life.knock(k.animal, -nx, -nz, push * (1 - carShare), Math.max(0, approach));
+      if (approach > 0 && (!worst || approach * Math.max(share, .08) > worst.approach * Math.max(worst.share, .08))) worst = {approach, share, cos: -(fx * nx + fz * nz) * travel, side: fx * nz - fz * nx, what: k, nx, nz};
     }
   }
-  if (impact > .15) {
-    const hit = Math.abs(state.speed); state.speed = impact > .6 ? 0 : state.speed * .55; state.vy = Math.min(state.vy || 0, 0);
-    if (hit > 3 && state.time - (state.lastBump || -9) > 1.5) { state.lastBump = state.time; state.lastHit = what; toast(what?.train ? 'The train! Wait for the barriers next time.' : what?.barrier ? 'Wait for the barrier to lift' : what?.person ? 'Watch out for pedestrians!' : hit > 12 ? 'Crash! Take it easy.' : 'Bump!'); }
+  if (!worst) return;
+  const sev = severity(worst.approach, worst.share), before = state.speed;
+  const hit = respond({speed: state.speed, approach: worst.approach, cos: worst.cos, share: worst.share, restitution: worst.what.person || worst.what.animal ? 0 : .1});
+  state.speed = hit.speed; state.vy = Math.min(state.vy || 0, 0);
+  // A wall glanced at an angle turns the nose away from it; the car does not slide along inside it.
+  if (worst.share === 1 && Math.abs(worst.cos) < .95) state.yaw += Math.sign(worst.side) * worst.cos * Math.abs(worst.side) * .08;
+  if (sev > .8) {
+    const j = jolt(sev, worst.cos, worst.side); state.jolt = {pitch: j.pitch, roll: j.roll, pv: 0, rv: 0};
+    state.shake = Math.max(state.shake || 0, Math.min(1, sev / 14));
+    const kph = Math.abs(before) * 3.6;
+    if (state.time - (state.lastBump || -9) > .9) {
+      state.lastBump = state.time; state.lastHit = worst.what; driveAudio?.crash(Math.min(1, sev / 14), !!(worst.what.person || worst.what.animal));
+      const w = worst.what;
+      toast(w.train ? 'The train! Wait for the barriers next time.' : w.barrier ? 'Wait for the barrier to lift' : w.person ? (sev > 4 ? 'You hit someone. Stop and take a breath.' : 'Careful · people about') : w.animal ? (sev > 4 ? `You hit a ${w.kind || 'animal'}.` : 'Mind the animals') : w.vehicle ? (kph > 40 ? 'Crash! You hit another car.' : 'Bumped another car') : kph > 60 ? 'Crash! That one hurt.' : kph > 25 ? 'Crash! Take it easy.' : 'Bump!');
+      if (sev > 3) state.crashes = (state.crashes || 0) + 1;
+    }
   }
 }
 
@@ -607,13 +643,16 @@ function updateCar(dt) {
   const fx = Math.sin(state.yaw), fz = Math.cos(state.yaw), rx = Math.cos(state.yaw), rz = -Math.sin(state.yaw), L = settings.vehicle === 'coach' ? 3 : settings.vehicle === 'bike' ? .7 : 1.3, Wd = settings.vehicle === 'bike' ? .15 : .8;
   const hf = world.groundHeight(state.x + fx * L, state.z + fz * L), hb = world.groundHeight(state.x - fx * L, state.z - fz * L), hr = world.groundHeight(state.x + rx * Wd, state.z + rz * Wd), hl = world.groundHeight(state.x - rx * Wd, state.z - rz * Wd);
   const air = state.grounded === false ? 4 : 8;
-  vehicle.group.rotation.x = damp(vehicle.group.rotation.x, -Math.atan2(hf - hb, L * 2), air, dt);
+  // Weight transfer: the nose dips under braking and lifts under power; a hit jolts the body and settles like a spring.
+  state.dive = damp(state.dive || 0, clamp(-(state.accel || 0) * (settings.vehicle === 'coach' ? .0035 : .0048), -.055, .045), 5, dt);
+  if (state.jolt) { const j = state.jolt; j.pv += (-j.pitch * 160 - j.pv * 9) * dt; j.pitch += j.pv * dt; j.rv += (-j.roll * 160 - j.rv * 9) * dt; j.roll += j.rv * dt; if (Math.abs(j.pitch) + Math.abs(j.roll) + Math.abs(j.pv) + Math.abs(j.rv) < .002) state.jolt = null; }
+  vehicle.group.rotation.x = damp(vehicle.group.rotation.x, -Math.atan2(hf - hb, L * 2), air, dt) + (vehicle.detailed ? 0 : state.dive) + (state.jolt?.pitch || 0);
   const lateral = state.lateralAcceleration || 0;
   const lean = settings.vehicle === 'bike' ? motorcycleLean(lateral) : clamp(lateral * (settings.vehicle === 'coach' ? .009 : .004), -.08, .08);
-  vehicle.group.rotation.z = damp(vehicle.group.rotation.z, (settings.vehicle === 'bike' ? 0 : Math.atan2(hr - hl, Wd * 2)) + lean, air, dt);
+  vehicle.group.rotation.z = damp(vehicle.group.rotation.z, (settings.vehicle === 'bike' ? 0 : Math.atan2(hr - hl, Wd * 2)) + lean, air, dt) + (state.jolt?.roll || 0);
   vehicle.group.updateMatrixWorld(); vehicle.setDirt(state.dirt);
   const inTunnel = !!world.road.tunnelAt(state.z);
-  vehicle.update(dt, (state.paused || panelOpen || state.inspection || !state.started) ? 0 : state.speed, state.steer, atmo.lit > .5 || state.headlights || inTunnel, keys.KeyS || keys.Space || (state.auto && state.brakeIn > .2), settings.camera === 2 && !state.inspection);
+  vehicle.longAccel = state.accel || 0; vehicle.update(dt, (state.paused || panelOpen || state.inspection || !state.started) ? 0 : state.speed, state.steer, atmo.lit > .5 || state.headlights || inTunnel, keys.KeyS || keys.Space || (state.auto && state.brakeIn > .2), settings.camera === 2 && !state.inspection);
 }
 
 function positionCamera(dt, instant = false) {
@@ -657,8 +696,11 @@ function positionCamera(dt, instant = false) {
     else cameraPos.y = Math.max(cameraPos.y, world.surfaceHeight(cameraPos.x, cameraPos.z, settings.location !== 'hills') + .6);
   }
   if (settings.camera === 2) cameraPos.addScaledVector(right, bike ? 0 : (vehicle.seatX ?? .4));
+  // Under braking the camera keeps going for a moment (closer to the car); under power it hangs back.
+  if (settings.camera < 2 && !state.inspection) cameraPos.addScaledVector(forward, clamp(-(state.accel || 0) * .07, -.5, .9) * (1 - driveOrbit.focus));
   // Views from inside or on the car are fixed to it; the chase cameras follow smoothly.
   if (instant || settings.camera >= 2 || driveOrbit.focus > .001) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-5 * dt));
+  if (state.shake > .001) { const k = state.shake * .12; camera.position.x += (Math.random() - .5) * k; camera.position.y += (Math.random() - .5) * k * .7; camera.position.z += (Math.random() - .5) * k; state.shake = damp(state.shake, 0, 7, dt); }
   // Retract the camera boom before it passes through a following vehicle.
   if (settings.camera < 2) {
     const target={x:state.x,y:state.y+1.35,z:state.z};
@@ -667,12 +709,22 @@ function positionCamera(dt, instant = false) {
     if(fraction<1)camera.position.set(target.x+(camera.position.x-target.x)*fraction,target.y+(camera.position.y-target.y)*fraction,target.z+(camera.position.z-target.z)*fraction);
   }
   lookTarget.set(state.x + forward.x * ahead, state.y + (settings.camera >= 2 ? up : 1.35), state.z + forward.z * ahead);
-  if (settings.camera >= 2) lookTarget.y = world.road.y(state.z + ahead) + up * .8; else lookTarget.lerp(tmp.set(state.x, state.y + .95, state.z), driveOrbit.focus);
+  if (settings.camera >= 2) lookTarget.y = world.road.y(state.z + ahead) + up * .8 - (state.dive || 0) * ahead * .9; else lookTarget.lerp(tmp.set(state.x, state.y + .95, state.z), driveOrbit.focus);
   camera.lookAt(lookTarget);
   camera.fov = damp(camera.fov, settings.fov + Math.min(Math.abs(state.speed) * .15, 9), 4, dt); camera.updateProjectionMatrix();
   placeSun(forward.x, forward.z);
 }
 function placeSun(fx, fz) { const ld = world.lightDir; sun.position.set(state.x + ld.x * 180 + fx * 20, state.y + ld.y * 180, state.z + ld.z * 180 + fz * 20); sun.target.position.set(state.x + fx * 20, state.y, state.z + fz * 20); }
+
+// Below the surface the world turns green-blue and close, the light dims and the sound goes dull.
+function underwaterLook(dt) {
+  const waterY = settings.location === 'hills' ? world.water.position.y : -1e9, under = camera.position.y < waterY - .05;
+  state.underwater = under;
+  if (!under) return;
+  const a = atmo, f = scene.fog; if (!f) return;
+  f.color.set(0x14383c).lerp(tmp.set(0x061418), a.night); f.near = .5; f.far = 26 + 14 * (1 - a.night);
+  hemi.intensity *= .45; sun.intensity *= .35; renderer.toneMappingExposure *= .72;
+}
 
 /* ---------- Frame loop ---------- */
 // Physics runs at a fixed 120 Hz; the car and camera are drawn between the last two steps so motion stays even at any frame rate.
@@ -686,6 +738,7 @@ function frame(now) {
   if (Math.hypot(live.x - previousState.x, live.z - previousState.z) < 5) { const a = accumulator * 120; for (const k of SMOOTHED) state[k] = k === 'yaw' ? previousState.yaw + angleDifference(live.yaw, previousState.yaw) * a : previousState[k] + (live[k] - previousState[k]) * a; }
   applyAtmosphere(dt);
   updateCar(dt); positionCamera(dt);
+  underwaterLook(dt);
   Object.assign(state, live);
   effects.inTunnel = !!world.road.tunnelAt(camera.position.z);
   effects.update(dt); town.update(dt, camera); life.update(dt); railway.update(dt, camera, () => effects.getVolume());
@@ -801,7 +854,8 @@ function initAudio() {
     const source = audioContext.createBufferSource(); source.buffer = buffer; source.loop = true;
     const filter = audioContext.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 500;
     // Mixer: one channel each for the vehicle (engine, brakes, wind, indicators), the weather and other sound effects.
-    mixer = Object.fromEntries(['vehicle', 'weather', 'sfx'].map((k) => { const g = audioContext.createGain(); g.gain.value = settings[k + 'Volume']; g.connect(audioContext.destination); return [k, g]; }));
+    muffle = audioContext.createBiquadFilter(); muffle.type = 'lowpass'; muffle.frequency.value = 20000; muffle.connect(audioContext.destination);
+    mixer = Object.fromEntries(['vehicle', 'weather', 'sfx'].map((k) => { const g = audioContext.createGain(); g.gain.value = settings[k + 'Volume']; g.connect(muffle); return [k, g]; }));
     windGain = audioContext.createGain(); windGain.gain.value = 0; source.connect(filter).connect(windGain).connect(mixer.vehicle); source.start();
     effects?.initAudio(audioContext, mixer); railway?.initAudio(audioContext, mixer.sfx);
     driveAudio = new DriveAudio(audioContext, mixer.vehicle);
@@ -828,6 +882,7 @@ function updateAudio(dt = 0) {
   if (driveAudio) { state.gearLabel = driveAudio.update(dt, {speed: state.speed, throttle: state.throttle || 0, brake: Math.max(state.brakeIn || 0, keys.Space ? 1 : 0), steer: state.steer, offroad: state.offroad, volume: active, vehicle: settings.vehicle, reverse: state.speed < -.2, grounded: state.grounded !== false}); state.slip = driveAudio.slip; driveAudio.horn(horning && state.started, active); }
   windGain.gain.setTargetAtTime(active * .14 * Math.min(Math.abs(state.speed) / 25, 1), audioContext.currentTime, .3);
   for (const k in mixer) mixer[k].gain.setTargetAtTime(settings[k + 'Volume'], audioContext.currentTime, .1);
+  muffle?.frequency.setTargetAtTime(state.underwater ? 360 : state.depth > .3 ? 2400 : 20000, audioContext.currentTime, .12);
   radio?.update(dt);
   // Indicator relay: tick on, tock off.
   const blink = state.indicator ? Math.floor(performance.now() / 380) % 2 : null;

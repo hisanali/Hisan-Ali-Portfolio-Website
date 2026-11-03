@@ -1,8 +1,8 @@
 import {Landmarks} from './landmarks.js?v=20260927-train1';
-import {upgradeSurfaces} from './materials.js?v=20260927-train1';
+import {upgradeSurfaces} from './materials.js?v=20261103-realism1';
 import * as T from './vendor/three.module.js';
 import {random, noise, lerp, smooth, clamp, hashSeed} from './math.js?v=20260927-train1';
-import {Network, TYPES, ZONE, SEA} from './network.js?v=20260927-train1';
+import {Network, TYPES, ZONE, REACH, SEA} from './network.js?v=20260927-train1';
 import {Scenery} from './scenery.js?v=20260927-train1';
 import {Roadside} from './roadside.js?v=20260927-train1';
 import {sheltered} from './atmosphere.js?v=20260927-train1';
@@ -299,9 +299,9 @@ export class World {
     }
     strip(run, matFor(kind));
     for (const j of r.junctions) {
-      if (j.z > z1 || j.z + ZONE < z0) continue;
+      if (j.z > z1 || j.z + REACH < z0) continue;
       const seg = j.options[1 - j.chosen], rows = [], k = ROAD_KIND[seg.type];
-      for (let z = Math.max(z0, j.z); z <= Math.min(z1, j.z + ZONE) + .01; z += ROW) rows.push([seg.x(z), seg.y(z) + .062, z, seg.half(z)]);
+      for (let z = Math.max(z0, j.z); z <= Math.min(z1, j.z + REACH) + .01; z += ROW) { const u = z - j.z, taper = u > REACH - 160 ? 1 - (u - (REACH - 160)) / 160 : 1; rows.push([seg.x(z), seg.y(z) + .062, z, seg.half(z) * Math.max(.05, taper)]); }
       strip(rows, this.stubMats[k], true);
       // Where a branch leaves ahead of you, the road you are on gets skirts too (it may now sit above the other branch's ground).
     }
