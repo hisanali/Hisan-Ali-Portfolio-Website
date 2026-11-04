@@ -120,3 +120,13 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 - The car stays exactly where you left it; walk back to it and press X to get in. Walk up to any parked car (not the delivery truck) and X takes it: your own car stays parked there as a second car you can come back to and swap again. Parked cars become the nearest matching drivable model (saloon or estate → Mercedes W201, hatchback → GR Corolla, SUV, pickup or van → Land Cruiser, bus → coach).
 - The camera is a shoulder chase behind the walker with the same drag-to-look-around; the world streams around you on foot; traffic treats the parked car as the obstacle and will push you out of its way, but does not yet brake for a pedestrian you.
 - Not yet: entering moving traffic, doors that open, a run animation of its own (the walk is sped up), shops, talking, or saving the on-foot state across a reload (you reload inside the car).
+
+
+## Stage 2: shops, the café, the petrol station shop, the bus
+
+- Coins: you start with twenty, earn one a kilometre driven and ten for each new place found. Shown under the journey figures.
+- Every town shop has a door you can walk to (its name and door are recorded on the lot as the street is built). X at the door takes you inside (`interiors.js`): a room built once per shop with a tiled floor, plaster walls, windows and the door, a counter with a shopkeeper (one of the civilians, idling), shelves of goods coloured for the trade, tables and chairs in cafés, a drinks fridge in markets and the petrol shop, a chair and mirror at the barber, a lit sign. The roadside café and the petrol station shop open the same way.
+- At the counter, X opens the shop card: what the shop stocks, prices, what you have, and your bag. Coffee or tea passes twenty minutes; the newspaper gives a headline; a haircut is a haircut. Kept things go in the bag: a fuel can is used when you get into a car that is low on fuel, a wash token is offered on the petrol station card and washes the car and beats out the dents, plasters, a spare bulb, a road map, flowers and a paperback are yours to carry.
+- Bus: stand at a town bus stop; when a bus is at the stop, X boards it. You ride with it (camera on the roof) and X at its next stop gets you off beside the door. If the bus goes out of range you are set down where you are.
+- Rain and wind stay outside; the world keeps streaming around the door you came in by; the on-foot save remembers the door so a reload inside puts you outside it.
+- Known limits: the café and petrol station doors are approximate positions in front of their buildings, not modelled doors; the shop card is a card, not a modelled till; the keeper does not speak yet (Stage 3).
