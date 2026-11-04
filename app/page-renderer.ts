@@ -6,6 +6,8 @@ const experienceStyles = '<link rel="stylesheet" href="/experience-upgrades.css?
 const qualityRepairStyles = '<link rel="stylesheet" href="/quality-repairs.css?v=2">';
 const fieldGuideStyles = '<link rel="stylesheet" href="/blog/field-guide.css?v=2">';
 const interiorScript = '<script src="/interior-redesign.js?v=34"></script>';
+const listenStyles = '<link rel="stylesheet" href="/blog-listen.css?v=20261104-1">';
+const listenScript = '<script src="/blog-listen.js?v=20261104-1" defer></script>';
 
 export function prepareInteriorPage(html: string, pathname: string) {
   if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
@@ -24,6 +26,7 @@ export function prepareInteriorPage(html: string, pathname: string) {
   const bodyClasses = ['redesign-interior', `page-${family}`];
   if (root === 'blog' && path.split('/').length > 1) bodyClasses.push('page-blog-article');
   if (root === 'tools' && path.split('/').length > 1) bodyClasses.push('page-tool-detail');
+  const isArticle = root === 'blog' && path.split('/').length > 1;
 
   const prepared = html
     .replace(/script\.js\?v=[^"']+/g, 'script.js?v=20260903-shell3')
@@ -33,10 +36,12 @@ export function prepareInteriorPage(html: string, pathname: string) {
     .replace(/<link\b[^>]*href=["']\/quality-repairs\.css[^>]*>\s*/gi, '')
     .replace(/<script\b[^>]*src=["']\/interior-redesign\.js[^>]*><\/script>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/blog\/field-guide\.css[^>]*>\s*/gi, '')
+    .replace(/<link\b[^>]*href=["']\/blog-listen\.css[^>]*>\s*/gi, '')
+    .replace(/<script\b[^>]*src=["']\/blog-listen\.js[^>]*><\/script>\s*/gi, '')
     .replace(/<link\b[^>]*rel=["']preconnect["'][^>]*href=["']https:\/\/fonts\.(?:googleapis|gstatic)\.com[^>]*>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']https:\/\/fonts\.googleapis\.com\/css2\?family=DM\+Serif\+Display[^>]*>\s*/gi, '')
-    .replace('</head>', `${interiorFonts}${pageStyles}</head>`)
-    .replace('</body>', `${interiorScript}</body>`)
+    .replace('</head>', `${interiorFonts}${pageStyles}${isArticle ? listenStyles : ''}</head>`)
+    .replace('</body>', `${interiorScript}${isArticle ? listenScript : ''}</body>`)
     .replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
       if (/\bclass=/i.test(attributes)) {
         return match.replace(/class=(["'])(.*?)\1/i, (_full, quote, classes) => {
