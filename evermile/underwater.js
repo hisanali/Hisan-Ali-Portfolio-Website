@@ -1,5 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
+import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 
 // Below the surface of the lakes and the sea: the water seen from underneath, shoals of fish, kelp swaying on
 // the bed, wrecks (a broken ship, capsized boats), rising bubbles, and a shifting light. Everything is laid out
@@ -12,7 +13,7 @@ export class Underwater {
     this.scene = scene; this.world = world; this.settings = settings; this.time = 0; this.seedZ = null; this.active = false;
     this.group = new T.Group(); this.group.visible = false; scene.add(this.group);
     // The surface from below: a dim, rippling ceiling.
-    this.underside = new T.Mesh(new T.PlaneGeometry(4000, 4000), new T.MeshStandardMaterial({color: 0x2f6f78, emissive: 0x15424a, emissiveIntensity: .35, roughness: .35, metalness: .2, transparent: true, opacity: .78, side: T.BackSide, depthWrite: false}));
+    this.underside = new T.Mesh(new T.PlaneGeometry(4000, 4000), new T.MeshStandardMaterial({color: 0x2f6f78, emissive: 0x15424a, emissiveIntensity: .35, roughness: .35, metalness: .2, transparent: true, opacity: .97, side: T.BackSide, depthWrite: false, fog: false}));
     this.underside.rotation.x = -Math.PI / 2; this.underside.renderOrder = 1; this.group.add(this.underside);
     // Fish: a flattened body with a tail, wiggled in the shader; each instance swims its own loop.
     const body = new T.SphereGeometry(1, 10, 7).scale(.07, .11, .24), tail = new T.ConeGeometry(.1, .18, 3).rotateX(-Math.PI / 2).rotateZ(Math.PI / 2).translate(0, 0, -.3);
@@ -39,6 +40,31 @@ export class Underwater {
     this.bubbles = new T.Points(bg, this.bubbleMat); this.bubbles.frustumCulled = false; this.group.add(this.bubbles); this.nextBubble = 0;
     this.wrecks = new T.Group(); this.group.add(this.wrecks);
     this.wood = new T.MeshStandardMaterial({color: 0x4b3b2c, roughness: .92}); this.rust = new T.MeshStandardMaterial({color: 0x6b4a33, roughness: .85, metalness: .35}); this.dark = new T.MeshStandardMaterial({color: 0x2c2f33, roughness: .9});
+    this.models = {}; this.loadModels();
+  }
+
+  // Real models: two fish species (a Barramundi and a Grey Snapper) and wreck dressing (ship boards and a ship's wheel).
+  // Each fish becomes an instanced mesh with the same tail wiggle; the shoals switch over as soon as a species is in.
+  loadModels() {
+    const loader = new GLTFLoader();
+    const wiggle = (mat) => { const previous = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { previous?.(sh, r); sh.uniforms.uTime = this.timeUniform; sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nfloat fishPhase=float(gl_InstanceID)*1.7;float back=max(0.,-transformed.z);transformed.x+=sin(uTime*7.+fishPhase+transformed.z*6.)*back*back*.9;'); }; mat.customProgramCacheKey = () => 'fish-wiggle'; };
+    const species = [['fish-barramundi', 1.35], ['fish-snapper', .021]];
+    for (const [key, scale] of species) loader.load(new URL(`./assets/models/${key}.glb?v=20261104-water2`, import.meta.url).href, (g) => {
+      let mesh = null; g.scene.traverse((o) => { if (o.isMesh && !mesh) mesh = o; }); if (!mesh) return;
+      g.scene.updateMatrixWorld(true);
+      const geo = mesh.geometry.clone().applyMatrix4(mesh.matrixWorld); geo.scale(scale, scale, scale);
+      const box = new T.Box3().setFromBufferAttribute(geo.attributes.position), c = box.getCenter(new T.Vector3()); geo.translate(-c.x, -c.y, -c.z);
+      // The snapper faces +z; the barramundi faces -z: turn it so every species swims the same way.
+      if (key === 'fish-barramundi') geo.rotateY(Math.PI);
+      const mat = mesh.material.clone(); mat.side = T.FrontSide; mat.envMapIntensity = .6; wiggle(mat);
+      const inst = new T.InstancedMesh(geo, mat, this.fishCount); inst.instanceMatrix.setUsage(T.DynamicDrawUsage); inst.frustumCulled = false; inst.count = 0; inst.castShadow = false;
+      this.models[key] = inst; this.group.add(inst); this.fish.visible = false;
+      document.dispatchEvent(new CustomEvent('underwaterloaded', {detail: {key}}));
+    }, undefined, (e) => console.warn('Underwater model unavailable', key, e.message));
+    for (const key of ['wreck-boards', 'wreck-wheel']) loader.load(new URL(`./assets/models/${key}.glb?v=20261104-water2`, import.meta.url).href, (g) => {
+      g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; o.material.envMapIntensity = .5; } });
+      this.models[key] = g.scene; if (this.active) this.seed(this.seedZ);
+    }, undefined, (e) => console.warn('Underwater model unavailable', key, e.message));
   }
 
   // A broken ship: a hull split in two with the bow heeled over, a snapped mast, ribs showing, a funnel.
@@ -66,7 +92,7 @@ export class Underwater {
     // Shoals.
     this.shoals = []; this.fishData = [];
     for (let s = 0; s < 6; s++) { const p = pick(); this.shoals.push({x: p.x, z: p.z, y: Math.min(water - 1.5, p.y + 1.2 + rng() * Math.max(.5, water - p.y - 2)), radius: 3 + rng() * 6, speed: .3 + rng() * .5, phase: rng() * 6.28, clockwise: rng() < .5 ? 1 : -1}); }
-    for (let i = 0; i < this.fishCount; i++) { const sh = this.shoals[i % this.shoals.length]; this.fishData.push({shoal: sh, a: rng() * 6.28, r: sh.radius * (.5 + rng() * .6), dy: (rng() - .5) * 1.4, size: .7 + rng() * .8, wobble: rng() * 6.28}); }
+    for (let i = 0; i < this.fishCount; i++) { const sh = this.shoals[i % this.shoals.length]; sh.species ??= (i % 2 ? 'fish-snapper' : 'fish-barramundi'); this.fishData.push({shoal: sh, species: sh.species, a: rng() * 6.28, r: sh.radius * (.5 + rng() * .6), dy: (rng() - .5) * 1.4, size: .7 + rng() * .8, wobble: rng() * 6.28}); }
     // Kelp on the bed.
     const m = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), sc = new T.Vector3();
     for (let i = 0; i < this.kelpCount; i++) { const p = pick(); const h = .6 + rng() * .9; e.set(0, rng() * 6.28, 0); q.setFromEuler(e); m.compose(new T.Vector3(p.x + (rng() - .5) * 3, p.y, p.z + (rng() - .5) * 3), q, sc.set(1, Math.min(h, (water - p.y - .5) / 3.2), 1)); this.kelp.setMatrixAt(i, m); }
@@ -75,7 +101,10 @@ export class Underwater {
     for (const o of [...this.wrecks.children]) this.wrecks.remove(o);
     this.wreckSpots = [];
     const deepest = deep.filter((p) => p.y < water - 5).sort((a, b) => a.y - b.y);
-    if (deepest.length) { const p = deepest[Math.floor(rng() * Math.min(5, deepest.length))], ship = this.ship(rng); ship.position.set(p.x, p.y - .4, p.z); ship.rotation.set(.08, rng() * 6.28, -.22); this.wrecks.add(ship); this.wreckSpots.push({x: p.x, y: p.y + 2, z: p.z}); }
+    if (deepest.length) { const p = deepest[Math.floor(rng() * Math.min(5, deepest.length))], ship = this.ship(rng); ship.position.set(p.x, p.y - .4, p.z); ship.rotation.set(.08, rng() * 6.28, -.22); this.wrecks.add(ship); this.wreckSpots.push({x: p.x, y: p.y + 2, z: p.z});
+      // Real wreck dressing round the hull: scattered ship boards and the ship's wheel lying on the bed.
+      if (this.models['wreck-boards']) for (let k = 0; k < 3; k++) { const b = this.models['wreck-boards'].clone(true); const a = rng() * 6.28, d = 9 + rng() * 9; b.position.set(p.x + Math.cos(a) * d, this.world.surfaceHeight(p.x + Math.cos(a) * d, p.z + Math.sin(a) * d, false) + .05, p.z + Math.sin(a) * d); b.rotation.set(0, rng() * 6.28, 0); b.scale.setScalar(1.3 + rng() * .6); this.wrecks.add(b); }
+      if (this.models['wreck-wheel']) { const w = this.models['wreck-wheel'].clone(true); const a = rng() * 6.28; w.position.set(p.x + Math.cos(a) * 6, this.world.surfaceHeight(p.x + Math.cos(a) * 6, p.z + Math.sin(a) * 6, false) + .02, p.z + Math.sin(a) * 6); w.rotation.set(-Math.PI / 2 + .3, rng() * 6.28, 0); w.scale.setScalar(1.2); this.wrecks.add(w); } }
     if (this.world.scenery?.boat) for (let k = 0; k < 2; k++) { const p = pick(), b = this.world.scenery.boat(false, rng); b.scale.setScalar(1.7); b.position.set(p.x, p.y + .5, p.z); b.rotation.set(0, rng() * 6.28, Math.PI * (.75 + rng() * .3)); this.wrecks.add(b); this.wreckSpots.push({x: p.x, y: p.y + .6, z: p.z}); }
     this.seedZ = zc;
   }
@@ -90,15 +119,21 @@ export class Underwater {
     if (!this.active) return;
     this.underside.position.set(Math.round(camera.position.x / 50) * 50, water - .04, Math.round(camera.position.z / 50) * 50);
     this.underside.visible = camera.position.y < water + 1.5;
+    if (this.scene.fog) { this.underside.material.color.copy(this.scene.fog.color).multiplyScalar(1.25); this.underside.material.emissive.copy(this.scene.fog.color).multiplyScalar(.55); }
     // Fish swim their loops; the shoal drifts a little.
-    const m = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), s = new T.Vector3(), p = new T.Vector3();
+    const m = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), s = new T.Vector3(), p = new T.Vector3(), counts = {};
+    const real = Object.keys(this.models).filter((k) => k.startsWith('fish-'));
     for (let i = 0; i < this.fishCount; i++) {
       const f = this.fishData[i], sh = f.shoal; f.a += dt * sh.speed * sh.clockwise / Math.max(f.r, 1) * 2.2;
       const x = sh.x + Math.cos(f.a) * f.r, z = sh.z + Math.sin(f.a) * f.r, y = sh.y + f.dy + Math.sin(this.time * .8 + f.wobble) * .3;
       const heading = f.a + (sh.clockwise > 0 ? Math.PI / 2 : -Math.PI / 2);
-      e.set(0, Math.atan2(-Math.sin(heading), Math.cos(heading)) + Math.PI / 2, 0); q.setFromEuler(e); m.compose(p.set(x, y, z), q, s.setScalar(f.size)); this.fish.setMatrixAt(i, m);
+      e.set(0, Math.atan2(-Math.sin(heading), Math.cos(heading)) + Math.PI / 2, 0); q.setFromEuler(e); m.compose(p.set(x, y, z), q, s.setScalar(f.size));
+      const target = this.models[f.species] || (real.length ? this.models[real[0]] : null);
+      if (target) { const n = counts[f.species] = (counts[f.species] || 0); target.setMatrixAt(n, m); counts[f.species] = n + 1; }
+      else this.fish.setMatrixAt(i, m);
     }
-    this.fish.instanceMatrix.needsUpdate = true;
+    if (real.length) { for (const k of real) { const inst = this.models[k]; inst.count = counts[k] || 0; inst.instanceMatrix.needsUpdate = true; } this.fish.visible = false; }
+    else this.fish.instanceMatrix.needsUpdate = true;
     // Bubbles from the wrecks now and then, and from the car when it is under.
     this.bubbleClock = (this.bubbleClock || 0) + dt;
     if (this.bubbleClock > .12) { this.bubbleClock = 0; for (const w of this.wreckSpots) if (Math.random() < .5) this.bubble(w.x, w.y, w.z, .5); if (state.depth > .3) this.bubble(state.x - Math.sin(state.yaw) * 2, state.y + .4, state.z - Math.cos(state.yaw) * 2, .9); }
