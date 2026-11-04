@@ -13,6 +13,16 @@ export function axis(value, deadzone = DEADZONE) {
 
 function value(button) { return typeof button === 'number' ? button : button?.value ?? (button?.pressed ? 1 : 0); }
 
+// A pad only counts once someone has clearly used it (a button, a full stick push or a trigger squeeze): a wheel,
+// joystick or worn pad that reports a little input at rest must not drive the car on its own.
+export function wakes(pad, threshold = .6) {
+  if (!pad) return false;
+  const buttons = pad.buttons || [], axes = pad.axes || [];
+  for (let i = 0; i < buttons.length; i++) if (i !== 6 && i !== 7 && value(buttons[i]) > .5) return true;
+  if (Math.abs(axis(axes[0])) > threshold) return true;
+  return value(buttons[6]) > threshold || value(buttons[7]) > threshold;
+}
+
 // Returns the driving inputs plus the buttons that went down this frame. `held` lists the buttons that are down.
 export function readGamepad(pad, previous = {}) {
   const buttons = pad?.buttons || [], axes = pad?.axes || [];
@@ -24,7 +34,9 @@ export function readGamepad(pad, previous = {}) {
   // Steering from the left stick; the keyboard convention is positive to the left.
   const input = -axis(axes[0]) || 0;
   const trigger = (i) => value(buttons[i]);
-  const throttle = Math.max(trigger(7), 0), brake = Math.max(trigger(6), 0);
+  // Triggers get a dead zone too, so a trigger that does not quite return to zero does not creep the car forward.
+  const dz = (v) => v < .06 ? 0 : (v - .06) / .94;
+  const throttle = dz(Math.max(trigger(7), 0)), brake = dz(Math.max(trigger(6), 0));
   return {input, throttle, brake, held, pressed, active: !!pad && (input !== 0 || throttle > 0 || brake > 0 || Object.values(held).some(Boolean))};
 }
 
