@@ -14,6 +14,7 @@ import {createSuspension, stepSuspension, restAttitude, wheelOffset} from './sus
 import {SkidMarks} from './marks.js?v=20261103-realism1';
 import {Dust} from './dust.js?v=20261103-realism1';
 import {SSAOPass} from './ssao.js?v=20261103-realism1';
+import {Underwater} from './underwater.js?v=20261104-water1';
 import * as T from './vendor/three.module.js';
 import {World} from './world.js?v=20260927-train1';
 import {CameraOrbit} from './camera-orbit.js?v=20260927-train1';
@@ -51,7 +52,7 @@ export const state = {started: false, paused: false, auto: false, speed: 0, x: 0
 try { state.distance = Number(localStorage.getItem('evermile-distance')) || 0; state.fuel = clamp(Number(localStorage.getItem('evermile-fuel') ?? 1), 0, 1); if (Number.isNaN(state.fuel)) state.fuel = 1; } catch {}
 export const keys = {};
 // Live objects for the browser checks under tests/ and scripts/ (not part of the game's own API).
-export const debug = {get vehicle() { return vehicle; }, get life() { return life; }, get world() { return world; }, get camera() { return camera; }};
+export const debug = {get vehicle() { return vehicle; }, get life() { return life; }, get world() { return world; }, get camera() { return camera; }, get renderer() { return renderer; }, get underwater() { return underwater; }, get effects() { return effects; }};
 // The journey log lives beside the settings; `session` is this drive, started when the title screen is left.
 let storage = null; try { storage = localStorage; } catch {}
 const journey = loadJourney(storage, state.distance); let session = null;
@@ -65,9 +66,9 @@ function endTouchDrive(pointerId) { const code = touchPointers.get(pointerId); i
 function endAllTouchDrive() { for (const id of touchPointers.keys()) touchCounts[touchPointers.get(id)] = 0; for (const code of Object.keys(touchCounts)) keys[code] = false; touchPointers.clear(); }
 
 const $ = (id) => document.getElementById(id);
-let renderer, world, vehicle, scene, camera, sun, hemi, pmrem, envTarget, effects, life, town, railway, atmo, windscreen, mirror, radio;
+let renderer, world, vehicle, scene, camera, sun, hemi, pmrem, envTarget, effects, life, town, railway, atmo, windscreen, mirror, radio, underwater;
 let last = 0, accumulator = 0, hudClock = 0, fpsTime = 0, fpsFrames = 0, panelOpen = false, frameId;
-const cameraPos = new T.Vector3(), lookTarget = new T.Vector3(), tmp = new T.Vector3();
+const cameraPos = new T.Vector3(), lookTarget = new T.Vector3(), tmp = new T.Vector3(), tmp2 = new T.Color();
 const driveOrbit = new CameraOrbit();
 let chaseOrbitRadius = 0, orbitYaw = .72, orbitPitch = .28, orbitDistance = 7.5, orbitPointer = null;
 let audioContext, windGain, muffle = null, mixer = null, audioReady = false, muted = false, driveAudio = null, horning = false;
@@ -124,6 +125,7 @@ try {
   railway = new Railway({scene, world, settings, getState: () => state});
   town = new TownLife({scene, world, settings, getState: () => state, life});
   life.town = town; life.railway = railway;
+  underwater = new Underwater(scene, world, settings);
   windscreen = new Windscreen($('windscreen'));
   mirror = new Mirror(renderer, scene);
   reset(); world.update(state.z, camera, true); setupHighFx(); applyAtmosphere(0, true); initUI();
@@ -786,8 +788,10 @@ function underwaterLook(dt) {
   state.underwater = under;
   if (!under) return;
   const a = atmo, f = scene.fog; if (!f) return;
-  f.color.set(0x14383c).lerp(tmp.set(0x061418), a.night); f.near = .5; f.far = 26 + 14 * (1 - a.night);
-  hemi.intensity *= .45; sun.intensity *= .35; renderer.toneMappingExposure *= .72;
+  // Games are kinder than lakes: the light stays bright enough to see the bed, wrecks and fish even deep down.
+  const depth = Math.max(0, waterY - camera.position.y), clarity = Math.max(.6, 1 - depth * .012), shimmer = 1 + Math.sin(state.time * 2.1) * .05 + Math.sin(state.time * 3.7 + 1) * .03;
+  f.color.set(0x2a7f8a).lerp(tmp2.set(0x12474f), Math.min(1, depth * .025)).lerp(tmp2.set(0x071e24), a.night * .8); f.near = 1; f.far = (46 + 44 * clarity) * (1 - a.night * .4);
+  hemi.intensity = Math.max(hemi.intensity, .9) * 1.15 * shimmer; hemi.color.lerp(tmp2.set(0x9fe0e8), .5); hemi.groundColor.lerp(tmp2.set(0x1d4a50), .5); sun.intensity *= .55 * clarity; renderer.toneMappingExposure *= 1.02 * shimmer;
 }
 
 // Rubber and dust: sliding or locked tyres mark the tarmac and smoke; off the road the wheels throw dust.
@@ -809,7 +813,6 @@ function roadEffects(dt) {
   }
   marks.update(dt); dust.update(dt, {light: tmp2.copy(atmo.hemiSky || atmo.lightColor).multiplyScalar(.9), fog: scene.fog, season: settings.location === 'hills' ? settings.season : 'summer'});
 }
-const tmp2 = new T.Color();
 
 /* ---------- Frame loop ---------- */
 // Physics runs at a fixed 120 Hz; the car and camera are drawn between the last two steps so motion stays even at any frame rate.
@@ -827,6 +830,7 @@ function frame(now) {
   Object.assign(state, live);
   effects.inTunnel = !!world.road.tunnelAt(camera.position.z);
   effects.update(dt); town.update(dt, camera); life.update(dt); railway.update(dt, camera, () => effects.getVolume());
+  underwater?.update(dt, state, camera);
   world.update(state.z, camera); world.scenery.update(dt, camera, state); world.roadside.update(dt, camera, railway, state);
   world.landmarks.update(dt, state);
   detailedModels ||= new DetailedModels(scene,settings);
