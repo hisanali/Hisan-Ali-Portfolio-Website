@@ -263,6 +263,8 @@ export class Scenery {
     put('wall', UNIT, D / 2, H + .05, 0, 0x4a4a4a, D - .2, .1, W - .2);
     // Shopfront: lit window, door, sign board and LED strips.
     const gw = W * .6, sign = Math.floor(rng() * SHOPS.length), strip = 'strip' + Math.floor(rng() * STRIPS.length);
+    // Remembered on the lot so you can find the door on foot: the shop's name and where its door is.
+    { const [dx, dz] = put.world(-.4, W * .31); lot.name = SHOPS[sign]; lot.doorX = dx; lot.doorZ = dz; lot.doorYaw = yaw; }
     put('shopGlass', UNIT, -.03, 1.5, -W * .12, 0xffffff, .1, 2.3, gw);
     put('shopGlass', UNIT, -.03, 1.3, W * .31, 0xffffff, .1, 2.1, 1.1);
     put('glassTrim', UNIT, -.06, 2.7, 0, 0xffffff, .14, .1, W * .92);

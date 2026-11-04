@@ -130,6 +130,19 @@ export class DriveAudio {
     if (!soft) { burst('bandpass', 2600, 1.2, .5 * k, .14 + .1 * k, .01); burst('highpass', 1800, .8, .22 * k, .25, .05); }
     if (!soft && k > .45) for (let i = 0; i < 6; i++) burst('bandpass', 5200 + Math.random() * 3000, 8, .12 * k, .08, .06 + i * .05 + Math.random() * .04);
   }
+  // Another driver's horn, from a direction: a short two-note blast, a little lower and further away than yours.
+  hornBurst(distance = 20) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = (this.lastVolume ?? .35) * Math.max(.15, 1 - distance / 70);
+    if (!vol) return;
+    for (const [f, g] of [[392, .5], [494, .4]]) { const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), gain = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 1800; gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(g * vol * .18, t + .02); gain.gain.setValueAtTime(g * vol * .18, t + .32); gain.gain.linearRampToValueAtTime(0, t + .4); gain.gain.setValueAtTime(0, t + .46); gain.gain.linearRampToValueAtTime(g * vol * .18, t + .48); gain.gain.setValueAtTime(g * vol * .18, t + .7); gain.gain.linearRampToValueAtTime(0, t + .78); o.connect(lp).connect(gain).connect(this.out); o.start(t); o.stop(t + .8); }
+  }
+  // A car door: the latch click and the shut thunk.
+  door(open = false) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
+    const burst = (freq, q, gain, len, delay) => { const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(gain * vol, t + delay + .005); g.gain.exponentialRampToValueAtTime(.0001, t + delay + len); src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random()); src.stop(t + delay + len + .02); };
+    burst(2400, 4, .35, .06, 0);
+    if (!open) burst(180, 1.2, .9, .22, .12);
+  }
   // Driving into water: a splash that grows with speed, then a short wash.
   splash(strength = .5) {
     const ctx = this.ctx, t = ctx.currentTime, k = Math.max(0, Math.min(1, strength)), vol = this.lastVolume ?? .35;

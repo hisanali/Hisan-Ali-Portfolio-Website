@@ -12,7 +12,7 @@ export class Walker {
   constructor(scene, world, settings) {
     this.scene = scene; this.world = world; this.settings = settings;
     this.root = new T.Group(); this.root.visible = false; scene.add(this.root);
-    this.x = 0; this.z = 0; this.y = 0; this.yaw = 0; this.speed = 0; this.vy = 0; this.grounded = true; this.key = null; this.detail = null; this.height = 1.72;
+    this.x = 0; this.z = 0; this.y = 0; this.yaw = 0; this.speed = 0; this.vy = 0; this.grounded = true; this.key = null; this.detail = null; this.height = 1.72; this.floor = null;
   }
   // Dress the walker from a loaded citizen asset (the detailed-models loader keeps them); falls back to a capsule.
   dress(asset, key) {
@@ -28,18 +28,24 @@ export class Walker {
   undress() { if (!this.detail) return; this.detail.mixer?.stopAllAction(); for (const o of [...this.root.children]) this.root.remove(o); this.detail = null; this.key = null; }
 
   // Step out of (or appear at) a point, facing a direction.
-  place(x, z, yaw) { this.x = x; this.z = z; this.yaw = yaw; this.speed = 0; this.vy = 0; this.y = this.world.groundHeight(x, z); this.root.position.set(x, this.y, z); this.root.rotation.set(0, yaw, 0); this.root.visible = true; }
+  // Indoors the floor is flat and known; outdoors it is the ground.
+  ground(x, z) { return this.floor !== null ? this.floor : this.world.groundHeight(x, z); }
+  place(x, z, yaw) { this.x = x; this.z = z; this.yaw = yaw; this.speed = 0; this.vy = 0; this.down = 0; this.lie = 0; this.y = this.ground(x, z); this.root.position.set(x, this.y, z); this.root.rotation.set(0, yaw, 0); this.root.visible = true; }
   hide() { this.root.visible = false; }
 
+  // Hit by a car: thrown along its direction, down on the ground for a moment, then up again.
+  knock(dx, dz, speed) { if (this.down > 0) return; this.down = 2.4 + Math.min(1.6, speed * .1); this.throwX = dx * Math.min(6, 1.5 + speed * .3); this.throwZ = dz * Math.min(6, 1.5 + speed * .3); this.speed = 0; }
   // One step: `forward` −1..1, `turn` −1..1 (positive left), `run`; `colliders` are the solid things near by.
   update(dt, {forward = 0, turn = 0, run = false} = {}, colliders = [], water = -1e9) {
+    if (this.down > 0) { this.down -= dt; forward = 0; turn = 0; run = false; this.x += this.throwX * dt; this.z += this.throwZ * dt; this.throwX *= Math.exp(-dt * 3); this.throwZ *= Math.exp(-dt * 3); }
+    const lying = this.down > .7 ? 1 : this.down > 0 ? this.down / .7 : 0; this.lie = damp(this.lie || 0, lying, this.down > 0 && this.down < .7 ? 4 : 9, dt);
     const want = forward * (run && forward > 0 ? RUN : WALK) * (forward < 0 ? .6 : 1);
     this.speed = damp(this.speed, want, want ? 9 : 14, dt);
     this.yaw += turn * TURN * dt * (Math.abs(this.speed) > RUN * .7 ? .55 : 1);
     const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
     let nx = this.x + fx * this.speed * dt, nz = this.z + fz * this.speed * dt;
     // Too steep, or into deep water: stay where you are.
-    const gNext = this.world.groundHeight(nx, nz), rise = gNext - this.y;
+    const gNext = this.ground(nx, nz), rise = gNext - this.y;
     if (rise > .55 || gNext < water - 1.05) { nx = this.x; nz = this.z; this.speed *= .3; }
     this.x = nx; this.z = nz;
     // Pushed out of anything solid.
@@ -54,11 +60,11 @@ export class Walker {
       } else { const d = Math.hypot(dx, dz), min = RADIUS + (k.r || .3); if (d < min && d > 1e-4) { this.x += dx / d * (min - d); this.z += dz / d * (min - d); } }
     }
     // Feet on the ground (a small drop is walked down, a bigger one is fallen).
-    const ground = this.world.groundHeight(this.x, this.z);
+    const ground = this.ground(this.x, this.z);
     if (this.y - ground > .35 && this.grounded) { this.vy = 0; this.grounded = false; }
     if (!this.grounded) { this.vy -= 9.81 * dt; this.y += this.vy * dt; if (this.y <= ground) { this.y = ground; this.vy = 0; this.grounded = true; } }
     else this.y = damp(this.y, ground, 18, dt);
-    this.root.position.set(this.x, this.y, this.z); this.root.rotation.y = this.yaw;
+    this.root.position.set(this.x, this.y + this.lie * .18, this.z); this.root.rotation.y = this.yaw; this.root.rotation.x = -this.lie * Math.PI / 2 * .92;
     // Pose.
     const d = this.detail; if (!d) return;
     if (d.placeholder) { d.placeholder.position.y = .85 + Math.abs(Math.sin(performance.now() * .012)) * Math.min(1, Math.abs(this.speed)) * .04; return; }

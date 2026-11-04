@@ -51,3 +51,19 @@ test('places are found once ever, and the title screen summary describes the log
   assert.equal(clockText(90), '1 min'); assert.equal(clockText(3600 * 2 + 300), '2h 05m');
   const store = memory(); saveJourney(store, j); assert.equal(loadJourney(store, 0).places[0], 'lake');
 });
+
+test('shops: money is earned by driving and finding places, goods are bought only where stocked, kept things go in the bag', async () => {
+  const {GOODS, STOCK, buy, useItem, bagText} = await import('../../evermile/journey.js');
+  const j = loadJourney(memory(), 0), s = startDrive(j);
+  assert.equal(j.money, 20);
+  for (let i = 0; i < 300; i++) advance(j, s, 10, 1 / 120); // 3 km
+  assert.equal(j.money, 23, 'a coin a kilometre');
+  foundPlace(j, s, 'pier'); assert.equal(j.money, 33, 'ten for a new place');
+  assert.equal(buy(j, 'fuelcan', 'FLOWERS').ok, false, 'not stocked');
+  const r = buy(j, 'fuelcan', 'HARDWARE'); assert.equal(r.ok, true); assert.equal(r.kind, 'keep'); assert.equal(j.money, 21); assert.equal(j.bag.fuelcan, 1);
+  assert.equal(buy(j, 'coffee', 'CAFÉ AROMA').kind, 'now'); assert.equal(j.bag.coffee, undefined, 'drunk, not carried');
+  j.money = 1; assert.match(buy(j, 'haircut', 'BARBER').why, /more/);
+  assert.equal(useItem(j, 'fuelcan'), true); assert.equal(useItem(j, 'fuelcan'), false); assert.equal(bagText(j), 'Nothing yet');
+  for (const [shop, items] of Object.entries(STOCK)) for (const it of items) assert.ok(GOODS[it], `${shop} stocks a real item: ${it}`);
+  const store = memory(); j.bag.map = 2; saveJourney(store, j); assert.equal(loadJourney(store, 0).bag.map, 2);
+});
