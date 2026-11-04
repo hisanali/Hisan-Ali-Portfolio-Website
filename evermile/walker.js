@@ -31,8 +31,12 @@ export class Walker {
   place(x, z, yaw) { this.x = x; this.z = z; this.yaw = yaw; this.speed = 0; this.vy = 0; this.y = this.world.groundHeight(x, z); this.root.position.set(x, this.y, z); this.root.rotation.set(0, yaw, 0); this.root.visible = true; }
   hide() { this.root.visible = false; }
 
+  // Hit by a car: thrown along its direction, down on the ground for a moment, then up again.
+  knock(dx, dz, speed) { if (this.down > 0) return; this.down = 2.4 + Math.min(1.6, speed * .1); this.throwX = dx * Math.min(6, 1.5 + speed * .3); this.throwZ = dz * Math.min(6, 1.5 + speed * .3); this.speed = 0; }
   // One step: `forward` −1..1, `turn` −1..1 (positive left), `run`; `colliders` are the solid things near by.
   update(dt, {forward = 0, turn = 0, run = false} = {}, colliders = [], water = -1e9) {
+    if (this.down > 0) { this.down -= dt; forward = 0; turn = 0; run = false; this.x += this.throwX * dt; this.z += this.throwZ * dt; this.throwX *= Math.exp(-dt * 3); this.throwZ *= Math.exp(-dt * 3); }
+    const lying = this.down > .7 ? 1 : this.down > 0 ? this.down / .7 : 0; this.lie = damp(this.lie || 0, lying, this.down > 0 && this.down < .7 ? 4 : 9, dt);
     const want = forward * (run && forward > 0 ? RUN : WALK) * (forward < 0 ? .6 : 1);
     this.speed = damp(this.speed, want, want ? 9 : 14, dt);
     this.yaw += turn * TURN * dt * (Math.abs(this.speed) > RUN * .7 ? .55 : 1);
@@ -58,7 +62,7 @@ export class Walker {
     if (this.y - ground > .35 && this.grounded) { this.vy = 0; this.grounded = false; }
     if (!this.grounded) { this.vy -= 9.81 * dt; this.y += this.vy * dt; if (this.y <= ground) { this.y = ground; this.vy = 0; this.grounded = true; } }
     else this.y = damp(this.y, ground, 18, dt);
-    this.root.position.set(this.x, this.y, this.z); this.root.rotation.y = this.yaw;
+    this.root.position.set(this.x, this.y + this.lie * .18, this.z); this.root.rotation.y = this.yaw; this.root.rotation.x = -this.lie * Math.PI / 2 * .92;
     // Pose.
     const d = this.detail; if (!d) return;
     if (d.placeholder) { d.placeholder.position.y = .85 + Math.abs(Math.sin(performance.now() * .012)) * Math.min(1, Math.abs(this.speed)) * .04; return; }

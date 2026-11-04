@@ -685,6 +685,16 @@ export class Life {
       const pAhead = (s.z - c.z) * dir, myPX = c.road.x(s.z) + c.road.laneX(s.z, dir, c.lane) + c.lat;
       if (pAhead > 0 && Math.abs(s.x - myPX) < c.width / 2 + playerW / 2 + .25) consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player');
       for (const an of this.roadAnimals) { const ag = (an.z - c.z) * dir - c.length / 2 - 1.2; if (ag > -1 && Math.abs(an.x - (c.road.x(an.z) + laneOff + c.lat)) < c.width / 2 + 1) consider(ag, 0, null, 0, 'animal'); }
+      // You, on foot, in the road ahead: brake for you, flash and hoot when you are close; a car that still reaches you knocks you down.
+      if (s.onFoot && s.walker) {
+        const w = s.walker, wAhead = (w.z - c.z) * dir, myWX = c.road.x(w.z) + c.road.laneX(w.z, dir, c.lane) + c.lat;
+        if (wAhead > -1 && wAhead < 110 && Math.abs(w.x - myWX) < c.width / 2 + 1.3) {
+          consider(wAhead - c.length / 2 - 2.6, 0, null, 0, 'walker');
+          if (wAhead < 40 && c.speed > 2.5 && now - (c.hornAt || 0) > 2600) { c.hornAt = now; this.flash(c, now, 2); this.onTrafficHorn?.(c, wAhead); }
+        }
+        const lx = (w.x - c.x) * Math.cos(c.yaw) - (w.z - c.z) * Math.sin(c.yaw), lz = (w.x - c.x) * Math.sin(c.yaw) + (w.z - c.z) * Math.cos(c.yaw);
+        if (c.speed > .8 && Math.abs(lx) < c.width / 2 + .35 && Math.abs(lz) < c.length / 2 + .45 && now - (c.ranOverAt || 0) > 3000) { c.ranOverAt = now; this.onRunOver?.(c, Math.sin(c.yaw) * dir, Math.cos(c.yaw) * dir, c.speed); }
+      }
       // Signals, stop signs, zebra crossings, level crossings and bus stops.
       // Stop lines are not cars: pull right up to them rather than keeping a following gap.
       const stop = this.stopFor(c, s), s0 = c.kind === 'bike' ? 1.5 : 3;

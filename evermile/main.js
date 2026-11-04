@@ -130,6 +130,8 @@ try {
   town = new TownLife({scene, world, settings, getState: () => state, life});
   life.town = town; life.railway = railway;
   underwater = new Underwater(scene, world, settings);
+  life.onTrafficHorn = (c, distance) => driveAudio?.hornBurst(distance);
+  life.onRunOver = (c, dx, dz, speed) => { if (!walker || state.onFoot !== true) return; walker.knock(dx, dz, speed); state.shake = Math.max(state.shake || 0, .6); driveAudio?.crash(Math.min(1, speed / 10), true); toast(speed > 6 ? 'You were hit by a car. Look before you cross.' : 'Knocked over · mind the traffic'); state.knockdowns = (state.knockdowns || 0) + 1; };
   windscreen = new Windscreen($('windscreen'));
   mirror = new Mirror(renderer, scene);
   reset(); world.update(state.z, camera, true); setupHighFx(); applyAtmosphere(0, true); initUI();
@@ -138,7 +140,17 @@ try {
   frameId = requestAnimationFrame(frame);
 } catch (error) { console.error(error); $('fatal-message').textContent = error.message; $('fatal').hidden = false; }
 
-function save() { try { localStorage.setItem('evermile-settings', JSON.stringify(soloRoomSettings?{...settings,...soloRoomSettings}:settings)); localStorage.setItem('evermile-distance', String(state.distance)); localStorage.setItem('evermile-fuel', String(state.fuel)); localStorage.setItem('evermile-hour', String(atmo.hour)); } catch {} saveJourney(storage, journey); }
+function saveFoot() { try { if (!state.started) return; const foot = {world: `${settings.destination}|${settings.seed}|${settings.roadStyle}|${settings.location}`, onFoot: !!state.onFoot, car: {x: state.x, z: state.z, yaw: state.yaw}, walker: walker && state.onFoot ? {x: walker.x, z: walker.z, yaw: walker.yaw} : null, left: leftCar ? {type: leftCar.type, color: leftCar.color, x: leftCar.group.position.x, z: leftCar.group.position.z, yaw: leftCar.group.rotation.y} : null}; localStorage.setItem('evermile-foot', JSON.stringify(foot)); } catch {} }
+// Back where you were: the car where it stood, you beside it or wherever you had walked to, the other car you left.
+function restoreFoot() {
+  let foot = null; try { foot = JSON.parse(localStorage.getItem('evermile-foot') || 'null'); } catch {}
+  if (!foot || foot.world !== `${settings.destination}|${settings.seed}|${settings.roadStyle}|${settings.location}` || !foot.car || !Number.isFinite(foot.car.z) || Math.abs(foot.car.z - state.z) > 400) return;
+  state.x = foot.car.x; state.z = foot.car.z; state.yaw = foot.car.yaw; state.y = world.groundHeight(state.x, state.z); world.road.extend(state.z + 2000); world.update(state.z, camera, true);
+  if (foot.left && VEHICLE_DYNAMICS[foot.left.type]) { leftCar = new Vehicle(scene, foot.left.type, foot.left.color || settings.color); leftCar.group.position.set(foot.left.x, world.groundHeight(foot.left.x, foot.left.z) + .05, foot.left.z); leftCar.group.rotation.y = foot.left.yaw; leftCar.externalSuspension = true; if (cubeRT) leftCar.setEnvMap(cubeRT.texture); }
+  if (foot.onFoot && foot.walker) { walker ||= new Walker(scene, world, settings); walker.place(foot.walker.x, foot.walker.z, foot.walker.yaw); state.onFoot = true; footTarget = null; }
+  updateCar(1 / 60); positionCamera(1, true); updateUI();
+}
+function save() { saveFoot(); try { localStorage.setItem('evermile-settings', JSON.stringify(soloRoomSettings?{...settings,...soloRoomSettings}:settings)); localStorage.setItem('evermile-distance', String(state.distance)); localStorage.setItem('evermile-fuel', String(state.fuel)); localStorage.setItem('evermile-hour', String(atmo.hour)); } catch {} saveJourney(storage, journey); }
 
 // Your lane's offset from the road centre (the slow lane on a motorway, or the centre if you asked for it on a single-lane road).
 function ownLaneX(z, lane) { const r = world.road; if (settings.autoLane === 'center' && r.laneCount(z) === 1) return 0; return r.laneX(z, 1, lane ?? r.homeLane(z)); }
@@ -164,7 +176,7 @@ function changeSettingLoaded(key, value, after) {
   const wasPaused = state.paused; state.paused = true;
   intro.run({quick: true, minimum: 1300, label: String(LOADED_SETTINGS[key](value) || '').toUpperCase(), task: () => { changeSetting(key, value); after?.(); }}).then(() => { state.paused = wasPaused; updateUI(); });
 }
-export function begin() { if (state.started) return; state.started = true; session = startDrive(journey); { const d = world.road.districtAt(state.z); if (d) foundPlace(journey, session, d.district); } saveJourney(storage, journey); $('start').classList.add('leaving'); setTimeout(() => $('start').hidden = true, 700); initAudio(); radio?.notify('start'); toast('WASD to drive · Drag to look around · F for autodrive'); }
+export function begin() { if (state.started) return; state.started = true; restoreFoot(); session = startDrive(journey); { const d = world.road.districtAt(state.z); if (d) foundPlace(journey, session, d.district); } saveJourney(storage, journey); $('start').classList.add('leaving'); setTimeout(() => $('start').hidden = true, 700); initAudio(); radio?.notify('start'); toast('WASD to drive · Drag to look around · F for autodrive'); }
 export function toggleAuto(value = !state.auto) { state.auto = value; if (value) state.cruise = false; updateUI(); toast(value ? 'Autodrive on. Enjoy the view.' : 'You’re in control.'); }
 export function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').classList.remove('visible'), 2700); }
 
@@ -260,6 +272,7 @@ function physics(dt) {
   if (state.onFoot) { state.speed = 0; state.throttle = 0; state.brakeIn = 0; state.time += dt; return; }
   const r = world.road, gamepad = padInput;
   let throttle = keys.KeyW || keys.ArrowUp ? 1 : 0, brake = keys.KeyS || keys.ArrowDown ? 1 : 0;
+  if (state.transition) { throttle = 0; brake = 1; }
   let input = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0);
   if (gamepad) { if (gamepad.input) input = gamepad.input; throttle = Math.max(throttle, gamepad.throttle); brake = Math.max(brake, gamepad.brake); }
   if ((input || throttle || brake) && state.auto) { if ((input && settings.autoMode !== 'speed') || (throttle && settings.autoMode === 'full') || brake) { state.auto = false; state.pit = null; updateUI(); } }
@@ -741,7 +754,7 @@ function positionCamera(dt, instant = false) {
   // Under braking the camera keeps going for a moment (closer to the car); under power it hangs back.
   if (settings.camera < 2 && !state.inspection) cameraPos.addScaledVector(forward, clamp(-(state.accel || 0) * .07, -.5, .9) * (1 - driveOrbit.focus));
   // Views from inside or on the car are fixed to it; the chase cameras follow smoothly.
-  if (instant || settings.camera >= 2 || driveOrbit.focus > .001) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-5 * dt));
+  if (instant || (settings.camera >= 2 && !state.transition) || driveOrbit.focus > .001) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-(state.transition ? 3.5 : 5) * dt));
   if (state.shake > .001) { const k = state.shake * .12; camera.position.x += (Math.random() - .5) * k; camera.position.y += (Math.random() - .5) * k * .7; camera.position.z += (Math.random() - .5) * k; state.shake = damp(state.shake, 0, 7, dt); }
   // Retract the camera boom before it passes through a following vehicle.
   if (settings.camera < 2) {
@@ -829,6 +842,7 @@ function frame(now) {
   const elapsed = (now - (last || now)) / 1000, dt = Math.min(elapsed, .05); last = now; accumulator += dt;
   pollGamepad();
   while (accumulator >= 1 / 120) { for (const k of SMOOTHED) previousState[k] = state[k]; physics(1 / 120); accumulator -= 1 / 120; }
+  if (state.transition) { state.transition.t += Math.min(elapsed, .5); if (state.transition.t >= state.transition.dur) state.transition = null; }
   if (state.onFoot) walkStep(dt);
   const live = {}; for (const k of SMOOTHED) live[k] = state[k];
   if (Math.hypot(live.x - previousState.x, live.z - previousState.z) < 5) { const a = accumulator * 120; for (const k of SMOOTHED) state[k] = k === 'yaw' ? previousState.yaw + angleDifference(live.yaw, previousState.yaw) * a : previousState[k] + (live[k] - previousState[k]) * a; }
@@ -868,7 +882,7 @@ function exitCar() {
   walker ||= new Walker(scene, world, settings);
   const rx = Math.cos(state.yaw), rz = -Math.sin(state.yaw), fx = Math.sin(state.yaw), fz = Math.cos(state.yaw), side = settings.vehicle === 'coach' ? 1.9 : settings.vehicle === 'bike' ? .9 : 1.5, seatZ = vehicle.seatZ ?? 0;
   walker.place(state.x + rx * side + fx * seatZ, state.z + rz * side + fz * seatZ, state.yaw + Math.PI / 2);
-  state.onFoot = true; footTarget = null; updateUI(); toast('You’re on foot · W A S D to walk, Shift to run, X to get back in');
+  state.onFoot = true; footTarget = null; state.transition = {kind: 'out', t: 0, dur: .75}; driveAudio?.door(true); setTimeout(() => driveAudio?.door(false), 650); updateUI(); toast('You’re on foot · W A S D to walk, Shift to run, X to get back in');
 }
 // What X would get you into: your own car, the one you left, or a parked car, if a door is within reach.
 function carNearby() {
@@ -898,10 +912,10 @@ function enterCar(target) {
     state.x = take.group.position.x; state.z = take.group.position.z; state.yaw = take.group.rotation.y; state.y = world.groundHeight(state.x, state.z);
     if (settings.vehicle !== take.type) changeSetting('vehicle', take.type); take.dispose();
   }
-  state.onFoot = false; walker.hide(); state.steer = 0; state.yawRate = 0; state.drift = 0; state.vy = 0; state.grounded = true; susp = null; wheelMounts = null; state.bodyY = undefined;
-  updateCar(1 / 60); positionCamera(1, true); updateUI(); if (target.kind === 'own') toast('Back behind the wheel');
+  state.onFoot = false; walker.hide(); state.transition = {kind: 'in', t: 0, dur: .75}; driveAudio?.door(true); setTimeout(() => driveAudio?.door(false), 600); state.steer = 0; state.yawRate = 0; state.drift = 0; state.vy = 0; state.grounded = true; susp = null; wheelMounts = null; state.bodyY = undefined;
+  updateCar(1 / 60); positionCamera(1 / 60); updateUI(); if (target.kind === 'own') toast('Back behind the wheel');
 }
-function footAction() { if (!state.started) return; if (state.onFoot) { const t = carNearby(); if (t) enterCar(t); else toast('Walk up to a car door first'); } else exitCar(); }
+function footAction() { if (!state.started || state.transition) return; if (state.onFoot) { const t = carNearby(); if (t) enterCar(t); else toast('Walk up to a car door first'); } else exitCar(); }
 // Each frame on foot: keys (or a controller) move the walker, solid things keep it out, and the prompt follows the nearest door.
 function walkStep(dt) {
   if (state.paused || panelOpen) return;
@@ -911,7 +925,9 @@ function walkStep(dt) {
   const own = {x: state.x, z: state.z, hx: settings.vehicle === 'coach' ? 1.3 : .95, hz: settings.vehicle === 'coach' ? 6 : 2.3, c: Math.cos(state.yaw), s: Math.sin(state.yaw)};
   const colliders = [...world.collidersNear(walker.x, walker.z, 8), ...life.colliders(walker.x, walker.z, 8), ...railway.colliders(walker.x, walker.z, 8), ...town.colliders(walker.x, walker.z, 6), own];
   if (leftCar) colliders.push({x: leftCar.group.position.x, z: leftCar.group.position.z, hx: .95, hz: 2.3, c: Math.cos(leftCar.group.rotation.y), s: Math.sin(leftCar.group.rotation.y)});
-  walker.update(dt, {forward: clamp(forward, -1, 1), turn: clamp(turn, -1, 1), run}, colliders, settings.location === 'hills' ? world.water.position.y : -1e9);
+  const moving = !state.transition;
+  walker.update(dt, moving ? {forward: clamp(forward, -1, 1), turn: clamp(turn, -1, 1), run} : {}, colliders, settings.location === 'hills' ? world.water.position.y : -1e9);
+  state.walker ||= {x: 0, z: 0}; state.walker.x = walker.x; state.walker.z = walker.z;
   const t = carNearby(), label = t ? (t.kind === 'own' ? 'GET IN' : t.kind === 'left' ? 'GET IN · YOUR OTHER CAR' : `GET IN · ${(t.car.style === 'bus' ? 'BUS' : t.car.style).toUpperCase()}`) : 'ON FOOT';
   if (label !== footTarget) { footTarget = label; $('foot-label').textContent = t ? label : 'WALK'; $('drive-status').textContent = t ? label + ' · X' : 'ON FOOT · SHIFT TO RUN'; }
 }
@@ -920,7 +936,7 @@ function walkerCamera(dt, instant) {
   const yaw = walker.yaw + Math.PI + driveOrbit.yaw, pitch = clamp(.22 + driveOrbit.pitch, .02, 1.2), radius = 3.6 * Math.max(1, .9 / camera.aspect);
   cameraPos.set(head.x + Math.sin(yaw) * Math.cos(pitch) * radius, head.y - .1 + Math.sin(pitch) * radius, head.z + Math.cos(yaw) * Math.cos(pitch) * radius);
   cameraPos.y = Math.max(cameraPos.y, world.surfaceHeight(cameraPos.x, cameraPos.z, settings.location !== 'hills') + .5);
-  if (instant) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-8 * dt));
+  if (instant) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-(state.transition ? 3.5 : 8) * dt));
   lookTarget.set(head.x + fx * 1.2 * (1 - driveOrbit.focus), head.y - .15, head.z + fz * 1.2 * (1 - driveOrbit.focus)); camera.lookAt(lookTarget);
   camera.fov = damp(camera.fov, 52, 4, dt); camera.updateProjectionMatrix();
   placeSun(fx, fz);
