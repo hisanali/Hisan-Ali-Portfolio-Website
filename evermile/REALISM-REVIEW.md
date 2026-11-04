@@ -112,3 +112,11 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 - Real wreck dressing from the Babylon.js Under Water Scene (CC BY 4.0): scattered **ship boards** and a **ship's wheel** lying on the bed round the hull, each extracted into its own GLB with its baseColor, normal and ORM textures embedded. The hull itself is still authored: no complete ship-wreck model with a usable licence was reachable from this environment (Sketchfab, Kenney, Poly Haven and Quaternius are blocked here); a hull GLB supplied with its licence can be dropped in the same way.
 - The water surface is one-sided again; from below you see the dim rippling underside, not the sky mirror.
 - Credits, sources, licences and modifications are in `ASSET-CREDITS.md`. Rendered check: both species load and fill their shoals, the wreck site gets seven pieces, no console warnings.
+
+
+## On foot (Stage 1 of the character)
+
+- Press X (or the Get out button, or A on a controller) with the car stopped to step out beside the driver's door. You are one of the rigged civilians (`walker.js`): W/S walk, A/D turn, Shift run, with the idle and walk clips blended by speed and the walk sped up for a run. You stand on whatever the ground is, step down small drops and fall off big ones, and are kept out of buildings, cars, people, animals and deep water.
+- The car stays exactly where you left it; walk back to it and press X to get in. Walk up to any parked car (not the delivery truck) and X takes it: your own car stays parked there as a second car you can come back to and swap again. Parked cars become the nearest matching drivable model (saloon or estate → Mercedes W201, hatchback → GR Corolla, SUV, pickup or van → Land Cruiser, bus → coach).
+- The camera is a shoulder chase behind the walker with the same drag-to-look-around; the world streams around you on foot; traffic treats the parked car as the obstacle and will push you out of its way, but does not yet brake for a pedestrian you.
+- Not yet: entering moving traffic, doors that open, a run animation of its own (the walk is sped up), shops, talking, or saving the on-foot state across a reload (you reload inside the car).
