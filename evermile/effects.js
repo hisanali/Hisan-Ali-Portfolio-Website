@@ -388,7 +388,7 @@ export class Effects {
   /* ---------- Water: a real reflective surface for lakes and valleys ---------- */
   buildWater() {
     this.water = new Water(new T.PlaneGeometry(6000, 6000), {textureWidth: 512, textureHeight: 512, waterNormals: waterNormals(), sunDirection: new T.Vector3(-.5, .48, .65).normalize(), sunColor: 0xfff2d6, waterColor: 0x1d3b44, distortionScale: 2.4, fog: true, alpha: 1});
-    this.water.rotation.x = -Math.PI / 2; this.water.position.y = this.world.water.position.y + .05; this.water.material.side = T.DoubleSide;
+    this.water.rotation.x = -Math.PI / 2; this.water.position.y = this.world.water.position.y + .05;
     this.water.material.uniforms.size.value = 2.2;
     addMist(this.water.material.uniforms);
     this.scene.add(this.water);
