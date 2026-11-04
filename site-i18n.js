@@ -107,6 +107,7 @@
     [/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? (\d{1,2}),? (\d{4})$/i, (m) => `${Number(m[2])} ${MONTHS[m[1].toLowerCase()]} ${m[3]}`],
     [/^(\d{1,2}) (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? (\d{4})$/i, (m) => `${Number(m[1])} ${MONTHS[m[2].toLowerCase()]} ${m[3]}`],
     [/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* (\d{4})$/i, (m) => `${MONTHS[m[1].toLowerCase()]} ${m[2]}`],
+    [/^(\d+) of (\d+)$/i, (m) => `${m[1]} من ${m[2]}`],
     [/^Updated (.+)$/, (m) => { const inner = byRule(m[1]); return inner ? `آخر تحديث: ${inner}` : null; }],
     [/^Published (.+)$/, (m) => { const inner = byRule(m[1]); return inner ? `نُشر في ${inner}` : null; }]
   ];
@@ -158,6 +159,7 @@
 
   const translateText = (node) => {
     const value = node.nodeValue;
+    if (!extractMode && dictionary && /^\s*,\s*$/.test(value)) { node.nodeValue = value.replace(',', '،'); return; }
     if (!hasLatin(value) || translated.get(node) === value) return;
     const key = clean(value);
     if (extractMode) { collect(key); return; }
@@ -233,15 +235,17 @@
       // The article picker owns the body, heading and meta for translated posts.
       const option = picker?.querySelector('.language-option[data-language="ar"]');
       if (option && option.getAttribute('aria-selected') !== 'true') option.click();
-      article.setAttribute('data-i18n-managed', '');
       document.querySelector('.blog-post-header h1')?.setAttribute('data-i18n-managed', '');
-      return;
+      // The picker keeps the English body when its Arabic copy no longer matches
+      // the article's current layout; only hand the body over if it really changed.
+      const bodyText = article.querySelector('p')?.textContent || '';
+      if (/[\u0600-\u06FF]/.test(bodyText)) { article.setAttribute('data-i18n-managed', ''); return; }
     }
     article.setAttribute('data-i18n-skip', '');
     article.setAttribute('dir', 'ltr');
     article.setAttribute('lang', 'en');
     const heading = document.querySelector('.blog-post-header h1, .article-hero h1, main h1');
-    if (heading && hasLatin(heading.textContent)) { heading.setAttribute('dir', 'ltr'); heading.setAttribute('lang', 'en'); heading.setAttribute('data-i18n-skip', ''); }
+    if (heading && !heading.hasAttribute('data-i18n-managed') && hasLatin(heading.textContent)) { heading.setAttribute('dir', 'ltr'); heading.setAttribute('lang', 'en'); heading.setAttribute('data-i18n-skip', ''); }
     if (!document.querySelector('.i18n-article-note')) {
       const note = document.createElement('p');
       note.className = 'i18n-article-note';
@@ -339,8 +343,10 @@
     ensureFonts();
     syncControls();
     const safety = setTimeout(reveal, 2500);
-    Promise.all([loadJson('common'), loadJson(pageKey)]).then(([common, page]) => {
-      dictionary = Object.assign({}, common, page);
+    // Articles also use the blog index dictionary for related-post titles and excerpts.
+    const extra = pageKey === 'blog-article' ? loadJson('blog') : Promise.resolve({});
+    Promise.all([loadJson('common'), extra, loadJson(pageKey)]).then(([common, blog, page]) => {
+      dictionary = Object.assign({}, common, blog, page);
       prepareArticle();
       translateHead();
       walk(document.body);

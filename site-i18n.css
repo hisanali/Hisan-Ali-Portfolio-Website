@@ -36,7 +36,7 @@ html.lang-ar body { transition: opacity .18s ease; }
 
 /* ---------- Arabic typography ---------- */
 html.lang-ar body,
-html.lang-ar body *:not(i):not(svg):not(svg *):not(code):not(pre):not(kbd):not(samp):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands):not(.ua-symbol-icon):not([data-i18n-skip]):not([data-i18n-skip] *):not([lang="en"]):not([lang="en"] *) {
+html.lang-ar body *:not(i):not(svg):not(svg *):not(code):not(pre):not(kbd):not(samp):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands):not(.ua-symbol-icon):not([data-i18n-skip]):not([data-i18n-skip] *):not([translate="no"]):not([translate="no"] *):not([lang="en"]):not([lang="en"] *) {
   font-family: "IBM Plex Sans Arabic", "Manrope", system-ui, sans-serif !important;
   letter-spacing: 0 !important;
 }
