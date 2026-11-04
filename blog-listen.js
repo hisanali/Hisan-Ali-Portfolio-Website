@@ -32,14 +32,17 @@
     voices: ['Voices', 'الأصوات'],
     narrator: ['Narrator', 'الراوي'],
     cast: ['Cast mode', 'وضع الأصوات المتعددة'],
-    castHint: ['Headings, body and quotes each get their own voice', 'لكل من العناوين والنص والاقتباسات صوت مختلف'],
+    castHint: ['A host introduces each section, a narrator reads, a guest voices quotes', 'مقدّم يعرّف كل قسم، وراوٍ يقرأ النص، وضيف يقرأ الاقتباسات'],
     follow: ['Follow along', 'تتبّع القراءة'],
     close: ['Close player', 'إغلاق المشغّل'],
     noVoices: ['No voices for this language on this device. Install one in your system speech settings.', 'لا توجد أصوات لهذه اللغة على هذا الجهاز. يمكنك تثبيت صوت من إعدادات النطق في النظام.'],
     best: ['Most natural', 'الأكثر طبيعية'],
     sample: ['Preview', 'استماع تجريبي'],
     done: ['Finished reading', 'انتهت القراءة'],
-    of: ['of', 'من']
+    of: ['of', 'من'],
+    tip: ['This device only has basic voices. For the most natural, human-sounding narration, open this page in Microsoft Edge (free natural voices on Windows, Mac and Android) or download an Enhanced voice in your system speech settings.', 'هذا الجهاز يحتوي على أصوات أساسية فقط. للحصول على قراءة طبيعية تشبه الصوت البشري، افتح الصفحة في متصفح Microsoft Edge (أصوات طبيعية مجانية على ويندوز وماك وأندرويد) أو نزّل صوتًا محسّنًا من إعدادات النطق في جهازك.'],
+    host: ['Host', 'المقدّم'],
+    guest: ['Guest', 'الضيف']
   };
   const t = (key) => T[key][arabicUi() ? 1 : 0];
 
@@ -54,18 +57,35 @@
   };
   const GULF = ['ar-om', 'ar-ae', 'ar-sa', 'ar-qa', 'ar-kw', 'ar-bh'];
 
-  const quality = (voice) => {
+  /* Voice tiers. 3 = studio-grade neural voices (Edge "Natural", Apple Premium/
+     Enhanced, Android network voices); 2 = good cloud/standard voices (Chrome's
+     Google voices, Apple's classic voices); 1 = old robotic desktop voices;
+     0 = novelty voices that are never offered. */
+  const NOVELTY = /compact|eloquence|espeak|robot|novelty|bad news|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|bahh|\bfred\b|junior|ralph|kathy|grandma|grandpa|rocko|sandy|shelley|\bflo\b|\breed\b|\beddy\b/i;
+  const APPLE_GOOD = /\b(samantha|daniel|karen|moira|tessa|serena|arthur|martha|catherine|gordon|aaron|nicky|evan|zoe|allison|ava|susan|tom|majed|maged|tarik|laila|mariam)\b/i;
+  const tier = (voice) => {
     const name = voice.name;
-    let score = 0;
-    if (/natural|neural/i.test(name)) score += 60;
-    if (/online/i.test(name)) score += 25;
-    if (/premium|enhanced|\(enhanced\)|siri/i.test(name)) score += 45;
-    if (/^google /i.test(name)) score += 30;
-    if (!voice.localService) score += 8;
-    if (/compact|eloquence|espeak|robot|novelty|bad news|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|bahh|fred|junior|ralph|kathy|grandma|grandpa|rocko|sandy|shelley|flo|reed/i.test(name)) score -= 80;
-    if (voice.default) score += 3;
+    if (NOVELTY.test(name)) return 0;
+    if (/\(natural\)|natural|neural|premium|enhanced|network|wavenet|studio|journey/i.test(name)) return 3;
+    if (/online/i.test(name)) return 3;
+    if (/^google /i.test(name) || !voice.localService) return 2;
+    if (/^microsoft /i.test(name)) return 1; // classic desktop SAPI voices sound robotic
+    if (APPLE_GOOD.test(name)) return 2;
+    return 1;
+  };
+  const quality = (voice) => {
+    const level = tier(voice);
+    if (!level) return -100;
+    let score = level * 40;
+    if (/\(natural\)|neural/i.test(voice.name)) score += 12;
+    if (/premium/i.test(voice.name)) score += 10;
+    if (/multilingual/i.test(voice.name)) score -= 4;
+    if (voice.default) score += 2;
     return score;
   };
+  const FEMALE = /\b(ava|emma|jenny|aria|sonia|libby|natasha|clara|samantha|karen|moira|tessa|serena|zira|hazel|susan|hoda|zariyah|salma|fatima|laila|amina|mona|noura|sana|aysha|amal|layla|mariam|michelle|ana|maisie|mia|olivia|sara|nanami|catherine|martha|allison|zoe|nicky|female|woman|leah|molly|emily|neerja|yan|elsa|isla|hollie|bella|abeer|iman|rana|reem|amany)\b/i;
+  const MALE = /\b(andrew|brian|guy|davis|ryan|thomas|liam|william|daniel|arthur|david|mark|george|hamdan|naayf|shakir|bassel|taim|omar|hamed|fahed|majed|maged|tarik|abdullah|ali|moaz|rami|saleh|jamal|eric|roger|steffan|christopher|tony|jason|aaron|gordon|evan|tom|alfie|elliot|ethan|noah|oliver|male|man|prabhat|connor|duncan|ken|wayne)\b/i;
+  const genderOf = (voice) => (FEMALE.test(voice.name) ? 'f' : MALE.test(voice.name) ? 'm' : '');
 
   const tidyName = (voice) => voice.name
     .replace(/^(Microsoft|Google|Apple)\s+/i, '')
@@ -103,10 +123,20 @@
     .sort((a, b) => b.score - a.score)
     .map((entry) => entry.voice);
 
+  // Offer only the best tiers this device has, so robotic voices never appear next to natural ones.
+  const goodVoicesFor = (language) => {
+    const list = voicesFor(language).filter((voice) => tier(voice) > 0);
+    const studio = list.filter((voice) => tier(voice) >= 3);
+    if (studio.length >= 2) return studio;
+    const top = Math.max(0, ...list.map(tier));
+    return list.filter((voice) => tier(voice) >= Math.min(top, 2) || top <= 1);
+  };
+  const deviceTop = (language) => Math.max(0, ...voicesFor(language).map(tier));
+
   const loadVoices = () => { allVoices = synth.getVoices(); return allVoices.length; };
 
   /* ---------- Reading script ---------- */
-  const BLOCKS = 'h1,h2,h3,h4,h5,p,li,blockquote,figcaption,dt,dd,td,th,summary,.callout,.key-takeaway';
+  const BLOCKS = 'h1,h2,h3,h4,h5,p,li,blockquote,figcaption,dt,dd,tr,summary,.callout,.key-takeaway';
   const isArabic = (text) => /[؀-ۿ]/.test(text);
   const hidden = (element) => !element.getClientRects().length || getComputedStyle(element).visibility === 'hidden';
 
@@ -127,6 +157,47 @@
     return out;
   };
 
+  /* Turn written text into something that sounds natural when spoken. */
+  const ACRONYMS = { SEO: 'S.E.O.', GA4: 'G.A. 4', CRO: 'C.R.O.', ROI: 'R.O.I.', ROAS: 'roas', CTR: 'C.T.R.', CPC: 'C.P.C.', CPA: 'C.P.A.', CPM: 'C.P.M.', KPI: 'K.P.I.', KPIs: 'K.P.I.s', UTM: 'U.T.M.', SME: 'S.M.E.', SMEs: 'S.M.E.s', GCC: 'G.C.C.', CRM: 'C.R.M.', URL: 'U.R.L.', URLs: 'U.R.L.s', UX: 'U.X.', UI: 'U.I.', API: 'A.P.I.', B2B: 'B. to B.', B2C: 'B. to C.', D2C: 'direct to consumer', PPC: 'P.P.C.', SERP: 'serp', SERPs: 'serps', CMS: 'C.M.S.', VAT: 'V.A.T.', FAQ: 'F.A.Q.', FAQs: 'F.A.Q.s', 'E-E-A-T': 'E.E.A.T.', AI: 'A.I.', PDF: 'P.D.F.', QR: 'Q.R.', GBP: 'Google Business Profile', LCP: 'L.C.P.', CLS: 'C.L.S.', INP: 'I.N.P.' };
+  const acronymPattern = new RegExp(`\\b(${Object.keys(ACRONYMS).map((key) => key.replace(/[-]/g, '\\-')).join('|')})\\b`, 'g');
+  const speakable = (text, language, role) => {
+    let out = ` ${text} `
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+      .replace(/\[\d+\]/g, '')
+      .replace(/[↗→←↓↑›‹★☆✦✓×•▸▪◆]/g, ' ')
+      .replace(/\s*—\s*/g, ', ')
+      .replace(/\s+–\s+/g, ', ')
+      .replace(/\s+/g, ' ');
+    if (language === 'ar') {
+      out = out
+        .replace(/(\d[\d,.]*)\s*ر\.ع\.?/g, '$1 ريال عُماني')
+        .replace(/ر\.ع\.?\s*(\d[\d,.]*)/g, '$1 ريال عُماني')
+        .replace(/\s&\s/g, ' و ')
+        .replace(/%/g, ' بالمئة');
+    } else {
+      out = out
+        .replace(/\b(?:OMR|RO)\s?(\d[\d,.]*)\s?(k|m|bn)?\b/gi, (_m, n, unit) => `${n}${unit ? ` ${{ k: 'thousand', m: 'million', bn: 'billion' }[unit.toLowerCase()]}` : ''} Omani rials`)
+        .replace(/(\d[\d,.]*)\s?(OMR|RO)\b/g, '$1 Omani rials')
+        .replace(/\$(\d[\d,.]*)\s?(k|m|bn)?\b/gi, (_m, n, unit) => `${n}${unit ? ` ${{ k: 'thousand', m: 'million', bn: 'billion' }[unit.toLowerCase()]}` : ''} dollars`)
+        .replace(/\be\.g\.,?/gi, 'for example,')
+        .replace(/\bi\.e\.,?/gi, 'that is,')
+        .replace(/\betc\./gi, 'and so on.')
+        .replace(/\bvs\.?\s/gi, 'versus ')
+        .replace(/\bapprox\.\s/gi, 'approximately ')
+        .replace(/\bNo\.\s?(\d)/g, 'number $1')
+        .replace(/\b24\/7\b/g, 'around the clock')
+        .replace(/(\d)\s?[–-]\s?(\d)/g, '$1 to $2')
+        .replace(/\s&\s/g, ' and ')
+        .replace(/([A-Za-z])\/([A-Za-z])/g, '$1 or $2')
+        .replace(acronymPattern, (match) => ACRONYMS[match]);
+    }
+    out = out.replace(/\s+([,.;:!?؟،])/g, '$1').replace(/\s{2,}/g, ' ').trim();
+    // Headings and list items without an ending sound unfinished; close them so the voice settles.
+    if (out && !/[.!?؟…:;,،"”»)]$/.test(out)) out += role === 'heading' ? '.' : '.';
+    return out;
+  };
+
   const roleOf = (element) => {
     if (/^H[1-5]$/.test(element.tagName)) return 'heading';
     if (element.closest('blockquote, .callout, .key-takeaway, figcaption, aside')) return 'quote';
@@ -139,14 +210,18 @@
     const add = (element, text, role) => {
       const clean = text.replace(/\s+/g, ' ').replace(/[↗→←↓↑›‹★☆✦✓×]/g, '').trim();
       if (!clean || !/[\p{L}\p{N}]/u.test(clean)) return;
-      splitSentences(clean).forEach((sentence) => chunks.push({ element, text: sentence, role, lang: isArabic(sentence) ? 'ar' : 'en' }));
+      const lang = isArabic(clean) ? 'ar' : 'en';
+      chunks.push({ element, text: speakable(clean, lang, role), role, lang, kind: element.tagName });
     };
     if (heading) add(heading, heading.textContent, 'heading');
     article.querySelectorAll(BLOCKS).forEach((element) => {
       if (hidden(element) || element.closest('[data-listen-skip], .blog-listen, nav, .toc, .table-of-contents, .article-language-switcher, pre, code, button')) return;
       // Read only the innermost blocks so nothing is spoken twice.
       if (element.querySelector(BLOCKS)) return;
-      add(element, element.innerText || element.textContent, roleOf(element));
+      const text = element.tagName === 'TR'
+        ? [...element.children].map((cell) => (cell.innerText || cell.textContent).trim()).filter(Boolean).join(', ')
+        : (element.innerText || element.textContent);
+      add(element, text, roleOf(element));
     });
     return chunks;
   };
@@ -219,16 +294,22 @@
   /* ---------- Casting ---------- */
   const languageNow = () => (isArabic((article.innerText || '').slice(0, 600)) ? 'ar' : 'en');
   const castFor = (language) => {
-    const list = voicesFor(language);
+    const list = goodVoicesFor(language);
     if (!list.length) return null;
     const chosenName = prefs[`voice-${language}`];
     const narrator = list.find((voice) => voice.name === chosenName) || list[0];
     if (!prefs.cast) return { heading: narrator, body: narrator, quote: narrator };
-    // Pick contrasting voices: prefer a different accent/name family for each role.
-    const others = list.filter((voice) => voice !== narrator && quality(voice) > -20);
-    const different = (base, pool) => pool.find((voice) => voice.lang !== base.lang) || pool[0] || base;
-    const heading = different(narrator, others);
-    const quote = others.find((voice) => voice !== heading && voice.lang !== narrator.lang) || others.find((voice) => voice !== heading) || heading;
+    // A host voice for headings and a guest voice for quotes: contrasting gender
+    // and accent where the device has them, never a lower tier than needed.
+    const pool = list.filter((voice) => voice !== narrator && tier(voice) >= Math.min(tier(narrator), 2));
+    const g = genderOf(narrator);
+    const score = (voice, avoid = []) => (avoid.includes(voice) ? -999 : 0)
+      + (g && genderOf(voice) && genderOf(voice) !== g ? 30 : 0)
+      + (voice.lang !== narrator.lang ? 10 : 0)
+      + quality(voice) / 10;
+    const best = (avoid) => pool.slice().sort((a, b) => score(b, avoid) - score(a, avoid))[0];
+    const heading = best([]) || narrator;
+    const quote = best([heading]) || heading;
     return { heading, body: narrator, quote };
   };
 
@@ -262,7 +343,7 @@
     $('[data-bl-speaker]').textContent = voice ? displayName(voice) : '';
     const block = new Set(chunks.slice(0, index + 1).map((c) => c.element)).size;
     const blocks = new Set(chunks.map((c) => c.element)).size;
-    $('[data-bl-position]').textContent = `${block} ${t('of')} ${blocks}${prefs.cast && chunk ? ` · ${chunk.role === 'heading' ? (arabicUi() ? 'عنوان' : 'Heading') : chunk.role === 'quote' ? (arabicUi() ? 'اقتباس' : 'Quote') : t('narrator')}` : ''}`;
+    $('[data-bl-position]').textContent = `${block} ${t('of')} ${blocks}${prefs.cast && chunk ? ` · ${chunk.role === 'heading' ? t('host') : chunk.role === 'quote' ? t('guest') : t('narrator')}` : ''}`;
   };
 
   const setToggle = () => {
@@ -272,8 +353,21 @@
     launcher.classList.toggle('is-playing', playing);
   };
 
+  // Chrome's Google voices stop after ~15 s, so they get sentence-sized pieces.
+  // Other voices read a whole paragraph in one go, which keeps the intonation natural.
+  const pieceLimit = (voice) => (voice && /^google /i.test(voice.name) ? 190 : voice && /natural|online|neural|premium|enhanced/i.test(voice.name) ? 1400 : 420);
+  const pauseAfter = (chunk, next) => {
+    if (!next) return 0;
+    if (chunk.role === 'heading') return 520;
+    if (next.role === 'heading') return 420;
+    if (chunk.kind === 'LI' || chunk.kind === 'TR') return 140;
+    return 240;
+  };
+
+  let timer = 0;
   const speakFrom = (start) => {
     synth.cancel();
+    clearTimeout(timer);
     session += 1;
     const mySession = session;
     index = Math.max(0, Math.min(start, chunks.length - 1));
@@ -287,21 +381,35 @@
       const chunk = chunks[index];
       const cast = castFor(chunk.lang);
       const voice = cast ? cast[chunk.role] : null;
-      const utterance = new SpeechSynthesisUtterance(chunk.text);
-      if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else utterance.lang = chunk.lang === 'ar' ? 'ar-SA' : 'en-GB';
-      utterance.rate = prefs.rate * (chunk.role === 'heading' ? 0.96 : 1);
-      utterance.pitch = 1;
-      utterance.onend = () => { if (mySession !== session) return; index += 1; step(); };
-      utterance.onerror = (event) => { if (mySession !== session || event.error === 'interrupted' || event.error === 'canceled') return; index += 1; step(); };
-      current = utterance;
+      const pieces = splitSentences(chunk.text, pieceLimit(voice));
       highlight(chunk.element);
       updateNow(chunk, voice);
-      synth.speak(utterance);
+      let part = 0;
+      const sayPiece = () => {
+        if (mySession !== session || !playing) return;
+        const utterance = new SpeechSynthesisUtterance(pieces[part]);
+        if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else utterance.lang = chunk.lang === 'ar' ? 'ar-SA' : 'en-GB';
+        utterance.rate = prefs.rate * (chunk.role === 'heading' ? 0.95 : 1);
+        utterance.pitch = chunk.role === 'heading' && voice === cast?.body ? 0.98 : 1;
+        const done = () => {
+          if (mySession !== session) return;
+          part += 1;
+          if (part < pieces.length) { sayPiece(); return; }
+          const wait = pauseAfter(chunk, chunks[index + 1]) / Math.max(prefs.rate, 0.85);
+          index += 1;
+          timer = setTimeout(step, wait);
+        };
+        utterance.onend = done;
+        utterance.onerror = (event) => { if (event.error === 'interrupted' || event.error === 'canceled') return; done(); };
+        current = utterance;
+        synth.speak(utterance);
+      };
+      sayPiece();
     };
     step();
   };
 
-  const pause = () => { playing = false; session += 1; synth.cancel(); setToggle(); };
+  const pause = () => { playing = false; session += 1; clearTimeout(timer); synth.cancel(); setToggle(); };
 
   const open = () => {
     if (!allVoices.length) loadVoices();
@@ -325,10 +433,16 @@
 
   const renderVoices = () => {
     const language = languageNow();
-    const list = voicesFor(language).filter((voice) => quality(voice) > -20).slice(0, 12);
+    const list = goodVoicesFor(language).slice(0, 12);
     const holder = $('[data-bl-list]');
     holder.innerHTML = '';
     if (!list.length) { holder.innerHTML = `<p class="bl-empty">${t('noVoices')}</p>`; return; }
+    if (deviceTop(language) < 3) {
+      const tip = document.createElement('p');
+      tip.className = 'bl-tip';
+      tip.textContent = t('tip');
+      holder.appendChild(tip);
+    }
     const chosen = castFor(language)?.body;
     list.forEach((voice, i) => {
       const item = document.createElement('button');
@@ -336,7 +450,7 @@
       item.className = 'bl-voice';
       item.setAttribute('role', 'option');
       item.setAttribute('aria-selected', String(voice === chosen));
-      const natural = quality(voice) >= 45;
+      const natural = tier(voice) >= 3;
       item.innerHTML = `<span class="bl-avatar" style="--h:${(i * 47 + 20) % 360}">${displayName(voice).charAt(0)}</span><span class="bl-voice-copy"><b></b><small></small></span>${natural ? `<em>${t('best')}</em>` : ''}`;
       item.querySelector('b').textContent = displayName(voice);
       item.querySelector('small').textContent = accentOf(voice);
@@ -405,7 +519,12 @@
     synth.cancel();
   });
   // Chrome stops long sessions silently; nudge it while speaking.
-  setInterval(() => { if (playing && !synth.speaking && !synth.pending && current) speakFrom(index); }, 4000);
+  let idleSince = 0;
+  setInterval(() => {
+    if (!playing || synth.speaking || synth.pending || !current) { idleSince = 0; return; }
+    idleSince = idleSince || Date.now();
+    if (Date.now() - idleSince > 3500) { idleSince = 0; speakFrom(index); }
+  }, 1000);
 
   const refresh = () => { loadVoices(); paintLabels(); updateLauncherVoice(); if (!player.hidden) renderVoices(); };
   if (typeof synth.addEventListener === 'function') synth.addEventListener('voiceschanged', refresh);

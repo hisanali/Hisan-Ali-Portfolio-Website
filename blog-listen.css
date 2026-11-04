@@ -99,3 +99,4 @@ body.bl-open .back-to-top { opacity: 0 !important; pointer-events: none !importa
   .bl-voice-list { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .bl-player { animation: none; } .blog-listen.is-playing .bl-start-wave path { animation: none; } }
+.bl-tip { grid-column: 1 / -1; margin: 2px 0 0; padding: 10px 12px; border-radius: 12px; color: var(--ua-ink, #15201b); background: color-mix(in srgb, var(--ua-orange, #e2582c) 10%, transparent); font-size: 12.5px; line-height: 1.6; }

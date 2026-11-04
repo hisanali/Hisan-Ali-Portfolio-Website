@@ -6,8 +6,8 @@ const experienceStyles = '<link rel="stylesheet" href="/experience-upgrades.css?
 const qualityRepairStyles = '<link rel="stylesheet" href="/quality-repairs.css?v=2">';
 const fieldGuideStyles = '<link rel="stylesheet" href="/blog/field-guide.css?v=2">';
 const interiorScript = '<script src="/interior-redesign.js?v=34"></script>';
-const listenStyles = '<link rel="stylesheet" href="/blog-listen.css?v=20261104-1">';
-const listenScript = '<script src="/blog-listen.js?v=20261104-1" defer></script>';
+const listenStyles = '<link rel="stylesheet" href="/blog-listen.css?v=20261104-2">';
+const listenScript = '<script src="/blog-listen.js?v=20261104-2" defer></script>';
 
 export function prepareInteriorPage(html: string, pathname: string) {
   if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
