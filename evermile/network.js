@@ -290,10 +290,25 @@ export class Network {
     this.extend(z + 6000);
     return changed;
   }
-  // The branch not taken is still drawn through the junction zone and well beyond it, so side roads lead somewhere.
+  // How far past the junction the branch not taken is drawn: through the zone and on until it would meet
+  // something laid out for the road you are on (a railway, a town, a bridge, a lay-by, the main road itself).
+  reach(j) {
+    if (j.reach !== undefined && j.reachFor === j.chosen) return j.reach;
+    const seg = j.options[1 - j.chosen]; let end = j.z + REACH;
+    for (let z = j.z + ZONE; z < j.z + REACH; z += 10) {
+      const sx = seg.x(z), mx = this.x(z), gap = Math.abs(sx - mx), rail = this.railAt(z);
+      const clash = gap < seg.half(z) + this.half(z) + 10 || (rail && Math.abs(this.railX(rail, z) - sx) < seg.half(z) + 14)
+        || (() => { const t = this.townAt(z); return t && z > t.start - 120 && z < t.end + 120 && gap < 110; })()
+        || (this.bridgeNear(z) && Math.abs(this.bridgeNear(z).start - z) < 400 && gap < 120) || (this.districtAt(z) && gap < 140)
+        || this.stopsNear(z, 80).some((st) => gap < 60) || (this.tunnelAt(z) && gap < 60);
+      if (clash) { end = z - 170; break; }
+    }
+    j.reach = Math.max(j.z + ZONE, end); j.reachFor = j.chosen; return j.reach;
+  }
+  // The branch not taken is still drawn through the junction zone and on as far as it safely can be.
   stubs(z) {
     const out = [];
-    for (const j of this.junctions) if (z >= j.z - 5 && z <= j.z + REACH) out.push({seg: j.options[1 - j.chosen], j});
+    for (const j of this.junctions) if (z >= j.z - 5 && z <= this.reach(j)) out.push({seg: j.options[1 - j.chosen], j});
     return out;
   }
 
@@ -301,7 +316,7 @@ export class Network {
   roadsAt(z) {
     if (z === this.rowZ) return this.row;
     const s = this.segAt(z), rows = [{x: s.x(z), y: s.y(z), half: s.half(z) * this.stretch(s, z), seg: s, w: s.weight(z), main: true, fade: 1}];
-    for (const st of this.stubs(z)) { const u = z - st.j.z; rows.push({x: st.seg.x(z), y: st.seg.y(z), half: st.seg.half(z) * this.stretch(st.seg, z), seg: st.seg, w: 0, main: false, fade: 1 - smooth(REACH - 160, REACH, u), u}); }
+    for (const st of this.stubs(z)) { const u = z - st.j.z; rows.push({x: st.seg.x(z), y: st.seg.y(z), half: st.seg.half(z) * this.stretch(st.seg, z), seg: st.seg, w: 0, main: false, fade: 1 - smooth(this.reach(st.j) - st.j.z - 160, this.reach(st.j) - st.j.z, u), u}); }
     this.rowZ = z; this.row = rows;
     return rows;
   }

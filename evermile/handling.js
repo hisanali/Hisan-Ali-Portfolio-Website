@@ -53,3 +53,19 @@ export function advancePose({x, z, yaw, speed, yawRate, beta = 0, dt}) {
  const distance = speed * dt * (Math.abs(half) < 1e-8 ? 1 : Math.sin(half) / half);
  return {x: x + Math.sin(yaw + beta + half) * distance, z: z + Math.cos(yaw + beta + half) * distance, yaw: yaw + turn};
 }
+// Rear-tyre sideslip: once the lateral budget is used up (or the handbrake locks the rear at speed), the rear
+// steps out and the body yaws beyond the path it is following; grip pulls it back when the demand eases.
+// `drift` is the angle between heading and velocity (radians, positive = tail out to the right in a left turn).
+export function sideslip({vehicle = 'coupe', drift = 0, slip = 0, steer = 0, speed = 0, mu = 1, throttle = 0, handbrake = false, dt = 1 / 120}) {
+ const v = Math.abs(speed), dir = Math.sign(steer) || Math.sign(drift) || 0;
+ const can = vehicle === 'bike' ? .25 : vehicle === 'coach' ? .35 : 1;
+ let target = 0;
+ if (v > 3) {
+  if (handbrake) target = dir * Math.min(.75, .25 + v * .02) * can;
+  else if (slip > 0) target = dir * Math.min(.5, slip * .55 + throttle * .12) * can;
+ }
+ const grow = handbrake ? 5 : 3.2, settle = 1.8 + Math.max(0, mu) * 2.4 + (v < 3 ? 6 : 0);
+ const rate = Math.abs(target) > Math.abs(drift) ? grow : settle;
+ const next = drift + (target - drift) * (1 - Math.exp(-rate * dt));
+ return Math.abs(next) < 1e-4 ? 0 : clamp(next, -.8, .8);
+}
