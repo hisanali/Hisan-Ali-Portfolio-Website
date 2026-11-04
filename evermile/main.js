@@ -15,6 +15,7 @@ import {SkidMarks} from './marks.js?v=20261103-realism1';
 import {Dust} from './dust.js?v=20261103-realism1';
 import {SSAOPass} from './ssao.js?v=20261103-realism1';
 import {Underwater} from './underwater.js?v=20261104-water1';
+import {Walker} from './walker.js?v=20261104-foot1';
 import * as T from './vendor/three.module.js';
 import {World} from './world.js?v=20260927-train1';
 import {CameraOrbit} from './camera-orbit.js?v=20260927-train1';
@@ -52,7 +53,7 @@ export const state = {started: false, paused: false, auto: false, speed: 0, x: 0
 try { state.distance = Number(localStorage.getItem('evermile-distance')) || 0; state.fuel = clamp(Number(localStorage.getItem('evermile-fuel') ?? 1), 0, 1); if (Number.isNaN(state.fuel)) state.fuel = 1; } catch {}
 export const keys = {};
 // Live objects for the browser checks under tests/ and scripts/ (not part of the game's own API).
-export const debug = {get vehicle() { return vehicle; }, get life() { return life; }, get world() { return world; }, get camera() { return camera; }, get renderer() { return renderer; }, get underwater() { return underwater; }, get effects() { return effects; }};
+export const debug = {get vehicle() { return vehicle; }, get life() { return life; }, get world() { return world; }, get camera() { return camera; }, get renderer() { return renderer; }, get underwater() { return underwater; }, get effects() { return effects; }, get walker() { return walker; }};
 // The journey log lives beside the settings; `session` is this drive, started when the title screen is left.
 let storage = null; try { storage = localStorage; } catch {}
 const journey = loadJourney(storage, state.distance); let session = null;
@@ -67,6 +68,9 @@ function endAllTouchDrive() { for (const id of touchPointers.keys()) touchCounts
 
 const $ = (id) => document.getElementById(id);
 let renderer, world, vehicle, scene, camera, sun, hemi, pmrem, envTarget, effects, life, town, railway, atmo, windscreen, mirror, radio, underwater;
+// On foot: the walker, the car you last got out of when you took another, and what the X key would do right now.
+let walker = null, leftCar = null, footTarget = null;
+const STYLE_TO_VEHICLE = {sedan: 'mercedes', mercedes: 'mercedes', hatch: 'grcorolla', grcorolla: 'grcorolla', suv: 'landcruiser', landcruiser: 'landcruiser', wagon: 'mercedes', pickup: 'landcruiser', van: 'landcruiser', bus: 'coach', coach: 'coach'};
 let last = 0, accumulator = 0, hudClock = 0, fpsTime = 0, fpsFrames = 0, panelOpen = false, frameId;
 const cameraPos = new T.Vector3(), lookTarget = new T.Vector3(), tmp = new T.Vector3(), tmp2 = new T.Color();
 const driveOrbit = new CameraOrbit();
@@ -174,6 +178,7 @@ export function changeSetting(key, value) {
   const rebuild = ['destination', 'seed', 'roadStyle', 'location', 'roadWidth', 'season', 'planet', 'quality', 'autoLane'];
   if (rebuild.includes(key)) {
     const moving = state.speed, same = !['destination', 'seed', 'roadStyle', 'location'].includes(key); world.rebuild(same); life.clear(); marks?.clear();
+    if (!same && state.onFoot) { state.onFoot = false; walker?.hide(); } if (!same && leftCar) { leftCar.dispose(); leftCar = null; }
     if (['destination', 'seed', 'roadStyle', 'location'].includes(key)) { state.z = 35; reset(); } else { const r = world.road; state.laneIndex = r.homeLane(state.z); }
     world.update(state.z, camera, true); if (!['destination', 'seed', 'roadStyle', 'location'].includes(key)) state.speed = moving;
   }
@@ -252,6 +257,7 @@ function updateReflections() {
 /* ---------- Driving ---------- */
 function physics(dt) {
   if (!state.started || state.paused || panelOpen || state.inspection || state.viewing) return;
+  if (state.onFoot) { state.speed = 0; state.throttle = 0; state.brakeIn = 0; state.time += dt; return; }
   const r = world.road, gamepad = padInput;
   let throttle = keys.KeyW || keys.ArrowUp ? 1 : 0, brake = keys.KeyS || keys.ArrowDown ? 1 : 0;
   let input = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0);
@@ -710,6 +716,7 @@ function positionCamera(dt, instant = false) {
     if (v.t > 40) state.viewing = null;
     placeSun(Math.sin(state.yaw), Math.cos(state.yaw)); return;
   }
+  if (state.onFoot) return walkerCamera(dt, instant);
   if (settings.camera === 5) return cinematicCamera(dt, instant);
   const yaw = state.yaw, forward = new T.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), right = new T.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
   let back = 7.6, up = 2.25, ahead = 14;
@@ -822,16 +829,17 @@ function frame(now) {
   const elapsed = (now - (last || now)) / 1000, dt = Math.min(elapsed, .05); last = now; accumulator += dt;
   pollGamepad();
   while (accumulator >= 1 / 120) { for (const k of SMOOTHED) previousState[k] = state[k]; physics(1 / 120); accumulator -= 1 / 120; }
+  if (state.onFoot) walkStep(dt);
   const live = {}; for (const k of SMOOTHED) live[k] = state[k];
   if (Math.hypot(live.x - previousState.x, live.z - previousState.z) < 5) { const a = accumulator * 120; for (const k of SMOOTHED) state[k] = k === 'yaw' ? previousState.yaw + angleDifference(live.yaw, previousState.yaw) * a : previousState[k] + (live[k] - previousState[k]) * a; }
   applyAtmosphere(dt);
-  updateCar(dt); roadEffects(dt); positionCamera(dt);
+  updateCar(dt); if (!state.onFoot) roadEffects(dt); leftCar?.update(dt, 0, 0, atmo.lit > .5, false, false); positionCamera(dt);
   underwaterLook(dt);
   Object.assign(state, live);
   effects.inTunnel = !!world.road.tunnelAt(camera.position.z);
   effects.update(dt); town.update(dt, camera); life.update(dt); railway.update(dt, camera, () => effects.getVolume());
   underwater?.update(dt, state, camera);
-  world.update(state.z, camera); world.scenery.update(dt, camera, state); world.roadside.update(dt, camera, railway, state);
+  world.update(state.onFoot ? walker.z : state.z, camera); world.scenery.update(dt, camera, state); world.roadside.update(dt, camera, railway, state);
   world.landmarks.update(dt, state);
   detailedModels ||= new DetailedModels(scene,settings);
   detailedModels.update(dt,state,life.traffic,town.people,world,life.animals,town);
@@ -850,6 +858,74 @@ function frame(now) {
   if (hudClock > .12) { hudClock = 0; updateHUD(); }
 }
 
+/* ---------- On foot ---------- */
+// Step out beside the driver's door; the car stays exactly where it is.
+function exitCar() {
+  if (!state.started || state.onFoot || state.inspection || state.viewing) return;
+  if (multiplayer?.active) { toast('Stay in the car while you drive with a friend.'); return; }
+  if (Math.abs(state.speed) > 1.2) { toast('Stop the car first'); return; }
+  state.speed = 0; state.auto = false; state.cruise = false; state.pit = null; releaseCameraDrag(true);
+  walker ||= new Walker(scene, world, settings);
+  const rx = Math.cos(state.yaw), rz = -Math.sin(state.yaw), fx = Math.sin(state.yaw), fz = Math.cos(state.yaw), side = settings.vehicle === 'coach' ? 1.9 : settings.vehicle === 'bike' ? .9 : 1.5, seatZ = vehicle.seatZ ?? 0;
+  walker.place(state.x + rx * side + fx * seatZ, state.z + rz * side + fz * seatZ, state.yaw + Math.PI / 2);
+  state.onFoot = true; footTarget = null; updateUI(); toast('You’re on foot · W A S D to walk, Shift to run, X to get back in');
+}
+// What X would get you into: your own car, the one you left, or a parked car, if a door is within reach.
+function carNearby() {
+  if (!walker) return null;
+  const near = (x, z, length) => Math.hypot(walker.x - x, walker.z - z) < Math.max(2.6, length * .45 + 1.2);
+  if (near(state.x, state.z, settings.vehicle === 'coach' ? 12 : 4.6)) return {kind: 'own'};
+  if (leftCar && near(leftCar.group.position.x, leftCar.group.position.z, leftCar.type === 'coach' ? 12 : 4.6)) return {kind: 'left'};
+  for (const c of life.parked) if (c.g.visible && c.spot && c.kind !== 'truck' && near(c.g.position.x, c.g.position.z, c.length)) return {kind: 'parked', car: c};
+  return null;
+}
+function enterCar(target) {
+  if (!target) return;
+  const night = atmo.lit > .5;
+  if (target.kind === 'parked') {
+    // Leave your car where it is (as a parked car you can come back to) and take this one.
+    const c = target.car, type = STYLE_TO_VEHICLE[c.style] || 'mercedes';
+    if (leftCar) { leftCar.dispose(); leftCar = null; }
+    leftCar = new Vehicle(scene, settings.vehicle, settings.color); leftCar.group.position.copy(vehicle.group.position); leftCar.group.rotation.copy(vehicle.group.rotation); leftCar.externalSuspension = true; leftCar.update(1 / 60, 0, 0, night, false, false); if (cubeRT) leftCar.setEnvMap(cubeRT.texture);
+    state.x = c.g.position.x; state.z = c.g.position.z; state.yaw = c.g.rotation.y; state.y = world.groundHeight(state.x, state.z);
+    c.spot = false; c.z = -1e9; c.g.visible = false;
+    if (settings.vehicle !== type) changeSetting('vehicle', type);
+    toast(`You took the ${c.style === 'bus' ? 'bus' : c.style}. Your ${settings.vehicle === type ? 'other car' : 'car'} is parked where you left it.`);
+  } else if (target.kind === 'left') {
+    // Swap back into the car you left; the one you arrive in stays here instead.
+    const swap = new Vehicle(scene, settings.vehicle, settings.color); swap.group.position.copy(vehicle.group.position); swap.group.rotation.copy(vehicle.group.rotation); swap.externalSuspension = true; swap.update(1 / 60, 0, 0, night, false, false); if (cubeRT) swap.setEnvMap(cubeRT.texture);
+    const take = leftCar; leftCar = swap;
+    state.x = take.group.position.x; state.z = take.group.position.z; state.yaw = take.group.rotation.y; state.y = world.groundHeight(state.x, state.z);
+    if (settings.vehicle !== take.type) changeSetting('vehicle', take.type); take.dispose();
+  }
+  state.onFoot = false; walker.hide(); state.steer = 0; state.yawRate = 0; state.drift = 0; state.vy = 0; state.grounded = true; susp = null; wheelMounts = null; state.bodyY = undefined;
+  updateCar(1 / 60); positionCamera(1, true); updateUI(); if (target.kind === 'own') toast('Back behind the wheel');
+}
+function footAction() { if (!state.started) return; if (state.onFoot) { const t = carNearby(); if (t) enterCar(t); else toast('Walk up to a car door first'); } else exitCar(); }
+// Each frame on foot: keys (or a controller) move the walker, solid things keep it out, and the prompt follows the nearest door.
+function walkStep(dt) {
+  if (state.paused || panelOpen) return;
+  const pad = padInput, forward = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + (pad ? pad.throttle - pad.brake : 0);
+  const turn = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) + (pad ? pad.input : 0), run = !!(keys.ShiftLeft || keys.ShiftRight || pad?.held.handbrake);
+  const outfit = 'man-casual_2', asset = detailedModels?.loaded[outfit]; walker.dress(asset, asset ? outfit : 'placeholder');
+  const own = {x: state.x, z: state.z, hx: settings.vehicle === 'coach' ? 1.3 : .95, hz: settings.vehicle === 'coach' ? 6 : 2.3, c: Math.cos(state.yaw), s: Math.sin(state.yaw)};
+  const colliders = [...world.collidersNear(walker.x, walker.z, 8), ...life.colliders(walker.x, walker.z, 8), ...railway.colliders(walker.x, walker.z, 8), ...town.colliders(walker.x, walker.z, 6), own];
+  if (leftCar) colliders.push({x: leftCar.group.position.x, z: leftCar.group.position.z, hx: .95, hz: 2.3, c: Math.cos(leftCar.group.rotation.y), s: Math.sin(leftCar.group.rotation.y)});
+  walker.update(dt, {forward: clamp(forward, -1, 1), turn: clamp(turn, -1, 1), run}, colliders, settings.location === 'hills' ? world.water.position.y : -1e9);
+  const t = carNearby(), label = t ? (t.kind === 'own' ? 'GET IN' : t.kind === 'left' ? 'GET IN · YOUR OTHER CAR' : `GET IN · ${(t.car.style === 'bus' ? 'BUS' : t.car.style).toUpperCase()}`) : 'ON FOOT';
+  if (label !== footTarget) { footTarget = label; $('foot-label').textContent = t ? label : 'WALK'; $('drive-status').textContent = t ? label + ' · X' : 'ON FOOT · SHIFT TO RUN'; }
+}
+function walkerCamera(dt, instant) {
+  const fx = Math.sin(walker.yaw), fz = Math.cos(walker.yaw), head = walker.head(tmp);
+  const yaw = walker.yaw + Math.PI + driveOrbit.yaw, pitch = clamp(.22 + driveOrbit.pitch, .02, 1.2), radius = 3.6 * Math.max(1, .9 / camera.aspect);
+  cameraPos.set(head.x + Math.sin(yaw) * Math.cos(pitch) * radius, head.y - .1 + Math.sin(pitch) * radius, head.z + Math.cos(yaw) * Math.cos(pitch) * radius);
+  cameraPos.y = Math.max(cameraPos.y, world.surfaceHeight(cameraPos.x, cameraPos.z, settings.location !== 'hills') + .5);
+  if (instant) camera.position.copy(cameraPos); else camera.position.lerp(cameraPos, 1 - Math.exp(-8 * dt));
+  lookTarget.set(head.x + fx * 1.2 * (1 - driveOrbit.focus), head.y - .15, head.z + fz * 1.2 * (1 - driveOrbit.focus)); camera.lookAt(lookTarget);
+  camera.fov = damp(camera.fov, 52, 4, dt); camera.updateProjectionMatrix();
+  placeSun(fx, fz);
+}
+
 /* ---------- Controller, photos and the journey log ---------- */
 // Read once per frame: the stick and triggers go to the physics step, the buttons do what the keyboard shortcuts do.
 function pollGamepad() {
@@ -866,7 +942,7 @@ function pollGamepad() {
   if (state.viewing) { if (g.active) { state.viewing = null; positionCamera(1, true); } return; }
   if (p.pause) { if (state.inspection) inspectCar(false); else if (panelOpen) closePanel(); else { state.paused = !state.paused; updateUI(); } }
   if (panelOpen || state.inspection) return;
-  if (p.autodrive) toggleAuto();
+  if (p.autodrive) { if (state.onFoot) footAction(); else toggleAuto(); }
   if (p.camera) changeSetting('camera', (settings.camera + 1) % 6);
   if (p.indicateLeft) toggleIndicator(1);
   if (p.indicateRight) toggleIndicator(-1);
@@ -927,7 +1003,8 @@ function updateHUD() {
 }
 export function updateUI() {
   $('autodrive-btn').classList.toggle('active', state.auto); $('autodrive-btn').setAttribute('aria-pressed', String(state.auto));
-  $('drive-status').textContent = state.auto ? 'ENJOY THE VIEW' : state.cruise ? 'CRUISE CONTROL' : 'TAKE THE SCENIC ROUTE';
+  $('drive-status').textContent = state.onFoot ? 'ON FOOT · SHIFT TO RUN' : state.auto ? 'ENJOY THE VIEW' : state.cruise ? 'CRUISE CONTROL' : 'TAKE THE SCENIC ROUTE';
+  $('foot-label').textContent = state.onFoot ? 'WALK' : 'GET OUT'; document.body.classList.toggle('on-foot', !!state.onFoot); for (const id of ['autodrive-wrap', 'ind-left-btn', 'ind-right-btn', 'horn-btn', 'camera-btn']) $(id)?.classList.toggle('foot-hidden', !!state.onFoot);
   $('scene-label').innerHTML = (settings.location === 'hills' ? (world.road.districtAt(state.z) ? DESTINATIONS[world.road.districtAt(state.z).district].name.toUpperCase() : 'HILLS') : 'OFF-WORLD') + ' <span>/</span> ' + (settings.location === 'hills' ? settings.season : settings.planet).toUpperCase();
   $('camera-label').textContent = ['CHASE', 'FAR CHASE', 'COCKPIT', 'BONNET', 'BUMPER', 'CINEMATIC'][settings.camera];
   $('speed-unit').textContent = settings.units === 'mi' ? 'MPH' : 'KM / H'; document.querySelector('.journey>span').textContent = settings.units === 'mi' ? 'MILES' : 'KILOMETERS';
@@ -985,7 +1062,7 @@ function updateAudio(dt = 0) {
 function initUI() {
   $('begin').onclick = beginWithIntro; $('autodrive-btn').onclick = () => toggleAuto(); $('reset-btn').onclick = () => { reset(); toast('Back on the road'); };
   $('camera-btn').onclick = () => changeSetting('camera', (settings.camera + 1) % 6);
-  $('photo-btn').onclick = () => togglePhoto(); $('photo-save').onclick = () => savePhoto(); $('photo-exit').onclick = () => togglePhoto(false);
+  $('photo-btn').onclick = () => togglePhoto(); $('foot-btn').onclick = () => footAction(); $('photo-save').onclick = () => savePhoto(); $('photo-exit').onclick = () => togglePhoto(false);
   addEventListener('gamepadconnected', (e) => toast(`${padName(e.gamepad)} connected · press any button to use it`));
   renderStartStats();
   $('sound-btn').onclick = () => { muted = !muted; $('sound-btn').style.opacity = muted ? .4 : 1; toast(muted ? 'Sound off' : 'Sound on'); initAudio(); };
@@ -1000,9 +1077,10 @@ function initUI() {
     keys[e.code] = true; if (e.repeat) return;
     if (state.viewing) { state.viewing = null; positionCamera(1, true); return; }
     if (e.code === 'Enter' && !state.started && $('start').hidden === false) beginWithIntro();
-    if (e.code === 'KeyF') toggleAuto();
+    if (e.code === 'KeyF' && !state.onFoot) toggleAuto();
     if (e.code === 'KeyC') changeSetting('camera', (settings.camera + 1) % 6);
-    if (e.code === 'KeyR') { reset(); toast('Back on the road'); }
+    if (e.code === 'KeyR') { if (state.onFoot) footAction(); else { reset(); toast('Back on the road'); } }
+    if (e.code === 'KeyX') footAction();
     if (e.code === 'KeyP') { state.paused = !state.paused; updateUI(); }
     if (e.code === 'KeyG') setHorn(true);
     if (e.code === 'KeyQ') toggleIndicator(1);
@@ -1016,7 +1094,7 @@ function initUI() {
     if (e.code === 'KeyI') state.cruiseSpeed += 2;
     if (e.code === 'KeyK') state.cruiseSpeed = Math.max(3, state.cruiseSpeed - 2);
     if (e.code === 'F4') { e.preventDefault(); $('performance').hidden = !$('performance').hidden; }
-    if (e.code === 'KeyV') inspectCar(!state.inspection);
+    if (e.code === 'KeyV' && !state.onFoot) inspectCar(!state.inspection);
     if (e.code === 'Escape') { if (state.inspection) inspectCar(false); else if (panelOpen) closePanel(); else openPanel('settings'); }
   });
   addEventListener('keyup', (e) => { keys[e.code] = false; if (e.code === 'KeyG') setHorn(false); });
@@ -1080,7 +1158,7 @@ function panelMarkup(name) {
   if (name === 'world') return section('START YOUR DRIVE IN', `<p class="hint">Every place is on the same road network. Look for them on junction signs as you drive, or start in one.</p><div class="destination-list">${Object.entries(DESTINATIONS).map(([key, d]) => `<button data-destination="${key}" aria-pressed="${settings.destination === key}" class="destination-card ${settings.destination === key ? 'selected' : ''}"><strong>${d.name}</strong><span>${d.detail}</span></button>`).join('')}</div>`) + section('LANDSCAPE', options('location', [['hills', 'Hills'], ['offworld', 'Off-World']])) + section('ROAD', options('roadStyle', [['straight', 'Straight'], ['casual', 'Casual'], ['normal', 'Normal'], ['winding', 'Winding']])) + section('AT JUNCTIONS', options('junctions', [['surprise', 'Surprise me'], ['straight', 'Keep straight on']]) + '<p class="hint">What autodrive does at a junction. Indicate with Q or E, or tap the sign that pops up, to choose your own way.</p>') + section('WORLD SEED', '<input id="seed-input" aria-label="World seed" type="text" maxlength="60"><button id="generate-btn" class="action-btn">Generate a new journey ↗︎</button><p class="hint">The same seed always leads to the same road.</p>');
   if (name === 'style') return (settings.location === 'hills' ? section('SEASON', options('season', [['spring', 'Spring'], ['summer', 'Summer'], ['autumn', 'Autumn'], ['winter', 'Winter']])) : section('PLANET', options('planet', [['mars', 'Mars'], ['moon', 'Moon'], ['venus', 'Venus']]))) + section('TIME OF DAY', options('time', [['dawn', 'Dawn'], ['day', 'Day'], ['sunset', 'Golden hour'], ['night', 'Night']])) + section('CLOCK', options('clock', [['live', 'Time passes'], ['still', 'Hold the time']]) + '<p class="hint">With time passing, a whole day goes by in about half an hour: sunset, night, dawn.</p>') + section('WEATHER', options('weather', [['changing', 'Changing'], ['clear', 'Clear skies'], ['overcast', 'Overcast'], ['rain', 'Rain & thunder']]));
   if (name === 'vehicle') return section('YOUR RIDE', options('vehicle', [['coupe', 'Coupé'], ['grcorolla', 'GR Corolla'], ['landcruiser', 'Land Cruiser'], ['mercedes', 'Mercedes W201'], ['coach', 'Coach'], ['bike', 'Bike']])) + '<p class="vehicle-description">' + ({grcorolla: '2023 Toyota GR Corolla. A turbocharged all-wheel-drive hot hatch: light, eager and quick to turn in, with a rev-happy three-cylinder.', landcruiser: '2022 Toyota Land Cruiser 300 VX.R. A big twin-turbo V6 off-roader with a high seat and a ten-speed automatic: calm, heavy and unstoppable.', mercedes: '1982 Mercedes W201. A classic saloon with a textured cabin, independently rigged wheels, and calmer everyday handling.', coupe: 'A detailed sports coupé with sculpted bodywork, alloy wheels, and reflective paint. Balanced, responsive, and made for the long way home.', coach: 'A higher perspective on the open road. Take your time and watch the scenery unfold.', bike: 'Light, nimble, and a little closer to the elements.'}[settings.vehicle]) + '</p>' + '<button id="inspect-car" class="action-btn">Explore in 3D <span>↗︎</span></button>' + (state.dirt > .15 || state.dented ? `<button id="wash-car" class="action-btn">${state.dented ? 'Wash and repair' : 'Wash the car'} <span>↗︎</span></button>` : '') + section('PAINT', `<div class="options swatches">${['#e9e7db', '#b51f25', '#335b4c', '#7b9ba8', '#333a43', '#d6ba75'].map((c) => `<button data-setting="color" data-value="${c}" aria-label="${{'#e9e7db': 'Pearl', '#335b4c': 'Forest', '#7b9ba8': 'Glacier', '#b51f25': 'Racing red', '#333a43': 'Graphite', '#d6ba75': 'Champagne'}[c]} paint" class="${settings.color === c ? 'selected' : ''}" style="background:${c}"></button>`).join('')}</div>`) + section('VIEW', options('camera', [[0, 'Chase'], [1, 'Far'], [2, 'Cockpit'], [3, 'Bonnet'], [4, 'Bumper'], [5, 'Cinematic']]) + '<p class="hint">Cinematic cuts between roadside, tracking and helicopter shots as you drive. In the cockpit, drag to look around the cabin.</p>');
-  if (name === 'help') return '<p class="vehicle-description">There’s no finish line. Drive at your own pace, or let autodrive take you somewhere new.</p><div class="keylist">' + [['Look around (and round the cabin in the cockpit)', 'Drag / release'], ['Explore car in 3D', 'V'], ['Accelerate / brake', 'W / S or ↑︎ / ↓︎'], ['Steer', 'A / D or ←︎ / →︎'], ['Indicate left / right', 'Q / E'], ['Autodrive', 'F'], ['Boost', 'Shift'], ['Handbrake', 'Space'], ['Radio station', 'N'], ['Reset on road', 'R'], ['Change camera', 'C'], ['Cruise control', 'J'], ['Adjust cruise speed', 'I / K'], ['Headlights', 'H'], ['Horn', 'G'], ['Pause', 'P'], ['Mute', 'M'], ['Photo mode', 'U'], ['Save photo', 'Enter'], ['Performance', 'F4'], ['Settings', 'Esc']].map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div><p class="hint">At a junction, indicate towards the side road (or tap the sign) to take it. Stop in a petrol station, café or viewpoint for something to do there.</p><p class="hint">Photo mode hides the interface; press Enter or tap Save photo to keep the picture.</p>' + section('CONTROLLER', '<div class="keylist">' + BUTTON_HELP.map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div>') + '<p class="hint">3D car: Ferrari 458 Italia by <a href="https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6" target="_blank" rel="noopener noreferrer">vicent091036</a>, via the <a href="https://threejs.org/examples/webgl_materials_car.html" target="_blank" rel="noopener noreferrer">Three.js car demo</a>. Adapted materials and animation.</p>';
+  if (name === 'help') return '<p class="vehicle-description">There’s no finish line. Drive at your own pace, or let autodrive take you somewhere new.</p><div class="keylist">' + [['Look around (and round the cabin in the cockpit)', 'Drag / release'], ['Get out / get in', 'X'], ['Explore car in 3D', 'V'], ['Accelerate / brake', 'W / S or ↑︎ / ↓︎'], ['Steer', 'A / D or ←︎ / →︎'], ['Indicate left / right', 'Q / E'], ['Autodrive', 'F'], ['Boost', 'Shift'], ['Handbrake', 'Space'], ['Radio station', 'N'], ['Reset on road', 'R'], ['Change camera', 'C'], ['Cruise control', 'J'], ['Adjust cruise speed', 'I / K'], ['Headlights', 'H'], ['Horn', 'G'], ['Pause', 'P'], ['Mute', 'M'], ['Photo mode', 'U'], ['Save photo', 'Enter'], ['Performance', 'F4'], ['Settings', 'Esc']].map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div><p class="hint">At a junction, indicate towards the side road (or tap the sign) to take it. Stop in a petrol station, café or viewpoint for something to do there.</p><p class="hint">Photo mode hides the interface; press Enter or tap Save photo to keep the picture.</p>' + section('CONTROLLER', '<div class="keylist">' + BUTTON_HELP.map(([a, b]) => `<span>${a}</span><kbd>${b}</kbd>`).join('') + '</div>') + '<p class="hint">3D car: Ferrari 458 Italia by <a href="https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6" target="_blank" rel="noopener noreferrer">vicent091036</a>, via the <a href="https://threejs.org/examples/webgl_materials_car.html" target="_blank" rel="noopener noreferrer">Three.js car demo</a>. Adapted materials and animation.</p>';
   return section('RENDER QUALITY', options('quality', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']])) + section('AMBIENT OCCLUSION', options('ao', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Soft contact shadows under the car, along kerbs and in corners. High and Ultra quality only.</p>') + section('CAMERA FIELD OF VIEW', `<input aria-label="Field of view" data-range="fov" type="range" min="45" max="85" step="1" value="${settings.fov}">`) + section('AUTODRIVE', options('autoMode', [['full', 'Full auto'], ['steering', 'Steer only'], ['speed', 'Speed only']])) + section('DRIVING LANE', options('autoLane', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']])) + section('RUSH MODE', options('rushMode', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Autodrive drives faster and overtakes as soon as a gap opens, even with oncoming cars in the distance.</p>') + section('ONCOMING TRAFFIC', options('trafficOncoming', [['on', 'On'], ['off', 'Off']])) + section('TRAFFIC IN YOUR LANE', options('trafficOwn', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Slower cars, buses and delivery trucks ahead of you. Autodrive follows them and overtakes when the road is clear.</p>') + section('CYCLISTS', options('cyclists', [['on', 'On'], ['off', 'Off']])) + section('FUEL GAUGE', options('fuel', [['off', 'Off'], ['on', 'On']]) + '<p class="hint">Keep an eye on the tank and fill up at petrol stations. Autodrive pulls in by itself when it runs low.</p>') + section('REAR-VIEW MIRROR', options('mirror', [['on', 'On'], ['off', 'Off']]) + '<p class="hint">Shown in the cockpit and bonnet views.</p>') + section('UNITS', options('units', [['km', 'Kilometers'], ['mi', 'Miles']])) + section('SOUND', [['volume', 'Master'], ['vehicleVolume', 'Vehicle'], ['weatherVolume', 'Weather'], ['sfxVolume', 'Effects'], ['radioVolume', 'Radio']].map(([k, label]) => `<label class="setting-line">${label}<input aria-label="${label} volume" data-range="${k}" type="range" min="0" max="1" step=".05" value="${settings[k]}"></label>`).join('') + '<p class="hint">Vehicle: engine, brakes, wind and indicators. Weather: rain and thunder. Effects: trains and aircraft.</p>') + section('RADIO', `<div class="options radio-options">${[[-1, 'Off'], ...STATIONS.map((s, i) => [i, s.name])].map(([i, label]) => `<button data-radio="${i}" class="${settings.radio === i ? 'selected' : ''}" aria-pressed="${settings.radio === i}">${label}</button>`).join('')}</div><p class="hint">${STATIONS.map((s) => `${s.name}: ${s.tag}`).join(' · ')}</p>`) + section('ROAD WIDTH', `<input aria-label="Road width" data-range="roadWidth" type="range" min="8" max="13" step=".5" value="${settings.roadWidth}">`) + section('HANDLING', `<label class="setting-line">Grip<input aria-label="Grip" data-range="grip" type="range" min=".4" max="1.5" step=".1" value="${settings.grip}"></label><label class="setting-line">Speed<input aria-label="Speed factor" data-range="speedFactor" type="range" min=".5" max="2" step=".1" value="${settings.speedFactor}"></label>`);
 }
 function bindPanel() {
