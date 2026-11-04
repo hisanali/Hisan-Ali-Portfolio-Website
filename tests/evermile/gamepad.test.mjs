@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readGamepad, axis, padName, BUTTONS, BUTTON_HELP, DEADZONE} from '../../evermile/gamepad.js';
+import {readGamepad, axis, padName, wakes, BUTTONS, BUTTON_HELP, DEADZONE} from '../../evermile/gamepad.js';
 
 const pad = (buttons = {}, axes = [0, 0, 0, 0]) => ({id: 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)', connected: true, axes, buttons: Array.from({length: 17}, (_, i) => ({value: buttons[i] ?? 0, pressed: (buttons[i] ?? 0) > .5}))});
 
@@ -14,7 +14,8 @@ test('stick dead zone eases out instead of jumping, and steering sign matches th
 
 test('triggers drive, face buttons report rising edges only once, and held buttons stay held', () => {
   const first = readGamepad(pad({7: .6, 6: .2, [BUTTONS.autodrive]: 1, [BUTTONS.horn]: 1}));
-  assert.equal(first.throttle, .6); assert.equal(first.brake, .2);
+  assert.ok(Math.abs(first.throttle - (.6 - .06) / .94) < 1e-9 && Math.abs(first.brake - (.2 - .06) / .94) < 1e-9, 'triggers past their dead zone');
+  assert.equal(readGamepad(pad({7: .04})).throttle, 0, 'a trigger resting slightly off zero does not creep the car');
   assert.equal(first.pressed.autodrive, true); assert.equal(first.pressed.horn, true); assert.equal(first.held.horn, true); assert.equal(first.active, true);
   const second = readGamepad(pad({[BUTTONS.autodrive]: 1, [BUTTONS.horn]: 1}), first.held);
   assert.equal(second.pressed.autodrive, false, 'a button held across frames fires once');
@@ -38,4 +39,11 @@ test('every mapped button is explained in the help list, and pad names read clea
   assert.equal(padName(pad()), 'Xbox controller');
   assert.equal(padName({id: 'Wireless Controller (Vendor: 054c Product: 0ce6)'}), 'PlayStation controller');
   assert.equal(padName({id: ''}), 'Controller');
+});
+
+test('a pad only wakes on a deliberate press, so an idle wheel or a drifting stick cannot drive the car', () => {
+  assert.equal(wakes(null), false);
+  assert.equal(wakes(pad({}, [.3, 0])), false, 'a little stick drift is not a wake');
+  assert.equal(wakes(pad({7: .3})), false, 'a trigger resting part way is not a wake');
+  assert.equal(wakes(pad({0: 1})), true); assert.equal(wakes(pad({}, [-.9, 0])), true); assert.equal(wakes(pad({7: .9})), true);
 });
