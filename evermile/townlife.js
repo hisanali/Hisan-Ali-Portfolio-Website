@@ -179,7 +179,8 @@ export class TownLife {
         p.walkVelocity+=(target-p.walkVelocity)*(1-Math.exp(-dt*3));p.z+=p.dir*p.walkVelocity*dt;
         if(p.z < d0 - 80 || p.z > d0 + 980) p.dir *= -1;
         p.x = r.x(p.z) + p.side * (r.half(p.z) + 2.4 + (p.i % 3) * .55 + .10*Math.sin(p.z*.08+p.i)) + (p.knockX || 0); p.y = r.y(p.z) + .2;
-        p.yaw = p.state==='knocked'?p.knockYaw:p.state==='look'?Math.atan(r.tangent(p.z))+p.side*Math.PI*.35 : Number.isFinite(oldX)&&Math.abs(p.z-oldZ)>.0001?Math.atan2(p.x-oldX,p.z-oldZ):Math.atan(r.tangent(p.z))+(p.dir<0?Math.PI:0); this.pose(p, p.walkVelocity>.05, rain, dt);
+        if(p.talkUntil!==undefined){if(this.time<p.talkUntil){target=0;}else{p.talkUntil=undefined;p.talkYaw=undefined;}}
+        p.yaw = p.talkYaw!==undefined?p.talkYaw:p.state==='knocked'?p.knockYaw:p.state==='look'?Math.atan(r.tangent(p.z))+p.side*Math.PI*.35 : Number.isFinite(oldX)&&Math.abs(p.z-oldZ)>.0001?Math.atan2(p.x-oldX,p.z-oldZ):Math.atan(r.tangent(p.z))+(p.dir<0?Math.PI:0); this.pose(p, p.walkVelocity>.05, rain, dt);
       }
       return;
     }
@@ -202,7 +203,7 @@ export class TownLife {
         for (const zc of spots) if (Math.abs(p.z - zc) < .6 && p.lastSpot !== zc) { p.lastSpot = zc; if (Math.random() < .55) { p.state = 'wait'; p.z = zc + rand(-.6, .6); p.lane = w + .45; p.crossAt = zc; p.light = zc !== lay.zebra; p.timer = 0; } break; }
         if (p.timer <= 0 && p.state === 'walk') { p.timer = rand(8, 25); if (Math.random() < .3) { p.state = 'look'; p.timer = rand(2.5, 7); } else if (Math.random() < .2) p.dir = -p.dir; }
       } else if (p.state === 'look') {
-        p.timer -= dt; if (p.timer <= 0) { p.state = 'walk'; p.timer = rand(8, 25); }
+        if (p.talkUntil === undefined || this.time >= p.talkUntil) { p.timer -= dt; if (p.timer <= 0) { p.state = 'walk'; p.timer = rand(8, 25); } }
       } else if (p.state === 'knocked') {
         // Knocked aside by a car: stagger to a stop, face it, then carry on (crossing again if that is where they were).
         p.timer -= dt; if (p.timer <= 0) { p.state = Math.abs(p.lane) > w + .3 ? 'walk' : 'cross'; p.timer = rand(6, 20); }
@@ -229,7 +230,8 @@ export class TownLife {
       const lane = p.lane;
       p.x = r.x(p.z) + p.side * lane; p.y = r.y(p.z) + (Math.abs(lane) > w ? .075 : .06);
       const along = Math.atan(r.tangent(p.z));
-      p.yaw = p.state === 'knocked' ? p.knockYaw : p.state === 'cross' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'wait' || p.state === 'bus' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'look' ? along + (p.side > 0 ? Math.PI / 2 : -Math.PI / 2) : along + (p.dir < 0 ? Math.PI : 0);
+      if (p.talkUntil !== undefined && this.time >= p.talkUntil) { p.talkUntil = undefined; p.talkYaw = undefined; }
+      p.yaw = p.talkYaw !== undefined ? p.talkYaw : p.state === 'knocked' ? p.knockYaw : p.state === 'cross' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'wait' || p.state === 'bus' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'look' ? along + (p.side > 0 ? Math.PI / 2 : -Math.PI / 2) : along + (p.dir < 0 ? Math.PI : 0);
       this.pose(p, moving, rain, dt);
     }
   }
@@ -331,6 +333,14 @@ export class TownLife {
   }
 
   /* ---------- Queries for other systems ---------- */
+  // The nearest person on the pavement to a point (for talking to), if within `range`.
+  nearest(x, z, range = 2.4) {
+    let best = null, d = range;
+    for (const p of this.people) { if (!p.active || p.state === 'knocked' || p.state === 'board' || !Number.isFinite(p.x)) continue; const q = Math.hypot(p.x - x, p.z - z); if (q < d) { d = q; best = p; } }
+    return best;
+  }
+  // Stop and face someone for a while.
+  talkTo(p, x, z, seconds = 8) { if (!p) return; p.talkYaw = Math.atan2(x - p.x, z - p.z); p.talkUntil = this.time + seconds; if (p.state === 'walk' || p.state === 'look') { p.state = 'look'; p.timer = Math.max(p.timer, seconds); } p.walkVelocity = 0; }
   // A car has pushed into this person: they are shoved along the contact normal (nx, nz) by `push` metres, stop,
   // and turn towards whatever hit them. Walkers in a destination keep a sideways offset that fades as they recover.
   knock(p, nx, nz, push, approach) {

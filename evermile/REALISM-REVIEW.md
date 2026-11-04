@@ -130,3 +130,10 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 - Bus: stand at a town bus stop; when a bus is at the stop, X boards it. You ride with it (camera on the roof) and X at its next stop gets you off beside the door. If the bus goes out of range you are set down where you are.
 - Rain and wind stay outside; the world keeps streaming around the door you came in by; the on-foot save remembers the door so a reload inside puts you outside it.
 - Known limits: the café and petrol station doors are approximate positions in front of their buildings, not modelled doors; the shop card is a card, not a modelled till; the keeper does not speak yet (Stage 3).
+
+
+## Stages 3 and 4: your outfit, and talking
+
+- You: choose any of the twelve civilian outfits in the Vehicle panel ("You"); it is remembered, and the shopkeeper never wears the same one.
+- Talking (`dialogue.js`): X beside a passer-by opens a conversation card. They stop and turn to face you while you talk. Lines fit the time of day, the weather, the town, and your state (low on fuel, a dented car); each has two or three replies with their answer. On the pier people are fishermen who know about the wreck. Shopkeepers can be talked to from the shop card; the petrol station keeper repairs dents (8 coins) and washes the car (4), the barber cuts hair (8). Names are stable per person per town.
+- Not yet: spoken voice, and people reacting to the horn with a wave.
