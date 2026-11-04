@@ -1,5 +1,7 @@
 export const sharedThemeInit = `<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script>`;
 
+export const sharedLanguageInit = `<script id="lang-init">(()=>{const r=document.documentElement;try{const q=location.search.match(/[?&]lang=(ar|en)\\b/);const n=r.lang==='ar';if(n)r.dataset.nativeLang='ar';const l=n?'ar':q?q[1]:localStorage.getItem('site-language');if(l==='ar'){r.classList.add('lang-ar','i18n-loading');r.lang='ar';r.dir='rtl';setTimeout(()=>r.classList.remove('i18n-loading'),2500)}}catch(e){}})();</script>`;
+
 const sectionPrefixes: Record<string, string[]> = {
   services: ['/services/'],
   insights: ['/blog/'],
@@ -47,7 +49,7 @@ export function sharedHeader(pathname: string) {
   </svg>
 
   <div class="hd-bar">
-    <a class="hd-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
+    <a class="hd-brand" translate="no" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
 
     <nav class="hd-nav" aria-label="Primary navigation" data-hd-nav>
       <ul>
@@ -63,6 +65,7 @@ export function sharedHeader(pathname: string) {
 
     <div class="hd-actions">
 ${readingControl}
+      <button class="hd-lang" type="button" lang="ar" aria-label="التبديل إلى العربية" aria-pressed="false" data-lang-toggle data-i18n-skip><span class="hd-lang-short" data-lang-short aria-hidden="true">ع</span><span class="hd-lang-label" data-lang-label>العربية</span></button>
       <button class="ua-theme-toggle hd-theme" type="button" aria-label="Toggle color theme" aria-pressed="false" data-ua-theme-toggle><span aria-hidden="true"></span></button>
       <a class="hd-cta" href="/growth-diagnostic/"><svg class="hd-i" aria-hidden="true"><use href="#hd-pulse"/></svg>Free check-up</a>
       <button class="hd-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="hd-mobile" data-ua-menu-button><span class="hd-burger-icon" aria-hidden="true"><i></i><i></i></span></button>
@@ -161,7 +164,8 @@ ${readingControl}
       <a class="hd-m-checkup" href="/growth-diagnostic/"><svg class="hd-i" aria-hidden="true"><use href="#hd-pulse"/></svg><span><b>Free 3-min marketing check-up</b><small>Find what to fix first</small></span><svg class="hd-i" aria-hidden="true"><use href="#hd-arrow"/></svg></a>
     </div>
     <div class="hd-m-foot">
-      <a class="hd-m-home" href="/">Hisan<span>.</span></a>
+      <a class="hd-m-home" translate="no" href="/">Hisan<span>.</span></a>
+      <button class="hd-m-lang" type="button" lang="ar" aria-label="التبديل إلى العربية" aria-pressed="false" data-lang-toggle data-i18n-skip><span class="hd-lang-short" data-lang-short aria-hidden="true">ع</span><span data-lang-label>العربية</span></button>
       <div class="hd-m-social">
         <a href="https://wa.me/96896110846" target="_blank" rel="noopener" aria-label="WhatsApp"><svg class="hd-i" aria-hidden="true"><use href="#hd-whatsapp"/></svg></a>
         <a href="mailto:workhisan@gmail.com" aria-label="Email"><svg class="hd-i" aria-hidden="true"><use href="#hd-mail"/></svg></a>
@@ -186,7 +190,7 @@ ${readingControl}
 export const sharedFooter = `<footer class="ua-footer" data-ua-footer>
   <div class="ua-footer-shell">
     <div class="ua-footer-intro">
-      <a class="ua-footer-brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
+      <a class="ua-footer-brand" translate="no" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
       <p>Clear digital strategy and focused execution for businesses ready to grow across Oman and the GCC.</p>
       <a class="ua-footer-email" href="mailto:workhisan@gmail.com">workhisan@gmail.com <span class="ua-icon-arrow" aria-hidden="true"></span></a>
     </div>
@@ -219,6 +223,9 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   const header = sharedHeader(pathname);
   let enhanced = html
     .replace(/<script id="theme-init">[\s\S]*?<\/script>/gi, '')
+    .replace(/<script id="lang-init">[\s\S]*?<\/script>/gi, '')
+    .replace(/<link\b[^>]*href=["']\/site-i18n\.css[^>]*>\s*/gi, '')
+    .replace(/<script\b[^>]*src=["']\/site-i18n\.js[^>]*><\/script>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/site-shell\.css[^>]*>\s*/gi, '')
     .replace(/<script\b[^>]*src=["']\/site-shell\.js[^>]*><\/script>\s*/gi, '')
     .replace(/<link\b[^>]*href=["']\/site-header\.css[^>]*>\s*/gi, '')
@@ -246,8 +253,8 @@ export function applySharedShell(html: string, pathname: string, home = false) {
   }
 
   enhanced = enhanced
-    .replace('</head>', `${sharedThemeInit}<link rel="stylesheet" href="/site-shell.css?v=20261010-1"><link rel="stylesheet" href="/site-header.css?v=20261010-1"></head>`)
-    .replace('</body>', '<script src="/site-shell.js?v=20261010-1"></script><script src="/site-header.js?v=20261010-1"></script></body>');
+    .replace('</head>', `${sharedThemeInit}${sharedLanguageInit}<link rel="stylesheet" href="/site-shell.css?v=20261010-1"><link rel="stylesheet" href="/site-header.css?v=20261010-1"><link rel="stylesheet" href="/site-i18n.css?v=20261104-1"></head>`)
+    .replace('</body>', '<script src="/site-shell.js?v=20261010-1"></script><script src="/site-header.js?v=20261010-1"></script><script src="/site-i18n.js?v=20261104-1"></script></body>');
 
   if (home) {
     enhanced = enhanced.replace(/<body(\s[^>]*)?>/i, (match, attributes = '') => {
