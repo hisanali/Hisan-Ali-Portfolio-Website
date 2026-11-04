@@ -137,3 +137,11 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 - You: choose any of the twelve civilian outfits in the Vehicle panel ("You"); it is remembered, and the shopkeeper never wears the same one.
 - Talking (`dialogue.js`): X beside a passer-by opens a conversation card. They stop and turn to face you while you talk. Lines fit the time of day, the weather, the town, and your state (low on fuel, a dented car); each has two or three replies with their answer. On the pier people are fishermen who know about the wreck. Shopkeepers can be talked to from the shop card; the petrol station keeper repairs dents (8 coins) and washes the car (4), the barber cuts hair (8). Names are stable per person per town.
 - Not yet: spoken voice, and people reacting to the horn with a wave.
+
+
+## Stage 5: the phone, jobs, home, and today's road
+
+- Phone (Tab, or the PHONE button): four tabs. **Map** draws the road ahead for three kilometres as a ribbon with the next junctions and their signposted places, towns, petrol stations and cafés, and home; a note says what the next junction offers. **Journey** is the log: distance, drives, longest, places, this drive, coins, bag, photos, jobs, crashes and knockdowns. **Jobs** shows the job on (what, where to, what it pays, how far) and lets you give it up. **Home** says how far home is and how many times you have come home.
+- Jobs: a shop that sells goods offers a parcel for the next town on its card (15 coins); someone waiting at a bus stop can be offered a lift to the next town when you talk to them (12 coins, they ride with you). A job pays when the car stops in that town. One job at a time; it survives a reload.
+- Home is where this world's first drive began. Park within sight of it and get out to come home (5 coins and a count).
+- Today's road: a button in the World panel sets the seed to the date, the same for everyone that day; your best crash-free distance on it is kept locally and shown on the phone and the title screen. An online leaderboard would need a table on the server and is deliberately not included.

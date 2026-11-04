@@ -67,3 +67,17 @@ test('shops: money is earned by driving and finding places, goods are bought onl
   for (const [shop, items] of Object.entries(STOCK)) for (const it of items) assert.ok(GOODS[it], `${shop} stocks a real item: ${it}`);
   const store = memory(); j.bag.map = 2; saveJourney(store, j); assert.equal(loadJourney(store, 0).bag.map, 2);
 });
+
+test('jobs pay when you stop in the right town, home is noted once per world, the daily road keeps a best', async () => {
+  const {offerJob, completeJob, dropJob, setHome, atHome, cameHome, dailySeed, recordDaily, dailyBest} = await import('../../evermile/journey.js');
+  const j = loadJourney(memory(), 0);
+  assert.ok(offerJob(j, 'delivery', 'Linden', 'HARDWARE')); assert.equal(offerJob(j, 'taxi', 'Wrenfield'), null, 'one job at a time');
+  assert.equal(completeJob(j, 'Wrenfield', 0), null); assert.equal(completeJob(j, 'Linden', 5), null, 'must be stopped');
+  const done = completeJob(j, 'Linden', 0); assert.equal(done.pay, 15); assert.equal(j.money, 35); assert.equal(j.job, null); assert.equal(j.jobsDone, 1);
+  offerJob(j, 'taxi', 'Linden', '', 'Ada'); assert.equal(j.job.passenger, 'Ada'); dropJob(j); assert.equal(j.job, null);
+  setHome(j, 10, 35, 'w1'); setHome(j, 99, 99, 'w1'); assert.equal(j.home.x, 10, 'home stays put in the same world'); setHome(j, 99, 99, 'w2'); assert.equal(j.home.x, 99);
+  assert.equal(atHome(j, 100, 95, 'w2'), true); assert.equal(atHome(j, 100, 95, 'w1'), false); assert.equal(cameHome(j), 1);
+  const d = dailySeed(new Date('2026-11-04T10:00:00Z')); assert.equal(d.seed, 'daily-2026-11-04');
+  assert.equal(recordDaily(j, d.date, 12.4), true); assert.equal(recordDaily(j, d.date, 11), false); assert.equal(dailyBest(j, d.date), 12.4);
+  const store = memory(); j.job = {kind: 'delivery', town: 'Linden', pay: 15, from: 'HARDWARE', passenger: null}; saveJourney(store, j); const back = loadJourney(store, 0); assert.equal(back.job.town, 'Linden'); assert.equal(back.home.x, 99); assert.equal(back.daily[d.date], 12.4);
+});
