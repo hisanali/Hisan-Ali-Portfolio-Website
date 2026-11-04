@@ -33,5 +33,21 @@
  "Will quality or text be affected?<0/>": "هل ستتأثر الجودة أو النص؟<0/>",
  "No. Pages are copied as they are, so text stays selectable and images keep their quality.": "لا. تُنسخ الصفحات كما هي، فيبقى النص قابلًا للتحديد وتحتفظ الصور بجودتها.",
  "Can I split password-protected PDFs?<0/>": "هل يمكنني تقسيم ملفات PDF المحمية بكلمة مرور؟<0/>",
- "Not until the password is removed. Open it in a PDF reader, save an unlocked copy and add that.": "ليس قبل إزالة كلمة المرور. افتح الملف في قارئ PDF، واحفظ نسخة غير مقفلة، ثم أضفها."
+ "Not until the password is removed. Open it in a PDF reader, save an unlocked copy and add that.": "ليس قبل إزالة كلمة المرور. افتح الملف في قارئ PDF، واحفظ نسخة غير مقفلة، ثم أضفها.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Every page becomes its own PDF, downloaded together as a ZIP.": "تصبح كل صفحة ملف PDF مستقلًا، وتُنزَّل جميعها معًا في ملف ZIP.",
+ "Cut the document into equal chunks — e.g. every 2 pages.": "قسّم المستند إلى أجزاء متساوية — مثلًا كل صفحتين.",
+ "Each range becomes a separate PDF, e.g. 1-3, 4-8, 9-.": "يصبح كل نطاق ملف PDF منفصلًا، مثلًا 1-3, 4-8, 9-.",
+ "Drop your PDF": "أفلت ملف PDF",
+ "Please choose a PDF file.": "يُرجى اختيار ملف PDF.",
+ "Annual report": "التقرير السنوي",
+ "This PDF is password-protected — unlock it first.": "ملف PDF هذا محمي بكلمة مرور — افتح قفله أولًا.",
+ "This PDF couldn’t be read.": "تعذّرت قراءة ملف PDF هذا.",
+ "Packing your ZIP…": "جارٍ تجهيز ملف ZIP…"
 }

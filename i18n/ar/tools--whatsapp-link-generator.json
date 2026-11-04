@@ -53,5 +53,21 @@
  "Will the link ever stop working?<0/>": "هل سيتوقف الرابط عن العمل يومًا؟<0/>",
  "No. It’s WhatsApp’s official click-to-chat format, so it works as long as the number is on WhatsApp.": "لا. إنه صيغة واتساب الرسمية للمحادثة المباشرة، لذا يعمل ما دام الرقم مسجّلًا على واتساب.",
  "Where should I use the link?<0/>": "أين يجب أن أستخدم الرابط؟<0/>",
- "Instagram and TikTok bios, Google Business Profile, ads, email signatures and your website — anywhere customers might want to message you.": "في نبذة إنستغرام وتيك توك، وملف النشاط التجاري على جوجل، والإعلانات، وتوقيعات البريد الإلكتروني، وموقعك — في أي مكان قد يرغب العملاء فيه بمراسلتك."
+ "Instagram and TikTok bios, Google Business Profile, ads, email signatures and your website — anywhere customers might want to message you.": "في نبذة إنستغرام وتيك توك، وملف النشاط التجاري على جوجل، والإعلانات، وتوقيعات البريد الإلكتروني، وموقعك — في أي مكان قد يرغب العملاء فيه بمراسلتك.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Hi! I found you online and I’d like to know more about your services.": "مرحبًا! وجدتكم عبر الإنترنت وأودّ معرفة المزيد عن خدماتكم.",
+ "Hello, could you share your prices and availability?": "مرحبًا، هل يمكنكم مشاركة أسعاركم ومواعيدكم المتاحة؟",
+ "Hi, I’d like to book an appointment. What times are available this week?": "مرحبًا، أودّ حجز موعد. ما الأوقات المتاحة هذا الأسبوع؟",
+ "Hello, I’d like to place an order.": "مرحبًا، أودّ تقديم طلب.",
+ "Hi, I need help with my recent order.": "مرحبًا، أحتاج مساعدة بخصوص طلبي الأخير.",
+ "Chat on WhatsApp": "تواصل عبر واتساب",
+ "WhatsApp link copied": "تم نسخ رابط واتساب",
+ "Button code copied": "تم نسخ كود الزر",
+ "QR code downloaded": "تم تنزيل رمز QR"
 }

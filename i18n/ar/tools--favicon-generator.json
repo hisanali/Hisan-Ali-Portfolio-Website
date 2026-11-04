@@ -59,5 +59,17 @@
  "iOS fills transparent areas with black, so the Apple touch icon always gets a solid background (white if you chose transparent).": "يملأ نظام iOS المناطق الشفافة باللون الأسود، لذا تحصل أيقونة Apple touch دائمًا على خلفية صلبة (بيضاء إذا اخترت الشفافية).",
  "My new favicon isn’t showing up<0/>": "أيقونة موقعي الجديدة لا تظهر<0/>",
  "Browsers cache favicons aggressively. Hard-refresh the page, or add a version to the link such as": "تحتفظ المتصفحات بأيقونات المواقع في ذاكرة التخزين المؤقت بشدة. حدّث الصفحة تحديثًا كاملًا، أو أضف رقم إصدار إلى الرابط مثل",
- "Complete favicon set": "مجموعة أيقونات موقع كاملة"
+ "Complete favicon set": "مجموعة أيقونات موقع كاملة",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "This image isn’t square, so it’s centred with space around it. A square logo fills the icon better.": "هذه الصورة ليست مربعة، لذا وُضعت في المنتصف مع مساحة حولها. الشعار المربع يملأ الأيقونة بشكل أفضل.",
+ "Drop your logo": "أفلت شعارك",
+ "Please choose an image file.": "يُرجى اختيار ملف صورة.",
+ "Favicon package downloaded": "تم تنزيل حزمة الأيقونة المفضلة (Favicon)",
+ "HTML copied": "تم نسخ HTML"
 }

@@ -50,5 +50,21 @@
  "Choose <0>Smaller file</0> under Image quality. Large photos are resized to a sensible resolution and compressed.": "اختر <0>ملف أصغر</0> ضمن جودة الصورة. تُصغَّر الصور الكبيرة إلى دقة مناسبة وتُضغط.",
  "Are transparent PNGs supported?<0/>": "هل تُدعم صور PNG الشفافة؟<0/>",
  "Yes. In High quality transparency is kept; Smaller file places images on a white background.": "نعم. في الجودة العالية تُحفظ الشفافية؛ أما خيار «ملف أصغر» فيضع الصور على خلفية بيضاء.",
- "0 pages · A4": "0 صفحات · A4"
+ "0 pages · A4": "0 صفحات · A4",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Drop images to add pages": "أفلت الصور لإضافة صفحات",
+ "Scan 1": "مسح ضوئي 1",
+ "Photo": "صورة",
+ "Notes": "ملاحظات",
+ "Can’t read this image": "تعذّرت قراءة هذه الصورة",
+ "Rotate 90°": "تدوير 90°",
+ "Move down": "نقل للأسفل",
+ "Remove": "إزالة",
+ "Saving your PDF…": "جارٍ حفظ ملف PDF…"
 }

@@ -108,6 +108,8 @@
     [/^(\d{1,2}) (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? (\d{4})$/i, (m) => `${Number(m[1])} ${MONTHS[m[2].toLowerCase()]} ${m[3]}`],
     [/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* (\d{4})$/i, (m) => `${MONTHS[m[1].toLowerCase()]} ${m[2]}`],
     [/^(\d+) of (\d+)$/i, (m) => `${m[1]} من ${m[2]}`],
+    [/^(\d+) out of (\d+)$/i, (m) => `${m[1]} من ${m[2]}`],
+    [/^Week (\d+)$/i, (m) => `الأسبوع ${m[1]}`],
     [/^Updated (.+)$/, (m) => { const inner = byRule(m[1]); return inner ? `آخر تحديث: ${inner}` : null; }],
     [/^Published (.+)$/, (m) => { const inner = byRule(m[1]); return inner ? `نُشر في ${inner}` : null; }]
   ];
@@ -121,9 +123,32 @@
     }
     return null;
   }
+  /* Dictionary keys written as "re:<regex>" translate text that scripts build from
+     templates. In the value, $1..$9 insert the captured text, itself translated
+     when the dictionary knows it (case-insensitively for lower-cased labels). */
+  let patterns = [];
+  const compilePatterns = () => {
+    patterns = Object.keys(dictionary).filter((key) => key.startsWith('re:')).map((key) => {
+      try { return [new RegExp(key.slice(3)), dictionary[key]]; } catch (error) { return null; }
+    }).filter(Boolean);
+  };
+  const exact = (key) => {
+    if (!dictionary) return null;
+    if (Object.prototype.hasOwnProperty.call(dictionary, key)) return dictionary[key];
+    const capital = key.charAt(0).toUpperCase() + key.slice(1);
+    if (capital !== key && Object.prototype.hasOwnProperty.call(dictionary, capital)) return dictionary[capital];
+    return null;
+  };
   const lookup = (key) => {
-    if (dictionary && Object.prototype.hasOwnProperty.call(dictionary, key)) return dictionary[key];
-    return dictionary ? byRule(key) : null;
+    if (!dictionary) return null;
+    if (Object.prototype.hasOwnProperty.call(dictionary, key)) return dictionary[key];
+    const rule = byRule(key);
+    if (rule != null) return rule;
+    for (const [pattern, template] of patterns) {
+      const match = key.match(pattern);
+      if (match) return template.replace(/\$(\d)/g, (_all, n) => { const part = match[Number(n)] ?? ''; return exact(part) ?? lookup(part) ?? part; });
+    }
+    return null;
   };
 
   const loadJson = (name) => fetch(`/i18n/ar/${name}.json?v=${VERSION}`, { credentials: 'same-origin' })
@@ -347,6 +372,7 @@
     const extra = pageKey === 'blog-article' ? loadJson('blog') : Promise.resolve({});
     Promise.all([loadJson('common'), extra, loadJson(pageKey)]).then(([common, blog, page]) => {
       dictionary = Object.assign({}, common, blog, page);
+      compilePatterns();
       prepareArticle();
       translateHead();
       walk(document.body);

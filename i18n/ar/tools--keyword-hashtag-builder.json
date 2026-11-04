@@ -45,5 +45,13 @@
  "How many hashtags should I use?<0/>": "كم عدد الهاشتاغات التي يجب أن أستخدمها؟<0/>",
  "Instagram allows 30, but 3–5 relevant hashtags usually work as well. Mix broad, niche and local tags.": "يسمح إنستغرام بـ 30، لكن 3–5 هاشتاغات ذات صلة تؤدي الغرض غالبًا. امزج بين الوسوم العامة والمتخصصة والمحلية.",
  "Can I paste from Excel?<0/>": "هل يمكنني اللصق من Excel؟<0/>",
- "Yes. Copy a column from Excel or Google Sheets and paste it straight in — each cell becomes a keyword.": "نعم. انسخ عمودًا من Excel أو Google Sheets والصقه مباشرة — تصبح كل خلية كلمة مفتاحية."
+ "Yes. Copy a column from Excel or Google Sheets and paste it straight in — each cell becomes a keyword.": "نعم. انسخ عمودًا من Excel أو Google Sheets والصقه مباشرة — تصبح كل خلية كلمة مفتاحية.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Tip: 3–5 focused hashtags usually perform as well as 30 on most platforms.": "نصيحة: 3–5 وسوم مركّزة غالبًا ما تحقق أداءً يضاهي 30 وسمًا على معظم المنصات."
 }

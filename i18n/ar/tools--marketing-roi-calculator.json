@@ -48,5 +48,13 @@
  "What should I include in campaign cost?<0/>": "ماذا أُدرج في تكلفة الحملة؟<0/>",
  "Ad spend plus everything it took to run the campaign: design, video, agency or freelancer fees and tools.": "الإنفاق الإعلاني وكل ما تطلبه تشغيل الحملة: التصميم والفيديو وأتعاب الوكالة أو المستقل والأدوات.",
  "What is a good marketing ROI?<0/>": "ما هو العائد الجيد على الاستثمار التسويقي؟<0/>",
- "Anything above 0% is profitable. Many businesses aim for 100%+ (doubling their money) to cover overheads and risk.": "أي نسبة فوق 0% تعني ربحًا. وكثير من الأنشطة تستهدف 100% فأكثر (أي مضاعفة أموالها) لتغطية النفقات العامة والمخاطر."
+ "Anything above 0% is profitable. Many businesses aim for 100%+ (doubling their money) to cover overheads and risk.": "أي نسبة فوق 0% تعني ربحًا. وكثير من الأنشطة تستهدف 100% فأكثر (أي مضاعفة أموالها) لتغطية النفقات العامة والمخاطر.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Made with hisanali.com/tools/marketing-roi-calculator/": "صُنع باستخدام hisanali.com/tools/marketing-roi-calculator/"
 }

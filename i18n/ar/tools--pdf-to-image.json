@@ -37,5 +37,21 @@
  ", or": "، أو",
  "for page 5 to the end.": "من الصفحة 5 حتى النهاية.",
  "Why is WebP missing?<0/>": "لماذا لا تتوفر صيغة WebP؟<0/>",
- "A few older browsers (such as older Safari versions) can’t create WebP images. PNG and JPG work everywhere.": "بعض المتصفحات القديمة (مثل الإصدارات القديمة من Safari) لا تستطيع إنشاء صور WebP. أما PNG وJPG فتعملان في كل مكان."
+ "A few older browsers (such as older Safari versions) can’t create WebP images. PNG and JPG work everywhere.": "بعض المتصفحات القديمة (مثل الإصدارات القديمة من Safari) لا تستطيع إنشاء صور WebP. أما PNG وJPG فتعملان في كل مكان.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "72 DPI — small files for screens and web.": "72 DPI — ملفات صغيرة للشاشات والويب.",
+ "300 DPI — print quality, larger files.": "300 DPI — جودة طباعة، وملفات أكبر.",
+ "Drop your PDF": "أفلت ملف PDF",
+ "That isn’t a PDF — please choose a .pdf file.": "هذا ليس ملف PDF — يُرجى اختيار ملف ‎.pdf.",
+ "Quarterly review": "المراجعة الربعية",
+ "Password-protected — unlock it first": "محمي بكلمة مرور — افتح قفله أولًا",
+ "This PDF couldn’t be read": "تعذّرت قراءة ملف PDF هذا",
+ "Packing your ZIP…": "جارٍ تجهيز ملف ZIP…",
+ "ZIP downloaded": "تم تنزيل ملف ZIP"
 }

@@ -40,5 +40,18 @@
  "What do the contrast numbers mean?<0/>": "ماذا تعني أرقام التباين؟<0/>",
  "They show how readable text in that colour is on white or dark backgrounds. 4.5:1 or higher passes WCAG AA for normal text.": "توضح مدى وضوح النص بهذا اللون على الخلفيات البيضاء أو الداكنة. النسبة 4.5:1 أو أعلى تجتاز معيار WCAG AA للنص العادي.",
  "Can I use the codes in Canva or Figma?<0/>": "هل يمكنني استخدام الرموز في Canva أو Figma؟<0/>",
- "Yes — copy the HEX codes and paste them straight into Canva, Figma, Photoshop or your website CSS.": "نعم — انسخ رموز HEX والصقها مباشرةً في Canva أو Figma أو Photoshop أو في CSS موقعك."
+ "Yes — copy the HEX codes and paste them straight into Canva, Figma, Photoshop or your website CSS.": "نعم — انسخ رموز HEX والصقها مباشرةً في Canva أو Figma أو Photoshop أو في CSS موقعك.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Drop your image": "أفلت صورتك",
+ "Please choose an image.": "يُرجى اختيار صورة.",
+ "Contrast as text on white": "التباين كنص على خلفية بيضاء",
+ "Contrast as text on dark": "التباين كنص على خلفية داكنة",
+ "Palette code copied": "تم نسخ كود اللوحة",
+ "Palette image downloaded": "تم تنزيل صورة اللوحة"
 }

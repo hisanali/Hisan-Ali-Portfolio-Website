@@ -64,5 +64,14 @@
  "What’s a good return on ad spend?<0/>": "ما هو العائد الجيد على الإنفاق الإعلاني؟<0/>",
  "It depends on your margins. Many service businesses aim for 4× or more; low-margin products often need higher.": "يعتمد ذلك على هوامش ربحك. كثير من أنشطة الخدمات تستهدف 4× أو أكثر، أما المنتجات منخفضة الهامش فتحتاج غالبًا إلى عائد أعلى.",
  "What are the industry presets based on?<0/>": "على ماذا تستند إعدادات القطاعات الجاهزة؟<0/>",
- "Rough GCC averages for search campaigns. Treat them as a starting point and replace them with your own figures.": "متوسطات تقريبية لحملات البحث في دول الخليج. اعتبرها نقطة انطلاق واستبدلها بأرقامك الخاصة."
+ "Rough GCC averages for search campaigns. Treat them as a starting point and replace them with your own figures.": "متوسطات تقريبية لحملات البحث في دول الخليج. اعتبرها نقطة انطلاق واستبدلها بأرقامك الخاصة.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Enter a cost per click and conversion rate.": "أدخل تكلفة النقرة ومعدل التحويل.",
+ "Made with hisanali.com/tools/google-ads-calculator/": "صُنع باستخدام hisanali.com/tools/google-ads-calculator/"
 }

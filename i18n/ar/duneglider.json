@@ -33,5 +33,17 @@
  "Balanced": "متوازنة",
  "Launch<0>It flies forward on its own · ↓/S dive for speed · ↑/W climb · ←/→ bank · tilt your phone to steer</0>": "انطلق<0>تطير إلى الأمام تلقائيًا · ↓/S للانقضاض وزيادة السرعة · ↑/W للصعود · ←/→ للانعطاف · أمِل هاتفك للتوجيه</0>",
  "Gates flown in a row build a multiplier. Clipping a pylon costs points. Skimming the sand close without touching it earns a bonus.": "البوابات التي تعبرها على التوالي تبني مضاعِفًا للنقاط. ملامسة عمود تكلّفك نقاطًا، والتحليق قريبًا من الرمال دون لمسها يمنحك مكافأة.",
- "Terrain textures: Poly Haven (CC0). Trees: forest kit (CC BY 4.0).": "خامات التضاريس: Poly Haven (CC0). الأشجار: forest kit (CC BY 4.0)."
+ "Terrain textures: Poly Haven (CC0). Trees: forest kit (CC BY 4.0).": "خامات التضاريس: Poly Haven (CC0). الأشجار: forest kit (CC BY 4.0).",
+ "Flight ended": "انتهت الرحلة",
+ "You returned to the menu.": "عدت إلى القائمة.",
+ "Paused": "متوقف مؤقتًا",
+ "Shaping the dunes": "جارٍ تشكيل الكثبان",
+ "Gates": "البوابات",
+ "Score": "النقاط",
+ "Speed": "السرعة",
+ "Height": "الارتفاع",
+ "New best": "رقم قياسي جديد",
+ "Flight over": "انتهى الطيران",
+ "Into the sand": "سقطت في الرمال",
+ "Pylon hit −50": "اصطدام بعمود −50"
 }

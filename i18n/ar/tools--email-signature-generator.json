@@ -67,5 +67,16 @@
  "Why does my photo need a URL?<0/>": "لماذا تحتاج صورتي إلى رابط URL؟<0/>",
  "Email apps strip uploaded images from signatures. Host the image online (your website, LinkedIn or a public link) and paste its address.": "تحذف تطبيقات البريد الصور المرفوعة من التواقيع. استضف الصورة على الإنترنت (موقعك أو لينكدإن أو رابط عام) والصق عنوانها.",
  "Will it look the same everywhere?<0/>": "هل سيظهر بالشكل نفسه في كل مكان؟<0/>",
- "The signature uses simple tables and inline styles — the most reliable approach for Gmail, Outlook and Apple Mail.": "يستخدم التوقيع جداول بسيطة وأنماطًا مضمّنة — وهي الطريقة الأكثر موثوقية في Gmail وOutlook وApple Mail."
+ "The signature uses simple tables and inline styles — the most reliable approach for Gmail, Outlook and Apple Mail.": "يستخدم التوقيع جداول بسيطة وأنماطًا مضمّنة — وهي الطريقة الأكثر موثوقية في Gmail وOutlook وApple Mail.",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Image links must be full web addresses.": "يجب أن تكون روابط الصور عناوين ويب كاملة.",
+ "Signature copied — paste it into your email settings": "تم نسخ التوقيع — الصقه في إعدادات بريدك الإلكتروني",
+ "Couldn’t copy — use “Copy HTML” instead": "تعذّر النسخ — استخدم «نسخ HTML» بدلًا من ذلك",
+ "HTML copied": "تم نسخ HTML"
 }

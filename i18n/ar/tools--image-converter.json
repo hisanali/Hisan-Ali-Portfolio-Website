@@ -49,5 +49,22 @@
  "PNG is lossless, so turning a compressed photo into PNG makes it larger. Use WebP or JPG for photos.": "PNG صيغة دون فقدان، لذا فإن تحويل صورة مضغوطة إلى PNG يزيد حجمها. استخدم WebP أو JPG للصور الفوتوغرافية.",
  "What happens to transparency in JPG?<0/>": "ماذا يحدث للشفافية في JPG؟<0/>",
  "JPG can’t store transparency, so transparent areas are filled with the background colour you choose.": "لا تدعم JPG الشفافية، لذا تُملأ المناطق الشفافة بلون الخلفية الذي تختاره.",
- "0 images → WEBP": "0 صورة → WEBP"
+ "0 images → WEBP": "0 صورة → WEBP",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "AVIF — the smallest files in modern browsers.": "AVIF — أصغر حجم للملفات في المتصفحات الحديثة.",
+ "Drop images to convert": "أفلت الصور لتحويلها",
+ "Hero": "صورة رئيسية",
+ "Product": "منتج",
+ "Can’t read this image": "تعذّرت قراءة هذه الصورة",
+ "IMAGE": "صورة",
+ "Remove": "إزالة",
+ "Smaller": "أصغر",
+ "Larger": "أكبر",
+ "ZIP downloaded": "تم تنزيل ملف ZIP"
 }

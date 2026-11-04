@@ -28,5 +28,16 @@
  "No. Rotation is stored as a page setting — content isn’t re-rendered, so nothing is lost.": "لا. يُحفظ التدوير كإعداد للصفحة — ولا يُعاد رسم المحتوى، فلا يضيع شيء.",
  "How do I reorder on a phone?<0/>": "كيف أعيد الترتيب على الهاتف؟<0/>",
  "Press and drag a page’s thumbnail, or use the arrow buttons under each page.": "اضغط مطولًا على الصورة المصغّرة للصفحة واسحبها، أو استخدم أزرار الأسهم أسفل كل صفحة.",
- "0 pages": "0 صفحة"
+ "0 pages": "0 صفحة",
+ "A required component couldn’t load. Check your connection and try again.": "تعذّر تحميل أحد المكوّنات المطلوبة. تحقّق من اتصالك وحاول مرة أخرى.",
+ "Copied to clipboard": "تم النسخ إلى الحافظة",
+ "Drop to add": "أفلت للإضافة",
+ "No pages selected.": "لم يتم تحديد أي صفحات.",
+ "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
+ "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
+ "Sample document": "مستند تجريبي",
+ "Drop PDFs to add their pages": "أفلت ملفات PDF لإضافة صفحاتها",
+ "Only PDF files can be added.": "يمكن إضافة ملفات PDF فقط.",
+ "Scanned pack": "ملف ممسوح ضوئيًا",
+ "Drag to move": "اسحب للنقل"
 }
