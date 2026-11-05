@@ -175,3 +175,10 @@ A review of everything added since the controller work, plus a soak run switchin
 - Walking is camera-relative: drag turns the camera and it stays where you put it; W walks where the camera looks, A and D step sideways, S walks back, and the body turns smoothly into the direction of travel (quickly, about a tenth of a second to settle) instead of spinning on the spot with A/D. A moment after you stop dragging, the camera eases in behind you again as you walk. The joystick and a controller stick work the same way.
 - Getting in: X at the door of your own car, the car you left, any parked car, or any traffic car that has stopped (at lights, a bus at its stop). The prompt shows what you would get into; within nine metres of your own car it says to walk to the door. Trucks and moving cars cannot be entered.
 - At the wheel you now sit: thighs forward, shins down, arms to the wheel, hips at seat height, posed on the rig after the idle clip. The coupé's cockpit view now has its dashboard and wheel (the model has no interior of its own).
+
+
+## Keys that feel right: F in and out, Space to jump, the engine
+
+- F: on foot, F (or X) near any stopped car walks you to the nearer door, opens it (the door sound; the models have no hinged doors), sits you down, and the starter cranks for a second before the engine catches. In a stopped car F gets you out; while moving F is autodrive, as before. From up to nine metres away F picks the car you are closest to and walks you there.
+- Space: a jump on foot; a heavier footfall on landing. (In the car Space is still the handbrake.)
+- Engine: off when you get out, started when you sit down, or by the first touch of the throttle (or autodrive) if it is off; nothing pulls until it has caught. The engine note is silent with the engine off; the HUD says ENGINE OFF · W TO START, then STARTING….
