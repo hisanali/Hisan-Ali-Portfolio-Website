@@ -62,7 +62,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const shop = await q((m) => { const r = m.debug.world.road; for (let z = 200; z < 9000; z += 50) { const t = r.townAt(z); if (t) { const lot = m.debug.scenery.layout(t).lots.find((l) => l.kind === 'shop'); if (lot) return {z: lot.z}; } } return null; });
     check('a town with a shop is on the road', !!shop);
     await q((m, z) => { m.state.z = z - 30; m.reset(); m.changeSetting('time', 'day'); }, shop.z); await wait(8000);
-    await page.keyboard.press('f'); await wait(2500);
+    await page.keyboard.press('f'); await until((m) => m.state.onFoot && !m.state.transition, null, 30000); await wait(500);
     await q((m, z) => { const r = m.debug.world.road, t = r.townAt(z); const lot = m.debug.scenery.layout(t).lots.find((l) => l.kind === 'shop' && l.name); m.debug.walker.place(lot.doorX, lot.doorZ, lot.doorYaw); }, shop.z); await wait(3500);
     const atDoor = await status();
     check('the shop door is recognised', /ENTER|CLOSED/.test(atDoor), atDoor);
