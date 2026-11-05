@@ -168,3 +168,10 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 ## QA pass
 
 A review of everything added since the controller work, plus a soak run switching vehicles, cameras, outfits, worlds, seasons, quality and look in every mode (driving, on foot, inside a shop, off-world), found and fixed eight interaction bugs: the door transition pressed the brake (reverse at a standstill, and it cancelled autodrive); a world rebuild left you logically inside a vanished shop or on a bus; X during a bus ride could get you into another car; traffic reacted to a phantom pedestrian while you were indoors or on the bus, and the bus you rode knocked you down; shoppers hidden inside a shop still collided and could be talked to; changing vehicle disposed the seated driver model; getting out under water stranded the walker; joining a multiplayer room on foot left the car parked. The soak run finished with no errors; 119 tests pass.
+
+
+## Walking that follows the camera, any stopped car, a seated driver
+
+- Walking is camera-relative: drag turns the camera and it stays where you put it; W walks where the camera looks, A and D step sideways, S walks back, and the body turns smoothly into the direction of travel (quickly, about a tenth of a second to settle) instead of spinning on the spot with A/D. A moment after you stop dragging, the camera eases in behind you again as you walk. The joystick and a controller stick work the same way.
+- Getting in: X at the door of your own car, the car you left, any parked car, or any traffic car that has stopped (at lights, a bus at its stop). The prompt shows what you would get into; within nine metres of your own car it says to walk to the door. Trucks and moving cars cannot be entered.
+- At the wheel you now sit: thighs forward, shins down, arms to the wheel, hips at seat height, posed on the rig after the idle clip. The coupé's cockpit view now has its dashboard and wheel (the model has no interior of its own).

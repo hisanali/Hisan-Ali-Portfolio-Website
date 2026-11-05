@@ -3,10 +3,12 @@ import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
 import {fitCitizen} from './citizen-assets.js?v=20260927-train1';
 import {clamp, damp, angleDifference} from './math.js?v=20260927-train1';
 
-// You, on foot: one of the rigged civilians, driven by the same keys as the car (W/S walk, A/D turn, Shift run),
+// You, on foot: one of the rigged civilians. Movement is relative to the camera: W walks where the camera looks,
+// A/D step sideways, S walks back, Shift runs; the body turns smoothly towards the way you are going. (Legacy
+// `forward`/`turn` input is still accepted.)
 // standing on whatever the ground is, kept out of walls, cars, people and deep water, blending idle and walk clips
 // with the walk sped up for a run. The car is left where it stands; walk back to a door to get in again.
-export const WALK = 1.55, RUN = 4.6, TURN = 2.7, RADIUS = .34;
+export const WALK = 1.55, RUN = 4.6, TURN = 2.7, TURN_RATE = 9, RADIUS = .34;
 
 export class Walker {
   constructor(scene, world, settings) {
@@ -37,8 +39,11 @@ export class Walker {
   // Hit by a car: thrown along its direction, down on the ground for a moment, then up again.
   knock(dx, dz, speed) { if (this.down > 0) return; this.down = 2.4 + Math.min(1.6, speed * .1); this.throwX = dx * Math.min(6, 1.5 + speed * .3); this.throwZ = dz * Math.min(6, 1.5 + speed * .3); this.speed = 0; }
   // One step: `forward` −1..1, `turn` −1..1 (positive left), `run`; `colliders` are the solid things near by.
-  update(dt, {forward = 0, turn = 0, run = false} = {}, colliders = [], water = -1e9) {
-    if (this.down > 0) { this.down -= dt; forward = 0; turn = 0; run = false; this.x += this.throwX * dt; this.z += this.throwZ * dt; this.throwX *= Math.exp(-dt * 3); this.throwZ *= Math.exp(-dt * 3); }
+  update(dt, {forward = 0, turn = 0, run = false, moveX = 0, moveY = 0, camYaw = null} = {}, colliders = [], water = -1e9) {
+    if (this.down > 0) { this.down -= dt; forward = 0; turn = 0; moveX = 0; moveY = 0; run = false; this.x += this.throwX * dt; this.z += this.throwZ * dt; this.throwX *= Math.exp(-dt * 3); this.throwZ *= Math.exp(-dt * 3); }
+    // Camera-relative input: the stick or keys give a direction in the camera's frame; the body turns to it.
+    if (camYaw !== null && (moveX || moveY)) { const amount = Math.min(1, Math.hypot(moveX, moveY)), heading = camYaw + Math.atan2(moveX, moveY); const back = Math.abs(angleDifference(heading, this.yaw)) > Math.PI * .75 && Math.abs(this.speed) < .3; this.yaw += angleDifference(heading, this.yaw) * (1 - Math.exp(-(back ? TURN_RATE * 2 : TURN_RATE) * dt)); forward = amount * (1 - Math.min(.7, Math.abs(angleDifference(heading, this.yaw)) / Math.PI)); turn = 0; }
+    else if (camYaw !== null) { turn = 0; forward = 0; }
     const lying = this.down > .7 ? 1 : this.down > 0 ? this.down / .7 : 0; this.lie = damp(this.lie || 0, lying, this.down > 0 && this.down < .7 ? 4 : 9, dt);
     const want = forward * (run && forward > 0 ? RUN : WALK) * (forward < 0 ? .6 : 1);
     this.speed = damp(this.speed, want, want ? 9 : 14, dt);
