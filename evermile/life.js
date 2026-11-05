@@ -611,7 +611,7 @@ export class Life {
       if (c.kind === 'bike' && (type === 'highway' || r.tunnelAt(z))) continue;
       if (c.kind === 'bus' && type === 'mountain') continue;
       // Side-road traffic, except off a motorway, where anything joining would have to cross the central barrier.
-      if (j && Math.random() < .38 && !(c.dir < 0 && (j.from.typeAt(j.z) === 'highway' || j.options.some((o) => o.type === 'highway')))) {
+      if (j && Math.random() < .55 && !(c.dir < 0 && (j.from.typeAt(j.z) === 'highway' || j.options.some((o) => o.type === 'highway')))) {
         const other = 1 - j.chosen;
         if (c.dir < 0 && z > j.z + 60 && z < j.z + ZONE - 50) road = this.path(j, other);
         if (c.dir > 0 && z < j.z - 80 && z > s.z) road = this.path(j, other);
@@ -683,7 +683,13 @@ export class Life {
       }
       // The player counts as the vehicle in front when in this path ahead (including head-on, when overtaking).
       const pAhead = (s.z - c.z) * dir, myPX = c.road.x(s.z) + c.road.laneX(s.z, dir, c.lane) + c.lat;
-      if (pAhead > 0 && Math.abs(s.x - myPX) < c.width / 2 + playerW / 2 + .25) consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player');
+      if (pAhead > 0 && Math.abs(s.x - myPX) < c.width / 2 + playerW / 2 + .25) {
+        // Dawdling (or stopped) in its lane: the car behind eases out and passes you when nothing is coming.
+        const slow = pvz * dir < Math.min(c.cruise, r.limit(c.z)) * .6 && pAhead < 90 && c.kind !== 'bike' && !s.onFoot;
+        const you = this.youProxy ||= {g: {visible: true}, kind: 'car', player: true, atStop: 0}; you.x = s.x; you.z = s.z; you.width = playerW; you.length = playerLen; you.speed = pvz * dir;
+        if (slow && this.tryPass(c, you, pAhead, list, s)) { const room = (s.x - c.x) * ow - (playerW + c.width) / 2; if (!(room > .5 || pAhead - (playerLen + c.length) / 2 > 10)) consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player'); }
+        else consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player');
+      }
       for (const an of this.roadAnimals) { const ag = (an.z - c.z) * dir - c.length / 2 - 1.2; if (ag > -1 && Math.abs(an.x - (c.road.x(an.z) + laneOff + c.lat)) < c.width / 2 + 1) consider(ag, 0, null, 0, 'animal'); }
       // You, on foot, in the road ahead: brake for you, flash and hoot when you are close; a car that still reaches you knocks you down.
       if (s.onFoot && s.walker) {

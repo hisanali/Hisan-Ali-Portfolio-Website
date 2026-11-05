@@ -71,6 +71,9 @@ export class Effects {
   // In winter the showers fall as snow, unless you picked rain.
   get precip() { return this.settings.location === 'hills' ? this.atmo.rain : 0; }
   get snowAmount() { return this.winter && this.settings.weather !== 'rain' ? .3 + .7 * this.precip : 0; }
+  // What the ground remembers: puddles need a few minutes of rain to form and take longer to dry; snow settles and thaws slowly.
+  get groundWet() { return this.wetMemory ?? Math.min(1, this.precip * 1.5); }
+  rememberGround(dt) { const rain = this.raining ? this.precip : 0, target = Math.min(1, rain * 1.5); this.wetMemory ??= target; this.wetMemory += (target - this.wetMemory) * Math.min(1, dt / (target > this.wetMemory ? 45 : 240)); const snow = this.snowAmount; this.snowMemory ??= snow; this.snowMemory += (snow - this.snowMemory) * Math.min(1, dt / (snow > this.snowMemory ? 90 : 400)); }
   get snowing() { return this.snowAmount > 0; }
 
   /* ---------- Snow: a light, slow fall of soft flakes drifting in the air around you ---------- */
@@ -404,7 +407,7 @@ export class Effects {
     const u = this.water.material.uniforms;
     u.time.value += dt * (this.raining ? 1.6 : .7);
     u.sunDirection.value.copy(this.world.lightDir);
-    const a = this.atmo, wet = Math.min(1, this.precip * 1.5);
+    const a = this.atmo, wet = this.groundWet;
     u.waterColor.value.set(0x1d3b44).lerp(this.fade.set(0x33403f), a.golden).lerp(this.fade.set(0x2a3a40), wet).lerp(this.fade.set(0x08141c), a.night);
     u.sunColor.value.set(0xfff2d6).lerp(this.fade.set(0xffa050), a.golden).lerp(this.fade.set(0x6a7680), wet).lerp(this.fade.set(0x8fa6d8), a.night);
     u.distortionScale.value = 2.4 + 2.6 * wet;
@@ -525,6 +528,7 @@ export class Effects {
     this.updateAircraft(dt);
     const rain = this.raining;
     // No rain falls inside a tunnel.
+    this.rememberGround(dt);
     this.rain.visible = rain && !this.inTunnel; this.ripples.visible = rain && this.precip > .08 && !this.inTunnel;
     this.rain.material.opacity = .42 * Math.min(1, .35 + this.precip);
     this.rain.material.color.set(0xb9c6d2).lerp(this.fade.set(0x6d7a88), this.atmo.night);

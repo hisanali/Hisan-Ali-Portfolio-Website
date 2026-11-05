@@ -143,6 +143,33 @@ export class DriveAudio {
     burst(2400, 4, .35, .06, 0);
     if (!open) burst(180, 1.2, .9, .22, .12);
   }
+  // A footstep: a short filtered tap, heavier when running, duller on grass and crunchier on gravel.
+  footstep(surface = 'paved', run = false) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = (this.lastVolume ?? .35) * (run ? .9 : .6); if (!vol) return;
+    const [freq, q, len] = surface === 'grass' ? [420, .8, .07] : surface === 'gravel' ? [1800, .6, .09] : surface === 'wood' ? [320, 1.4, .08] : surface === 'indoor' ? [900, 1.6, .06] : [700, 1.1, .06];
+    const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq * (.9 + Math.random() * .2); f.Q.value = q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.22 * vol, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+    src.connect(f).connect(g).connect(this.out); src.start(t, Math.random()); src.stop(t + len + .02);
+    if (surface === 'gravel') for (let i = 0; i < 3; i++) { const s2 = ctx.createBufferSource(); s2.buffer = this.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = 3000; const g2 = ctx.createGain(); const d = .01 + i * .012; g2.gain.setValueAtTime(0, t + d); g2.gain.linearRampToValueAtTime(.08 * vol, t + d + .003); g2.gain.exponentialRampToValueAtTime(.0001, t + d + .03); s2.connect(f2).connect(g2).connect(this.out); s2.start(t + d, Math.random()); s2.stop(t + d + .05); }
+  }
+  // A shop door chime: two bright notes.
+  chime() {
+    const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
+    for (const [f, d] of [[1318, 0], [1760, .14]]) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.12 * vol, t + d + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d + .9); o.connect(g).connect(this.out); o.start(t + d); o.stop(t + d + 1); }
+  }
+  // Room tone for cafés and shops: a low murmur of voices and crockery, faded in and out.
+  chatter(on, kind = 'cafe') {
+    const ctx = this.ctx, vol = this.lastVolume ?? .35;
+    if (!this.chatterGain) { this.chatterGain = ctx.createGain(); this.chatterGain.gain.value = 0; const src = ctx.createBufferSource(); src.buffer = this.noise; src.loop = true; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = .5; const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .9; lg.gain.value = .35; const lfo2 = ctx.createOscillator(), lg2 = ctx.createGain(); lfo2.frequency.value = 3.1; lg2.gain.value = .2; const mod = ctx.createGain(); mod.gain.value = .5; lfo.connect(lg).connect(mod.gain); lfo2.connect(lg2).connect(mod.gain); lfo.start(); lfo2.start(); src.connect(bp).connect(mod).connect(this.chatterGain).connect(this.out); src.start(0, Math.random()); }
+    this.chatterGain.gain.setTargetAtTime(on ? (kind === 'cafe' ? .16 : .07) * vol : 0, ctx.currentTime, .6);
+    if (on && Math.random() < .02) { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 2400 + Math.random() * 1200; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03 * vol, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .25); o.connect(g).connect(this.out); o.start(t); o.stop(t + .3); }
+  }
+  // Distant traffic and town hum, level 0..1.
+  townHum(level) {
+    const ctx = this.ctx, vol = this.lastVolume ?? .35;
+    if (!this.humGain) { this.humGain = ctx.createGain(); this.humGain.gain.value = 0; const src = ctx.createBufferSource(); src.buffer = this.noise; src.loop = true; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 160; const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .07; lg.gain.value = .4; const mod = ctx.createGain(); mod.gain.value = .6; lfo.connect(lg).connect(mod.gain); lfo.start(); src.connect(lp).connect(mod).connect(this.humGain).connect(this.out); src.start(0, Math.random()); }
+    this.humGain.gain.setTargetAtTime(Math.max(0, Math.min(1, level)) * .11 * vol, ctx.currentTime, 1.2);
+  }
   // Driving into water: a splash that grows with speed, then a short wash.
   splash(strength = .5) {
     const ctx = this.ctx, t = ctx.currentTime, k = Math.max(0, Math.min(1, strength)), vol = this.lastVolume ?? .35;

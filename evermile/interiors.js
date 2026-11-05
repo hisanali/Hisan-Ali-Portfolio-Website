@@ -38,8 +38,9 @@ export class Interiors {
     box(counterMat, 4.2, 1.05, .8, 0, .525, -D / 2 + 1.6); box(this.wood, 4.4, .06, .9, 0, 1.08, -D / 2 + 1.6); solid(0, -D / 2 + 1.6, 2.1, .4);
     const shelfMat = new T.MeshStandardMaterial({color: 0xcfc9bd, roughness: .8});
     for (const side of [-1, 1]) { for (let k = 0; k < 3; k++) { const y = .6 + k * .75; box(shelfMat, .4, .04, 5, side * (W / 2 - .35), y, -.3); for (let i = 0; i < 9; i++) { const pm = new T.MeshStandardMaterial({color: new T.Color(product).offsetHSL((i % 3) * .08 - .08, 0, (i % 2) * .08), roughness: .5 + (i % 2) * .3, metalness: name === 'HARDWARE' || name === 'ELECTRONICS' ? .5 : .05 }); box(pm, .26, .22 + (i % 3) * .08, .26, side * (W / 2 - .35), y + .14, -2.6 + i * .55); } } solid(side * (W / 2 - .35), -.3, .3, 2.5); }
-    // Café: tables and chairs; the petrol shop: a drinks fridge; barber: a chair and mirror.
-    if (/CAF|TEA|BAKERY|ICE|PIZZA|SWEET/.test(name)) for (const [tx, tz] of [[-2.4, .6], [2.4, .6], [-2.4, -1.8], [2.4, -1.8]]) { box(this.wood, .9, .06, .9, tx, .76, tz); box(this.dark, .08, .74, .08, tx, .37, tz); for (const [cx, cz] of [[tx - .75, tz], [tx + .75, tz]]) { box(this.wood, .4, .05, .4, cx, .46, cz); box(this.wood, .05, .9, .4, cx + (cx < tx ? -.17 : .17), .6, cz); } solid(tx, tz, .9, .9); }
+    // Café: tables and chairs you can sit on; the petrol shop: a drinks fridge; barber: a chair and mirror.
+    const seats = [];
+    if (/CAF|TEA|BAKERY|ICE|PIZZA|SWEET/.test(name)) for (const [tx, tz] of [[-2.4, .6], [2.4, .6], [-2.4, -1.8], [2.4, -1.8]]) { box(this.wood, .9, .06, .9, tx, .76, tz); box(this.dark, .08, .74, .08, tx, .37, tz); for (const [cx, cz] of [[tx - .75, tz], [tx + .75, tz]]) { box(this.wood, .4, .05, .4, cx, .46, cz); box(this.wood, .05, .9, .4, cx + (cx < tx ? -.17 : .17), .6, cz); seats.push({x: x0 + cx, z: cz, yaw: cx < tx ? Math.PI / 2 : -Math.PI / 2, y: CELL_Y}); } solid(tx, tz, .6, .6); }
     if (name === 'PETROL STATION' || name === 'MINI MARKET' || name === 'GROCERY') { const fridge = box(new T.MeshStandardMaterial({color: 0xffffff, roughness: .4, metalness: .3}), 1.4, 2, .7, 2.6, 1, -D / 2 + .5); box(new T.MeshStandardMaterial({color: 0x9ad8ff, emissive: 0x66c0ff, emissiveIntensity: .8}), 1.2, 1.7, .05, 2.6, 1.05, -D / 2 + .86); solid(2.6, -D / 2 + .5, .7, .35); }
     if (name === 'BARBER') { box(this.dark, .7, .5, .7, 2.3, .5, 0); box(this.dark, .7, .9, .12, 2.3, 1.2, -.3); box(new T.MeshStandardMaterial({color: 0xdde6ee, metalness: .9, roughness: .05}), 1.2, 1, .05, W / 2 - .12, 1.6, 0, Math.PI / 2); solid(2.3, 0, .4, .4); }
     // Sign over the counter and a light.
@@ -49,7 +50,7 @@ export class Interiors {
     const amb = new T.PointLight(0xdde8ff, 6, 12, 2); amb.position.set(0, 2, 2.6); g.add(amb);
     const exit = canvasTexture(256, 96, (c, w, h) => { c.fillStyle = '#2f5d45'; c.fillRect(0, 0, w, h); c.fillStyle = '#e9f4df'; c.font = '600 56px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('EXIT', w / 2, h / 2); });
     const exitMesh = new T.Mesh(new T.PlaneGeometry(.9, .34), new T.MeshStandardMaterial({map: exit, emissive: 0xffffff, emissiveMap: exit, emissiveIntensity: .6})); exitMesh.position.set(0, 2.8, front - .12); exitMesh.rotation.y = Math.PI; g.add(exitMesh);
-    const cell = {key, name, stock, group: g, x0, colliders, door: {x: x0, z: front - .9, yaw: 0}, counter: {x: x0, z: -D / 2 + 2.5}, keeper: null, keeperSpot: {x: x0, z: -D / 2 + .85}, floorY: CELL_Y, ceiling};
+    const cell = {key, name, stock, group: g, x0, colliders, door: {x: x0, z: front - .9, yaw: 0}, counter: {x: x0, z: -D / 2 + 2.5}, keeper: null, keeperSpot: {x: x0, z: -D / 2 + .85}, floorY: CELL_Y, ceiling, seats};
     this.cells.set(key, cell); return cell;
   }
   // The keeper: one of the civilians, idling behind the counter, dressed from the loaded assets when they are in.

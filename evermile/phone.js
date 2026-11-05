@@ -18,10 +18,15 @@ export function renderPhone(card, snap, tab, handlers) {
   if (tab === 'map') body = mapSvg(snap) + `<p class="hint">${esc(snap.map.note)}</p>`;
   if (tab === 'journey') body = `<div class="stats">${snap.journey.cells.map((c) => `<span><b>${esc(c.value)}</b><small>${esc(c.label)}</small></span>`).join('')}</div><p class="hint">${esc(snap.journey.drive || 'Not far yet today.')}</p><p class="hint">Coins ${snap.journey.money} · Bag: ${esc(snap.journey.bag)}</p><p class="hint">Photos ${snap.journey.photos} · Jobs done ${snap.journey.jobsDone} · Crashes this drive ${snap.journey.crashes} · Knocked over ${snap.journey.knockdowns}</p>`;
   if (tab === 'jobs') body = snap.job ? `<p><b>${snap.job.kind === 'taxi' ? `Lift for ${esc(snap.job.passenger || 'a passenger')}` : `Parcel from ${esc(snap.job.from || 'the shop')}`}</b></p><p class="hint">To ${esc(snap.job.town)} · ${snap.job.pay} coins when you stop there${snap.job.distance != null ? ` · ${snap.job.distance}` : ''}</p><div class="row"><button data-act="drop">Give it up</button></div>` : `<p class="hint">No job on. Ask a shopkeeper about deliveries, or offer someone waiting at a bus stop a lift. Jobs pay ${snap.pay.delivery} and ${snap.pay.taxi} coins.</p>`;
-  if (tab === 'home') body = snap.home ? `<p><b>Home</b></p><p class="hint">${esc(snap.home.text)}</p>${snap.home.canSet ? '' : ''}<p class="hint">Park within sight of home and get out to come home. Homecomings so far: ${snap.home.homecomings}.</p>` : `<p class="hint">Home is where this road began. Drive back there, park, and get out.</p>`;
+  if (tab === 'home') {
+    body = snap.home ? `<p><b>Home</b></p><p class="hint">${esc(snap.home.text)}</p><p class="hint">Park within sight of home and get out to come home. Homecomings so far: ${snap.home.homecomings}.</p>` : `<p class="hint">Home is where this road began. Drive back there, park, and get out.</p>`;
+    const b = snap.board;
+    body += `<p><b>Today’s board</b></p>` + (!b || b.loading ? '<p class="hint">Fetching…</p>' : !b.ok ? `<p class="hint">Not available (${esc(b.why || 'offline')}). Your best is kept on this device.</p>` : b.rows.length ? `<ol class="board">${b.rows.map((r) => `<li><span>${esc(r.name)}</span><b>${r.km.toFixed(1)} km</b></li>`).join('')}</ol>` : '<p class="hint">Nobody has posted a drive yet today.</p>');
+    if (b && b.ok !== false) body += `<div class="submit"><input id="board-name" maxlength="24" placeholder="Your name" value="${esc(b.name || '')}"><button data-act="submit">Post my best</button></div>`;
+  }
   body += `<p class="hint">${esc(snap.daily)}</p>`;
   card.innerHTML = `<small>YOUR PHONE · ${esc(snap.clock)}</small><div class="tabs">${nav}</div>${body}<div class="row"><button data-close="1" class="primary">Put away</button></div>`;
   for (const b of card.querySelectorAll('[data-tab]')) b.onclick = () => handlers.tab(b.dataset.tab);
-  for (const b of card.querySelectorAll('[data-act]')) b.onclick = () => handlers.act(b.dataset.act);
+  for (const b of card.querySelectorAll('[data-act]')) b.onclick = () => handlers.act(b.dataset.act, card.querySelector('#board-name')?.value);
   card.querySelector('[data-close]').onclick = handlers.close;
 }
