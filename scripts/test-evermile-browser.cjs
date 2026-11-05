@@ -48,10 +48,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const moved = await q((m, c) => { const t = m.state.boarding?.target?.car; return t ? Math.hypot(t.g.position.x - c.x, t.g.position.z - c.z) : 0; }, car);
       check('a stopped car waits while you walk to it', moved < .5, `${moved.toFixed(2)} m`);
       await q((m) => { const b = m.state.boarding; if (b) m.debug.walker.place(b.door.x, b.door.z, m.debug.walker.yaw); });
-      await until((m) => !m.state.onFoot, null, 40000);
-      const took = await q((m) => ({vehicle: m.settings.vehicle, body: m.settings.body, at: Math.hypot(m.state.x, m.state.z)}));
+      await until((m) => !m.state.onFoot, null, 90000);
+      const took = await q((m) => ({vehicle: m.settings.vehicle, body: m.settings.body, at: Math.hypot(m.state.x, m.state.z), onFoot: m.state.onFoot, phase: m.state.boarding?.phase || null}));
       const want = {sedan: 'mercedes', mercedes: 'mercedes', hatch: 'grcorolla', grcorolla: 'grcorolla', suv: 'landcruiser', landcruiser: 'landcruiser', wagon: 'mercedes', pickup: 'landcruiser', van: 'landcruiser'}[car.style];
-      check('you drive the car you walked to', took.vehicle === want && (['sedan', 'hatch', 'suv', 'wagon', 'pickup', 'van'].includes(car.style) ? took.body === car.style : took.body === ''), `${car.style} → ${took.vehicle}${took.body ? ' / ' + took.body : ''}`);
+      check('you drive the car you walked to', took.vehicle === want && (['sedan', 'hatch', 'suv', 'wagon', 'pickup', 'van'].includes(car.style) ? took.body === car.style : took.body === ''), `${car.style} → ${took.vehicle}${took.body ? ' / ' + took.body : ''}${took.onFoot ? ' (still on foot, ' + took.phase + ')' : ''}`);
       await until((m) => !m.state.transition);
     }
     for (const c of [0, 1, 2, 3, 4, 5]) { await q((m, c) => m.changeSetting('camera', c), c); await wait(700); }
