@@ -48,7 +48,7 @@ export function generated(kind, size = 512, seed = 7) {
   norm.data[i] = (-dx / len * .5 + .5) * 255; norm.data[i + 1] = (dy / len * .5 + .5) * 255; norm.data[i + 2] = (1 / len * .5 + .5) * 255; norm.data[i + 3] = 255;
  }
  dctx.putImageData(diff, 0, 0); nctx.putImageData(norm, 0, 0); rctx.putImageData(rough, 0, 0);
- const tex = (c, srgb) => { const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 8; if (srgb) t.colorSpace = T.SRGBColorSpace; return t; };
+ const tex = (c, srgb) => { const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 16; if (srgb) t.colorSpace = T.SRGBColorSpace; return t; };
  return {map: tex(cd, true), normalMap: tex(cn, false), roughnessMap: tex(cr, false)};
 }
 export function maps(kind) {
@@ -60,7 +60,7 @@ export function maps(kind) {
   const t = loader.load(new URL(`./assets/materials/${name}_${s}_1k.jpg`, import.meta.url).href, () => resolve(), undefined, () => {
    const canvas=document.createElement('canvas');canvas.width=canvas.height=2;const c=canvas.getContext('2d');c.fillStyle=i===1?'#8080ff':'#b8b8b8';c.fillRect(0,0,2,2);t.image=canvas;t.needsUpdate=true;resolve();
   });
-  t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=8;if(!i)t.colorSpace=T.SRGBColorSpace;
+  t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=16;if(!i)t.colorSpace=T.SRGBColorSpace;
   result[['map','normalMap','roughnessMap'][i]]=t;
  });
  cache.set(kind, result); return result;

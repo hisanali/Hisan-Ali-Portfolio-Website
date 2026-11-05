@@ -206,3 +206,8 @@ The Sketchfab Standard licence allows use in a project like this but not redistr
 - **Ship boards and ship's wheel** (`assets/models/wreck-boards.glb`, `assets/models/wreck-wheel.glb`): the `boards` and `shipWheel` meshes and their baseColor, normal and ORM textures from the same Babylon.js Under Water Scene demo (`meshes/Demos/UnderWaterScene/`), CC BY 4.0, © Babylon.js contributors. Modification: each mesh extracted into its own GLB with its textures embedded at 1K JPEG and a glTF metallic-roughness material built from the ORM map.
 
 The broken ship hull, kelp and bubbles are authored for Evermile. No paid asset was purchased.
+
+
+## You
+
+The on-foot player can wear any of the Quaternius civilian outfits (CC0, listed above) or the Mixamo **Vanguard/Soldier** (textured, with idle, walk and run clips) distributed with the Three.js examples; Mixamo assets are royalty-free for use in games. The Quaternius civilians carry their own run clips, which the player uses when running.
