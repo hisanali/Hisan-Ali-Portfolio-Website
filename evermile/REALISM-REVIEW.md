@@ -156,3 +156,10 @@ Validation: 93 automated checks, including 160 km network walks in three road st
 - Sound: footsteps that follow your stride, lighter when walking and heavier when running, dull on grass, crunchy on gravel, tight indoors; a door chime going into a shop; a murmur of voices and crockery inside cafés and shops; a low traffic hum in towns.
 - Touch: on foot, a joystick appears bottom-left (drag to walk and turn) with a RUN toggle beside it.
 - Today's board, shared: `supabase/migrations/20261105_evermile_daily.sql` creates `evermile_daily` (read for everyone, insert only, 24-character names, distance bounds) and `leaderboard.js` reads and posts through the site's existing public Realtime configuration. The phone's Home tab shows the top drives of the day, a name box and "Post my best". Until the migration is applied, the tab says the board is not available and keeps your best on the device.
+
+
+## Fixes and the look
+
+- You: the walker now plays a real run clip when the outfit has one (every Quaternius civilian does, and so does the Mixamo soldier), blended from the walk by speed, instead of a sped-up walk. The textured Mixamo soldier is a selectable outfit (never a pedestrian).
+- Look (Settings, "Rich" by default on High and Ultra): sun shafts from the sky round the sun, blurred towards it and added warm, strongest at low sun and gone at night, under cloud, underwater and in tunnels; a lens flare with ghost rings along the line through the frame centre; a final filmic grade with a soft vignette, fine moving grain, a little extra saturation and contrast, and colour fringing at the edges in the cinematic camera. "Plain" switches all of it off. Texture filtering is now 16× anisotropic.
+- Still waiting on you: the board's table on Supabase (`supabase/migrations/20261105_evermile_daily.sql`), and hinged-door car models if you want doors to swing.

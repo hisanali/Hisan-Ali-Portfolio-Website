@@ -21,9 +21,10 @@ export class Walker {
     if (!asset) { const m = new T.Mesh(new T.CapsuleGeometry(.28, 1.1, 6, 12), new T.MeshStandardMaterial({color: 0x6a7f9a, roughness: .8})); m.position.y = .85; m.castShadow = true; this.root.add(m); this.detail = {mixer: null, placeholder: m}; this.key = key; return; }
     const model = cloneSkin(asset.scene); fitCitizen(model, 2); model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
     this.root.add(model);
-    const mixer = new T.AnimationMixer(model), find = (n) => asset.animations.find((a) => a.name === n) || asset.animations[0];
-    const walk = mixer.clipAction(find('Walk')).play(), idle = mixer.clipAction(find('Idle')).play(); idle.setEffectiveWeight(1); walk.setEffectiveWeight(0);
-    this.detail = {mixer, walk, idle, blend: 0, stride: 1.15}; this.key = key;
+    const mixer = new T.AnimationMixer(model), find = (n) => asset.animations.find((a) => a.name === n), fallback = asset.animations[0];
+    const walk = mixer.clipAction(find('Walk') || fallback).play(), idle = mixer.clipAction(find('Idle') || fallback).play(), runClip = find('Run'), run = runClip ? mixer.clipAction(runClip).play() : null;
+    idle.setEffectiveWeight(1); walk.setEffectiveWeight(0); run?.setEffectiveWeight(0);
+    this.detail = {mixer, walk, idle, run, blend: 0, runBlend: 0, stride: 1.15, runStride: 3.6}; this.key = key;
   }
   undress() { if (!this.detail) return; this.detail.mixer?.stopAllAction(); for (const o of [...this.root.children]) this.root.remove(o); this.detail = null; this.key = null; }
 
@@ -68,9 +69,11 @@ export class Walker {
     // Pose.
     const d = this.detail; if (!d) return;
     if (d.placeholder) { d.placeholder.position.y = .85 + Math.abs(Math.sin(performance.now() * .012)) * Math.min(1, Math.abs(this.speed)) * .04; return; }
-    const moving = Math.abs(this.speed) > .08;
-    d.blend = damp(d.blend, moving ? 1 : 0, 12, dt); d.walk.setEffectiveWeight(d.blend); d.idle.setEffectiveWeight(1 - d.blend);
-    d.walk.setEffectiveTimeScale(clamp(Math.abs(this.speed) / d.stride, .3, 3.1) * Math.sign(this.speed || 1)); d.mixer.update(dt);
+    // Idle, walk and (when the model has one) a real run clip, blended by speed; without a run clip the walk speeds up.
+    const pace = Math.abs(this.speed), moving = pace > .08, running = d.run ? clamp((pace - WALK * 1.15) / (RUN * .75 - WALK * 1.15), 0, 1) : 0;
+    d.blend = damp(d.blend, moving ? 1 : 0, 12, dt); d.runBlend = damp(d.runBlend, running, 8, dt);
+    d.idle.setEffectiveWeight(1 - d.blend); d.walk.setEffectiveWeight(d.blend * (1 - d.runBlend)); d.run?.setEffectiveWeight(d.blend * d.runBlend);
+    d.walk.setEffectiveTimeScale(clamp(pace / d.stride, .3, d.run ? 1.6 : 3.1) * Math.sign(this.speed || 1)); d.run?.setEffectiveTimeScale(clamp(pace / d.runStride, .6, 1.5)); d.mixer.update(dt);
   }
   // Where the head is, for the camera.
   head(out) { return out.set(this.x, this.y + this.height * .92, this.z); }
