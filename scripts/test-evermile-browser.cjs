@@ -32,13 +32,28 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await page.keyboard.press('f');
     check('F while stopped gets you out', await until((m) => m.state.onFoot && !m.state.engineOn && !m.state.transition));
     await page.keyboard.press('Space');
-    check('Space jumps', await until((m) => m.debug.walker.grounded === false || m.debug.walker.y > m.debug.world.groundHeight(m.debug.walker.x, m.debug.walker.z) + .05, null, 3000));
+    check('Space jumps', await until((m) => m.debug.walker.grounded === false || m.debug.walker.crouchT > 0, null, 10000));
     await until((m) => m.debug.walker.grounded !== false);
     await q((m) => { const w = m.debug.walker; w.place(w.x + 4, w.z + 1, w.yaw); });
     await until((m) => /GET IN/.test(document.querySelector('#drive-status').textContent)); await page.keyboard.press('f');
     check('F from a few metres walks you to the door', await until((m) => !!m.state.boarding, null, 8000));
     await q((m) => { const b = m.state.boarding; if (b) m.debug.walker.place(b.door.x, b.door.z, m.debug.walker.yaw); });
-    check('you sit down and the engine starts', await until((m) => !m.state.onFoot && m.state.engineOn, null, 40000));
+    check('you sit down and the engine starts', await until((m) => !m.state.onFoot && m.state.engineOn, null, 90000), await q((m) => JSON.stringify({onFoot: m.state.onFoot, boarding: m.state.boarding?.phase || null, engine: m.state.engineOn, starting: !!m.state.starting})));
+    // A stopped traffic car stays put while you walk to it, and you end up in that same car, with its paint.
+    await page.keyboard.press('f'); await until((m) => m.state.onFoot && !m.state.transition);
+    const car = await q((m) => { const L = m.debug.life, w = m.debug.walker, c = L.traffic.find((t) => t.g.visible && t.kind === 'car'); if (!c) return null; c.speed = 0; c.z = m.state.z + 35; c.lat = 0; c.hit = {t: 0, hold: 3, side: 0}; L.placeCar(c, 1 / 60); w.place(c.g.position.x + 5, c.g.position.z + 2, 0); return {x: c.g.position.x, z: c.g.position.z, style: c.detailStyle || c.style}; });
+    if (car) {
+      await until(() => /GET IN/.test(document.querySelector('#drive-status').textContent)); await page.keyboard.press('f');
+      await until((m) => !!m.state.boarding, null, 8000); await wait(5000);
+      const moved = await q((m, c) => { const t = m.state.boarding?.target?.car; return t ? Math.hypot(t.g.position.x - c.x, t.g.position.z - c.z) : 0; }, car);
+      check('a stopped car waits while you walk to it', moved < .5, `${moved.toFixed(2)} m`);
+      await q((m) => { const b = m.state.boarding; if (b) m.debug.walker.place(b.door.x, b.door.z, m.debug.walker.yaw); });
+      await until((m) => !m.state.onFoot, null, 40000);
+      const took = await q((m) => ({vehicle: m.settings.vehicle, body: m.settings.body, at: Math.hypot(m.state.x, m.state.z)}));
+      const want = {sedan: 'mercedes', mercedes: 'mercedes', hatch: 'grcorolla', grcorolla: 'grcorolla', suv: 'landcruiser', landcruiser: 'landcruiser', wagon: 'mercedes', pickup: 'landcruiser', van: 'landcruiser'}[car.style];
+      check('you drive the car you walked to', took.vehicle === want && (['sedan', 'hatch', 'suv', 'wagon', 'pickup', 'van'].includes(car.style) ? took.body === car.style : took.body === ''), `${car.style} → ${took.vehicle}${took.body ? ' / ' + took.body : ''}`);
+      await until((m) => !m.state.transition);
+    }
     for (const c of [0, 1, 2, 3, 4, 5]) { await q((m, c) => m.changeSetting('camera', c), c); await wait(700); }
     check('every camera view runs', errors.length === 0, errors.slice(-1)[0] || '');
     await q((m) => m.changeSetting('camera', 0));

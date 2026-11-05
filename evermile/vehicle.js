@@ -14,8 +14,17 @@ export const IMPORTED={
  grcorolla:{file:'car-gr-corolla.glb',name:'Toyota GR Corolla',seat:[.36,1.13,-.12],lamp:[.66,.7,2.02],contact:[1.9,4.5]},
  landcruiser:{file:'car-land-cruiser.glb',name:'Toyota Land Cruiser 300',seat:[.4,1.56,.12],lamp:[.72,.95,2.3],contact:[2.05,5]},
 };
+// The everyday traffic bodies, drivable when you take one: the same model and paint you walked up to.
+export const BODIES={
+ sedan:{file:'road-sedan.glb',name:'Saloon',seat:[.36,1.12,-.15],lamp:[.66,.68,2.15],contact:[1.85,4.6]},
+ hatch:{file:'road-hatch.glb',name:'Hatchback',seat:[.36,1.13,-.05],lamp:[.64,.7,1.9],contact:[1.8,4.1]},
+ suv:{file:'road-suv.glb',name:'SUV',seat:[.38,1.5,.05],lamp:[.7,.9,2.2],contact:[1.95,4.7]},
+ wagon:{file:'road-wagon.glb',name:'Estate',seat:[.36,1.14,-.1],lamp:[.66,.7,2.25],contact:[1.85,4.85]},
+ pickup:{file:'road-pickup.glb',name:'Pickup',seat:[.4,1.55,.3],lamp:[.72,.92,2.5],contact:[2,5.3]},
+ van:{file:'road-van.glb',name:'Van',seat:[.4,1.75,1.1],lamp:[.75,.95,2.4],contact:[2,5]},
+};
 export class Vehicle{
- constructor(scene,type='coupe',color='#e9e7db'){this.scene=scene;this.color=color;this.group=new T.Group();scene.add(this.group);this.wheels=[];this.frontWheels=[];this.type=type;this.body=new T.MeshPhysicalMaterial({color,metalness:.45,roughness:.25,clearcoat:1,clearcoatRoughness:.16});this.glass=new T.MeshPhysicalMaterial({color:0x263c49,metalness:.65,roughness:.12,clearcoat:1});this.black=new T.MeshStandardMaterial({color:0x151b1d,roughness:.65});this.chrome=new T.MeshStandardMaterial({color:0xadb6ba,metalness:.9,roughness:.2});this.rubber=new T.MeshStandardMaterial({color:0x171c1e,roughness:.94});this.red=new T.MeshStandardMaterial({color:0x610b12,emissive:0xb92723,emissiveIntensity:.65,roughness:.25});this.white=new T.MeshStandardMaterial({color:0xeaf1ea,emissive:0xe6f8ff,emissiveIntensity:1});addMicroSurface(this.rubber,'rubber',.012);addMicroSurface(this.black,'fabric',.006);this.setupDirt();this.build();this.addContactShadow();if(type==='coupe')this.loadDetailedCar();if(type==='bike')this.loadDetailedBike();if(type==='coach')this.loadDetailedCoach();if(type==='mercedes')this.loadMercedes();if(IMPORTED[type])this.loadImported(IMPORTED[type]);}
+ constructor(scene,type='coupe',color='#e9e7db',body=''){this.scene=scene;this.color=color;this.bodyStyle=BODIES[body]&&!['coach','bike'].includes(type)?body:'';this.group=new T.Group();scene.add(this.group);this.wheels=[];this.frontWheels=[];this.type=type;this.body=new T.MeshPhysicalMaterial({color,metalness:.45,roughness:.25,clearcoat:1,clearcoatRoughness:.16});this.glass=new T.MeshPhysicalMaterial({color:0x263c49,metalness:.65,roughness:.12,clearcoat:1});this.black=new T.MeshStandardMaterial({color:0x151b1d,roughness:.65});this.chrome=new T.MeshStandardMaterial({color:0xadb6ba,metalness:.9,roughness:.2});this.rubber=new T.MeshStandardMaterial({color:0x171c1e,roughness:.94});this.red=new T.MeshStandardMaterial({color:0x610b12,emissive:0xb92723,emissiveIntensity:.65,roughness:.25});this.white=new T.MeshStandardMaterial({color:0xeaf1ea,emissive:0xe6f8ff,emissiveIntensity:1});addMicroSurface(this.rubber,'rubber',.012);addMicroSurface(this.black,'fabric',.006);this.setupDirt();this.build();this.addContactShadow();if(this.bodyStyle){this.loadImported({...BODIES[this.bodyStyle],version:'supplied7'});return;}if(type==='coupe')this.loadDetailedCar();if(type==='bike')this.loadDetailedBike();if(type==='coach')this.loadDetailedCoach();if(type==='mercedes')this.loadMercedes();if(IMPORTED[type])this.loadImported(IMPORTED[type]);}
  add(g,m,x,y,z,parent=this.group){const mesh=new T.Mesh(g,m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh}
  wheel(x,z,r=.39){const wheel=new T.Group();wheel.userData.radius=r;wheel.position.set(x,r,z);this.group.add(wheel);this.wheels.push(wheel);if(z>0)this.frontWheels.push(wheel);const tire=this.add(new T.CylinderGeometry(r,r,.26,24),this.rubber,0,0,0,wheel);tire.rotation.z=Math.PI/2;const outer=x>0?.145:-.145;const hub=this.add(new T.CylinderGeometry(r*.68,r*.68,.015,24),this.chrome,outer,0,0,wheel);hub.rotation.z=Math.PI/2;const dark=this.add(new T.CylinderGeometry(r*.52,r*.52,.02,20),this.black,outer*1.06,0,0,wheel);dark.rotation.z=Math.PI/2;for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const spoke=this.add(new T.BoxGeometry(.03,r*.98,.05),this.chrome,outer*1.15,0,0,wheel);spoke.rotation.x=a;}rotorFor(wheel);return wheel}
  build(){const coach=this.type==='coach',bike=this.type==='bike';if(bike){this.buildBike();}
@@ -155,7 +164,7 @@ export class Vehicle{
  }
  loadImported(spec){
   const fallback=[...this.group.children].filter(o=>o!==this.interior&&o!==this.contact&&!o.isLight&&!this.headlights.some(l=>l.target===o));
-  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/'+spec.file+'?v=20260927a',asset=>{
+  this.ready=new Promise(resolve=>modelLoader.load('./assets/models/'+spec.file+'?v='+(spec.version||'20260927a'),asset=>{
    if(this.disposed){resolve();return;}const model=asset.scene,wheels=[],calipers=[];this.realWheels=[];this.realBrakeMats=[];
    model.traverse(o=>{if(/^Wheel_[FR][LR]$/.test(o.name))wheels.push(o);if(/^Caliper_[FR][LR]$/.test(o.name))calipers.push(o);if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const n=o.material.name;
     if(n==='BodyPaint')o.material=this.body;else if(n==='EXT_Glass'){o.material.depthWrite=false;this.realGlass=o.material;}else if(n.startsWith('TailLens')){this.realBrakeMats.push(o.material);o.material.emissive.set(0xff1a10);}});
