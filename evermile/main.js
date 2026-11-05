@@ -202,12 +202,12 @@ export function changeSetting(key, value) {
   const rebuild = ['destination', 'seed', 'roadStyle', 'location', 'roadWidth', 'season', 'planet', 'quality', 'autoLane'];
   if (rebuild.includes(key)) {
     const moving = state.speed, same = !['destination', 'seed', 'roadStyle', 'location'].includes(key); world.rebuild(same); life.clear(); marks?.clear();
-    if (!same && state.onFoot) { state.onFoot = false; walker?.hide(); } if (!same && leftCar) { leftCar.dispose(); leftCar = null; }
+    if (!same) { if (state.onFoot) { state.onFoot = false; walker?.hide(); } state.inside = null; state.sitting = null; state.riding = null; if (walker) { walker.floor = null; walker.root.rotation.x = 0; } closeShop(); closePhone(); if (leftCar) { leftCar.dispose(); leftCar = null; } }
     if (['destination', 'seed', 'roadStyle', 'location'].includes(key)) { state.z = 35; reset(); } else { const r = world.road; state.laneIndex = r.homeLane(state.z); }
     world.update(state.z, camera, true); if (!['destination', 'seed', 'roadStyle', 'location'].includes(key)) state.speed = moving;
   }
   if (key === 'destination') { settings.time = DESTINATIONS[value].time || 'day'; atmo.setPreset(settings.time); save(); lastEnv = null; effects.refresh(); applyAtmosphere(0, true); }
-  if (key === 'vehicle') { state.dented = false; state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.tireSlip = 0; vehicle.dispose(); vehicle = new Vehicle(scene, settings.vehicle, settings.color); if (cubeRT) vehicle.setEnvMap(cubeRT.texture); }
+  if (key === 'vehicle') { driver?.root.parent?.remove(driver.root); state.dented = false; state.steer = 0; state.yawRate = 0; state.lateralAcceleration = 0; state.tireSlip = 0; vehicle.dispose(); vehicle = new Vehicle(scene, settings.vehicle, settings.color); if (cubeRT) vehicle.setEnvMap(cubeRT.texture); }
   if (key === 'color') vehicle.setColor(value);
   if (key === 'time') { atmo.setPreset(value); lastEnv = null; }
   if (key === 'weather') atmo.applyWeather(true);
@@ -221,6 +221,7 @@ export function changeSetting(key, value) {
 
 /* ---------- Shared driving rooms ---------- */
 function enterRoom(){
+ if(state.onFoot){state.inside=null;state.sitting=null;state.riding=null;if(walker){walker.floor=null;walker.root.rotation.x=0;}enterCar({kind:'own'});}
  if(!soloRoomSettings)soloRoomSettings=Object.fromEntries(SHARED_KEYS.map(k=>[k,settings[k]]));
  Object.assign(settings,{clock:'still',weather:'clear',trafficOncoming:'off',trafficOwn:'off',cyclists:'off'});atmo.applyWeather(true);life.clear();state.auto=false;
 }
@@ -284,8 +285,8 @@ function physics(dt) {
   if (state.onFoot) { state.speed = 0; state.throttle = 0; state.brakeIn = 0; state.time += dt; return; }
   const r = world.road, gamepad = padInput;
   let throttle = keys.KeyW || keys.ArrowUp ? 1 : 0, brake = keys.KeyS || keys.ArrowDown ? 1 : 0;
-  if (state.transition) { throttle = 0; brake = 1; }
   let input = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0);
+  if (state.transition) { throttle = 0; brake = 0; input = 0; }
   if (gamepad) { if (gamepad.input) input = gamepad.input; throttle = Math.max(throttle, gamepad.throttle); brake = Math.max(brake, gamepad.brake); }
   if ((input || throttle || brake) && state.auto) { if ((input && settings.autoMode !== 'speed') || (throttle && settings.autoMode === 'full') || brake) { state.auto = false; state.pit = null; updateUI(); } }
   // Steering gets gentler with speed, so the car no longer darts at the slightest touch.
@@ -314,7 +315,7 @@ function physics(dt) {
   state.accel = acceleration;
   // Hill hold: with no pedal pressed and the car (nearly) still, the brakes stay on until you drive off.
   if (!throttle && !brake && !state.auto && !state.cruise && Math.abs(state.speed) < .35) state.holdTime = (state.holdTime || 0) + dt; else state.holdTime = 0;
-  const held = state.holdTime > .25;
+  const held = state.holdTime > .25 || (!!state.transition && Math.abs(state.speed) < .35);
   const oldSpeed = state.speed;
   state.speed = held ? 0 : clamp(state.speed + acceleration * dt, -9, boost ? 65 : 49);
   water(dt, depth, oldSpeed);
@@ -909,6 +910,7 @@ function exitCar() {
   if (!state.started || state.onFoot || state.inspection || state.viewing) return;
   if (multiplayer?.active) { toast('Stay in the car while you drive with a friend.'); return; }
   if (Math.abs(state.speed) > 1.2) { toast('Stop the car first'); return; }
+  if ((state.depth || 0) > .6) { toast('Not into the water'); return; }
   state.speed = 0; state.auto = false; state.cruise = false; state.pit = null; releaseCameraDrag(true);
   walker ||= new Walker(scene, world, settings);
   const rx = Math.cos(state.yaw), rz = -Math.sin(state.yaw), fx = Math.sin(state.yaw), fz = Math.cos(state.yaw), side = settings.vehicle === 'coach' ? 1.9 : settings.vehicle === 'bike' ? .9 : 1.5, seatZ = vehicle.seatZ ?? 0;
@@ -944,10 +946,10 @@ function enterCar(target) {
     state.x = take.group.position.x; state.z = take.group.position.z; state.yaw = take.group.rotation.y; state.y = world.groundHeight(state.x, state.z);
     if (settings.vehicle !== take.type) changeSetting('vehicle', take.type); take.dispose();
   }
-  state.onFoot = false; walker.hide(); state.transition = {kind: 'in', t: 0, dur: .75}; driveAudio?.door(true); setTimeout(() => driveAudio?.door(false), 600); state.steer = 0; state.yawRate = 0; state.drift = 0; state.vy = 0; state.grounded = true; susp = null; wheelMounts = null; state.bodyY = undefined;
+  state.onFoot = false; state.walker = null; state.sitting = null; walker.hide(); state.transition = {kind: 'in', t: 0, dur: .75}; driveAudio?.door(true); setTimeout(() => driveAudio?.door(false), 600); state.steer = 0; state.yawRate = 0; state.drift = 0; state.vy = 0; state.grounded = true; susp = null; wheelMounts = null; state.bodyY = undefined;
   updateCar(1 / 60); positionCamera(1 / 60); updateUI(); if (target.kind === 'own') toast('Back behind the wheel'); useBagAtCar();
 }
-function footAction() { if (!state.started || state.transition || cardOpen) return; if (state.onFoot) { const t = placeNearby(); if (t) t.go(); else toast(state.inside ? 'The door is the way out' : 'Walk up to a car, a shop door or a bus stop'); } else exitCar(); }
+function footAction() { if (!state.started || state.transition || cardOpen || state.riding) return; if (state.onFoot) { const t = placeNearby(); if (t) t.go(); else toast(state.inside ? 'The door is the way out' : 'Walk up to a car, a shop door or a bus stop'); } else exitCar(); }
 
 /* ---------- Places on foot: shops, the café, the petrol station, the bus ---------- */
 // What X does here: a car door, a shop door, the café, the petrol station shop, a bus stop; inside, the counter or the exit.
@@ -1074,11 +1076,11 @@ function rideStep(dt) {
   const atStop = bus.atStop > .3 && bus.nextStop && bus.nextStop !== ride.boardedAt;
   const label = atStop ? 'GET OFF' : 'ON THE BUS';
   if (label !== footTarget) { footTarget = label; $('foot-label').textContent = label; $('drive-status').textContent = atStop ? 'GET OFF · X' : 'ON THE BUS'; }
-  if (atStop && (keys.KeyX || padInput?.pressed.autodrive)) leaveBus();
+  if (atStop && (keys.KeyX || padInput?.pressed.autodrive)) { keys.KeyX = false; leaveBus(); }
 }
 function leaveBus() {
   const bus = state.riding.bus, yaw = bus.g.rotation.y, side = world.road.side * (bus.dir || 1);
-  state.riding = null; walker.place(bus.g.position.x + Math.cos(yaw) * -side * 2.2, bus.g.position.z - Math.sin(yaw) * -side * 2.2, yaw); walker.x = walker.x; footTarget = null; driveAudio?.door(true); toast('Mind the step');
+  state.riding = null; walker.place(bus.g.position.x + Math.cos(yaw) * -side * 2.2, bus.g.position.z - Math.sin(yaw) * -side * 2.2, yaw); footTarget = null; driveAudio?.door(true); toast('Mind the step');
 }
 // Each frame on foot: keys (or a controller) move the walker, solid things keep it out, and the prompt follows the nearest door.
 function walkStep(dt) {
@@ -1089,14 +1091,14 @@ function walkStep(dt) {
   const own = {x: state.x, z: state.z, hx: settings.vehicle === 'coach' ? 1.3 : .95, hz: settings.vehicle === 'coach' ? 6 : 2.3, c: Math.cos(state.yaw), s: Math.sin(state.yaw)};
   const colliders = [...world.collidersNear(walker.x, walker.z, 8), ...life.colliders(walker.x, walker.z, 8), ...railway.colliders(walker.x, walker.z, 8), ...town.colliders(walker.x, walker.z, 6), own];
   if (leftCar) colliders.push({x: leftCar.group.position.x, z: leftCar.group.position.z, hx: .95, hz: 2.3, c: Math.cos(leftCar.group.rotation.y), s: Math.sin(leftCar.group.rotation.y)});
-  if (state.riding) { rideStep(dt); return; }
+  if (state.riding) { state.walker = null; rideStep(dt); return; }
   if (state.inside) { let keeperKey = /BARBER|HARDWARE|PETROL/.test(state.inside.cell.name) ? 'man-worker' : 'woman-casual'; if (keeperKey === settings.outfit) keeperKey = keeperKey === 'man-worker' ? 'man-suit' : 'woman-formal'; interiors.keep(state.inside.cell, detailedModels?.loaded[keeperKey], keeperKey); }
   if (state.sitting) { walker.detail?.mixer?.update(dt); walker.root.position.y = (state.sitting.y ?? walker.y) - .42; if (settings.clock === 'live') atmo.hour = (atmo.hour + dt * 3 / 1800) % 24; const t = placeNearby(), label = t ? t.label : 'SITTING'; if (label !== footTarget) { footTarget = label; $('foot-label').textContent = label; $('drive-status').textContent = label + ' · X'; } return; }
   const moving = !state.transition && !cardOpen;
   walker.update(dt, moving ? {forward: clamp(forward, -1, 1), turn: clamp(turn, -1, 1), run} : {}, state.inside ? state.inside.cell.colliders : colliders, settings.location === 'hills' && !state.inside ? world.water.position.y : -1e9);
   // Footsteps follow the stride; the surface sets the sound.
   const pace = Math.abs(walker.speed); if (pace > .3) { stepClock += dt * pace / (run ? .95 : .72); if (stepClock >= 1) { stepClock = 0; const surface = state.inside ? 'indoor' : world.onPaved(walker.x, walker.z) ? 'paved' : state.offroadWalk ? 'grass' : world.roadside?.inField?.(walker.x, walker.z) ? 'gravel' : 'grass'; driveAudio?.footstep(surface, run); } } else stepClock = .7;
-  state.walker ||= {x: 0, z: 0}; state.walker.x = walker.x; state.walker.z = walker.z;
+  if (state.inside || state.riding) state.walker = null; else { state.walker ||= {x: 0, z: 0}; state.walker.x = walker.x; state.walker.z = walker.z; }
   const t = placeNearby(), label = t ? t.label : 'ON FOOT';
   if (label !== footTarget) { footTarget = label; $('foot-label').textContent = t ? label : 'WALK'; $('drive-status').textContent = t ? label + ' · X' : state.inside ? state.inside.cell.name : 'ON FOOT · SHIFT TO RUN'; }
 }

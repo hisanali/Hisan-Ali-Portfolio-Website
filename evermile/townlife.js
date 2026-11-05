@@ -359,7 +359,7 @@ export class TownLife {
   // The nearest person on the pavement to a point (for talking to), if within `range`.
   nearest(x, z, range = 2.4) {
     let best = null, d = range;
-    for (const p of this.people) { if (!p.active || p.state === 'knocked' || p.state === 'board' || !Number.isFinite(p.x)) continue; const q = Math.hypot(p.x - x, p.z - z); if (q < d) { d = q; best = p; } }
+    for (const p of this.people) { if (!p.active || p.hidden || p.state === 'knocked' || p.state === 'board' || !Number.isFinite(p.x)) continue; const q = Math.hypot(p.x - x, p.z - z); if (q < d) { d = q; best = p; } }
     return best;
   }
   // Stop and face someone for a while.
@@ -378,13 +378,13 @@ export class TownLife {
   }
   obstacles(z, range) {
     const out = [];
-    for (const p of this.people) if (p.active && p.z > z - 6 && p.z < z + range && (p.state === 'cross' || p.state === 'wait' || p.state === 'board')) out.push({x: p.x, z: p.z, r: .45, vz: 0});
+    for (const p of this.people) if (p.active && !p.hidden && p.z > z - 6 && p.z < z + range && (p.state === 'cross' || p.state === 'wait' || p.state === 'board')) out.push({x: p.x, z: p.z, r: .45, vz: 0});
     for (const x of this.cross) if (x.active && x.z > z - 8 && x.z < z + range) out.push({x: x.x, z: x.z, r: 1.5, vz: 0});
     return out;
   }
   colliders(x, z, range) {
     const out = [];
-    for (const p of this.people) if (p.active && Math.abs(p.x - x) < range && Math.abs(p.z - z) < range) out.push({x: p.x, z: p.z, r: .3, person: p});
+    for (const p of this.people) if (p.active && !p.hidden && Math.abs(p.x - x) < range && Math.abs(p.z - z) < range) out.push({x: p.x, z: p.z, r: .3, person: p});
     for (const c of this.cross) if (c.active && Math.abs(c.x - x) < range + 3 && Math.abs(c.z - z) < range + 3) { const yaw = c.car.g.rotation.y; out.push({x: c.x, z: c.z, hx: c.car.width / 2, hz: c.car.length / 2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0}); }
     return out;
   }
