@@ -18,7 +18,7 @@ export function loadJourney(storage, legacyKm = 0) {
       for (const k of ['drives', 'totalKm', 'longestKm', 'seconds', 'photos', 'money', 'bought']) if (Number.isFinite(saved[k]) && saved[k] >= 0) j[k] = saved[k];
       if (saved.bag && typeof saved.bag === 'object') for (const [k, v] of Object.entries(saved.bag)) if (GOODS[k] && Number.isInteger(v) && v > 0) j.bag[k] = Math.min(9, v);
       for (const k of ['jobsDone', 'earnedFromJobs', 'homecomings']) if (Number.isFinite(saved[k]) && saved[k] >= 0) j[k] = saved[k];
-      if (saved.job && typeof saved.job === 'object' && typeof saved.job.town === 'string' && Number.isFinite(saved.job.pay)) j.job = {kind: saved.job.kind === 'taxi' ? 'taxi' : 'delivery', town: saved.job.town, pay: saved.job.pay, from: typeof saved.job.from === 'string' ? saved.job.from : '', passenger: typeof saved.job.passenger === 'string' ? saved.job.passenger : null};
+      if (saved.job && typeof saved.job === 'object' && typeof saved.job.town === 'string' && Number.isFinite(saved.job.pay)) j.job = {kind: ['taxi', 'photo'].includes(saved.job.kind) ? saved.job.kind : 'delivery', town: saved.job.town, pay: saved.job.pay, from: typeof saved.job.from === 'string' ? saved.job.from : '', passenger: typeof saved.job.passenger === 'string' ? saved.job.passenger : null, due: Number.isFinite(saved.job.due) ? saved.job.due : null, bonus: Number.isFinite(saved.job.bonus) ? saved.job.bonus : 0};
       if (saved.home && typeof saved.home === 'object' && Number.isFinite(saved.home.x) && Number.isFinite(saved.home.z)) j.home = {x: saved.home.x, z: saved.home.z, world: String(saved.home.world || '')};
       if (saved.daily && typeof saved.daily === 'object') for (const [d, v] of Object.entries(saved.daily)) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && Number.isFinite(v) && v >= 0) j.daily[d] = v;
       if (Array.isArray(saved.places)) j.places = saved.places.filter((p) => typeof p === 'string').slice(0, 64);
@@ -81,17 +81,27 @@ export function useItem(journey, item) { if (!(journey.bag[item] > 0)) return fa
 export function bagText(journey) { const parts = Object.entries(journey.bag).map(([k, n]) => `${GOODS[k].name}${n > 1 ? ' ×' + n : ''}`); return parts.length ? parts.join(' · ') : 'Nothing yet'; }
 
 // Jobs: a parcel to deliver to a named town for a shop, or a passenger who wants a lift there. One at a time.
-export function offerJob(journey, kind, town, from, passenger = null) {
-  if (journey.job || !town) return null;
-  journey.job = {kind: kind === 'taxi' ? 'taxi' : 'delivery', town, pay: kind === 'taxi' ? 12 : 15, from: from || '', passenger};
+// `express` sets a deadline in driving seconds (journey.seconds) with a bonus for making it; a photo job has no town.
+export function offerJob(journey, kind, town, from, passenger = null, {express = 0} = {}) {
+  if (journey.job || (!town && kind !== 'photo')) return null;
+  const pay = kind === 'taxi' ? 12 : kind === 'photo' ? 10 : 15;
+  journey.job = {kind: ['taxi', 'photo'].includes(kind) ? kind : 'delivery', town: town || '', pay, from: from || '', passenger, due: express > 0 ? journey.seconds + express : null, bonus: express > 0 ? 10 : 0};
   return journey.job;
 }
-// Done when the car has stopped in the job's town.
+// Done when the car has stopped in the job's town; an express job made in time pays its bonus too.
 export function completeJob(journey, townName, speed) {
-  const job = journey.job; if (!job || !townName || townName !== job.town || Math.abs(speed) > 1) return null;
-  journey.money += job.pay; journey.jobsDone += 1; journey.earnedFromJobs += job.pay; journey.job = null;
-  return job;
+  const job = journey.job; if (!job || job.kind === 'photo' || !townName || townName !== job.town || Math.abs(speed) > 1) return null;
+  const onTime = job.due === null || job.due === undefined || journey.seconds <= job.due, paid = job.pay + (onTime ? job.bonus || 0 : 0);
+  journey.money += paid; journey.jobsDone += 1; journey.earnedFromJobs += paid; journey.job = null;
+  return {...job, paid, onTime};
 }
+// A photo job is done by saving a photo at a viewpoint.
+export function completePhotoJob(journey, atViewpoint) {
+  const job = journey.job; if (!job || job.kind !== 'photo' || !atViewpoint) return null;
+  journey.money += job.pay; journey.jobsDone += 1; journey.earnedFromJobs += job.pay; journey.job = null;
+  return {...job, paid: job.pay, onTime: true};
+}
+export function timeLeft(journey) { const j = journey.job; return j && Number.isFinite(j.due) ? Math.max(0, j.due - journey.seconds) : null; }
 export function dropJob(journey) { const j = journey.job; journey.job = null; return j; }
 // Home: where this world's first drive began. Coming home (stopping within reach) is noted and paid a little.
 export function setHome(journey, x, z, world) { if (!journey.home || journey.home.world !== world) journey.home = {x, z, world}; return journey.home; }
@@ -101,3 +111,13 @@ export function cameHome(journey) { journey.homecomings += 1; journey.money += 5
 export function dailySeed(date = new Date()) { const d = date.toISOString().slice(0, 10); return {seed: 'daily-' + d, date: d}; }
 export function recordDaily(journey, date, km) { const best = journey.daily[date] || 0; if (km > best) { journey.daily[date] = km; return true; } return false; }
 export function dailyBest(journey, date) { return journey.daily[date] || 0; }
+
+// Postcards: one small picture per place found, kept separately (they are big) and capped.
+export const POSTCARD_KEY = 'evermile-postcards';
+export function loadPostcards(storage) { try { const p = JSON.parse(storage?.getItem(POSTCARD_KEY) || 'null'); return p && typeof p === 'object' ? Object.fromEntries(Object.entries(p).filter(([k, v]) => typeof k === 'string' && typeof v === 'string' && v.startsWith('data:image/'))) : {}; } catch { return {}; } }
+export function savePostcard(storage, key, dataUrl, limit = 16) {
+  if (!key || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return false;
+  const all = loadPostcards(storage); if (all[key]) return false; all[key] = dataUrl;
+  const keys = Object.keys(all); while (keys.length > limit) delete all[keys.shift()];
+  try { storage?.setItem(POSTCARD_KEY, JSON.stringify(all)); return true; } catch { return false; }
+}

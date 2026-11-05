@@ -12,12 +12,14 @@ function mapSvg(snap) {
 }
 
 export function renderPhone(card, snap, tab, handlers) {
-  const tabs = ['map', 'journey', 'jobs', 'home'];
+  const tabs = ['map', 'journey', 'jobs', 'cards', 'home'];
   const nav = tabs.map((t) => `<button data-tab="${t}" class="${t === tab ? 'on' : ''}">${t.toUpperCase()}</button>`).join('');
   let body = '';
   if (tab === 'map') body = mapSvg(snap) + `<p class="hint">${esc(snap.map.note)}</p>`;
   if (tab === 'journey') body = `<div class="stats">${snap.journey.cells.map((c) => `<span><b>${esc(c.value)}</b><small>${esc(c.label)}</small></span>`).join('')}</div><p class="hint">${esc(snap.journey.drive || 'Not far yet today.')}</p><p class="hint">Coins ${snap.journey.money} · Bag: ${esc(snap.journey.bag)}</p><p class="hint">Photos ${snap.journey.photos} · Jobs done ${snap.journey.jobsDone} · Crashes this drive ${snap.journey.crashes} · Knocked over ${snap.journey.knockdowns}</p>`;
-  if (tab === 'jobs') body = snap.job ? `<p><b>${snap.job.kind === 'taxi' ? `Lift for ${esc(snap.job.passenger || 'a passenger')}` : `Parcel from ${esc(snap.job.from || 'the shop')}`}</b></p><p class="hint">To ${esc(snap.job.town)} · ${snap.job.pay} coins when you stop there${snap.job.distance != null ? ` · ${snap.job.distance}` : ''}</p><div class="row"><button data-act="drop">Give it up</button></div>` : `<p class="hint">No job on. Ask a shopkeeper about deliveries, or offer someone waiting at a bus stop a lift. Jobs pay ${snap.pay.delivery} and ${snap.pay.taxi} coins.</p>`;
+  const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  if (tab === 'jobs') body = snap.job ? (snap.job.kind === 'photo' ? `<p><b>A photo for ${esc(snap.job.from || 'the shop')}</b></p><p class="hint">Save a photo at a scenic viewpoint (U, then Enter) · ${snap.job.pay} coins</p>` : `<p><b>${snap.job.kind === 'taxi' ? `Lift for ${esc(snap.job.passenger || 'a passenger')}` : `${snap.job.due != null ? 'Express parcel' : 'Parcel'} from ${esc(snap.job.from || 'the shop')}`}</b></p><p class="hint">To ${esc(snap.job.town)} · ${snap.job.pay} coins when you stop there${snap.job.distance != null ? ` · ${snap.job.distance}` : ''}${snap.job.left != null ? ` · ${snap.job.left > 0 ? clock(snap.job.left) + ' left for the ' + snap.job.bonus + '-coin bonus' : 'too late for the bonus'}` : ''}</p>`) + `<div class="row"><button data-act="drop">Give it up</button></div>` : `<p class="hint">No job on. Ask a shopkeeper about deliveries, or offer someone waiting at a bus stop a lift. Jobs pay ${snap.pay.delivery} and ${snap.pay.taxi} coins.</p>`;
+  if (tab === 'cards') body = snap.postcards.length ? `<div class="cards">${snap.postcards.map((c) => `<figure><img src="${esc(c.src)}" alt=""><figcaption>${esc(c.name)}</figcaption></figure>`).join('')}</div>` : '<p class="hint">Every new place you find sends a postcard here. Follow the signposted ways at junctions.</p>';
   if (tab === 'home') {
     body = snap.home ? `<p><b>Home</b></p><p class="hint">${esc(snap.home.text)}</p><p class="hint">Park within sight of home and get out to come home. Homecomings so far: ${snap.home.homecomings}.</p>` : `<p class="hint">Home is where this road began. Drive back there, park, and get out.</p>`;
     const b = snap.board;
