@@ -62,7 +62,8 @@ export class Scenery {
     this.layouts = new Map(); this.time = 0;
     this.makeMaterials();
     this.glow = new GlowPoints(this.scene, 220, {fade: 1000});
-    this.lamps = [0, 1, 2].map(() => { const l = new T.PointLight(0xffd6a0, 0, 22, 1.8); this.scene.add(l); return l; });
+    // Real light from the street lamps nearest you (on foot or in the car): a warm pool on the pavement under each.
+    this.lamps = Array.from({length: 6}, () => { const l = new T.PointLight(0xffd6a0, 0, 24, 1.7); this.scene.add(l); return l; });
     this.lampColor = new T.Color(1, .82, .56);
   }
 
@@ -641,14 +642,14 @@ export class Scenery {
       const d = Math.hypot(l.x - camera.position.x, l.z - camera.position.z);
       if (d < 900) this.glow.add(l.x, l.y, l.z, this.lampColor, this.lit * .55, 30);
       const df = Math.hypot(l.x - focus.x, l.z - focus.z);
-      if (df < 40) near.push([df, l]);
+      if (df < 70) near.push([df, l]);
     }
     this.glow.end();
     near.sort((a, b) => a[0] - b[0]);
     this.lamps.forEach((light, i) => {
       const l = near[i]?.[1];
       if (!l) { light.intensity = 0; return; }
-      light.position.set(l.x, l.y - .3, l.z); light.intensity = 80 * this.lit;
+      light.position.set(l.x, l.y - .3, l.z); light.intensity = 80 * this.lit * (i < 3 ? 1 : .85);
     });
   }
 }

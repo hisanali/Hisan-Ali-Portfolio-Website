@@ -14,7 +14,9 @@
     "build:cube": "esbuild tools/rubiks-cube/studio.js --bundle --minify --format=iife --target=es2020 --outfile=tools/rubiks-cube/studio.bundle.js && esbuild tools/rubiks-cube/solver.worker.js --bundle --minify --format=iife --target=es2020 --outfile=tools/rubiks-cube/solver.bundle.js",
     "test:cube": "node scripts/test-cube.mjs",
     "test:cube-scan": "node scripts/test-cube-scan.mjs",
-    "build:evermile": "esbuild evermile/realtime-client.entry.js --bundle --minify --format=esm --target=es2020 --outfile=evermile/vendor/realtime-client.js"
+    "build:evermile": "esbuild evermile/realtime-client.entry.js --bundle --minify --format=esm --target=es2020 --outfile=evermile/vendor/realtime-client.js",
+    "test:evermile": "node --test tests/evermile/*.test.mjs",
+    "test:evermile-browser": "node scripts/test-evermile-browser.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",

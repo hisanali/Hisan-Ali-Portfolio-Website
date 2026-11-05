@@ -81,3 +81,19 @@ test('jobs pay when you stop in the right town, home is noted once per world, th
   assert.equal(recordDaily(j, d.date, 12.4), true); assert.equal(recordDaily(j, d.date, 11), false); assert.equal(dailyBest(j, d.date), 12.4);
   const store = memory(); j.job = {kind: 'delivery', town: 'Linden', pay: 15, from: 'HARDWARE', passenger: null}; saveJourney(store, j); const back = loadJourney(store, 0); assert.equal(back.job.town, 'Linden'); assert.equal(back.home.x, 99); assert.equal(back.daily[d.date], 12.4);
 });
+
+test('express jobs pay a bonus only in time, photo jobs are done at a viewpoint, postcards are kept once per place', async () => {
+  const {offerJob, completeJob, completePhotoJob, timeLeft, savePostcard, loadPostcards} = await import('../../evermile/journey.js');
+  const j = loadJourney(memory(), 0); j.money = 0; j.seconds = 100;
+  offerJob(j, 'delivery', 'Linden', 'HARDWARE', null, {express: 300}); assert.equal(timeLeft(j), 300);
+  j.seconds = 350; const fast = completeJob(j, 'Linden', 0); assert.equal(fast.paid, 25); assert.equal(fast.onTime, true);
+  offerJob(j, 'delivery', 'Linden', 'HARDWARE', null, {express: 60}); j.seconds += 120; const late = completeJob(j, 'Linden', 0); assert.equal(late.paid, 15); assert.equal(late.onTime, false);
+  assert.ok(offerJob(j, 'photo', '', 'BOOKS & CO')); assert.equal(completeJob(j, 'Linden', 0), null, 'a photo job is not a delivery');
+  assert.equal(completePhotoJob(j, false), null); assert.equal(completePhotoJob(j, true).paid, 10); assert.equal(j.job, null);
+  assert.equal(j.money, 50);
+  const store = memory();
+  assert.equal(savePostcard(store, 'lake', 'data:image/jpeg;base64,AAA'), true); assert.equal(savePostcard(store, 'lake', 'data:image/jpeg;base64,BBB'), false, 'one per place');
+  assert.equal(savePostcard(store, 'x', 'javascript:alert(1)'), false);
+  for (let i = 0; i < 20; i++) savePostcard(store, 'p' + i, 'data:image/jpeg;base64,C', 16);
+  const cards = loadPostcards(store); assert.equal(Object.keys(cards).length, 16); assert.equal(cards.lake, undefined, 'oldest dropped first');
+});
