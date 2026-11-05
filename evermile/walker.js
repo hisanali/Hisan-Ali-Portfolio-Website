@@ -2,6 +2,7 @@ import * as T from './vendor/three.module.js';
 import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
 import {fitCitizen} from './citizen-assets.js?v=20260927-train1';
 import {clamp, damp, angleDifference} from './math.js?v=20260927-train1';
+import {findBones, tuck, crouch, seat, hipsIn} from './pose.js?v=20261105-pose1';
 
 // You, on foot: one of the rigged civilians. Movement is relative to the camera: W walks where the camera looks,
 // A/D step sideways, S walks back, Shift runs; the body turns smoothly towards the way you are going. (Legacy
@@ -26,7 +27,7 @@ export class Walker {
     const mixer = new T.AnimationMixer(model), find = (n) => asset.animations.find((a) => a.name === n), fallback = asset.animations[0];
     const walk = mixer.clipAction(find('Walk') || fallback).play(), idle = mixer.clipAction(find('Idle') || fallback).play(), runClip = find('Run'), run = runClip ? mixer.clipAction(runClip).play() : null;
     idle.setEffectiveWeight(1); walk.setEffectiveWeight(0); run?.setEffectiveWeight(0);
-    this.detail = {mixer, walk, idle, run, blend: 0, runBlend: 0, stride: 1.15, runStride: 3.6}; this.key = key;
+    this.detail = {mixer, walk, idle, run, blend: 0, runBlend: 0, stride: 1.15, runStride: 3.6, model, bones: findBones(model)}; this.key = key;
   }
   undress() { if (!this.detail) return; this.detail.mixer?.stopAllAction(); for (const o of [...this.root.children]) this.root.remove(o); this.detail = null; this.key = null; }
 
@@ -37,7 +38,9 @@ export class Walker {
   hide() { this.root.visible = false; }
 
   // A jump: a hop from standing or a stride in motion; the body keeps its heading in the air.
-  jump() { if (!this.grounded || this.down > 0 || this.floor !== null && false) return false; this.vy = 4.3; this.grounded = false; this.y += .02; return true; }
+  jump() { if (!this.grounded || this.down > 0 || this.crouchT > 0 || this.landT > .1) return false; this.crouchT = .14; return true; }
+  // Sitting, posed on the rig: `seatY` is the world height of the seat; the hips are put on it.
+  sit(seatY, dt) { const d = this.detail; if (!d) return; d.mixer?.update(dt); if (!d.bones) return; this.root.rotation.set(0, this.yaw, 0); this.root.position.set(this.x, seatY, this.z); seat(d.bones, this.root); let h = hipsIn(d.bones, this.root); if (h) this.root.position.y = seatY - h.y * this.root.scale.y + .04; this.root.updateMatrixWorld(true); d.mixer?.update(0); seat(d.bones, this.root, {floorY: seatY - .47}); h = hipsIn(d.bones, this.root); if (h) this.root.position.y = seatY - h.y * this.root.scale.y + .04; }
   // Hit by a car: thrown along its direction, down on the ground for a moment, then up again.
   knock(dx, dz, speed) { if (this.down > 0) return; this.down = 2.4 + Math.min(1.6, speed * .1); this.throwX = dx * Math.min(6, 1.5 + speed * .3); this.throwZ = dz * Math.min(6, 1.5 + speed * .3); this.speed = 0; }
   // One step: `forward` −1..1, `turn` −1..1 (positive left), `run`; `colliders` are the solid things near by.
@@ -70,9 +73,13 @@ export class Walker {
     // Feet on the ground (a small drop is walked down, a bigger one is fallen).
     const ground = this.ground(this.x, this.z);
     if (this.y - ground > .35 && this.grounded) { this.vy = 0; this.grounded = false; }
-    if (!this.grounded) { this.vy -= 9.81 * dt; this.y += this.vy * dt; if (this.y <= ground && this.vy <= 0) { this.landed = this.vy < -2.5; this.y = ground; this.vy = 0; this.grounded = true; } }
+    if (this.crouchT > 0) { this.crouchT -= dt; if (this.crouchT <= 0) { this.crouchT = 0; this.vy = 3.1 + Math.min(.4, Math.abs(this.speed) * .06); this.grounded = false; this.y += .02; } }
+    if (!this.grounded) { this.vy -= 9.81 * dt; this.y += this.vy * dt; if (this.y <= ground && this.vy <= 0) { const hard = Math.min(1, -this.vy / 5); this.landed = this.vy < -2.5; this.landT = .12 + hard * .2; this.landHard = hard; this.speed *= 1 - hard * .35; this.y = ground; this.vy = 0; this.grounded = true; } }
     else this.y = damp(this.y, ground, 18, dt);
-    this.root.position.set(this.x, this.y + this.lie * .18, this.z); this.root.rotation.y = this.yaw; this.root.rotation.x = -this.lie * Math.PI / 2 * .92;
+    if (this.landT > 0) this.landT = Math.max(0, this.landT - dt);
+    // Knees bend in the crouch and on landing, so the hips drop and the feet stay on the ground.
+    const bend = this.crouchT > 0 ? .9 : this.landT > 0 ? Math.min(1, this.landT / .12) * (.4 + .6 * (this.landHard || 0)) : 0; this.bend = damp(this.bend || 0, bend, 30, dt);
+    this.root.position.set(this.x, this.y + this.lie * .18 - this.bend * .16, this.z); this.root.rotation.y = this.yaw; this.root.rotation.x = -this.lie * Math.PI / 2 * .92;
     // Pose.
     const d = this.detail; if (!d) return;
     if (d.placeholder) { d.placeholder.position.y = .85 + Math.abs(Math.sin(performance.now() * .012)) * Math.min(1, Math.abs(this.speed)) * .04; return; }
@@ -81,6 +88,7 @@ export class Walker {
     d.blend = damp(d.blend, moving ? 1 : 0, 12, dt); d.runBlend = damp(d.runBlend, running, 8, dt);
     d.idle.setEffectiveWeight(1 - d.blend); d.walk.setEffectiveWeight(d.blend * (1 - d.runBlend)); d.run?.setEffectiveWeight(d.blend * d.runBlend);
     d.walk.setEffectiveTimeScale(clamp(pace / d.stride, .3, d.run ? 1.6 : 3.1) * Math.sign(this.speed || 1)); d.run?.setEffectiveTimeScale(clamp(pace / d.runStride, .6, 1.5)); d.mixer.update(dt);
+    if (d.bones) { if (!this.grounded) tuck(d.bones, this.root, clamp(.55 + this.vy * .12, .25, .85)); else if (this.bend > .02) crouch(d.bones, this.root, this.bend); }
   }
   // Where the head is, for the camera.
   head(out) { return out.set(this.x, this.y + this.height * .92, this.z); }

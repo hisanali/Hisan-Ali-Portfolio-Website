@@ -387,7 +387,7 @@ export class Life {
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, front + 4); g.add(beam);
     batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
-    return {g, beam, kind: 'car', style: requestedStyle, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
+    return {g, beam, kind: 'car', paint: color, style: requestedStyle, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
   // A 12 m single-deck bus: rounded body, a long window band lit inside after dark, doors on the kerb side and a destination display.
@@ -741,7 +741,8 @@ export class Life {
     this.lamps(list, s, now, blink, lit, night);
     this.parked.forEach((c) => {
       if (off) { c.g.visible = false; return; }
-      if (c.z < s.z - 60 || c.z > s.z + 900 || c.version !== r.version && this.parkedMoved(c)) this.parkCar(c, s.z);
+      const fz = s.onFoot && s.walker ? s.walker.z : s.z;
+      if (c.z < fz - 60 || c.z > fz + 900 || c.version !== r.version && this.parkedMoved(c)) this.parkCar(c, fz);
       c.g.visible = !!c.spot;
     });
   }
