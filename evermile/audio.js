@@ -152,6 +152,17 @@ export class DriveAudio {
     src.connect(f).connect(g).connect(this.out); src.start(t, Math.random()); src.stop(t + len + .02);
     if (surface === 'gravel') for (let i = 0; i < 3; i++) { const s2 = ctx.createBufferSource(); s2.buffer = this.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = 3000; const g2 = ctx.createGain(); const d = .01 + i * .012; g2.gain.setValueAtTime(0, t + d); g2.gain.linearRampToValueAtTime(.08 * vol, t + d + .003); g2.gain.exponentialRampToValueAtTime(.0001, t + d + .03); s2.connect(f2).connect(g2).connect(this.out); s2.start(t + d, Math.random()); s2.stop(t + d + .05); }
   }
+  // The starter: a second of cranking (a low whine with a chug at the cranking rate), then the engine catches.
+  starter(seconds = 1.1) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
+    const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.linearRampToValueAtTime(150, t + seconds); lp.type = 'lowpass'; lp.frequency.value = 900;
+    const chug = ctx.createOscillator(), cg = ctx.createGain(); chug.type = 'square'; chug.frequency.value = 7.5; cg.gain.value = .45; const depth = ctx.createGain(); depth.gain.value = .5; chug.connect(cg).connect(depth.gain);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12 * vol, t + .05); g.gain.setValueAtTime(.12 * vol, t + seconds - .15); g.gain.linearRampToValueAtTime(0, t + seconds);
+    o.connect(lp).connect(depth).connect(g).connect(this.out); o.start(t); chug.start(t); o.stop(t + seconds + .02); chug.stop(t + seconds + .02);
+    // The catch: a short rev flare as it fires up.
+    const flare = ctx.createOscillator(), fg = ctx.createGain(); flare.type = 'sawtooth'; flare.frequency.setValueAtTime(55, t + seconds - .1); flare.frequency.exponentialRampToValueAtTime(140, t + seconds + .25); flare.frequency.exponentialRampToValueAtTime(70, t + seconds + .9);
+    fg.gain.setValueAtTime(0, t + seconds - .1); fg.gain.linearRampToValueAtTime(.16 * vol, t + seconds + .1); fg.gain.exponentialRampToValueAtTime(.0001, t + seconds + 1); flare.connect(fg).connect(this.out); flare.start(t + seconds - .1); flare.stop(t + seconds + 1.05);
+  }
   // A shop door chime: two bright notes.
   chime() {
     const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
@@ -180,8 +191,8 @@ export class DriveAudio {
       src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
     }
   }
-  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded}) {
-    this.lastVolume = volume;
+  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true}) {
+    this.lastVolume = volume; this.engineOn = engineOn;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
     const box = GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;
@@ -206,7 +217,7 @@ export class DriveAudio {
     this.rough.gain.setTargetAtTime(.12 + (1 - load) * .12, t, .1);
     this.engineLp.frequency.setTargetAtTime(420 + load * 3200 * e.bright + this.rpm * .22, t, .05);
     const cut = this.shiftDip > 0 ? .5 : 1;
-    this.engineGain.gain.setTargetAtTime(volume * e.level * (.45 + load * .55) * (.8 + rev * .3) * cut, t, .04);
+    this.engineGain.gain.setTargetAtTime(volume * e.level * (.45 + load * .55) * (.8 + rev * .3) * cut * (engineOn ? 1 : 0), t, engineOn ? .04 : .25);
     this.intake.g.gain.setTargetAtTime(volume * .025 * throttle * rev * e.bright, t, .06);
     this.intake.f.frequency.setTargetAtTime(700 + rev * 1400, t, .1);
     this.clatter.g.gain.setTargetAtTime(e.clatter ? volume * .018 * (.5 + load * .5) : 0, t, .1);

@@ -36,6 +36,8 @@ export class Walker {
   place(x, z, yaw) { this.x = x; this.z = z; this.yaw = yaw; this.speed = 0; this.vy = 0; this.down = 0; this.lie = 0; this.y = this.ground(x, z); this.root.position.set(x, this.y, z); this.root.rotation.set(0, yaw, 0); this.root.visible = true; }
   hide() { this.root.visible = false; }
 
+  // A jump: a hop from standing or a stride in motion; the body keeps its heading in the air.
+  jump() { if (!this.grounded || this.down > 0 || this.floor !== null && false) return false; this.vy = 4.3; this.grounded = false; this.y += .02; return true; }
   // Hit by a car: thrown along its direction, down on the ground for a moment, then up again.
   knock(dx, dz, speed) { if (this.down > 0) return; this.down = 2.4 + Math.min(1.6, speed * .1); this.throwX = dx * Math.min(6, 1.5 + speed * .3); this.throwZ = dz * Math.min(6, 1.5 + speed * .3); this.speed = 0; }
   // One step: `forward` −1..1, `turn` −1..1 (positive left), `run`; `colliders` are the solid things near by.
@@ -68,7 +70,7 @@ export class Walker {
     // Feet on the ground (a small drop is walked down, a bigger one is fallen).
     const ground = this.ground(this.x, this.z);
     if (this.y - ground > .35 && this.grounded) { this.vy = 0; this.grounded = false; }
-    if (!this.grounded) { this.vy -= 9.81 * dt; this.y += this.vy * dt; if (this.y <= ground) { this.y = ground; this.vy = 0; this.grounded = true; } }
+    if (!this.grounded) { this.vy -= 9.81 * dt; this.y += this.vy * dt; if (this.y <= ground && this.vy <= 0) { this.landed = this.vy < -2.5; this.y = ground; this.vy = 0; this.grounded = true; } }
     else this.y = damp(this.y, ground, 18, dt);
     this.root.position.set(this.x, this.y + this.lie * .18, this.z); this.root.rotation.y = this.yaw; this.root.rotation.x = -this.lie * Math.PI / 2 * .92;
     // Pose.
