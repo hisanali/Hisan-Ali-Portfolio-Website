@@ -201,9 +201,25 @@ export class TownLife {
         // Stop at a zebra or light crossing now and then to cross the road.
         const spots = [lay.zebra, lay.cross.kind === 'lights' ? lay.cross.z - 5.6 : null, lay.cross.kind === 'lights' ? lay.cross.z + 5.6 : null].filter((q) => q !== null);
         for (const zc of spots) if (Math.abs(p.z - zc) < .6 && p.lastSpot !== zc) { p.lastSpot = zc; if (Math.random() < .55) { p.state = 'wait'; p.z = zc + rand(-.6, .6); p.lane = w + .45; p.crossAt = zc; p.light = zc !== lay.zebra; p.timer = 0; } break; }
-        if (p.timer <= 0 && p.state === 'walk') { p.timer = rand(8, 25); if (Math.random() < .3) { p.state = 'look'; p.timer = rand(2.5, 7); } else if (Math.random() < .2) p.dir = -p.dir; }
+        if (p.timer <= 0 && p.state === 'walk') {
+          p.timer = rand(8, 25); const roll = Math.random();
+          const shopDoor = lay.lots.find((l) => l.kind === 'shop' && l.name && l.side === p.side && Math.abs(l.doorZ - p.z) < 9), bench = lay.benches.find((b) => b.side === p.side && Math.abs(b.z - p.z) < 6 && !this.people.some((o) => o !== p && o.state === 'bench' && o.benchZ === b.z));
+          const other = this.people.find((o) => o !== p && o.active && o.town === t && o.state === 'walk' && o.side === p.side && o.dir !== p.dir && (o.z - p.z) * p.dir > 0 && (o.z - p.z) * p.dir < 2.2);
+          if (roll < .12 && shopDoor) { p.state = 'shopping'; p.timer = rand(12, 40); p.shopZ = shopDoor.doorZ; p.hidden = true; }
+          else if (roll < .22 && bench) { p.state = 'bench'; p.timer = rand(15, 45); p.benchZ = bench.z; p.z = bench.z; p.lane = w + 2.6; }
+          else if (roll < .34 && other) { p.state = 'chat'; other.state = 'chat'; p.timer = other.timer = rand(8, 22); p.chatWith = other; other.chatWith = p; }
+          else if (roll < .55) { p.state = 'look'; p.timer = rand(2.5, 7); }
+          else if (roll < .7) p.dir = -p.dir;
+        }
       } else if (p.state === 'look') {
         if (p.talkUntil === undefined || this.time >= p.talkUntil) { p.timer -= dt; if (p.timer <= 0) { p.state = 'walk'; p.timer = rand(8, 25); } }
+      } else if (p.state === 'shopping') {
+        // Inside the shop: out of sight at the door, then back out with the shopping.
+        p.timer -= dt; p.z = p.shopZ; p.lane = w + 3.2; if (p.timer <= 0) { p.state = 'walk'; p.hidden = false; p.timer = rand(10, 30); p.bag = this.time + 60; }
+      } else if (p.state === 'bench') {
+        p.timer -= dt; if (p.timer <= 0) { p.state = 'walk'; p.timer = rand(8, 25); p.lane = w + rand(.95, 1.5); }
+      } else if (p.state === 'chat') {
+        p.timer -= dt; if (p.timer <= 0 || !p.chatWith?.active || p.chatWith.state !== 'chat') { p.state = 'walk'; p.timer = rand(8, 25); p.chatWith = null; }
       } else if (p.state === 'knocked') {
         // Knocked aside by a car: stagger to a stop, face it, then carry on (crossing again if that is where they were).
         p.timer -= dt; if (p.timer <= 0) { p.state = Math.abs(p.lane) > w + .3 ? 'walk' : 'cross'; p.timer = rand(6, 20); }
@@ -227,11 +243,17 @@ export class TownLife {
         p.z += dz / d * 1.4 * dt; p.x += dx / d * 1.4 * dt; p.yaw = Math.atan2(dx, dz); moving = true;
         this.pose(p, moving, rain, dt); continue;
       }
-      const lane = p.lane;
-      p.x = r.x(p.z) + p.side * lane; p.y = r.y(p.z) + (Math.abs(lane) > w ? .075 : .06);
+      let lane = p.lane;
+      if (s.onFoot && s.walker && p.state === 'walk') { const wd = (s.walker.z - p.z) * p.dir, wx = Math.abs(s.walker.x - (r.x(p.z) + p.side * lane)); if (wd > 0 && wd < 2.2 && wx < .9) { p.aside = (p.aside || 0) + ((s.walker.x - r.x(p.z)) * p.side < lane ? .7 : -.7) * .5; } }
+      if (p.aside) { lane += p.aside; p.aside *= Math.exp(-dt * 1.2); if (Math.abs(p.aside) < .02) p.aside = 0; }
+      if (s.knockdowns && s.knockdowns !== p.sawKnock && s.walker && Math.hypot(s.walker.x - p.x, s.walker.z - p.z) < 25) { p.sawKnock = s.knockdowns; this.talkTo(p, s.walker.x, s.walker.z, 4); }
+      if (s.horning && !p.waveUntil && Math.hypot(s.x - p.x, s.z - p.z) < 22 && Math.random() < .3) p.waveUntil = this.time + 2.2 + Math.random();
+      if (p.waveUntil && this.time > p.waveUntil) p.waveUntil = 0;
+      p.x = r.x(p.z) + p.side * lane; p.y = r.y(p.z) + (Math.abs(lane) > w ? .075 : .06) - (p.state === 'bench' ? .42 : 0);
       const along = Math.atan(r.tangent(p.z));
       if (p.talkUntil !== undefined && this.time >= p.talkUntil) { p.talkUntil = undefined; p.talkYaw = undefined; }
-      p.yaw = p.talkYaw !== undefined ? p.talkYaw : p.state === 'knocked' ? p.knockYaw : p.state === 'cross' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'wait' || p.state === 'bus' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'look' ? along + (p.side > 0 ? Math.PI / 2 : -Math.PI / 2) : along + (p.dir < 0 ? Math.PI : 0);
+      if (p.state === 'chat' && p.chatWith) p.talkYawChat = Math.atan2(p.chatWith.x - p.x, p.chatWith.z - p.z);
+      p.yaw = p.talkYaw !== undefined ? p.talkYaw : p.state === 'chat' ? p.talkYawChat ?? along : p.state === 'bench' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'knocked' ? p.knockYaw : p.state === 'cross' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'wait' || p.state === 'bus' ? along + (p.side > 0 ? -Math.PI / 2 : Math.PI / 2) : p.state === 'look' ? along + (p.side > 0 ? Math.PI / 2 : -Math.PI / 2) : along + (p.dir < 0 ? Math.PI : 0);
       this.pose(p, moving, rain, dt);
     }
   }
@@ -252,20 +274,21 @@ export class TownLife {
     const swing = moving ? Math.sin(p.phase) : Math.sin(p.phase * .3) * .04;
     const base = M.compose(V.set(p.x, p.y, p.z), Q.setFromEuler(E.set(0, p.yaw, 0)), S.setScalar(sc));
     const set = (mesh, k, x, y, z, rx = 0, rz = 0, sx = 1, sy = 1, sz = 1) => { M2.compose(V.set(x, y, z), Q.setFromEuler(E.set(rx, 0, rz)), S.set(sx, sy, sz)); mesh.setMatrixAt(k, M2.premultiply(base)); };
-    const bob = moving ? Math.abs(Math.cos(p.phase)) * .03 : 0;
-    set(P.torso, i, 0, 1.2 + bob, 0, moving ? .05 : 0);
-    set(P.head, i, 0, 1.62 + bob, .02);
-    set(P.hair, i, 0, 1.64 + bob, 0);
+    const bob = moving ? Math.abs(Math.cos(p.phase)) * .03 : 0, hidden = p.hidden ? 0 : 1, seated = p.state === 'bench';
+    set(P.torso, i, 0, 1.2 + bob, 0, moving ? .05 : 0, 0, hidden, hidden, hidden);
+    set(P.head, i, 0, 1.62 + bob, .02, 0, 0, hidden, hidden, hidden);
+    set(P.hair, i, 0, 1.64 + bob, 0, 0, 0, hidden, hidden, hidden);
     for (const k of [0, 1]) {
       const sgn = k ? 1 : -1, a = swing * .45 * sgn, knee = moving ? Math.max(0, -Math.sin(p.phase + (k ? 0 : Math.PI) + .6)) * .7 : 0;
-      M2.compose(V.set(sgn * .1, .9 + bob, 0), Q.setFromEuler(E.set(-a, 0, 0)), S.setScalar(1));
+      M2.compose(V.set(sgn * .1, .9 + bob, 0), Q.setFromEuler(E.set(seated ? -Math.PI / 2 : -a, 0, 0)), S.set(hidden, hidden, hidden));
       const hip = M2.clone().premultiply(base);
       P.thigh.setMatrixAt(i * 2 + k, hip);
-      const kneeM = new T.Matrix4().compose(V.set(0, -.44, 0), Q.setFromEuler(E.set(knee, 0, 0)), S.setScalar(1)).premultiply(hip);
+      const kneeM = new T.Matrix4().compose(V.set(0, -.44, 0), Q.setFromEuler(E.set(seated ? Math.PI / 2 : knee, 0, 0)), S.setScalar(1)).premultiply(hip);
       P.shin.setMatrixAt(i * 2 + k, kneeM);
       P.shoe.setMatrixAt(i * 2 + k, new T.Matrix4().makeTranslation(0, -.46, 0).premultiply(kneeM));
       const umbrellaArm = k === 1 && p.umbrella && rain > .25;
-      set(P.arm, i * 2 + k, sgn * .24, 1.45 + bob, 0, umbrellaArm ? -1.9 : a * 1.1 * -1 + (p.state === 'board' ? -.3 : 0), sgn * .08);
+      const waving = k === 1 && p.waveUntil && !umbrellaArm;
+      set(P.arm, i * 2 + k, sgn * .24, 1.45 + bob, 0, umbrellaArm ? -1.9 : waving ? -2.7 : a * 1.1 * -1 + (p.state === 'board' ? -.3 : 0), waving ? sgn * .08 + Math.sin(this.time * 9) * .25 : sgn * .08, hidden, hidden, hidden);
     }
     if(p.detailed){const zero=new T.Matrix4().makeScale(0,0,0);for(const key of ['torso','head','hair'])P[key].setMatrixAt(i,zero);for(const key of ['thigh','shin','shoe','arm'])for(const k of [0,1])P[key].setMatrixAt(i*2+k,zero);}
     const brolly = p.umbrella && rain > .25;

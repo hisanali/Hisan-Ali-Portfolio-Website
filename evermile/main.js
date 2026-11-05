@@ -3,7 +3,10 @@ import {Multiplayer} from './multiplayer.js?v=20261103-journey1';
 import {Intro} from './loader.js?v=20260926-intro1';
 import {readGamepad, padName, wakes, BUTTON_HELP} from './gamepad.js?v=20261103-realism1';
 import {loadJourney, saveJourney, startDrive, advance, foundPlace, summary, GOODS, STOCK, buy, useItem, bagText, offerJob, completeJob, dropJob, setHome, atHome, cameHome, dailySeed, recordDaily, dailyBest} from './journey.js?v=20261104-phone1';
-import {renderPhone} from './phone.js?v=20261104-phone1';
+import {renderPhone} from './phone.js?v=20261105-life1';
+import {fetchBoard, submitDrive} from './leaderboard.js?v=20261105-life1';
+import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
+import {fitCitizen} from './citizen-assets.js?v=20260927-train1';
 import {Interiors} from './interiors.js?v=20261104-shops1';
 import {conversation, nameFor} from './dialogue.js?v=20261104-talk1';
 import {citizenAssets} from './citizen-assets.js?v=20260927-train1';
@@ -73,7 +76,7 @@ function endAllTouchDrive() { for (const id of touchPointers.keys()) touchCounts
 const $ = (id) => document.getElementById(id);
 let renderer, world, vehicle, scene, camera, sun, hemi, pmrem, envTarget, effects, life, town, railway, atmo, windscreen, mirror, radio, underwater;
 // On foot: the walker, the car you last got out of when you took another, and what the X key would do right now.
-let walker = null, leftCar = null, footTarget = null, interiors = null, cardOpen = false, phoneTab = 'map';
+let walker = null, leftCar = null, footTarget = null, interiors = null, cardOpen = false, phoneTab = 'map', driver = null, driverKey = null, stepClock = 0, touchWalk = {forward: 0, turn: 0, run: false};
 const worldKey = () => `${settings.destination}|${settings.seed}|${settings.roadStyle}|${settings.location}`;
 const STYLE_TO_VEHICLE = {sedan: 'mercedes', mercedes: 'mercedes', hatch: 'grcorolla', grcorolla: 'grcorolla', suv: 'landcruiser', landcruiser: 'landcruiser', wagon: 'mercedes', pickup: 'landcruiser', van: 'landcruiser', bus: 'coach', coach: 'coach'};
 let last = 0, accumulator = 0, hudClock = 0, fpsTime = 0, fpsFrames = 0, panelOpen = false, frameId;
@@ -712,6 +715,7 @@ function updateCar(dt) {
   state.lamps ||= []; vehicle.headlights.forEach((l, i) => { const w = state.lamps[i] ||= {x: 0, y: 0, z: 0}; tmp.copy(l.position).z += .22; vehicle.group.localToWorld(tmp); w.x = tmp.x; w.y = tmp.y; w.z = tmp.z; }); state.lamps.length = vehicle.headlights.length;
   if (settings.vehicle === 'bike' && state.lamps.length === 2) { const [a, b] = state.lamps; a.x = (a.x + b.x) / 2; a.y = (a.y + b.y) / 2; a.z = (a.z + b.z) / 2; state.lamps.length = 1; }
   const inTunnel = !!world.road.tunnelAt(state.z);
+  updateDriver();
   vehicle.longAccel = state.accel || 0; vehicle.update(dt, (state.paused || panelOpen || state.inspection || !state.started) ? 0 : state.speed, state.steer, atmo.lit > .5 || state.headlights || inTunnel, keys.KeyS || keys.Space || (state.auto && state.brakeIn > .2), settings.camera === 2 && !state.inspection);
 }
 
@@ -880,6 +884,19 @@ function frame(now) {
   if (hudClock > .12) { hudClock = 0; updateHUD(); }
 }
 
+// You at the wheel: your outfit, seated in the driver's seat, shown from outside the car (never from the cockpit).
+function updateDriver() {
+  const key = settings.outfit, asset = detailedModels?.loaded[key], show = state.started && !state.onFoot && !state.inspection && settings.camera !== 2 && settings.vehicle !== 'bike' && asset;
+  if (show && driverKey !== key) { if (driver) { driver.mixer.stopAllAction(); driver.root.parent?.remove(driver.root); } const model = cloneSkin(asset.scene); fitCitizen(model, 2); model.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); const root = new T.Group(); root.add(model); const mixer = new T.AnimationMixer(model); mixer.clipAction(asset.animations.find((a) => a.name === 'Idle') || asset.animations[0]).play(); driver = {root, mixer, model}; driverKey = key; }
+  if (!driver) return;
+  if (driver.root.parent !== vehicle.group) { driver.root.parent?.remove(driver.root); vehicle.group.add(driver.root); }
+  driver.root.visible = !!show;
+  if (!show) return;
+  // Seated: the body sits low so the legs are below the floor pan, leaning back a touch, hands near the wheel.
+  const seatX = settings.vehicle === 'coach' ? 0 : (vehicle.seatX ?? .4), seatY = (vehicle.seatY ?? 1.43) - 1.38, seatZ = (vehicle.seatZ ?? -.05) - .1;
+  driver.root.position.set(seatX, seatY, seatZ); driver.root.rotation.set(-.12, 0, 0); driver.mixer.update(1 / 60);
+}
+
 /* ---------- On foot ---------- */
 // Step out beside the driver's door; the car stays exactly where it is.
 function exitCar() {
@@ -930,16 +947,18 @@ function footAction() { if (!state.started || state.transition || cardOpen) retu
 // What X does here: a car door, a shop door, the café, the petrol station shop, a bus stop; inside, the counter or the exit.
 function placeNearby() {
   if (!walker) return null;
-  const near = (x, z, d) => Math.hypot(walker.x - x, walker.z - z) < d;
+  const r = world.road, near = (x, z, d) => Math.hypot(walker.x - x, walker.z - z) < d;
+  if (state.sitting) return {label: 'STAND UP', go: () => standUp()};
   if (state.inside) {
     const c = state.inside.cell;
     if (near(c.door.x, c.door.z, 1.4)) return {label: 'LEAVE', go: () => leaveInterior()};
     if (near(c.counter.x, c.counter.z, 1.8)) return {label: 'BUY', go: () => openShop(c)};
+    for (const seat of c.seats || []) if (near(seat.x, seat.z, 1.1)) return {label: 'SIT', go: () => sitDown(seat)};
     return null;
   }
   const car = carNearby(); if (car) return {label: car.kind === 'own' ? 'GET IN' : car.kind === 'left' ? 'GET IN · YOUR OTHER CAR' : `GET IN · ${(car.car.style === 'bus' ? 'BUS' : car.car.style).toUpperCase()}`, go: () => enterCar(car)};
+  { const t = r.townAt(walker.z); if (t) for (const b of world.scenery.layout(t).benches) { const bx = r.x(b.z) + b.side * (r.half(b.z) + 2.6); if (near(bx, b.z, 1.3)) return {label: 'SIT ON THE BENCH', go: () => sitDown({x: bx, z: b.z, yaw: Math.atan(r.tangent(b.z)) + (b.side > 0 ? -Math.PI / 2 : Math.PI / 2), y: walker.ground(bx, b.z)})}; } }
   const person = town.nearest(walker.x, walker.z, 2.4); if (person) { const name = nameFor(person.i, person.town ? person.town.center : 0); return {label: `TALK · ${name.toUpperCase()}`, go: () => talkTo(person, name)}; }
-  const r = world.road;
   if (settings.location === 'hills') {
     const t = r.townAt(walker.z);
     if (t) { const lay = world.scenery.layout(t); for (const lot of lay.lots) if (lot.kind === 'shop' && lot.name && near(lot.doorX, lot.doorZ, 2.3)) return {label: `ENTER · ${lot.name}`, go: () => enterInterior(`shop:${t.start}:${lot.z}`, lot.name, STOCK[lot.name] || ['paper'], {x: lot.doorX, z: lot.doorZ, yaw: lot.doorYaw + Math.PI / 2})};
@@ -948,10 +967,14 @@ function placeNearby() {
   }
   return null;
 }
+// Sitting: on a café chair or a bench. Time passes four times faster while you sit; X stands you up.
+function sitDown(seat) { state.sitting = seat; walker.place(seat.x, seat.z, seat.yaw); walker.root.position.y = (seat.y ?? walker.y) - .42; walker.root.rotation.x = -.15; footTarget = null; toast('Sit a while · X to get up'); }
+function standUp() { const seat = state.sitting; state.sitting = null; walker.root.rotation.x = 0; walker.place(seat.x, seat.z, seat.yaw); footTarget = null; }
 function fadeThen(fn, hold = 450) { const fade = $('fade'); fade.classList.add('on'); setTimeout(() => { fn(); setTimeout(() => fade.classList.remove('on'), 120); }, hold); }
 function enterInterior(key, name, stock, back) {
   interiors ||= new Interiors(scene, settings);
   const cell = interiors.cell(key, name, stock); state.transition = {kind: 'door', t: 0, dur: .9}; driveAudio?.door(true);
+  setTimeout(() => driveAudio?.chime(), 500);
   fadeThen(() => { state.inside = {cell, back}; walker.floor = cell.floorY; walker.place(cell.door.x, cell.door.z - .4, Math.PI); footTarget = null; positionCamera(1, true); toast(`${name[0] + name.slice(1).toLowerCase()} · walk to the counter to buy, the door to leave`); });
 }
 function leaveInterior() {
@@ -970,7 +993,7 @@ function openShop(cell) {
   };
   render(); card.hidden = false;
 }
-function closeShop() { $('shop-card').hidden = true; cardOpen = false; }
+function closeShop() { $('shop-card').hidden = true; cardOpen = false; document.activeElement?.blur?.(); }
 
 /* ---------- The phone: map, journey, jobs, home; the daily road ---------- */
 // The next town with a different name from the one you are in, scanning the road ahead.
@@ -990,8 +1013,18 @@ function phoneSnapshot() {
   const home = journey.home && journey.home.world === worldKey() ? {text: `${(Math.hypot(journey.home.x - x0, journey.home.z - z0) / 1000).toFixed(1)} km away, ${journey.home.z < z0 ? 'back the way you came' : 'up the road'}.`, homecomings: journey.homecomings} : null;
   return {clock: atmo.clock, map: {z0, span, road: (z) => r.x(z) - x0, marks, note}, journey: {cells: sum.cells, drive: sum.drive, money: journey.money, bag: bagText(journey), photos: journey.photos, jobsDone: journey.jobsDone, crashes: state.crashes || 0, knockdowns: state.knockdowns || 0}, job: journey.job ? {...journey.job, distance: distanceToTown(journey.job.town)} : null, pay: {delivery: 15, taxi: 12}, home, daily};
 }
-function openPhone(tab = phoneTab) { if (!state.started) return; phoneTab = tab; cardOpen = true; const card = $('phone-card'); renderPhone(card, phoneSnapshot(), tab, {tab: (t) => openPhone(t), act: (a) => { if (a === 'drop') { dropJob(journey); saveJourney(storage, journey); toast('Job given up'); openPhone('jobs'); } }, close: closePhone}); card.hidden = false; }
-function closePhone() { $('phone-card').hidden = true; cardOpen = false; }
+function openPhone(tab = phoneTab) {
+  if (!state.started) return; phoneTab = tab; cardOpen = true; const card = $('phone-card');
+  const snap = phoneSnapshot(); snap.board = phoneBoard;
+  renderPhone(card, snap, tab, {tab: (t) => openPhone(t), act: (a, value) => {
+    if (a === 'drop') { dropJob(journey); saveJourney(storage, journey); toast('Job given up'); openPhone('jobs'); }
+    if (a === 'submit') { const d = dailySeed(), km = dailyBest(journey, d.date), name = String(value || '').trim(); if (!name) { toast('Give yourself a name first'); return; } try { localStorage.setItem('evermile-name', name); } catch {} submitDrive(d.date, name, km).then((r) => { toast(r.ok ? 'Your drive is on today’s board' : `Couldn’t submit: ${r.why}`); if (r.ok) loadBoard(true); }); }
+  }, close: closePhone}); card.hidden = false;
+  if (tab === 'home') loadBoard();
+}
+let phoneBoard = null, boardLoadedFor = null;
+function loadBoard(force = false) { const d = dailySeed(); if (!force && boardLoadedFor === d.date) return; boardLoadedFor = d.date; phoneBoard = {loading: true, rows: [], name: (() => { try { return localStorage.getItem('evermile-name') || ''; } catch { return ''; } })()}; fetchBoard(d.date).then((r) => { phoneBoard = {loading: false, ok: r.ok, rows: r.rows, why: r.why, name: phoneBoard.name}; if (!$('phone-card').hidden && phoneTab === 'home') openPhone('home'); }); }
+function closePhone() { $('phone-card').hidden = true; cardOpen = false; document.activeElement?.blur?.(); }
 // A conversation card: their line, your replies, their answer; a reply can be a service with a price.
 function talkCard(context, onDone) {
   const t = conversation(context), card = $('shop-card'); cardOpen = true; if (context.extra?.length) t.replies.splice(t.replies.length - 1, 0, ...context.extra);
@@ -1044,23 +1077,27 @@ function leaveBus() {
 // Each frame on foot: keys (or a controller) move the walker, solid things keep it out, and the prompt follows the nearest door.
 function walkStep(dt) {
   if (state.paused || panelOpen) return;
-  const pad = padInput, forward = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + (pad ? pad.throttle - pad.brake : 0);
-  const turn = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) + (pad ? pad.input : 0), run = !!(keys.ShiftLeft || keys.ShiftRight || pad?.held.handbrake);
+  const pad = padInput, forward = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + (pad ? pad.throttle - pad.brake : 0) + touchWalk.forward;
+  const turn = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) + (pad ? pad.input : 0) + touchWalk.turn, run = !!(keys.ShiftLeft || keys.ShiftRight || pad?.held.handbrake || touchWalk.run);
   const outfit = settings.outfit, asset = detailedModels?.loaded[outfit]; walker.dress(asset, asset ? outfit : 'placeholder');
   const own = {x: state.x, z: state.z, hx: settings.vehicle === 'coach' ? 1.3 : .95, hz: settings.vehicle === 'coach' ? 6 : 2.3, c: Math.cos(state.yaw), s: Math.sin(state.yaw)};
   const colliders = [...world.collidersNear(walker.x, walker.z, 8), ...life.colliders(walker.x, walker.z, 8), ...railway.colliders(walker.x, walker.z, 8), ...town.colliders(walker.x, walker.z, 6), own];
   if (leftCar) colliders.push({x: leftCar.group.position.x, z: leftCar.group.position.z, hx: .95, hz: 2.3, c: Math.cos(leftCar.group.rotation.y), s: Math.sin(leftCar.group.rotation.y)});
   if (state.riding) { rideStep(dt); return; }
   if (state.inside) { let keeperKey = /BARBER|HARDWARE|PETROL/.test(state.inside.cell.name) ? 'man-worker' : 'woman-casual'; if (keeperKey === settings.outfit) keeperKey = keeperKey === 'man-worker' ? 'man-suit' : 'woman-formal'; interiors.keep(state.inside.cell, detailedModels?.loaded[keeperKey], keeperKey); }
+  if (state.sitting) { walker.detail?.mixer?.update(dt); walker.root.position.y = (state.sitting.y ?? walker.y) - .42; if (settings.clock === 'live') atmo.hour = (atmo.hour + dt * 3 / 1800) % 24; const t = placeNearby(), label = t ? t.label : 'SITTING'; if (label !== footTarget) { footTarget = label; $('foot-label').textContent = label; $('drive-status').textContent = label + ' · X'; } return; }
   const moving = !state.transition && !cardOpen;
   walker.update(dt, moving ? {forward: clamp(forward, -1, 1), turn: clamp(turn, -1, 1), run} : {}, state.inside ? state.inside.cell.colliders : colliders, settings.location === 'hills' && !state.inside ? world.water.position.y : -1e9);
+  // Footsteps follow the stride; the surface sets the sound.
+  const pace = Math.abs(walker.speed); if (pace > .3) { stepClock += dt * pace / (run ? .95 : .72); if (stepClock >= 1) { stepClock = 0; const surface = state.inside ? 'indoor' : world.onPaved(walker.x, walker.z) ? 'paved' : state.offroadWalk ? 'grass' : world.roadside?.inField?.(walker.x, walker.z) ? 'gravel' : 'grass'; driveAudio?.footstep(surface, run); } } else stepClock = .7;
   state.walker ||= {x: 0, z: 0}; state.walker.x = walker.x; state.walker.z = walker.z;
   const t = placeNearby(), label = t ? t.label : 'ON FOOT';
   if (label !== footTarget) { footTarget = label; $('foot-label').textContent = t ? label : 'WALK'; $('drive-status').textContent = t ? label + ' · X' : state.inside ? state.inside.cell.name : 'ON FOOT · SHIFT TO RUN'; }
 }
 function walkerCamera(dt, instant) {
   const fx = Math.sin(walker.yaw), fz = Math.cos(walker.yaw), head = walker.head(tmp); if (state.riding) head.y = walker.y + 2.6;
-  const yaw = walker.yaw + Math.PI + driveOrbit.yaw, pitch = clamp(.22 + driveOrbit.pitch, .02, 1.2), radius = 3.6 * Math.max(1, .9 / camera.aspect);
+  // Seated outdoors (a bench against a shopfront), the camera looks at you from the street side instead of from the wall behind.
+  const yaw = walker.yaw + (state.sitting && !state.inside ? Math.PI * .3 : Math.PI) + driveOrbit.yaw, pitch = clamp(.22 + driveOrbit.pitch, .02, 1.2), radius = (state.sitting ? 3 : 3.6) * Math.max(1, .9 / camera.aspect);
   cameraPos.set(head.x + Math.sin(yaw) * Math.cos(pitch) * radius, head.y - .1 + Math.sin(pitch) * radius, head.z + Math.cos(yaw) * Math.cos(pitch) * radius);
   if (state.inside) { const c = state.inside.cell; cameraPos.y = Math.min(Math.max(cameraPos.y, c.floorY + .4), c.floorY + 2.9); cameraPos.x = clamp(cameraPos.x, c.x0 - 4.2, c.x0 + 4.2); cameraPos.z = clamp(cameraPos.z, -3.2, 3.2); }
   else if (state.riding) { cameraPos.y = Math.max(cameraPos.y, walker.y + 2.2); }
@@ -1151,7 +1188,7 @@ function updateHUD() {
 export function updateUI() {
   $('autodrive-btn').classList.toggle('active', state.auto); $('autodrive-btn').setAttribute('aria-pressed', String(state.auto));
   $('drive-status').textContent = state.onFoot ? 'ON FOOT · SHIFT TO RUN' : state.auto ? 'ENJOY THE VIEW' : state.cruise ? 'CRUISE CONTROL' : 'TAKE THE SCENIC ROUTE';
-  $('foot-label').textContent = state.onFoot ? 'WALK' : 'GET OUT'; document.body.classList.toggle('on-foot', !!state.onFoot); for (const id of ['autodrive-wrap', 'ind-left-btn', 'ind-right-btn', 'horn-btn', 'camera-btn']) $(id)?.classList.toggle('foot-hidden', !!state.onFoot);
+  $('foot-label').textContent = state.onFoot ? 'WALK' : 'GET OUT'; document.body.classList.toggle('on-foot', !!state.onFoot); $('walk-stick').hidden = !(state.onFoot && matchMedia('(hover:none) and (pointer:coarse)').matches); for (const id of ['autodrive-wrap', 'ind-left-btn', 'ind-right-btn', 'horn-btn', 'camera-btn']) $(id)?.classList.toggle('foot-hidden', !!state.onFoot);
   $('scene-label').innerHTML = (settings.location === 'hills' ? (world.road.districtAt(state.z) ? DESTINATIONS[world.road.districtAt(state.z).district].name.toUpperCase() : 'HILLS') : 'OFF-WORLD') + ' <span>/</span> ' + (settings.location === 'hills' ? settings.season : settings.planet).toUpperCase();
   $('camera-label').textContent = ['CHASE', 'FAR CHASE', 'COCKPIT', 'BONNET', 'BUMPER', 'CINEMATIC'][settings.camera];
   $('speed-unit').textContent = settings.units === 'mi' ? 'MPH' : 'KM / H'; document.querySelector('.journey>span').textContent = settings.units === 'mi' ? 'MILES' : 'KILOMETERS';
@@ -1198,6 +1235,7 @@ function updateAudio(dt = 0) {
   windGain.gain.setTargetAtTime(active * .14 * Math.min(Math.abs(state.speed) / 25, 1), audioContext.currentTime, .3);
   for (const k in mixer) mixer[k].gain.setTargetAtTime(settings[k + 'Volume'], audioContext.currentTime, .1);
   muffle?.frequency.setTargetAtTime(state.underwater ? 360 : state.depth > .3 ? 2400 : 20000, audioContext.currentTime, .12);
+  if (driveAudio) { driveAudio.chatter(!!state.inside && active > 0, /CAF|TEA|BAKERY|PIZZA|ICE|SWEET/.test(state.inside?.cell.name || '') ? 'cafe' : 'shop'); const tf = world.road.townFactor(state.onFoot ? walker.z : state.z); driveAudio.townHum(active > 0 && !state.inside ? (state.onFoot ? .9 : .35) * tf : 0); }
   radio?.update(dt);
   // Indicator relay: tick on, tock off.
   const blink = state.indicator ? Math.floor(performance.now() / 380) % 2 : null;
@@ -1263,6 +1301,14 @@ function initUI() {
   for (const button of document.querySelectorAll('[data-panel]')) button.onclick = () => openPanel(button.dataset.panel);
   $('settings-btn').onclick = () => openPanel('settings'); $('help-btn').onclick = () => openPanel('help'); $('exit-inspection').onclick = () => inspectCar(false);
   bindCameraDrag(); $('close-panel').onclick = closePanel; updateUI(); updateIndicatorHUD();
+  // The walking stick: drag the knob, forward/back is walking, left/right is turning; the run button toggles.
+  { const base = document.querySelector('.stick-base'), knob = document.querySelector('.stick-knob'); let id = null;
+    const set = (e) => { const r = base.getBoundingClientRect(), dx = clamp((e.clientX - r.left - r.width / 2) / (r.width / 2), -1, 1), dy = clamp((e.clientY - r.top - r.height / 2) / (r.height / 2), -1, 1); touchWalk.forward = -dy; touchWalk.turn = -dx; knob.style.transform = `translate(${dx * 30}px, ${dy * 30}px)`; };
+    base.onpointerdown = (e) => { e.preventDefault(); id = e.pointerId; base.setPointerCapture(id); set(e); };
+    base.onpointermove = (e) => { if (e.pointerId === id) set(e); };
+    const end = (e) => { if (e.pointerId !== id) return; id = null; touchWalk.forward = 0; touchWalk.turn = 0; knob.style.transform = ''; };
+    base.onpointerup = end; base.onpointercancel = end; base.onlostpointercapture = end;
+    $('run-btn').onclick = () => { touchWalk.run = !touchWalk.run; $('run-btn').setAttribute('aria-pressed', String(touchWalk.run)); }; }
 }
 
 function releaseCameraDrag(reset = false) {
