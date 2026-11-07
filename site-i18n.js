@@ -42,6 +42,10 @@
     if (parts[0] === 'blog' && parts.length > 1) return 'blog-article';
     return parts.join('--');
   })();
+  const postKey = (() => {
+    const parts = pagePath.replace(/^\/+/, '').split('/');
+    return parts[0] === 'blog' && parts.length === 2 ? `blog--${parts[1]}` : '';
+  })();
 
   /* ---------- Text discovery ---------- */
   const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA', 'SVG', 'CANVAS', 'TEMPLATE', 'IFRAME', 'VIDEO', 'AUDIO', 'MATH', 'SELECT']);
@@ -251,7 +255,7 @@
   };
 
   /* ---------- Blog articles ---------- */
-  const prepareArticle = () => {
+  const prepareArticle = (hasPostDictionary) => {
     const article = document.getElementById('blog-content');
     if (!article) return;
     const hasArabic = Boolean(window.blogLanguagePage?.translations?.ar);
@@ -265,6 +269,11 @@
       // the article's current layout; only hand the body over if it really changed.
       const bodyText = article.querySelector('p')?.textContent || '';
       if (/[\u0600-\u06FF]/.test(bodyText)) { article.setAttribute('data-i18n-managed', ''); return; }
+    }
+    // Posts with their own Arabic dictionary are translated in place like any page.
+    if (hasPostDictionary || extractMode) {
+      document.querySelector('.blog-post-header h1')?.removeAttribute('data-i18n-managed');
+      return;
     }
     article.setAttribute('data-i18n-skip', '');
     article.setAttribute('dir', 'ltr');
@@ -369,11 +378,14 @@
     syncControls();
     const safety = setTimeout(reveal, 2500);
     // Articles also use the blog index dictionary for related-post titles and excerpts.
+    // Articles also use the blog index dictionary (related-post titles) and their own post dictionary.
     const extra = pageKey === 'blog-article' ? loadJson('blog') : Promise.resolve({});
-    Promise.all([loadJson('common'), extra, loadJson(pageKey)]).then(([common, blog, page]) => {
-      dictionary = Object.assign({}, common, blog, page);
+    const post = postKey ? loadJson(postKey) : Promise.resolve({});
+    Promise.all([loadJson('common'), extra, loadJson(pageKey), post]).then(([common, blog, page, postDictionary]) => {
+      dictionary = Object.assign({}, common, blog, page, postDictionary);
+      const hasPostDictionary = Object.keys(postDictionary).length > 20;
       compilePatterns();
-      prepareArticle();
+      prepareArticle(hasPostDictionary);
       translateHead();
       walk(document.body);
       observe();
