@@ -383,7 +383,8 @@
     const post = postKey ? loadJson(postKey) : Promise.resolve({});
     Promise.all([loadJson('common'), extra, loadJson(pageKey), post]).then(([common, blog, page, postDictionary]) => {
       dictionary = Object.assign({}, common, blog, page, postDictionary);
-      const hasPostDictionary = Object.keys(postDictionary).length > 20;
+      // A page or post dictionary of its own means the article body is translated too.
+      const hasPostDictionary = Object.keys(postDictionary).length > 20 || (pageKey !== 'blog-article' && Object.keys(page).length > 20);
       compilePatterns();
       prepareArticle(hasPostDictionary);
       translateHead();

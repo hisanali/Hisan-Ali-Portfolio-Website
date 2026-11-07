@@ -193,10 +193,13 @@
  "WhatsApp +968 9611 0846": "واتساب ‎+968 9611 0846",
  "Connect on LinkedIn": "تواصل عبر لينكدإن",
  "Muscat · <0>11:37 GST</0>": "مسقط · <0>11:37 GST</0>",
- "Working hours — replies within 1–2 days": "ساعات العمل — الرد خلال 1–2 يوم",
- "After hours — replies within 1–2 days": "خارج أوقات العمل — أرد خلال 1–2 يوم",
+ "Working hours — replies within 1–2 days": "ساعات العمل — الرد خلال يوم إلى يومين",
+ "After hours — replies within 1–2 days": "خارج ساعات العمل — الرد خلال يوم إلى يومين",
  "Right now, probably…": "الآن، على الأرجح…",
  "mapping what people in Oman Google before they buy.": "أرصد ما يبحث عنه الناس في عُمان على جوجل قبل أن يشتروا.",
  "building something odd for the Lab.": "أبني شيئًا غريبًا للمختبر.",
- "Copied": "تم النسخ"
+ "Copied": "تم النسخ",
+ "Muscat · <0>08:08 GST</0>": "مسقط · <0>08:08 GST</0>",
+ "Muscat ·": "مسقط ·",
+ "re:^(\\d{1,2}:\\d{2}) GST$": "$1 بتوقيت الخليج"
 }
