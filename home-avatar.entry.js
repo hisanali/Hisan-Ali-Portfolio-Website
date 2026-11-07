@@ -18,6 +18,7 @@ if (stage) {
   const DEPTH = stage.dataset.depth;
   const ASPECT = 744 / 1144; // photo width / height
   const HEIGHT = 1.75;
+  const FIT = Number(stage.dataset.fit || 0.94); // share of the panel height the figure fills
 
   const supportsWebGL = (() => {
     try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
@@ -106,7 +107,7 @@ if (stage) {
       // Fit the figure to ~94% of the panel height (or width on narrow panels)
       // and stand it on the bottom edge of the panel.
       const tan = Math.tan(MathUtils.degToRad(camera.fov / 2));
-      const byHeight = HEIGHT / 0.94 / (2 * tan);
+      const byHeight = HEIGHT / FIT / (2 * tan);
       const byWidth = (HEIGHT * ASPECT) / 0.9 / (2 * tan * camera.aspect);
       const distance = Math.max(byHeight, byWidth);
       const viewHeight = 2 * distance * tan;
@@ -151,11 +152,11 @@ if (stage) {
       const ease = 1 - Math.pow(0.04, dt);
       lookX += ((hovering ? hoverX : 0) - lookX) * ease;
       lookY += ((hovering ? hoverY : 0) - lookY) * ease;
-      figure.rotation.y = (drift * 0.022 + lookX * 0.085) * motion;
-      figure.rotation.x = (nod * 0.006 + lookY * 0.03) * motion;
+      figure.rotation.y = (drift * 0.018 + lookX * 0.045) * motion;
+      figure.rotation.x = (nod * 0.005 + lookY * 0.014) * motion;
       const head = uniforms.uHead.value;
-      head.x = ((Math.sin(t * 0.29 + 0.4) * 0.6 + drift * 0.4) * 0.02 + lookX * 0.07) * motion;
-      head.y = ((Math.sin(t * 0.21 + 2.1) * 0.6 + nod * 0.4) * 0.01 + lookY * 0.035) * motion;
+      head.x = ((Math.sin(t * 0.29 + 0.4) * 0.6 + drift * 0.4) * 0.016 + lookX * 0.035) * motion;
+      head.y = ((Math.sin(t * 0.21 + 2.1) * 0.6 + nod * 0.4) * 0.008 + lookY * 0.018) * motion;
       uniforms.uBreath.value = Math.sin(t * 1.55) * motion;
       renderer.render(scene, camera);
     };

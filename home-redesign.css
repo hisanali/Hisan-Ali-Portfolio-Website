@@ -730,30 +730,11 @@ html.theme-dark .partner-stage .about-columns p { color: #a5b1ab; }
 .partner-tags li:nth-child(3n+2) { background: #fff; box-shadow: 0 14px 30px -16px rgba(20, 37, 31, .45), inset 0 0 0 1px rgba(20, 37, 31, .1); }
 .partner-visual .portrait-caption { color: #fff; background: rgba(20, 37, 31, .82); border-color: rgba(20, 37, 31, .2); }
 
-/* ===== Meet me in 3D ===== */
-.avatar-section { position: relative; background: #f8f5ef; overflow: hidden; }
-html.theme-dark .avatar-section { background: #101814; }
-.avatar-shell { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(28px, 5vw, 80px); align-items: center; }
-.avatar-copy h2 { margin: 18px 0 18px; font-family: var(--display); font-size: clamp(48px, 5.2vw, 78px); line-height: .95; letter-spacing: -.04em; font-weight: 400; color: var(--ink); }
-.avatar-copy h2 em { color: var(--orange); }
-.avatar-copy > p { max-width: 440px; margin: 0 0 26px; color: var(--muted); font-size: 15px; line-height: 1.75; }
-.avatar-hints { display: grid; gap: 10px; margin: 0 0 32px; padding: 0; list-style: none; }
-.avatar-hints li { display: flex; align-items: center; gap: 12px; color: var(--ink); font-size: 14px; font-weight: 700; }
-.avatar-hints li span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: var(--on-lime); background: var(--lime); font-size: 15px; }
-.avatar-link { color: var(--ink) !important; border-bottom-color: var(--orange); }
-html.theme-dark .avatar-link { color: #f2efe7 !important; }
-.avatar-stage { position: relative; height: clamp(520px, 52vw, 720px); overflow: hidden; border-radius: 34px; background: radial-gradient(70% 60% at 50% 38%, #ffffff 0%, #f1f1ec 52%, #dfe3dc 100%); box-shadow: inset 0 0 0 1px rgba(20, 37, 31, .08), 0 40px 80px -50px rgba(10, 32, 24, .45); }
-.avatar-stage::before { content: ""; position: absolute; left: 50%; bottom: -30%; width: 80%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(223, 255, 103, .55), rgba(223, 255, 103, 0) 65%); transform: translateX(-50%); pointer-events: none; }
-.avatar-canvas { position: absolute; inset: 0; z-index: 1; }
-.avatar-canvas canvas { display: block; width: 100% !important; height: 100% !important; opacity: 0; transition: opacity .8s ease; }
-.avatar-stage.is-ready .avatar-canvas canvas { opacity: 1; }
-.avatar-fallback { position: absolute; z-index: 0; left: 50%; bottom: 0; height: 88%; width: auto; transform: translateX(-50%); transition: opacity .6s ease; }
-.avatar-stage.is-ready .avatar-fallback { opacity: 0; }
-.avatar-badge { position: absolute; z-index: 2; left: 20px; top: 20px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 999px; color: #fff; background: rgba(20, 37, 31, .85); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.avatar-badge i { width: 8px; height: 8px; border-radius: 50%; background: #5fe08a; animation: partner-pulse 2s ease-out infinite; }
-.avatar-status { position: absolute; z-index: 2; right: 22px; top: 22px; color: rgba(20, 37, 31, .6); font-size: 12px; font-weight: 800; }
-@media (max-width: 980px) {
-  .avatar-shell { grid-template-columns: 1fr; }
-  .avatar-stage { height: clamp(560px, 135vw, 680px); }
-}
-@media (prefers-reduced-motion: reduce) { .avatar-badge i { animation: none; } }
+
+
+/* Live 3D portrait inside the partner panel: the canvas replaces the photo once ready */
+.partner-canvas { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.partner-canvas canvas { display: block; width: 100% !important; height: 100% !important; opacity: 0; filter: drop-shadow(0 26px 30px rgba(20, 37, 31, .22)); transition: opacity .7s ease; }
+.partner-visual.is-ready .partner-canvas canvas { opacity: 1; }
+.partner-visual.is-ready .partner-photo { opacity: 0; }
+.partner-photo { transition: opacity .7s ease; }
