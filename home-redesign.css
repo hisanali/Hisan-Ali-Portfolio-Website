@@ -718,3 +718,14 @@ html.theme-dark .partner-stage .about-columns p { color: #a5b1ab; }
 @media (prefers-reduced-motion: reduce) {
   .partner-orbit, .partner-tags li, .partner-visual .portrait-caption i { animation: none; }
 }
+
+/* Light studio backdrop that matches the portrait's original white background,
+   so the fine hair edges of the cut-out blend in. */
+.partner-visual { background: radial-gradient(110% 80% at 50% 30%, #ffffff 0%, #f3f3ef 45%, #e3e6df 100%); box-shadow: 0 40px 80px -50px rgba(10, 32, 24, .45), inset 0 0 0 1px rgba(20, 37, 31, .08); }
+.partner-visual::before { background-image: radial-gradient(rgba(20, 37, 31, .13) 1px, transparent 1.2px); }
+.partner-visual::after { height: 18%; background: linear-gradient(180deg, transparent, rgba(20, 37, 31, .12)); }
+.partner-word { -webkit-text-stroke: 1.5px rgba(23, 56, 45, .32); }
+.partner-orbit { border-color: rgba(23, 56, 45, .26); }
+.partner-photo { filter: contrast(1.04) drop-shadow(0 26px 30px rgba(20, 37, 31, .22)); }
+.partner-tags li:nth-child(3n+2) { background: #fff; box-shadow: 0 14px 30px -16px rgba(20, 37, 31, .45), inset 0 0 0 1px rgba(20, 37, 31, .1); }
+.partner-visual .portrait-caption { color: #fff; background: rgba(20, 37, 31, .82); border-color: rgba(20, 37, 31, .2); }
