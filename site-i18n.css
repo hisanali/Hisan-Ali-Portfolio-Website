@@ -82,3 +82,24 @@ html[dir="rtl"] .ua-symbol-icon.ua-symbol-solo { margin-right: 0; }
   font-size: 15px; font-weight: 600; line-height: 1.7; text-align: right;
 }
 html.lang-ar [dir="ltr"][data-i18n-skip] { text-align: left; }
+
+/* Decorative labels drawn by CSS content (not reachable by the text translator). */
+html.lang-ar .redesign-interior.page-blog-article .author-card::before { content: "بقلم"; }
+html.lang-ar .redesign-interior.page-blog-article .blog-post-hero::after { content: "مقالات"; }
+html.lang-ar .redesign-interior.page-blog-article .blog-featured-image::after { content: "قصة مميزة"; }
+html.lang-ar .redesign-interior.page-blog-article .blog-post-content .tip-box::before,
+html.lang-ar .redesign-interior.page-blog-article .blog-post-content .info-box::before { content: "ملاحظة"; }
+html.lang-ar .redesign-interior.page-about .skills-section::after { content: "الخبرات"; }
+html.lang-ar .redesign-interior.page-contact .contact-form-side::before { content: "طلب مشروع"; }
+html.lang-ar .field-guide-page .pocket-note::before { content: "ملاحظة ميدانية"; }
+html.lang-ar .sv-card.is-recommended::after { content: "موصى به"; }
+html.lang-ar .gx-goal.is-suggested::before { content: "اختيارك"; }
+html.lang-ar .page-work .proof-hero::before { content: "الأعمال"; }
+html.lang-ar body.tm-page .tm-steps a::before { content: "الخطوة "; }
+html.lang-ar .ig-guide .ig-t.r::after { content: "إعادة نشر"; }
+html.lang-ar :is(.multi-scoreboard, .tic-players) > div.is-active-turn::after { content: "يلعب الآن"; }
+html.lang-ar :is(.multi-scoreboard, .tic-players) > div.is-active-turn.is-your-card::after { content: "دورك"; }
+html.lang-ar :is(.multi-scoreboard, .tic-players) > div.is-winner::after { content: "الفائز"; }
+html.lang-ar .game-stage :is(.tic-mode-switch, .multi-mode) button:is([data-tic-mode="online"], [data-multi-mode="online"]):not(.is-active)::after { content: "مباشر"; }
+html.lang-ar .game-stage .game-panel-info > p::before { content: "طريقة اللعب"; }
+html.lang-ar .game-stage .game-panel.is-multi-online .game-panel-info > p::before { content: "مباراة عبر الإنترنت"; }
