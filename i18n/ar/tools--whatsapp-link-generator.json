@@ -69,5 +69,10 @@
  "Chat on WhatsApp": "تواصل عبر واتساب",
  "WhatsApp link copied": "تم نسخ رابط واتساب",
  "Button code copied": "تم نسخ كود الزر",
- "QR code downloaded": "تم تنزيل رمز QR"
+ "QR code downloaded": "تم تنزيل رمز QR",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2",
+ "re:^Number used: \\+(.+?)$": "الرقم المستخدم: +$1"
 }

@@ -73,5 +73,18 @@
  "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
  "Sample document": "مستند تجريبي",
  "Enter a cost per click and conversion rate.": "أدخل تكلفة النقرة ومعدل التحويل.",
- "Made with hisanali.com/tools/google-ads-calculator/": "صُنع باستخدام hisanali.com/tools/google-ads-calculator/"
+ "Made with hisanali.com/tools/google-ads-calculator/": "صُنع باستخدام hisanali.com/tools/google-ads-calculator/",
+ "re:^Healthy: every (.+?) 1 in ads brings back about (.+?) (.+?) in sales\\.$": "وضع صحي: كل 1 $1 تنفقه على الإعلانات يعيد نحو $2 $3 من المبيعات.",
+ "re:^Google Ads estimate \\((.+?)\\)$": "تقدير إعلانات جوجل ($1)",
+ "re:^Monthly budget: (.+?)$": "الميزانية الشهرية: $1",
+ "re:^Avg\\. CPC: (.+?) · Conversion rate: (.+?)% · Close rate: (.+?)%$": "متوسط CPC: $1 · معدل التحويل: $2% · معدل إتمام البيع: $3%",
+ "re:^Clicks: (.+?) · Leads: (.+?) · Cost per lead: (.+?)$": "النقرات: $1 · العملاء المحتملون: $2 · تكلفة العميل المحتمل: $3",
+ "re:^Customers: (.+?) · Revenue: (.+?) · ROAS: (.+?)$": "العملاء: $1 · الإيرادات: $2 · ROAS: $3",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2",
+ "gets": "",
+ "get": "",
+ "re:^To get <0>([\\d,.]+) leads</0> a month you need about <1>(.+?)</1> in ad spend\\.$": "للحصول على <0>$1 استفسار</0> شهريًا تحتاج إلى نحو <1>$2</1> من الإنفاق الإعلاني."
 }

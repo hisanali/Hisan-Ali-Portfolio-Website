@@ -92,5 +92,10 @@
  "Please choose an image.": "يُرجى اختيار صورة.",
  "Summer sale": "تخفيضات الصيف",
  "Pick at least one size.": "اختر مقاسًا واحدًا على الأقل.",
- "Tip: click the photo to set the focal point for crops.": "نصيحة: انقر على الصورة لتحديد نقطة التركيز عند القص."
+ "Tip: click the photo to set the focal point for crops.": "نصيحة: انقر على الصورة لتحديد نقطة التركيز عند القص.",
+ "re:^Rendering (.+?) (.+?)…$": "جارٍ إنشاء $1 $2…",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

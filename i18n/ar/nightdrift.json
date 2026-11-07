@@ -61,5 +61,9 @@
  "Race over": "انتهى السباق",
  "Finish!": "خط النهاية!",
  "Time over": "انتهى الوقت",
- "Seven minutes is long enough for one race.": "سبع دقائق مدة كافية لسباق واحد."
+ "Seven minutes is long enough for one race.": "سبع دقائق مدة كافية لسباق واحد.",
+ "re:^Lap (.+?)$": "اللفة $1",
+ "re:^Drift \\+(.+?)$": "انجراف +$1",
+ "re:^Finished (.+?)$": "أنهيت $1",
+ "re:^(.+?) drift points over three laps\\.$": "$1 نقطة انجراف خلال ثلاث لفات."
 }

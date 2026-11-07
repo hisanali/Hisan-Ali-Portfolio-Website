@@ -103,5 +103,11 @@
  "Choose what the code should do.": "اختر ما يجب أن يفعله الرمز.",
  "QR image copied — paste it anywhere": "تم نسخ صورة رمز QR — الصقها في أي مكان",
  "Your browser can’t copy images — use Download instead.": "لا يستطيع متصفحك نسخ الصور — استخدم التنزيل بدلًا من ذلك.",
- "Choose an image for the logo": "اختر صورة للشعار"
+ "Choose an image for the logo": "اختر صورة للشعار",
+ "re:^Long content \\((.+?) characters\\) makes a dense code\\. Keep it short or print it large\\.$": "المحتوى الطويل ($1 حرفًا) ينتج رمزًا كثيفًا. اجعله قصيرًا أو اطبعه بحجم كبير.",
+ "re:^QR code saved as (.+?)$": "تم حفظ رمز QR باسم $1",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

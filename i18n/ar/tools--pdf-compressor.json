@@ -55,5 +55,13 @@
  "Rebuilding the file structure…": "جارٍ إعادة بناء بنية الملف…",
  "Writing the optimised file…": "جارٍ كتابة الملف المُحسَّن…",
  "Saving…": "جارٍ الحفظ…",
- "Download original": "تنزيل الأصل"
+ "Download original": "تنزيل الأصل",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2",
+ "re:^Ready to compress (.+?)\\.$": "جاهز لضغط $1.",
+ "re:^Compressing page (.+?) of (.+?)$": "جارٍ ضغط الصفحة $1 من $2",
+ "re:^Saved (.+?) — download started$": "تم توفير $1، وبدأ التنزيل",
+ "re:^Compression failed: (.+?)$": "فشل الضغط: $1"
 }

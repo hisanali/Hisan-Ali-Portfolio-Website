@@ -49,5 +49,15 @@
  "Annual report": "التقرير السنوي",
  "This PDF is password-protected — unlock it first.": "ملف PDF هذا محمي بكلمة مرور — افتح قفله أولًا.",
  "This PDF couldn’t be read.": "تعذّرت قراءة ملف PDF هذا.",
- "Packing your ZIP…": "جارٍ تجهيز ملف ZIP…"
+ "Packing your ZIP…": "جارٍ تجهيز ملف ZIP…",
+ "re:^(.+?) separate PDFs$": "$1 ملفات PDF منفصلة",
+ "re:^(.+?) from your ranges$": "$1 من النطاقات التي حددتها",
+ "re:^Ready: (.+?)\\.$": "جاهز: $1.",
+ "re:^Building file (.+?) of (.+?)$": "جارٍ إنشاء الملف $1 من $2",
+ "re:^(.+?) PDFs ready$": "$1 ملفات PDF جاهزة",
+ "re:^Split failed: (.+?)$": "فشل التقسيم: $1",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }
