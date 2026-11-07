@@ -3648,9 +3648,9 @@ body.redesign-interior.page-blog-article { overflow-x: clip; }
   border: 2px solid var(--ix-lime);
   border-radius: 50%;
   background-color: var(--ix-green) !important;
-  background-image: url('/hisan-ali-bw-avatar.webp') !important;
-  background-position: 50% 50% !important;
-  background-size: cover !important;
+  background-image: url('/Hisan-optimized.webp') !important;
+  background-position: 50% 24% !important;
+  background-size: 160% auto !important;
 }
 .redesign-interior.page-blog-article .author-avatar i { display: none; }
 .redesign-interior.page-blog-article .author-card h3,
@@ -7610,7 +7610,7 @@ body.redesign-interior.page-contact .map-section .map-location-marker {
 
 /* About mobile portrait: the image is the media element, not a nested wrapper. */
 .redesign-interior.page-about .about-image-section {
-  background: var(--ix-paper-deep) url('/hisan-ali-bw.webp') 50% 20% / cover no-repeat;
+  background: var(--ix-paper-deep) url('/Hisan-Ali.jpeg') 50% 32% / cover no-repeat;
 }
 
 .redesign-interior.page-about img.about-main-image {

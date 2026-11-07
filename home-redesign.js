@@ -245,3 +245,17 @@ document.querySelector('#contactForm')?.addEventListener('submit', (event) => {
   const message = `Name: ${data.get('name')}\nEmail: ${data.get('email')}\n\n${data.get('message')}`;
   window.location.href = `mailto:workhisan@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
 });
+
+// Meet your growth partner: layered depth that follows the pointer.
+const partnerStage = document.querySelector('[data-partner]');
+if (partnerStage && !reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+  partnerStage.addEventListener('pointermove', (event) => {
+    const box = partnerStage.getBoundingClientRect();
+    partnerStage.style.setProperty('--mx', ((event.clientX - box.left) / box.width - 0.5).toFixed(3));
+    partnerStage.style.setProperty('--my', ((event.clientY - box.top) / box.height - 0.5).toFixed(3));
+  });
+  partnerStage.addEventListener('pointerleave', () => {
+    partnerStage.style.setProperty('--mx', '0');
+    partnerStage.style.setProperty('--my', '0');
+  });
+}
