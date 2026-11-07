@@ -2,8 +2,8 @@
    The real studio photo is shown on a finely subdivided surface that is pushed
    into shape by a depth map (taken from a 3D model generated from the same
    photo), so every pixel is the real photograph while the figure has true depth.
-   Head and body turn towards the visitor's cursor (the head a little more, as a
-   person would), with breathing, a slow head sway and drag-to-look-around.
+   It moves only very subtly on its own: a slow, slight drift of body and head,
+   and breathing.
    Loads only when the section is near the viewport; falls back to the photo. */
 import {
   Clock, DoubleSide, MathUtils, Mesh, PerspectiveCamera, PlaneGeometry, Scene,
@@ -118,27 +118,6 @@ if (stage) {
     new ResizeObserver(resize).observe(host);
     resize();
 
-    // Pointer aim (anywhere on the page) and drag-to-look-around.
-    let aimX = 0; let aimY = 0; let lastPointer = -10;
-    let dragYaw = 0; let velocity = 0; let dragging = false; let lastX = 0;
-    addEventListener('pointermove', (event) => {
-      const box = stage.getBoundingClientRect();
-      aimX = MathUtils.clamp((event.clientX - (box.left + box.width / 2)) / (innerWidth * 0.5), -1, 1);
-      aimY = MathUtils.clamp((event.clientY - (box.top + box.height * 0.3)) / (innerHeight * 0.6), -1, 1);
-      if (event.pointerType === 'mouse') lastPointer = performance.now() / 1000;
-    }, { passive: true });
-    host.addEventListener('pointerdown', (event) => { dragging = true; lastX = event.clientX; host.setPointerCapture(event.pointerId); stage.classList.add('is-dragging'); });
-    host.addEventListener('pointermove', (event) => {
-      if (!dragging) return;
-      const delta = (event.clientX - lastX) / host.clientWidth;
-      lastX = event.clientX;
-      dragYaw = MathUtils.clamp(dragYaw + delta * 1.1, -0.26, 0.26);
-      velocity = delta * 1.6;
-    });
-    const endDrag = () => { dragging = false; stage.classList.remove('is-dragging'); };
-    host.addEventListener('pointerup', endDrag);
-    host.addEventListener('pointercancel', endDrag);
-
     let visible = true;
     new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { rootMargin: '120px' }).observe(stage);
 
@@ -149,22 +128,16 @@ if (stage) {
       const dt = Math.min(clock.getDelta(), 0.05);
       if (!visible) return;
       t += dt;
-      if (!dragging) {
-        dragYaw = MathUtils.clamp(dragYaw + velocity, -0.26, 0.26);
-        velocity *= 0.9;
-        dragYaw = MathUtils.lerp(dragYaw, 0, 0.02); // settle back to face the visitor
-      }
       const motion = reduceMotion ? 0 : 1;
-      // No mouse for a while (phones, tablets): look around slowly on his own.
-      if (performance.now() / 1000 - lastPointer > 4) {
-        aimX = Math.sin(t * 0.32) * 0.7;
-        aimY = Math.sin(t * 0.21 + 0.8) * 0.25;
-      }
-      figure.rotation.y = MathUtils.lerp(figure.rotation.y, aimX * 0.09 * motion + dragYaw, 0.06);
-      figure.rotation.x = MathUtils.lerp(figure.rotation.x, aimY * 0.03 * motion, 0.06);
+      // Very subtle, slow idle motion only: two layered slow waves so it never
+      // looks mechanical. About 1-2 degrees at most, well inside what the photo holds.
+      const drift = Math.sin(t * 0.23) * 0.6 + Math.sin(t * 0.11 + 1.3) * 0.4;
+      const nod = Math.sin(t * 0.17 + 0.6) * 0.6 + Math.sin(t * 0.07) * 0.4;
+      figure.rotation.y = drift * 0.022 * motion;
+      figure.rotation.x = nod * 0.006 * motion;
       const head = uniforms.uHead.value;
-      head.x = MathUtils.lerp(head.x, (aimX * 0.075 + Math.sin(t * 0.45) * 0.014) * motion, 0.06);
-      head.y = MathUtils.lerp(head.y, (aimY * 0.04 + Math.sin(t * 0.37 + 1.2) * 0.008) * motion, 0.06);
+      head.x = (Math.sin(t * 0.29 + 0.4) * 0.6 + drift * 0.4) * 0.02 * motion;
+      head.y = (Math.sin(t * 0.21 + 2.1) * 0.6 + nod * 0.4) * 0.01 * motion;
       uniforms.uBreath.value = Math.sin(t * 1.55) * motion;
       renderer.render(scene, camera);
     };
