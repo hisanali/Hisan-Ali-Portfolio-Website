@@ -2,8 +2,8 @@
    The real studio photo is shown on a finely subdivided surface that is pushed
    into shape by a depth map (taken from a 3D model generated from the same
    photo), so every pixel is the real photograph while the figure has true depth.
-   It moves only very subtly on its own: a slow, slight drift of body and head,
-   and breathing.
+   On its own it only drifts very slightly and breathes; while the pointer is
+   over the panel (or a finger on it) head and body turn gently toward it.
    Loads only when the section is near the viewport; falls back to the photo. */
 import {
   Clock, DoubleSide, MathUtils, Mesh, PerspectiveCamera, PlaneGeometry, Scene,
@@ -118,6 +118,20 @@ if (stage) {
     new ResizeObserver(resize).observe(host);
     resize();
 
+    // Hover (or touch) over the panel: turn gently toward the pointer.
+    let hoverX = 0; let hoverY = 0; let hovering = false;
+    let lookX = 0; let lookY = 0;
+    const aim = (event) => {
+      const box = stage.getBoundingClientRect();
+      hoverX = Math.max(-1, Math.min(1, ((event.clientX - box.left) / box.width - 0.5) * 2));
+      hoverY = Math.max(-1, Math.min(1, ((event.clientY - box.top) / box.height - 0.32) * 2));
+    };
+    stage.addEventListener('pointerenter', (event) => { hovering = true; aim(event); });
+    stage.addEventListener('pointermove', (event) => { hovering = true; aim(event); });
+    stage.addEventListener('pointerleave', () => { hovering = false; });
+    stage.addEventListener('pointerup', (event) => { if (event.pointerType !== 'mouse') hovering = false; });
+    stage.addEventListener('pointercancel', () => { hovering = false; });
+
     let visible = true;
     new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { rootMargin: '120px' }).observe(stage);
 
@@ -133,11 +147,15 @@ if (stage) {
       // looks mechanical. About 1-2 degrees at most, well inside what the photo holds.
       const drift = Math.sin(t * 0.23) * 0.6 + Math.sin(t * 0.11 + 1.3) * 0.4;
       const nod = Math.sin(t * 0.17 + 0.6) * 0.6 + Math.sin(t * 0.07) * 0.4;
-      figure.rotation.y = drift * 0.022 * motion;
-      figure.rotation.x = nod * 0.006 * motion;
+      // Ease toward the pointer while hovering, back to centre when it leaves.
+      const ease = 1 - Math.pow(0.04, dt);
+      lookX += ((hovering ? hoverX : 0) - lookX) * ease;
+      lookY += ((hovering ? hoverY : 0) - lookY) * ease;
+      figure.rotation.y = (drift * 0.022 + lookX * 0.085) * motion;
+      figure.rotation.x = (nod * 0.006 + lookY * 0.03) * motion;
       const head = uniforms.uHead.value;
-      head.x = (Math.sin(t * 0.29 + 0.4) * 0.6 + drift * 0.4) * 0.02 * motion;
-      head.y = (Math.sin(t * 0.21 + 2.1) * 0.6 + nod * 0.4) * 0.01 * motion;
+      head.x = ((Math.sin(t * 0.29 + 0.4) * 0.6 + drift * 0.4) * 0.02 + lookX * 0.07) * motion;
+      head.y = ((Math.sin(t * 0.21 + 2.1) * 0.6 + nod * 0.4) * 0.01 + lookY * 0.035) * motion;
       uniforms.uBreath.value = Math.sin(t * 1.55) * motion;
       renderer.render(scene, camera);
     };
