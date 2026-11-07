@@ -5,7 +5,7 @@
   "scripts": {
     "build:games": "esbuild games/tic-online.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/tic-online.bundle.js && esbuild games/multiplayer.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/multiplayer.bundle.js && esbuild games/snake3d.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/snake3d.bundle.js && esbuild games/arcade3d.entry.js --bundle --minify --format=iife --target=es2020 --outfile=games/arcade3d.bundle.js",
     "dev": "npm run build:games && next dev",
-    "build": "npm run build:games && npm run build:evermile && npm run build:cube && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
+    "build": "npm run build:games && npm run build:evermile && npm run build:cube && npm run build:avatar && node scripts/generate-static-site.mjs && npm run seo:sitemap && npm run seo:audit && next build",
     "start": "next start",
     "lint": "next lint",
     "sync:footer": "node scripts/sync-footer.js",
@@ -16,7 +16,8 @@
     "test:cube-scan": "node scripts/test-cube-scan.mjs",
     "build:evermile": "esbuild evermile/realtime-client.entry.js --bundle --minify --format=esm --target=es2020 --outfile=evermile/vendor/realtime-client.js",
     "test:evermile": "node --test tests/evermile/*.test.mjs",
-    "test:evermile-browser": "node scripts/test-evermile-browser.cjs"
+    "test:evermile-browser": "node scripts/test-evermile-browser.cjs",
+    "build:avatar": "esbuild home-avatar.entry.js --bundle --minify --format=iife --target=es2020 --outfile=home-avatar.bundle.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",

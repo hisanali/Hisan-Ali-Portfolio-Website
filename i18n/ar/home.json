@@ -255,5 +255,17 @@
  "Close menu": "إغلاق القائمة",
  "re:^Project inquiry: (.+?)$": "استفسار عن مشروع: $1",
  "re:^Name: (.+?) Email: (.+?)  (.+?)$": "الاسم: $1\\nالبريد الإلكتروني: $2\\n\\n",
- "<0/>Hisan Ali · Muscat, Oman": "<0/>حسان علي · مسقط، عُمان"
+ "<0/>Hisan Ali · Muscat, Oman": "<0/>حسان علي · مسقط، عُمان",
+ "Say hello": "قل مرحبًا",
+ "Meet me <0>in 3D.</0>": "تعرّف عليّ <0>بتقنية ثلاثية الأبعاد.</0>",
+ "How to interact": "طريقة التفاعل",
+ "<0/>Rendered live in your browser": "<0/>يُعرض مباشرة في متصفحك",
+ "Let’s talk in person <0/>": "لنتحدث وجهًا لوجه <0/>",
+ "Let’s talk in person": "لنتحدث وجهًا لوجه",
+ "<0/>Live 3D": "<0/>ثلاثي الأبعاد مباشر",
+ "Live 3D": "ثلاثي الأبعاد مباشر",
+ "My real studio photo, brought to life in subtle 3D: real depth and a quiet, natural movement.": "صورتي الحقيقية من الاستوديو، وقد أصبحت حيّة بتقنية ثلاثية الأبعاد هادئة: عمق حقيقي وحركة طبيعية خفيفة.",
+ "<0/>The real photo, not a drawing": "<0/>صورة حقيقية، لا رسم",
+ "<0/>True 3D depth": "<0/>عمق ثلاثي الأبعاد حقيقي",
+ "<0/>Hover and I look your way": "<0/>مرّر المؤشر وسألتفت نحوك"
 }
