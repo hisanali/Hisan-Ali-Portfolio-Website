@@ -53,5 +53,10 @@
  "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
  "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
  "Sample document": "مستند تجريبي",
- "Tip: 3–5 focused hashtags usually perform as well as 30 on most platforms.": "نصيحة: 3–5 وسوم مركّزة غالبًا ما تحقق أداءً يضاهي 30 وسمًا على معظم المنصات."
+ "Tip: 3–5 focused hashtags usually perform as well as 30 on most platforms.": "نصيحة: 3–5 وسوم مركّزة غالبًا ما تحقق أداءً يضاهي 30 وسمًا على معظم المنصات.",
+ "re:^Instagram allows up to 30 hashtags per post — you have (.+?)\\.$": "يسمح إنستغرام بما يصل إلى 30 وسمًا في المنشور الواحد، ولديك $1.",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

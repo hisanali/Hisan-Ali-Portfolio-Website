@@ -157,5 +157,6 @@
  "Other social accounts": "حسابات تواصل اجتماعي أخرى",
  "Make sure each login uses a company email and phone number, and that two staff can get in.": "تأكد أن كل تسجيل دخول يستخدم بريدًا ورقم هاتف تابعين للشركة، وأن موظفَين اثنين يستطيعان الدخول.",
  "Choose at least one asset your business uses, then score again.": "اختر أصلًا واحدًا على الأقل يستخدمه نشاطك، ثم احسب النتيجة مرة أخرى.",
- "Every asset you use is held by your business. Keep it that way with the offboarding checklist below.": "كل أصل تستخدمه مملوك لنشاطك التجاري. حافظ على ذلك باستخدام قائمة إنهاء التعاون أدناه."
+ "Every asset you use is held by your business. Keep it that way with the offboarding checklist below.": "كل أصل تستخدمه مملوك لنشاطك التجاري. حافظ على ذلك باستخدام قائمة إنهاء التعاون أدناه.",
+ "re:^Then review: (.+?)\\.$": "ثم راجع: $1."
 }

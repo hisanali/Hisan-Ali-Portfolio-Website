@@ -45,5 +45,8 @@
  "New best": "رقم قياسي جديد",
  "Flight over": "انتهى الطيران",
  "Into the sand": "سقطت في الرمال",
- "Pylon hit −50": "اصطدام بعمود −50"
+ "Pylon hit −50": "اصطدام بعمود −50",
+ "re:^(.+?) gates flown in (.+?) seconds of flight\\.$": "عبرت $1 بوابة خلال $2 ثانية من الطيران.",
+ "re:^Gate \\+(.+?)(.+?)$": "بوابة +$1$2",
+ "re:^All (.+?) gates before sunset, (.+?) seconds airborne\\.$": "جميع البوابات الـ$1 قبل الغروب، $2 ثانية في الجو."
 }

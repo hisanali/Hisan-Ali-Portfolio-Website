@@ -120,5 +120,7 @@
  "Most Low channels can take": "أقصى ما يمكن أن تأخذه القنوات المنخفضة",
  "Search partners up to 15%, Display Network up to 20%. Best-effort, not a hard cap.": "شركاء البحث حتى 15%، والشبكة الإعلانية حتى 20%. حدّ يُطبَّق بأفضل جهد، وليس سقفًا صارمًا.",
  "Monthly at that ceiling": "شهريًا عند هذا الحد الأقصى",
- "Roughly the most that could flow to Low-priority channels in a month.": "تقريبًا أقصى ما يمكن أن يتدفق إلى القنوات ذات الأولوية المنخفضة في شهر."
+ "Roughly the most that could flow to Low-priority channels in a month.": "تقريبًا أقصى ما يمكن أن يتدفق إلى القنوات ذات الأولوية المنخفضة في شهر.",
+ "re:^(.+?) (.+?) budget before anything else\\.$": "$1 $2 الميزانية قبل أي شيء آخر.",
+ "re:^Daily budget (.+?): at least (.+?) for High priority, up to (.+?) for Low priority$": "الميزانية اليومية $1: $2 على الأقل للأولوية العالية، وحتى $3 للأولوية المنخفضة"
 }

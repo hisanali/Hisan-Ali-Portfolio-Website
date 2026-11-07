@@ -77,5 +77,7 @@
  "AI Max for Search Campaigns: The Oman Guide": "AI Max لحملات البحث: الدليل لعُمان",
  "Related guide<0/>": "دليل ذو صلة<0/>",
  "DSA to AI Max: What Oman Advertisers Should <0>Check</0> Before <1/>": "من DSA إلى AI Max: ما الذي يجب أن <0>يتحقق منه</0> المعلنون في عُمان قبل <1/>",
- "0 of 6 checks complete. First resolve campaign inventory, conversion quality and destination control.": "0 من 6 فحوصات مكتملة. عالج أولًا جرد الحملات وجودة التحويلات والتحكم في الوجهات."
+ "0 of 6 checks complete. First resolve campaign inventory, conversion quality and destination control.": "0 من 6 فحوصات مكتملة. عالج أولًا جرد الحملات وجودة التحويلات والتحكم في الوجهات.",
+ "re:^(.+?) of (.+?) checks complete\\. $": "اكتمل $1 من $2 من الفحوصات.",
+ "re:^After discount: OMR (.+?)\\. Contribution after advertising: OMR (.+?) per order, before fixed costs\\. $": "بعد الخصم: $1 ر.ع. المساهمة بعد الإعلان: $2 ر.ع. لكل طلب، قبل التكاليف الثابتة."
 }

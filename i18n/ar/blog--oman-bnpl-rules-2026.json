@@ -82,5 +82,6 @@
  "Fee on an instalment order": "الرسوم على طلب بالتقسيط",
  "Average fee across all orders": "متوسط الرسوم على جميع الطلبات",
  "Instalment orders need to average OMR 96 to earn the same profit": "يجب أن يبلغ متوسط طلبات التقسيط OMR 96 لتحقيق الربح نفسه",
- "Reachable on big-ticket items; test it on a few categories first.": "ممكن في المنتجات مرتفعة الثمن؛ جرّبه أولًا على بضع فئات."
+ "Reachable on big-ticket items; test it on a few categories first.": "ممكن في المنتجات مرتفعة الثمن؛ جرّبه أولًا على بضع فئات.",
+ "re:^Instalment orders need to average OMR (.+?) to earn the same profit$": "يجب أن يبلغ متوسط طلبات التقسيط $1 ر.ع. لتحقيق الربح نفسه"
 }

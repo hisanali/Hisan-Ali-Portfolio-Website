@@ -121,5 +121,6 @@
  "Summaries and excerpts from connected apps may be used.": "قد تُستخدم الملخصات والمقتطفات من التطبيقات المرتبطة.",
  "Correct.": "صحيح.",
  "Not quite.": "ليس تمامًا.",
- "Full marks. You know the rules better than most advertisers.": "علامة كاملة. أنت تعرف القواعد أفضل من معظم المعلنين."
+ "Full marks. You know the rules better than most advertisers.": "علامة كاملة. أنت تعرف القواعد أفضل من معظم المعلنين.",
+ "re:^(.+?) still to answer\\.$": "لم تتم الإجابة بعد عن $1."
 }

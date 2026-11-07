@@ -53,5 +53,14 @@
  "Password-protected — unlock it first": "محمي بكلمة مرور — افتح قفله أولًا",
  "This PDF couldn’t be read": "تعذّرت قراءة ملف PDF هذا",
  "Packing your ZIP…": "جارٍ تجهيز ملف ZIP…",
- "ZIP downloaded": "تم تنزيل ملف ZIP"
+ "ZIP downloaded": "تم تنزيل ملف ZIP",
+ "re:^Ready to export (.+?)\\.$": "جاهز لتصدير $1.",
+ "re:^Rendering page (.+?) \\((.+?) of (.+?)\\)$": "جارٍ معالجة الصفحة $1 ($2 من $3)",
+ "re:^(.+?)Download image$": "$1تنزيل الصورة",
+ "re:^(.+?)Download all \\(\\.zip\\)$": "$1تنزيل الكل (.zip)",
+ "re:^Conversion failed: (.+?)$": "فشل التحويل: $1",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

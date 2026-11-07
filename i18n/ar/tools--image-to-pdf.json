@@ -66,5 +66,13 @@
  "Rotate 90°": "تدوير 90°",
  "Move down": "نقل للأسفل",
  "Remove": "إزالة",
- "Saving your PDF…": "جارٍ حفظ ملف PDF…"
+ "Saving your PDF…": "جارٍ حفظ ملف PDF…",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2",
+ "re:^(.+?) skipped — only images can be added\\.$": "تم تخطي $1: يمكن إضافة الصور فقط.",
+ "re:^Ready: (.+?), one image per page\\.$": "جاهز: $1، صورة واحدة في كل صفحة.",
+ "re:^Adding image (.+?) of (.+?)$": "جارٍ إضافة الصورة $1 من $2",
+ "re:^Couldn’t create the PDF: (.+?)$": "تعذّر إنشاء ملف PDF: $1"
 }

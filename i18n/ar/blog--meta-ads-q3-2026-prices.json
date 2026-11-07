@@ -125,5 +125,9 @@
  "Purchases": "عمليات الشراء",
  "Down from 75.0 if conversion per impression stays the same.": "بانخفاض من 75.0 إذا بقي معدل التحويل لكل ظهور كما هو.",
  "Last year": "العام الماضي",
- "Same budget now": "الميزانية نفسها الآن"
+ "Same budget now": "الميزانية نفسها الآن",
+ "re:^(.+?) fewer than last year \\((.+?)%\\)\\.$": "أقل بـ$1 من العام الماضي ($2%).",
+ "re:^(.+?) more than last year\\.$": "أكثر بـ$1 من العام الماضي.",
+ "re:^Per month, to buy the same (.+?) impressions\\.$": "شهريًا، لشراء العدد نفسه من مرات الظهور: $1.",
+ "re:^Down from (.+?) if conversion per impression stays the same\\.$": "انخفاضًا من $1 إذا بقي التحويل لكل ظهور كما هو."
 }

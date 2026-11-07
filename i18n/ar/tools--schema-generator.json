@@ -108,5 +108,9 @@
  "Yes. Book a free 20-minute call to discuss your goals.": "نعم. احجز مكالمة مجانية مدتها 20 دقيقة لمناقشة أهدافك.",
  "Which areas do you serve?": "ما المناطق التي تخدمونها؟",
  "We work with businesses across Oman and the GCC.": "نعمل مع الأنشطة التجارية في جميع أنحاء عُمان ودول الخليج.",
- "Schema copied — paste it into the “Code” tab": "تم نسخ Schema — الصقه في تبويب «Code»"
+ "Schema copied — paste it into the “Code” tab": "تم نسخ Schema — الصقه في تبويب «Code»",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

@@ -90,5 +90,7 @@
  "<0>Platform source:</0> <1>Google Ads: about seasonality adjustments</1>, checked 17 October 2026. The financial example and campaign plan are illustrative editorial guidance.": "<0>مصدر المنصة:</0> <1>إعلانات جوجل: حول تعديلات الموسمية</1>، تمت المراجعة في 17 أكتوبر 2026. المثال المالي وخطة الحملة إرشادات تحريرية توضيحية.",
  "Related guide<0/>": "دليل ذو صلة<0/>",
  "White Friday 2026 in Oman: Plan the <0>Profit</0> Before the <1>Discount</1>": "الجمعة البيضاء 2026 في عُمان: خطّط لـ<0>الربح</0> قبل <1>الخصم</1>",
- "After discount: OMR 40.000. Contribution after advertising: OMR 2.000 per order, before fixed costs. The zero-contribution acquisition ceiling is OMR 10.000; your actual target needs room for overhead and profit.": "بعد الخصم: OMR 40.000. المساهمة بعد الإعلان: OMR 2.000 لكل طلب، قبل التكاليف الثابتة. سقف الاستحواذ عند مساهمة صفرية هو OMR 10.000؛ وهدفك الفعلي يحتاج إلى مجال للمصاريف العامة والربح."
+ "After discount: OMR 40.000. Contribution after advertising: OMR 2.000 per order, before fixed costs. The zero-contribution acquisition ceiling is OMR 10.000; your actual target needs room for overhead and profit.": "بعد الخصم: OMR 40.000. المساهمة بعد الإعلان: OMR 2.000 لكل طلب، قبل التكاليف الثابتة. سقف الاستحواذ عند مساهمة صفرية هو OMR 10.000؛ وهدفك الفعلي يحتاج إلى مجال للمصاريف العامة والربح.",
+ "re:^(.+?) of (.+?) checks complete\\. $": "اكتمل $1 من $2 من الفحوصات.",
+ "re:^After discount: OMR (.+?)\\. Contribution after advertising: OMR (.+?) per order, before fixed costs\\. $": "بعد الخصم: $1 ر.ع. المساهمة بعد الإعلان: $2 ر.ع. لكل طلب، قبل التكاليف الثابتة."
 }

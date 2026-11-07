@@ -66,5 +66,9 @@
  "Tip: end the description with a full stop or a call to action.": "نصيحة: اختم الوصف بنقطة أو بدعوة لاتخاذ إجراء.",
  "Digital Marketing Agency in Muscat | SEO & Google Ads Experts": "وكالة تسويق رقمي في مسقط | خبراء السيو وإعلانات جوجل",
  "Get more qualified leads in Oman with SEO, Google Ads and social media campaigns built around measurable results. Book a free 20-minute strategy call.": "احصل على مزيد من العملاء المحتملين المؤهلين في عُمان عبر السيو وإعلانات جوجل وحملات التواصل الاجتماعي المبنية على نتائج قابلة للقياس. احجز مكالمة استراتيجية مجانية مدتها 20 دقيقة.",
- "Meta tags copied": "تم نسخ وسوم الميتا"
+ "Meta tags copied": "تم نسخ وسوم الميتا",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1: نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

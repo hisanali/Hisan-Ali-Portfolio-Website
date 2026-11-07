@@ -121,5 +121,7 @@
  "Tick at least one task to see your mix.": "اختر مهمة واحدة على الأقل لترى توزيع مهامك.",
  "Much of your week sits on the “AI does it” shelf. Start using AI for those tasks now, and deliberately take on reviewing and decision work.": "جزء كبير من أسبوعك يقع ضمن خانة “الذكاء الاصطناعي ينجزها”. ابدأ باستخدام الذكاء الاصطناعي في هذه المهام الآن، وتولَّ عن قصد أعمال المراجعة واتخاذ القرار.",
  "Most of your week depends on presence and trust. Use AI to cut admin so you have more time for the human part.": "معظم أسبوعك يعتمد على الحضور والثقة. استخدم الذكاء الاصطناعي لتقليل الأعمال الإدارية فيتبقى لك وقت أطول للجانب الإنساني.",
- "Your week is mostly judgement work. AI makes you faster here, as long as you stay the one who checks and decides.": "أسبوعك في معظمه عمل يحتاج إلى حُسن تقدير. الذكاء الاصطناعي يجعلك أسرع هنا، ما دمت أنت من يراجع ويقرّر."
+ "Your week is mostly judgement work. AI makes you faster here, as long as you stay the one who checks and decides.": "أسبوعك في معظمه عمل يحتاج إلى حُسن تقدير. الذكاء الاصطناعي يجعلك أسرع هنا، ما دمت أنت من يراجع ويقرّر.",
+ "re:^AI does it (.+?)%, AI drafts (.+?)%, stays human (.+?)%$": "ينفّذه الذكاء الاصطناعي $1%، يصوغ مسودته الذكاء الاصطناعي $2%، يبقى بشريًا $3%",
+ "re:^AI does it: (.+?)% · AI drafts, you decide: (.+?)% · Stays human: (.+?)%\\. (.+?)$": "ينفّذه الذكاء الاصطناعي: $1% · يصوغ الذكاء الاصطناعي المسودة وأنت تقرر: $2% · يبقى بشريًا: $3%. $4"
 }

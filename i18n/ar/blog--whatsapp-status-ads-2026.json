@@ -138,5 +138,13 @@
  "Captions or on-screen text: works with sound off.": "ترجمة نصية أو نص على الشاشة: يعمل دون صوت.",
  "Opening on the product or offer: a strong first second.": "البدء بالمنتج أو العرض: ثانية أولى قوية.",
  "12s: short enough to finish.": "12 ث: قصير بما يكفي لمشاهدته حتى النهاية.",
- "under the reply bar and CTA": "أسفل شريط الرد وزر الإجراء"
+ "under the reply bar and CTA": "أسفل شريط الرد وزر الإجراء",
+ "re:^A (.+?) creative will be letterboxed on a full\\-screen 9:16 placement\\. Rebuild it vertical\\.$": "التصميم بمقاس $1 سيظهر بأشرطة سوداء في موضع 9:16 بملء الشاشة. أعد تصميمه بشكل عمودي.",
+ "re:^Your logo sits (.+?)\\. Move it to the middle\\.$": "شعارك موضوع $1. انقله إلى المنتصف.",
+ "re:^Your headline sits (.+?)\\. Move it to the middle\\.$": "عنوانك موضوع $1. انقله إلى المنتصف.",
+ "re:^Opening on (.+?): a strong first second\\.$": "البداية بـ $1: ثانية أولى قوية.",
+ "re:^(.+?)s is above the 30\\-second limit guides cite for ads\\. Cut it down\\.$": "$1 ثانية أطول من حد الـ 30 ثانية الذي تذكره الأدلة للإعلانات. اختصره.",
+ "re:^(.+?)s is allowed, but completion drops fast after 10–15 seconds\\. Try a 6–10s cut\\.$": "$1 ثانية مسموح بها، لكن نسبة المشاهدة الكاملة تنخفض بسرعة بعد 10–15 ثانية. جرّب نسخة من 6–10 ثوانٍ.",
+ "re:^(.+?)s: short enough to finish\\.$": "$1 ثانية: قصير بما يكفي لمشاهدته حتى النهاية.",
+ "re:^(.+?) problem(.+?) the Status interface or viewer behaviour would expose\\.$": "$1 مشكلات ستكشفها واجهة الحالة أو سلوك المشاهدين."
 }

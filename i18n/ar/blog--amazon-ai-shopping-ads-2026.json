@@ -122,5 +122,7 @@
  "Prompt click, vs $12.00 on a standard click.": "نقرة اقتراح، مقابل $12.00 للنقرة العادية.",
  "Profit per click": "الربح لكل نقرة",
  "Prompt click, vs +$0.38 standard. Prompt clicks earn more per click if the lift holds.": "نقرة اقتراح، مقابل +$0.38 للنقرة العادية. تربح نقرات الاقتراحات أكثر لكل نقرة إذا صمدت الزيادة.",
- "vs 3.75× on standard clicks.": "مقابل 3.75× في النقرات العادية."
+ "vs 3.75× on standard clicks.": "مقابل 3.75× في النقرات العادية.",
+ "re:^Prompt click, vs (.+?) on a standard click\\.$": "للنقرة من الطلب النصي، مقابل $1 للنقرة العادية.",
+ "re:^vs (.+?)× on standard clicks\\.$": "مقابل $1× للنقرات العادية."
 }

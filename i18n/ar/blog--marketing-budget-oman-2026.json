@@ -149,5 +149,7 @@
  "December": "ديسمبر",
  "New brands buy awareness and first customers.": "العلامات الجديدة تشتري الوعي وأول العملاء.",
  "Growing businesses fund both acquisition and brand.": "الأعمال النامية تموّل استقطاب العملاء وبناء العلامة معًا.",
- "Established businesses defend share and retention.": "الأعمال الراسخة تدافع عن حصتها السوقية وتحافظ على عملائها."
+ "Established businesses defend share and retention.": "الأعمال الراسخة تدافع عن حصتها السوقية وتحافظ على عملائها.",
+ "re:^(.+?)–(.+?)% of revenue: (.+?) to (.+?)\\. (.+?)$": "$1–$2% من الإيرادات: من $3 إلى $4. $5",
+ "re:^Biggest months: (.+?) \\(about (.+?) each\\)\\. Quietest month: about (.+?)\\.$": "أكبر الأشهر: $1 (نحو $2 لكل شهر). أهدأ شهر: نحو $3."
 }

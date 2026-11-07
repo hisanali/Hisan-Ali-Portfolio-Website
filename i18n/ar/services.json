@@ -300,5 +300,10 @@
  "Your team — tap to adjust": "فريقك — اضغط للتعديل",
  "Added": "أُضيف",
  "Added to your brief": "أُضيف إلى ملخصك",
- "Use this mix": "استخدم هذه التركيبة"
+ "Use this mix": "استخدم هذه التركيبة",
+ "re:^What I need: (.+?)$": "ما أحتاجه: $1",
+ "re:^Services I'm interested in: (.+?)$": "الخدمات التي تهمني: $1",
+ "re:^Timeline: (.+?)$": "الجدول الزمني: $1",
+ "re:^(.+?) service(.+?) in brief$": "$1 خدمات في الملخص",
+ "re:^Remove (.+?) from brief$": "إزالة $1 من الملخص"
 }

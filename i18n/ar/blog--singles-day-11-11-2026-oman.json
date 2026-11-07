@@ -78,5 +78,8 @@
  "Your margin falls from OMR 9 to OMR 6.8 per unit at a sale price of OMR 17.8.": "ينخفض هامش ربحك من 9 ر.ع. إلى 6.8 ر.ع. للوحدة عند سعر بيع قدره 17.8 ر.ع.",
  "Limit the offer to a few items and a short window.": "اقصر العرض على بعض المنتجات ولفترة قصيرة.",
  "Send it to your WhatsApp or email list first, before paying for ads.": "أرسله إلى قائمتك على واتساب أو البريد الإلكتروني أولًا، قبل أن تدفع مقابل الإعلانات.",
- "That lift is hard to reach. Try a smaller discount or a bundle.": "من الصعب تحقيق هذه الزيادة. جرّب خصمًا أصغر أو باقة مجمّعة."
+ "That lift is hard to reach. Try a smaller discount or a bundle.": "من الصعب تحقيق هذه الزيادة. جرّب خصمًا أصغر أو باقة مجمّعة.",
+ "re:^At (.+?)% off you sell at OMR (.+?), below your cost of OMR (.+?)\\.$": "بخصم $1% ستبيع بسعر $2 ر.ع.، أي أقل من تكلفتك البالغة $3 ر.ع.",
+ "re:^Sell (.+?) units instead of (.+?) to break even$": "بِع $1 وحدة بدلًا من $2 لتصل إلى نقطة التعادل",
+ "re:^Your margin falls from OMR (.+?) to OMR (.+?) per unit at a sale price of OMR (.+?)\\.$": "ينخفض هامشك من $1 ر.ع. إلى $2 ر.ع. للوحدة عند سعر بيع $3 ر.ع."
 }

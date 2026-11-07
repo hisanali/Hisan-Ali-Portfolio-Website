@@ -212,5 +212,14 @@
  "Now!": "الآن!",
  "Missed it!": "فاتتك!",
  "The signal came and went. Tap to try again.": "ظهرت الإشارة واختفت. اضغط للمحاولة مجددًا.",
- "Missed the signal. Press again to retry.": "فاتتك الإشارة. اضغط مرة أخرى لإعادة المحاولة."
+ "Missed the signal. Press again to retry.": "فاتتك الإشارة. اضغط مرة أخرى لإعادة المحاولة.",
+ "re:^Top (.+?) of (.+?) matches$": "أفضل $1 من $2 نتيجة مطابقة",
+ "re:^Let’s go (.+?)$": "هيا بنا $1",
+ "re:^Surprise pick: (.+?)\\. (.+?)$": "اختيار مفاجئ: $1. $2",
+ "re:^Scrambled with (.+?) moves\\. Press Solve to watch it unwind\\.$": "تم الخلط بـ $1 حركة. اضغط «حل» لتشاهد المكعب يعود إلى حالته.",
+ "re:^✓ Solved in (.+?) (.+?)$": "✓ تم الحل في $1 $2",
+ "re:^Solved in (.+?) moves\\.$": "تم الحل في $1 حركة.",
+ "re:^Face (.+?) of 6$": "الوجه $1 من 6",
+ "re:^(.+?)(.+?) Tap to play again\\.$": "$1$2 اضغط للعب مجددًا.",
+ "re:^Showing (.+?) (.+?)\\.$": "عرض $1 $2."
 }

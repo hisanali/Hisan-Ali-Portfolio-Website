@@ -122,5 +122,6 @@
  "Clicks today": "النقرات اليوم",
  "Searches in scenario": "عمليات البحث في السيناريو",
  "Classic clicks": "النقرات التقليدية",
- "AI-answer clicks": "نقرات إجابات الذكاء الاصطناعي"
+ "AI-answer clicks": "نقرات إجابات الذكاء الاصطناعي",
+ "re:^(.+?) from classic results, (.+?) from AI answers\\.$": "$1 من النتائج التقليدية، و$2 من إجابات الذكاء الاصطناعي."
 }

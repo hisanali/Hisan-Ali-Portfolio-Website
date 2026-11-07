@@ -60,5 +60,13 @@
  "Fix the highlighted page range to continue.": "صحّح نطاق الصفحات المميّز للمتابعة.",
  "None of these files can be merged.": "لا يمكن دمج أي من هذه الملفات.",
  "Add another PDF — or pick pages or rotate to save a new copy.": "أضف ملف PDF آخر — أو اختر صفحات أو دوّرها لحفظ نسخة جديدة.",
- "Files marked in red will be skipped.": "سيتم تخطي الملفات المميّزة باللون الأحمر."
+ "Files marked in red will be skipped.": "سيتم تخطي الملفات المميّزة باللون الأحمر.",
+ "re:^(.+?) skipped — only PDFs can be merged\\.$": "تم تخطي $1، يمكن دمج ملفات PDF فقط.",
+ "re:^Ready: (.+?) from (.+?)\\.$": "جاهز: $1 من $2.",
+ "re:^Adding page (.+?) of (.+?)$": "جارٍ إضافة الصفحة $1 من $2",
+ "re:^Merge failed: (.+?)$": "فشل الدمج: $1",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

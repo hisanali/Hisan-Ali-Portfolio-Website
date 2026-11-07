@@ -157,5 +157,9 @@
  "Creators promoting other businesses need a MoCIIP licence. Check it before you pay.": "صنّاع المحتوى الذين يروّجون لأنشطة أخرى يحتاجون إلى ترخيص من وزارة التجارة والصناعة وترويج الاستثمار (MoCIIP). تحقّق منه قبل الدفع.",
  "Food product promoted by creators": "منتج غذائي يروّج له صنّاع المحتوى",
  "Approval in place.": "الموافقة متوفرة.",
- "Since July 2026, creators need prior approval from the Food Safety and Quality Centre to promote food products.": "منذ يوليو 2026، يحتاج صنّاع المحتوى إلى موافقة مسبقة من مركز سلامة وجودة الغذاء للترويج للمنتجات الغذائية."
+ "Since July 2026, creators need prior approval from the Food Safety and Quality Centre to promote food products.": "منذ يوليو 2026، يحتاج صنّاع المحتوى إلى موافقة مسبقة من مركز سلامة وجودة الغذاء للترويج للمنتجات الغذائية.",
+ "re:^Discount (.+?)%$": "خصم $1%",
+ "re:^(.+?) consecutive day(.+?)$": "$1 أيام متتالية",
+ "re:^Promotion (.+?) of the month$": "العرض رقم $1 في الشهر",
+ "re:^(.+?) issue(.+?) to fix before launch$": "$1 مشكلات يجب إصلاحها قبل الإطلاق"
 }

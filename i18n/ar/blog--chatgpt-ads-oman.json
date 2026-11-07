@@ -281,5 +281,7 @@
  "Avoid “best” or “number one”: claims like these need proof and rarely help next to an AI answer.": "تجنّب “الأفضل” أو “رقم واحد”: ادعاءات كهذه تحتاج إلى إثبات ونادرًا ما تفيد بجوار إجابة ذكاء اصطناعي.",
  "No unproven superlatives.": "لا صيغ تفضيل غير مُثبتة.",
  "Local detail included, so it reads as relevant to people in Oman.": "يتضمن تفصيلًا محليًا، فيبدو مناسبًا للناس في عُمان.",
- "Add a local detail (Muscat, OMR, delivery across Oman) if it is true.": "أضف تفصيلًا محليًا (مسقط، OMR، التوصيل في أنحاء عُمان) إن كان صحيحًا."
+ "Add a local detail (Muscat, OMR, delivery across Oman) if it is true.": "أضف تفصيلًا محليًا (مسقط، OMR، التوصيل في أنحاء عُمان) إن كان صحيحًا.",
+ "re:^Headline is (.+?) characters too long\\.$": "العنوان أطول من المسموح بـ$1 حرفًا.",
+ "re:^Description is (.+?) characters too long\\.$": "الوصف أطول من المسموح بـ$1 حرفًا."
 }

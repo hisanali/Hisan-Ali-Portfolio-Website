@@ -121,5 +121,6 @@
  "Profit after fee": "الربح بعد الرسوم",
  "The creator pays for themselves at this spend.": "صانع المحتوى يغطي تكلفته عند هذا الإنفاق.",
  "Break-even improvement": "التحسن اللازم للتعادل",
- "CPA improvement needed for the extra orders to cover the fee.": "التحسن المطلوب في تكلفة الاكتساب كي تغطي الطلبات الإضافية الرسوم."
+ "CPA improvement needed for the extra orders to cover the fee.": "التحسن المطلوب في تكلفة الاكتساب كي تغطي الطلبات الإضافية الرسوم.",
+ "re:^(.+?) orders vs (.+?) from a brand ad, at a cost per purchase of (.+?)\\.$": "$1 طلب مقابل $2 من إعلان العلامة التجارية، بتكلفة شراء $3 للطلب."
 }

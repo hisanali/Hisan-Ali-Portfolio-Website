@@ -81,5 +81,7 @@
  "<0>Primary source:</0> <1>Meta's June 2026 Business Agent announcement</1>, checked 17 October 2026. The pilot process and examples are editorial recommendations, not an account availability confirmation.": "<0>المصدر الرئيسي:</0> <1>إعلان ميتا عن وكيل الأعمال في يونيو 2026</1>، تمت مراجعته في 17 أكتوبر 2026. خطوات التجربة الأولية والأمثلة توصيات تحريرية، وليست تأكيدًا لتوفر الخدمة في الحساب.",
  "The Lead Response System for Oman Businesses": "نظام الرد على الاستفسارات للشركات في عُمان",
  "Related guide<0/>": "دليل ذو صلة<0/>",
- "Meta Business Agent: Is Your Oman Business Ready for <0>AI</0> <1>Replies?</1>": "وكيل الأعمال من ميتا: هل نشاطك التجاري في عُمان جاهز <1>للردود</1> <0>بالذكاء الاصطناعي</0>؟"
+ "Meta Business Agent: Is Your Oman Business Ready for <0>AI</0> <1>Replies?</1>": "وكيل الأعمال من ميتا: هل نشاطك التجاري في عُمان جاهز <1>للردود</1> <0>بالذكاء الاصطناعي</0>؟",
+ "re:^(.+?) of (.+?) checks complete\\. $": "اكتمل $1 من $2 فحوصات.",
+ "re:^After discount: OMR (.+?)\\. Contribution after advertising: OMR (.+?) per order, before fixed costs\\. $": "بعد الخصم: $1 ر.ع. المساهمة بعد الإعلان: $2 ر.ع. لكل طلب، قبل التكاليف الثابتة."
 }

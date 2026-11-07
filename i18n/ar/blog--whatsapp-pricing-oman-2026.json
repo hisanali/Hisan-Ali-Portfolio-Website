@@ -142,5 +142,6 @@
  "Free until 30 Sep 2026, now charged": "مجانية حتى 30 سبتمبر 2026، ومدفوعة الآن",
  "Utility outside window": "رسائل خدمات خارج النافذة",
  "Charged before and after": "مدفوعة قبل التغيير وبعده",
- "at Oman rates.": "بأسعار عُمان."
+ "at Oman rates.": "بأسعار عُمان.",
+ "re:^(.+?) billable after the first (.+?)$": "$1 مدفوعة بعد أول $2"
 }

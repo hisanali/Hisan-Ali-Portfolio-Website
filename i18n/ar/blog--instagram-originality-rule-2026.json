@@ -134,5 +134,6 @@
  "Most of your feed is original. Keep reposts in Stories or the repost feature.": "معظم محتوى حسابك أصلي. أبقِ إعادة النشر في القصص أو عبر ميزة إعادة النشر.",
  "At risk": "معرّض للخطر",
  "Most of your recent posts are not original. Instagram may stop recommending your account to non-followers. Check Account Status in Settings and shift to original content.": "معظم منشوراتك الأخيرة ليست أصلية. قد يتوقف إنستغرام عن اقتراح حسابك لغير المتابعين. راجع حالة الحساب في الإعدادات وتحوّل إلى المحتوى الأصلي.",
- "Done": "تم"
+ "Done": "تم",
+ "re:^(.+?) of (.+?) posts are your own or meaningfully transformed\\.$": "$1 من أصل $2 منشورات من إنتاجك أو معدّلة تعديلًا جوهريًا."
 }

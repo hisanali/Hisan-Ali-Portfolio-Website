@@ -125,5 +125,10 @@
  "Cost per new customer": "التكلفة لكل عميل جديد",
  "OMR 7": "7 OMR",
  "42% less than the OMR 12 you pay through ads.": "أقل بنسبة 42% من 12 OMR التي تدفعها عبر الإعلانات.",
- "Enter an average order above 0, a margin between 1 and 100%, at least 1 order, and a non-negative ad cost.": "أدخل متوسط طلب أكبر من 0، وهامش ربح بين 1 و100%، وطلبًا واحدًا على الأقل، وتكلفة إعلانية غير سالبة."
+ "Enter an average order above 0, a margin between 1 and 100%, at least 1 order, and a non-negative ad cost.": "أدخل متوسط طلب أكبر من 0، وهامش ربح بين 1 و100%، وطلبًا واحدًا على الأقل، وتكلفة إعلانية غير سالبة.",
+ "re:^About (.+?)% of a first order\\. This is what gets the friend to act\\.$": "نحو $1% من الطلب الأول. هذا ما يدفع الصديق إلى التحرك.",
+ "re:^Out of (.+?) first\\-year gross profit per customer\\.$": "من أصل $1 إجمالي ربح في السنة الأولى لكل عميل.",
+ "re:^(.+?)% less than the (.+?) you pay through ads\\.$": "أقل بنسبة $1% من $2 التي تدفعها عبر الإعلانات.",
+ "re:^Not cheaper than ads at (.+?)\\. Lower the reward or improve repeat orders first\\.$": "ليس أرخص من الإعلانات عند $1. خفّض المكافأة أو حسّن الطلبات المتكررة أولًا.",
+ "re:^Heads up: the total reward \\((.+?)\\) is more than the gross profit on the first order \\((.+?)\\)\\. You only earn it back if referred customers come back, so track their repeat orders\\.$": "تنبيه: إجمالي المكافأة ($1) أكبر من إجمالي الربح على الطلب الأول ($2). لن تستردها إلا إذا عاد العملاء المُحالون، لذا تابع طلباتهم المتكررة."
 }

@@ -39,5 +39,14 @@
  "Drop PDFs to add their pages": "أفلت ملفات PDF لإضافة صفحاتها",
  "Only PDF files can be added.": "يمكن إضافة ملفات PDF فقط.",
  "Scanned pack": "ملف ممسوح ضوئيًا",
- "Drag to move": "اسحب للنقل"
+ "Drag to move": "اسحب للنقل",
+ "re:^(.+?) is password\\-protected\\.$": "$1 محمي بكلمة مرور.",
+ "re:^(.+?) couldn’t be read\\.$": "تعذّرت قراءة $1.",
+ "re:^Ready: (.+?) in this order\\.$": "جاهز: $1 بهذا الترتيب.",
+ "re:^Adding page (.+?) of (.+?)$": "جارٍ إضافة الصفحة $1 من $2",
+ "re:^Couldn’t save the PDF: (.+?)$": "تعذّر حفظ ملف PDF: $1",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

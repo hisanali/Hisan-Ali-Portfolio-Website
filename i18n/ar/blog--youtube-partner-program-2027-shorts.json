@@ -99,5 +99,9 @@
  "You qualify today but not under the reported 2027 rules. Apply before 1 February 2027.": "أنت مؤهل اليوم لكن ليس وفق قواعد 2027 الواردة في التقارير. قدّم طلبك قبل 1 فبراير 2027.",
  "Shorts revenue pool (partners)": "مجمّع إيرادات Shorts (للشركاء)",
  "On track": "على المسار الصحيح",
- "Existing partner": "شريك حالي"
+ "Existing partner": "شريك حالي",
+ "re:^You have (.+?) Shorts views in 90 days, above the 10m needed for Shorts pool revenue\\.$": "لديك $1 مشاهدة Shorts خلال 90 يومًا، أي أكثر من 10 ملايين المطلوبة لإيرادات مجمّع Shorts.",
+ "re:^You need (.+?) more Shorts views in 90 days to earn from the Shorts pool from February\\.$": "تحتاج إلى $1 مشاهدة Shorts إضافية خلال 90 يومًا لتربح من مجمّع Shorts بدءًا من فبراير.",
+ "re:^You need (.+?) more subscribers, plus (.+?) watch hours or (.+?) Shorts views today\\.$": "تحتاج إلى $1 مشترك إضافي، إضافة إلى $2 ساعة مشاهدة أو $3 مشاهدة Shorts اليوم.",
+ "re:^You need (.+?) more watch hours or (.+?) more Shorts views to qualify today\\.$": "تحتاج إلى $1 ساعة مشاهدة إضافية أو $2 مشاهدة Shorts إضافية لتتأهل اليوم."
 }

@@ -95,5 +95,9 @@
  "The 20% threshold for a project of OMR 12,000,000 is OMR 2,400,000. Your escrow-funded marketing ceiling at 3% is OMR 180,000.": "عتبة 20% لمشروع بقيمة OMR 12,000,000 هي OMR 2,400,000. وسقف التسويق الممول من حساب الضمان بنسبة 3% هو OMR 180,000.",
  "Your planned budget of OMR 250,000 is OMR 70,000 above the escrow ceiling. Fund the difference from the developer’s own money or phase the campaign.": "ميزانيتك المخططة البالغة OMR 250,000 تزيد بمقدار OMR 70,000 على سقف حساب الضمان. موّل الفرق من أموال المطوّر الخاصة أو قسّم الحملة على مراحل.",
  "Until then, build a waiting list with brand and area content, and prepare the permit application and launch creative.": "وحتى ذلك الحين، ابنِ قائمة انتظار بمحتوى عن العلامة والمنطقة، وجهّز طلب التصريح والمواد الإعلانية للإطلاق.",
- "Threshold reached: off-plan marketing can start once the permit is in place": "تم بلوغ الحد: يمكن بدء تسويق العقارات على الخارطة بمجرد صدور التصريح"
+ "Threshold reached: off-plan marketing can start once the permit is in place": "تم بلوغ الحد: يمكن بدء تسويق العقارات على الخارطة بمجرد صدور التصريح",
+ "re:^(.+?) to go before off\\-plan marketing in the zones$": "يتبقى $1 قبل بدء تسويق العقارات على الخارطة في المناطق",
+ "re:^The 20% threshold for a project of (.+?) is (.+?)\\. Your escrow\\-funded marketing ceiling at 3% is (.+?)\\.$": "حد الـ20% لمشروع قيمته $1 هو $2. وسقف التسويق الممول من حساب الضمان بنسبة 3% هو $3.",
+ "re:^Your planned budget of (.+?) is (.+?) above the escrow ceiling\\. Fund the difference from the developer’s own money or phase the campaign\\.$": "ميزانيتك المخططة البالغة $1 تتجاوز سقف حساب الضمان بمقدار $2. موّل الفرق من أموال المطوّر الخاصة أو قسّم الحملة على مراحل.",
+ "re:^Your planned budget of (.+?) fits within the escrow ceiling, leaving (.+?)\\.$": "ميزانيتك المخططة البالغة $1 ضمن سقف حساب الضمان، ويتبقى $2."
 }

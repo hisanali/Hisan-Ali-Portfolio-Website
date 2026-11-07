@@ -56,5 +56,15 @@
  "This image couldn’t be read — it may be damaged or in an unsupported format.": "تعذّرت قراءة هذه الصورة — قد تكون تالفة أو بصيغة غير مدعومة.",
  "Your browser couldn’t encode this image.": "تعذّر على متصفحك ترميز هذه الصورة.",
  "Sample document": "مستند تجريبي",
- "Made with hisanali.com/tools/marketing-roi-calculator/": "صُنع باستخدام hisanali.com/tools/marketing-roi-calculator/"
+ "Made with hisanali.com/tools/marketing-roi-calculator/": "صُنع باستخدام hisanali.com/tools/marketing-roi-calculator/",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2",
+ "re:^(.+?) sales beats your (.+?)% ROI target\\.$": "$1 من المبيعات يتجاوز هدف ROI البالغ $2%.",
+ "re:^Profitable, but (.+?) more sales are needed to hit your (.+?)% target\\.$": "مربح، لكنك تحتاج إلى $1 مبيعات إضافية لبلوغ هدفك البالغ $2%.",
+ "re:^(.+?) more sales needed just to break even\\.$": "تحتاج إلى $1 مبيعات إضافية لمجرد بلوغ نقطة التعادل.",
+ "re:^Campaign cost: (.+?) · Avg\\. sale: (.+?) · Margin: (.+?)%$": "تكلفة الحملة: $1 · متوسط البيع: $2 · الهامش: $3%",
+ "re:^Break\\-even: (.+?) sales \\((.+?)\\)$": "نقطة التعادل: $1 من المبيعات ($2)",
+ "re:^For a <0>([\\d,.\\-]+)% ROI</0> you need <1>([\\d,.]+) sales</1> \\((.+?) revenue\\)\\.$": "لتحقيق <0>عائد على الاستثمار بنسبة $1%</0> تحتاج إلى <1>$2 عملية بيع</1> (بإيرادات $3)."
 }

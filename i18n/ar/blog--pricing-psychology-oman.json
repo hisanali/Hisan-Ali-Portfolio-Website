@@ -116,5 +116,10 @@
  "Show the bigger option first, make yours the clearly “most chosen” middle, and keep a smaller entry option for price-sensitive buyers.": "اعرض الخيار الأكبر أولًا، واجعل خيارك هو الأوسط “الأكثر اختيارًا” بوضوح، واحتفظ بخيار دخول أصغر للمشترين الحساسين للسعر.",
  "Enter a price between OMR 0.100 and OMR 10,000,000.": "أدخل سعرًا بين 0.100 OMR و10,000,000 OMR.",
  "Round price": "سعر مقرَّب",
- "Already round. For an emotional purchase, keep it that way.": "السعر مقرَّب بالفعل. في الشراء العاطفي، أبقِه كذلك."
+ "Already round. For an emotional purchase, keep it that way.": "السعر مقرَّب بالفعل. في الشراء العاطفي، أبقِه كذلك.",
+ "re:^Options: (.+?) \\((.+?)\\) or (.+?) \\((.+?)\\)\\. Round numbers feel confident and premium\\.$": "الخيارات: $1 ($2) أو $3 ($4). الأرقام المستديرة توحي بالثقة والتميّز.",
+ "re:^About 1\\.5% under your figure, not rounded\\. A costed\\-looking number tends to hold better in negotiation than (.+?)\\.$": "أقل من رقمك بنحو 1.5%، دون تقريب. الرقم الذي يبدو محسوبًا بدقة يصمد عادةً في التفاوض أفضل من $1.",
+ "re:^Nearest options: (.+?) \\((.+?)\\) or (.+?) \\((.+?)\\)\\. Pick the one just below a round number\\.$": "أقرب الخيارات: $1 ($2) أو $3 ($4). اختر الرقم الذي يقع أسفل رقم مستدير مباشرة.",
+ "re:^about OMR (.+?) a day$": "نحو $1 ر.ع. يوميًا",
+ "re:^Show it next to the full (.+?) price, never instead of it\\.$": "اعرضه بجانب السعر الكامل $1، وليس بدلًا منه أبدًا."
 }

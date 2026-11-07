@@ -161,5 +161,11 @@
  "Plan an incrementality test <0/>": "خطّط لاختبار الأثر الإضافي <0/>",
  "Enter whole numbers for people and buyers (buyers cannot exceed people in their group), and non-negative OMR amounts.": "أدخل أعدادًا صحيحة للأشخاص والمشترين (لا يمكن أن يتجاوز المشترون عدد الأشخاص في مجموعتهم)، ومبالغ غير سالبة بالريال العُماني (OMR).",
  "At least one group has fewer than 10 buyers or non-buyers, so the range is unreliable. Run the test longer or with larger groups before deciding.": "مجموعة واحدة على الأقل فيها أقل من 10 مشترين أو غير مشترين، لذا فالنطاق غير موثوق. شغّل الاختبار مدة أطول أو بمجموعات أكبر قبل اتخاذ القرار.",
- "No extra buyers": "لا مشترين إضافيين"
+ "No extra buyers": "لا مشترين إضافيين",
+ "re:^Likely real: the rough 95% range for extra buyers \\((.+?) to (.+?)\\) excludes zero\\.$": "الأثر حقيقي على الأرجح: النطاق التقريبي بنسبة 95% للمشترين الإضافيين ($1 إلى $2) لا يشمل الصفر.",
+ "re:^ Even the low end covers the (.+?) extra buyers needed to pay for the spend\\.$": "وحتى الحد الأدنى يغطي $1 مشترين إضافيين مطلوبين لتغطية الإنفاق.",
+ "re:^ But even the high end falls short of the (.+?) extra buyers needed to cover the spend\\.$": "لكن حتى الحد الأعلى لا يبلغ $1 مشترين إضافيين مطلوبين لتغطية الإنفاق.",
+ "re:^ You need (.+?) extra buyers to cover the spend, and that sits inside the range, so profitability is not yet certain\\.$": "تحتاج إلى $1 مشترين إضافيين لتغطية الإنفاق، وهذا الرقم داخل النطاق، لذا فالربحية غير مؤكدة بعد.",
+ "re:^The holdout bought more than the targeted group \\(range (.+?) to (.+?)\\)\\. Check the random split and the exclusions before trusting this campaign\\.$": "اشترت المجموعة الضابطة أكثر من المجموعة المستهدفة (النطاق $1 إلى $2). راجع التقسيم العشوائي والاستثناءات قبل الوثوق بهذه الحملة.",
+ "re:^Inconclusive: the rough 95% range \\((.+?) to (.+?) extra buyers\\) includes zero, so this test cannot separate the campaign’s effect from normal variation\\. Try a larger holdout or a longer test\\.$": "النتيجة غير حاسمة: النطاق التقريبي بنسبة 95% ($1 إلى $2 مشترين إضافيين) يشمل الصفر، لذا لا يستطيع هذا الاختبار فصل أثر الحملة عن التباين الطبيعي. جرّب مجموعة ضابطة أكبر أو اختبارًا أطول."
 }

@@ -123,5 +123,6 @@
  "Saved per year": "التوفير سنويًا",
  "Moving 240 of 600 monthly orders to QR or transfer, at a maximum QR fee of 0.50%. Instant transfers from customers are free to them; ask your bank what, if anything, you pay to receive them.": "نقل 240 من أصل 600 طلب شهري إلى QR أو التحويل، بحد أقصى لرسوم QR يبلغ 0.50%. التحويلات الفورية مجانية للعملاء؛ اسأل بنكك عمّا تدفعه لاستلامها، إن وُجد.",
  "Your orders are above OMR 400, so the OMR 2 cap applies and the saving per order grows with order size.": "طلباتك أعلى من 400 OMR، لذا يُطبَّق سقف 2 OMR وتزداد التوفيرات لكل طلب مع زيادة حجم الطلب.",
- "Your card rate is already at or below the QR ceiling, so the saving here comes from fewer COD orders.": "نسبة رسوم البطاقة لديك أصلًا عند سقف QR أو أقل منه، لذا فالتوفير هنا يأتي من تقليل طلبات الدفع عند الاستلام."
+ "Your card rate is already at or below the QR ceiling, so the saving here comes from fewer COD orders.": "نسبة رسوم البطاقة لديك أصلًا عند سقف QR أو أقل منه، لذا فالتوفير هنا يأتي من تقليل طلبات الدفع عند الاستلام.",
+ "re:^Moving (.+?) of (.+?) monthly orders to QR or transfer, at a maximum QR fee of 0\\.50%\\.$": "تحويل $1 من أصل $2 طلب شهري إلى الدفع عبر QR أو التحويل، برسوم QR قصوى تبلغ 0.50%."
 }

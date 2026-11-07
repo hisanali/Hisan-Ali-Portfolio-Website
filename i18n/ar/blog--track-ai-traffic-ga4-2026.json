@@ -115,5 +115,6 @@
  "Copy regex": "نسخ التعبير",
  "5 assistants · paste into Session source → matches regex.": "5 مساعدات · الصقه في Session source ← matches regex.",
  "Copied ✓": "تم النسخ ✓",
- "Select and copy the text above": "حدّد النص أعلاه وانسخه"
+ "Select and copy the text above": "حدّد النص أعلاه وانسخه",
+ "re:^(.+?) assistant(.+?) · paste into Session source → matches regex\\.$": "عدد المساعدات: $1 · الصقه في Session source ← matches regex."
 }

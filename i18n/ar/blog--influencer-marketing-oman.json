@@ -155,5 +155,8 @@
  "No fee to cover": "لا رسوم لتغطيتها",
  "At least one creator has no estimated views in Oman with these inputs, so compare their audience location before anything else.": "صانع محتوى واحد على الأقل ليست لديه مشاهدات تقديرية في عُمان بهذه المدخلات، فقارن موقع جمهوره قبل أي شيء آخر.",
  "more estimated Oman views and costs": "مشاهدات تقديرية أكثر في عُمان وتكلفته",
- "the same estimated Oman views but costs": "المشاهدات التقديرية نفسها في عُمان لكن تكلفته"
+ "the same estimated Oman views but costs": "المشاهدات التقديرية نفسها في عُمان لكن تكلفته",
+ "re:^(.+?) Oman views$": "$1 مشاهدة في عُمان",
+ "re:^(.+?) delivers (.+?) less per view\\.$": "يقدّم $1 تكلفة أقل بمقدار $2 لكل مشاهدة.",
+ "re:^(.+?) delivers each estimated Oman view for about (.+?)% of (.+?)’s cost\\. (.+?) reaches about (.+?) more estimated views in Oman, so decide which matters more for this campaign\\.$": "يقدّم $1 كل مشاهدة تقديرية في عُمان بنحو $2% من تكلفة $3. أما $4 فيصل إلى نحو $5 مشاهدة تقديرية إضافية في عُمان، فحدّد أيهما أهم لهذه الحملة."
 }

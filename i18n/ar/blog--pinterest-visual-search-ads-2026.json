@@ -136,5 +136,7 @@
  "Ready for visual search": "جاهز للبحث المرئي",
  "Nearly there": "اقتربت",
  "Needs work": "يحتاج إلى تحسين",
- "Not ready": "غير جاهز"
+ "Not ready": "غير جاهز",
+ "re:^(.+?)% text: the image stays legible and matchable\\.$": "نص بنسبة $1%: تبقى الصورة واضحة وقابلة للمطابقة.",
+ "re:^(.+?)% text turns the Pin into a graphic\\. Remove most of it\\.$": "نص بنسبة $1% يحوّل الـ Pin إلى تصميم جرافيكي. احذف معظمه."
 }

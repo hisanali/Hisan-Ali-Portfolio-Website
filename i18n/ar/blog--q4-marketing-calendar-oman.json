@@ -123,5 +123,6 @@
  "Produce and test": "الإنتاج والاختبار",
  "Plan and book": "التخطيط والحجز",
  "Choose a valid date.": "اختر تاريخًا صحيحًا.",
- "Every moment in this calendar has passed. Start the 2027 plan from Ramadan onwards.": "انتهت جميع مناسبات هذا التقويم. ابدأ خطة 2027 من رمضان فصاعدًا."
+ "Every moment in this calendar has passed. Start the 2027 plan from Ramadan onwards.": "انتهت جميع مناسبات هذا التقويم. ابدأ خطة 2027 من رمضان فصاعدًا.",
+ "re:^Next up: (.+?) in (.+?) days\\. Anything that needs creators, stock or new creative should already be booked by the “Produce and test” stage, six weeks out\\.$": "التالي: $1 بعد $2 يومًا. أي شيء يحتاج إلى صنّاع محتوى أو مخزون أو تصاميم إعلانية جديدة يجب أن يكون محجوزًا بالفعل بحلول مرحلة «الإنتاج والاختبار»، قبل ستة أسابيع."
 }

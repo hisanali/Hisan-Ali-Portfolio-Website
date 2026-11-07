@@ -121,5 +121,9 @@
  "Read while you wait": "اقرأ أثناء الانتظار",
  "Thanks for sending that over — it gives me a great head start. Just a few details so I can reply.": "شكرًا لإرسال ذلك — إنه يمنحني بداية رائعة. فقط بعض التفاصيل حتى أتمكن من الرد.",
  "Welcome back — want to pick up where you left off?": "مرحبًا بعودتك — هل تريد المتابعة من حيث توقفت؟",
- "Continue": "متابعة"
+ "Continue": "متابعة",
+ "re:^(.+?) What’s the main outcome you’re after\\?$": "$1 ما النتيجة الرئيسية التي تسعى إليها؟",
+ "re:^Nice to meet you, (.+?)\\. What’s the best email to reply to\\?$": "سعيد بالتعرف إليك يا $1. ما أفضل بريد إلكتروني للرد عليك؟",
+ "re:^Change your answer: (.+?)$": "غيّر إجابتك: $1",
+ "re:^I completed the Growth Diagnostic\\. Result: (.+?)  I would like help deciding what to prioritize first\\.$": "أكملت تشخيص النمو. النتيجة: $1\\n\\nأودّ المساعدة في تحديد ما يجب أن أبدأ به أولًا."
 }

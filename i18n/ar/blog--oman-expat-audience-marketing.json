@@ -179,5 +179,6 @@
  "English, with Tagalog touches for Filipino audiences": "الإنجليزية، مع لمسات بالتاغالوغية للجمهور الفلبيني",
  "Facebook, TikTok and community pages": "فيسبوك وتيك توك وصفحات المجتمعات",
  "Western & other expatriates": "المغتربون الغربيون وغيرهم",
- "Google Search, Instagram, LinkedIn and expat community groups": "بحث جوجل وإنستغرام ولينكدإن ومجموعات مجتمعات المغتربين"
+ "Google Search, Instagram, LinkedIn and expat community groups": "بحث جوجل وإنستغرام ولينكدإن ومجموعات مجتمعات المغتربين",
+ "re:^Your sliders add up to (.+?)%, so shares were scaled to 100%\\.$": "مجموع أشرطة التمرير لديك $1%، لذا عُدّلت الحصص لتصبح 100%."
 }

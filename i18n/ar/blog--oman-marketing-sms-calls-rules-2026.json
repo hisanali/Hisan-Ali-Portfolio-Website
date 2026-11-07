@@ -150,5 +150,7 @@
  "Bought or shared lists invite blocking and raise data protection risk. Drop them and grow an opt-in list.": "القوائم المشتراة أو المتبادلة تدفع إلى الحظر وترفع مخاطر حماية البيانات. تخلّص منها وابنِ قائمة اشتراك بالموافقة.",
  "Opt-out instruction included.": "تتضمن تعليمات إلغاء الاشتراك.",
  "Add a clear opt-out, such as “Reply STOP to opt out”, and honour it within a day.": "أضف طريقة واضحة لإلغاء الاشتراك، مثل “أرسل STOP لإلغاء الاشتراك”، ونفّذها خلال يوم.",
- "Pressure wording (“last chance tonight”, “!!”) reads like spam and gets blocked. State the offer and the end date plainly.": "عبارات الضغط (“الفرصة الأخيرة الليلة”، “!!”) تبدو كرسائل مزعجة ويتم حظرها. اذكر العرض وتاريخ انتهائه بوضوح."
+ "Pressure wording (“last chance tonight”, “!!”) reads like spam and gets blocked. State the offer and the end date plainly.": "عبارات الضغط (“الفرصة الأخيرة الليلة”، “!!”) تبدو كرسائل مزعجة ويتم حظرها. اذكر العرض وتاريخ انتهائه بوضوح.",
+ "re:^(.+?) is outside 8am to 9pm\\. Move the send to between 8am and about 8:30pm\\.$": "الساعة $1 خارج الفترة من 8 صباحًا إلى 9 مساءً. انقل الإرسال إلى ما بين 8 صباحًا ونحو 8:30 مساءً.",
+ "re:^The text is (.+?) characters, so it will be split into (.+?) SMS parts\\. Shorten it to keep costs down\\.$": "طول النص $1 حرفًا، لذا سيُقسَّم إلى $2 أجزاء SMS. اختصره لتقليل التكلفة."
 }

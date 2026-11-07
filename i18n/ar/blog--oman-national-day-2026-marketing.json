@@ -128,5 +128,6 @@
  "Royal Palaces or Royal Mosques": "القصور السلطانية أو الجوامع السلطانية",
  "the State Emblem": "شعار الدولة",
  "the image of His Majesty the Sultan": "صورة حضرة صاحب الجلالة السلطان",
- "the official map of Oman": "الخريطة الرسمية لسلطنة عُمان"
+ "the official map of Oman": "الخريطة الرسمية لسلطنة عُمان",
+ "re:^(.+?) must not be used on commercial products under the ministry’s guidance\\. Remove (.+?)\\.$": "لا يجوز استخدام $1 على المنتجات التجارية وفق إرشادات الوزارة. أزِل $2."
 }

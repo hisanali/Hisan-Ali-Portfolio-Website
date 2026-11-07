@@ -66,5 +66,14 @@
  "Remove": "إزالة",
  "Smaller": "أصغر",
  "Larger": "أكبر",
- "ZIP downloaded": "تم تنزيل ملف ZIP"
+ "ZIP downloaded": "تم تنزيل ملف ZIP",
+ "re:^(.+?)Convert again$": "$1حوّل مرة أخرى",
+ "re:^Ready to convert (.+?)\\.$": "جاهز لتحويل $1.",
+ "re:^Converting (.+?) of (.+?)$": "جارٍ تحويل $1 من $2",
+ "re:^(.+?) converted — save them or download all$": "تم تحويل $1، احفظها أو نزّلها كلها",
+ "re:^(.+?) couldn’t be converted$": "تعذّر تحويل $1",
+ "re:^(.+?) skipped — unsupported type\\.$": "تم تخطي $1، نوع غير مدعوم.",
+ "re:^“(.+?)” isn’t a page number or range\\.$": "«$1» ليس رقم صفحة أو نطاقًا صحيحًا.",
+ "re:^Page (.+?) doesn’t exist — this file has (.+?)\\.$": "الصفحة $1 غير موجودة، فهذا الملف يحتوي على $2.",
+ "re:^Page (.+?) of (.+?)$": "الصفحة $1 من $2"
 }

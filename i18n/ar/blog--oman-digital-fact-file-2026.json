@@ -150,5 +150,6 @@
  "Likely online": "على الأرجح متصلون بالإنترنت",
  "At the national internet rate of 95.3%.": "وفق معدل الإنترنت الوطني البالغ 95.3%.",
  "On social media": "على وسائل التواصل الاجتماعي",
- "At the national rate of 62.1% social media identities.": "وفق المعدل الوطني البالغ 62.1% لهويات وسائل التواصل الاجتماعي."
+ "At the national rate of 62.1% social media identities.": "وفق المعدل الوطني البالغ 62.1% لهويات وسائل التواصل الاجتماعي.",
+ "re:^(.+?)% of Oman’s residents live in the (.+?) you picked\\.$": "يعيش $1% من سكان عُمان في $2 التي اخترتها."
 }

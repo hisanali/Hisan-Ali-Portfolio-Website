@@ -269,5 +269,6 @@
  "Cars & property": "السيارات والعقارات",
  "Big-ticket decisions cluster after summer and around National Day and year-end offers. Summer is for building lists, not closing.": "قرارات الشراء الكبيرة تتركز بعد الصيف وحول العيد الوطني وعروض نهاية العام. الصيف لبناء قوائم العملاء، لا لإتمام الصفقات.",
  "B2B services": "خدمات الشركات (B2B)",
- "New budgets in January and the September–October restart are when decisions get made. Ramadan and summer slow approvals.": "الميزانيات الجديدة في يناير والعودة إلى العمل في سبتمبر–أكتوبر هما وقت اتخاذ القرارات. أما رمضان والصيف فيبطئان الموافقات."
+ "New budgets in January and the September–October restart are when decisions get made. Ramadan and summer slow approvals.": "الميزانيات الجديدة في يناير والعودة إلى العمل في سبتمبر–أكتوبر هما وقت اتخاذ القرارات. أما رمضان والصيف فيبطئان الموافقات.",
+ "re:^(.+?) demand by month: $": "الطلب على $1 حسب الشهر:"
 }

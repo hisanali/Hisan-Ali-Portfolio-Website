@@ -139,5 +139,9 @@
  "Higher": "أعلى",
  "Low": "منخفض",
  "Copied ✓": "تم النسخ ✓",
- "Select the text to copy": "حدّد النص لنسخه"
+ "Select the text to copy": "حدّد النص لنسخه",
+ "re:^(.+?), up to OMR (.+?) a day per campaign$": "$1، بحد أقصى $2 ر.ع. يوميًا لكل حملة",
+ "re:^You may (.+?) without asking\\.$": "يمكنك $1 دون استئذان.",
+ "re:^Before you (.+?), describe the change and wait for written approval\\.$": "قبل أن $1، صِف التغيير وانتظر موافقة مكتوبة.",
+ "re:^Never set any campaign above OMR (.+?) a day\\.$": "لا تضبط أي حملة على أكثر من $1 ر.ع. يوميًا أبدًا."
 }

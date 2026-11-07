@@ -143,5 +143,6 @@
  "No customers yet": "لا عملاء بعد",
  "Not available": "غير متاح",
  "There is no advertising spend to recover in this scenario.": "لا يوجد إنفاق إعلاني لاسترداده في هذا السيناريو.",
- "With zero contribution per customer, additional customers cannot recover this ad spend.": "مع هامش مساهمة صفري لكل عميل، لا يمكن للعملاء الإضافيين استرداد هذا الإنفاق الإعلاني."
+ "With zero contribution per customer, additional customers cannot recover this ad spend.": "مع هامش مساهمة صفري لكل عميل، لا يمكن للعملاء الإضافيين استرداد هذا الإنفاق الإعلاني.",
+ "re:^(.+?) customers needed to cover this ad spend at (.+?) contribution each\\.$": "تحتاج إلى $1 عميل لتغطية هذا الإنفاق الإعلاني، بمساهمة $2 من كل عميل."
 }

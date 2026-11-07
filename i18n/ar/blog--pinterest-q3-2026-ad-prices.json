@@ -85,5 +85,6 @@
  "More reach for the same budget": "وصول أكبر بالميزانية نفسها",
  "That is the same as $83 of free media a month at your old price.": "وهذا يعادل 83$ من الظهور الإعلاني المجاني شهريًا بسعرك القديم.",
  "Impressions at the new CPM ($": "مرات الظهور بتكلفة الألف ظهور (CPM) الجديدة ($",
- "Less reach for the same budget": "وصول أقل بالميزانية نفسها"
+ "Less reach for the same budget": "وصول أقل بالميزانية نفسها",
+ "re:^That is the same as \\$(.+?) of (.+?) media a month at your old price\\.$": "وهذا يعادل $$1 من وسائط $2 شهريًا بسعرك القديم."
 }
