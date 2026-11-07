@@ -59,8 +59,10 @@ if (stage) {
     varying vec2 vUv;
     void main() {
       vec4 c = texture2D(uPhoto, vUv);
-      if (c.a < 0.04) discard;
-      gl_FragColor = vec4(c.rgb, smoothstep(0.04, 0.6, c.a));
+      // soft cut-out edge, and fade the bottom of the photo into the panel
+      float a = smoothstep(0.12, 0.88, c.a) * smoothstep(0.0, 0.06, vUv.y);
+      if (a < 0.01) discard;
+      gl_FragColor = vec4(c.rgb, a);
       #include <colorspace_fragment>
     }
   `;
@@ -88,7 +90,7 @@ if (stage) {
     const uniforms = {
       uPhoto: { value: photo },
       uDepth: { value: depth },
-      uDepthScale: { value: 0.42 },
+      uDepthScale: { value: 0.34 },
       uHead: { value: new Vector2() },
       uNeck: { value: new Vector2(0.49, 0.64) },
       uBreath: { value: 0 }
@@ -108,7 +110,7 @@ if (stage) {
       const byWidth = (HEIGHT * ASPECT) / 0.9 / (2 * tan * camera.aspect);
       const distance = Math.max(byHeight, byWidth);
       const viewHeight = 2 * distance * tan;
-      figure.position.y = -viewHeight / 2 + HEIGHT / 2;
+      figure.position.y = -viewHeight / 2 + HEIGHT / 2 - HEIGHT * 0.03;
       camera.position.set(0, 0, distance);
       camera.lookAt(0, 0, 0);
       camera.updateProjectionMatrix();
@@ -117,19 +119,20 @@ if (stage) {
     resize();
 
     // Pointer aim (anywhere on the page) and drag-to-look-around.
-    let aimX = 0; let aimY = 0;
+    let aimX = 0; let aimY = 0; let lastPointer = -10;
     let dragYaw = 0; let velocity = 0; let dragging = false; let lastX = 0;
     addEventListener('pointermove', (event) => {
       const box = stage.getBoundingClientRect();
       aimX = MathUtils.clamp((event.clientX - (box.left + box.width / 2)) / (innerWidth * 0.5), -1, 1);
       aimY = MathUtils.clamp((event.clientY - (box.top + box.height * 0.3)) / (innerHeight * 0.6), -1, 1);
+      if (event.pointerType === 'mouse') lastPointer = performance.now() / 1000;
     }, { passive: true });
     host.addEventListener('pointerdown', (event) => { dragging = true; lastX = event.clientX; host.setPointerCapture(event.pointerId); stage.classList.add('is-dragging'); });
     host.addEventListener('pointermove', (event) => {
       if (!dragging) return;
       const delta = (event.clientX - lastX) / host.clientWidth;
       lastX = event.clientX;
-      dragYaw = MathUtils.clamp(dragYaw + delta * 1.6, -0.55, 0.55);
+      dragYaw = MathUtils.clamp(dragYaw + delta * 1.1, -0.26, 0.26);
       velocity = delta * 1.6;
     });
     const endDrag = () => { dragging = false; stage.classList.remove('is-dragging'); };
@@ -147,16 +150,21 @@ if (stage) {
       if (!visible) return;
       t += dt;
       if (!dragging) {
-        dragYaw = MathUtils.clamp(dragYaw + velocity, -0.55, 0.55);
+        dragYaw = MathUtils.clamp(dragYaw + velocity, -0.26, 0.26);
         velocity *= 0.9;
         dragYaw = MathUtils.lerp(dragYaw, 0, 0.02); // settle back to face the visitor
       }
       const motion = reduceMotion ? 0 : 1;
-      figure.rotation.y = MathUtils.lerp(figure.rotation.y, aimX * 0.16 * motion + dragYaw, 0.07);
-      figure.rotation.x = MathUtils.lerp(figure.rotation.x, aimY * 0.05 * motion, 0.07);
+      // No mouse for a while (phones, tablets): look around slowly on his own.
+      if (performance.now() / 1000 - lastPointer > 4) {
+        aimX = Math.sin(t * 0.32) * 0.7;
+        aimY = Math.sin(t * 0.21 + 0.8) * 0.25;
+      }
+      figure.rotation.y = MathUtils.lerp(figure.rotation.y, aimX * 0.09 * motion + dragYaw, 0.06);
+      figure.rotation.x = MathUtils.lerp(figure.rotation.x, aimY * 0.03 * motion, 0.06);
       const head = uniforms.uHead.value;
-      head.x = MathUtils.lerp(head.x, (aimX * 0.14 + Math.sin(t * 0.45) * 0.025) * motion, 0.08);
-      head.y = MathUtils.lerp(head.y, (aimY * 0.07 + Math.sin(t * 0.37 + 1.2) * 0.012) * motion, 0.08);
+      head.x = MathUtils.lerp(head.x, (aimX * 0.075 + Math.sin(t * 0.45) * 0.014) * motion, 0.06);
+      head.y = MathUtils.lerp(head.y, (aimY * 0.04 + Math.sin(t * 0.37 + 1.2) * 0.008) * motion, 0.06);
       uniforms.uBreath.value = Math.sin(t * 1.55) * motion;
       renderer.render(scene, camera);
     };
