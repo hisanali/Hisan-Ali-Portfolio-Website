@@ -259,3 +259,17 @@ if (partnerStage && !reduceMotion && window.matchMedia('(pointer: fine)').matche
     partnerStage.style.setProperty('--my', '0');
   });
 }
+
+// Live 3D portrait: download the three.js bundle only when the section is close.
+const avatarStage = document.querySelector('[data-avatar-stage]');
+if (avatarStage && 'IntersectionObserver' in window) {
+  const loadAvatar = new IntersectionObserver((entries) => {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    loadAvatar.disconnect();
+    const script = document.createElement('script');
+    script.src = avatarStage.dataset.bundle;
+    script.async = true;
+    document.body.appendChild(script);
+  }, { rootMargin: '600px' });
+  loadAvatar.observe(avatarStage);
+}

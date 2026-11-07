@@ -755,6 +755,6 @@ html.theme-dark .avatar-link { color: #f2efe7 !important; }
 .avatar-status { position: absolute; z-index: 2; right: 22px; top: 22px; color: rgba(20, 37, 31, .6); font-size: 12px; font-weight: 800; }
 @media (max-width: 980px) {
   .avatar-shell { grid-template-columns: 1fr; }
-  .avatar-stage { height: clamp(480px, 110vw, 620px); }
+  .avatar-stage { height: clamp(560px, 135vw, 680px); }
 }
 @media (prefers-reduced-motion: reduce) { .avatar-badge i { animation: none; } }

@@ -1,177 +1,163 @@
 /* Live 3D portrait on the home page.
-   A textured 3D model of Hisan (generated from his studio photo) rendered with
-   three.js: soft studio lighting, a contact shadow, gentle breathing, a turn
-   towards the visitor's pointer and drag-to-rotate. Loads only when the
-   section is near the viewport; falls back to the photo without WebGL. */
+   The real studio photo is shown on a finely subdivided surface that is pushed
+   into shape by a depth map (taken from a 3D model generated from the same
+   photo), so every pixel is the real photograph while the figure has true depth.
+   Head and body turn towards the visitor's cursor (the head a little more, as a
+   person would), with breathing, a slow head sway and drag-to-look-around.
+   Loads only when the section is near the viewport; falls back to the photo. */
 import {
-  NoToneMapping, AmbientLight, Box3, Clock, Color, DirectionalLight, Group, MathUtils,
-  Mesh, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, PMREMGenerator, Scene, ShadowMaterial, SRGBColorSpace,
-  Vector3, WebGLRenderer, PCFSoftShadowMap, HemisphereLight
+  Clock, DoubleSide, MathUtils, Mesh, PerspectiveCamera, PlaneGeometry, Scene,
+  ShaderMaterial, SRGBColorSpace, TextureLoader, Vector2, WebGLRenderer, LinearFilter
 } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const stage = document.querySelector('[data-avatar-stage]');
 if (stage) {
-  const canvasHost = stage.querySelector('[data-avatar-canvas]');
-  const status = stage.querySelector('[data-avatar-status]');
+  const host = stage.querySelector('[data-avatar-canvas]');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const MODEL_URL = stage.dataset.model;
+  const PHOTO = stage.dataset.photo;
+  const DEPTH = stage.dataset.depth;
+  const ASPECT = 744 / 1144; // photo width / height
+  const HEIGHT = 1.75;
 
   const supportsWebGL = (() => {
     try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
   })();
+
+  const vertexShader = /* glsl */`
+    uniform sampler2D uDepth;
+    uniform float uDepthScale;
+    uniform vec2 uHead;      // extra head yaw / pitch (radians)
+    uniform vec2 uNeck;      // neck pivot in uv
+    uniform float uBreath;
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      vec3 p = position;
+      float d = texture2D(uDepth, uv).r;
+      p.z = (d - 0.5) * uDepthScale;
+
+      // Breathing: the chest rises and comes forward a touch.
+      float chest = smoothstep(0.0, 0.25, uv.y) * (1.0 - smoothstep(0.45, 0.62, uv.y));
+      p.y += chest * uBreath * 0.005;
+      p.z += chest * uBreath * 0.009;
+
+      // Head: rotate everything above the neck around a pivot inside the neck.
+      float head = smoothstep(uNeck.y - 0.035, uNeck.y + 0.03, uv.y);
+      vec3 pivot = vec3((uNeck.x - 0.5) * ${(ASPECT * HEIGHT).toFixed(4)}, (uNeck.y - 0.5) * ${HEIGHT.toFixed(2)}, -0.05);
+      vec3 q = p - pivot;
+      float yaw = uHead.x * head;
+      float pitch = uHead.y * head;
+      q = vec3(q.x * cos(yaw) + q.z * sin(yaw), q.y, -q.x * sin(yaw) + q.z * cos(yaw));
+      q = vec3(q.x, q.y * cos(pitch) - q.z * sin(pitch), q.y * sin(pitch) + q.z * cos(pitch));
+      p = q + pivot;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+    }
+  `;
+  const fragmentShader = /* glsl */`
+    uniform sampler2D uPhoto;
+    varying vec2 vUv;
+    void main() {
+      vec4 c = texture2D(uPhoto, vUv);
+      if (c.a < 0.04) discard;
+      gl_FragColor = vec4(c.rgb, smoothstep(0.04, 0.6, c.a));
+      #include <colorspace_fragment>
+    }
+  `;
 
   const start = () => {
     if (!supportsWebGL) { stage.classList.add('is-fallback'); return; }
     const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.outputColorSpace = SRGBColorSpace;
-    renderer.toneMapping = NoToneMapping;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
-    canvasHost.appendChild(renderer.domElement);
+    host.appendChild(renderer.domElement);
 
     const scene = new Scene();
-    const pmrem = new PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const camera = new PerspectiveCamera(24, 1, 0.05, 30);
 
-    const camera = new PerspectiveCamera(26, 1, 0.05, 50);
+    let loaded = 0;
+    const markReady = () => { loaded += 1; if (loaded === 2) stage.classList.add('is-ready'); };
+    const loader = new TextureLoader();
+    const photo = loader.load(PHOTO, markReady, undefined, () => stage.classList.add('is-fallback'));
+    photo.colorSpace = SRGBColorSpace;
+    photo.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const depth = loader.load(DEPTH, markReady, undefined, () => stage.classList.add('is-fallback'));
+    depth.minFilter = LinearFilter;
+    depth.generateMipmaps = false;
 
-    // Studio lighting: warm key, cool rim, soft fill from below.
-    scene.add(new HemisphereLight(0xffffff, 0x9aa59c, 0.25));
-    scene.add(new AmbientLight(0xffffff, 0.15));
-    const key = new DirectionalLight(0xfff3e6, 0.55);
-    key.position.set(1.6, 2.4, 2.6);
-    key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
-    key.shadow.radius = 6;
-    key.shadow.bias = -0.0004;
-    scene.add(key);
-    const rim = new DirectionalLight(0xdfffd0, 0.5);
-    rim.position.set(-2.2, 1.8, -2.4);
-    scene.add(rim);
-    const fill = new DirectionalLight(0xffffff, 0.15);
-    fill.position.set(-1.8, 0.4, 2);
-    scene.add(fill);
-
-    const ground = new Mesh(new PlaneGeometry(6, 6), new ShadowMaterial({ opacity: 0.18 }));
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    const rig = new Group();      // pointer turn + drag
-    const body = new Group();     // breathing / sway
-    rig.add(body);
-    scene.add(rig);
+    const uniforms = {
+      uPhoto: { value: photo },
+      uDepth: { value: depth },
+      uDepthScale: { value: 0.42 },
+      uHead: { value: new Vector2() },
+      uNeck: { value: new Vector2(0.49, 0.64) },
+      uBreath: { value: 0 }
+    };
+    const material = new ShaderMaterial({ uniforms, vertexShader, fragmentShader, transparent: true, side: DoubleSide });
+    const figure = new Mesh(new PlaneGeometry(HEIGHT * ASPECT, HEIGHT, 240, 370), material);
+    scene.add(figure);
 
     const resize = () => {
-      const { width, height } = canvasHost.getBoundingClientRect();
+      const { width, height } = host.getBoundingClientRect();
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(height, 1);
+      // Fit the figure to ~94% of the panel height (or width on narrow panels)
+      // and stand it on the bottom edge of the panel.
+      const tan = Math.tan(MathUtils.degToRad(camera.fov / 2));
+      const byHeight = HEIGHT / 0.94 / (2 * tan);
+      const byWidth = (HEIGHT * ASPECT) / 0.9 / (2 * tan * camera.aspect);
+      const distance = Math.max(byHeight, byWidth);
+      const viewHeight = 2 * distance * tan;
+      figure.position.y = -viewHeight / 2 + HEIGHT / 2;
+      camera.position.set(0, 0, distance);
+      camera.lookAt(0, 0, 0);
       camera.updateProjectionMatrix();
     };
-    new ResizeObserver(resize).observe(canvasHost);
+    new ResizeObserver(resize).observe(host);
     resize();
 
-    const loader = new GLTFLoader();
-    loader.setMeshoptDecoder(MeshoptDecoder);
-    loader.load(MODEL_URL, (gltf) => {
-      const model = gltf.scene;
-      model.traverse((node) => {
-        if (node.isMesh) {
-          // The generated mesh ships without normals: compute smooth ones for soft shading.
-          if (!node.geometry.attributes.normal) node.geometry.computeVertexNormals();
-          node.castShadow = true;
-          node.receiveShadow = false;
-          // The texture already carries the real light from the photo shoot. Show it
-          // mostly as-is (emissive) and add only a little scene light for depth, so the
-          // skin reads as a photo rather than a lit statue.
-          const map = node.material && node.material.map;
-          if (map) {
-            map.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            node.material = new MeshStandardMaterial({
-              map, emissiveMap: map, emissive: new Color(0xffffff), emissiveIntensity: 0.78,
-              roughness: 0.92, metalness: 0, envMapIntensity: 0.12
-            });
-          }
-        }
-      });
-      // Normalise: feet on the ground, 1.75 m tall, centred.
-      const box = new Box3().setFromObject(model);
-      const size = box.getSize(new Vector3());
-      const scale = 1.75 / size.y;
-      model.scale.setScalar(scale);
-      box.setFromObject(model);
-      const centre = box.getCenter(new Vector3());
-      model.position.x -= centre.x;
-      model.position.z -= centre.z;
-      model.position.y -= box.min.y;
-      body.add(model);
-
-      // Frame head and torso: the model is waist-up, so aim at the upper body.
-      const top = box.max.y - box.min.y;
-      const target = new Vector3(0, top * 0.62, 0);
-      camera.position.set(0, top * 0.66, top * 2.05);
-      camera.lookAt(target);
-      key.target.position.copy(target);
-      scene.add(key.target);
-
-      stage.classList.add('is-ready');
-      if (status) status.textContent = '';
-    }, (event) => {
-      if (status && event.total) status.textContent = `${Math.round((event.loaded / event.total) * 100)}%`;
-    }, () => {
-      stage.classList.add('is-fallback');
-    });
-
-    // Pointer: the figure turns towards the visitor.
+    // Pointer aim (anywhere on the page) and drag-to-look-around.
     let aimX = 0; let aimY = 0;
-    let dragYaw = 0; let dragVelocity = 0; let dragging = false; let lastX = 0;
+    let dragYaw = 0; let velocity = 0; let dragging = false; let lastX = 0;
     addEventListener('pointermove', (event) => {
       const box = stage.getBoundingClientRect();
-      aimX = MathUtils.clamp(((event.clientX - (box.left + box.width / 2)) / innerWidth) * 2, -1, 1);
-      aimY = MathUtils.clamp(((event.clientY - (box.top + box.height * 0.35)) / innerHeight) * 2, -1, 1);
+      aimX = MathUtils.clamp((event.clientX - (box.left + box.width / 2)) / (innerWidth * 0.5), -1, 1);
+      aimY = MathUtils.clamp((event.clientY - (box.top + box.height * 0.3)) / (innerHeight * 0.6), -1, 1);
     }, { passive: true });
-    canvasHost.addEventListener('pointerdown', (event) => { dragging = true; lastX = event.clientX; canvasHost.setPointerCapture(event.pointerId); stage.classList.add('is-dragging'); });
-    canvasHost.addEventListener('pointermove', (event) => {
+    host.addEventListener('pointerdown', (event) => { dragging = true; lastX = event.clientX; host.setPointerCapture(event.pointerId); stage.classList.add('is-dragging'); });
+    host.addEventListener('pointermove', (event) => {
       if (!dragging) return;
-      const delta = (event.clientX - lastX) / canvasHost.clientWidth;
+      const delta = (event.clientX - lastX) / host.clientWidth;
       lastX = event.clientX;
-      dragVelocity = delta * 6;
-      dragYaw += delta * 6;
+      dragYaw = MathUtils.clamp(dragYaw + delta * 1.6, -0.55, 0.55);
+      velocity = delta * 1.6;
     });
     const endDrag = () => { dragging = false; stage.classList.remove('is-dragging'); };
-    canvasHost.addEventListener('pointerup', endDrag);
-    canvasHost.addEventListener('pointercancel', endDrag);
+    host.addEventListener('pointerup', endDrag);
+    host.addEventListener('pointercancel', endDrag);
 
     let visible = true;
     new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { rootMargin: '120px' }).observe(stage);
 
     const clock = new Clock();
-    let elapsed = 0;
+    let t = 0;
     const tick = () => {
       requestAnimationFrame(tick);
-      if (!visible) return;
       const dt = Math.min(clock.getDelta(), 0.05);
-      elapsed += dt;
-      const t = elapsed;
+      if (!visible) return;
+      t += dt;
       if (!dragging) {
-        dragVelocity *= 0.92;
-        dragYaw += dragVelocity * dt * 2;
-        // ease the drag back to facing the visitor
-        dragYaw = MathUtils.lerp(dragYaw, 0, 0.012);
+        dragYaw = MathUtils.clamp(dragYaw + velocity, -0.55, 0.55);
+        velocity *= 0.9;
+        dragYaw = MathUtils.lerp(dragYaw, 0, 0.02); // settle back to face the visitor
       }
-      const yaw = (reduceMotion ? 0 : aimX * 0.32) + dragYaw;
-      const pitch = reduceMotion ? 0 : aimY * 0.06;
-      rig.rotation.y = MathUtils.lerp(rig.rotation.y, yaw, 0.06);
-      rig.rotation.x = MathUtils.lerp(rig.rotation.x, pitch, 0.06);
-      if (!reduceMotion) {
-        body.scale.y = 1 + Math.sin(t * 1.6) * 0.0035;           // breathing
-        body.rotation.z = Math.sin(t * 0.55) * 0.012;             // gentle sway
-        body.position.y = Math.sin(t * 1.6) * 0.002;
-      }
+      const motion = reduceMotion ? 0 : 1;
+      figure.rotation.y = MathUtils.lerp(figure.rotation.y, aimX * 0.16 * motion + dragYaw, 0.07);
+      figure.rotation.x = MathUtils.lerp(figure.rotation.x, aimY * 0.05 * motion, 0.07);
+      const head = uniforms.uHead.value;
+      head.x = MathUtils.lerp(head.x, (aimX * 0.14 + Math.sin(t * 0.45) * 0.025) * motion, 0.08);
+      head.y = MathUtils.lerp(head.y, (aimY * 0.07 + Math.sin(t * 0.37 + 1.2) * 0.012) * motion, 0.08);
+      uniforms.uBreath.value = Math.sin(t * 1.55) * motion;
       renderer.render(scene, camera);
     };
     tick();
