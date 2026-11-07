@@ -60,8 +60,8 @@ if (stage) {
     varying vec2 vUv;
     void main() {
       vec4 c = texture2D(uPhoto, vUv);
-      // soft cut-out edge, and fade the bottom of the photo into the panel
-      float a = smoothstep(0.12, 0.88, c.a) * smoothstep(0.0, 0.06, vUv.y);
+      // soft cut-out edge; the bottom of the photo runs past the panel edge
+      float a = smoothstep(0.12, 0.88, c.a);
       if (a < 0.01) discard;
       gl_FragColor = vec4(c.rgb, a);
       #include <colorspace_fragment>
@@ -111,7 +111,7 @@ if (stage) {
       const byWidth = (HEIGHT * ASPECT) / 0.9 / (2 * tan * camera.aspect);
       const distance = Math.max(byHeight, byWidth);
       const viewHeight = 2 * distance * tan;
-      figure.position.y = -viewHeight / 2 + HEIGHT / 2 - HEIGHT * 0.03;
+      figure.position.y = -viewHeight / 2 + HEIGHT / 2 - HEIGHT * 0.05;
       camera.position.set(0, 0, distance);
       camera.lookAt(0, 0, 0);
       camera.updateProjectionMatrix();
