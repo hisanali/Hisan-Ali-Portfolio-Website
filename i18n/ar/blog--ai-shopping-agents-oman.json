@@ -142,5 +142,14 @@
  "Your next three fixes:": "إصلاحاتك الثلاثة التالية:",
  "Show every price as plain text in OMR. An agent can’t compare a price it can’t read.": "اعرض كل سعر كنص عادي بالريال العُماني. فالوكيل لا يستطيع مقارنة سعر لا يستطيع قراءته.",
  "Add complete Product structured data: price, currency, availability and rating.": "أضف بيانات منظَّمة كاملة للمنتج: السعر والعملة والتوفر والتقييم.",
- "Show stock status as text, and sync it with your real inventory.": "اعرض حالة المخزون كنص، وزامنها مع مخزونك الفعلي."
+ "Show stock status as text, and sync it with your real inventory.": "اعرض حالة المخزون كنص، وزامنها مع مخزونك الفعلي.",
+ "Write delivery times and costs by region: Muscat, Batinah, Dakhiliyah, Dhofar and so on.": "اكتب مدد التوصيل وتكاليفه حسب المنطقة: مسقط، والباطنة، والداخلية، وظفار وغيرها.",
+ "Set up or clean your Google Merchant Center feed so titles, prices and stock match the site.": "أنشئ خلاصة Google Merchant Center أو نظّفها لتتطابق العناوين والأسعار والمخزون مع الموقع.",
+ "Check robots.txt: allow OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User and PerplexityBot if you want to appear in answers.": "راجع ملف robots.txt: اسمح لـ OAI-SearchBot وChatGPT-User وClaude-SearchBot وClaude-User وPerplexityBot إن أردت الظهور في الإجابات.",
+ "Publish a clear returns page and link it from every product.": "انشر صفحة واضحة لسياسة الإرجاع واربطها من كل منتج.",
+ "Move specs, sizes and warranty details out of images and into page text.": "انقل المواصفات والمقاسات وتفاصيل الضمان من الصور إلى نص الصفحة.",
+ "Ask recent customers for Google reviews and reply to each one.": "اطلب من العملاء الجدد تقييمات على جوجل وردّ على كل واحد منها.",
+ "Allow guest checkout and show the full total, including delivery, before payment.": "اسمح بالشراء كزائر دون تسجيل، واعرض الإجمالي الكامل شاملًا التوصيل قبل الدفع.",
+ "Agent-ready. Keep the data accurate and watch AI referrals in GA4.": "جاهز للوكلاء الذكيين. حافظ على دقة البيانات وراقب الزيارات القادمة من الذكاء الاصطناعي في GA4.",
+ "Partly readable. Agents can find you, but may drop you in a close comparison.": "مقروء جزئيًا. يمكن للوكلاء العثور عليك، لكنهم قد يستبعدونك في مقارنة متقاربة."
 }

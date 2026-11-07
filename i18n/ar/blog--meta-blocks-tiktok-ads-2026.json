@@ -84,5 +84,6 @@
  "Low": "منخفض",
  "Low risk": "خطر منخفض",
  "Nothing in this campaign touches the reported block.": "لا شيء في هذه الحملة يمسّ الحظر المُعلَن.",
- "Keep landing pages on channels you own.": "أبقِ صفحات الهبوط على قنوات تملكها."
+ "Keep landing pages on channels you own.": "أبقِ صفحات الهبوط على قنوات تملكها.",
+ "Put Egypt in its own ad set so a rejection doesn’t pause your GCC delivery.": "ضع مصر في مجموعة إعلانية خاصة بها حتى لا يوقف الرفضُ عرضَ إعلاناتك في دول الخليج."
 }

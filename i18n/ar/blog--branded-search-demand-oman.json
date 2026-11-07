@@ -103,5 +103,12 @@
  "Audit my brand search <0/>": "دقّق البحث باسم علامتي <0/>",
  "Total clicks": "إجمالي النقرات",
  "Branded, year on year": "باسم العلامة، مقارنة بالعام السابق",
- "A healthy mix of discovery and demand. Keep both growing and watch the yearly trend. Branded clicks are growing year on year: your marketing is building memory.": "مزيج صحي بين الاكتشاف والطلب. حافظ على نمو الاثنين وراقب الاتجاه السنوي. النقرات باسم العلامة تنمو عامًا بعد عام: تسويقك يبني الذاكرة."
+ "A healthy mix of discovery and demand. Keep both growing and watch the yearly trend. Branded clicks are growing year on year: your marketing is building memory.": "مزيج صحي بين الاكتشاف والطلب. حافظ على نمو الاثنين وراقب الاتجاه السنوي. النقرات باسم العلامة تنمو عامًا بعد عام: تسويقك يبني الذاكرة.",
+ "Enter non-negative click numbers, with at least some clicks in total.": "أدخل أعداد نقرات غير سالبة، مع وجود بعض النقرات في المجموع على الأقل.",
+ "People find you for topics more than for your name. Work on brand memory: a clear name in every ad and consistent visuals.": "يجدك الناس عبر المواضيع أكثر من اسمك. اعمل على تذكّر العلامة التجارية: اسم واضح في كل إعلان وهوية بصرية متّسقة.",
+ "A healthy mix of discovery and demand. Keep both growing and watch the yearly trend.": "مزيج صحي بين الاكتشاف والطلب. حافظ على نمو الاثنين وراقب الاتجاه السنوي.",
+ "People know you, but you rely on existing demand. Reach new audiences with non-branded SEO and prospecting ads.": "الناس يعرفونك، لكنك تعتمد على الطلب القائم. اوصل إلى جماهير جديدة عبر SEO لعبارات غير مرتبطة باسمك وإعلانات استقطاب.",
+ "Branded clicks are growing year on year: your marketing is building memory.": "النقرات على اسم علامتك تنمو سنة بعد سنة: تسويقك يبني حضورًا في الذاكرة.",
+ "Branded clicks are down year on year: check what changed in your visibility, offline presence and reviews.": "النقرات على اسم علامتك تراجعت مقارنة بالعام الماضي: راجع ما تغيّر في ظهورك وحضورك خارج الإنترنت وتقييماتك.",
+ "Branded clicks are roughly flat year on year.": "النقرات على اسم علامتك ثابتة تقريبًا مقارنة بالعام الماضي."
 }

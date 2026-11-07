@@ -113,5 +113,7 @@
  "I’ll set up AI traffic tracking in your GA4, build a report your team can read and show which pages AI tools trust.": "سأُعدّ تتبّع زيارات الذكاء الاصطناعي في GA4 لديك، وأبني تقريرًا يستطيع فريقك قراءته، وأوضّح الصفحات التي تثق بها أدوات الذكاء الاصطناعي.",
  "Set up my AI tracking <0/>": "أعدّ تتبّع الذكاء الاصطناعي لدي <0/>",
  "Copy regex": "نسخ التعبير",
- "5 assistants · paste into Session source → matches regex.": "5 مساعدات · الصقه في Session source ← matches regex."
+ "5 assistants · paste into Session source → matches regex.": "5 مساعدات · الصقه في Session source ← matches regex.",
+ "Copied ✓": "تم النسخ ✓",
+ "Select and copy the text above": "حدّد النص أعلاه وانسخه"
 }

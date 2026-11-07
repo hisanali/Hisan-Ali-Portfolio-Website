@@ -135,5 +135,9 @@
  "Before you switch campaigns or ads on or change budgets, describe the change and wait for written approval.": "قبل تفعيل الحملات أو الإعلانات أو تغيير الميزانيات، صِف التغيير وانتظر موافقة كتابية.",
  "Never set any campaign above OMR 50 a day.": "لا تضبط أي حملة على أكثر من 50 ر.ع. يوميًا.",
  "After every change, report what you changed, why, and how to undo it.": "بعد كل تغيير، أبلغ بما غيّرته، ولماذا، وكيف يمكن التراجع عنه.",
- "Copy policy": "نسخ السياسة"
+ "Copy policy": "نسخ السياسة",
+ "Higher": "أعلى",
+ "Low": "منخفض",
+ "Copied ✓": "تم النسخ ✓",
+ "Select the text to copy": "حدّد النص لنسخه"
 }

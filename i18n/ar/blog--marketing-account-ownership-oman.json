@@ -142,5 +142,20 @@
  "Incrementality testing": "اختبار الأثر الإضافي",
  "Want a second pair of eyes on your accounts?": "هل تريد من يراجع حساباتك معك؟",
  "Let’s walk through the ownership audit with your team and plan a clean, friendly handover.": "لنمرّ معًا على تدقيق الملكية مع فريقك ونخطط لعملية تسليم نظيفة وودية.",
- "Book an ownership review <0/>": "احجز مراجعة للملكية <0/>"
+ "Book an ownership review <0/>": "احجز مراجعة للملكية <0/>",
+ "Move the registration into the business’s name, in a registrar account on a company email. Record the expiry date and switch on auto-renew.": "انقل تسجيل النطاق إلى اسم النشاط التجاري، في حساب لدى جهة التسجيل ببريد الشركة. سجّل تاريخ الانتهاء وفعّل التجديد التلقائي.",
+ "Get an admin login on a company email, put the hosting account in the business’s name and download a recent backup.": "احصل على دخول بصلاحية المسؤول ببريد الشركة، واجعل حساب الاستضافة باسم النشاط التجاري، ونزّل نسخة احتياطية حديثة.",
+ "Make a company Google account the primary owner and keep your agency as a manager.": "اجعل حساب جوجل تابعًا للشركة هو المالك الأساسي، وأبقِ وكالتك بصفة مدير.",
+ "Facebook, Instagram and Meta ads": "فيسبوك وإنستغرام وإعلانات ميتا",
+ "Put your Page, Instagram account, ad account and dataset in your own business portfolio, give two trusted staff full control and add your agency as a partner.": "ضع صفحتك وحساب إنستغرام والحساب الإعلاني ومجموعة البيانات في محفظة أعمالك الخاصة، وامنح اثنين من الموظفين الموثوقين تحكمًا كاملًا، وأضف وكالتك كشريك.",
+ "WhatsApp Business number": "رقم واتساب للأعمال",
+ "Run WhatsApp Business on a company-owned number, and record who holds the phone and the two-step verification PIN.": "شغّل واتساب للأعمال على رقم تملكه الشركة، وسجّل من يحمل الهاتف ورمز PIN للتحقق بخطوتين.",
+ "Ask for Admin access for a company email directly on the account before anyone changes the manager-account link.": "اطلب صلاحية المسؤول (Admin) لبريد الشركة مباشرة على الحساب قبل أن يغيّر أحد ربط الحساب الإداري.",
+ "Hold Administrator on the Analytics account that contains your property, or ask your agency to move the property into your own account.": "احتفظ بصلاحية المسؤول (Administrator) على حساب Analytics الذي يضم موقعك، أو اطلب من وكالتك نقل الموقع إلى حسابك الخاص.",
+ "Become Admin of the Tag Manager account and give your agency Publish access to the container.": "كن مسؤولًا (Admin) عن حساب Tag Manager، وامنح وكالتك صلاحية النشر (Publish) على الحاوية.",
+ "Verify ownership yourself, then remove former owners and their verification tokens.": "وثّق الملكية بنفسك، ثم أزل المالكين السابقين ورموز التحقق الخاصة بهم.",
+ "Other social accounts": "حسابات تواصل اجتماعي أخرى",
+ "Make sure each login uses a company email and phone number, and that two staff can get in.": "تأكد أن كل تسجيل دخول يستخدم بريدًا ورقم هاتف تابعين للشركة، وأن موظفَين اثنين يستطيعان الدخول.",
+ "Choose at least one asset your business uses, then score again.": "اختر أصلًا واحدًا على الأقل يستخدمه نشاطك، ثم احسب النتيجة مرة أخرى.",
+ "Every asset you use is held by your business. Keep it that way with the offboarding checklist below.": "كل أصل تستخدمه مملوك لنشاطك التجاري. حافظ على ذلك باستخدام قائمة إنهاء التعاون أدناه."
 }

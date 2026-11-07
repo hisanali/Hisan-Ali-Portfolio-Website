@@ -158,5 +158,8 @@
  "Measure meaningful actions": "قِس الإجراءات ذات المعنى",
  "Not sure which campaigns are really working?": "لست متأكدًا أي الحملات تنجح فعلًا؟",
  "Let’s design a holdout test around your own sales data and set budgets on the numbers that matter.": "لنصمم اختبار مجموعة ضابطة قائمًا على بيانات مبيعاتك الخاصة، ونحدد الميزانيات وفق الأرقام التي تهم.",
- "Plan an incrementality test <0/>": "خطّط لاختبار الأثر الإضافي <0/>"
+ "Plan an incrementality test <0/>": "خطّط لاختبار الأثر الإضافي <0/>",
+ "Enter whole numbers for people and buyers (buyers cannot exceed people in their group), and non-negative OMR amounts.": "أدخل أعدادًا صحيحة للأشخاص والمشترين (لا يمكن أن يتجاوز المشترون عدد الأشخاص في مجموعتهم)، ومبالغ غير سالبة بالريال العُماني (OMR).",
+ "At least one group has fewer than 10 buyers or non-buyers, so the range is unreliable. Run the test longer or with larger groups before deciding.": "مجموعة واحدة على الأقل فيها أقل من 10 مشترين أو غير مشترين، لذا فالنطاق غير موثوق. شغّل الاختبار مدة أطول أو بمجموعات أكبر قبل اتخاذ القرار.",
+ "No extra buyers": "لا مشترين إضافيين"
 }

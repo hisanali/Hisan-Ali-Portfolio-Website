@@ -126,5 +126,15 @@
  "The product dominates the frame.": "المنتج يهيمن على الإطار.",
  "10% text: the image stays legible and matchable.": "نص بنسبة 10%: تبقى الصورة واضحة وقابلة للمطابقة.",
  "Descriptive title: says what the item is.": "عنوان وصفي: يقول ما هو المنتج.",
- "In the catalogue with price and stock: eligible for product formats.": "في الكتالوج مع السعر والمخزون: مؤهل لتنسيقات المنتجات."
+ "In the catalogue with price and stock: eligible for product formats.": "في الكتالوج مع السعر والمخزون: مؤهل لتنسيقات المنتجات.",
+ "Allowed, but 2:3 fills more of the screen and crops less in close-ups.": "مسموح، لكن نسبة 2:3 تملأ مساحة أكبر من الشاشة وتُقتطع أقل في اللقطات المقرّبة.",
+ "16:9 horizontal gets cropped and loses the product. Rebuild vertical.": "الصورة الأفقية 16:9 تُقتطع ويضيع المنتج. أعد تصميمها عموديًا.",
+ "Graphic or text-led images have nothing for visual search to match.": "الصور الجرافيكية أو المعتمدة على النص لا تحتوي على ما يطابقه البحث المرئي.",
+ "A small or hidden product will not be recognised. Reshoot.": "المنتج الصغير أو المخفي لن يُتعرَّف عليه. أعد التصوير.",
+ "Title should name the product, material or colour in 4–12 words.": "يجب أن يذكر العنوان المنتج أو الخامة أو اللون في 4–12 كلمة.",
+ "Add a title that names the product.": "أضف عنوانًا يذكر اسم المنتج.",
+ "Ready for visual search": "جاهز للبحث المرئي",
+ "Nearly there": "اقتربت",
+ "Needs work": "يحتاج إلى تحسين",
+ "Not ready": "غير جاهز"
 }

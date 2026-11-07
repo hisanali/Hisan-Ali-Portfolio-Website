@@ -200,5 +200,13 @@
  "Brand demand": "الطلب على العلامة التجارية",
  "Want AI agents working on your website safely?": "تريد وكلاء ذكاء اصطناعي يعملون على موقعك بأمان؟",
  "I can set up the repository, memory files and review routine so your team gets the speed without the surprises.": "أستطيع إعداد المستودع وملفات الذاكرة وروتين المراجعة ليحصل فريقك على السرعة دون مفاجآت.",
- "Talk about an AI workflow <0/>": "لنتحدث عن سير عمل بالذكاء الاصطناعي <0/>"
+ "Talk about an AI workflow <0/>": "لنتحدث عن سير عمل بالذكاء الاصطناعي <0/>",
+ "Copied": "تم النسخ",
+ "Select & copy": "حدّد وانسخ",
+ "Try both for a week each": "جرّب كليهما لمدة أسبوع لكلٍّ منهما",
+ "Your answers are balanced. Use the entry plan on one side for a week, then the other, on the same real task. Keep the one you reach for without thinking.": "إجاباتك متوازنة. استخدم خطة البداية مع أحدهما لمدة أسبوع، ثم الآخر، على المهمة الحقيقية نفسها. واحتفظ بالذي تلجأ إليه دون تفكير.",
+ "Start with Claude Code": "ابدأ بـ Claude Code",
+ "Your work leans towards long, judgement-heavy tasks and writing. Start in plan mode, keep a short CLAUDE.md, and use Codex later as a second-opinion reviewer.": "عملك يميل إلى المهام الطويلة التي تتطلب حُكمًا وتقديرًا، وإلى الكتابة. ابدأ في وضع التخطيط (plan mode)، واحتفظ بملف CLAUDE.md قصير، واستخدم Codex لاحقًا كمراجع يقدّم رأيًا ثانيًا.",
+ "Start with Codex": "ابدأ بـ Codex",
+ "Your work leans towards many small, well-defined tasks you can hand off. Split your backlog into cloud tasks, review each diff, and keep an AGENTS.md with your build and test commands.": "عملك يميل إلى مهام صغيرة كثيرة ومحددة جيدًا يمكنك تسليمها. قسّم قائمة مهامك إلى مهام سحابية، وراجع كل تغيير (diff)، واحتفظ بملف AGENTS.md يتضمن أوامر البناء والاختبار."
 }

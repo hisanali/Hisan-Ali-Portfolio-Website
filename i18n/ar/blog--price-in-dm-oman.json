@@ -122,5 +122,7 @@
  "Reply faster and better": "ردّ بشكل أسرع وأفضل",
  "Want your Instagram to sell before anyone messages?": "هل تريد أن يبيع حسابك على إنستغرام قبل أن يراسلك أحد؟",
  "Let’s review your captions, catalogue and pricing presentation, and design a four-week test.": "لنراجع تعليقاتك وكتالوجك وطريقة عرض أسعارك، ونصمم اختبارًا لمدة أربعة أسابيع.",
- "Review my social selling <0/>": "راجع بيعي عبر وسائل التواصل <0/>"
+ "Review my social selling <0/>": "راجع بيعي عبر وسائل التواصل <0/>",
+ "Enter a whole number of weekly price questions, non-negative minutes and cost, and a silent share from 0 to 100.": "أدخل عددًا صحيحًا لأسئلة السعر الأسبوعية، ودقائق وتكلفة غير سالبة، ونسبة صامتين من 0 إلى 100.",
+ "With these inputs, price questions take no staff time. Check the silent share: those are still buyers who left.": "بهذه المدخلات، لا تستهلك أسئلة السعر وقتًا من الموظفين. تحقّق من نسبة الصامتين: فهؤلاء مشترون غادروا رغم ذلك."
 }

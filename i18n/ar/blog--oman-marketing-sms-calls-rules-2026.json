@@ -136,5 +136,19 @@
  "Pause": "إيقاف مؤقت",
  "RO 18,254": "18,254 ر.ع.",
  "Ready to send": "جاهزة للإرسال",
- "Inside the 8am to 9pm window. Sender ID starts with AD. Sender ID matches your business name. Sent through a business channel. Sent to people who opted in. Opt-out instruction included.": "ضمن نافذة 8 صباحًا إلى 9 مساءً. معرّف المرسل يبدأ بـAD. معرّف المرسل يطابق اسم نشاطك. مُرسلة عبر قناة تجارية. مُرسلة لمن اشتركوا طوعًا. تتضمن تعليمات إلغاء الاشتراك."
+ "Inside the 8am to 9pm window. Sender ID starts with AD. Sender ID matches your business name. Sent through a business channel. Sent to people who opted in. Opt-out instruction included.": "ضمن نافذة 8 صباحًا إلى 9 مساءً. معرّف المرسل يبدأ بـAD. معرّف المرسل يطابق اسم نشاطك. مُرسلة عبر قناة تجارية. مُرسلة لمن اشتركوا طوعًا. تتضمن تعليمات إلغاء الاشتراك.",
+ "Inside the 8am to 9pm window.": "ضمن نافذة 8 صباحًا إلى 9 مساءً.",
+ "That time": "ذلك الوقت",
+ "Sender ID starts with AD.": "معرّف المرسل يبدأ بـ AD.",
+ "Promotional sender IDs must start with “AD”, for example AD-": "يجب أن تبدأ معرّفات المرسل الترويجية بـ “AD”، مثل AD-",
+ "Sender ID matches your business name.": "معرّف المرسل يطابق اسم نشاطك التجاري.",
+ "The sender ID should reflect your legal or trade name so people recognise it. Use a short form of “": "يجب أن يعكس معرّف المرسل اسمك القانوني أو التجاري ليتعرّف عليه الناس. استخدم صيغة مختصرة من “",
+ "Personal phone lines may not be used for commercial promotion. Send through a licensed SMS platform or a business line.": "لا يجوز استخدام الخطوط الهاتفية الشخصية للترويج التجاري. أرسل عبر منصة رسائل نصية مرخّصة أو خط تجاري.",
+ "Sent through a business channel.": "مُرسلة عبر قناة تجارية.",
+ "Sent to people who opted in.": "مُرسلة إلى أشخاص وافقوا على الاشتراك.",
+ "Past customers without a recorded opt-in: send one message asking them to stay subscribed, and record who says yes.": "العملاء السابقون دون موافقة مسجّلة: أرسل رسالة واحدة تسألهم إن كانوا يرغبون في البقاء مشتركين، وسجّل من يوافق.",
+ "Bought or shared lists invite blocking and raise data protection risk. Drop them and grow an opt-in list.": "القوائم المشتراة أو المتبادلة تدفع إلى الحظر وترفع مخاطر حماية البيانات. تخلّص منها وابنِ قائمة اشتراك بالموافقة.",
+ "Opt-out instruction included.": "تتضمن تعليمات إلغاء الاشتراك.",
+ "Add a clear opt-out, such as “Reply STOP to opt out”, and honour it within a day.": "أضف طريقة واضحة لإلغاء الاشتراك، مثل “أرسل STOP لإلغاء الاشتراك”، ونفّذها خلال يوم.",
+ "Pressure wording (“last chance tonight”, “!!”) reads like spam and gets blocked. State the offer and the end date plainly.": "عبارات الضغط (“الفرصة الأخيرة الليلة”، “!!”) تبدو كرسائل مزعجة ويتم حظرها. اذكر العرض وتاريخ انتهائه بوضوح."
 }

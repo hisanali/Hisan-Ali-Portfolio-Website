@@ -137,5 +137,11 @@
  "Measure meaningful actions": "قِس الإجراءات ذات المعنى",
  "Getting enquiries without enough customers?": "تصلك استفسارات دون عدد كافٍ من العملاء؟",
  "Let’s examine the campaign, the customer journey and the numbers behind the gap.": "لنفحص الحملة ورحلة العميل والأرقام التي تقف وراء هذه الفجوة.",
- "Discuss your lead quality <0/>": "ناقش جودة عملائك المحتملين <0/>"
+ "Discuss your lead quality <0/>": "ناقش جودة عملائك المحتملين <0/>",
+ "Enter valid non-negative values. Enquiries and customers must be whole numbers, and customers cannot exceed enquiries.": "أدخل قيمًا صحيحة غير سالبة. يجب أن يكون عدد الاستفسارات والعملاء أعدادًا صحيحة، ولا يمكن أن يتجاوز عدد العملاء عدد الاستفسارات.",
+ "No enquiries": "لا توجد استفسارات",
+ "No customers yet": "لا عملاء بعد",
+ "Not available": "غير متاح",
+ "There is no advertising spend to recover in this scenario.": "لا يوجد إنفاق إعلاني لاسترداده في هذا السيناريو.",
+ "With zero contribution per customer, additional customers cannot recover this ad spend.": "مع هامش مساهمة صفري لكل عميل، لا يمكن للعملاء الإضافيين استرداد هذا الإنفاق الإعلاني."
 }

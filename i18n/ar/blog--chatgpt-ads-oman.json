@@ -269,5 +269,17 @@
  "✓ Includes a concrete number (price, time, size). Good: answers beat slogans.": "✓ يتضمن رقمًا ملموسًا (سعر، وقت، حجم). ممتاز: الإجابات أقوى من الشعارات.",
  "✓ No unproven superlatives.": "✓ لا توجد صيغ تفضيل غير مثبتة.",
  "✓ Local detail included, so it reads as relevant to people in Oman.": "✓ يتضمن تفصيلًا محليًا، فيبدو ذا صلة للناس في عُمان.",
- "Next step →": "الخطوة التالية →"
+ "Next step →": "الخطوة التالية →",
+ "Done": "تم",
+ "Your brand": "علامتك التجارية",
+ "Your headline appears here": "يظهر عنوانك هنا",
+ "A short description that answers the question the person just asked.": "وصف قصير يجيب عن السؤال الذي طرحه الشخص للتو.",
+ "Description fits the reported limit.": "الوصف ضمن الحد المُعلن.",
+ "Add a description.": "أضف وصفًا.",
+ "Includes a concrete number (price, time, size). Good: answers beat slogans.": "يتضمن رقمًا محددًا (سعر، وقت، مقاس). جيد: الإجابات تتفوّق على الشعارات.",
+ "Add a concrete detail: a price, a delivery time or a size.": "أضف تفصيلًا محددًا: سعرًا أو مدة توصيل أو مقاسًا.",
+ "Avoid “best” or “number one”: claims like these need proof and rarely help next to an AI answer.": "تجنّب “الأفضل” أو “رقم واحد”: ادعاءات كهذه تحتاج إلى إثبات ونادرًا ما تفيد بجوار إجابة ذكاء اصطناعي.",
+ "No unproven superlatives.": "لا صيغ تفضيل غير مُثبتة.",
+ "Local detail included, so it reads as relevant to people in Oman.": "يتضمن تفصيلًا محليًا، فيبدو مناسبًا للناس في عُمان.",
+ "Add a local detail (Muscat, OMR, delivery across Oman) if it is true.": "أضف تفصيلًا محليًا (مسقط، OMR، التوصيل في أنحاء عُمان) إن كان صحيحًا."
 }

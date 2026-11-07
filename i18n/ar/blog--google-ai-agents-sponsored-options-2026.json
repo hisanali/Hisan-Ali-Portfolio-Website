@@ -94,5 +94,10 @@
  "Fix these first:": "أصلح هذه أولًا:",
  "Set up Google Merchant Center and submit a product feed.": "أنشئ حسابًا في Google Merchant Center وأرسل خلاصة منتجات.",
  "Update prices and stock in the feed at least daily.": "حدّث الأسعار والمخزون في الخلاصة يوميًا على الأقل.",
- "Add delivery times and costs to your feed and Merchant Center.": "أضف مواعيد التوصيل وتكاليفه إلى خلاصتك وإلى Merchant Center."
+ "Add delivery times and costs to your feed and Merchant Center.": "أضف مواعيد التوصيل وتكاليفه إلى خلاصتك وإلى Merchant Center.",
+ "Publish a clear return policy and add it in Merchant Center.": "انشر سياسة إرجاع واضحة وأضفها في Merchant Center.",
+ "Start collecting product reviews after every order.": "ابدأ بجمع تقييمات المنتجات بعد كل طلب.",
+ "Rewrite titles with brand, model, size and colour.": "أعد كتابة العناوين لتتضمن العلامة التجارية والطراز والمقاس واللون.",
+ "Track purchases with order values in Google Ads.": "تتبّع المشتريات مع قيم الطلبات في إعلانات جوجل.",
+ "Run a Shopping or Performance Max campaign to build data.": "شغّل حملة تسوق أو Performance Max لبناء البيانات."
 }

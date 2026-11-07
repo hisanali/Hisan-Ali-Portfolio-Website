@@ -138,5 +138,15 @@
  "Yes: disclose it visibly": "نعم: أفصح عنه بشكل مرئي",
  "AI-generated video that could be mistaken for real people, places or events is a deepfake under the Act. The deployer who publishes it must disclose that, in a way people can see, near the content.": "الفيديو المولّد بالذكاء الاصطناعي الذي قد يُظن أنه أشخاص أو أماكن أو أحداث حقيقية يُعدّ تزييفًا عميقًا بموجب القانون. وعلى المُستخدِم الذي ينشره أن يفصح عن ذلك بطريقة يراها الناس، قرب المحتوى.",
  "The tool’s watermark is not enough on its own.": "العلامة المائية للأداة لا تكفي وحدها.",
- "Keep the provider’s metadata and watermark intact when you export.": "حافظ على البيانات الوصفية والعلامة المائية للمزوّد سليمة عند التصدير."
+ "Keep the provider’s metadata and watermark intact when you export.": "حافظ على البيانات الوصفية والعلامة المائية للمزوّد سليمة عند التصدير.",
+ "Yes: say it is AI": "نعم: صرّح بأنه ذكاء اصطناعي",
+ "People must be told they are interacting with an AI system, unless it is obvious from the context. Put it at the start of the conversation.": "يجب إبلاغ الناس بأنهم يتعاملون مع نظام ذكاء اصطناعي، ما لم يكن ذلك واضحًا من السياق. ضع ذلك في بداية المحادثة.",
+ "Yes: label it, or add real editorial oversight": "نعم: ضع وسمًا، أو أضف إشرافًا تحريريًا حقيقيًا",
+ "AI-generated text that informs the public on matters of public interest must be labelled, unless a human editor exercised genuine editorial responsibility for it.": "النص المولَّد بالذكاء الاصطناعي الذي يُطلع الجمهور على مسائل تهم الشأن العام يجب وسمه، ما لم يتحمّل محرر بشري مسؤولية تحريرية حقيقية عنه.",
+ "A named editor who reviewed and takes responsibility can replace the label.": "وجود محرر مسمّى راجع النص ويتحمّل مسؤوليته يمكن أن يغني عن الوسم.",
+ "Probably not, if the editing is real": "على الأرجح لا، إذا كان التحرير حقيقيًا",
+ "AI-assisted text with meaningful human editing can fall under the editorial-oversight exception. Make sure the oversight is genuine and documented.": "النص المكتوب بمساعدة الذكاء الاصطناعي مع تحرير بشري جوهري قد يندرج تحت استثناء الإشراف التحريري. تأكد أن الإشراف حقيقي وموثّق.",
+ "Cloned or imitated voices need disclosure even with the person’s consent.": "الأصوات المستنسخة أو المقلَّدة تتطلب الإفصاح حتى مع موافقة صاحبها.",
+ "Usually no, but platforms may ask": "عادةً لا، لكن المنصات قد تطلب ذلك",
+ "Clearly stylised or obviously artificial content is generally outside the deepfake rule. Meta, TikTok and YouTube may still require an AI label on synthetic media.": "المحتوى ذو الطابع الفني الواضح أو المصطنع بشكل جليّ يقع عمومًا خارج قاعدة التزييف العميق. لكن ميتا وتيك توك ويوتيوب قد تشترط مع ذلك وسم الذكاء الاصطناعي على الوسائط المصطنعة."
 }

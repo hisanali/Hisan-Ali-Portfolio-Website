@@ -113,5 +113,13 @@
  "Is your Google Ads account ready for AI Mode?": "هل حسابك في إعلانات جوجل جاهز لـ AI Mode؟",
  "I’ll check your campaigns’ eligibility, feeds and landing pages for AI Mode, and set up reporting to spot the change.": "سأراجع أهلية حملاتك وخلاصات المنتجات وصفحات الهبوط للظهور في AI Mode، وأُعدّ تقارير ترصد التغيير.",
  "Check my AI Mode readiness <0/>": "افحص جاهزيتي لـ AI Mode <0/>",
- "Answer any question to see the result.": "أجب عن أي سؤال لترى النتيجة."
+ "Answer any question to see the result.": "أجب عن أي سؤال لترى النتيجة.",
+ "Google says ads are not based directly on your Gmail inbox.": "تقول جوجل إن الإعلانات لا تستند مباشرة إلى صندوق بريدك في Gmail.",
+ "Inferences from connected apps may be used to show ads.": "قد تُستخدم الاستنتاجات من التطبيقات المرتبطة لعرض الإعلانات.",
+ "Google says sensitive categories such as health are not used for personalised ads.": "تقول جوجل إن الفئات الحساسة مثل الصحة لا تُستخدم للإعلانات المخصّصة.",
+ "Advertisers do not get access to users’ connected apps.": "لا يحصل المعلنون على وصول إلى التطبيقات المرتبطة بالمستخدمين.",
+ "Summaries and excerpts from connected apps may be used.": "قد تُستخدم الملخصات والمقتطفات من التطبيقات المرتبطة.",
+ "Correct.": "صحيح.",
+ "Not quite.": "ليس تمامًا.",
+ "Full marks. You know the rules better than most advertisers.": "علامة كاملة. أنت تعرف القواعد أفضل من معظم المعلنين."
 }

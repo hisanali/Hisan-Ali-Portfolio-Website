@@ -135,5 +135,15 @@
  "Average": "متوسط",
  "Readers get value, but similar pages are easy to find. Lift the weakest attribute.": "يحصل القرّاء على قيمة، لكن من السهل العثور على صفحات مشابهة. ارفع السمة الأضعف.",
  "Fix first": "أصلِح أولًا",
- "Add something only you have: data, a tool, a real example or first-hand experience.": "أضف شيئًا لا يملكه غيرك: بيانات، أو أداة، أو مثالًا حقيقيًا، أو تجربة مباشرة."
+ "Add something only you have: data, a tool, a real example or first-hand experience.": "أضف شيئًا لا يملكه غيرك: بيانات، أو أداة، أو مثالًا حقيقيًا، أو تجربة مباشرة.",
+ "Add your own photos, tests or research, and say how and when the content was made.": "أضف صورك أو اختباراتك أو أبحاثك الخاصة، واذكر كيف ومتى أُعدّ المحتوى.",
+ "Cut padding, answer early, add tables and make sure every tool works on mobile.": "احذف الحشو، وأجب مبكرًا، وأضف جداول، وتأكد أن كل أداة تعمل على الجوال.",
+ "Link primary sources, add a “checked on” date and set a review schedule.": "اربط بالمصادر الأصلية، وأضف تاريخ “آخر مراجعة”، وحدّد جدولًا للمراجعة.",
+ "Untrustworthy": "غير جدير بالثقة",
+ "Google’s guidance calls invented authors deception. Remove the fake profile before anything else.": "إرشادات جوجل تعتبر الكتّاب الوهميين خداعًا. احذف الملف التعريفي المزيف قبل أي شيء آخر.",
+ "Strong": "قوي",
+ "The page shows the qualities Google describes. Keep it updated.": "تُظهر الصفحة الصفات التي تصفها جوجل. حافظ على تحديثها.",
+ "Weak": "ضعيف",
+ "The page is at risk of being seen as low effort. Start with the weakest attribute below.": "الصفحة معرّضة لأن تُعَدّ قليلة الجهد. ابدأ بأضعف عنصر أدناه.",
+ "Accuracy counted double for a health, money, legal or safety topic.": "تُحتسب الدقة مضاعفة في موضوعات الصحة أو المال أو القانون أو السلامة."
 }

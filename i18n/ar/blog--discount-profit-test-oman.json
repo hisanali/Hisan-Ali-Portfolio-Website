@@ -101,5 +101,9 @@
  "Checkout improvement": "تحسين صفحة الدفع",
  "Planning a promotion that must earn its keep?": "هل تخطط لعرض يجب أن يحقق عائدًا يستحقه؟",
  "I can help connect the offer, customer journey, campaign and commercial model.": "يمكنني مساعدتك في ربط العرض ورحلة العميل والحملة والنموذج التجاري.",
- "Plan the campaign <0/>": "خطط للحملة <0/>"
+ "Plan the campaign <0/>": "خطط للحملة <0/>",
+ "Enter valid values. Discount must be between 0 and 100, and regular units must be a whole number.": "أدخل قيمًا صحيحة. يجب أن يكون الخصم بين 0 و100، وأن تكون الوحدات المعتادة عددًا صحيحًا.",
+ "No finite break-even": "لا توجد نقطة تعادل محددة",
+ "Not achievable": "غير قابل للتحقيق",
+ "The promoted price only covers the entered variable cost. More volume cannot replace the regular contribution.": "سعر العرض يغطي فقط التكلفة المتغيرة المُدخلة. زيادة الكمية لا يمكن أن تعوّض المساهمة المعتادة."
 }

@@ -149,5 +149,11 @@
  "Incrementality testing": "اختبار الأثر الإضافي",
  "Planning creators for National Day or the winter season?": "تخطط للتعاون مع صنّاع المحتوى في العيد الوطني أو موسم الشتاء؟",
  "Let’s shortlist creators by local reach, fit and real cost, and set up tracking before the first post goes live.": "لنختر معًا صنّاع المحتوى بحسب الوصول المحلي والملاءمة والتكلفة الحقيقية، ونجهّز التتبّع قبل نشر أول منشور.",
- "Plan a creator campaign <0/>": "خطّط لحملة مع صنّاع المحتوى <0/>"
+ "Plan a creator campaign <0/>": "خطّط لحملة مع صنّاع المحتوى <0/>",
+ "Enter non-negative fees, whole numbers for views and posts (at least one post), an Oman audience share from 0 to 100, and a contribution per sale above zero.": "أدخل رسومًا غير سالبة، وأعدادًا صحيحة للمشاهدات والمنشورات (منشور واحد على الأقل)، ونسبة جمهور في عُمان من 0 إلى 100، ومساهمة لكل عملية بيع أكبر من صفر.",
+ "No Oman views": "لا مشاهدات في عُمان",
+ "No fee to cover": "لا رسوم لتغطيتها",
+ "At least one creator has no estimated views in Oman with these inputs, so compare their audience location before anything else.": "صانع محتوى واحد على الأقل ليست لديه مشاهدات تقديرية في عُمان بهذه المدخلات، فقارن موقع جمهوره قبل أي شيء آخر.",
+ "more estimated Oman views and costs": "مشاهدات تقديرية أكثر في عُمان وتكلفته",
+ "the same estimated Oman views but costs": "المشاهدات التقديرية نفسها في عُمان لكن تكلفته"
 }

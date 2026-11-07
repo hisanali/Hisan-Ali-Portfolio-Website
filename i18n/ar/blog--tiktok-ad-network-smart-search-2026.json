@@ -85,5 +85,16 @@
  "Keep your proven campaigns as the control.": "احتفظ بحملاتك المجرّبة كمجموعة ضابطة للمقارنة.",
  "Capture product and brand searches; review search terms weekly.": "التقط عمليات البحث عن المنتجات والعلامة التجارية، وراجع مصطلحات البحث أسبوعيًا.",
  "Retargeting only at first; judge on cost per purchase.": "إعادة الاستهداف فقط في البداية، والتقييم بتكلفة الشراء.",
- "Run for four weeks, then compare cost per result by line and move budget to the winner.": "شغّل الاختبار أربعة أسابيع، ثم قارن تكلفة النتيجة لكل بند وانقل الميزانية إلى الأفضل أداءً."
+ "Run for four weeks, then compare cost per result by line and move budget to the winner.": "شغّل الاختبار أربعة أسابيع، ثم قارن تكلفة النتيجة لكل بند وانقل الميزانية إلى الأفضل أداءً.",
+ "Keep your proven campaigns as the control": "أبقِ حملاتك المجرَّبة كمجموعة مرجعية",
+ "In-feed lead campaigns": "حملات العملاء المحتملين داخل الخلاصة",
+ "Your control, with instant forms or a landing page": "مجموعتك المرجعية، بنماذج فورية أو صفحة هبوط",
+ "People searching for your service are warmer leads": "من يبحثون عن خدمتك عملاء محتملون أكثر اهتمامًا",
+ "Test with a strict app exclusion list and lead quality checks": "اختبر مع قائمة صارمة لاستبعاد التطبيقات وفحص جودة العملاء المحتملين",
+ "In-feed app campaigns": "حملات التطبيقات داخل الخلاصة",
+ "Your control for installs and in-app events": "مجموعتك المرجعية للتثبيتات والأحداث داخل التطبيق",
+ "Searches for your app category": "عمليات البحث عن فئة تطبيقك",
+ "In-feed reach campaigns": "حملات الوصول داخل الخلاصة",
+ "Creative-led video for attention": "فيديو إبداعي لجذب الانتباه",
+ "Brand searches after people see your videos": "البحث عن علامتك التجارية بعد أن يشاهد الناس فيديوهاتك"
 }

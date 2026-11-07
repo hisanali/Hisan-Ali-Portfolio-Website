@@ -145,5 +145,11 @@
  "Fix these first:": "أصلح هذه أولًا:",
  "Update availability at least daily, or use automatic item updates, so carts never hold sold-out items.": "حدّث التوفر يوميًا على الأقل، أو استخدم التحديثات التلقائية للمنتجات، حتى لا تحتوي السلال أبدًا على منتجات نفدت.",
  "Add shipping costs and delivery times in Merchant Center shipping settings.": "أضف تكاليف الشحن ومدد التوصيل في إعدادات الشحن في Merchant Center.",
- "Add GTINs (barcodes) and brand for branded products so Google can match and compare them.": "أضف رموز GTIN (الباركود) والعلامة التجارية للمنتجات ذات العلامات التجارية حتى تتمكن جوجل من مطابقتها ومقارنتها."
+ "Add GTINs (barcodes) and brand for branded products so Google can match and compare them.": "أضف رموز GTIN (الباركود) والعلامة التجارية للمنتجات ذات العلامات التجارية حتى تتمكن جوجل من مطابقتها ومقارنتها.",
+ "Now": "الآن",
+ "Black Friday is here. Keep prices and stock in sync.": "الجمعة البيضاء هنا. حافظ على تزامن الأسعار والمخزون.",
+ "Cart-ready": "جاهز للسلة",
+ "Nearly there": "اقتربت",
+ "Gaps that cost sales": "ثغرات تكلّفك مبيعات",
+ "Not ready yet": "غير جاهز بعد"
 }

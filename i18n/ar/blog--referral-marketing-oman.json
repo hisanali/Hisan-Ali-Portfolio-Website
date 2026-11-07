@@ -124,5 +124,6 @@
  "As store credit, a free extra or a donation option, paid once the friend buys.": "كرصيد في المتجر، أو إضافة مجانية، أو خيار تبرع، ويُدفع بعد أن يشتري الصديق.",
  "Cost per new customer": "التكلفة لكل عميل جديد",
  "OMR 7": "7 OMR",
- "42% less than the OMR 12 you pay through ads.": "أقل بنسبة 42% من 12 OMR التي تدفعها عبر الإعلانات."
+ "42% less than the OMR 12 you pay through ads.": "أقل بنسبة 42% من 12 OMR التي تدفعها عبر الإعلانات.",
+ "Enter an average order above 0, a margin between 1 and 100%, at least 1 order, and a non-negative ad cost.": "أدخل متوسط طلب أكبر من 0، وهامش ربح بين 1 و100%، وطلبًا واحدًا على الأقل، وتكلفة إعلانية غير سالبة."
 }

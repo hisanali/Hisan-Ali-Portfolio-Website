@@ -127,5 +127,11 @@
  "Pause animation": "إيقاف الرسم المتحرك مؤقتًا",
  "Pause": "إيقاف مؤقت",
  "Strong fit: run the four-week test": "ملاءمة قوية: شغّل اختبار الأسابيع الأربعة",
- "B2B buyers research in subreddits; the October changes are built for you. Nothing is missing; judge results by pipeline after four weeks.": "مشترو B2B يبحثون في مجتمعات Reddit؛ وتغييرات أكتوبر صُممت لأمثالك. لا شيء ناقص؛ احكم على النتائج بخط المبيعات بعد أربعة أسابيع."
+ "B2B buyers research in subreddits; the October changes are built for you. Nothing is missing; judge results by pipeline after four weeks.": "مشترو B2B يبحثون في مجتمعات Reddit؛ وتغييرات أكتوبر صُممت لأمثالك. لا شيء ناقص؛ احكم على النتائج بخط المبيعات بعد أربعة أسابيع.",
+ "Your category matches Reddit’s in-market audiences beta (Enterprise, Business AI, Cybersecurity).": "فئتك تطابق النسخة التجريبية لجماهير Reddit المهتمة بالشراء (المؤسسات، والذكاء الاصطناعي للأعمال، والأمن السيبراني).",
+ "Find at least three active subreddits where your buyers already discuss the problem before you spend.": "ابحث عن ثلاثة مجتمعات فرعية نشطة على الأقل يناقش فيها مشتروك المشكلة بالفعل، قبل أن تنفق.",
+ "Deal value justifies a lead-based model and a sales follow-up.": "قيمة الصفقة تبرّر نموذجًا قائمًا على العملاء المحتملين ومتابعة من فريق المبيعات.",
+ "Reddit’s native lead forms are retired. Build a fast landing page with a three-field form first.": "نماذج العملاء المحتملين المدمجة في Reddit توقفت. ابنِ أولًا صفحة هبوط سريعة بنموذج من ثلاثة حقول.",
+ "HubSpot’s open-beta integration gives you attribution and reporting now.": "تكامل HubSpot في نسخته التجريبية المفتوحة يمنحك الإسناد والتقارير الآن.",
+ "Use UTMs and a lead-source field until Pixel and Conversions API support arrives.": "استخدم UTM وحقلًا لمصدر العميل المحتمل حتى يتوفر دعم Pixel وConversions API."
 }
