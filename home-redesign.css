@@ -729,3 +729,12 @@ html.theme-dark .partner-stage .about-columns p { color: #a5b1ab; }
 .partner-photo { filter: contrast(1.04) drop-shadow(0 26px 30px rgba(20, 37, 31, .22)); }
 .partner-tags li:nth-child(3n+2) { background: #fff; box-shadow: 0 14px 30px -16px rgba(20, 37, 31, .45), inset 0 0 0 1px rgba(20, 37, 31, .1); }
 .partner-visual .portrait-caption { color: #fff; background: rgba(20, 37, 31, .82); border-color: rgba(20, 37, 31, .2); }
+
+
+
+/* Live 3D portrait inside the partner panel: the canvas replaces the photo once ready */
+.partner-canvas { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.partner-canvas canvas { display: block; width: 100% !important; height: 100% !important; opacity: 0; filter: drop-shadow(0 26px 30px rgba(20, 37, 31, .22)); transition: opacity .7s ease; }
+.partner-visual.is-ready .partner-canvas canvas { opacity: 1; }
+.partner-visual.is-ready .partner-photo { opacity: 0; }
+.partner-photo { transition: opacity .7s ease; }
