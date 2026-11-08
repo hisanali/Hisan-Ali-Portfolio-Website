@@ -1,0 +1,18 @@
+.md-guide .md-wrap { display:grid; grid-template-columns:auto 60px auto; align-items:center; gap:16px; max-width:560px; }
+.md-guide .md-phone { position:relative; display:grid; place-items:center; gap:8px; width:120px; height:200px; border:3px solid var(--fe-ink); border-radius:22px; color:var(--fe-ink); font-size:.85rem; font-weight:800; text-align:center; }
+.md-guide .md-phone i { width:44px; height:44px; border-radius:50%; background:var(--fe-accent); animation:md-pop 6s ease infinite; }
+.md-guide .md-phone i::after { content:"✓"; display:grid; place-items:center; height:100%; color:#fff; font-style:normal; font-size:1.4rem; }
+.md-guide .md-arrow { height:3px; background:linear-gradient(90deg,var(--fe-accent) 50%,transparent 50%) 0 0/16px 3px repeat-x; animation:md-flow 6s linear infinite; }
+.md-guide .md-report { display:grid; gap:4px; min-width:150px; padding:16px; border:1px solid var(--fe-border); border-radius:14px; }
+.md-guide .md-report span { color:var(--fe-muted); font-size:.8rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.md-guide .md-report b { grid-area:2/1; font-family:'DM Serif Display',serif; font-weight:400; font-size:2.4rem; color:var(--fe-ink); }
+.md-guide .md-a { animation:md-a 6s ease infinite; } .md-guide .md-b { opacity:0; color:var(--fe-accent)!important; animation:md-b 6s ease infinite; }
+@keyframes md-pop { 0%,20% { transform:scale(.6); opacity:.3; } 30%,85% { transform:scale(1); opacity:1; } 100% { opacity:.3; } }
+@keyframes md-flow { to { background-position:64px 0; } }
+@keyframes md-a { 0%,45% { opacity:1; } 55%,92% { opacity:0; } 100% { opacity:1; } }
+@keyframes md-b { 0%,48% { opacity:0; } 58%,90% { opacity:1; } 100% { opacity:0; } }
+.md-guide .md-rows { margin-top:18px; }
+.md-guide .md-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 16px; padding:12px 0; border-bottom:1px solid var(--fe-border); color:var(--fe-ink); }
+.md-guide .md-row strong { font-family:'DM Serif Display',serif; font-weight:400; font-size:1.3rem; color:var(--fe-accent); white-space:nowrap; }
+@media (max-width:560px) { .md-guide .md-wrap { grid-template-columns:auto 30px auto; gap:8px; } .md-guide .md-phone { width:96px; height:170px; } }
+@media (prefers-reduced-motion: reduce) { .md-guide .md-wrap * { animation:none !important; } .md-guide .md-b { opacity:1; } .md-guide .md-a { opacity:0; } }
