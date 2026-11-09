@@ -7,141 +7,191 @@
 <title>Chess Move Guide</title>
 <style>
 :root {
-  --bg: #f4f1ea; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665d; --line: #e2ddd2;
-  --light: #eedcb8; --dark: #b58863; --accent: #1f8a4c; --accent-ink: #ffffff; --warn: #c2410c;
-  --hl-from: rgba(31,138,76,.38); --hl-to: rgba(31,138,76,.55); --last: rgba(234,179,8,.38); --sel: rgba(59,130,246,.45);
-  --arrow: #1f8a4c; --alt-arrow: #2563eb;
+  --bg: #f3f1ec; --panel: #ffffff; --ink: #1c1b19; --muted: #6b675f; --line: #e3dfd6; --soft: #f7f5f0;
+  --accent: #1f8a4c; --accent-ink: #ffffff; --warn: #c2410c; --good: #15803d; --gold: #b45309;
+  --last: rgba(235,190,40,.42); --sel: rgba(20,85,30,.5); --hint: rgba(31,138,76,.45);
+  --arrow: #15a34a; --alt-arrow: #2563eb;
+  --light: #f0d9b5; --dark: #b58863;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #15171a; --panel: #1f2226; --ink: #ecebe8; --muted: #9a9890; --line: #33373d;
-    --light: #d6c3a0; --dark: #8f6b4d; --accent: #34c46e; --accent-ink: #0d1a12; --warn: #fb923c;
-    --arrow: #34c46e; --alt-arrow: #60a5fa;
+    --bg: #131416; --panel: #1d1f22; --ink: #ecebe8; --muted: #9b9890; --line: #2f3237; --soft: #25282c;
+    --accent: #34c46e; --accent-ink: #0b1a10; --warn: #fb923c; --good: #4ade80; --gold: #fbbf24;
+    --arrow: #22c55e; --alt-arrow: #60a5fa;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #15171a; --panel: #1f2226; --ink: #ecebe8; --muted: #9a9890; --line: #33373d;
-  --light: #d6c3a0; --dark: #8f6b4d; --accent: #34c46e; --accent-ink: #0d1a12; --warn: #fb923c;
-  --arrow: #34c46e; --alt-arrow: #60a5fa;
+  --bg: #131416; --panel: #1d1f22; --ink: #ecebe8; --muted: #9b9890; --line: #2f3237; --soft: #25282c;
+  --accent: #34c46e; --accent-ink: #0b1a10; --warn: #fb923c; --good: #4ade80; --gold: #fbbf24;
+  --arrow: #22c55e; --alt-arrow: #60a5fa;
 }
+body[data-board="green"] { --light: #eeeed2; --dark: #769656; }
+body[data-board="blue"] { --light: #dee3e6; --dark: #8ca2ad; }
+body[data-board="purple"] { --light: #e8e0f0; --dark: #8877b7; }
 * { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 1060px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 18px; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); align-items: start; }
-@media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
-h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+main { max-width: 1080px; margin: 0 auto; padding: 16px 16px 40px; display: grid; gap: 18px; grid-template-columns: minmax(0, 580px) minmax(0, 1fr); align-items: start; }
+@media (max-width: 880px) { main { grid-template-columns: minmax(0, 1fr); } }
 header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+h1 .logo { width: 30px; height: 30px; border-radius: 8px; background: var(--accent) center/70% no-repeat; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel); }
 .seg button { border: 0; background: transparent; color: var(--ink); padding: 8px 12px; font: inherit; cursor: pointer; }
-.seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
 button.btn, select { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 10px; padding: 8px 12px; font: inherit; cursor: pointer; }
+button.btn:hover:not(:disabled), select:hover { border-color: var(--accent); }
 button.btn:disabled { opacity: .45; cursor: default; }
-button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 650; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+button.icon { padding: 8px 10px; }
 
+.board-col { display: grid; gap: 8px; }
+.tray { display: flex; align-items: center; gap: 2px; min-height: 26px; padding-left: 22px; font-size: 13px; color: var(--muted); }
+.tray .who { font-weight: 700; color: var(--ink); margin-right: 8px; font-size: 13px; }
+.tray .cap { width: 22px; height: 22px; background-size: contain; background-repeat: no-repeat; margin-right: -7px; }
+.tray .adv { margin-left: 12px; font-weight: 700; color: var(--ink); }
 .board-wrap { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; }
-.evalbar { border-radius: 6px; overflow: hidden; background: #2b2b2b; position: relative; border: 1px solid var(--line); }
-.evalbar .fill { position: absolute; left: 0; right: 0; bottom: 0; background: #f2f2f2; transition: height .4s; height: 50%; }
-.board { position: relative; aspect-ratio: 1; width: 100%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border-radius: 8px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.18); user-select: none; touch-action: manipulation; }
+.evalbar { border-radius: 6px; overflow: hidden; background: #3a3a3a; position: relative; border: 1px solid var(--line); }
+.evalbar .fill { position: absolute; left: 0; right: 0; bottom: 0; background: #f4f4f4; transition: height .45s ease; height: 50%; }
+.board { position: relative; aspect-ratio: 1; width: 100%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border-radius: 6px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.22); user-select: none; -webkit-user-select: none; touch-action: none; }
 .sq { position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .sq.l { background: var(--light); } .sq.d { background: var(--dark); }
 .sq::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
 .sq.last::after { background: var(--last); }
-.sq.hfrom::after { background: var(--hl-from); }
-.sq.hto::after { background: var(--hl-to); }
+.sq.hint::after { background: var(--hint); }
 .sq.sel::after { background: var(--sel); }
-.sq.check { background: radial-gradient(circle, #ef4444 0%, rgba(239,68,68,.5) 45%, transparent 75%), var(--dark); }
-.sq .dot { position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(0,0,0,.22); z-index: 2; pointer-events: none; }
-.sq .ring { position: absolute; inset: 4%; border-radius: 50%; border: 5px solid rgba(0,0,0,.22); z-index: 2; pointer-events: none; }
-.coord { position: absolute; font-size: 10px; font-weight: 700; opacity: .7; pointer-events: none; z-index: 1; }
+.sq.check { background-image: radial-gradient(circle, rgba(255,0,0,1) 0%, rgba(231,0,0,1) 25%, rgba(169,0,0,0) 89%); }
+.sq .dot { position: absolute; width: 30%; height: 30%; border-radius: 50%; background: rgba(20,85,30,.5); z-index: 5; pointer-events: none; }
+.sq .ring { position: absolute; inset: 0; background: radial-gradient(transparent 0%, transparent 79%, rgba(20,85,30,.4) 80%); z-index: 5; pointer-events: none; }
+.coord { position: absolute; font-size: 11px; font-weight: 700; pointer-events: none; z-index: 1; }
 .coord.f { right: 3px; bottom: 1px; } .coord.r { left: 3px; top: 1px; }
 .sq.l .coord { color: var(--dark); } .sq.d .coord { color: var(--light); }
-.pc { width: 92%; height: 92%; z-index: 3; pointer-events: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
-.pc.w { fill: #ffffff; stroke: #1a1a1a; }
-.pc.b { fill: #1f1f1f; stroke: #000000; }
-.pc .ln { fill: none; stroke-width: 2.5; }
-.pc.w .ln { stroke: #1a1a1a; } .pc.b .ln { stroke: #f2f2f2; }
-.pc.w .dt { fill: #1a1a1a; } .pc.b .dt { fill: #f2f2f2; stroke: none; }
-svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.pc { width: 100%; height: 100%; background-size: 100% 100%; z-index: 3; pointer-events: none; position: relative; }
+.sq.dragfrom .pc { opacity: .3; }
+.ghost { position: fixed; z-index: 100; pointer-events: none; transform: translate(-50%, -50%) scale(1.12); filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+@keyframes pop { from { transform: scale(.7); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+.sq.justmoved .pc { animation: pop .18s ease-out; }
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
 .side { display: grid; gap: 14px; }
-.status { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-.status .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; background: var(--line); color: var(--ink); }
-.status .pill.me { background: var(--accent); color: var(--accent-ink); }
-.best { margin-top: 10px; }
-.best .label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
-.best .move { font-size: 34px; font-weight: 800; letter-spacing: -.02em; margin: 2px 0; }
+.status { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 800; background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
+.pill.me { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.alert { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-weight: 650; font-size: 14px; }
+.alert.good { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.alert.bad { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.alert.win { background: color-mix(in srgb, var(--gold) 16%, transparent); color: var(--gold); }
+.best { margin-top: 12px; }
+.best .label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 800; }
+.best .row { display: flex; align-items: center; gap: 12px; margin: 4px 0 2px; }
+.best .move { font-size: 38px; font-weight: 850; letter-spacing: -.02em; line-height: 1.1; }
+.best .bigpc { width: 46px; height: 46px; background-size: contain; flex: none; }
 .best .desc { font-size: 15px; }
-.best .why { margin-top: 6px; font-size: 14px; color: var(--muted); }
-.best .mate { color: var(--warn); font-weight: 700; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--soft); border: 1px solid var(--line); }
+.tag.hot { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); border-color: transparent; }
+.best .why { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.line { margin-top: 6px; font-size: 13px; color: var(--muted); }
 .alts { margin-top: 12px; display: grid; gap: 6px; }
-.alt { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line); font-size: 14px; cursor: pointer; background: transparent; color: var(--ink); font: inherit; text-align: left; }
-.alt:hover { border-color: var(--accent); }
-.alt .sc { color: var(--muted); font-variant-numeric: tabular-nums; }
-.typer { display: flex; gap: 8px; margin-top: 12px; }
-.typer input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 9px 11px; font: inherit; }
+.alt { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); cursor: pointer; background: transparent; color: var(--ink); font: inherit; font-size: 14px; text-align: left; }
+.alt:hover { border-color: var(--alt-arrow); }
+.alt .sc { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.typer { display: flex; gap: 8px; margin-top: 14px; }
+.typer input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 9px 11px; font: inherit; }
 .err { color: var(--warn); font-size: 13px; min-height: 18px; margin-top: 4px; }
-.moves { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 2px 8px; font-size: 14px; max-height: 220px; overflow: auto; font-variant-numeric: tabular-nums; }
+.moves { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 2px 8px; font-size: 14px; max-height: 210px; overflow: auto; font-variant-numeric: tabular-nums; }
 .moves .n { color: var(--muted); }
+.moves .cur { font-weight: 800; color: var(--accent); }
 .small { font-size: 12.5px; color: var(--muted); }
-.engine-tag { font-size: 12px; color: var(--muted); }
-.promo { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 10; }
+.thinking { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.promo { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 20; }
 .promo.show { display: flex; }
 .promo div { background: var(--panel); border-radius: 12px; padding: 10px; display: flex; gap: 6px; }
-.promo button { display: flex; align-items: center; justify-content: center; padding: 4px; width: 60px; height: 60px; border-radius: 10px; border: 1px solid var(--line); background: var(--light); cursor: pointer; }
-.thinking { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: p 1s infinite; }
-@keyframes p { 50% { opacity: .2; } }
+.promo button { width: 64px; height: 64px; border-radius: 10px; border: 1px solid var(--line); background: var(--light) center/90% no-repeat; cursor: pointer; }
+details summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+details ol { margin: 8px 0 0; padding-left: 18px; }
+</style>
+<style>
+.pc.wP { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=='); }
+.pc.wB { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiNmZmYiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PC9nPjwvc3ZnPg=='); }
+.pc.wN { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjMDAwIi8+PC9nPjwvc3ZnPg=='); }
+.pc.wR { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy0zdi00aDIxdjRIMTJ6bS0xLTIyVjloNHYyaDVWOWg1djJoNVY5aDR2NSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMzQgMTRsLTMgM0gxNGwtMy0zIi8+PHBhdGggZD0iTTMxIDE3djEyLjVIMTRWMTciIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMxIDI5LjVsMS41IDIuNWgtMjBsMS41LTIuNSIvPjxwYXRoIGQ9Ik0xMSAxNGgyMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4='); }
+.pc.wQ { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04IDEyYTIgMiAwIDEgMS00IDAgMiAyIDAgMSAxIDQgMHptMTYuNS00LjVhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAwek00MSAxMmEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTE2IDguNWEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTMzIDlhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAweiIvPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi0xMi03IDExVjExbC01LjUgMTMuNS0zLTE1LTMgMTUtNS41LTE0VjI1TDcgMTRsMiAxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTkgMjZjMCAyIDEuNSAyIDIuNSA0IDEgMS41IDEgMSAuNSAzLjUtMS41IDEtMS41IDIuNS0xLjUgMi41LTEuNSAxLjUuNSAyLjUuNSAyLjUgNi41IDEgMTYuNSAxIDIzIDAgMCAwIDEuNS0xIDAtMi41IDAgMCAuNS0xLjUtMS0yLjUtLjUtMi41LS41LTIgLjUtMy41IDEtMiAyLjUtMiAyLjUtNC04LjUtMS41LTE4LjUtMS41LTI3IDB6IiBzdHJva2UtbGluZWNhcD0iYnV0dCIvPjxwYXRoIGQ9Ik0xMS41IDMwYzMuNS0xIDE4LjUtMSAyMiAwTTEyIDMzLjVjNi0xIDE1LTEgMjEgMCIgZmlsbD0ibm9uZSIvPjwvZz48L3N2Zz4='); }
+.pc.wK { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjZNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTIyLjUgMjVzNC41LTcuNSAzLTEwLjVjMCAwLTEtMi41LTMtMi41cy0zIDIuNS0zIDIuNWMtMS41IDMgMyAxMC41IDMgMTAuNSIgZmlsbD0iI2ZmZiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTEuNSAzN2M1LjUgMy41IDE1LjUgMy41IDIxIDB2LTdzOS00LjUgNi0xMC41Yy00LTYuNS0xMy41LTMuNS0xNiA0VjI3di0zLjVjLTMuNS03LjUtMTMtMTAuNS0xNi00LTMgNiA1IDEwIDUgMTBWMzd6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTExLjUgMzBjNS41LTMgMTUuNS0zIDIxIDBtLTIxIDMuNWM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwIi8+PC9nPjwvc3ZnPg=='); }
+.pc.bP { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=='); }
+.pc.bB { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9zdmc+'); }
+.pc.bN { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iIzAwMCIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjZWNlY2VjIiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMjQuNTUgMTAuNGwtLjQ1IDEuNDUuNS4xNWMzLjE1IDEgNS42NSAyLjQ5IDcuOSA2Ljc1UzM1Ljc1IDI5LjA2IDM1LjI1IDM5bC0uMDUuNWgyLjI1bC4wNS0uNWMuNS0xMC4wNi0uODgtMTYuODUtMy4yNS0yMS4zNC0yLjM3LTQuNDktNS43OS02LjY0LTkuMTktNy4xNmwtLjUxLS4xeiIgZmlsbD0iI2VjZWNlYyIgc3Ryb2tlPSJub25lIi8+PC9nPjwvc3ZnPg=='); }
+.pc.bR { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy41LTdsMS41LTIuNWgxN2wxLjUgMi41aC0yMHptLS41IDR2LTRoMjF2NEgxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTE0IDI5LjV2LTEzaDE3djEzSDE0eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTQgMTYuNUwxMSAxNGgyM2wtMyAyLjVIMTR6TTExIDE0VjloNHYyaDVWOWg1djJoNVY5aDR2NUgxMXoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTEyIDM1LjVoMjFtLTIwLTRoMTltLTE4LTJoMTdtLTE3LTEzaDE3TTExIDE0aDIzIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4='); }
+.pc.bQ { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIHN0cm9rZT0ibm9uZSI+PGNpcmNsZSBjeD0iNiIgY3k9IjEyIiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMTQiIGN5PSI5IiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMjIuNSIgY3k9IjgiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzMSIgY3k9IjkiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEyIiByPSIyLjc1Ii8+PC9nPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi41LTEyLjVMMzEgMjVsLS4zLTE0LjEtNS4yIDEzLjYtMy0xNC41LTMgMTQuNS01LjItMTMuNkwxNCAyNSA2LjUgMTMuNSA5IDI2eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNOSAyNmMwIDIgMS41IDIgMi41IDQgMSAxLjUgMSAxIC41IDMuNS0xLjUgMS0xLjUgMi41LTEuNSAyLjUtMS41IDEuNS41IDIuNS41IDIuNSA2LjUgMSAxNi41IDEgMjMgMCAwIDAgMS41LTEgMC0yLjUgMCAwIC41LTEuNS0xLTIuNS0uNS0yLjUtLjUtMiAuNS0zLjUgMS0yIDIuNS0yIDIuNS00LTguNS0xLjUtMTguNS0xLjUtMjcgMHoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTExIDM4LjVhMzUgMzUgMSAwIDAgMjMgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMTEgMjlhMzUgMzUgMSAwIDEgMjMgMG0tMjEuNSAyLjVoMjBtLTIxIDNhMzUgMzUgMSAwIDAgMjIgMG0tMjMgM2EzNSAzNSAxIDAgMCAyNCAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiLz48L2c+PC9zdmc+'); }
+.pc.bK { background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjYiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMjIuNSAyNXM0LjUtNy41IDMtMTAuNWMwIDAtMS0yLjUtMy0yLjVzLTMgMi41LTMgMi41Yy0xLjUgMyAzIDEwLjUgMyAxMC41IiBmaWxsPSIjMDAwIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxwYXRoIGQ9Ik0xMS41IDM3YzUuNSAzLjUgMTUuNSAzLjUgMjEgMHYtN3M5LTQuNSA2LTEwLjVjLTQtNi41LTEzLjUtMy41LTE2IDRWMjd2LTMuNWMtMy41LTcuNS0xMy0xMC41LTE2LTQtMyA2IDUgMTAgNSAxMFYzN3oiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMyIDI5LjVzOC41LTQgNi4wMy05LjY1QzM0LjE1IDE0IDI1IDE4IDIyLjUgMjQuNWwuMDEgMi4xLS4wMS0yLjFDMjAgMTggOS45MDYgMTQgNi45OTcgMTkuODVjLTIuNDk3IDUuNjUgNC44NTMgOSA0Ljg1MyA5IiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMTEuNSAzMGM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwbS0yMSAzLjVjNS41LTMgMTUuNS0zIDIxIDAiIHN0cm9rZT0iI2VjZWNlYyIvPjwvZz48L3N2Zz4='); }
 </style>
 </head>
-<body>
+<body data-board="brown">
 <main>
   <header>
-    <h1>Chess Move Guide</h1>
+    <h1><span class="logo pc wN" style="background-color:var(--accent);background-size:76%;background-position:center"></span>Chess Move Guide</h1>
     <div class="controls">
       <span class="small">I play</span>
       <div class="seg" id="colorSeg"><button data-c="0" class="on">White</button><button data-c="1">Black</button></div>
       <select id="think" title="How long the engine thinks">
-        <option value="1000">Fast (1s)</option>
-        <option value="2500" selected>Strong (2.5s)</option>
-        <option value="5000">Deep (5s)</option>
-        <option value="10000">Max (10s)</option>
+        <option value="1000">Fast · 1s</option>
+        <option value="2500" selected>Strong · 2.5s</option>
+        <option value="5000">Deep · 5s</option>
+        <option value="10000">Max · 10s</option>
       </select>
     </div>
   </header>
 
-  <section>
+  <section class="board-col">
+    <div class="tray" id="trayTop"></div>
     <div class="board-wrap">
-      <div class="evalbar" title="Who is winning (bottom = you)"><div class="fill" id="evalFill"></div></div>
+      <div class="evalbar" title="Who is winning — white part is you"><div class="fill" id="evalFill"></div></div>
       <div class="board" id="board">
         <svg class="arrows" id="arrows" viewBox="0 0 800 800"></svg>
         <div class="promo" id="promo"><div id="promoBox"></div></div>
       </div>
     </div>
-    <div class="controls" style="margin-top:12px">
-      <button class="btn" id="undo">↶ Undo</button>
+    <div class="tray" id="trayBottom"></div>
+    <div class="controls">
+      <button class="btn" id="undo" title="Undo (←)">↶ Undo</button>
       <button class="btn" id="flip">⇅ Flip</button>
       <button class="btn" id="reset">New game</button>
+      <select id="boardTheme" title="Board colours">
+        <option value="brown">Wood</option><option value="green">Green</option><option value="blue">Blue</option><option value="purple">Purple</option>
+      </select>
+      <button class="btn icon" id="sound" title="Sound on/off">🔊</button>
     </div>
   </section>
 
   <aside class="side">
     <div class="panel">
       <div class="status" id="status"></div>
+      <div id="alert"></div>
       <div class="best" id="best"></div>
       <div class="alts" id="alts"></div>
       <form class="typer" id="typer" autocomplete="off">
-        <input id="moveInput" placeholder="Type a move: e5, Nf6, O-O, e7e5" aria-label="Type a move">
+        <input id="moveInput" placeholder="Or type a move: e5, Nf6, O-O" aria-label="Type a move">
         <button class="btn" type="submit">Enter</button>
       </form>
       <div class="err" id="err"></div>
     </div>
     <div class="panel">
-      <div class="small" style="margin-bottom:8px;font-weight:700">Moves</div>
+      <div class="small" style="margin-bottom:8px;font-weight:800">Moves</div>
       <div class="moves" id="moves"></div>
     </div>
     <div class="panel small">
-      <b>How to use:</b> pick your colour. When your opponent moves, make the same move here: tap their piece, then the square it went to (or type it). The guide then shows your best reply with a green arrow. Tap <b>Play this move</b> after you make it in your game.
-      <div class="engine-tag" id="engineTag" style="margin-top:8px"></div>
+      <details open>
+        <summary>How to use</summary>
+        <ol>
+          <li>Pick the colour you play.</li>
+          <li>When your opponent moves, copy it here: drag their piece, or tap it then tap the square.</li>
+          <li>Play the green arrow move in your game, then tap <b>Play this move</b> here.</li>
+        </ol>
+      </details>
+      <div id="engineTag" style="margin-top:10px"></div>
     </div>
   </aside>
 </main>
@@ -542,25 +592,41 @@ function search(fen, { depth = 4, timeMs = 1500, randomness = 0, history = [] } 
 </script>
 <script>
 const NAMES = ['', 'Pawn', 'Knight', 'Bishop', 'Rook', 'Queen', 'King'];
-// Pieces are drawn as SVG: phones render the ♟ text symbol as a black emoji, which mixed up the colours.
-const SHAPES = ['',
-  '<circle cx="22.5" cy="13" r="5.5"/><path d="M16 35c.5-7 3-11 6.5-13 3.5 2 6 6 6.5 13z"/><rect x="11" y="34" width="23" height="5" rx="2"/>',
-  '<path d="M13 38h19l-1-8c0-10-3-18-11-21l-1-3-2 4c-4 2-7 8-8 12l1 3 4-1 4-3c1 3-1 6-4 9z"/><circle class="dt" cx="16" cy="15" r="1.3"/>',
-  '<circle cx="22.5" cy="6.5" r="2.5"/><path d="M22.5 9c-8 6-7 13-4.5 15h9c2.5-2 3.5-9-4.5-15z"/><path d="M14 35c0-6 3-9 5-11h7c2 2 5 5 5 11z"/><rect x="10" y="34" width="25" height="5" rx="2"/><path class="ln" d="M22.5 12v8M19 16h7"/>',
-  '<path d="M11 17V9h4v3h5V9h5v3h5V9h4v8z"/><path d="M13 35l1.5-18h16L32 35z"/><rect x="9" y="34" width="27" height="5" rx="2"/>',
-  '<path d="M12 35L9 14l5 11 2-14 3 12 3.5-14 3.5 14 3-12 2 14 5-11-3 21z"/><circle cx="9" cy="13" r="2"/><circle cx="16" cy="10" r="2"/><circle cx="22.5" cy="8" r="2"/><circle cx="29" cy="10" r="2"/><circle cx="36" cy="13" r="2"/><rect x="10" y="34" width="25" height="5" rx="2"/>',
-  '<path class="ln" d="M22.5 4v11M18 8h9"/><path d="M12 35c-3-10 2-16 10.5-13 8.5-3 13.5 3 10.5 13z"/><rect x="10" y="34" width="25" height="5" rx="2"/>'];
-const pieceSvg = (t, c) => `<svg class="pc ${c === WHITE ? 'w' : 'b'}" viewBox="0 0 45 45">${SHAPES[t]}</svg>`;
+const CODE = ' PNBRQK';
+const pcClass = p => (colorOf(p) === WHITE ? 'w' : 'b') + CODE[typeOf(p)];
 const $ = id => document.getElementById(id);
 
-let game = new Chess();
-let myColor = WHITE, flipped = false, selected = -1, analysis = null, analysisFor = '', lastErr = '';
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem('chessGuide.' + k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem('chessGuide.' + k, JSON.stringify(v)); } catch {} }
+};
+
+let game = new Chess(), sans = [];
+let myColor = WHITE, flipped = false, selected = -1, lastErr = '';
+let analysis = null, analysisFor = '';
+const evalAt = new Map(); // fen -> my-perspective centipawns, for spotting opponent blunders
+let soundOn = store.get('sound') !== false;
 const think = () => Number($('think').value);
+
+/* ---------- Sound ---------- */
+let audio;
+function beep(kind) {
+  if (!soundOn) return;
+  try {
+    audio ||= new (window.AudioContext || window.webkitAudioContext)();
+    const t = audio.currentTime, o = audio.createOscillator(), g = audio.createGain();
+    const f = { move: 520, capture: 330, check: 880, end: 660 }[kind];
+    o.type = kind === 'capture' ? 'square' : 'triangle';
+    o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * .6, t + .09);
+    g.gain.setValueAtTime(kind === 'capture' ? .09 : .16, t); g.gain.exponentialRampToValueAtTime(.001, t + .12);
+    o.connect(g).connect(audio.destination); o.start(t); o.stop(t + .13);
+  } catch {}
+}
 
 /* ---------- Engines ---------- */
 // Preferred: Stockfish (from CDN). Fallback: the built-in search from the site's own chess engine.
 const SF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js';
-const engine = { kind: 'loading', sf: null, local: null, job: 0 };
+const engine = { sf: null, local: null, job: 0, busy: false, stale: false };
 
 function startLocal() {
   const src = document.getElementById('engine-src').textContent + `
@@ -571,29 +637,26 @@ function startLocal() {
   engine.local = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
   engine.local.onmessage = ({ data }) => {
     if (data.id !== engine.job) return;
-    const lines = data.lines.map(l => ({ uci: l.uci, cp: Math.abs(l.score) > 90000 ? null : l.score, mate: Math.abs(l.score) > 90000 ? Math.sign(l.score) * Math.ceil((100000 - Math.abs(l.score)) / 2) : null, depth: l.depth, pv: [l.uci] }));
-    finishAnalysis(lines);
+    const mateIn = s => Math.sign(s) * Math.ceil((100000 - Math.abs(s)) / 2);
+    finishAnalysis(data.lines.map(l => ({ uci: l.uci, cp: Math.abs(l.score) > 90000 ? null : l.score, mate: Math.abs(l.score) > 90000 ? mateIn(l.score) : null, depth: l.depth, pv: [l.uci] })));
   };
 }
 
 function startStockfish() {
   return new Promise(resolve => {
     let w;
-    try {
-      w = new Worker(URL.createObjectURL(new Blob([`importScripts(${JSON.stringify(SF_URL)});`], { type: 'text/javascript' })));
-    } catch { return resolve(false); }
+    try { w = new Worker(URL.createObjectURL(new Blob([`importScripts(${JSON.stringify(SF_URL)});`], { type: 'text/javascript' }))); }
+    catch { return resolve(false); }
     const timer = setTimeout(() => { try { w.terminate(); } catch {} resolve(false); }, 8000);
     w.onerror = () => { clearTimeout(timer); resolve(false); };
     w.onmessage = e => {
-      const line = typeof e.data === 'string' ? e.data : '';
-      if (line === 'uciok') {
-        clearTimeout(timer);
-        w.postMessage('setoption name MultiPV value 3');
-        w.postMessage('isready');
-        engine.sf = w;
-        w.onmessage = ev => onSfLine(String(ev.data));
-        resolve(true);
-      }
+      if (e.data !== 'uciok') return;
+      clearTimeout(timer);
+      w.postMessage('setoption name MultiPV value 3');
+      w.postMessage('isready');
+      engine.sf = w;
+      w.onmessage = ev => onSfLine(String(ev.data));
+      resolve(true);
     };
     w.postMessage('uci');
   });
@@ -604,11 +667,9 @@ function onSfLine(line) {
   if (engine.stale && !line.startsWith('bestmove')) return;
   if (line.startsWith('info') && line.includes(' pv ') && line.includes('multipv')) {
     const g = k => { const m = line.match(new RegExp(' ' + k + ' (-?\\d+)')); return m ? Number(m[1]) : null; };
-    const idx = g('multipv') - 1;
-    const mate = g('mate'), cp = mate === null ? g('cp') : null;
-    const pv = line.split(' pv ')[1].trim().split(' ');
-    sfLines[idx] = { uci: pv[0], cp, mate, depth: g('depth'), pv };
-    if (idx === 0 && g('depth') >= 8) render(true, sfLines.filter(Boolean));
+    const idx = g('multipv') - 1, mate = g('mate');
+    sfLines[idx] = { uci: line.split(' pv ')[1].trim().split(' ')[0], cp: mate === null ? g('cp') : null, mate, depth: g('depth'), pv: line.split(' pv ')[1].trim().split(' ') };
+    if (idx === 0 && g('depth') >= 8) render(sfLines.filter(Boolean), true);
   } else if (line.startsWith('bestmove')) {
     if (engine.stale) { engine.stale = false; return; }
     finishAnalysis(sfLines.filter(Boolean));
@@ -622,7 +683,6 @@ function analyze() {
   if (game.status().over || game.turn !== myColor) return;
   engine.job++;
   if (engine.sf) {
-    if (engine.busy) { engine.stale = true; engine.sf.postMessage('stop'); }
     sfLines = []; engine.busy = true;
     engine.sf.postMessage('position fen ' + fen);
     engine.sf.postMessage('go movetime ' + think());
@@ -635,7 +695,8 @@ function finishAnalysis(lines) {
   engine.busy = false;
   if (!lines.length) return;
   analysis = lines.slice(0, 3);
-  render();
+  evalAt.set(game.fen(), myCp(analysis[0]));
+  render(analysis);
 }
 
 function stopAnalysis() {
@@ -648,191 +709,293 @@ function uciToMove(pos, uci) {
   const from = parseSquare(uci.slice(0, 2)), to = parseSquare(uci.slice(2, 4)), promo = uci[4];
   return pos.legalMoves(from).find(m => m.to === to && (!m.promo || ' pnbrqk'[typeOf(m.promo)] === (promo || 'q')));
 }
-function describe(pos, m) {
+const isMate = l => l.mate !== null && l.mate !== undefined;
+// Score from my side's view; lines are scored for the side to move, which is me while analysing.
+const myCp = l => isMate(l) ? Math.sign(l.mate) * (3000 - Math.abs(l.mate) * 10) : l.cp;
+function describe(m) {
   const t = typeOf(m.piece);
-  if (m.flags & F_CASTLE) return m.to > m.from ? 'Castle kingside (King to ' + squareName(m.to) + ')' : 'Castle queenside (King to ' + squareName(m.to) + ')';
-  let s = `${NAMES[t]} ${squareName(m.from)} → ${squareName(m.to)}`;
-  if (m.captured) s += `, takes ${NAMES[typeOf(m.captured)].toLowerCase()}`;
-  if (m.promo) s += `, becomes ${NAMES[typeOf(m.promo)].toLowerCase()}`;
-  return s;
+  if (m.flags & F_CASTLE) return (m.to > m.from ? 'Castle kingside' : 'Castle queenside') + ` (King ${squareName(m.from)} → ${squareName(m.to)})`;
+  return `${NAMES[t]} ${squareName(m.from)} → ${squareName(m.to)}`;
+}
+function tagsFor(pos, m, l) {
+  const tags = [];
+  if (isMate(l) && l.mate === 1) tags.push(['Checkmate!', true]);
+  else if (isMate(l) && l.mate > 0) tags.push([`Mate in ${l.mate}`, true]);
+  if (m.captured) tags.push([`Takes ${NAMES[typeOf(m.captured)].toLowerCase()}`, typeOf(m.captured) >= ROOK]);
+  if (m.promo) tags.push([`Becomes ${NAMES[typeOf(m.promo)].toLowerCase()}`, true]);
+  if (m.flags & F_CASTLE) tags.push(['Castle — king safety', false]);
+  pos.make(m);
+  if (pos.inCheck() && !(isMate(l) && l.mate === 1)) tags.push(['Check', false]);
+  // Pieces of theirs this move now attacks that are worth more than the mover, or undefended.
+  const hit = [];
+  pos.turn ^= 1;
+  for (const o of pos.legalMoves(m.to)) if (o.captured && VALUE[typeOf(o.captured)] > VALUE[typeOf(o.piece)]) hit.push(typeOf(o.captured));
+  pos.turn ^= 1;
+  pos.unmake();
+  if (hit.length >= 2) tags.push(['Fork!', true]);
+  else if (hit.length === 1 && hit[0] !== KING) tags.push([`Attacks ${NAMES[hit[0]].toLowerCase()}`, false]);
+  return tags;
 }
 function scoreText(l) {
-  if (l.mate !== null && l.mate !== undefined) return l.mate > 0 ? `Mate in ${l.mate}` : `Mated in ${-l.mate}`;
-  const v = (l.cp / 100); return (v > 0 ? '+' : '') + v.toFixed(1);
+  if (isMate(l)) return l.mate > 0 ? `M${l.mate}` : `-M${-l.mate}`;
+  const v = l.cp / 100; return (v > 0 ? '+' : '') + v.toFixed(1);
 }
 function whyText(l) {
-  if (l.mate !== null && l.mate !== undefined) return l.mate > 0 ? `<span class="mate">You can force checkmate in ${l.mate} move${l.mate > 1 ? 's' : ''}. Keep following the arrows.</span>` : `<span class="mate">Opponent has a forced mate — this move defends the longest.</span>`;
+  if (isMate(l)) return l.mate > 0 ? `You can force checkmate in ${l.mate}. Keep following the green arrow.` : `Opponent has a forced mate — this move holds out longest.`;
   const v = l.cp;
-  if (v > 500) return 'You are winning big. Trade pieces and push for mate.';
+  if (v > 500) return 'You are winning big. Trade pieces and go for mate.';
   if (v > 200) return 'You are clearly better.';
   if (v > 60) return 'You have an edge.';
-  if (v > -60) return 'Position is about equal.';
+  if (v > -60) return 'The position is about equal.';
   if (v > -200) return 'Opponent is slightly better — play carefully.';
   return 'You are behind — this is the toughest defence.';
 }
 function pvSan(l) {
   if (!l.pv || l.pv.length < 2) return '';
   const p = game.clone(), out = [];
-  for (const u of l.pv.slice(0, 6)) { const m = uciToMove(p, u); if (!m) break; out.push(p.san(m)); p.make(m); }
+  for (const u of l.pv.slice(0, 7)) { const m = uciToMove(p, u); if (!m) break; out.push(p.san(m)); p.make(m); }
   return out.join(' ');
+}
+function captured() {
+  const start = { 1: 8, 2: 2, 3: 2, 4: 2, 5: 1 }, have = [{}, {}];
+  for (let sq = 0; sq < 64; sq++) { const p = game.board[sq]; if (p && typeOf(p) !== KING) have[colorOf(p)][typeOf(p)] = (have[colorOf(p)][typeOf(p)] || 0) + 1; }
+  const lost = [[], []]; let mat = [0, 0];
+  for (const c of [WHITE, BLACK]) for (const t of [1, 2, 3, 4, 5]) {
+    const n = have[c][t] || 0; mat[c] += n * [0, 1, 3, 3, 5, 9][t];
+    for (let i = n; i < start[t]; i++) lost[c].push(t);
+  }
+  return { lost, mat };
 }
 
 /* ---------- Board ---------- */
 const boardEl = $('board'), squares = [];
-for (let i = 0; i < 64; i++) {
-  const d = document.createElement('div');
-  d.addEventListener('click', () => clickSquare(Number(d.dataset.sq)));
-  boardEl.appendChild(d); squares.push(d);
-}
+for (let i = 0; i < 64; i++) { const d = document.createElement('div'); boardEl.appendChild(d); squares.push(d); }
 const viewToSq = i => { const r = i >> 3, f = i & 7; return flipped ? r * 8 + (7 - f) : (7 - r) * 8 + f; };
 const sqCenter = sq => { const f = sq & 7, r = sq >> 3; const x = flipped ? 7 - f : f, y = flipped ? r : 7 - r; return [x * 100 + 50, y * 100 + 50]; };
 
 function arrow(from, to, color, width, opacity) {
   const [x1, y1] = sqCenter(from), [x2, y2] = sqCenter(to);
-  const ang = Math.atan2(y2 - y1, x2 - x1), len = Math.hypot(x2 - x1, y2 - y1) - 22;
-  const ex = x1 + Math.cos(ang) * len, ey = y1 + Math.sin(ang) * len, h = width * 2.3;
-  const p = (a, r) => `${ex + Math.cos(ang + a) * r},${ey + Math.sin(ang + a) * r}`;
-  return `<g opacity="${opacity}"><line x1="${x1}" y1="${y1}" x2="${ex - Math.cos(ang) * h * .6}" y2="${ey - Math.sin(ang) * h * .6}" stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>
-    <polygon points="${ex + Math.cos(ang) * h * .9},${ey + Math.sin(ang) * h * .9} ${p(Math.PI * .62, h)} ${p(-Math.PI * .62, h)}" fill="${color}"/></g>`;
+  const ang = Math.atan2(y2 - y1, x2 - x1), len = Math.hypot(x2 - x1, y2 - y1) - 18, h = width * 2.1;
+  const tx = x1 + Math.cos(ang) * len, ty = y1 + Math.sin(ang) * len;
+  const bx = tx - Math.cos(ang) * h, by = ty - Math.sin(ang) * h;
+  const side = a => `${bx + Math.cos(ang + a) * h * .75},${by + Math.sin(ang + a) * h * .75}`;
+  return `<g opacity="${opacity}"><line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>
+    <polygon points="${tx},${ty} ${side(Math.PI / 2)} ${side(-Math.PI / 2)}" fill="${color}"/></g>`;
 }
 
-function render(partial = false, partialLines = null) {
-  const lines = partial ? partialLines : analysis;
+function tray(color) {
+  const { lost, mat } = captured(), other = color ^ 1, diff = mat[color] - mat[other];
+  const who = color === myColor ? 'You' : 'Opponent';
+  return `<span class="who">${who}</span>` + lost[other].map(t => `<span class="cap pc ${(other === WHITE ? 'w' : 'b') + CODE[t]}"></span>`).join('') + (diff > 0 ? `<span class="adv">+${diff}</span>` : '');
+}
+
+let justMoved = -1, dragFrom = -1;
+function render(lines = analysis, partial = false) {
   const st = game.status(), myTurn = game.turn === myColor;
   const last = game.played[game.played.length - 1];
-  const best = myTurn && lines && lines[0] ? uciToMove(game, lines[0].uci) : null;
+  const best = myTurn && !st.over && lines && lines[0] ? uciToMove(game, lines[0].uci) : null;
   const targets = selected >= 0 ? game.legalMoves(selected) : [];
 
   squares.forEach((d, i) => {
     const sq = viewToSq(i), p = game.board[sq], f = sq & 7, r = sq >> 3;
     d.dataset.sq = sq;
-    d.className = 'sq ' + ((f + r) % 2 ? 'l' : 'd');
-    if (last && (sq === last.from || sq === last.to)) d.classList.add('last');
-    if (best && sq === best.from) d.classList.add('hfrom');
-    if (best && sq === best.to) d.classList.add('hto');
-    if (sq === selected) d.classList.add('sel');
-    if (p && typeOf(p) === KING && colorOf(p) === game.turn && st.check) d.classList.add('check');
+    let cls = 'sq ' + ((f + r) % 2 ? 'l' : 'd');
+    if (last && (sq === last.from || sq === last.to)) cls += ' last';
+    if (best && selected < 0 && (sq === best.from || sq === best.to)) cls += ' hint';
+    if (sq === selected) cls += ' sel';
+    if (sq === dragFrom) cls += ' dragfrom';
+    if (sq === justMoved) cls += ' justmoved';
+    if (p && typeOf(p) === KING && colorOf(p) === game.turn && st.check) cls += ' check';
+    d.className = cls;
     let html = '';
     if ((i >> 3) === 7) html += `<span class="coord f">${'abcdefgh'[f]}</span>`;
     if ((i & 7) === 0) html += `<span class="coord r">${r + 1}</span>`;
-    if (p) html += pieceSvg(typeOf(p), colorOf(p));
+    if (p) html += `<div class="pc ${pcClass(p)}"></div>`;
     const t = targets.find(m => m.to === sq);
     if (t) html += t.captured ? '<span class="ring"></span>' : '<span class="dot"></span>';
     d.innerHTML = html;
   });
+  justMoved = -1;
 
   let svg = '';
-  if (myTurn && lines) {
-    lines.slice(1, 3).forEach(l => { const m = uciToMove(game, l.uci); if (m) svg += arrow(m.from, m.to, 'var(--alt-arrow)', 12, .45); });
-    if (best) svg += arrow(best.from, best.to, 'var(--arrow)', 18, .9);
+  if (best && selected < 0) {
+    lines.slice(1, 3).forEach(l => { const m = uciToMove(game, l.uci); if (m) svg += arrow(m.from, m.to, 'var(--alt-arrow)', 11, .4); });
+    svg += arrow(best.from, best.to, 'var(--arrow)', 17, .88);
   }
   $('arrows').innerHTML = svg;
 
-  // Eval bar from my perspective (score is relative to side to move).
-  let myCp = 0;
-  if (lines && lines[0]) {
-    const l = lines[0], sign = game.turn === myColor ? 1 : -1;
-    myCp = l.mate !== null && l.mate !== undefined ? sign * Math.sign(l.mate) * 2000 : sign * l.cp;
-  }
-  $('evalFill').style.height = (50 + 50 * Math.tanh(myCp / 600)) + '%';
+  const bottom = flipped ? BLACK : WHITE;
+  $('trayTop').innerHTML = tray(bottom ^ 1);
+  $('trayBottom').innerHTML = tray(bottom);
 
-  // Status
-  const meName = myColor === WHITE ? 'White' : 'Black';
+  // Eval bar: the white part is you.
+  if (lines && lines[0] && myTurn) $('evalFill').style.height = (50 + 50 * Math.tanh(myCp(lines[0]) / 600)) + '%';
+  else if (st.over) $('evalFill').style.height = st.result === 'draw' ? '50%' : st.result === (myColor === WHITE ? 'white' : 'black') ? '100%' : '0%';
+
+  // Status line
   let status;
-  if (st.over) {
-    const iWon = st.result === (myColor === WHITE ? 'white' : 'black');
-    status = st.result === 'draw' ? `Draw — ${st.reason}.` : iWon ? `🏆 You won by ${st.reason}!` : `You lost by ${st.reason}.`;
-  } else if (myTurn) status = `<span class="pill me">Your move</span> ${partial || !analysis ? '<span class="thinking"></span> thinking…' : ''}`;
-  else status = `<span class="pill">Opponent's move</span> Enter what they played`;
+  if (st.over) status = `<span class="pill">Game over</span>`;
+  else if (myTurn) status = `<span class="pill me">Your move</span>` + (!analysis ? ' <span class="thinking"></span> thinking…' : '');
+  else status = `<span class="pill">Opponent's move</span> copy what they played`;
   $('status').innerHTML = status + (st.check && !st.over ? ' · <b>Check!</b>' : '');
 
+  // Alerts
+  let alert = '';
+  if (st.over) {
+    const iWon = st.result === (myColor === WHITE ? 'white' : 'black');
+    alert = st.result === 'draw' ? `<div class="alert bad">Draw — ${st.reason}.</div>` : iWon ? `<div class="alert win">🏆 You won by ${st.reason}!</div>` : `<div class="alert bad">You lost by ${st.reason}.</div>`;
+  } else if (myTurn && analysis && game.played.length >= 2) {
+    const before = evalAt.get(prevMyFen()), now = myCp(analysis[0]);
+    const gain = before === undefined ? 0 : now - before;
+    if (gain >= 300) alert = `<div class="alert good">⚡ Opponent blundered! You gained ${scoreText({ cp: gain })}. Punish it with the green arrow.</div>`;
+    else if (gain >= 120) alert = `<div class="alert good">👀 Opponent made a mistake (${scoreText({ cp: gain })} for you). Take advantage.</div>`;
+  }
+  $('alert').innerHTML = alert;
+
   // Best move panel
-  if (!st.over && myTurn && lines && lines[0] && best) {
+  if (best) {
     const l = lines[0];
-    $('best').innerHTML = `<div class="label">Best move · ${scoreText(l)}${partial ? ' · refining' : ''}</div>
-      <div class="move">${game.san(best)}</div>
-      <div class="desc">${describe(game, best)}</div>
+    $('best').innerHTML = `<div class="label">Best move · ${scoreText(l)} · depth ${l.depth || '?'}${partial ? ' · refining…' : ''}</div>
+      <div class="row"><div class="bigpc pc ${pcClass(best.piece)}"></div><div class="move">${game.san(best)}</div></div>
+      <div class="desc">${describe(best)}</div>
+      <div class="tags">${tagsFor(game, best, l).map(([t, hot]) => `<span class="tag${hot ? ' hot' : ''}">${t}</span>`).join('')}</div>
       <div class="why">${whyText(l)}</div>
-      ${pvSan(l) ? `<div class="small" style="margin-top:6px">Expected line: ${pvSan(l)}</div>` : ''}
-      ${partial ? '' : `<button class="btn primary" style="margin-top:12px" id="playBest">Play this move</button>`}`;
+      ${pvSan(l) ? `<div class="line">Expected: ${pvSan(l)}</div>` : ''}
+      ${partial ? '' : `<button class="btn primary" style="margin-top:12px" id="playBest">✓ Play this move</button>`}`;
     const pb = $('playBest'); if (pb) pb.onclick = () => playUci(l.uci);
-    $('alts').innerHTML = lines.slice(1, 3).map(alt => { const m = uciToMove(game, alt.uci); return m ? `<button class="alt" data-uci="${alt.uci}"><span>Also good: <b>${game.san(m)}</b> <span class="small">${describe(game, m)}</span></span><span class="sc">${scoreText(alt)}</span></button>` : ''; }).join('');
-    $('alts').querySelectorAll('.alt').forEach(b => b.onclick = () => { if (!partial) playUci(b.dataset.uci); });
+    $('alts').innerHTML = lines.slice(1, 3).map(alt => { const m = uciToMove(game, alt.uci); return m ? `<button class="alt" data-uci="${alt.uci}"><span>Also OK: <b>${game.san(m)}</b> <span class="small">${describe(m)}</span></span><span class="sc">${scoreText(alt)}</span></button>` : ''; }).join('');
+    if (!partial) $('alts').querySelectorAll('.alt').forEach(b => b.onclick = () => playUci(b.dataset.uci));
   } else if (!st.over && myTurn) {
     $('best').innerHTML = `<div class="label">Best move</div><div class="desc">Calculating…</div>`; $('alts').innerHTML = '';
   } else if (!st.over) {
-    $('best').innerHTML = `<div class="desc">Tap the piece your opponent moved, then the square it moved to.</div>`; $('alts').innerHTML = '';
+    $('best').innerHTML = `<div class="desc">Drag the piece your opponent moved to its new square (or tap it, then tap the square).</div>`; $('alts').innerHTML = '';
   } else { $('best').innerHTML = ''; $('alts').innerHTML = ''; }
 
   // Move list
   const rows = [];
-  const sans = game.sans || [];
-  for (let i = 0; i < sans.length; i += 2) rows.push(`<span class="n">${i / 2 + 1}.</span><span>${sans[i]}</span><span>${sans[i + 1] || ''}</span>`);
+  for (let i = 0; i < sans.length; i += 2) {
+    const c = k => k === sans.length - 1 ? ' class="cur"' : '';
+    rows.push(`<span class="n">${i / 2 + 1}.</span><span${c(i)}>${sans[i]}</span><span${c(i + 1)}>${sans[i + 1] || ''}</span>`);
+  }
   $('moves').innerHTML = rows.join('') || '<span class="small" style="grid-column:1/-1">No moves yet.</span>';
   $('moves').scrollTop = 1e6;
   $('undo').disabled = !game.played.length;
   $('err').textContent = lastErr;
 }
 
-function afterMove() { selected = -1; lastErr = ''; analysis = null; analysisFor = ''; stopAnalysis(); render(); analyze(); }
-function apply(m) { const san = game.san(m); game.make(m); (game.sans ||= []).push(san); afterMove(); }
+// FEN of the position two plies ago (my previous turn), used to compare evaluations.
+function prevMyFen() {
+  const p = new Chess();
+  for (const m of game.played.slice(0, -2)) p.make(m);
+  return p.fen();
+}
+
+function save() { store.set('game', { moves: game.played.map(m => game.uci(m)), myColor, flipped }); }
+function afterMove() { selected = -1; lastErr = ''; analysis = null; analysisFor = ''; stopAnalysis(); save(); render(); analyze(); }
+function apply(m) {
+  const san = game.san(m); game.make(m); sans.push(san); justMoved = m.to;
+  const st = game.status();
+  beep(st.over ? 'end' : st.check ? 'check' : m.captured ? 'capture' : 'move');
+  afterMove();
+}
 function playUci(u) { const m = uciToMove(game, u); if (m) apply(m); }
 
-let pendingPromo = null;
-function clickSquare(sq) {
-  if (game.status().over) return;
-  const p = game.board[sq];
-  if (selected >= 0) {
-    const options = game.legalMoves(selected).filter(m => m.to === sq);
-    if (options.length === 1) return apply(options[0]);
-    if (options.length > 1) return askPromo(options);
-  }
-  selected = p && colorOf(p) === game.turn && sq !== selected ? sq : -1;
-  render(false, null);
+function tryMove(from, to) {
+  const options = game.legalMoves(from).filter(m => m.to === to);
+  if (options.length === 1) { apply(options[0]); return true; }
+  if (options.length > 1) { askPromo(options); return true; }
+  return false;
 }
 function askPromo(options) {
   const box = $('promoBox'); box.innerHTML = '';
-  [QUEEN, ROOK, BISHOP, KNIGHT].forEach(t => {
+  [QUEEN, KNIGHT, ROOK, BISHOP].forEach(t => {
     const m = options.find(o => typeOf(o.promo) === t); if (!m) return;
-    const b = document.createElement('button'); b.innerHTML = pieceSvg(t, game.turn);
+    const b = document.createElement('button'); b.className = 'pc ' + (game.turn === WHITE ? 'w' : 'b') + CODE[t];
+    b.style.pointerEvents = 'auto'; b.title = NAMES[t];
     b.onclick = () => { $('promo').classList.remove('show'); apply(m); };
     box.appendChild(b);
   });
   $('promo').classList.add('show');
 }
 
+/* ---------- Drag and tap input ---------- */
+let drag = null;
+const sqAt = (x, y) => { const el = document.elementFromPoint(x, y)?.closest('.sq'); return el && boardEl.contains(el) ? Number(el.dataset.sq) : -1; };
+boardEl.addEventListener('pointerdown', e => {
+  if (e.button > 0 || game.status().over || $('promo').classList.contains('show')) return;
+  const sq = sqAt(e.clientX, e.clientY); if (sq < 0) return;
+  if (selected >= 0 && selected !== sq && tryMove(selected, sq)) return;
+  const p = game.board[sq];
+  if (!p || colorOf(p) !== game.turn) { selected = -1; render(); return; }
+  const wasSelected = selected === sq;
+  selected = sq; dragFrom = sq; render();
+  const size = boardEl.getBoundingClientRect().width / 8;
+  const ghost = document.createElement('div');
+  ghost.className = 'ghost pc ' + pcClass(p);
+  Object.assign(ghost.style, { width: size + 'px', height: size + 'px', left: e.clientX + 'px', top: e.clientY + 'px' });
+  document.body.appendChild(ghost);
+  drag = { from: sq, ghost, wasSelected, pointer: e.pointerId };
+  boardEl.setPointerCapture(e.pointerId);
+});
+boardEl.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pointer) return;
+  drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+});
+function endDrag(e, cancelled) {
+  if (!drag || e.pointerId !== drag.pointer) return;
+  const d = drag; drag = null; d.ghost.remove(); dragFrom = -1;
+  const to = cancelled ? -1 : sqAt(e.clientX, e.clientY);
+  if (to >= 0 && to !== d.from && tryMove(d.from, to)) return;
+  if (to === d.from && d.wasSelected) selected = -1;
+  render();
+}
+boardEl.addEventListener('pointerup', e => endDrag(e, false));
+boardEl.addEventListener('pointercancel', e => endDrag(e, true));
+
 $('typer').addEventListener('submit', e => {
   e.preventDefault();
   const raw = $('moveInput').value.trim(); if (!raw) return;
-  const clean = s => s.replace(/[+#!?x=\s]/g, '').replace(/^0-0-0$/, 'O-O-O').replace(/^0-0$/, 'O-O').toLowerCase();
+  const clean = s => s.replace(/[+#!?x=\s]/g, '').replace(/0/g, 'O').toLowerCase();
   const legal = game.legalMoves();
   let m = legal.find(o => clean(game.san(o)) === clean(raw));
-  if (!m && /^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(raw)) m = uciToMove(game, raw.toLowerCase());
-  if (!m && /^[a-h][1-8]-?[a-h][1-8]$/i.test(raw)) m = uciToMove(game, raw.replace('-', '').toLowerCase());
+  if (!m && /^[a-h][1-8]-?[a-h][1-8][qrbn]?$/i.test(raw)) m = uciToMove(game, raw.replace('-', '').toLowerCase());
   if (m) { $('moveInput').value = ''; apply(m); }
-  else { lastErr = `"${raw}" is not a legal move here.`; render(false, null); }
+  else { lastErr = `"${raw}" is not a legal move here.`; render(); }
 });
 
-$('colorSeg').addEventListener('click', e => {
-  const c = e.target.dataset.c; if (c === undefined) return;
-  myColor = Number(c); flipped = myColor === BLACK;
-  [...$('colorSeg').children].forEach(b => b.classList.toggle('on', b.dataset.c === c));
-  afterMove();
-});
-$('flip').onclick = () => { flipped = !flipped; render(false, null); if (analysis) render(); };
-$('undo').onclick = () => {
-  if (!game.played.length) return;
-  game.unmake(); game.sans.pop();
-  afterMove();
-};
-$('reset').onclick = () => { game = new Chess(); afterMove(); };
-$('think').onchange = () => { analysisFor = ''; stopAnalysis(); analyze(); };
+/* ---------- Controls ---------- */
+function setColor(c) {
+  myColor = c; flipped = c === BLACK;
+  [...$('colorSeg').children].forEach(b => b.classList.toggle('on', Number(b.dataset.c) === c));
+}
+$('colorSeg').addEventListener('click', e => { const c = e.target.dataset.c; if (c === undefined) return; setColor(Number(c)); afterMove(); });
+$('flip').onclick = () => { flipped = !flipped; save(); render(); };
+function undo() { if (!game.played.length) return; game.unmake(); sans.pop(); afterMove(); }
+$('undo').onclick = undo;
+$('reset').onclick = () => { game = new Chess(); sans = []; evalAt.clear(); afterMove(); };
+$('think').onchange = () => { store.set('think', $('think').value); analysisFor = ''; stopAnalysis(); analyze(); };
+$('boardTheme').onchange = () => { document.body.dataset.board = $('boardTheme').value; store.set('board', $('boardTheme').value); };
+const paintSound = () => { $('sound').textContent = soundOn ? '🔊' : '🔇'; };
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); paintSound(); };
+document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' && document.activeElement !== $('moveInput')) undo(); });
 
-render(false, null);
+/* ---------- Start ---------- */
+(function restore() {
+  const theme = store.get('board'); if (theme) { $('boardTheme').value = theme; document.body.dataset.board = theme; }
+  const t = store.get('think'); if (t) $('think').value = t;
+  paintSound();
+  const saved = store.get('game');
+  if (saved && Array.isArray(saved.moves)) {
+    setColor(saved.myColor === BLACK ? BLACK : WHITE);
+    for (const u of saved.moves) { const m = uciToMove(game, u); if (!m) break; sans.push(game.san(m)); game.make(m); }
+    if (typeof saved.flipped === 'boolean') flipped = saved.flipped;
+  }
+})();
+render();
+$('engineTag').innerHTML = '<span class="thinking"></span> Loading Stockfish engine…';
 startStockfish().then(ok => {
-  engine.kind = ok ? 'stockfish' : 'local';
   if (!ok) startLocal();
-  $('engineTag').textContent = ok ? 'Engine: Stockfish 10 (very strong).' : 'Engine: built-in search (Stockfish could not load, so using the backup engine).';
+  $('engineTag').innerHTML = ok ? '✅ Engine: <b>Stockfish</b> — about 3000+ rating.' : '⚠️ Engine: built-in backup (Stockfish could not load — check your internet).';
   analysisFor = ''; analyze();
 });
 </script>
