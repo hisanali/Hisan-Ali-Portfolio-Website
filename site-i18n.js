@@ -9,7 +9,7 @@
 
   const root = document.documentElement;
   const STORAGE_KEY = 'site-language';
-  const VERSION = '20261107-1';
+  const VERSION = '20261109-1';
   // Set by the lang-init script in <head> when the page itself is written in Arabic.
   const nativeArabic = root.dataset.nativeLang === 'ar';
   const alternatePath = (language) => {
