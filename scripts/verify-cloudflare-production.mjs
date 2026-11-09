@@ -14,7 +14,7 @@ assert(current, 'Production route is missing');
 await api(`${base}/${current.id}`, {method: 'PUT', body: JSON.stringify({pattern: current.pattern, script: config.name, request_limit_fail_open: true})});
 assert((await api(`${base}/${current.id}`)).request_limit_fail_open, 'Vercel fallback is not enabled');
 // Compare deployed content with this build; retry while edge caches converge.
-for (const path of ['site-shell.js', 'tactile.js', 'tactile.css']) {
+for (const path of ['site-shell.js', 'tactile.js', 'tactile.css', 'site-robot.js', 'site-robot.css']) {
   const expected = await readFile(`.vercel/site-static/${path}`, 'utf8');
   let matched = false;
   for (let attempt = 0; attempt < 12; attempt++) {
@@ -26,5 +26,5 @@ for (const path of ['site-shell.js', 'tactile.js', 'tactile.css']) {
 }
 const home = await fetch('https://hisanali.com/');
 assert(home.ok, `Homepage returned ${home.status}`);
-assert((await home.text()).includes('/tactile.js?v=4'), 'Homepage is missing the ripple script');
+assert((await home.text()).includes('/tactile.js?v=5'), 'Homepage is missing the ripple script');
 console.log('Production assets verified; Vercel fallback enabled.');

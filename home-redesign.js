@@ -176,18 +176,6 @@ if (window.location.hash) {
 }
 
 if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
-  const glow = document.querySelector('[data-cursor-glow]');
-  window.addEventListener('pointermove', (event) => {
-    if (glow) {
-      glow.style.opacity = '1';
-      glow.style.left = `${event.clientX}px`;
-      glow.style.top = `${event.clientY}px`;
-    }
-  }, { passive: true });
-  document.documentElement.addEventListener('mouseleave', () => {
-    if (glow) glow.style.opacity = '0';
-  });
-
   const growthStage = document.querySelector('[data-growth-stage]');
   const reactiveCards = [...document.querySelectorAll('.availability-card, .strategy-card')];
   growthStage?.addEventListener('pointermove', (event) => {

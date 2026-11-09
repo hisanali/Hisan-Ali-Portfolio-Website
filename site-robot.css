@@ -1,0 +1,118 @@
+.site-robot{position:fixed;left:0;bottom:18px;width:94px;height:124px;z-index:900;pointer-events:none;contain:layout style;transition:opacity .2s}
+.robot-touch{display:block;width:94px;height:124px;padding:0;border:0;background:transparent;cursor:pointer;pointer-events:auto;-webkit-tap-highlight-color:transparent}
+.robot-touch:focus-visible{outline:2px solid #f16c3b;outline-offset:3px;border-radius:28px}
+.robot-touch svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 4px 3px #0002)}
+.robot-hide{position:absolute;right:-5px;top:-9px;width:28px;height:28px;border:1px solid #17382d30;border-radius:50%;background:#f5f1e9;color:#17382d;font:18px/1 sans-serif;pointer-events:auto;cursor:pointer;opacity:0;transition:opacity .2s}
+.site-robot:hover .robot-hide,.site-robot:focus-within .robot-hide{opacity:1}
+.robot-leg-l{transform-origin:37px 89px}.robot-leg-r{transform-origin:57px 89px}.robot-arm-l{transform-origin:26px 72px}.robot-arm-r{transform-origin:68px 72px}
+.site-robot[data-state=walk] .robot-leg-l{animation:robot-step .55s ease-in-out infinite alternate}.site-robot[data-state=walk] .robot-leg-r{animation:robot-step .55s ease-in-out infinite alternate-reverse}
+.site-robot[data-state=walk] .robot-upper{animation:robot-bob .275s ease-in-out infinite alternate}
+.site-robot[data-state=wave] .robot-arm-r{animation:robot-wave .26s ease-in-out 6 alternate}
+.site-robot[data-state=curious] .robot-head{transform:rotate(-9deg);transform-origin:47px 54px}
+.robot-head{transition:transform .3s}.robot-eyes{transition:transform .12s ease-out}.robot-led{animation:robot-led 3s ease-in-out infinite}
+@keyframes robot-step{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+@keyframes robot-bob{to{transform:translateY(-2px)}}
+@keyframes robot-wave{from{transform:rotate(-115deg)}to{transform:rotate(-145deg)}}
+@keyframes robot-led{50%{opacity:.45}}
+@media(hover:none){.robot-hide{opacity:1}.site-robot{bottom:12px;scale:.85;transform-origin:bottom left}}
+@media(prefers-reduced-motion:reduce){.site-robot *{animation:none!important;transition:none!important}}
+.site-robot[data-state=curious] .robot-upper{animation:robot-hop .45s ease-out}
+@keyframes robot-hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-7px)}}
+@media print{.site-robot{display:none}}
+/* Explore visible page surfaces without occupying document space. */
+.site-robot{top:0;bottom:auto}
+.site-robot[data-state=fly] .robot-touch svg{rotate:var(--robot-lean,0deg);transition:rotate .3s}
+.site-robot[data-state=fly] .robot-touch::after{content:"";position:absolute;width:16px;height:25px;left:39px;top:111px;background:linear-gradient(#dfff67aa,transparent);border-radius:40% 40% 60% 60%;animation:robot-thrust .18s ease-in-out infinite alternate;pointer-events:none}
+.site-robot[data-state=peek] .robot-touch{clip-path:none}
+.site-robot[data-state=peek] .robot-head{transform:rotate(9deg);transform-origin:47px 54px}
+.site-robot[data-state=happy] .robot-upper{animation:robot-hop .45s ease-in-out 3}
+.site-robot[data-state=happy] .robot-eyes rect{height:5px;rx:2px}
+@keyframes robot-thrust{to{scale:.8 1.25;opacity:.65}}
+@media(hover:none){.site-robot{bottom:auto;scale:.85;transform-origin:top left}}
+.site-robot[data-state=fly] .robot-touch,.site-robot[data-state=walk] .robot-touch{pointer-events:none}
+body.menu-open .site-robot,body:has(dialog[open]) .site-robot{visibility:hidden}
+.robot-touch{touch-action:none;user-select:none;cursor:grab}
+.site-robot[data-state=carried] .robot-touch{cursor:grabbing}
+.site-robot[data-state=carried] .robot-leg-l{rotate:20deg}.site-robot[data-state=carried] .robot-leg-r{rotate:-20deg}
+.site-robot[data-state=charge] .robot-upper{transform:translateY(6px) scaleY(.9);transform-origin:47px 95px}
+.site-robot[data-state=charge] .robot-led{fill:#f16c3b}
+.site-robot[data-state=jump] .robot-touch svg{animation:robot-big-jump 1s cubic-bezier(.22,.7,.3,1)}
+.site-robot[data-state=dance] .robot-touch svg{animation:robot-dance .5s ease-in-out 6}
+.site-robot[data-state=dance] .robot-arm-l{animation:robot-wave .25s ease-in-out infinite alternate}
+.site-robot[data-state=dance] .robot-arm-r{animation:robot-wave .25s ease-in-out infinite alternate-reverse}
+@keyframes robot-big-jump{0%,100%{translate:0 0;scale:1}15%{translate:0 5px;scale:1.08 .9}50%{translate:0 -65px;scale:.95 1.06}85%{translate:0 0;scale:1.06 .94}}
+@keyframes robot-dance{0%,100%{rotate:-9deg;translate:-5px 0}50%{rotate:9deg;translate:5px -5px}}
+/* Original soft pet character; existing behaviors remain shared. */
+.pet-tail{transform-origin:68px 91px;animation:pet-wag 1.2s ease-in-out infinite alternate}
+.pet-ear-l{transform-origin:24px 33px}.pet-ear-r{transform-origin:70px 33px}
+.site-robot[data-state=happy] .pet-tail,.site-robot[data-state=wave] .pet-tail{animation-duration:.18s}
+.site-robot[data-state=walk] .pet-ear-l,.site-robot[data-state=walk] .pet-ear-r{animation:pet-ear .3s ease-in-out infinite alternate}
+.site-robot[data-state=fly] .robot-touch::after{display:none}
+.site-robot[data-state=fly] .robot-upper{animation:pet-bound .6s ease-in-out infinite}
+.site-robot[data-state=idle] .robot-upper{animation:pet-breathe 3s ease-in-out infinite}
+.site-robot[data-state=carried] .pet-ear-l{rotate:-15deg}.site-robot[data-state=carried] .pet-ear-r{rotate:15deg}
+@keyframes pet-wag{from{rotate:-12deg}to{rotate:16deg}}
+@keyframes pet-ear{to{rotate:8deg}}
+@keyframes pet-bound{50%{translate:0 -7px}}
+@keyframes pet-breathe{50%{translate:0 -1.5px}}
+.site-robot[data-state=happy] .robot-eyes ellipse,.site-robot[data-state=dance] .robot-eyes ellipse{ry:3px}
+.site-robot[data-state=carried] .robot-upper{scale:1 1.04;transform-origin:47px 30px}
+.site-robot[data-state=charge] .pet-ear-l{rotate:-18deg}.site-robot[data-state=charge] .pet-ear-r{rotate:18deg}
+.site-robot[data-state=dance] .pet-tail{animation-duration:.18s}
+/* Soft, non-animal blob: one continuous body, no legs or mechanical parts. */
+.site-robot .robot-upper{transform-origin:47px 109px}
+.site-robot[data-state=idle] .robot-upper{animation:blob-breathe 2.8s ease-in-out infinite}
+.site-robot[data-state=walk] .robot-upper{animation:blob-scoot .6s ease-in-out infinite}
+.site-robot[data-state=fly] .robot-upper{animation:blob-float .7s ease-in-out infinite}
+.site-robot[data-state=carried] .robot-upper{scale:.86 1.14;transform-origin:47px 40px}
+.site-robot[data-state=charge] .robot-upper{transform:translateY(8px) scale(1.15,.78);transform-origin:47px 109px}
+.site-robot[data-state=peek] .robot-touch{clip-path:none}
+.site-robot .robot-head{transform-origin:47px 80px}
+@keyframes blob-breathe{50%{transform:scale(1.025,.975)}}
+@keyframes blob-scoot{0%,100%{transform:scale(1.06,.94) rotate(-4deg)}50%{transform:translateY(-5px) scale(.95,1.05) rotate(4deg)}}
+@keyframes blob-float{0%,100%{transform:scale(.95,1.05)}50%{transform:translateY(-6px) scale(1.04,.96)}}
+/* Glass material: translucent body, curved rim, and restrained contact shadow. */
+.robot-touch svg{filter:drop-shadow(0 3px 3px #33487018)}
+.site-robot[data-state=carried] .robot-upper{transition:scale .18s ease-out}
+/* Paper ghost: gentle floating and folded-sheet motion. */
+.site-robot[data-state=idle] .robot-upper{animation:paper-hover 3s ease-in-out infinite}
+.site-robot[data-state=fly] .robot-upper,.site-robot[data-state=walk] .robot-upper{animation:paper-flutter .8s ease-in-out infinite}
+.site-robot[data-state=carried] .robot-upper{scale:.96 1.04;rotate:12deg}
+.site-robot[data-state=dance] .robot-touch svg{animation:paper-tumble 1.4s ease-in-out 2}
+@keyframes paper-hover{50%{translate:0 -5px;rotate:2deg}}
+@keyframes paper-flutter{0%,100%{rotate:-5deg;translate:0 0}50%{rotate:5deg;translate:0 -5px}}
+@keyframes paper-tumble{0%{rotate:0deg}45%{translate:0 -12px}100%{rotate:360deg}}
+.site-robot[data-state=idle] .robot-upper{animation-duration:4.5s}
+.paper-ball{position:fixed;top:0;left:0;width:44px;height:44px;padding:4px;border:0;background:transparent;z-index:901;cursor:grab;touch-action:none;user-select:none}
+.paper-ball svg{width:100%;height:100%;rotate:var(--ball-spin,0deg);filter:drop-shadow(0 3px 2px #26382826)}
+.paper-ball[data-state=held]{cursor:grabbing}
+.paper-ball:focus-visible{outline:2px solid #f16c3b;border-radius:50%;outline-offset:3px}
+body.menu-open .paper-ball,body:has(dialog[open]) .paper-ball{visibility:hidden}
+@media print{.paper-ball{display:none}}
+/* Expressive face: all changes stay within the existing character. */
+.site-robot[data-expression=blink] .robot-eyes ellipse{ry:.7px}
+.site-robot[data-expression=blink] .robot-eyes circle,.site-robot[data-expression=loved] .robot-eyes circle,.site-robot[data-expression=happy] .robot-eyes circle{opacity:0}
+.site-robot[data-expression=happy] .robot-eyes ellipse,.site-robot[data-expression=loved] .robot-eyes ellipse{ry:2px;rx:5px}
+.site-robot[data-expression=surprised] .robot-eyes ellipse{rx:5px;ry:8.5px}
+.site-robot[data-expression=excited] .robot-eyes ellipse{rx:5px;ry:8px}
+.site-robot[data-expression=surprised] .ghost-mouth{d:path('M44 73 C44 68 50 68 50 73 C50 79 44 79 44 73');fill:#293b36}
+.site-robot[data-expression=excited] .ghost-mouth,.site-robot[data-expression=proud] .ghost-mouth{d:path('M41 71 Q47 73 53 71 Q52 81 47 81 Q42 81 41 71');fill:#293b36}
+.site-robot[data-expression=determined] .robot-eyes ellipse{ry:3px}
+.site-robot[data-state=pet] .robot-upper{animation:ghost-nuzzle 1s ease-in-out 2}
+.site-robot[data-state=pet]::after{content:'♥';position:absolute;top:8px;left:41px;color:#df8d9a;font:17px/1 sans-serif;pointer-events:none;animation:ghost-heart 1.1s ease-out 2}
+@keyframes ghost-nuzzle{50%{rotate:-8deg;translate:0 -3px}}
+@keyframes ghost-heart{from{translate:0 0;opacity:0}25%{opacity:.9}to{translate:0 -20px;opacity:0}}
+@media(prefers-reduced-motion:reduce){.site-robot::after{animation:none!important}}
+/* Hide-and-seek shows only eyes; there is no flat clipping edge. */
+.site-robot[data-state=seek] .robot-head>:not(.robot-eyes),.site-robot[data-state=seek] svg>ellipse{opacity:0}
+.site-robot[data-state=seek] .robot-eyes{filter:drop-shadow(0 0 2px #fff)}
+.site-robot[data-state=seek] .robot-touch{cursor:pointer}
+.site-robot[data-state=reveal] .robot-touch svg{animation:ghost-reveal .65s ease-out}
+.site-robot[data-state=victory] .robot-touch svg{animation:paper-tumble 1.1s ease-in-out 2}
+.site-robot[data-state=sleep] .robot-upper{transform:translateY(22px) rotate(-18deg) scale(.9,.74);animation:ghost-sleep 3s ease-in-out infinite;transform-origin:47px 104px}
+.site-robot[data-expression=sleepy] .robot-eyes ellipse{ry:1px;rx:5px}
+.site-robot[data-expression=sleepy] .robot-eyes circle{opacity:0}
+.site-robot[data-state=sleep]::after{content:'z';position:absolute;left:65px;top:30px;color:#97aaa5;font:italic 14px Georgia;pointer-events:none;animation:ghost-heart 3s ease-out infinite}
+.site-robot[data-state=wake] .robot-upper{animation:ghost-reveal 1s ease-out}
+@keyframes ghost-reveal{0%{scale:.75;opacity:.3}60%{scale:1.08;opacity:1}100%{scale:1;opacity:1}}
+@keyframes ghost-sleep{50%{transform:translateY(21px) rotate(-18deg) scale(.92,.76)}}

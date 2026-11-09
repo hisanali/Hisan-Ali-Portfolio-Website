@@ -18,6 +18,7 @@
     ripple.style.top = `${e.clientY}px`;
     document.body.append(ripple);
     active.add(ripple);
+    document.dispatchEvent(new CustomEvent("site:ripple", {detail:{x:e.clientX,y:e.clientY}}));
     setTimeout(() => { ripple.remove(); active.delete(ripple); }, 1000);
   });
 })();
