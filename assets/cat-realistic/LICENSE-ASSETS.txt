@@ -1,0 +1,20 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+The original generated visual assets in this repository are licensed under
+the Creative Commons Attribution 4.0 International Public License, solely to
+the extent copyright or related rights exist and are held by the contributors.
+
+Licensed visual assets:
+
+- spritesheet.webp
+- assets/contact-sheet.png
+- assets/look-directions.png
+- assets/previews/*.gif
+
+Creator attribution: Octane0411 / maodie-codex-pet contributors
+Project URL: https://github.com/Octane0411/maodie-codex-pet
+License summary: https://creativecommons.org/licenses/by/4.0/
+Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+
+No source photograph or third-party artwork is offered under this license.
+See NOTICE.md for additional provenance and rights information.

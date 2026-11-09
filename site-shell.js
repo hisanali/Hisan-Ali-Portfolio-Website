@@ -77,7 +77,7 @@
   const catPreview = ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('preview') === 'natural-miso';
   if ((catPreview || matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches) && !document.querySelector('script[src^="/site-cat.js"]')) {
     const cat = document.createElement('script');
-    cat.src = '/site-cat.js?v=20261109-7';
+    cat.src = '/site-cat.js?v=20261109-8';
     cat.defer = true;
     document.body.appendChild(cat);
   }
