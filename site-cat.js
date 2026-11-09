@@ -10,11 +10,12 @@
   if (window.__siteCat) return;
   window.__siteCat = true;
 
-  const desktop = matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)');
+  const preview = ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('preview') === 'natural-miso';
+  const desktop = matchMedia(preview ? '(min-width: 0px)' : '(min-width: 1024px) and (hover: hover) and (pointer: fine)');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const STORE = 'site-cat-v1';
-  const read = () => { try { return JSON.parse(sessionStorage.getItem(STORE)) || {}; } catch { return {}; } };
-  const save = (data) => { try { sessionStorage.setItem(STORE, JSON.stringify(data)); } catch {} };
+  const read = () => { if (preview) return {}; try { return JSON.parse(sessionStorage.getItem(STORE)) || {}; } catch { return {}; } };
+  const save = (data) => { if (preview) return; try { sessionStorage.setItem(STORE, JSON.stringify(data)); } catch {} };
   if (read().away) return;
 
   const W = 116; // rendered cat width in px
@@ -583,7 +584,7 @@
 
     if (reduced.matches) { set('sleep', 'sleep'); return; }
 
-    if (fresh) {
+    if (fresh && !preview) {
       // stroll in from the nearest edge
       const startX = x;
       x = innerWidth + 10; // enter from the right, away from the cookie box
