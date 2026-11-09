@@ -23,7 +23,7 @@
 
   /* ---------- markup ---------- */
   const head = (extra = '') => `
-    <g class="sc-head" ${extra}>
+    <g class="sc-head" ${extra}><g class="sc-attention">
       <path class="sc-fur" d="M-14 -3 C -14.5 -10, -13 -18, -11.5 -24 C -7 -20, -3.5 -16.5, -0.5 -13.5 Z"/>
       <path class="sc-fur" d="M2.5 -14 C 6 -17, 10 -20.5, 14.5 -23 C 15.8 -16, 16.2 -9, 15.5 -3 Z"/>
       <path class="sc-ear-in" d="M-11 -7.5 C -11 -12, -10.4 -16, -9.8 -19.5 C -7.6 -17, -5.6 -15, -4 -12.8 Z"/>
@@ -46,7 +46,7 @@
       <path class="sc-line" d="M4.5 6.1 v.9 M4.5 7 q-1.6 2.2 -3.6 1 M4.5 7 q1.6 2.2 3.6 1"/>
       <ellipse class="sc-mouth" cx="4.5" cy="9.4" rx="2.6" ry="3.4"/>
       <path class="sc-whisker" d="M0 7 Q -10 4.5 -22 4.6 M0 8.4 Q -10 8.6 -21 11 M.4 9.6 Q -8 11.6 -17 15 M9 7 Q 19 4.5 29 4 M9 8.4 Q 19 8.6 28 11 M8.6 9.6 Q 16 11.6 24 15"/>
-    </g>`;
+    </g></g>`;
 
   const svg = `
   <svg class="sc-svg" viewBox="0 0 124 86" aria-hidden="true" focusable="false">
@@ -152,11 +152,9 @@
   .site-cat .sc-tail{transform-origin:100% 100%}
   .site-cat .sc-sit .sc-tail{transform-origin:0% 50%;animation:sc-swish-sit 3.2s ease-in-out infinite}
   .site-cat[data-pose="stand"] .sc-tail{animation:sc-swish 2.4s ease-in-out infinite}
-  /* walk */
-  .site-cat[data-act="walk"] .sc-l1,.site-cat[data-act="walk"] .sc-l4{animation:sc-step var(--step,.56s) ease-in-out infinite}
-  .site-cat[data-act="walk"] .sc-l2,.site-cat[data-act="walk"] .sc-l3{animation:sc-step var(--step,.56s) ease-in-out infinite reverse}
-  .site-cat[data-act="walk"] .sc-torso,.site-cat[data-act="walk"] .sc-stand .sc-head{animation:sc-bob calc(var(--step,.56s)/2) ease-in-out infinite}
-  .site-cat[data-act="walk"] .sc-tail{animation-duration:1.1s}
+  /* Walking is driven by distance travelled, so planted paws do not slide. */
+  .site-cat[data-act="walk"] .sc-stand .sc-tail{animation:none}
+  .site-cat[data-act="walk"] .sc-stand .sc-head{transition:none}
   /* stretch */
   .site-cat[data-act="stretch"] .sc-stand{transform-origin:28% 96%;animation:sc-stretch 2.6s ease-in-out both}
   .site-cat[data-act="stretch"] .sc-l2,.site-cat[data-act="stretch"] .sc-l4{animation:sc-reach 2.6s ease-in-out both}
@@ -188,6 +186,8 @@
   .site-cat .sc-bubble.is-on{opacity:1;transform:translate(-10%,0) scale(1)}
   .site-cat .sc-heart{position:absolute;bottom:60%;left:var(--hx,50%);font-size:14px;color:#ef6b7b;pointer-events:none;animation:sc-heart 1.3s ease-out forwards}
   .site-cat.is-leaving{transition:transform 1.4s cubic-bezier(.5,0,.9,.6),opacity 1.4s}
+  .site-cat.is-shoo .sc-l1,.site-cat.is-shoo .sc-l4{animation:sc-step .32s ease-in-out infinite}
+  .site-cat.is-shoo .sc-l2,.site-cat.is-shoo .sc-l3{animation:sc-step .32s ease-in-out infinite reverse}
   @keyframes sc-step{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
   @keyframes sc-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.4px)}}
   @keyframes sc-swish{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(9deg)}}
@@ -204,12 +204,33 @@
   @keyframes sc-hop{0%,100%{transform:translateY(0) scaleY(1)}15%{transform:translateY(0) scaleY(.9)}45%{transform:translateY(-20px) scaleY(1.04)}80%{transform:translateY(0) scaleY(.95)}}
   @keyframes sc-purr{0%,100%{transform:translateX(0)}50%{transform:translateX(.6px)}}
   @keyframes sc-heart{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-44px) scale(1.2)}}
+  .sc-attention{transform-origin:50% 80%;transform:rotate(var(--look,0deg)) translateY(var(--lean,0px))}
+  .site-cat.is-purr .sc-attention{transform:rotate(-8deg) translateY(-1.4px)}
+  .site-cat.is-purr .sc-body{animation:none}
+  .site-cat.is-purr .sc-eye{transform:scaleY(.12);transition:transform .4s}
+  .site-cat.is-stalking .sc-body{transform:scaleY(.88);transform-origin:50% 100%;transition:transform .25s}
+  .site-cat.is-pouncing .sc-body{animation:sc-hop .5s ease-in-out}
+  .cat-play{position:fixed;right:24px;bottom:82px;z-index:9001;border:1px solid #bcae9a;border-radius:20px;padding:8px 13px;background:#fff9ed;color:#44382a;font:600 12px system-ui;cursor:pointer;box-shadow:0 2px 10px #0001}
+  .cat-play:focus-visible,.cat-toy:focus-visible{outline:3px solid #bc622e;outline-offset:4px}
+  .cat-toy{position:fixed;left:0;bottom:8px;z-index:9002;width:26px;height:26px;border:1px solid #9c523b;border-radius:50%;background:repeating-linear-gradient(35deg,#d78666 0 2px,#b96046 3px 4px);box-shadow:inset -4px -4px 5px #743d3544,0 3px 3px #0002;cursor:grab;touch-action:none;transform:translateX(var(--toy-x,400px))}
+  .cat-toy:active{cursor:grabbing}
+  .cat-toy[hidden]{display:none}
+  .cat-toy.is-caught{animation:sc-toy-wobble .45s ease-in-out}
+  @keyframes sc-toy-wobble{25%{rotate:18deg}75%{rotate:-15deg}}
+  @media(max-width:1023px),(hover:none),(pointer:coarse){.cat-play,.cat-toy{display:none}}
+  @media(prefers-reduced-motion:reduce){.cat-toy{animation:none!important}.sc-attention{transform:none!important}}
+  @media print{.cat-play,.cat-toy{display:none}}
+  body.ua-menu-open .cat-play,body.ua-menu-open .cat-toy,body.hd-panel-open .cat-play,body.hd-panel-open .cat-toy{visibility:hidden}
   body.ua-menu-open .site-cat,body.hd-panel-open .site-cat{visibility:hidden}
   @media print{.site-cat{display:none}}
   @media (prefers-reduced-motion: reduce){.site-cat *{animation-duration:0s!important;animation-iteration-count:1!important}.site-cat[data-pose="sleep"] .sc-z{display:none}}`;
 
   /* ---------- state ---------- */
+  let playButton, toy, playing = false, dragging = false, toyX = 0, chaseTimer = 0;
+  let headAngle = 0, strokeDistance = 0, lastStrokeX = null, lastAffection = 0;
+
   let root, bodyEl, bubble, x, dir, act = '', timer = 0, raf = 0, last = 0;
+  let gaitPhase = 0, velocity = 0, legs = [], walkingTorso, walkingHead, walkingTail;
   let target = null, speed = 42, mouse = { x: -1e4, y: -1e4, t: 0 }, lastMove = performance.now();
   let clickTimer = 0, bubbleTimer = 0, purrTimer = 0, petting = false, gone = false;
 
@@ -226,18 +247,19 @@
   const clamp = (v) => Math.min(maxX(), Math.max(minX(), v));
 
   const persist = (extra = {}) => !gone && save({ x: Math.round(x), dir, sleeping: act === 'sleep', at: Date.now(), ...extra });
-  const place = () => root.style.setProperty('--x', `${Math.round(x)}px`);
+  const place = () => root.style.setProperty('--x', `${x.toFixed(2)}px`);
   const face = (d) => { dir = d; root.classList.toggle('is-left', d < 0); };
 
   const set = (pose, action) => {
     if (gone && action !== 'walk') return;
+    if (act === 'walk' && action !== 'walk') resetGait();
     root.dataset.pose = pose;
     root.dataset.act = action;
     act = action;
     persist();
   };
 
-  const later = (fn, ms) => { clearTimeout(timer); if (!gone) timer = setTimeout(fn, ms); };
+  const later = (fn, ms) => { clearTimeout(timer); if (!gone && !reduced.matches) timer = setTimeout(fn, ms); };
 
   /* behaviours */
   const behaviours = {
@@ -256,6 +278,7 @@
   const weights = [['walk', 34], ['sit', 16], ['look', 12], ['groom', 12], ['stretch', 10], ['yawn', 9], ['sleep', 7]];
 
   function next() {
+    if (playing) { set('sit', 'sit'); return; }
     if (act === 'sleep' && root.dataset.pose === 'sleep') return wake();
     let r = Math.random() * weights.reduce((s, [, w]) => s + w, 0);
     for (const [name, w] of weights) { if ((r -= w) <= 0) return behaviours[name](); }
@@ -273,7 +296,44 @@
     later(() => behaviours.stretch(), 2300);
   }
 
+  // Four staggered footfalls; each paw stays on the floor for 64% of a stride.
+  // Local backwards stance motion exactly cancels the cat's screen movement.
+  function renderGait(distance) {
+    if (reduced.matches) return;
+    const stride = 34, stance = .64;
+    gaitPhase = (gaitPhase + distance * 124 / W / stride) % 1;
+    const sway = Math.cos(gaitPhase * Math.PI * 4);
+    legs.forEach((leg) => {
+      const phase = (gaitPhase + leg.phase) % 1;
+      const grounded = phase < stance;
+      const swing = (phase - stance) / (1 - stance);
+      const ease = grounded ? 0 : swing * swing * (3 - 2 * swing);
+      const px = leg.x + (grounded ? stride * (stance / 2 - phase) : stride * stance * (ease - .5));
+      const lift = grounded ? 0 : Math.sin(Math.PI * swing) * 7;
+      const py = 81 - lift;
+      const hipY = 51 + sway * .55;
+      const kneeX = leg.x + (px - leg.x) * .45 + (leg.hind ? -5 : 3) + (leg.hind ? -1 : 1) * lift * .45;
+      const kneeY = (hipY + py) / 2;
+      leg.path.setAttribute('d', `M${leg.x-4} ${hipY} Q${kneeX-3} ${kneeY} ${px-2.7} ${py-2} Q${px-4} ${py+1} ${px} ${py+1} L${px+4} ${py+1} Q${px+6} ${py-1} ${px+2.7} ${py-3} Q${kneeX+3} ${kneeY} ${leg.x+4} ${hipY} Z`);
+      if (leg.paw) { leg.paw.setAttribute('cx', px + 1); leg.paw.setAttribute('cy', py); }
+    });
+    walkingTorso.style.transform = `translateY(${(sway * .55).toFixed(3)}px) rotate(${(Math.sin(gaitPhase * Math.PI * 2) * .65).toFixed(3)}deg)`;
+    walkingHead.style.transform = `translateY(${(-sway * .25).toFixed(3)}px) rotate(${(Math.sin(gaitPhase * Math.PI * 2 - .5) * .7).toFixed(3)}deg)`;
+    walkingTail.style.transform = `rotate(${(Math.sin(gaitPhase * Math.PI * 2 - .8) * 4).toFixed(3)}deg)`;
+  }
+
+  function resetGait() {
+    velocity = 0;
+    legs.forEach(leg => {
+      leg.path.setAttribute('d', leg.original);
+      if (leg.paw) { leg.paw.setAttribute('cx', leg.pawX); leg.paw.setAttribute('cy', leg.pawY); }
+    });
+    [walkingTorso, walkingHead, walkingTail].forEach(el => { if (el) el.style.removeProperty('transform'); });
+  }
+
   function walkTo(tx, s = 42, chase = false) {
+    if (reduced.matches) { target = null; set('sleep', 'sleep'); return; }
+    if (act !== 'walk') velocity = 0;
     target = tx; speed = s;
     face(tx >= x ? 1 : -1);
     root.style.setProperty('--step', `${(chase ? .3 : .56 * 42 / s).toFixed(2)}s`);
@@ -283,14 +343,21 @@
   }
 
   function tick(now) {
+    if (reduced.matches && act === 'walk' && !gone) {
+      target = null; clearTimeout(timer); raf = 0; set('sleep', 'sleep'); return;
+    }
     const dt = Math.min(64, now - last) / 1000; last = now;
     if (target != null && act === 'walk') {
       const d = target - x;
-      const stepPx = speed * dt;
-      if (Math.abs(d) <= stepPx) {
+      // Ease into a walk and brake before settling into the next pose.
+      const desired = Math.min(speed, Math.sqrt(2 * 150 * Math.abs(d)));
+      velocity += Math.max(-180 * dt, Math.min(120 * dt, desired - velocity));
+      const stepPx = Math.min(Math.abs(d), velocity * dt);
+      renderGait(stepPx);
+      if (Math.abs(d) <= Math.max(.15, stepPx)) {
         x = target; target = null; place();
         persist();
-        if (root.dataset.chasing) { delete root.dataset.chasing; set('sit', 'sit'); bubbleSay(pick(['*pounce*', 'got it!', 'mrrp!']), 1400); later(next, 3500); }
+        if (root.dataset.chasing) { delete root.dataset.chasing; set('sit', 'sit'); root.classList.add('is-pouncing'); toy?.classList.add('is-caught'); setTimeout(() => { root.classList.remove('is-pouncing'); toy?.classList.remove('is-caught'); }, 520); later(next, 2200); }
         else { set('sit', 'sit'); later(next, rand(150, 600)); }
       } else {
         x += Math.sign(d) * stepPx; place();
@@ -299,11 +366,16 @@
     // eyes follow the cursor
     const r = bodyEl.getBoundingClientRect();
     const hx = r.left + r.width * (dir > 0 ? .78 : .22), hy = r.top + r.height * .35;
-    const dx = mouse.x - hx, dy = mouse.y - hy, len = Math.hypot(dx, dy) || 1;
+    const attentionX = playing ? toyX + 13 : mouse.x, attentionY = playing ? innerHeight - 21 : mouse.y;
+    const dx = attentionX - hx, dy = attentionY - hy, len = Math.hypot(dx, dy) || 1;
     const k = Math.min(1, len / 160);
+    const attentive = !reduced.matches && !petting && ['sit','look','walk'].includes(act) && (playing || now - mouse.t < 1500);
+    const desiredAngle = attentive ? Math.max(-14, Math.min(14, dy * dir / 18 + dx / 100)) : 0;
+    headAngle += (desiredAngle - headAngle) * (1 - Math.exp(-dt * 7));
+    root.style.setProperty('--look', `${headAngle.toFixed(2)}deg`);
     root.style.setProperty('--px', `${((dx / len) * 1.5 * k * dir).toFixed(2)}px`);
     root.style.setProperty('--py', `${((dy / len) * 1.2 * k).toFixed(2)}px`);
-    raf = (act === 'walk' || now - mouse.t < 1500) ? requestAnimationFrame(tick) : 0;
+    raf = (act === 'walk' || now - mouse.t < 1500 || Math.abs(headAngle - desiredAngle) > .1) ? requestAnimationFrame(tick) : 0;
   }
 
   /* reactions */
@@ -346,8 +418,11 @@
   }
 
   function shoo() {
+    stopPlay(); playButton?.remove(); toy?.remove();
     clearTimeout(clickTimer); clearTimeout(timer); clearTimeout(purrTimer);
     root.classList.remove('is-purr');
+    resetGait();
+    root.classList.add('is-shoo');
     bubbleSay('fine. 😾', 1200);
     const off = x > innerWidth / 2 ? innerWidth + 40 : -W - 40;
     face(off > x ? 1 : -1);
@@ -364,24 +439,79 @@
   }
 
   function petStart() {
-    if (gone) return;
-    petting = true;
-    if (act === 'sleep') { hearts(1); return; } // purrs in its sleep
+    if (gone || dragging) return;
+    petting = true; lastStrokeX = null; strokeDistance = 0;
+    clearTimeout(chaseTimer); chaseTimer = 0;
+    target = null; delete root.dataset.chasing; root.classList.remove('is-stalking');
+    clearTimeout(timer);
+    if (act !== 'sleep') set('sit', 'sit');
+  }
+  function petStroke(e) {
+    if (!petting || gone) return;
+    if (lastStrokeX !== null) strokeDistance += Math.min(15, Math.abs(e.clientX - lastStrokeX));
+    lastStrokeX = e.clientX;
+    if (strokeDistance < 16) return;
+    root.classList.add('is-purr');
     clearTimeout(purrTimer);
-    purrTimer = setTimeout(() => {
-      if (!petting) return;
-      target = null;
-      if (act === 'walk') set('sit', 'sit');
-      clearTimeout(timer);
-      root.classList.add('is-purr');
-      bubbleSay('prrrrr…', 1800);
-      hearts();
-    }, 350);
+    purrTimer = setTimeout(() => root.classList.remove('is-purr'), 1400);
+    if (performance.now() - lastAffection > 2400) {
+      hearts(1); lastAffection = performance.now();
+    }
+    strokeDistance = 0;
   }
   function petEnd() {
-    petting = false;
+    petting = false; lastStrokeX = null;
     clearTimeout(purrTimer);
-    if (root.classList.contains('is-purr')) { root.classList.remove('is-purr'); later(next, rand(1500, 3500)); }
+    purrTimer = setTimeout(() => root?.classList.remove('is-purr'), 700);
+    later(next, rand(2000, 4000));
+  }
+
+  function placeToy(value) {
+    toyX = Math.max(minX() + W, Math.min(maxX() + W * .76 - 13, value));
+    toy.style.setProperty('--toy-x', `${toyX}px`);
+    mouse.t = performance.now(); lastMove = mouse.t;
+    if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); }
+  }
+  function inviteChase() {
+    if (!playing || reduced.matches || petting || gone || chaseTimer) return;
+    clearTimeout(timer);
+    if (act !== 'walk') { set('stand', 'sit'); root.classList.add('is-stalking'); face(toyX > x ? 1 : -1); }
+    chaseTimer = setTimeout(() => {
+      chaseTimer = 0;
+      if (!playing || petting || reduced.matches || gone) return;
+      root.classList.remove('is-stalking'); root.dataset.chasing = '1';
+      const right = toyX > x + W / 2;
+      walkTo(clamp(toyX - (right ? W * .76 : W * .2)), 90, true);
+    }, act === 'walk' ? 180 : 650);
+  }
+  function stopPlay() {
+    playing = false; dragging = false; clearTimeout(chaseTimer); chaseTimer = 0;
+    if (toy) toy.hidden = true;
+    if (playButton) { playButton.textContent = 'Play with Miso'; playButton.setAttribute('aria-pressed','false'); }
+    root?.classList.remove('is-stalking');
+    if (root && !gone) { target = null; delete root.dataset.chasing; set(reduced.matches ? 'sleep' : 'sit', reduced.matches ? 'sleep' : 'sit'); later(next, 3000); }
+  }
+  function mountPlay() {
+    playButton = document.createElement('button'); playButton.type = 'button'; playButton.className = 'cat-play';
+    playButton.textContent = 'Play with Miso'; playButton.setAttribute('aria-pressed','false');
+    toy = document.createElement('button'); toy.type = 'button'; toy.className = 'cat-toy'; toy.hidden = true;
+    toy.setAttribute('aria-label','Yarn toy. Drag or use arrow keys to move; Escape to finish.');
+    toy.title = 'Drag to play · arrow keys to move · Esc to finish';
+    document.body.append(playButton, toy);
+    playButton.addEventListener('click', () => {
+      if (playing) { stopPlay(); return; }
+      playing = true; clearTimeout(timer); target = null; set('sit','sit');
+      playButton.textContent = 'Finish playing'; playButton.setAttribute('aria-pressed','true');
+      toy.hidden = false; placeToy(x + W + 130); toy.focus({preventScroll:true}); inviteChase();
+    });
+    toy.addEventListener('pointerdown', e => { if (e.button !== 0) return; dragging = true; toy.setPointerCapture(e.pointerId); });
+    toy.addEventListener('pointermove', e => { if (dragging) { placeToy(e.clientX - 13); inviteChase(); } });
+    const release = () => { dragging = false; inviteChase(); };
+    toy.addEventListener('pointerup', release); toy.addEventListener('pointercancel', () => { dragging = false; });
+    toy.addEventListener('lostpointercapture', () => { dragging = false; });
+    toy.addEventListener('keydown', e => { if (['ArrowLeft','ArrowRight'].includes(e.key)) { e.preventDefault(); placeToy(toyX + (e.key === 'ArrowRight' ? 45 : -45)); inviteChase(); } });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && playing) { stopPlay(); playButton.focus({preventScroll:true}); } });
+    addEventListener('resize', () => { if (playing) placeToy(toyX); });
   }
 
   function onMouseMove(e) {
@@ -389,19 +519,12 @@
     mouse = { x: e.clientX, y: e.clientY, t: performance.now() };
     lastMove = mouse.t;
     if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); }
-    // the cat chases a pointer that wanders along the bottom edge
-    if (reduced.matches || petting || act === 'sleep' || act === 'stretch') return;
-    const nearFloor = innerHeight - e.clientY < 90;
-    const catCentre = x + W / 2;
-    if (nearFloor && Math.abs(e.clientX - catCentre) > 70 && Math.random() < .08) {
-      root.dataset.chasing = '1';
-      walkTo(clamp(e.clientX - W / 2), 120, true);
-    }
+
   }
 
   /* idle → nap; hidden tab → nap */
   setInterval(() => {
-    if (!root?.isConnected || reduced.matches) return;
+    if (!root?.isConnected || reduced.matches || playing) return;
     if (act !== 'walk' && act !== 'stretch' && x < minX() - 4) { walkTo(clamp(minX() + rand(40, 220)), 60); return; }
     if (act !== 'sleep' && act !== 'walk' && performance.now() - lastMove > 45000) behaviours.yawn();
   }, 5000);
@@ -426,6 +549,18 @@
     zWrap.replaceWith(...zWrap.childNodes);
     bodyEl = root.querySelector('.sc-body');
     bubble = root.querySelector('.sc-bubble');
+    legs = [
+      {selector: '.sc-l1', x: 40, phase: .5, hind: true},
+      {selector: '.sc-l2', x: 76, phase: .25, hind: false},
+      {selector: '.sc-l3', x: 46, phase: 0, hind: true},
+      {selector: '.sc-l4', x: 82, phase: .75, hind: false}
+    ].map(leg => {
+      const el = root.querySelector(leg.selector), path = el.querySelector('path'), paw = el.querySelector('ellipse');
+      return {...leg, path, paw, original: path.getAttribute('d'), pawX: paw?.getAttribute('cx'), pawY: paw?.getAttribute('cy')};
+    });
+    walkingTorso = root.querySelector('.sc-stand .sc-torso');
+    walkingHead = root.querySelector('.sc-stand .sc-head');
+    walkingTail = root.querySelector('.sc-stand .sc-tail');
     document.body.appendChild(root);
 
     const saved = read();
@@ -436,6 +571,8 @@
 
     bodyEl.addEventListener('click', onClick);
     bodyEl.addEventListener('dblclick', shoo);
+    mountPlay();
+    bodyEl.addEventListener('mousemove', petStroke);
     bodyEl.addEventListener('mouseenter', petStart);
     bodyEl.addEventListener('mouseleave', petEnd);
     addEventListener('mousemove', onMouseMove, { passive: true });
@@ -457,7 +594,7 @@
       x = innerWidth + 10; // enter from the right, away from the cookie box
       face(-1);
       place();
-      setTimeout(() => walkTo(startX, 46), 1200);
+      setTimeout(() => { if (!playing && !petting && !gone) walkTo(startX, 46); }, 1200);
     } else if (saved.sleeping) {
       sleep(rand(6000, 16000));
     } else {
@@ -468,8 +605,17 @@
 
   const start = () => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', mount) : mount());
   start();
+  reduced.addEventListener?.('change', () => {
+    if (!root?.isConnected || gone) return;
+    stopPlay();
+    clearTimeout(timer); cancelAnimationFrame(raf); raf = 0; target = null;
+    resetGait();
+    if (reduced.matches) set('sleep', 'sleep');
+    else { set('sit', 'sit'); later(next, 2000); }
+  });
   desktop.addEventListener?.('change', (e) => {
     if (!root) { if (e.matches) mount(); return; }
+    if (!e.matches) stopPlay();
     root.style.display = e.matches ? '' : 'none';
   });
 })();
