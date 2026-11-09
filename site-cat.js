@@ -213,7 +213,15 @@
   let target = null, speed = 42, mouse = { x: -1e4, y: -1e4, t: 0 }, lastMove = performance.now();
   let clickTimer = 0, bubbleTimer = 0, purrTimer = 0, petting = false, gone = false;
 
-  const minX = () => 12;
+  // Stay clear of anything pinned to the bottom-left (the cookie/privacy box).
+  const minX = () => {
+    let edge = 12;
+    document.querySelectorAll('.journey-privacy, .journey-privacy > *').forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.width && r.height && innerHeight - r.top < 260 && r.left < innerWidth / 2) edge = Math.max(edge, r.right + 16);
+    });
+    return Math.min(edge, innerWidth - W - 130);
+  };
   const maxX = () => Math.max(minX() + 40, innerWidth - W - 110); // keep clear of back-to-top button
   const clamp = (v) => Math.min(maxX(), Math.max(minX(), v));
 
@@ -394,6 +402,7 @@
   /* idle → nap; hidden tab → nap */
   setInterval(() => {
     if (!root?.isConnected || reduced.matches) return;
+    if (act !== 'walk' && act !== 'stretch' && x < minX() - 4) { walkTo(clamp(minX() + rand(40, 220)), 60); return; }
     if (act !== 'sleep' && act !== 'walk' && performance.now() - lastMove > 45000) behaviours.yawn();
   }, 5000);
   document.addEventListener('visibilitychange', () => { if (document.hidden && root?.isConnected) persist(); });
@@ -422,7 +431,7 @@
     const saved = read();
     const fresh = !saved.at || Date.now() - saved.at > 30 * 60 * 1000;
     face(saved.dir || 1);
-    x = clamp(typeof saved.x === 'number' && !fresh ? saved.x : rand(minX(), maxX() * .6));
+    x = clamp(typeof saved.x === 'number' && !fresh ? saved.x : rand(minX(), maxX()));
     place();
 
     bodyEl.addEventListener('click', onClick);
@@ -445,8 +454,8 @@
     if (fresh) {
       // stroll in from the nearest edge
       const startX = x;
-      x = dir > 0 ? -W - 10 : innerWidth + 10;
-      if (x < 0) face(1); else face(-1);
+      x = innerWidth + 10; // enter from the right, away from the cookie box
+      face(-1);
       place();
       setTimeout(() => walkTo(startX, 46), 1200);
     } else if (saved.sleeping) {
