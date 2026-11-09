@@ -73,14 +73,6 @@
   });
   if (!header || !menuButton || !mobileNav || !themeButton) return;
 
-  // Desktop-only ambient companion (a little cat along the bottom edge).
-  if (matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches && !document.querySelector('script[src^="/site-cat.js"]')) {
-    const cat = document.createElement('script');
-    cat.src = '/site-cat.js?v=20261109-5';
-    cat.defer = true;
-    document.body.appendChild(cat);
-  }
-
   const syncBrowserColor = () => {
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     const paper = getComputedStyle(document.documentElement).getPropertyValue('--ua-paper').trim();
