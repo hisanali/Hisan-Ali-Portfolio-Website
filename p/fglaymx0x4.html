@@ -107,6 +107,11 @@ svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-ev
 .small { font-size: 12.5px; color: var(--muted); }
 .thinking { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: .2; } }
+.live-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.live-dot.on { background: var(--good); box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 22%, transparent); }
+.live-dot.err { background: var(--warn); }
+.side-btn.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
 .promo { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 20; }
 .promo.show { display: flex; }
 .promo div { background: var(--panel); border-radius: 12px; padding: 10px; display: flex; gap: 6px; }
@@ -167,6 +172,14 @@ details ol { margin: 8px 0 0; padding-left: 18px; }
   </section>
 
   <aside class="side">
+    <div class="panel" id="livePanel">
+      <div class="small" style="font-weight:800;margin-bottom:8px">Live room</div>
+      <form class="typer" id="liveForm" autocomplete="off" style="margin-top:0">
+        <input id="roomCode" placeholder="Room code, e.g. K7Q2MX" maxlength="8" aria-label="Room code" style="text-transform:uppercase">
+        <button class="btn primary" type="submit" id="liveBtn">Connect</button>
+      </form>
+      <div id="liveInfo"></div>
+    </div>
     <div class="panel">
       <div class="status" id="status"></div>
       <div id="alert"></div>
@@ -680,7 +693,7 @@ function analyze() {
   const fen = game.fen();
   if (analysisFor === fen && analysis) return;
   analysis = null; analysisFor = fen;
-  if (game.status().over || game.turn !== myColor) return;
+  if (game.status().over || game.turn !== myColor || live.result) return;
   engine.job++;
   if (engine.sf) {
     sfLines = []; engine.busy = true;
@@ -793,7 +806,7 @@ let justMoved = -1, dragFrom = -1;
 function render(lines = analysis, partial = false) {
   const st = game.status(), myTurn = game.turn === myColor;
   const last = game.played[game.played.length - 1];
-  const best = myTurn && !st.over && lines && lines[0] ? uciToMove(game, lines[0].uci) : null;
+  const best = myTurn && !st.over && !live.result && lines && lines[0] ? uciToMove(game, lines[0].uci) : null;
   const targets = selected >= 0 ? game.legalMoves(selected) : [];
 
   squares.forEach((d, i) => {
@@ -836,12 +849,14 @@ function render(lines = analysis, partial = false) {
   let status;
   if (st.over) status = `<span class="pill">Game over</span>`;
   else if (myTurn) status = `<span class="pill me">Your move</span>` + (!analysis ? ' <span class="thinking"></span> thinking…' : '');
-  else status = `<span class="pill">Opponent's move</span> copy what they played`;
+  else status = `<span class="pill">Opponent's move</span> ` + (live.channel ? 'watching the room…' : 'copy what they played');
   $('status').innerHTML = status + (st.check && !st.over ? ' · <b>Check!</b>' : '');
 
   // Alerts
   let alert = '';
-  if (st.over) {
+  if (live.result) {
+    alert = `<div class="alert ${live.result.win ? 'win' : 'bad'}">${live.result.text}</div>`;
+  } else if (st.over) {
     const iWon = st.result === (myColor === WHITE ? 'white' : 'black');
     alert = st.result === 'draw' ? `<div class="alert bad">Draw — ${st.reason}.</div>` : iWon ? `<div class="alert win">🏆 You won by ${st.reason}!</div>` : `<div class="alert bad">You lost by ${st.reason}.</div>`;
   } else if (myTurn && analysis && game.played.length >= 2) {
@@ -861,14 +876,14 @@ function render(lines = analysis, partial = false) {
       <div class="tags">${tagsFor(game, best, l).map(([t, hot]) => `<span class="tag${hot ? ' hot' : ''}">${t}</span>`).join('')}</div>
       <div class="why">${whyText(l)}</div>
       ${pvSan(l) ? `<div class="line">Expected: ${pvSan(l)}</div>` : ''}
-      ${partial ? '' : `<button class="btn primary" style="margin-top:12px" id="playBest">✓ Play this move</button>`}`;
+      ${partial ? '' : live.channel ? `<div class="line">Make this move in your game. It will appear here by itself.</div>` : `<button class="btn primary" style="margin-top:12px" id="playBest">✓ Play this move</button>`}`;
     const pb = $('playBest'); if (pb) pb.onclick = () => playUci(l.uci);
     $('alts').innerHTML = lines.slice(1, 3).map(alt => { const m = uciToMove(game, alt.uci); return m ? `<button class="alt" data-uci="${alt.uci}"><span>Also OK: <b>${game.san(m)}</b> <span class="small">${describe(m)}</span></span><span class="sc">${scoreText(alt)}</span></button>` : ''; }).join('');
     if (!partial) $('alts').querySelectorAll('.alt').forEach(b => b.onclick = () => playUci(b.dataset.uci));
   } else if (!st.over && myTurn) {
     $('best').innerHTML = `<div class="label">Best move</div><div class="desc">Calculating…</div>`; $('alts').innerHTML = '';
   } else if (!st.over) {
-    $('best').innerHTML = `<div class="desc">Drag the piece your opponent moved to its new square (or tap it, then tap the square).</div>`; $('alts').innerHTML = '';
+    $('best').innerHTML = live.channel ? `<div class="desc">Waiting for your opponent to move. Their move will show up here automatically.</div>` : `<div class="desc">Drag the piece your opponent moved to its new square (or tap it, then tap the square).</div>`; $('alts').innerHTML = '';
   } else { $('best').innerHTML = ''; $('alts').innerHTML = ''; }
 
   // Move list
@@ -879,7 +894,8 @@ function render(lines = analysis, partial = false) {
   }
   $('moves').innerHTML = rows.join('') || '<span class="small" style="grid-column:1/-1">No moves yet.</span>';
   $('moves').scrollTop = 1e6;
-  $('undo').disabled = !game.played.length;
+  $('undo').disabled = !game.played.length || !!live.channel;
+  $('reset').disabled = !!live.channel;
   $('err').textContent = lastErr;
 }
 
@@ -922,7 +938,7 @@ function askPromo(options) {
 let drag = null;
 const sqAt = (x, y) => { const el = document.elementFromPoint(x, y)?.closest('.sq'); return el && boardEl.contains(el) ? Number(el.dataset.sq) : -1; };
 boardEl.addEventListener('pointerdown', e => {
-  if (e.button > 0 || game.status().over || $('promo').classList.contains('show')) return;
+  if (live.channel || e.button > 0 || game.status().over || $('promo').classList.contains('show')) return;
   const sq = sqAt(e.clientX, e.clientY); if (sq < 0) return;
   if (selected >= 0 && selected !== sq && tryMove(selected, sq)) return;
   const p = game.board[sq];
@@ -955,6 +971,7 @@ boardEl.addEventListener('pointercancel', e => endDrag(e, true));
 $('typer').addEventListener('submit', e => {
   e.preventDefault();
   const raw = $('moveInput').value.trim(); if (!raw) return;
+  if (live.channel) { lastErr = 'Moves come in from the live room. Disconnect to enter moves yourself.'; render(); return; }
   const clean = s => s.replace(/[+#!?x=\s]/g, '').replace(/0/g, 'O').toLowerCase();
   const legal = game.legalMoves();
   let m = legal.find(o => clean(game.san(o)) === clean(raw));
@@ -970,14 +987,149 @@ function setColor(c) {
 }
 $('colorSeg').addEventListener('click', e => { const c = e.target.dataset.c; if (c === undefined) return; setColor(Number(c)); afterMove(); });
 $('flip').onclick = () => { flipped = !flipped; save(); render(); };
-function undo() { if (!game.played.length) return; game.unmake(); sans.pop(); afterMove(); }
+function undo() { if (!game.played.length || live.channel) return; game.unmake(); sans.pop(); afterMove(); }
 $('undo').onclick = undo;
-$('reset').onclick = () => { game = new Chess(); sans = []; evalAt.clear(); afterMove(); };
+$('reset').onclick = () => { if (live.channel) return; game = new Chess(); sans = []; evalAt.clear(); afterMove(); };
 $('think').onchange = () => { store.set('think', $('think').value); analysisFor = ''; stopAnalysis(); analyze(); };
 $('boardTheme').onchange = () => { document.body.dataset.board = $('boardTheme').value; store.set('board', $('boardTheme').value); };
 const paintSound = () => { $('sound').textContent = soundOn ? '🔊' : '🔇'; };
 $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); paintSound(); };
 document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' && document.activeElement !== $('moveInput')) undo(); });
+
+
+/* ---------- Live room ----------
+   Listens to a room on the site's chess game (chess/online.js) without joining it:
+   it never tracks presence, so the players never see it as a member. */
+const live = { client: null, channel: null, code: '', status: 'off', error: '', state: null, players: [], result: null, side: store.get('liveSide') || '', syncTimer: 0, id: crypto.randomUUID() };
+const cleanCode = v => String(v || '').toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 6);
+
+async function realtimeClient() {
+  if (!live.client) {
+    const [{ createClient }, response] = await Promise.all([
+      import('/evermile/vendor/realtime-client.js'),
+      fetch('/api/multiplayer/config', { cache: 'no-store' })
+    ]);
+    if (!response.ok) throw new Error('Online rooms are unavailable right now. Try again shortly.');
+    const config = await response.json();
+    live.client = createClient(config.url, config.publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  }
+  return live.client;
+}
+
+async function connectRoom(raw) {
+  const code = cleanCode(raw);
+  if (code.length !== 6) { live.status = 'error'; live.error = 'Room codes have 6 letters or numbers.'; paintLive(); return; }
+  await disconnectRoom();
+  live.code = code; live.status = 'connecting'; live.error = ''; live.state = null; live.result = null; live.players = [];
+  store.set('room', code); paintLive();
+  try {
+    const client = await realtimeClient();
+    const ch = client.channel(`chess:v1:${code}`, { config: { broadcast: { self: false, ack: false } } });
+    live.channel = ch;
+    ch.on('broadcast', { event: 'msg' }, ({ payload }) => { if (live.channel === ch && payload) onRoomMessage(payload); })
+      .on('presence', { event: 'sync' }, () => { if (live.channel !== ch) return; live.players = Object.values(ch.presenceState()).flat(); paintLive(); });
+    ch.subscribe(status => {
+      if (live.channel !== ch) return;
+      if (status === 'SUBSCRIBED') { live.status = 'connected'; requestSync(); }
+      else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) { live.status = 'error'; live.error = 'Lost the connection. Tap Connect to try again.'; }
+      paintLive();
+    });
+    render();
+  } catch (error) {
+    live.channel = null; live.status = 'error'; live.error = error.message || 'Could not connect.'; paintLive(); render();
+  }
+}
+
+async function disconnectRoom() {
+  clearInterval(live.syncTimer);
+  const ch = live.channel; live.channel = null; live.status = 'off'; live.state = null; live.result = null; live.players = [];
+  if (ch && live.client) { try { await live.client.removeChannel(ch); } catch {} }
+  paintLive(); render();
+}
+
+// The host answers "sync" with the full game state. Keep asking until it does.
+function requestSync() {
+  const send = () => live.channel?.send({ type: 'broadcast', event: 'msg', payload: { type: 'sync', from: live.id } }).catch(() => {});
+  clearInterval(live.syncTimer); send();
+  live.syncTimer = setInterval(() => { if (live.state) clearInterval(live.syncTimer); else send(); }, 4000);
+}
+
+function onRoomMessage(msg) {
+  switch (msg.type) {
+    case 'state': {
+      const s = msg.state; if (!s || !Array.isArray(s.moves)) return;
+      const newGame = !live.state || live.state.gameId !== s.gameId;
+      live.state = s; clearInterval(live.syncTimer);
+      if (newGame) live.result = null;
+      if (s.result && s.result.winner) setLiveResult(s.result.winner, s.result.reason);
+      pickSideFromName();
+      loadMoves(s.moves);
+      paintLive(); break;
+    }
+    case 'move': {
+      if (!live.state || msg.gameId !== live.state.gameId) { requestSync(); return; }
+      if (msg.ply < game.played.length) return;
+      if (msg.ply !== game.played.length) { requestSync(); return; }
+      const m = uciToMove(game, String(msg.uci || ''));
+      if (!m) { requestSync(); return; }
+      live.state.moves = [...live.state.moves, game.uci(m)];
+      apply(m); break;
+    }
+    case 'resign': if (live.state && msg.gameId === live.state.gameId) setLiveResult(msg.color === WHITE ? 'black' : 'white', 'resignation'); break;
+    case 'flag': if (live.state && msg.gameId === live.state.gameId) setLiveResult(msg.color === WHITE ? 'black' : 'white', 'time'); break;
+    case 'draw-accept': if (live.state && msg.gameId === live.state.gameId) setLiveResult('draw', 'agreement'); break;
+  }
+}
+
+function setLiveResult(winner, reason) {
+  const mine = myColor === WHITE ? 'white' : 'black';
+  live.result = winner === 'draw' ? { text: `Draw by ${reason}.`, win: false }
+    : winner === mine ? { text: `🏆 You won by ${reason}!`, win: true } : { text: `You lost by ${reason}.`, win: false };
+  stopAnalysis(); render();
+}
+
+// Bring the board in line with the room's move list: one new move plays normally, anything else rebuilds.
+function loadMoves(moves) {
+  const local = game.played.map(m => game.uci(m));
+  if (moves.length === local.length && moves.every((u, i) => u === local[i])) { render(); analyze(); return; }
+  if (moves.length === local.length + 1 && local.every((u, i) => u === moves[i])) { const m = uciToMove(game, moves.at(-1)); if (m) { apply(m); return; } }
+  game = new Chess(); sans = []; evalAt.clear();
+  for (const u of moves) { const m = uciToMove(game, u); if (!m) break; sans.push(game.san(m)); game.make(m); }
+  afterMove();
+}
+
+const sideName = c => live.state?.names?.[c === WHITE ? live.state.white : live.state.black] || (c === WHITE ? 'White' : 'Black');
+function pickSideFromName() {
+  if (!live.side) return;
+  for (const c of [WHITE, BLACK]) if (sideName(c) === live.side && myColor !== c) { setColor(c); analysisFor = ''; }
+}
+function chooseSide(c) {
+  live.side = sideName(c); store.set('liveSide', live.side);
+  setColor(c); afterMove(); paintLive();
+}
+
+function paintLive() {
+  const on = !!live.channel;
+  $('liveBtn').textContent = on ? 'Disconnect' : 'Connect';
+  $('roomCode').disabled = on;
+  let html = '';
+  if (live.status === 'connecting') html = `<div class="live-row"><span class="live-dot"></span><span class="small">Connecting to room ${live.code}…</span></div>`;
+  else if (live.status === 'error') html = `<div class="live-row"><span class="live-dot err"></span><span class="small">${live.error}</span></div>`;
+  else if (live.status === 'connected' && !live.state) html = `<div class="live-row"><span class="live-dot on"></span><span class="small">Connected to ${live.code}. Waiting for the host to share the game… (the host's page must be open)</span></div>`;
+  else if (live.status === 'connected') {
+    html = `<div class="live-row"><span class="live-dot on"></span><span class="small">Live in room <b>${live.code}</b>. Moves update by themselves.</span></div>
+      <div class="live-row"><span class="small">I am:</span>
+        <button class="btn side-btn${myColor === WHITE && live.side ? ' on' : ''}" data-side="0">White · ${escapeHtml(sideName(WHITE))}</button>
+        <button class="btn side-btn${myColor === BLACK && live.side ? ' on' : ''}" data-side="1">Black · ${escapeHtml(sideName(BLACK))}</button></div>`;
+    if (!live.side) html += `<div class="small" style="margin-top:6px">Pick which player you are so the guide helps the right side.</div>`;
+  } else html = `<div class="small" style="margin-top:8px">Enter the code of a room on your chess game to follow it live. Leave empty to enter moves by hand.</div>`;
+  $('liveInfo').innerHTML = html;
+  $('liveInfo').querySelectorAll('[data-side]').forEach(b => b.onclick = () => chooseSide(Number(b.dataset.side)));
+}
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+$('liveForm').addEventListener('submit', e => { e.preventDefault(); live.channel ? disconnectRoom() : connectRoom($('roomCode').value); });
+$('roomCode').value = store.get('room') || '';
 
 /* ---------- Start ---------- */
 (function restore() {
@@ -992,6 +1144,7 @@ document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' && documen
   }
 })();
 render();
+paintLive();
 $('engineTag').innerHTML = '<span class="thinking"></span> Loading Stockfish engine…';
 startStockfish().then(ok => {
   if (!ok) startLocal();
