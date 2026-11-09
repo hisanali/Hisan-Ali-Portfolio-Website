@@ -1,0 +1,17 @@
+.dg-guide .dg-wrap { display:grid; grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr); align-items:center; gap:14px; max-width:620px; }
+.dg-guide .dg-old { display:grid; gap:8px; }
+.dg-guide .dg-old span { padding:10px 12px; border:1px dashed var(--fe-border); border-radius:10px; color:var(--fe-ink); font-size:.88rem; font-weight:700; animation:dg-move 7s ease infinite; }
+.dg-guide .dg-old span:nth-child(2) { animation-delay:.25s; } .dg-guide .dg-old span:nth-child(3) { animation-delay:.5s; }
+.dg-guide .dg-arrow { height:3px; background:linear-gradient(90deg,var(--fe-accent) 50%,transparent 50%) 0 0/14px 3px repeat-x; animation:dg-flow 7s linear infinite; }
+[dir="rtl"] .dg-guide .dg-arrow { animation-direction:reverse; }
+.dg-guide .dg-new { display:grid; gap:6px; padding:18px; border:2px solid var(--fe-accent); border-radius:16px; background:color-mix(in srgb,var(--fe-accent) 8%,transparent); animation:dg-fill 7s ease infinite; }
+.dg-guide .dg-new b { color:var(--fe-ink); font-family:'DM Serif Display',serif; font-size:1.5rem; font-weight:400; }
+.dg-guide .dg-new small { color:var(--fe-muted); font-size:.85rem; font-weight:700; }
+@keyframes dg-move { 0%,20% { opacity:1; transform:none; } 40%,80% { opacity:.25; transform:translateX(16px); } 100% { opacity:1; transform:none; } }
+@keyframes dg-flow { to { background-position:56px 0; } }
+@keyframes dg-fill { 0%,30% { box-shadow:none; } 45%,85% { box-shadow:0 0 0 6px color-mix(in srgb,var(--fe-accent) 20%,transparent); } 100% { box-shadow:none; } }
+.dg-guide .dg-steps { display:grid; gap:8px; margin:14px 0 4px; }
+.dg-guide .dg-step { display:grid; grid-template-columns:24px 1fr; align-items:start; gap:12px; padding:10px 14px; border-radius:8px; background:color-mix(in srgb,var(--fe-accent) 7%,transparent); color:var(--fe-ink); }
+.dg-guide .dg-step b { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--fe-accent); color:#fff; font-size:.8rem; font-weight:800; }
+@media (max-width:560px) { .dg-guide .dg-wrap { grid-template-columns:1fr; } .dg-guide .dg-arrow { width:3px; height:30px; margin:0 auto; background:linear-gradient(180deg,var(--fe-accent) 50%,transparent 50%) 0 0/3px 14px repeat-y; animation:none; } }
+@media (prefers-reduced-motion: reduce) { .dg-guide .dg-wrap * { animation:none !important; } }

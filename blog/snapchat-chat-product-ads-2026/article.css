@@ -1,0 +1,10 @@
+.sc-guide .sc-wrap { display:grid; gap:10px; max-width:460px; padding:16px; border:1px solid var(--fe-border); border-radius:22px; }
+.sc-guide .sc-chat { display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:12px; padding:10px 12px; border-radius:14px; color:var(--fe-ink); font-weight:700; }
+.sc-guide .sc-chat i { width:42px; height:42px; border-radius:50%; background:color-mix(in srgb,var(--fe-ink) 14%,transparent); }
+.sc-guide .sc-ad { border:1px solid color-mix(in srgb,var(--fe-accent) 55%,transparent); background:color-mix(in srgb,var(--fe-accent) 12%,transparent); animation:sc-in 7s ease infinite; transform-origin:top; }
+.sc-guide .sc-ad i { border-radius:10px; background:var(--fe-accent); }
+.sc-guide .sc-ad b { padding:3px 8px; border-radius:99px; background:var(--fe-accent); color:#111; font-size:.72rem; font-weight:800; }
+@keyframes sc-in { 0%,18% { opacity:0; max-height:0; padding-block:0; transform:scaleY(.4); } 30%,86% { opacity:1; max-height:70px; padding-block:10px; transform:none; } 100% { opacity:0; max-height:0; padding-block:0; } }
+.sc-guide .sc-list { display:grid; gap:8px; margin:14px 0 4px; }
+.sc-guide .sc-item { padding:10px 14px; border-inline-start:3px solid var(--fe-accent); border-radius:8px; background:color-mix(in srgb,var(--fe-accent) 8%,transparent); color:var(--fe-ink); }
+@media (prefers-reduced-motion: reduce) { .sc-guide .sc-ad { animation:none; } }
