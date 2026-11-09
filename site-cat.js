@@ -491,28 +491,6 @@
     root?.classList.remove('is-stalking');
     if (root && !gone) { target = null; delete root.dataset.chasing; set(reduced.matches ? 'sleep' : 'sit', reduced.matches ? 'sleep' : 'sit'); later(next, 3000); }
   }
-  function mountPlay() {
-    playButton = document.createElement('button'); playButton.type = 'button'; playButton.className = 'cat-play';
-    playButton.textContent = 'Play with Miso'; playButton.setAttribute('aria-pressed','false');
-    toy = document.createElement('button'); toy.type = 'button'; toy.className = 'cat-toy'; toy.hidden = true;
-    toy.setAttribute('aria-label','Yarn toy. Drag or use arrow keys to move; Escape to finish.');
-    toy.title = 'Drag to play · arrow keys to move · Esc to finish';
-    document.body.append(playButton, toy);
-    playButton.addEventListener('click', () => {
-      if (playing) { stopPlay(); return; }
-      playing = true; clearTimeout(timer); target = null; set('sit','sit');
-      playButton.textContent = 'Finish playing'; playButton.setAttribute('aria-pressed','true');
-      toy.hidden = false; placeToy(x + W + 130); toy.focus({preventScroll:true}); inviteChase();
-    });
-    toy.addEventListener('pointerdown', e => { if (e.button !== 0) return; dragging = true; toy.setPointerCapture(e.pointerId); });
-    toy.addEventListener('pointermove', e => { if (dragging) { placeToy(e.clientX - 13); inviteChase(); } });
-    const release = () => { dragging = false; inviteChase(); };
-    toy.addEventListener('pointerup', release); toy.addEventListener('pointercancel', () => { dragging = false; });
-    toy.addEventListener('lostpointercapture', () => { dragging = false; });
-    toy.addEventListener('keydown', e => { if (['ArrowLeft','ArrowRight'].includes(e.key)) { e.preventDefault(); placeToy(toyX + (e.key === 'ArrowRight' ? 45 : -45)); inviteChase(); } });
-    addEventListener('keydown', e => { if (e.key === 'Escape' && playing) { stopPlay(); playButton.focus({preventScroll:true}); } });
-    addEventListener('resize', () => { if (playing) placeToy(toyX); });
-  }
 
   function onMouseMove(e) {
     if (gone) return;
@@ -571,7 +549,6 @@
 
     bodyEl.addEventListener('click', onClick);
     bodyEl.addEventListener('dblclick', shoo);
-    mountPlay();
     bodyEl.addEventListener('mousemove', petStroke);
     bodyEl.addEventListener('mouseenter', petStart);
     bodyEl.addEventListener('mouseleave', petEnd);
