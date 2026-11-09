@@ -198,9 +198,10 @@ export class Life {
       a.timer = a.walking ? rand(2.5, 6) : rand(5, 15);
       if (a.walking) { const far = Math.hypot(a.x - a.homeX, a.z - a.homeZ) > 12; a.targetHeading = far ? Math.atan2(a.homeX - a.x, a.homeZ - a.z) : a.heading + rand(-1.3, 1.3); }
     }
-    const want = a.walking ? (a.kind === 'bighorn' ? .55 : .42) : 0;
-    a.speed += (want - a.speed) * Math.min(1, dt * 1.5);
-    a.heading += Math.atan2(Math.sin(a.targetHeading - a.heading), Math.cos(a.targetHeading - a.heading)) * Math.min(1, dt * .9);
+    const scared = (a.scare || 0) > 0; if (scared) a.scare -= dt;
+    const want = scared ? ({cow: 4.2, horse: 6, dog: 6.5, bighorn: 5}[a.kind] || 4) : a.walking ? (a.kind === 'bighorn' ? .55 : .42) : 0;
+    a.speed += (want - a.speed) * Math.min(1, dt * (scared ? 5 : 1.5));
+    a.heading += Math.atan2(Math.sin(a.targetHeading - a.heading), Math.cos(a.targetHeading - a.heading)) * Math.min(1, dt * (scared ? 4 : .9));
     if (a.speed < .01) return;
     const nx = a.x + Math.sin(a.heading) * 1.6, nz = a.z + Math.cos(a.heading) * 1.6, rise = Math.abs(h(nx, nz) - h(a.x, a.z)) / 1.6;
     if (rise > .6 || h(nx, nz) < -7.2 || r.roadUnder(nx, nz, 3) || (r.railAt(nz) && Math.abs(nx - r.railX(r.railAt(nz), nz)) < 8)) { a.targetHeading = a.heading + Math.PI * rand(.6, 1.4); a.speed *= .3; return; }
@@ -386,7 +387,7 @@ export class Life {
     }
     const beam = new T.Mesh(this.g.beam, this.m.beam); beam.position.set(0, .04, front + 4); g.add(beam);
     batchStatic(g,new Set([beam,...Object.values(lamps).flat()]));
-    return {g, beam, kind: 'car', style: requestedStyle, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
+    return {g, beam, kind: 'car', paint: color, style: requestedStyle, length: specs.L, width: specs.W, lamps, wheels, wheelRadius: .33 * r, headY: hy, headX: hw - .32, tailY: ty, lat: 0, latVel: 0, yaw: 0, steer: 0};
   }
 
   // A 12 m single-deck bus: rounded body, a long window band lit inside after dark, doors on the kerb side and a destination display.
@@ -610,7 +611,7 @@ export class Life {
       if (c.kind === 'bike' && (type === 'highway' || r.tunnelAt(z))) continue;
       if (c.kind === 'bus' && type === 'mountain') continue;
       // Side-road traffic, except off a motorway, where anything joining would have to cross the central barrier.
-      if (j && Math.random() < .38 && !(c.dir < 0 && (j.from.typeAt(j.z) === 'highway' || j.options.some((o) => o.type === 'highway')))) {
+      if (j && Math.random() < .55 && !(c.dir < 0 && (j.from.typeAt(j.z) === 'highway' || j.options.some((o) => o.type === 'highway')))) {
         const other = 1 - j.chosen;
         if (c.dir < 0 && z > j.z + 60 && z < j.z + ZONE - 50) road = this.path(j, other);
         if (c.dir > 0 && z < j.z - 80 && z > s.z) road = this.path(j, other);
@@ -682,8 +683,24 @@ export class Life {
       }
       // The player counts as the vehicle in front when in this path ahead (including head-on, when overtaking).
       const pAhead = (s.z - c.z) * dir, myPX = c.road.x(s.z) + c.road.laneX(s.z, dir, c.lane) + c.lat;
-      if (pAhead > 0 && Math.abs(s.x - myPX) < c.width / 2 + playerW / 2 + .25) consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player');
+      if (pAhead > 0 && Math.abs(s.x - myPX) < c.width / 2 + playerW / 2 + .25) {
+        // Dawdling (or stopped) in its lane: the car behind eases out and passes you when nothing is coming.
+        const slow = pvz * dir < Math.min(c.cruise, r.limit(c.z)) * .6 && pAhead < 90 && c.kind !== 'bike' && !s.onFoot;
+        const you = this.youProxy ||= {g: {visible: true}, kind: 'car', player: true, atStop: 0}; you.x = s.x; you.z = s.z; you.width = playerW; you.length = playerLen; you.speed = pvz * dir;
+        if (slow && this.tryPass(c, you, pAhead, list, s)) { const room = (s.x - c.x) * ow - (playerW + c.width) / 2; if (!(room > .5 || pAhead - (playerLen + c.length) / 2 > 10)) consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player'); }
+        else consider(pAhead - (playerLen + c.length) / 2, pvz * dir, s.z, playerLen, 'player');
+      }
       for (const an of this.roadAnimals) { const ag = (an.z - c.z) * dir - c.length / 2 - 1.2; if (ag > -1 && Math.abs(an.x - (c.road.x(an.z) + laneOff + c.lat)) < c.width / 2 + 1) consider(ag, 0, null, 0, 'animal'); }
+      // You, on foot, in the road ahead: brake for you, flash and hoot when you are close; a car that still reaches you knocks you down.
+      if (s.onFoot && s.walker && !s.riding) {
+        const w = s.walker, wAhead = (w.z - c.z) * dir, myWX = c.road.x(w.z) + c.road.laneX(w.z, dir, c.lane) + c.lat;
+        if (wAhead > -1 && wAhead < 110 && Math.abs(w.x - myWX) < c.width / 2 + 1.3) {
+          consider(wAhead - c.length / 2 - 2.6, 0, null, 0, 'walker');
+          if (wAhead < 40 && c.speed > 2.5 && now - (c.hornAt || 0) > 2600) { c.hornAt = now; this.flash(c, now, 2); this.onTrafficHorn?.(c, wAhead); }
+        }
+        const lx = (w.x - c.x) * Math.cos(c.yaw) - (w.z - c.z) * Math.sin(c.yaw), lz = (w.x - c.x) * Math.sin(c.yaw) + (w.z - c.z) * Math.cos(c.yaw);
+        if (c.speed > .8 && Math.abs(lx) < c.width / 2 + .35 && Math.abs(lz) < c.length / 2 + .45 && now - (c.ranOverAt || 0) > 3000) { c.ranOverAt = now; this.onRunOver?.(c, Math.sin(c.yaw) * dir, Math.cos(c.yaw) * dir, c.speed); }
+      }
       // Signals, stop signs, zebra crossings, level crossings and bus stops.
       // Stop lines are not cars: pull right up to them rather than keeping a following gap.
       const stop = this.stopFor(c, s), s0 = c.kind === 'bike' ? 1.5 : 3;
@@ -693,12 +710,14 @@ export class Life {
       let cruise = Math.min(c.cruise, c.kind === 'bike' ? 99 : r.limit(c.z) * 1.05 / (1 + bend * 2.5));
       if (town > .3) cruise = Math.min(cruise, c.kind === 'bike' ? 6 : 13.5);
       if (c.yielding && c.yieldPhase === 'aside') cruise *= .72;
+      if (c.hit) { c.hit.t += dt; if (c.hit.t < c.hit.hold) cruise = 0; else if (c.hit.t > c.hit.hold + 2) c.hit = null; }
       if (c.kind === 'bike') cruise *= 1 - .45 * clamp(c.road.slope(c.z) * dir * 12, 0, 1);
       // Intelligent driver model: accelerate towards cruise speed, brake to keep a time gap to whatever is in front.
       const v = c.speed, headway = c.kind === 'bike' ? .8 : 1.3, amax = c.kind === 'bus' || c.kind === 'truck' ? 1.1 : c.kind === 'bike' ? .8 : 1.7, comfort = 2.6;
       const desired = s0 + Math.max(0, v * headway + v * (v - leadSpeed) / (2 * Math.sqrt(amax * comfort)));
       let acc = amax * (1 - Math.pow(v / Math.max(cruise, 1), 4) - (gap < Infinity ? Math.pow(desired / Math.max(gap, .1), 2) : 0));
       acc = Math.max(-9, Math.min(amax, acc));
+      if (c.hit && c.hit.t < c.hit.hold && v > 0) acc = Math.min(acc, -7);
       c.speed = Math.max(0, v + acc * dt);
       c.braking = acc < -1.2 || (c.speed < .3 && gap < 12);
       c.z += dir * c.speed * dt;
@@ -713,6 +732,7 @@ export class Life {
       if (c.squeeze > 2) c.latTarget = ow * Math.max(0, c.road.half(c.z) - .3 - Math.abs(laneOff) - c.width / 2);
       this.updateYield(c, dt, s);
       this.busStops(c, dt);
+      if (c.hit && c.hit.t < c.hit.hold + 1) { const room = Math.max(0, c.road.half(c.z) - .4 - Math.abs(laneOff) - c.width / 2); c.latTarget = c.hit.side * ow * Math.min(room, 1.6) * (c.hit.t < c.hit.hold ? 1 : .35); }
       this.turnSignal(c);
       this.placeCar(c, dt);
       // Only the first oncoming car coming at you flashes, when you are in its lane.
@@ -721,7 +741,8 @@ export class Life {
     this.lamps(list, s, now, blink, lit, night);
     this.parked.forEach((c) => {
       if (off) { c.g.visible = false; return; }
-      if (c.z < s.z - 60 || c.z > s.z + 900 || c.version !== r.version && this.parkedMoved(c)) this.parkCar(c, s.z);
+      const fz = s.onFoot && s.walker ? s.walker.z : s.z;
+      if (c.z < fz - 60 || c.z > fz + 900 || c.version !== r.version && this.parkedMoved(c)) this.parkCar(c, fz);
       c.g.visible = !!c.spot;
     });
   }
@@ -869,7 +890,7 @@ export class Life {
     const warm = this.cWarm ||= new T.Color(1, .93, .8), red = this.cRed ||= new T.Color(1, .12, .06), amber = this.cAmber ||= new T.Color(1, .6, .12), v = this.v3 ||= new T.Vector3();
     for (const c of [...list, ...this.parked.filter((p) => p.g.visible && p.delivery)]) {
       const t = c.flashAt ? now - c.flashAt : -1, flashing = t > 0 && t < c.flashTimes * 260 && Math.floor(t / 130) % 2 === 0;
-      const hazard = c.delivery, ind = hazard ? 2 : c.indicator;
+      const hazard = c.delivery || (c.hazardUntil || 0) > now, ind = hazard ? 2 : c.indicator;
       for (const l of c.lamps.head) l.material = flashing ? this.m.flash : this.m.head;
       for (const l of c.lamps.tail) l.material = c.braking ? this.m.brake : this.m.tail;
       for (const l of c.lamps.left) l.material = (ind === 1 || ind === 2) && blink ? this.m.indicatorOn : this.m.indicatorOff;
@@ -890,7 +911,8 @@ export class Life {
     }
     // Your own headlamps: a halo at night or with the lights on, brighter while flashing.
     if (s.flashing || s.headlights || lit > .5) { const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), ahead = (this.settings.vehicle === 'coach' ? 6 : this.settings.vehicle === 'bike' ? 1 : 2.25) + .3, half = this.settings.vehicle === 'bike' ? 0 : this.settings.vehicle === 'coach' ? .95 : .72;
-      for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16); }
+      if (s.lamps?.length) for (const l of s.lamps) this.glow.add(l.x, l.y, l.z, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16);
+      else for (const side of this.settings.vehicle === 'bike' ? [0] : [-1, 1]) this.glow.add(s.x + fx * ahead + fz * half * side, s.y + (this.settings.vehicle === 'coach' ? .9 : .68), s.z + fz * ahead - fx * half * side, warm, s.flashing ? .9 : .35 + .3 * lit, s.flashing ? 22 : 16); }
     // Your own indicators.
     if (s.indicator && blink) for (const [lx, lz] of this.playerIndicatorSpots()) { const sx = Math.sign(lx); if (sx !== s.indicator && s.indicator !== 2) continue; const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw); this.glow.add(s.x + fx * lz + fz * lx, s.y + .8, s.z + fz * lz - fx * lx, amber, 1.1, 14); }
     this.glow.end();
@@ -958,6 +980,26 @@ export class Life {
     return out;
   }
 
+  // A car has pushed into this animal: it is shoved along (nx, nz) and bolts away from the road for a few seconds.
+  knock(a, nx, nz, push, approach) {
+    if (!a) return;
+    a.x += nx * push; a.z += nz * push;
+    if (approach > .3) { a.scare = Math.min(6, 2 + approach * .4); a.walking = true; a.timer = a.scare; a.targetHeading = Math.atan2(nx, nz); if (a.crossing) a.crossing.flee = Math.max(a.crossing.flee, a.scare); else a.heading = a.targetHeading; }
+  }
+
+  // The player has run into this vehicle: a shove from behind pushes it on, then it brakes hard, swerves away from
+  // the contact towards the verge, puts its hazards on and sits for a moment before driving on.
+  hitVehicle(c, {nx, nz, approach, share}) {
+    if (!c || !c.g.visible || !(approach > .3)) return;
+    const dir = c.dir, r = this.world.road, ow = r.side * dir;
+    const shove = -nz * dir * approach * (1 - share);
+    if (shove > 0) c.speed += shove * .55;
+    const side = Math.sign(-(nx * Math.cos(c.yaw) - nz * Math.sin(c.yaw)) * ow) || 1;
+    if (!c.hit || c.hit.t > c.hit.hold) c.hit = {t: 0, hold: 1.8 + Math.min(4, approach * .35), side};
+    c.hazardUntil = performance.now() + 9000;
+    c.braking = true; c.passing = null; c.yielding = false;
+  }
+
   // Solid bodies near a point, for the player's collisions.
   colliders(x, z, range) {
     const out = [];
@@ -967,7 +1009,7 @@ export class Life {
       const yaw = c.g.rotation.y;
       out.push({x: px, z: pz, hx: c.width / 2, hz: c.length / 2, c: Math.cos(yaw), s: Math.sin(yaw), r: 0, vehicle: c});
     }
-    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat' && Math.abs(a.x - x) < range && Math.abs(a.z - z) < range) out.push({x: a.x, z: a.z, r: ['cow','horse'].includes(a.kind) ? 1.1 : a.kind === 'bighorn' ? .6 : .35});
+    for (const a of this.animals) if (a.g.visible && a.g.position.y > -400 && a.kind !== 'cat' && Math.abs(a.x - x) < range && Math.abs(a.z - z) < range) out.push({x: a.x, z: a.z, r: ['cow','horse'].includes(a.kind) ? 1.1 : a.kind === 'bighorn' ? .6 : .35, animal: a, kind: a.kind});
     return out;
   }
 

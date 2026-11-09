@@ -198,3 +198,16 @@ The Sketchfab Standard licence allows use in a project like this but not redistr
 
 - Source embedded in the file: https://sketchfab.com/3d-models/2022-toyota-land-cruiser-300-vxr-3dfcd7904cdb4e52afa3ce59fa59e1a5
 - Adaptation (same script): 4.985 m metre scale, named wheel groups with fixed calipers, recolourable paint, transparent glass, brake-lit tail lamps; 409k to 260k triangles, WebP textures, Draco geometry. Playable car, and traffic on Ultra graphics. The original non-commercial, share-alike license designation is retained; this adapted model is shared under the same license.
+
+## Underwater models
+
+- **Barramundi Fish** (`assets/models/fish-barramundi.glb`): Microsoft, 2017, from the Khronos glTF Sample Assets, Creative Commons Zero v1.0 Universal (CC0). Source: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/BarramundiFish . Modification: textures downscaled to 1K and re-encoded as JPEG; geometry unchanged.
+- **Grey Snapper** (`assets/models/fish-snapper.glb`): from the Babylon.js Assets repository, Under Water Scene demo (`meshes/Demos/UnderWaterScene/fish/greySnapper_vertColor.glb`), Creative Commons Attribution 4.0 International (CC BY 4.0), © Babylon.js contributors. Source: https://github.com/BabylonJS/Assets . Modification: textures downscaled to 512 and re-encoded as JPEG; geometry unchanged.
+- **Ship boards and ship's wheel** (`assets/models/wreck-boards.glb`, `assets/models/wreck-wheel.glb`): the `boards` and `shipWheel` meshes and their baseColor, normal and ORM textures from the same Babylon.js Under Water Scene demo (`meshes/Demos/UnderWaterScene/`), CC BY 4.0, © Babylon.js contributors. Modification: each mesh extracted into its own GLB with its textures embedded at 1K JPEG and a glTF metallic-roughness material built from the ORM map.
+
+The broken ship hull, kelp and bubbles are authored for Evermile. No paid asset was purchased.
+
+
+## You
+
+The on-foot player can wear any of the Quaternius civilian outfits (CC0, listed above) or the Mixamo **Vanguard/Soldier** (textured, with idle, walk and run clips) distributed with the Three.js examples; Mixamo assets are royalty-free for use in games. The Quaternius civilians carry their own run clips, which the player uses when running.

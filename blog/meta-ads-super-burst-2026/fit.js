@@ -1,0 +1,30 @@
+(() => {
+  'use strict';
+  const form = document.getElementById('sb-fit');
+  const out = document.getElementById('sb-fit-result');
+  if (!form || !out) return;
+  const v = k => form.elements.namedItem(k).value;
+  const render = () => {
+    const m = v('moment'), r = v('rivals'), a = v('aud'), g = v('goal');
+    let s = { launch: 40, sale: 35, event: 38, always: 5 }[m];
+    s += { yes: 20, some: 10, no: 0 }[r]; s += { broad: 25, mid: 12, narrow: -10 }[a]; s += { reach: 20, sales: 8, cpa: -20 }[g];
+    s = Math.max(0, Math.min(100, s));
+    const cls = s >= 70 ? 'hi' : s >= 40 ? 'mid' : 'lo';
+    const hours = m === 'sale' ? '12 to 24 hours, covering the whole sale day' : m === 'event' ? '3 to 6 hours around the moment itself' : m === 'launch' ? '6 to 12 hours from the moment the product goes live' : 'none';
+    const tips = [];
+    if (cls !== 'lo') tips.push(`Window: ${hours}.`);
+    if (r === 'yes' && cls !== 'lo') tips.push('Category exclusivity is worth pricing: it keeps the same-day rival out of your window.'); else if (cls !== 'lo') tips.push('Skip exclusivity unless a rival is likely to book the same window.');
+    if (g === 'cpa') tips.push('If the lowest cost per sale is the goal, stay in the auction; a burst pays for timing, not efficiency.');
+    if (a === 'narrow') tips.push('Narrow audiences saturate quickly; a short burst can show the same people the ad too often.');
+    tips.push('Run a creative series of two or three short cuts, and keep performance campaigns live to catch the demand.');
+    out.innerHTML = '<div class="ed-result"><span class="big"></span><div><strong></strong><p></p><ul></ul></div></div>';
+    const box = out.firstChild; box.classList.add(cls);
+    box.querySelector('.big').textContent = cls === 'hi' ? 'Book it' : cls === 'mid' ? 'Maybe' : 'Skip';
+    box.querySelector('strong').textContent = cls === 'hi' ? 'A reserved burst fits this moment' : cls === 'mid' ? 'A short burst could help; test it against the auction' : 'Stay in the auction for this one';
+    box.querySelector('p').textContent = `Fit score ${s}/100, if Ads Super Burst is available in your market.`;
+    const ul = box.querySelector('ul'); tips.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.append(li); });
+  };
+  form.addEventListener('input', render);
+  form.addEventListener('submit', e => e.preventDefault());
+  render();
+})();

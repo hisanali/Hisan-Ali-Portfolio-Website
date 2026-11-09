@@ -1,5 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {Vehicle} from './vehicle.js?v=20260927-train1';
+import {clone as cloneSkin} from './vendor/utils/SkeletonUtils.js';
+import {fitCitizen} from './citizen-assets.js?v=20260927-train1';
 import {DriveRoom,roomCode,cleanCode,VEHICLES} from './multiplayer-room.js?v=20261010-mp2';
 const labels={coupe:'Sports coupé',mercedes:'Mercedes W201',grcorolla:'Toyota GR Corolla',landcruiser:'Land Cruiser',coach:'Coach',bike:'Motorcycle'};
 export class Multiplayer {
@@ -7,7 +9,7 @@ export class Multiplayer {
   this.game=game;this.remote=null;this.packet=null;this.lastSend=0;this.lastWorld='';this.savedPause=false;
   document.body.insertAdjacentHTML('beforeend',`<dialog id="drive-room"><div class="room-heading"><div><small>TAKE THE ROAD TOGETHER</small><h2>Drive with a friend</h2></div><button id="room-close" aria-label="Close multiplayer">×</button></div><p>Two drivers. Your own cars. One shared journey.</p><div class="room-fields"><label>Your name<input id="room-name" maxlength="24" autocomplete="nickname" placeholder="Driver"></label><label>Your vehicle<select id="room-car">${VEHICLES.map(v=>`<option value="${v}">${labels[v]}</option>`).join('')}</select></label><label>Paint<select id="room-color"><option value="#b51f25">Racing red</option><option value="#e9e7db">Pearl</option><option value="#335b4c">Forest</option><option value="#333a43">Graphite</option><option value="#7b9ba8">Glacier</option></select></label></div><div id="room-lobby"><button id="room-create" class="room-primary">Create a room ↗</button><div class="room-join"><input id="room-code" aria-label="Room code" placeholder="8-character code" maxlength="8" autocapitalize="characters"><button id="room-join">Join room</button></div></div><div id="room-connected" hidden><p class="room-code-label">INVITE CODE <strong id="room-current"></strong></p><button id="room-drive" class="room-primary">Start driving ↗</button><div class="room-actions"><button id="room-copy">Copy invite link</button><button id="room-meet">Meet my friend</button><button id="room-leave">Leave room</button></div></div><p id="room-status" role="status" aria-live="polite">Create a room, then share its code with your friend.</p><p class="room-note">The host chooses the route. World settings stay shared until you leave. Relaxed co-op: player cars pass through each other.</p></dialog><div id="room-hud" hidden><button id="room-hud-open"></button><button id="room-hud-meet">Meet up ↗</button></div><div id="remote-driver" hidden></div>`);
   this.$=id=>document.getElementById(id);this.dialog=this.$('drive-room');
-  const button=document.createElement('button');button.id='multiplayer-btn';button.textContent='MULTIPLAYER';document.querySelector('.bottom-nav').append(button);button.onclick=()=>this.open();const startButton=document.createElement('button');startButton.id='start-multiplayer';startButton.textContent='drive with a friend ↗';document.querySelector('.start-content').append(startButton);startButton.onclick=()=>this.open();
+  const button=document.createElement('button');button.id='multiplayer-btn';button.textContent='MULTIPLAYER';document.querySelector('.bottom-nav').append(button);button.onclick=()=>this.open();const startButton=document.createElement('button');startButton.id='start-multiplayer';startButton.textContent='drive with a friend ↗';(document.querySelector('.start-actions')||document.querySelector('.start-content')).append(startButton);startButton.onclick=()=>this.open();
   this.$('room-close').onclick=()=>this.dialog.close();this.$('room-drive').onclick=()=>{this.savedPause=false;this.dialog.close();};this.dialog.addEventListener('close',()=>{game.pause(this.savedPause);});this.dialog.addEventListener('cancel',()=>{});
   this.$('room-car').onchange=e=>game.setting('vehicle',e.target.value);this.$('room-color').onchange=e=>game.setting('color',e.target.value);
   this.$('room-code').oninput=e=>e.target.value=cleanCode(e.target.value);this.$('room-code').onkeydown=e=>{if(e.key==='Enter')this.join(false);};
@@ -46,18 +48,31 @@ export class Multiplayer {
  }
  receive(p){
   this.packet=p;this.receivedAt=performance.now();
-  if(!p){if(this.remote){this.remote.dispose();this.remote=null;}this.$('remote-driver').hidden=true;this.refresh();return;}
+  if(!p){if(this.remote){this.remote.dispose();this.remote=null;}this.dropWalker();this.$('remote-driver').hidden=true;this.refresh();return;}
   if(!this.remote||this.remote.type!==p.vehicle){this.remote?.dispose();this.remote=new Vehicle(this.game.scene,p.vehicle,p.color);this.remote.group.rotation.order='YXZ';this.remote.group.position.set(p.x,p.y,p.z);this.remote.group.rotation.set(p.pitch,p.yaw,p.roll);this.remoteColor=p.color;const current=this.remote;current.ready?.then(()=>{if(this.remote===current)current.setColor(this.remoteColor);});}
   if(this.remoteColor!==p.color){this.remoteColor=p.color;this.remote.setColor(p.color);}
+ }
+ // Your friend on foot: their outfit, walking, running or standing where they are, beside the car they left.
+ dropWalker(){const w=this.walker;if(!w)return;w.mixer.stopAllAction();w.root.parent?.remove(w.root);this.walker=null;}
+ updateWalker(dt,f){
+  if(!f||f.hidden){if(this.walker)this.walker.root.visible=false;return null;}
+  if(!this.walker||this.walker.key!==f.outfit){const asset=this.game.citizen?.(f.outfit);if(!asset)return null;this.dropWalker();const model=cloneSkin(asset.scene);fitCitizen(model,3);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.frustumCulled=false;}});const root=new T.Group();root.add(model);this.game.scene.add(root);const mixer=new T.AnimationMixer(model),find=n=>asset.animations.find(a=>a.name===n);const idle=mixer.clipAction(find('Idle')||asset.animations[0]).play(),walk=mixer.clipAction(find('Walk')||asset.animations[0]).play(),runClip=find('Run'),run=runClip?mixer.clipAction(runClip).play():null;walk.setEffectiveWeight(0);run?.setEffectiveWeight(0);this.walker={key:f.outfit,root,mixer,idle,walk,run,x:f.x,z:f.z,yaw:f.yaw,speed:0};root.position.set(f.x,this.game.ground(f.x,f.z),f.z);}
+  const w=this.walker,s=1-Math.exp(-dt*12);w.root.visible=true;
+  if(Math.hypot(f.x-w.x,f.z-w.z)>20){w.x=f.x;w.z=f.z;}else{w.x+=(f.x-w.x)*s;w.z+=(f.z-w.z)*s;}
+  w.yaw+=Math.atan2(Math.sin(f.yaw-w.yaw),Math.cos(f.yaw-w.yaw))*s;w.speed+=(Math.abs(f.speed)-w.speed)*s;
+  w.root.position.set(w.x,this.game.ground(w.x,w.z),w.z);w.root.rotation.y=w.yaw;
+  const moving=Math.min(1,w.speed/.4),running=w.run?Math.min(1,Math.max(0,(w.speed-2)/2)):0;w.idle.setEffectiveWeight(1-moving);w.walk.setEffectiveWeight(moving*(1-running));w.run?.setEffectiveWeight(moving*running);w.walk.setEffectiveTimeScale(Math.max(.3,Math.min(1.6,w.speed/1.15)));w.run?.setEffectiveTimeScale(Math.max(.6,Math.min(1.5,w.speed/3.6)));w.mixer.update(dt);
+  return w.root.position;
  }
  update(dt,now,camera){
   if(this.active&&now-this.lastSend>=100){this.lastSend=now;this.room.publish(this.game.pose());}
   const p=this.packet,r=this.remote;if(!p||!r)return;
-  const age=(now-this.receivedAt)/1000,visible=age<3;r.group.visible=visible;this.$('remote-driver').hidden=!visible;if(!visible)return;
+  const age=(now-this.receivedAt)/1000,visible=age<3;r.group.visible=visible;this.$('remote-driver').hidden=!visible;if(!visible){if(this.walker)this.walker.root.visible=false;return;}
+  const footAt=this.updateWalker(dt,p.foot);
   const s=1-Math.exp(-dt*14),ahead=Math.min(.12,age);this.target ||= new T.Vector3();this.target.set(p.x+Math.sin(p.yaw)*p.speed*ahead,p.y,p.z+Math.cos(p.yaw)*p.speed*ahead);
   if(r.group.position.distanceTo(this.target)>30)r.group.position.copy(this.target);else r.group.position.lerp(this.target,s);
   r.group.rotation.y+=Math.atan2(Math.sin(p.yaw-r.group.rotation.y),Math.cos(p.yaw-r.group.rotation.y))*s;r.group.rotation.x+=(p.pitch-r.group.rotation.x)*s;r.group.rotation.z+=(p.roll-r.group.rotation.z)*s;r.update(dt,p.speed,p.steer,!!p.lights,!!p.brake,false);
-  const distance=Math.round(r.group.position.distanceTo(this.game.position()));const v=r.group.position.clone().add(new T.Vector3(0,2.8,0)).project(camera);const tag=this.$('remote-driver');tag.hidden=v.z>1||v.z< -1||Math.abs(v.x)>1||Math.abs(v.y)>1;tag.style.transform=`translate(-50%,-100%) translate(${(v.x*.5+.5)*innerWidth}px,${(-v.y*.5+.5)*innerHeight}px)`;tag.textContent=`${p.name} · ${distance} m`;
+  const at=footAt||r.group.position,distance=Math.round(at.distanceTo(this.game.position()));const v=at.clone().add(new T.Vector3(0,footAt?2.1:2.8,0)).project(camera);const tag=this.$('remote-driver');tag.hidden=v.z>1||v.z< -1||Math.abs(v.x)>1||Math.abs(v.y)>1;tag.style.transform=`translate(-50%,-100%) translate(${(v.x*.5+.5)*innerWidth}px,${(-v.y*.5+.5)*innerHeight}px)`;tag.textContent=`${p.name}${p.foot?(p.foot.hidden?' · in a shop':' · on foot'):''} · ${distance} m`;
   if(now-(this.lastHUD||0)>500){this.lastHUD=now;this.$('room-hud-open').textContent=`${p.name} · ${distance} m away`;this.$('room-meet').disabled=this.$('room-hud-meet').disabled=false;}
  }
  status(){return {room:this.room?.code||'',role:this.room?.host?'host':'guest',status:this.room?.status||'Offline',connected:!!this.room?.connected,peer:this.room?.peer?.name||null,remoteVehicle:this.remote?.type||null,remotePosition:this.remote?.group.position.toArray()||null,receivedSequence:this.room?.peerSeq??-1};}

@@ -1,0 +1,13 @@
+.te-guide .te-wrap { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:26px; align-items:center; }
+.te-guide .te-clips { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.te-guide .te-clips i { display:block; aspect-ratio:9/16; border-radius:10px; background:radial-gradient(circle at 50% 60%,var(--c) 0 30%,transparent 31%),linear-gradient(#2a2a2a,#111); animation:te-clip 8s ease infinite; }
+.te-guide .te-clips i:nth-child(2) { animation-delay:.3s; } .te-guide .te-clips i:nth-child(3) { animation-delay:.6s; } .te-guide .te-clips i:nth-child(4) { animation-delay:.9s; }
+@keyframes te-clip { 0%,6% { opacity:0; transform:translateY(14px); } 14%,40% { opacity:1; transform:none; } 52%,100% { opacity:.25; transform:scale(.92); } }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .te-list { margin:0 !important; padding:0 !important; list-style:none; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .te-list li { display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:10px; align-items:center; padding:12px 0 !important; border-bottom:1px solid var(--fe-border); margin:0 !important; opacity:0; animation:te-row 8s ease infinite; }
+html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .te-list li:nth-child(2) { animation-delay:.3s; } html:is(.theme-dark,:not(.theme-dark)) body.ed-page.redesign-interior.page-blog-article .blog-post-content .te-list li:nth-child(3) { animation-delay:.6s; }
+@keyframes te-row { 0%,44% { opacity:0; transform:translateX(12px); } 52%,94% { opacity:1; transform:none; } 100% { opacity:0; } }
+.te-guide .te-list b { font-family:'DM Serif Display',serif; font-size:1.5rem; font-weight:400; color:var(--fe-accent); }
+.te-guide .te-list span { color:var(--fe-ink); font-weight:700; }
+.te-guide .te-list em { padding:3px 10px; border-radius:999px; background:#fe2c55; color:#fff; font-style:normal; font-size:.72rem; font-weight:800; }
+@media(max-width:560px) { .te-guide .te-wrap { grid-template-columns:1fr; } }

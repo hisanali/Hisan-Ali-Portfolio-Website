@@ -10,7 +10,7 @@ await build({entryPoints: ['scripts/portfolio-admin-entry.ts'], outfile: 'api/po
 await build({entryPoints: ['scripts/site-activity-entry.ts'], outfile: 'api/site-activity.mjs', bundle: true, platform: 'node', format: 'esm', target: 'node24'});
 await build({entryPoints: ['scripts/contact-enquiry-entry.ts'], outfile: 'api/contact-enquiry.mjs', bundle: true, platform: 'node', format: 'esm', target: 'node24'});
 const output = path.join(root, '.vercel', 'site-static');
-const internal = new Set(['app', 'components', 'api', 'server', 'scripts', 'node_modules', 'docs', 'tests']);
+const internal = new Set(['app', 'components', 'api', 'server', 'scripts', 'node_modules', 'docs', 'tests', 'cloudflare']);
 await rm(output, { recursive: true, force: true });
 let count = 0;
 async function copy(directory, relative = '') {

@@ -1,0 +1,42 @@
+.ms-guide .ms-scene { display:grid; grid-template-columns:1.1fr 1fr; gap:22px; align-items:center; max-width:720px; margin:26px auto 8px; padding:22px; border-radius:22px; background:var(--fe-surface); border:1px solid var(--fe-border); }
+.ms-guide .ms-ad { border-radius:14px; overflow:hidden; background:#fff; color:#1c1e21; border:1px solid #dadde1; }
+html.theme-dark .ms-guide .ms-ad { background:#242526; color:#e4e6eb; border-color:#3e4042; }
+.ms-guide .ms-head { display:flex; gap:10px; align-items:center; padding:10px 12px; } .ms-guide .ms-head i { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#b8432a,#0b6e7a); }
+.ms-guide .ms-head b { display:block; font-size:.82rem; } .ms-guide .ms-head small { font-size:.7rem; opacity:.65; }
+.ms-guide .ms-img { position:relative; display:grid; place-items:center; height:120px; background:linear-gradient(135deg,#f5d3c6,#cfe6e8); color:#4a3a33; font-size:.8rem; font-weight:700; }
+.ms-guide .ms-tap { position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px; border-radius:50%; border:3px solid #b8432a; opacity:0; animation:ms-tap 6s ease-out infinite; }
+@keyframes ms-tap { 18% { opacity:0; transform:scale(.4); } 24% { opacity:1; transform:scale(1); } 34% { opacity:0; transform:scale(2.2); } 100% { opacity:0; } }
+.ms-guide .ms-carousel { padding:10px 12px 12px; overflow:hidden; } .ms-guide .ms-carousel small { display:block; margin-top:6px; font-size:.68rem; font-weight:800; color:#b8432a; opacity:0; animation:ms-fade 6s ease infinite; }
+.ms-guide .ms-track { display:flex; gap:8px; transform:translateX(110%); animation:ms-slide 6s cubic-bezier(.2,.7,.2,1) infinite; }
+.ms-guide .ms-track i { flex:0 0 52px; height:52px; border-radius:8px; background:linear-gradient(135deg,#d9b38a,#7a5530); }
+.ms-guide .ms-track i:nth-child(2n) { background:linear-gradient(135deg,#3c4a5c,#8a9bb0); } .ms-guide .ms-track i:nth-child(3n) { background:linear-gradient(135deg,#0b7a75,#9fd8d1); }
+@keyframes ms-slide { 0%,30% { transform:translateX(110%); } 42%,85% { transform:translateX(0); } 95%,100% { transform:translateX(110%); } }
+@keyframes ms-fade { 0%,40% { opacity:0; } 48%,85% { opacity:1; } 95%,100% { opacity:0; } }
+.ms-guide .ms-switches { display:grid; gap:12px; }
+.ms-guide .ms-sw { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--fe-raised); border:1px solid var(--fe-border); color:var(--fe-ink); font-size:.86rem; font-weight:700; }
+.ms-guide .ms-sw i { position:relative; flex:0 0 46px; height:26px; border-radius:13px; background:#b9b9c2; animation:ms-on 6s ease infinite; }
+.ms-guide .ms-sw i::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; animation:ms-knob 6s ease infinite; }
+.ms-guide .ms-sw.s2 i, .ms-guide .ms-sw.s2 i::after { animation-delay:.6s; }
+@keyframes ms-on { 0%,50% { background:#b9b9c2; } 58%,90% { background:var(--fe-accent); } 98%,100% { background:#b9b9c2; } }
+@keyframes ms-knob { 0%,50% { left:3px; } 58%,90% { left:23px; } 98%,100% { left:3px; } }
+.ms-guide .ms-list { display:grid; gap:8px; margin:14px 0; }
+.ms-guide .ms-item { display:grid; grid-template-columns:52px 1fr; gap:14px; align-items:center; padding:12px 14px; border-radius:14px; border:1px solid var(--fe-border); background:var(--fe-raised); cursor:pointer; color:var(--fe-ink); }
+.ms-guide .ms-item input { position:absolute; opacity:0; width:1px; height:1px; }
+.ms-guide .ms-ui { position:relative; width:52px; height:30px; border-radius:15px; background:#b9b9c2; transition:background .3s; }
+.ms-guide .ms-ui::after { content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:left .3s; }
+.ms-guide .ms-item input:checked + .ms-ui { background:var(--fe-high); } .ms-guide .ms-item input:checked + .ms-ui::after { left:25px; }
+.ms-guide .ms-item input:focus-visible + .ms-ui { outline:3px solid var(--fe-accent); outline-offset:2px; }
+.ms-guide .ms-text b { display:block; font-size:.92rem; } .ms-guide .ms-text small { display:block; font-size:.78rem; color:var(--fe-muted); line-height:1.4; }
+.ms-guide .ms-ring { --p:0; display:grid; place-items:center; width:104px; height:104px; margin:0 auto; border-radius:50%; background:conic-gradient(var(--fe-high) calc(var(--p)*1%),var(--fe-border) 0); transition:--p .4s; }
+.ms-guide .ms-ring span { display:grid; place-items:center; width:80px; height:80px; border-radius:50%; background:var(--fe-raised); font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--fe-ink); }
+.ms-guide .ms-res { display:grid; grid-template-columns:130px 1fr; gap:18px; align-items:center; margin-top:12px; padding:18px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.ms-guide .ms-res strong { display:block; font-size:1.05rem; margin-bottom:6px; }
+html body.fe-page.page-blog-article .blog-post-content .ms-res ul { margin:6px 0 0 !important; padding:0 0 0 18px !important; border:0 !important; background:none !important; box-shadow:none !important; max-width:none !important; }
+html body.fe-page.page-blog-article .blog-post-content .ms-res li, html body.fe-page.page-blog-article .blog-post-content .ms-res p { margin:0 0 5px !important; padding:0 !important; font-size:.88rem !important; line-height:1.5 !important; color:var(--fe-ink) !important; max-width:none; }
+.ms-guide .ms-steps { display:grid; gap:10px; margin:22px 0; }
+.ms-guide .ms-steps > div { display:grid; grid-template-columns:48px 1fr; column-gap:16px; padding:18px 20px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.ms-guide .ms-steps > div > b { grid-row:span 2; display:grid; place-items:center; width:48px; height:48px; border-radius:50%; background:var(--fe-accent); color:#fff; font-family:'DM Serif Display',serif; font-size:1.4rem; font-weight:400; }
+html.theme-dark .ms-guide .ms-steps > div > b { color:#111; }
+html body.fe-page.page-blog-article .blog-post-content .ms-steps h3 { margin:2px 0 4px !important; padding:0 !important; font-size:1.05rem !important; color:var(--fe-ink) !important; }
+html body.fe-page.page-blog-article .blog-post-content .ms-steps p { margin:0 !important; font-size:.9rem !important; line-height:1.55 !important; color:var(--fe-muted) !important; max-width:none; }
+@media(max-width:640px) { .ms-guide .ms-scene { grid-template-columns:1fr; } .ms-guide .ms-res { grid-template-columns:1fr; } }

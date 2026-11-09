@@ -2,7 +2,9 @@
 export const VEHICLES = ['coupe','mercedes','grcorolla','landcruiser','coach','bike'];
 export const cleanCode = value => String(value || '').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,8);
 export function roomCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>a[n%a.length]).join('');}
-export function validPose(p){return p && VEHICLES.includes(p.vehicle) && /^#[\da-f]{6}$/i.test(p.color) && ['x','y','z','yaw','pitch','roll','speed','steer','seq'].every(k=>Number.isFinite(p[k])) && Math.abs(p.x)<1e7 && Math.abs(p.z)<1e7 && Math.abs(p.y)<1e5 && Math.abs(p.speed)<150 && Math.abs(p.steer)<2 && Number.isSafeInteger(p.seq);}
+// A player on foot also sends where they are walking; it is optional and checked as strictly as the car.
+export function validFoot(f){return f===undefined||f===null||(typeof f==='object'&&['x','z','yaw','speed'].every(k=>Number.isFinite(f[k]))&&Math.abs(f.x)<1e7&&Math.abs(f.z)<1e7&&Math.abs(f.speed)<12&&/^[a-z0-9_-]{1,24}$/.test(String(f.outfit))&&(f.hidden===undefined||typeof f.hidden==='boolean'));}
+export function validPose(p){return p && validFoot(p.foot) && VEHICLES.includes(p.vehicle) && /^#[\da-f]{6}$/i.test(p.color) && ['x','y','z','yaw','pitch','roll','speed','steer','seq'].every(k=>Number.isFinite(p[k])) && Math.abs(p.x)<1e7 && Math.abs(p.z)<1e7 && Math.abs(p.y)<1e5 && Math.abs(p.speed)<150 && Math.abs(p.steer)<2 && Number.isSafeInteger(p.seq);}
 export class DriveRoom {
  constructor(client, hooks={}){this.client=client;this.hooks=hooks;this.id=crypto.randomUUID();this.code='';this.seq=0;this.generation=0;this.status='Offline';this.peer=null;this.connected=false;}
  emit(status){this.status=status;this.hooks.status?.(this);}

@@ -2,7 +2,7 @@ import {ArchitectureModels} from './architecture-models.js?v=20260927-train1';
 import {MapKits} from './map-kits.js?v=20260926-maps1';
 import * as T from './vendor/three.module.js';
 import {Batch, UNIT, PLANE, FLAT, frame, canvasTexture} from './scenery.js?v=20260927-train1';
-import {scanned} from './materials.js?v=20260927-train1';
+import {scanned} from './materials.js?v=20261103-realism1';
 import {DESTINATIONS} from './destinations.js?v=20260927-train1';
 import {random, clamp} from './math.js?v=20260927-train1';
 import {SEA} from './network.js?v=20260927-train1';
@@ -36,7 +36,9 @@ export class Landmarks {
    stone:{material:scanned('stone',{vertexColors:true},3),cast:true},
    roof:{material:scanned('roof',{vertexColors:true},3),cast:true},
    bark:{material:scanned('bark',{vertexColors:true},2),cast:true},
-   plaster:{material:std({roughness:.89}),cast:true},
+   plaster:{material:scanned('plaster',{vertexColors:true,normalScale:new T.Vector2(.45,.45)},2.6),cast:true},
+   brick:{material:scanned('brick',{vertexColors:true,normalScale:new T.Vector2(.7,.7)},2.2),cast:true},
+   concrete:{material:scanned('concrete',{vertexColors:true,normalScale:new T.Vector2(.4,.4)},3),cast:true},
    pavement:{material:scanned('stone',{vertexColors:true,normalScale:new T.Vector2(.18,.18)},4),cast:false},
    metal:{material:std({metalness:.75,roughness:.28}),cast:true},
    wood:{material:scanned('bark',{vertexColors:true,normalScale:new T.Vector2(.1,.1)},1.8),cast:true},
@@ -83,7 +85,7 @@ export class Landmarks {
   const r=this.world.road,y=r.y(z),yaw=Math.atan(r.tangent(z))+(side<0?Math.PI:0),put=frame(b,r.x(z),y,z,yaw);put.y=y;
   const importedKey=kind==='oldtown'?'apartments':kind==='hotel'&&Math.round(z/40)%2===0?'apartments':kind==='estate'&&Math.round(z/40)%3===0?'brick-works':null;
   if(importedKey&&this.imported.loaded[importedKey]){
-   const edge=r.width(z),x=edge+14,[wx,wz]=put.world(x,0);this.imported.place(importedKey,group,wx,y,wz,yaw-Math.PI/2);this.collider(group,put,x,0,6.5,8);
+   const edge=r.width(z),x=edge+14,[wx,wz]=put.world(x,0);this.imported.place(importedKey,group,wx,y,wz,yaw-Math.PI/2);const sz=this.imported.size[importedKey];this.collider(group,put,x,0,sz?Math.max(3,sz.z/2-.3):6.5,sz?Math.max(3,sz.x/2-.3):8);
    put('pavement',UNIT,edge+4,.08,0,0xa3a29a,8,.16,36);this.palm(put,edge+2,-15,12);this.lamp(put,edge+1,12,group);return;
   }
   const edge=r.width(z),w=kind==='hotel'?23:kind==='oldtown'?17:25,depth=kind==='modern'?23:16,x=edge+(kind==='modern'?14:7)+depth/2,levels=kind==='hotel'?4+Math.floor(rng()*3):kind==='residential'?1:2;

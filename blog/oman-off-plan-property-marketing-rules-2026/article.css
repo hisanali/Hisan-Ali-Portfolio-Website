@@ -1,0 +1,17 @@
+.op-guide .op-scene { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:28px; align-items:end; }
+.op-guide .op-scene figcaption { grid-column:1 / -1; }
+.op-guide .op-stage { position:relative; height:260px; border-bottom:2px solid var(--fe-ink); }
+.op-guide .op-tower { position:absolute; right:12%; bottom:0; width:110px; display:flex; flex-direction:column-reverse; gap:4px; }
+.op-guide .op-tower i { display:block; height:24px; background:var(--fe-accent); opacity:0; transform:translateY(-12px); animation:op-floor 9s ease infinite; }
+.op-guide .op-tower i:nth-child(2) { animation-delay:.35s; } .op-guide .op-tower i:nth-child(3) { animation-delay:.7s; } .op-guide .op-tower i:nth-child(4) { animation-delay:1.05s; } .op-guide .op-tower i:nth-child(5) { animation-delay:1.4s; } .op-guide .op-tower i:nth-child(6) { animation-delay:1.75s; } .op-guide .op-tower i:nth-child(7) { animation-delay:2.1s; } .op-guide .op-tower i:nth-child(8) { animation-delay:2.45s; }
+@keyframes op-floor { 0%,4% { opacity:0; transform:translateY(-12px); } 10%,92% { opacity:.9; transform:none; } 100% { opacity:0; } }
+.op-guide .op-line { position:absolute; left:0; right:0; bottom:84px; border-top:2px dashed var(--fe-accent-2); }
+.op-guide .op-line span { position:absolute; left:0; top:-26px; color:var(--fe-accent-2); font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.op-guide .op-unlock { position:absolute; right:0; top:10px; color:var(--fe-high); font-weight:800; font-size:14px; opacity:0; animation:op-unlock 9s ease infinite; }
+@keyframes op-unlock { 0%,22% { opacity:0; transform:translateY(6px); } 28%,92% { opacity:1; transform:none; } 100% { opacity:0; } }
+.op-guide .op-budget small { display:block; margin-bottom:8px; color:var(--fe-muted); font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.op-guide .op-bar { position:relative; height:10px; border-bottom:1px solid var(--fe-border); }
+.op-guide .op-bar i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--fe-accent); animation:op-bar 9s ease infinite; }
+@keyframes op-bar { 0%,30% { width:0; } 60%,92% { width:72%; } 100% { width:0; } }
+.op-guide .op-cap { position:absolute; left:72%; top:-6px; height:22px; padding-left:8px; border-left:2px solid var(--fe-low); color:var(--fe-low); font-size:12px; font-weight:800; line-height:22px; white-space:nowrap; }
+@media(max-width:600px) { .op-guide .op-scene { grid-template-columns:1fr; } }

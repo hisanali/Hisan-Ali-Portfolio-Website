@@ -12,6 +12,8 @@ import {clamp, lerp, smooth, noise, random, hashSeed} from './math.js?v=20260927
   country and on to the next junction, so every place is reachable by road and none is a dead end.
 */
 export const FORK = 420, ZONE = FORK + 150, RAMP = 500, CREST = 7, SEA = -8;
+// The branch not taken is drawn this far past the junction (it runs on out of sight rather than stopping at the crest).
+export const REACH = ZONE + 1100;
 
 export const TYPES = {
   country: {label: 'Hill Road', half: 5.3, lanes: [2.65], limit: 27, towns: true, rivers: true, rail: .72},
@@ -288,10 +290,24 @@ export class Network {
     this.extend(z + 6000);
     return changed;
   }
-  // The branch not taken is still drawn through the junction zone.
+  // How far past the junction the branch not taken is drawn: through the zone and on until it would meet
+  // something laid out for the road you are on (a railway, a town, a bridge, a lay-by, the main road itself).
+  reach(j) {
+    if (j.reach !== undefined && j.reachFor === j.chosen) return j.reach;
+    const seg = j.options[1 - j.chosen]; let end = j.z + REACH;
+    for (let z = j.z + ZONE; z < j.z + REACH; z += 10) {
+      const sx = seg.x(z), mx = this.x(z), gap = Math.abs(sx - mx), rail = this.railAt(z);
+      const clash = gap < seg.half(z) + this.half(z) + 10
+        || (this.bridgeNear(z) && Math.abs(this.bridgeNear(z).start - z) < 400 && gap < 120) || (this.districtAt(z) && gap < 140)
+        || this.stopsNear(z, 80).some((st) => gap < 40) || (this.tunnelAt(z) && gap < 60) || (() => { const t = this.townAt(z); return t && z > t.start - 60 && z < t.end + 60 && gap < 52; })() || (rail && Math.abs(this.railX(rail, z) - sx) < 4 && rail.crossings.some((c) => Math.abs(c - z) < 60));
+      if (clash) { end = z - 170; break; }
+    }
+    j.reach = Math.max(j.z + ZONE, end); j.reachFor = j.chosen; return j.reach;
+  }
+  // The branch not taken is still drawn through the junction zone and on as far as it safely can be.
   stubs(z) {
     const out = [];
-    for (const j of this.junctions) if (z >= j.z - 5 && z <= j.z + ZONE) out.push({seg: j.options[1 - j.chosen], j});
+    for (const j of this.junctions) if (z >= j.z - 5 && z <= this.reach(j)) out.push({seg: j.options[1 - j.chosen], j});
     return out;
   }
 
@@ -299,7 +315,7 @@ export class Network {
   roadsAt(z) {
     if (z === this.rowZ) return this.row;
     const s = this.segAt(z), rows = [{x: s.x(z), y: s.y(z), half: s.half(z) * this.stretch(s, z), seg: s, w: s.weight(z), main: true, fade: 1}];
-    for (const st of this.stubs(z)) { const u = z - st.j.z; rows.push({x: st.seg.x(z), y: st.seg.y(z), half: st.seg.half(z) * this.stretch(st.seg, z), seg: st.seg, w: 0, main: false, fade: 1 - smooth(ZONE - 70, ZONE, u), u}); }
+    for (const st of this.stubs(z)) { const u = z - st.j.z; rows.push({x: st.seg.x(z), y: st.seg.y(z), half: st.seg.half(z) * this.stretch(st.seg, z), seg: st.seg, w: 0, main: false, fade: 1 - smooth(this.reach(st.j) - st.j.z - 160, this.reach(st.j) - st.j.z, u), u}); }
     this.rowZ = z; this.row = rows;
     return rows;
   }
@@ -463,11 +479,24 @@ export class Network {
   riverDepth(px, z) { const b = this.bridgeNear(z); if (!b) return 0; return 1 - smooth(0, b.bank, this.riverOff(px, z)); }
 
   /* ---------- Terrain ---------- */
+  // Where a side road's drawn part ends, the ground rises into a low hill just beyond it: the road is seen to climb
+  // over the crest rather than stop. Nothing is added within the main road's own flattened band.
+  stubEndHill(px, z) {
+    let h = 0;
+    for (const j of this.junctions) {
+      const end = this.reach(j); if (z < end - 60 || z > end + 240) continue;
+      const seg = j.options[1 - j.chosen], cz = end + 62, cx = seg.x(Math.min(cz, seg.z1 ?? cz));
+      if (Math.abs(cx - this.x(cz)) < this.half(cz) + 60) continue;
+      const dx = px - cx, dz = z - cz, q = (dx * dx) / (75 * 75) + (dz * dz) / (105 * 105);
+      h += 6.5 * Math.exp(-q * 1.8);
+    }
+    return h;
+  }
   terrain(px, z, offworld = this.off) {
     const R = this.roadsAt(z); let best = R[0], d = Math.abs(px - best.x);
     for (let i = 1; i < R.length; i++) { const di = Math.abs(px - R[i].x) / Math.max(R[i].fade, .05); if (di < d) { d = di; best = R[i]; } }
     const seg = best.seg, y = best.y, half = best.half, side = Math.sign(px - best.x) || 1;
-    let base = this.hills(px, z) + this.ridgeAt(seg, z, d);
+    let base = this.hills(px, z) + this.ridgeAt(seg, z, d) + this.stubEndHill(px, z);
     if (offworld) { const valley = -smooth(180, 620, best.x - px) * 30; return y + smooth(half + .8, half + 36, d) * (base + valley) + smooth(120, 400, d) * 12; }
     const tunnel = best.main ? this.tunnelAt(z) : null;
     // Parent road's character fades out as this road's own takes over after the junction.

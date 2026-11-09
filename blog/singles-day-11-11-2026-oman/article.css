@@ -1,0 +1,5 @@
+.ss-guide .ss-cal { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; max-width:420px; }
+.ss-guide .ss-cal i { display:grid; place-items:center; aspect-ratio:1; border-radius:8px; background:var(--fe-border); font-style:normal; font-size:12px; font-weight:800; color:var(--fe-ink); opacity:.6; }
+.ss-guide .ss-cal i.d1, .ss-guide .ss-cal i.d2, .ss-guide .ss-cal i.d3 { opacity:1; animation:ss-on 9s ease infinite; }
+.ss-guide .ss-cal i.d2 { animation-delay:1.2s; font-size:10px; } .ss-guide .ss-cal i.d3 { animation-delay:2.4s; }
+@keyframes ss-on { 0%,8% { background:var(--fe-border); color:var(--fe-ink); } 18%,90% { background:var(--fe-accent); color:#fff; } 100% { background:var(--fe-border); } }

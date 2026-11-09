@@ -45,6 +45,7 @@ export class DetailedModels{
    if(use&&p.detail&&this.loaded[citizenKey(p.i)]&&p.detail.asset!==this.loaded[citizenKey(p.i)]){this.scene.remove(p.detail.root);p.detail.mixer.stopAllAction();p.detail.root.traverse(o=>{if(o.isMesh)o.material.dispose();});p.detail=null;}if(use&&!p.detail)this.makeCitizen(p);const changed=p.detailed!==use;p.detailed=use;if(changed&&town)town.pose(p,['walk','cross','board'].includes(p.state),world.atmo.rain,0);if(!p.detail)continue;p.detail.root.visible=use;
    if(use){const d=p.detail;d.root.position.set(p.x,p.y,p.z);d.root.scale.setScalar(p.scale);
     const delta=Math.atan2(Math.sin(p.yaw-d.yaw),Math.cos(p.yaw-d.yaw));d.yaw+=delta*(1-Math.exp(-dt*10));d.root.rotation.y=d.yaw;
+    d.root.visible=!p.hidden;
     const speed=dt>0?Math.hypot(p.x-d.lastX,p.z-d.lastZ)/dt:0,walking=speed>.08&&speed<4;
     d.blend+=((walking?1:0)-d.blend)*(1-Math.exp(-dt*12));d.walk.setEffectiveWeight(d.blend);d.idle.setEffectiveWeight(1-d.blend);
     d.walk.setEffectiveTimeScale(Math.min(2,Math.max(.2,speed/(d.stride*p.scale))));d.mixer.update(dt);

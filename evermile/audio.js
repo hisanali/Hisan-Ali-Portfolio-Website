@@ -114,7 +114,85 @@ export class DriveAudio {
   }
 
   // Returns the current gear so the HUD can show it.
-  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded}) {
+  // A collision: a low thump through the body, a short metallic clatter, and above about 40 km/h a scatter of glass.
+  // Hitting something soft (a person or an animal) is a dull thud with no clatter.
+  crash(strength = .5, soft = false) {
+    const ctx = this.ctx, t = ctx.currentTime, k = Math.max(0, Math.min(1, strength)), vol = this.lastVolume ?? .35;
+    if (!vol) return;
+    const burst = (type, freq, q, gain, length, delay = 0) => {
+      const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(gain * vol, t + delay + .008); g.gain.exponentialRampToValueAtTime(.0001, t + delay + length);
+      src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + length + .05);
+    };
+    burst('lowpass', 140 + 120 * k, .7, (soft ? .9 : 1.4) * (.3 + .7 * k), .32 + .25 * k);
+    const thump = ctx.createOscillator(), tg = ctx.createGain(); thump.type = 'sine'; thump.frequency.setValueAtTime(90 + 30 * k, t); thump.frequency.exponentialRampToValueAtTime(38, t + .25);
+    tg.gain.setValueAtTime((soft ? .5 : .7) * (.3 + .7 * k) * vol, t); tg.gain.exponentialRampToValueAtTime(.0001, t + .3); thump.connect(tg).connect(this.out); thump.start(t); thump.stop(t + .32);
+    if (!soft) { burst('bandpass', 2600, 1.2, .5 * k, .14 + .1 * k, .01); burst('highpass', 1800, .8, .22 * k, .25, .05); }
+    if (!soft && k > .45) for (let i = 0; i < 6; i++) burst('bandpass', 5200 + Math.random() * 3000, 8, .12 * k, .08, .06 + i * .05 + Math.random() * .04);
+  }
+  // Another driver's horn, from a direction: a short two-note blast, a little lower and further away than yours.
+  hornBurst(distance = 20) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = (this.lastVolume ?? .35) * Math.max(.15, 1 - distance / 70);
+    if (!vol) return;
+    for (const [f, g] of [[392, .5], [494, .4]]) { const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), gain = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 1800; gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(g * vol * .18, t + .02); gain.gain.setValueAtTime(g * vol * .18, t + .32); gain.gain.linearRampToValueAtTime(0, t + .4); gain.gain.setValueAtTime(0, t + .46); gain.gain.linearRampToValueAtTime(g * vol * .18, t + .48); gain.gain.setValueAtTime(g * vol * .18, t + .7); gain.gain.linearRampToValueAtTime(0, t + .78); o.connect(lp).connect(gain).connect(this.out); o.start(t); o.stop(t + .8); }
+  }
+  // A car door: the latch click and the shut thunk.
+  door(open = false) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
+    const burst = (freq, q, gain, len, delay) => { const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(gain * vol, t + delay + .005); g.gain.exponentialRampToValueAtTime(.0001, t + delay + len); src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random()); src.stop(t + delay + len + .02); };
+    burst(2400, 4, .35, .06, 0);
+    if (!open) burst(180, 1.2, .9, .22, .12);
+  }
+  // A footstep: a short filtered tap, heavier when running, duller on grass and crunchier on gravel.
+  footstep(surface = 'paved', run = false) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = (this.lastVolume ?? .35) * (run ? .9 : .6); if (!vol) return;
+    const [freq, q, len] = surface === 'grass' ? [420, .8, .07] : surface === 'gravel' ? [1800, .6, .09] : surface === 'wood' ? [320, 1.4, .08] : surface === 'indoor' ? [900, 1.6, .06] : [700, 1.1, .06];
+    const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq * (.9 + Math.random() * .2); f.Q.value = q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.22 * vol, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+    src.connect(f).connect(g).connect(this.out); src.start(t, Math.random()); src.stop(t + len + .02);
+    if (surface === 'gravel') for (let i = 0; i < 3; i++) { const s2 = ctx.createBufferSource(); s2.buffer = this.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = 3000; const g2 = ctx.createGain(); const d = .01 + i * .012; g2.gain.setValueAtTime(0, t + d); g2.gain.linearRampToValueAtTime(.08 * vol, t + d + .003); g2.gain.exponentialRampToValueAtTime(.0001, t + d + .03); s2.connect(f2).connect(g2).connect(this.out); s2.start(t + d, Math.random()); s2.stop(t + d + .05); }
+  }
+  // The starter: a second of cranking (a low whine with a chug at the cranking rate), then the engine catches.
+  starter(seconds = 1.1) {
+    const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
+    const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.linearRampToValueAtTime(150, t + seconds); lp.type = 'lowpass'; lp.frequency.value = 900;
+    const chug = ctx.createOscillator(), cg = ctx.createGain(); chug.type = 'square'; chug.frequency.value = 7.5; cg.gain.value = .45; const depth = ctx.createGain(); depth.gain.value = .5; chug.connect(cg).connect(depth.gain);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12 * vol, t + .05); g.gain.setValueAtTime(.12 * vol, t + seconds - .15); g.gain.linearRampToValueAtTime(0, t + seconds);
+    o.connect(lp).connect(depth).connect(g).connect(this.out); o.start(t); chug.start(t); o.stop(t + seconds + .02); chug.stop(t + seconds + .02);
+    // The catch: a short rev flare as it fires up.
+    const flare = ctx.createOscillator(), fg = ctx.createGain(); flare.type = 'sawtooth'; flare.frequency.setValueAtTime(55, t + seconds - .1); flare.frequency.exponentialRampToValueAtTime(140, t + seconds + .25); flare.frequency.exponentialRampToValueAtTime(70, t + seconds + .9);
+    fg.gain.setValueAtTime(0, t + seconds - .1); fg.gain.linearRampToValueAtTime(.16 * vol, t + seconds + .1); fg.gain.exponentialRampToValueAtTime(.0001, t + seconds + 1); flare.connect(fg).connect(this.out); flare.start(t + seconds - .1); flare.stop(t + seconds + 1.05);
+  }
+  // A shop door chime: two bright notes.
+  chime() {
+    const ctx = this.ctx, t = ctx.currentTime, vol = this.lastVolume ?? .35; if (!vol) return;
+    for (const [f, d] of [[1318, 0], [1760, .14]]) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.12 * vol, t + d + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d + .9); o.connect(g).connect(this.out); o.start(t + d); o.stop(t + d + 1); }
+  }
+  // Room tone for cafés and shops: a low murmur of voices and crockery, faded in and out.
+  chatter(on, kind = 'cafe') {
+    const ctx = this.ctx, vol = this.lastVolume ?? .35;
+    if (!this.chatterGain) { this.chatterGain = ctx.createGain(); this.chatterGain.gain.value = 0; const src = ctx.createBufferSource(); src.buffer = this.noise; src.loop = true; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = .5; const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .9; lg.gain.value = .35; const lfo2 = ctx.createOscillator(), lg2 = ctx.createGain(); lfo2.frequency.value = 3.1; lg2.gain.value = .2; const mod = ctx.createGain(); mod.gain.value = .5; lfo.connect(lg).connect(mod.gain); lfo2.connect(lg2).connect(mod.gain); lfo.start(); lfo2.start(); src.connect(bp).connect(mod).connect(this.chatterGain).connect(this.out); src.start(0, Math.random()); }
+    this.chatterGain.gain.setTargetAtTime(on ? (kind === 'cafe' ? .16 : .07) * vol : 0, ctx.currentTime, .6);
+    if (on && Math.random() < .02) { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 2400 + Math.random() * 1200; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03 * vol, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .25); o.connect(g).connect(this.out); o.start(t); o.stop(t + .3); }
+  }
+  // Distant traffic and town hum, level 0..1.
+  townHum(level) {
+    const ctx = this.ctx, vol = this.lastVolume ?? .35;
+    if (!this.humGain) { this.humGain = ctx.createGain(); this.humGain.gain.value = 0; const src = ctx.createBufferSource(); src.buffer = this.noise; src.loop = true; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 160; const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .07; lg.gain.value = .4; const mod = ctx.createGain(); mod.gain.value = .6; lfo.connect(lg).connect(mod.gain); lfo.start(); src.connect(lp).connect(mod).connect(this.humGain).connect(this.out); src.start(0, Math.random()); }
+    this.humGain.gain.setTargetAtTime(Math.max(0, Math.min(1, level)) * .11 * vol, ctx.currentTime, 1.2);
+  }
+  // Driving into water: a splash that grows with speed, then a short wash.
+  splash(strength = .5) {
+    const ctx = this.ctx, t = ctx.currentTime, k = Math.max(0, Math.min(1, strength)), vol = this.lastVolume ?? .35;
+    if (!vol) return;
+    for (const [freq, gain, len, delay] of [[900, .9, .35, 0], [2400, .5, .5, .03], [400, .6, .8, .1]]) {
+      const src = ctx.createBufferSource(); src.buffer = this.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = .9;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(gain * (.25 + .75 * k) * vol, t + delay + .03); g.gain.exponentialRampToValueAtTime(.0001, t + delay + len);
+      src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
+    }
+  }
+  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true}) {
+    this.lastVolume = volume; this.engineOn = engineOn;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
     const box = GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;
@@ -139,7 +217,7 @@ export class DriveAudio {
     this.rough.gain.setTargetAtTime(.12 + (1 - load) * .12, t, .1);
     this.engineLp.frequency.setTargetAtTime(420 + load * 3200 * e.bright + this.rpm * .22, t, .05);
     const cut = this.shiftDip > 0 ? .5 : 1;
-    this.engineGain.gain.setTargetAtTime(volume * e.level * (.45 + load * .55) * (.8 + rev * .3) * cut, t, .04);
+    this.engineGain.gain.setTargetAtTime(volume * e.level * (.45 + load * .55) * (.8 + rev * .3) * cut * (engineOn ? 1 : 0), t, engineOn ? .04 : .25);
     this.intake.g.gain.setTargetAtTime(volume * .025 * throttle * rev * e.bright, t, .06);
     this.intake.f.frequency.setTargetAtTime(700 + rev * 1400, t, .1);
     this.clatter.g.gain.setTargetAtTime(e.clatter ? volume * .018 * (.5 + load * .5) : 0, t, .1);

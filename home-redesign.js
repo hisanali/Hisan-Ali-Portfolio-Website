@@ -176,18 +176,6 @@ if (window.location.hash) {
 }
 
 if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
-  const glow = document.querySelector('[data-cursor-glow]');
-  window.addEventListener('pointermove', (event) => {
-    if (glow) {
-      glow.style.opacity = '1';
-      glow.style.left = `${event.clientX}px`;
-      glow.style.top = `${event.clientY}px`;
-    }
-  }, { passive: true });
-  document.documentElement.addEventListener('mouseleave', () => {
-    if (glow) glow.style.opacity = '0';
-  });
-
   const growthStage = document.querySelector('[data-growth-stage]');
   const reactiveCards = [...document.querySelectorAll('.availability-card, .strategy-card')];
   growthStage?.addEventListener('pointermove', (event) => {
@@ -245,3 +233,31 @@ document.querySelector('#contactForm')?.addEventListener('submit', (event) => {
   const message = `Name: ${data.get('name')}\nEmail: ${data.get('email')}\n\n${data.get('message')}`;
   window.location.href = `mailto:workhisan@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
 });
+
+// Meet your growth partner: layered depth that follows the pointer.
+const partnerStage = document.querySelector('[data-partner]');
+if (partnerStage && !reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+  partnerStage.addEventListener('pointermove', (event) => {
+    const box = partnerStage.getBoundingClientRect();
+    partnerStage.style.setProperty('--mx', ((event.clientX - box.left) / box.width - 0.5).toFixed(3));
+    partnerStage.style.setProperty('--my', ((event.clientY - box.top) / box.height - 0.5).toFixed(3));
+  });
+  partnerStage.addEventListener('pointerleave', () => {
+    partnerStage.style.setProperty('--mx', '0');
+    partnerStage.style.setProperty('--my', '0');
+  });
+}
+
+// Live 3D portrait: download the three.js bundle only when the section is close.
+const avatarStage = document.querySelector('[data-avatar-stage]');
+if (avatarStage && 'IntersectionObserver' in window) {
+  const loadAvatar = new IntersectionObserver((entries) => {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    loadAvatar.disconnect();
+    const script = document.createElement('script');
+    script.src = avatarStage.dataset.bundle;
+    script.async = true;
+    document.body.appendChild(script);
+  }, { rootMargin: '600px' });
+  loadAvatar.observe(avatarStage);
+}

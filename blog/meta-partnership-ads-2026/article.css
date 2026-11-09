@@ -1,0 +1,16 @@
+.pa-guide .pa-ad { max-width:420px; margin:26px auto 10px; border-radius:16px; overflow:hidden; background:#fff; color:#262626; border:1px solid #dbdbdb; box-shadow:0 24px 48px -30px rgba(0,0,0,.35); }
+html.theme-dark .pa-guide .pa-ad { background:#000; color:#f5f5f5; border-color:#363636; }
+.pa-guide .pa-head { display:flex; align-items:center; gap:10px; padding:12px 14px; }
+.pa-guide .pa-head i { width:34px; height:34px; border-radius:50%; border:2px solid #fff; }
+.pa-guide .pa-head i.c { background:linear-gradient(135deg,#f58529,#dd2a7b); } .pa-guide .pa-head i.b { margin-left:-20px; background:linear-gradient(135deg,#a3620d,#0b7a75); }
+.pa-guide .pa-head b { display:block; font-size:.88rem; } .pa-guide .pa-head b span { font-weight:400; opacity:.7; } .pa-guide .pa-head small { font-size:.74rem; opacity:.7; }
+.pa-guide .pa-media { display:grid; place-items:center; aspect-ratio:4/5; max-height:360px; width:100%; padding:20px; text-align:center; background:linear-gradient(160deg,#f3d9b8,#d9b38a 45%,#7a5530); color:#fff; font-weight:800; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,.4); }
+.pa-guide .pa-cta { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#efefef; font-size:.84rem; } html.theme-dark .pa-guide .pa-cta { background:#262626; }
+.pa-guide .pa-cta b { color:#0095f6; }
+html body.fe-page.page-blog-article .blog-post-content .pa-ad .pa-cap { margin:0 !important; padding:10px 14px 14px !important; font-size:.86rem !important; line-height:1.5 !important; color:inherit !important; max-width:none; }
+.pa-guide .pa-steps { display:grid; gap:10px; margin:22px 0; }
+.pa-guide .pa-steps > div { display:grid; grid-template-columns:48px 1fr; column-gap:16px; padding:18px 20px; border-radius:16px; border:1px solid var(--fe-border); background:var(--fe-raised); color:var(--fe-ink); }
+.pa-guide .pa-steps > div > b { grid-row:span 2; display:grid; place-items:center; width:48px; height:48px; border-radius:50%; background:var(--fe-accent); color:#fff; font-family:'DM Serif Display',serif; font-size:1.4rem; font-weight:400; }
+html.theme-dark .pa-guide .pa-steps > div > b { color:#211a10; }
+html body.fe-page.page-blog-article .blog-post-content .pa-steps h3 { margin:2px 0 4px !important; padding:0 !important; font-size:1.05rem !important; color:var(--fe-ink) !important; }
+html body.fe-page.page-blog-article .blog-post-content .pa-steps p { margin:0 !important; font-size:.9rem !important; line-height:1.55 !important; color:var(--fe-muted) !important; max-width:none; }

@@ -268,7 +268,9 @@
       if (event.matches) resumePreview();
       else pausePreview();
     });
-    resumePreview();
+    // Start the preview only after the page has loaded, so the video does not compete with images and text.
+    if (document.readyState === 'complete') resumePreview();
+    else window.addEventListener('load', () => setTimeout(resumePreview, 300), { once: true });
   });
 
   const blogLandingHero = document.querySelector('.page-blog .blog-hero');

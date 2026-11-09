@@ -1,5 +1,6 @@
 import {RoadsideModels} from './roadside-models.js?v=20260927-train1';
 import * as T from './vendor/three.module.js';
+import {scanned} from './materials.js?v=20261103-realism1';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
 import {GlowPoints} from './glow.js?v=20260927-train1';
 import {random} from './math.js?v=20260927-train1';
@@ -61,7 +62,8 @@ export class Scenery {
     this.layouts = new Map(); this.time = 0;
     this.makeMaterials();
     this.glow = new GlowPoints(this.scene, 220, {fade: 1000});
-    this.lamps = [0, 1, 2].map(() => { const l = new T.PointLight(0xffd6a0, 0, 22, 1.8); this.scene.add(l); return l; });
+    // Real light from the street lamps nearest you (on foot or in the car): a warm pool on the pavement under each.
+    this.lamps = Array.from({length: 6}, () => { const l = new T.PointLight(0xffd6a0, 0, 24, 1.7); this.scene.add(l); return l; });
     this.lampColor = new T.Color(1, .82, .56);
   }
 
@@ -119,7 +121,8 @@ export class Scenery {
       }
     });
     this.mats = {
-      wall: {material: std({vertexColors: true, roughness: .88}), cast: true},
+      wall: {material: scanned('plaster', {vertexColors: true, normalScale: new T.Vector2(.45, .45)}, 2.6), cast: true},
+      brick: {material: scanned('brick', {vertexColors: true, normalScale: new T.Vector2(.7, .7)}, 2.2), cast: true},
       roof: {material: std({vertexColors: true, map: roofTiles, roughness: .78}), cast: true},
       shopGlass: {material: std({color: 0x707070, map: interior, emissive: 0xffe2b8, emissiveMap: interior, emissiveIntensity: 0, roughness: .12, metalness: .35})},
       win: {material: std({map: winMap, roughness: .15, metalness: .45})},
@@ -255,12 +258,14 @@ export class Scenery {
     const by = r.y(lot.z) + .075, put = frame(batch, bx, by, lot.z, yaw), W = lot.W, block = lot.kind === 'block';
     const D = block ? 10 + rng() * 2 : 8 + rng() * 3, floors = block ? 3 + Math.floor(rng() * 3) : rng() < .45 ? 2 : 1;
     const H = block ? 4.4 + (floors - 1) * 3.1 : floors === 2 ? 7.4 : 4.5, wall = WALLS[Math.floor(rng() * WALLS.length)], trim = rng() < .5 ? 0xf4f1ea : 0x3a3a3c;
-    put('wall', UNIT, D / 2, H / 2, 0, wall, D, H, W);
+    put(block ? (rng() < .75 ? 'brick' : 'wall') : rng() < .3 ? 'brick' : 'wall', UNIT, D / 2, H / 2, 0, wall, D, H, W);
     put('wall', UNIT, D / 2, .18, 0, 0x5d5a55, D + .06, .36, W + .06);
     put('wall', UNIT, .15, H + .18, 0, trim, .5, .36, W + .2);
     put('wall', UNIT, D / 2, H + .05, 0, 0x4a4a4a, D - .2, .1, W - .2);
     // Shopfront: lit window, door, sign board and LED strips.
     const gw = W * .6, sign = Math.floor(rng() * SHOPS.length), strip = 'strip' + Math.floor(rng() * STRIPS.length);
+    // Remembered on the lot so you can find the door on foot: the shop's name and where its door is.
+    { const [dx, dz] = put.world(-.4, W * .31); lot.name = SHOPS[sign]; lot.doorX = dx; lot.doorZ = dz; lot.doorYaw = yaw; }
     put('shopGlass', UNIT, -.03, 1.5, -W * .12, 0xffffff, .1, 2.3, gw);
     put('shopGlass', UNIT, -.03, 1.3, W * .31, 0xffffff, .1, 2.1, 1.1);
     put('glassTrim', UNIT, -.06, 2.7, 0, 0xffffff, .14, .1, W * .92);
@@ -637,14 +642,14 @@ export class Scenery {
       const d = Math.hypot(l.x - camera.position.x, l.z - camera.position.z);
       if (d < 900) this.glow.add(l.x, l.y, l.z, this.lampColor, this.lit * .55, 30);
       const df = Math.hypot(l.x - focus.x, l.z - focus.z);
-      if (df < 40) near.push([df, l]);
+      if (df < 70) near.push([df, l]);
     }
     this.glow.end();
     near.sort((a, b) => a[0] - b[0]);
     this.lamps.forEach((light, i) => {
       const l = near[i]?.[1];
       if (!l) { light.intensity = 0; return; }
-      light.position.set(l.x, l.y - .3, l.z); light.intensity = 80 * this.lit;
+      light.position.set(l.x, l.y - .3, l.z); light.intensity = 80 * this.lit * (i < 3 ? 1 : .85);
     });
   }
 }

@@ -1,0 +1,105 @@
+/* Language switch + Arabic (RTL) presentation for the shared site shell.
+   Arabic mode is html.lang-ar[dir="rtl"], set by the lang-init script in <head>
+   and site-i18n.js. */
+
+/* ---------- Switch buttons ---------- */
+.hd-lang {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 42px; min-width: 42px; padding: 0 14px;
+  color: var(--ua-ink); border: 1px solid var(--ua-line); border-radius: 99px; background: transparent;
+  font: 700 14px/1 "IBM Plex Sans Arabic", "Noto Kufi Arabic", var(--ua-sans, system-ui), sans-serif !important;
+  white-space: nowrap; cursor: pointer;
+  transition: transform .3s var(--hd-bounce, ease), background .2s, border-color .2s, color .2s;
+}
+.hd-lang:hover { transform: translateY(-1px); border-color: var(--ua-ink); }
+.hd-lang:focus-visible, .hd-m-lang:focus-visible { outline: 2px solid var(--ua-orange, #e2582c); outline-offset: 3px; }
+.hd-lang .hd-lang-short { display: none; font-size: 16px; }
+.hd-lang[lang="en"], .hd-m-lang[lang="en"] { font-family: var(--ua-sans, "Manrope"), system-ui, sans-serif !important; letter-spacing: 0; }
+
+.hd-m-lang {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px;
+  color: inherit; border: 1px solid currentColor; border-radius: 99px; background: transparent;
+  font: 700 14px/1 "IBM Plex Sans Arabic", "Noto Kufi Arabic", system-ui, sans-serif !important; cursor: pointer;
+}
+.hd-m-lang .hd-lang-short { display: none; }
+
+@media (max-width: 1180px) {
+  .hd-lang { width: 42px; padding: 0; }
+  .hd-lang .hd-lang-label { display: none; }
+  .hd-lang .hd-lang-short { display: inline; }
+  .hd-lang[lang="en"] .hd-lang-short { font-size: 12px; font-weight: 800; }
+}
+
+/* Avoid a flash of English while the Arabic dictionary loads. */
+html.i18n-loading body { opacity: 0 !important; }
+html.lang-ar body { transition: opacity .18s ease; }
+
+/* ---------- Arabic typography ---------- */
+html.lang-ar body,
+html.lang-ar body *:not(i):not(svg):not(svg *):not(code):not(pre):not(kbd):not(samp):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands):not(.ua-symbol-icon):not([data-i18n-skip]):not([data-i18n-skip] *):not([translate="no"]):not([translate="no"] *):not([lang="en"]):not([lang="en"] *) {
+  font-family: "IBM Plex Sans Arabic", "Manrope", system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+html.lang-ar body :is(h1, h2, h3, h4, h5, h6):not([data-i18n-skip]):not([data-i18n-skip] *):not([lang="en"]):not([lang="en"] *),
+html.lang-ar body :is(h1, h2, h3, h4, h5, h6):not([data-i18n-skip]):not([lang="en"]) *:not(i):not(svg):not(svg *):not(.fa):not(.fas):not(.far):not(.fab):not(.ua-symbol-icon) {
+  font-family: "Noto Kufi Arabic", "IBM Plex Sans Arabic", system-ui, sans-serif !important;
+  font-style: normal !important;
+  letter-spacing: 0 !important;
+}
+html.lang-ar body :is(h1, h2, h3):not([lang="en"]):not([data-i18n-skip]) { line-height: 1.4 !important; }
+html.lang-ar body :is(p, li, dd, blockquote) { line-height: 1.85; }
+/* Uppercase/italic styling has no Arabic equivalent. */
+html.lang-ar body :is(em, i:not([class*="fa"])) { font-style: normal; }
+
+/* Brand marks, email addresses and code stay left-to-right. */
+html.lang-ar .hd-brand, html.lang-ar .hd-m-home, html.lang-ar .ua-footer-brand,
+html.lang-ar a[href^="mailto:"], html.lang-ar a[href^="tel:"], html.lang-ar code, html.lang-ar pre, html.lang-ar kbd {
+  direction: ltr; unicode-bidi: isolate;
+}
+html.lang-ar .hd-brand, html.lang-ar .hd-m-home, html.lang-ar .ua-footer-brand {
+  font-family: var(--ua-display, "DM Serif Display"), Georgia, serif !important;
+}
+html.lang-ar input[type="email"], html.lang-ar input[type="url"], html.lang-ar input[type="tel"] { direction: ltr; text-align: right; }
+
+/* ---------- Directional icons point the other way in RTL ---------- */
+html[dir="rtl"] .ua-symbol-icon:is([data-ua-symbol="east"], [data-ua-symbol="west"], [data-ua-symbol="north-east"], [data-ua-symbol="chevron-right"], [data-ua-symbol="chevron-left"]),
+html[dir="rtl"] svg:has(> use[href="#hd-arrow"]),
+html[dir="rtl"] svg:has(> use[href="#hd-out"]),
+html[dir="rtl"] :is(.fa-arrow-right, .fa-arrow-left, .fa-chevron-right, .fa-chevron-left, .fa-arrow-right-long, .fa-angle-right, .fa-angle-left, .fa-long-arrow-alt-right, .fa-arrow-up-right-from-square) {
+  transform: scaleX(-1);
+}
+
+/* ---------- Shared shell adjustments ---------- */
+html[dir="rtl"] .hd-burger-icon i { left: auto; right: 0; }
+html[dir="rtl"] .ua-symbol-icon { margin-left: 0; margin-right: .35em; }
+html[dir="rtl"] .ua-symbol-icon.ua-symbol-solo { margin-right: 0; }
+
+/* ---------- Blog articles that are still English-only ---------- */
+.i18n-article-note {
+  margin: 0 0 28px; padding: 14px 18px;
+  border: 1px solid var(--ua-line, #d9d3c4); border-inline-start: 4px solid var(--ua-orange, #e2582c); border-radius: 12px;
+  color: var(--ua-ink, #15201b); background: color-mix(in srgb, var(--ua-orange, #e2582c) 7%, transparent);
+  font-size: 15px; font-weight: 600; line-height: 1.7; text-align: right;
+}
+html.lang-ar [dir="ltr"][data-i18n-skip] { text-align: left; }
+
+/* Decorative labels drawn by CSS content (not reachable by the text translator). */
+html.lang-ar .redesign-interior.page-blog-article .author-card::before { content: "بقلم"; }
+html.lang-ar .redesign-interior.page-blog-article .blog-post-hero::after { content: "مقالات"; }
+html.lang-ar .redesign-interior.page-blog-article .blog-featured-image::after { content: "قصة مميزة"; }
+html.lang-ar .redesign-interior.page-blog-article .blog-post-content .tip-box::before,
+html.lang-ar .redesign-interior.page-blog-article .blog-post-content .info-box::before { content: "ملاحظة"; }
+html.lang-ar .redesign-interior.page-about .skills-section::after { content: "الخبرات"; }
+html.lang-ar .redesign-interior.page-contact .contact-form-side::before { content: "طلب مشروع"; }
+html.lang-ar .field-guide-page .pocket-note::before { content: "ملاحظة ميدانية"; }
+html.lang-ar .sv-card.is-recommended::after { content: "موصى به"; }
+html.lang-ar .gx-goal.is-suggested::before { content: "اختيارك"; }
+html.lang-ar .page-work .proof-hero::before { content: "الأعمال"; }
+html.lang-ar body.tm-page .tm-steps a::before { content: "الخطوة "; }
+html.lang-ar .ig-guide .ig-t.r::after { content: "إعادة نشر"; }
+html.lang-ar :is(.multi-scoreboard, .tic-players) > div.is-active-turn::after { content: "يلعب الآن"; }
+html.lang-ar :is(.multi-scoreboard, .tic-players) > div.is-active-turn.is-your-card::after { content: "دورك"; }
+html.lang-ar :is(.multi-scoreboard, .tic-players) > div.is-winner::after { content: "الفائز"; }
+html.lang-ar .game-stage :is(.tic-mode-switch, .multi-mode) button:is([data-tic-mode="online"], [data-multi-mode="online"]):not(.is-active)::after { content: "مباشر"; }
+html.lang-ar .game-stage .game-panel-info > p::before { content: "طريقة اللعب"; }
+html.lang-ar .game-stage .game-panel.is-multi-online .game-panel-info > p::before { content: "مباراة عبر الإنترنت"; }
