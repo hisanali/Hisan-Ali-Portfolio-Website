@@ -173,4 +173,4 @@
 })();
 
 // Preview companion: overlays the page without changing document flow.
-(() => { const css=document.createElement("link");css.rel="stylesheet";css.href="/site-robot.css?v=13";document.head.append(css);const js=document.createElement("script");js.src="/site-robot.js?v=13";document.body.append(js);})();
+(() => { const css=document.createElement("link");css.rel="stylesheet";css.href="/site-robot.css?v=14";document.head.append(css);const js=document.createElement("script");js.src="/site-robot.js?v=14";document.body.append(js);})();
