@@ -152,11 +152,9 @@
   .site-cat .sc-tail{transform-origin:100% 100%}
   .site-cat .sc-sit .sc-tail{transform-origin:0% 50%;animation:sc-swish-sit 3.2s ease-in-out infinite}
   .site-cat[data-pose="stand"] .sc-tail{animation:sc-swish 2.4s ease-in-out infinite}
-  /* walk */
-  .site-cat[data-act="walk"] .sc-l1,.site-cat[data-act="walk"] .sc-l4{animation:sc-step var(--step,.56s) ease-in-out infinite}
-  .site-cat[data-act="walk"] .sc-l2,.site-cat[data-act="walk"] .sc-l3{animation:sc-step var(--step,.56s) ease-in-out infinite reverse}
-  .site-cat[data-act="walk"] .sc-torso,.site-cat[data-act="walk"] .sc-stand .sc-head{animation:sc-bob calc(var(--step,.56s)/2) ease-in-out infinite}
-  .site-cat[data-act="walk"] .sc-tail{animation-duration:1.1s}
+  /* Walking is driven by distance travelled, so planted paws do not slide. */
+  .site-cat[data-act="walk"] .sc-stand .sc-tail{animation:none}
+  .site-cat[data-act="walk"] .sc-stand .sc-head{transition:none}
   /* stretch */
   .site-cat[data-act="stretch"] .sc-stand{transform-origin:28% 96%;animation:sc-stretch 2.6s ease-in-out both}
   .site-cat[data-act="stretch"] .sc-l2,.site-cat[data-act="stretch"] .sc-l4{animation:sc-reach 2.6s ease-in-out both}
@@ -188,6 +186,8 @@
   .site-cat .sc-bubble.is-on{opacity:1;transform:translate(-10%,0) scale(1)}
   .site-cat .sc-heart{position:absolute;bottom:60%;left:var(--hx,50%);font-size:14px;color:#ef6b7b;pointer-events:none;animation:sc-heart 1.3s ease-out forwards}
   .site-cat.is-leaving{transition:transform 1.4s cubic-bezier(.5,0,.9,.6),opacity 1.4s}
+  .site-cat.is-shoo .sc-l1,.site-cat.is-shoo .sc-l4{animation:sc-step .32s ease-in-out infinite}
+  .site-cat.is-shoo .sc-l2,.site-cat.is-shoo .sc-l3{animation:sc-step .32s ease-in-out infinite reverse}
   @keyframes sc-step{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
   @keyframes sc-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.4px)}}
   @keyframes sc-swish{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(9deg)}}
@@ -210,6 +210,7 @@
 
   /* ---------- state ---------- */
   let root, bodyEl, bubble, x, dir, act = '', timer = 0, raf = 0, last = 0;
+  let gaitPhase = 0, velocity = 0, legs = [], walkingTorso, walkingHead, walkingTail;
   let target = null, speed = 42, mouse = { x: -1e4, y: -1e4, t: 0 }, lastMove = performance.now();
   let clickTimer = 0, bubbleTimer = 0, purrTimer = 0, petting = false, gone = false;
 
@@ -226,18 +227,19 @@
   const clamp = (v) => Math.min(maxX(), Math.max(minX(), v));
 
   const persist = (extra = {}) => !gone && save({ x: Math.round(x), dir, sleeping: act === 'sleep', at: Date.now(), ...extra });
-  const place = () => root.style.setProperty('--x', `${Math.round(x)}px`);
+  const place = () => root.style.setProperty('--x', `${x.toFixed(2)}px`);
   const face = (d) => { dir = d; root.classList.toggle('is-left', d < 0); };
 
   const set = (pose, action) => {
     if (gone && action !== 'walk') return;
+    if (act === 'walk' && action !== 'walk') resetGait();
     root.dataset.pose = pose;
     root.dataset.act = action;
     act = action;
     persist();
   };
 
-  const later = (fn, ms) => { clearTimeout(timer); if (!gone) timer = setTimeout(fn, ms); };
+  const later = (fn, ms) => { clearTimeout(timer); if (!gone && !reduced.matches) timer = setTimeout(fn, ms); };
 
   /* behaviours */
   const behaviours = {
@@ -273,7 +275,44 @@
     later(() => behaviours.stretch(), 2300);
   }
 
+  // Four staggered footfalls; each paw stays on the floor for 64% of a stride.
+  // Local backwards stance motion exactly cancels the cat's screen movement.
+  function renderGait(distance) {
+    if (reduced.matches) return;
+    const stride = 34, stance = .64;
+    gaitPhase = (gaitPhase + distance * 124 / W / stride) % 1;
+    const sway = Math.cos(gaitPhase * Math.PI * 4);
+    legs.forEach((leg) => {
+      const phase = (gaitPhase + leg.phase) % 1;
+      const grounded = phase < stance;
+      const swing = (phase - stance) / (1 - stance);
+      const ease = grounded ? 0 : swing * swing * (3 - 2 * swing);
+      const px = leg.x + (grounded ? stride * (stance / 2 - phase) : stride * stance * (ease - .5));
+      const lift = grounded ? 0 : Math.sin(Math.PI * swing) * 7;
+      const py = 81 - lift;
+      const hipY = 51 + sway * .55;
+      const kneeX = leg.x + (px - leg.x) * .45 + (leg.hind ? -5 : 3) + (leg.hind ? -1 : 1) * lift * .45;
+      const kneeY = (hipY + py) / 2;
+      leg.path.setAttribute('d', `M${leg.x-4} ${hipY} Q${kneeX-3} ${kneeY} ${px-2.7} ${py-2} Q${px-4} ${py+1} ${px} ${py+1} L${px+4} ${py+1} Q${px+6} ${py-1} ${px+2.7} ${py-3} Q${kneeX+3} ${kneeY} ${leg.x+4} ${hipY} Z`);
+      if (leg.paw) { leg.paw.setAttribute('cx', px + 1); leg.paw.setAttribute('cy', py); }
+    });
+    walkingTorso.style.transform = `translateY(${(sway * .55).toFixed(3)}px) rotate(${(Math.sin(gaitPhase * Math.PI * 2) * .65).toFixed(3)}deg)`;
+    walkingHead.style.transform = `translateY(${(-sway * .25).toFixed(3)}px) rotate(${(Math.sin(gaitPhase * Math.PI * 2 - .5) * .7).toFixed(3)}deg)`;
+    walkingTail.style.transform = `rotate(${(Math.sin(gaitPhase * Math.PI * 2 - .8) * 4).toFixed(3)}deg)`;
+  }
+
+  function resetGait() {
+    velocity = 0;
+    legs.forEach(leg => {
+      leg.path.setAttribute('d', leg.original);
+      if (leg.paw) { leg.paw.setAttribute('cx', leg.pawX); leg.paw.setAttribute('cy', leg.pawY); }
+    });
+    [walkingTorso, walkingHead, walkingTail].forEach(el => { if (el) el.style.removeProperty('transform'); });
+  }
+
   function walkTo(tx, s = 42, chase = false) {
+    if (reduced.matches) { target = null; set('sleep', 'sleep'); return; }
+    if (act !== 'walk') velocity = 0;
     target = tx; speed = s;
     face(tx >= x ? 1 : -1);
     root.style.setProperty('--step', `${(chase ? .3 : .56 * 42 / s).toFixed(2)}s`);
@@ -286,8 +325,12 @@
     const dt = Math.min(64, now - last) / 1000; last = now;
     if (target != null && act === 'walk') {
       const d = target - x;
-      const stepPx = speed * dt;
-      if (Math.abs(d) <= stepPx) {
+      // Ease into a walk and brake before settling into the next pose.
+      const desired = Math.min(speed, Math.sqrt(2 * 150 * Math.abs(d)));
+      velocity += Math.max(-180 * dt, Math.min(120 * dt, desired - velocity));
+      const stepPx = Math.min(Math.abs(d), velocity * dt);
+      renderGait(stepPx);
+      if (Math.abs(d) <= Math.max(.15, stepPx)) {
         x = target; target = null; place();
         persist();
         if (root.dataset.chasing) { delete root.dataset.chasing; set('sit', 'sit'); bubbleSay(pick(['*pounce*', 'got it!', 'mrrp!']), 1400); later(next, 3500); }
@@ -348,6 +391,8 @@
   function shoo() {
     clearTimeout(clickTimer); clearTimeout(timer); clearTimeout(purrTimer);
     root.classList.remove('is-purr');
+    resetGait();
+    root.classList.add('is-shoo');
     bubbleSay('fine. 😾', 1200);
     const off = x > innerWidth / 2 ? innerWidth + 40 : -W - 40;
     face(off > x ? 1 : -1);
@@ -426,6 +471,18 @@
     zWrap.replaceWith(...zWrap.childNodes);
     bodyEl = root.querySelector('.sc-body');
     bubble = root.querySelector('.sc-bubble');
+    legs = [
+      {selector: '.sc-l1', x: 40, phase: .5, hind: true},
+      {selector: '.sc-l2', x: 76, phase: .25, hind: false},
+      {selector: '.sc-l3', x: 46, phase: 0, hind: true},
+      {selector: '.sc-l4', x: 82, phase: .75, hind: false}
+    ].map(leg => {
+      const el = root.querySelector(leg.selector), path = el.querySelector('path'), paw = el.querySelector('ellipse');
+      return {...leg, path, paw, original: path.getAttribute('d'), pawX: paw?.getAttribute('cx'), pawY: paw?.getAttribute('cy')};
+    });
+    walkingTorso = root.querySelector('.sc-stand .sc-torso');
+    walkingHead = root.querySelector('.sc-stand .sc-head');
+    walkingTail = root.querySelector('.sc-stand .sc-tail');
     document.body.appendChild(root);
 
     const saved = read();
@@ -468,6 +525,13 @@
 
   const start = () => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', mount) : mount());
   start();
+  reduced.addEventListener?.('change', () => {
+    if (!root?.isConnected || gone) return;
+    clearTimeout(timer); cancelAnimationFrame(raf); raf = 0; target = null;
+    resetGait();
+    if (reduced.matches) set('sleep', 'sleep');
+    else { set('sit', 'sit'); later(next, 2000); }
+  });
   desktop.addEventListener?.('change', (e) => {
     if (!root) { if (e.matches) mount(); return; }
     root.style.display = e.matches ? '' : 'none';
