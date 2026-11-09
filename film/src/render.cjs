@@ -1,5 +1,5 @@
 // Renders film.html to numbered JPEG frames.
-// Usage: node render.cjs <outDir> [fps] [workers]   or   node render.cjs --stills <outDir> t1 t2 ...
+// Usage: node render.cjs <outDir> [fps] [workers] [firstFrame] [endFrame]   or   node render.cjs --stills <outDir> t1 t2 ...
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -29,10 +29,11 @@ async function open(browser) {
     const probe = await open(browser);
     const total = Math.round((await probe.evaluate(() => window.DURATION)) * fps);
     await probe.close();
-    let next = 0;
+    const last = args[4] ? Math.min(total, Number(args[4])) : total;
+    let next = Number(args[3] || 0);
     await Promise.all(Array.from({ length: workers }, async () => {
       const page = await open(browser);
-      while (next < total) {
+      while (next < last) {
         const f = next++;
         await page.evaluate(v => window.render(v), f / fps);
         await page.screenshot({ path: path.join(out, `f${String(f).padStart(5, '0')}.jpg`), type: 'jpeg', quality: 95 });

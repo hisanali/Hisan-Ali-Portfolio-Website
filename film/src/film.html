@@ -455,6 +455,8 @@ function sceneYears(t, alpha) {
 /* ---------- scene 7: the job ---------- */
 const QUOTE = [['“Replace', 0], ['random', 1], ['marketing', 1], ['activity', 1], ['with', 0], ['a', 0], ['focused', 2], ['system', 2],
   ['for', 0], ['visibility,', 0], ['demand', 0], ['and', 0], ['long-term', 0], ['growth.”', 0]];
+// Each word lands as the narrator says it.
+const QUOTE_AT = [70.40, 70.59, 71.05, 71.47, 72.01, 72.25, 72.36, 72.91, 73.85, 74.03, 75.09, 75.77, 75.95, 76.61];
 function sceneJob(t, alpha) {
   if (alpha <= 0) return;
   backdrop(alpha);
@@ -470,12 +472,12 @@ function sceneJob(t, alpha) {
   lines.forEach((ln, li) => {
     const total = ln[ln.length - 1].x + ln[ln.length - 1].ww, sx = (W - total) / 2, y = y0 + li * 104;
     ln.forEach(o => {
-      const a = 69.7 + o.i * 0.34, k = easeOut(seg(t, a, a + 0.5));
+      const a = QUOTE_AT[o.i] - 0.12, k = easeOut(seg(t, a, a + 0.45));
       ctx.fillStyle = rgba(o.w[1] === 1 ? C.orange : o.w[1] === 2 ? C.lime : C.ink, alpha * k);
       ctx.fillText(o.w[0], sx + o.x, y + (1 - k) * 16);
     });
   });
-  const k = seg(t, 75.2, 76);
+  const k = seg(t, 76.9, 77.5);
   font(22, MONO, 500); ctx.textAlign = 'center'; ctx.fillStyle = rgba(C.muted, alpha * k);
   ctx.fillText('— THE WHOLE JOB, IN ONE LINE', W / 2, y0 + lines.length * 104 + 10);
 }
@@ -517,7 +519,7 @@ function render(t) {
   sceneShift(t, env(t, 31.8, 43.6, 0.8, 0.6));
   sceneLeaks(t, env(t, 43.2, 60.3, 0.8, 0.7));
   sceneYears(t, env(t, 59.9, 69.3, 0.8, 0.7));
-  sceneJob(t, env(t, 68.9, 78.2, 0.8, 0.8));
+  sceneJob(t, env(t, 68.9, 78.6, 0.8, 0.7));
   city(t, easeInOut(seg(t, 77.4, 84.5)), seg(t, 77.6, 79), 'dawn');
   endCard(t);
 
