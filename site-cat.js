@@ -1,8 +1,8 @@
 /*
  * Miso — a small ginger cat who lives along the bottom of the screen on desktop.
  * Purely decorative: it walks, sits, grooms, stretches, yawns and naps on its own,
- * follows the cursor with its eyes, chases the pointer along the bottom edge,
- * purrs when petted (hover), meows when clicked and leaves when double-clicked.
+ * follows the cursor with its eyes, turns its head toward the pointer,
+ * leans into strokes when petted, meows when clicked and leaves when double-clicked.
  * Self-contained: injects its own markup and styles. Loaded by site-shell.js.
  */
 (() => {
@@ -17,7 +17,7 @@
   const save = (data) => { try { sessionStorage.setItem(STORE, JSON.stringify(data)); } catch {} };
   if (read().away) return;
 
-  const W = 104; // rendered cat width in px
+  const W = 116; // rendered cat width in px
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -29,16 +29,16 @@
       <path class="sc-ear-in" d="M-11 -7.5 C -11 -12, -10.4 -16, -9.8 -19.5 C -7.6 -17, -5.6 -15, -4 -12.8 Z"/>
       <path class="sc-ear-in" d="M5.5 -13 C 8 -15, 10.4 -16.8 13 -18.4 C 13.6 -14.5, 13.6 -10.5, 13.2 -7 Z"/>
       <path class="sc-tuft" d="M-9.6 -9.5 l-.6 -5.5 M-7.8 -10.8 l.2 -4.6 M-6 -11.4 l.8 -3.4 M7.4 -12.6 l2 -3.4 M9.6 -11.4 l1.4 -4.4 M11.6 -9.8 l.6 -4.6"/>
-      <path class="sc-fur" d="M-15.5 1 C -16.5 -9, -8 -14.8, 1 -14.8 C 10 -14.8, 18 -9, 17.5 1 C 17.3 5.5, 15 9.5, 11 12 C 7 14.2, -3 14.2, -7.5 12 C -11.6 10, -15.3 6, -15.5 1 Z"/>
+      <path class="sc-fur sc-skull" d="M-15.5 1 C -16.5 -9, -8 -14.8, 1 -14.8 C 10 -14.8, 18 -9, 17.5 1 C 17.3 5.5, 15 9.5, 11 12 C 7 14.2, -3 14.2, -7.5 12 C -11.6 10, -15.3 6, -15.5 1 Z"/>
       <path class="sc-fur" d="M-15.3 2 l-4 1.6 l3.6 1.2 l-3 2 l4.2 .2 Z M17.2 2 l4 1.4 l-3.6 1.3 l3 2 l-4.2 .3 Z"/>
       <path class="sc-stripe sc-soft" d="M-3.2 -14 c -.4 2, -.2 4, .3 6 M1 -14.6 v6.4 M5.2 -14 c .4 2, .2 4, -.3 6 M-12.5 -3 l4 1.5 M14.5 -3 l-4 1.5"/>
       <path class="sc-shade-eye" d="M-9.2 -4.6 q4.2 -2.6 8.4 0 M4.3 -4.6 q4.2 -2.6 8.4 0"/>
       <g class="sc-eyes">
-        <g class="sc-eye"><path class="sc-iris" d="M-9 -1 C -8 -5, -2 -5, -1 -1 C -2 3, -8 3, -9 -1 Z"/><ellipse class="sc-pupil" cx="-5" cy="-1" rx="1" ry="3"/><circle class="sc-glint" cx="-3.7" cy="-2.6" r=".9"/><circle class="sc-glint" cx="-6.2" cy=".9" r=".35"/></g>
+        <g class="sc-eye"><path class="sc-iris" d="M-7.6 -1 C -6.8 -4.4, -2.4 -4.4, -1.6 -1 C -2.4 2.4, -6.8 2.4, -7.6 -1 Z"/><ellipse class="sc-pupil" cx="-5" cy="-1" rx="1" ry="3"/><circle class="sc-glint" cx="-3.7" cy="-2.6" r=".9"/><circle class="sc-glint" cx="-6.2" cy=".9" r=".35"/></g>
         <g class="sc-eye"><path class="sc-iris" d="M4.5 -1 C 5.5 -5, 11.5 -5, 12.5 -1 C 11.5 3, 5.5 3, 4.5 -1 Z"/><ellipse class="sc-pupil" cx="8.5" cy="-1" rx="1" ry="3"/><circle class="sc-glint" cx="9.8" cy="-2.6" r=".9"/><circle class="sc-glint" cx="7.3" cy=".9" r=".35"/></g>
       </g>
       <path class="sc-closed" d="M-8.8 -.4 q3.8 2.8 7.6 0 M4.7 -.4 q3.8 2.8 7.6 0"/>
-      <ellipse class="sc-muzzle" cx="2.2" cy="7.2" rx="4.4" ry="3.4"/>
+      <ellipse class="sc-muzzle" cx="2.2" cy="7.2" rx="3.6" ry="3.4"/>
       <ellipse class="sc-muzzle" cx="6.8" cy="7.2" rx="4.4" ry="3.4"/>
       <ellipse class="sc-muzzle" cx="4.5" cy="10.6" rx="3" ry="1.8"/>
       <path class="sc-whisker-dots" d="M1 6.6 h.01 M2.4 8 h.01 M0.6 9 h.01 M8 6.6 h.01 M6.6 8 h.01 M8.4 9 h.01"/>
@@ -48,12 +48,27 @@
       <path class="sc-whisker" d="M0 7 Q -10 4.5 -22 4.6 M0 8.4 Q -10 8.6 -21 11 M.4 9.6 Q -8 11.6 -17 15 M9 7 Q 19 4.5 29 4 M9 8.4 Q 19 8.6 28 11 M8.6 9.6 Q 16 11.6 24 15"/>
     </g></g>`;
 
+  // A separate side profile keeps the walking cat anatomically coherent.
+  const profileHead = () => `<g class="sc-head"><g class="sc-attention">
+    <path fill="#99552e" d="M-9 -5 L-11 -21 Q-5 -19 0 -11 Z"/>
+    <path class="sc-fur sc-skull" d="M-11 -3 Q-16 -13 -4 -15 L2 -24 Q7 -20 8 -12 Q13 -9 13 -4 L20 1 Q22 5 17 7 L13 8 Q9 14 0 11 Q-8 10 -11 -3Z"/>
+    <path class="sc-ear-in" d="M0 -14 L3 -20 Q6 -17 6 -12Z"/>
+    <path class="sc-tuft" d="M1 -14 l2 -4 M3 -13 l1 -3"/>
+    <path class="sc-stripe" d="M-7 -10 l4 5 M-11 -4 l6 3 M-9 3 l5 1 M7 -9 l3 2"/>
+    <path class="sc-muzzle" d="M13 1 Q19 0 20 4 Q20 7 14 8 Q10 10 8 6 Q8 3 13 1Z"/>
+    <g class="sc-eye"><path class="sc-iris" d="M4 -4 Q8 -8 11 -4 Q8 -1 4 -4Z"/><ellipse class="sc-pupil" cx="8" cy="-4" rx=".7" ry="1.8"/><circle class="sc-glint" cx="8.5" cy="-4.8" r=".45"/></g>
+    <path class="sc-nose" d="M18 1 L22 2 L20 4 L18 3Z"/>
+    <path class="sc-line" d="M20 4 Q18 7 14 6"/>
+    <path class="sc-whisker" d="M15 4 Q23 2 29 3 M14 5 Q24 5 29 8 M14 6 Q21 8 25 12"/>
+    <path class="sc-whisker-dots" d="M14 3 h.01 M16 5 h.01"/>
+  </g></g>`;
+
   const svg = `
   <svg class="sc-svg" viewBox="0 0 124 86" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="scg-fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6b878"/><stop offset=".45" stop-color="#e5934f"/><stop offset="1" stop-color="#b9672c"/></linearGradient>
+      <linearGradient id="scg-fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dbb082"/><stop offset=".45" stop-color="#c58c54"/><stop offset="1" stop-color="#975c32"/></linearGradient>
       <linearGradient id="scg-fur-dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c77a3c"/><stop offset="1" stop-color="#8a4a1f"/></linearGradient>
-      <radialGradient id="scg-head" cx=".42" cy=".32" r=".75"><stop offset="0" stop-color="#f9c389"/><stop offset=".55" stop-color="#e8975a"/><stop offset="1" stop-color="#bf6d31"/></radialGradient>
+      <radialGradient id="scg-head" cx=".42" cy=".32" r=".75"><stop offset="0" stop-color="#e3bc91"/><stop offset=".55" stop-color="#cb925c"/><stop offset="1" stop-color="#9e633b"/></radialGradient>
       <linearGradient id="scg-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6ea"/><stop offset="1" stop-color="#e9c49c"/></linearGradient>
       <radialGradient id="scg-ear" cx=".5" cy=".75" r=".8"><stop offset="0" stop-color="#f6b9b0"/><stop offset="1" stop-color="#c97d72"/></radialGradient>
       <radialGradient id="scg-iris" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#f1f5a0"/><stop offset=".55" stop-color="#b8cf4e"/><stop offset="1" stop-color="#6b8424"/></radialGradient>
@@ -61,18 +76,18 @@
       <linearGradient id="scg-tail" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#e18d4b"/><stop offset="1" stop-color="#c36f33"/></linearGradient>
       <filter id="scf-fur" x="-8%" y="-12%" width="116%" height="124%" color-interpolation-filters="sRGB">
         <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="4" result="edge"/>
-        <feDisplacementMap in="SourceGraphic" in2="edge" scale="1.5" xChannelSelector="R" yChannelSelector="G" result="fuzzy"/>
+        <feDisplacementMap in="SourceGraphic" in2="edge" scale=".45" xChannelSelector="R" yChannelSelector="G" result="fuzzy"/>
         <feTurbulence type="fractalNoise" baseFrequency=".13 .75" numOctaves="2" seed="11" result="grain"/>
-        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 .18  0 0 0 0 .07  0 0 0 0 0  0 0 0 -1.1 .62" result="dark"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 .18  0 0 0 0 .07  0 0 0 0 0  0 0 0 -.22 .12" result="dark"/>
         <feComposite in="dark" in2="fuzzy" operator="in" result="darkIn"/>
-        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 1  0 0 0 0 .93  0 0 0 0 .8  0 0 0 1.3 -.8" result="light"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 1  0 0 0 0 .93  0 0 0 0 .8  0 0 0 .25 -.15" result="light"/>
         <feComposite in="light" in2="fuzzy" operator="in" result="lightIn"/>
         <feMerge><feMergeNode in="fuzzy"/><feMergeNode in="darkIn"/><feMergeNode in="lightIn"/></feMerge>
       </filter>
       <filter id="scf-soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".55"/></filter>
     </defs>
 
-    <g class="sc-pose sc-stand" filter="url(#scf-fur)">
+    <g class="sc-pose sc-stand">
       <g class="sc-tail"><path class="sc-tail-path" d="M32 47 C 16 46, 9 32, 15 16 C 16.5 12.5, 19 11.5, 20.5 13"/><path class="sc-tail-ring" d="M32 47 C 16 46, 9 32, 15 16 C 16.5 12.5, 19 11.5, 20.5 13"/></g>
       <g class="sc-leg sc-l1"><path class="sc-fur-dark" d="M34 51 C 31 59, 37 64, 36.5 70 L 36 79.5 C 37.5 82.4, 42 82.6, 44 80.5 L 43.6 70 C 46.5 63, 47 57, 45 51 Z"/></g>
       <g class="sc-leg sc-l2"><path class="sc-fur-dark" d="M71 52 C 71.5 62, 72 72, 72 80 C 73.6 82.4, 77.6 82.4, 79.6 80.6 C 79.5 72, 80 62, 80.5 52 Z"/></g>
@@ -81,14 +96,15 @@
         <ellipse class="sc-fur" cx="39" cy="52" rx="12.5" ry="12"/>
         <path class="sc-belly" d="M48 61 C 56 65.5, 70 66, 80 61 C 76 58, 58 58, 48 61 Z"/>
         <path class="sc-stripe sc-soft" d="M46 36.5 c 2.6 5, 2 9, -.6 13 M55.5 35.6 c 2.6 5, 2.2 9, -.4 13 M64.5 35.8 c 2.2 4.6, 1.8 8, -.4 11.5 M73 36.8 c 1.6 3.6, 1.2 6.4, -.6 9 M36.5 41 c 2.4 4, 2 8, -.4 11 M31 47 c 1.6 3, 1.2 6, -.4 8"/>
+        <path class="sc-shade" d="M74 38 Q80 42 82 50"/>
         <path class="sc-shade" d="M30 56 C 38 64, 60 66, 84 59"/>
       </g>
-      <g class="sc-leg sc-l3"><path class="sc-fur" d="M39 51 C 36 59, 42 64, 41.6 70 L 41.2 79.6 C 42.6 82.8, 49.4 82.8, 51 80.4 L 49.4 70 C 52.6 63, 53 57, 51 51 Z"/><ellipse class="sc-paw" cx="46.2" cy="81.2" rx="5.4" ry="2"/></g>
-      <g class="sc-leg sc-l4"><path class="sc-fur" d="M77 53 C 77.5 62, 78 72, 78 80 C 79.6 82.8, 85.4 82.8, 87.4 80.6 C 87.2 72, 87.8 62, 88 53 Z"/><ellipse class="sc-paw" cx="82.6" cy="81.2" rx="5.2" ry="2"/></g>
-      <g transform="translate(93 33)">${head()}</g>
+      <g class="sc-leg sc-l3"><path class="sc-fur" d="M39 51 C 36 59, 42 64, 41.6 70 L 41.2 79.6 C 42.6 82.8, 49.4 82.8, 51 80.4 L 49.4 70 C 52.6 63, 53 57, 51 51 Z"/><ellipse class="sc-paw" cx="46.2" cy="81.2" rx="4" ry="1.6"/></g>
+      <g class="sc-leg sc-l4"><path class="sc-fur" d="M77 53 C 77.5 62, 78 72, 78 80 C 79.6 82.8, 85.4 82.8, 87.4 80.6 C 87.2 72, 87.8 62, 88 53 Z"/><ellipse class="sc-paw" cx="82.6" cy="81.2" rx="3.8" ry="1.6"/></g>
+      <g transform="translate(91 40) scale(.86)">${profileHead()}</g>
     </g>
 
-    <g class="sc-pose sc-sit" filter="url(#scf-fur)">
+    <g class="sc-pose sc-sit">
       <g class="sc-tail"><path class="sc-tail-path" d="M37 77 C 50 86, 82 86, 95 78 C 98 76, 99.5 73.5, 98.5 72"/><path class="sc-tail-ring" d="M37 77 C 50 86, 82 86, 95 78 C 98 76, 99.5 73.5, 98.5 72"/></g>
       <ellipse class="sc-fur-dark" cx="40" cy="80" rx="10.5" ry="3.4"/>
       <path class="sc-fur" d="M27 66 C 25 52, 36 43, 50 44 C 62 45, 70 56, 69 68 C 68 78, 60 82, 47 82 C 35 82, 28 76, 27 66 Z"/>
@@ -97,18 +113,18 @@
       <path class="sc-fur" d="M52 44 C 52 34, 58 27, 65 28 C 74 29, 79 40, 78.5 54 C 78 64, 74 72, 66 72 C 58 72, 53 64, 52 54 Z"/>
       <path class="sc-belly" d="M64 36 C 70 37, 74 46, 73.5 56 C 73 64, 70 70, 66.5 70 C 63 68, 61.5 60, 61.6 52 C 61.6 44, 61.5 38, 64 36 Z"/>
       <path class="sc-chest-fluff" d="M63 40 l2 2.4 l1.6 -2.2 l1.8 2.6 l1.8 -2.2 M62.8 46 l2 2.2 l1.8 -2 l1.8 2.4 l2 -2"/>
-      <g class="sc-raise"><path class="sc-fur" d="M66 56 C 66.3 64, 66.4 73, 66.4 80.4 C 68 82.8, 73.8 82.8, 75.6 80.6 C 75.4 73, 75.6 64, 76 56 Z"/><ellipse class="sc-paw" cx="71" cy="81.2" rx="5.2" ry="2"/></g>
-      <g transform="translate(68 27)">${head()}</g>
+      <g class="sc-raise"><path class="sc-fur" d="M66 56 C 66.3 64, 66.4 73, 66.4 80.4 C 68 82.8, 73.8 82.8, 75.6 80.6 C 75.4 73, 75.6 64, 76 56 Z"/><ellipse class="sc-paw" cx="71" cy="81.2" rx="3.8" ry="1.6"/></g>
+      <g transform="translate(68 30) scale(.82 .87)">${head()}</g>
     </g>
 
-    <g class="sc-pose sc-sleep" filter="url(#scf-fur)">
+    <g class="sc-pose sc-sleep">
       <g class="sc-breathe">
         <path class="sc-fur" d="M21 70 C 20 60, 34 54, 54 54 C 74 54, 92 59, 92 70 C 92 79, 76 83, 56 83 C 36 83, 22 79, 21 70 Z"/>
         <path class="sc-stripe sc-soft" d="M38 55.6 c 2.6 4, 2.6 7.6, .4 11 M49 54.2 c 2.6 4.2, 2.6 8, .4 11.4 M60 54.4 c 2.6 4.2, 2.6 8, .4 11.4 M71 56 c 2.2 3.8, 2.2 7, .4 10 M29 59 c 2 3, 2 6, .4 9"/>
         <path class="sc-shade" d="M24 74 C 36 82, 74 84, 90 74"/>
       </g>
       <path class="sc-tail-path" d="M22 71 C 15 86, 56 88, 80 81 C 84 80, 86 78, 85.5 76.5"/><path class="sc-tail-ring" d="M22 71 C 15 86, 56 88, 80 81 C 84 80, 86 78, 85.5 76.5"/>
-      <g transform="translate(86 64) rotate(10) scale(.94)">${head()}</g>
+      <g transform="translate(86 64) rotate(10) scale(.76)">${head()}</g>
     </g>
   </svg>`;
 
@@ -121,21 +137,22 @@
   .site-cat .sc-body{position:absolute;inset:0;pointer-events:auto;cursor:grab;transform-origin:50% 100%}
   .site-cat.is-left .sc-flip{transform:scaleX(-1)}
   .site-cat .sc-flip{position:absolute;inset:0;transform-origin:50% 50%}
-  .site-cat .sc-svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}
+  .site-cat .sc-svg{display:block;width:100%;height:100%;overflow:visible}
   .site-cat .sc-shadow{position:absolute;left:18%;right:14%;bottom:-3px;height:7px;border-radius:50%;background:rgba(0,0,0,.16);filter:blur(2px)}
   .site-cat svg *{transform-box:fill-box}
-  .site-cat .sc-fur{fill:url(#scg-fur)} .site-cat .sc-head>.sc-fur:nth-of-type(n+5){fill:url(#scg-head)} .site-cat .sc-fur-dark{fill:url(#scg-fur-dark)} .site-cat .sc-belly,.site-cat .sc-muzzle{fill:url(#scg-belly)}
-  .site-cat .sc-ear-in{fill:url(#scg-ear)} .site-cat .sc-paw{fill:#f6dcc0;opacity:.9}
+  .site-cat .sc-fur{fill:url(#scg-fur);filter:url(#scf-fur)} .site-cat .sc-skull{fill:url(#scg-head)} .site-cat .sc-fur-dark{fill:url(#scg-fur-dark)} .site-cat .sc-belly,.site-cat .sc-muzzle{fill:url(#scg-belly)}
+  .site-cat .sc-ear-in{fill:url(#scg-ear)} .site-cat .sc-paw{fill:#dab48b;opacity:.8}
   .site-cat .sc-tuft,.site-cat .sc-chest-fluff{fill:none;stroke:#fff4e6;stroke-width:.55;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
   .site-cat .sc-chest-fluff{stroke-width:.8;opacity:.6}
   .site-cat .sc-shade{fill:none;stroke:#7a3d14;stroke-width:3;opacity:.22;filter:url(#scf-soft)}
   .site-cat .sc-shade-eye{fill:none;stroke:#9c5422;stroke-width:1.1;opacity:.55;stroke-linecap:round}
   .site-cat .sc-soft{filter:url(#scf-soft)}
   .site-cat .sc-whisker-dots{stroke:#a0663c;stroke-width:.7;stroke-linecap:round}
-  .site-cat .sc-tail-ring{fill:none;stroke:var(--stripe);stroke-width:7.6;stroke-linecap:butt;stroke-dasharray:3.2 5.4;opacity:.5;filter:url(#scf-soft)}
-  .site-cat .sc-stripe{fill:none;stroke:var(--stripe);stroke-width:2.8;stroke-linecap:round;opacity:.62}
-  .site-cat .sc-tail-path{fill:none;stroke:url(#scg-tail);stroke-width:7.5;stroke-linecap:round}
+  .site-cat .sc-tail-ring{fill:none;stroke:var(--stripe);stroke-width:5.8;stroke-linecap:butt;stroke-dasharray:3.2 5.4;opacity:.5;filter:url(#scf-soft)}
+  .site-cat .sc-stripe{fill:none;stroke:var(--stripe);stroke-width:1.8;stroke-linecap:round;opacity:.43}
+  .site-cat .sc-tail-path{fill:none;stroke:url(#scg-tail);stroke-width:5.8;stroke-linecap:round}
   .site-cat .sc-iris{fill:url(#scg-iris);stroke:#2e2410;stroke-width:.6} .site-cat .sc-pupil{fill:#1b1410;transform:translate(var(--px,0px),var(--py,0px));transition:transform .18s ease-out}
+  .site-cat .sc-stand .sc-pupil{transform:translate(calc(var(--px,0px) * .5),calc(var(--py,0px) * .6))}
   .site-cat .sc-glint{fill:#fff;opacity:.95}
   .site-cat .sc-nose{fill:url(#scg-nose)}
   .site-cat .sc-line,.site-cat .sc-closed{fill:none;stroke:var(--line);stroke-width:1.2;stroke-linecap:round}
@@ -144,13 +161,13 @@
   .site-cat .sc-closed{display:none}
   .site-cat .sc-pose{display:none}
   .site-cat[data-pose="stand"] .sc-stand,.site-cat[data-pose="sit"] .sc-sit,.site-cat[data-pose="sleep"] .sc-sleep{display:inline}
-  .site-cat .sc-eye{transform-origin:50% 50%;transition:transform .09s}
+  .site-cat .sc-eye{transform-origin:50% 30%;transition:transform .09s}
   .site-cat.is-blink .sc-eye{transform:scaleY(.1)}
   .site-cat[data-pose="sleep"] .sc-eyes{display:none} .site-cat[data-pose="sleep"] .sc-closed{display:inline}
   .site-cat .sc-head{transform-origin:50% 80%;transition:transform .35s ease}
   .site-cat .sc-leg{transform-origin:50% 6%}
   .site-cat .sc-tail{transform-origin:100% 100%}
-  .site-cat .sc-sit .sc-tail{transform-origin:0% 50%;animation:sc-swish-sit 3.2s ease-in-out infinite}
+  .site-cat .sc-sit .sc-tail{transform-origin:0% 50%;animation:sc-swish-sit 8.7s ease-in-out infinite}
   .site-cat[data-pose="stand"] .sc-tail{animation:sc-swish 2.4s ease-in-out infinite}
   /* Walking is driven by distance travelled, so planted paws do not slide. */
   .site-cat[data-act="walk"] .sc-stand .sc-tail{animation:none}
@@ -170,9 +187,9 @@
   /* look around */
   .site-cat[data-act="look"] .sc-sit .sc-head{animation:sc-look 4s ease-in-out both}
   /* sleep */
-  .site-cat .sc-breathe{transform-origin:50% 100%;animation:sc-breathe 3.4s ease-in-out infinite}
+  .site-cat .sc-breathe{transform-origin:50% 100%;animation:sc-breathe 4.4s ease-in-out infinite}
   .site-cat .sc-z{position:absolute;right:6px;top:-6px;font:800 13px/1 system-ui,sans-serif;color:var(--fur-dark);opacity:0;pointer-events:none}
-  .site-cat[data-pose="sleep"] .sc-z{animation:sc-z 3s ease-out infinite}
+  .site-cat[data-pose="sleep"] .sc-z{display:none}
   .site-cat[data-pose="sleep"] .sc-z:nth-child(2){animation-delay:1s;font-size:11px}
   .site-cat[data-pose="sleep"] .sc-z:nth-child(3){animation-delay:2s;font-size:9px}
   .site-cat.is-left .sc-z{right:auto;left:6px}
@@ -191,15 +208,15 @@
   @keyframes sc-step{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
   @keyframes sc-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.4px)}}
   @keyframes sc-swish{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(9deg)}}
-  @keyframes sc-swish-sit{0%,100%{transform:rotate(0)}40%{transform:rotate(-7deg)}60%{transform:rotate(-2deg)}}
+  @keyframes sc-swish-sit{0%,72%,100%{transform:rotate(0)}80%{transform:rotate(-4deg)}88%{transform:rotate(1deg)}}
   @keyframes sc-stretch{0%,100%{transform:rotate(0)}30%,72%{transform:rotate(10deg) translateY(-2px)}}
-  @keyframes sc-reach{0%,100%{transform:rotate(0)}30%,72%{transform:rotate(-58deg)}}
+  @keyframes sc-reach{0%,100%{transform:rotate(0)}30%,72%{transform:rotate(-28deg)}}
   @keyframes sc-tail-up{0%,100%{transform:rotate(0)}30%,72%{transform:rotate(18deg)}}
   @keyframes sc-paw-up{0%,100%{transform:rotate(0)}18%,82%{transform:rotate(-158deg)}30%,46%,62%{transform:rotate(-150deg)}38%,54%,70%{transform:rotate(-164deg)}}
   @keyframes sc-lick{0%,100%{transform:rotate(0)}18%,82%{transform:rotate(14deg)}30%,46%,62%{transform:rotate(18deg)}38%,54%,70%{transform:rotate(10deg)}}
   @keyframes sc-yawn{0%,100%{transform:scaleY(0)}35%,70%{transform:scaleY(1)}}
   @keyframes sc-look{0%,100%{transform:rotate(0)}20%,40%{transform:rotate(-10deg) translateX(-1px)}55%,80%{transform:rotate(8deg)}}
-  @keyframes sc-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.05)}}
+  @keyframes sc-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.018)}}
   @keyframes sc-z{0%{opacity:0;transform:translate(0,0) scale(.7)}25%{opacity:.85}100%{opacity:0;transform:translate(10px,-30px) scale(1.15)}}
   @keyframes sc-hop{0%,100%{transform:translateY(0) scaleY(1)}15%{transform:translateY(0) scaleY(.9)}45%{transform:translateY(-20px) scaleY(1.04)}80%{transform:translateY(0) scaleY(.95)}}
   @keyframes sc-purr{0%,100%{transform:translateX(0)}50%{transform:translateX(.6px)}}
@@ -300,7 +317,7 @@
   // Local backwards stance motion exactly cancels the cat's screen movement.
   function renderGait(distance) {
     if (reduced.matches) return;
-    const stride = 34, stance = .64;
+    const stride = 30, stance = .66;
     gaitPhase = (gaitPhase + distance * 124 / W / stride) % 1;
     const sway = Math.cos(gaitPhase * Math.PI * 4);
     legs.forEach((leg) => {
@@ -309,7 +326,7 @@
       const swing = (phase - stance) / (1 - stance);
       const ease = grounded ? 0 : swing * swing * (3 - 2 * swing);
       const px = leg.x + (grounded ? stride * (stance / 2 - phase) : stride * stance * (ease - .5));
-      const lift = grounded ? 0 : Math.sin(Math.PI * swing) * 7;
+      const lift = grounded ? 0 : Math.sin(Math.PI * swing) * 5.5;
       const py = 81 - lift;
       const hipY = 51 + sway * .55;
       const kneeX = leg.x + (px - leg.x) * .45 + (leg.hind ? -5 : 3) + (leg.hind ? -1 : 1) * lift * .45;
@@ -370,7 +387,7 @@
     const dx = attentionX - hx, dy = attentionY - hy, len = Math.hypot(dx, dy) || 1;
     const k = Math.min(1, len / 160);
     const attentive = !reduced.matches && !petting && ['sit','look','walk'].includes(act) && (playing || now - mouse.t < 1500);
-    const desiredAngle = attentive ? Math.max(-14, Math.min(14, dy * dir / 18 + dx / 100)) : 0;
+    const desiredAngle = attentive ? Math.max(-9, Math.min(9, dy * dir / 24 + dx / 140)) : 0;
     headAngle += (desiredAngle - headAngle) * (1 - Math.exp(-dt * 7));
     root.style.setProperty('--look', `${headAngle.toFixed(2)}deg`);
     root.style.setProperty('--px', `${((dx / len) * 1.5 * k * dir).toFixed(2)}px`);
@@ -410,7 +427,8 @@
       target = null;
       clearTimeout(purrTimer);
       root.classList.remove('is-purr');
-      hop();
+      root.classList.add('is-blink');
+      setTimeout(() => root.classList.remove('is-blink'), 350);
       bubbleSay(pick(['meow!', 'mrrp?', 'prrrt!', 'hi human 👋', 'feed me?', 'meow meow', '🐟?']));
       set('sit', 'sit');
       later(next, rand(3000, 6000));
