@@ -1,8 +1,8 @@
 """Assembles the cinematic cut of One Journey.
 
-Usage: python3 build.py <workdir> <out.mp4>
+Usage: python3 build.py <workdir> <out.mp4> [en|ar]
 <workdir> must hold the eight generated shots as s1.mp4 .. s8.mp4 and the end
-card frames in card/c0000.jpg .. (from render-card.cjs). The narration and
+card frames in card/c0000.jpg .. (card-ar/ for Arabic; from render-card.cjs). The narration and
 music sit next to this script."""
 import os
 import subprocess
@@ -12,12 +12,17 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 work, out_path = sys.argv[1], sys.argv[2]
+LANG = sys.argv[3] if len(sys.argv) > 3 else 'en'
 SR, FPS = 44100, 24
 SHOTS = [8, 7, 7, 8, 7, 8, 7, 8]          # seconds used from each shot
 CARD = 5.0
 FILM = sum(SHOTS)
 TOTAL = FILM + CARD
 # (start in narration file, end in narration file, cue in film), seconds
+LINES_AR = [
+    (0.00, 4.85, 1.5), (5.00, 8.95, 9.2), (9.10, 12.75, 16.6), (13.05, 19.30, 22.6), (19.40, 26.75, 29.6),
+    (26.85, 34.85, 37.2), (35.10, 42.35, 45.4), (42.50, 46.37, 52.9), (46.37, 49.50, 56.9),
+]
 LINES = [
     (0.10, 4.35, 1.8), (4.72, 8.40, 9.4), (8.55, 11.95, 17.0), (12.70, 17.40, 23.3), (17.55, 23.40, 30.5),
     (23.44, 30.15, 37.6), (30.74, 36.12, 45.7), (36.34, 39.10, 52.8), (39.58, 41.79, 56.4),
@@ -30,11 +35,16 @@ def decode(path, channels):
     return np.frombuffer(raw, '<i2').astype(np.float64).reshape(-1, channels) / 32768
 
 
+if LANG == 'ar':
+    LINES = LINES_AR
+VOICE = 'voiceover-ar.mp3' if LANG == 'ar' else 'voiceover.mp3'
+CARD_DIR = 'card-ar' if LANG == 'ar' else 'card'
+
 n = int(SR * TOTAL)
 t = np.arange(n) / SR
 
 # Narration, cut line by line and placed on its shot.
-src = decode(os.path.join(HERE, 'voiceover.mp3'), 1)[:, 0]
+src = decode(os.path.join(HERE, VOICE), 1)[:, 0]
 src /= np.max(np.abs(src))
 voice = np.zeros(n)
 f = int(0.02 * SR)
@@ -87,7 +97,7 @@ for k, dur in enumerate(SHOTS, 1):
     cmd += ['-i', os.path.join(work, f's{k}.mp4')]
     parts.append(f'[{k - 1}:v]trim=0:{dur},setpts=PTS-STARTPTS,fps={FPS},scale=1920:824,setsar=1,'
                  f'pad=1920:1080:0:128,format=yuv420p[v{k}]')
-cmd += ['-framerate', str(FPS), '-i', os.path.join(work, 'card', 'c%04d.jpg'), '-i', wav]
+cmd += ['-framerate', str(FPS), '-i', os.path.join(work, CARD_DIR, 'c%04d.jpg'), '-i', wav]
 nshots = len(SHOTS)
 parts.append(''.join(f'[v{k}]' for k in range(1, nshots + 1)) + f'concat=n={nshots}:v=1:a=0,'
              f'fade=t=in:st=0:d=1.2,fade=t=out:st={FILM - 0.6}:d=0.6[film]')

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>بطاقة الختام</title>
+<style>
+  @font-face { font-family: "Plex Arabic"; font-weight: 500; src: url(fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2); }
+  @font-face { font-family: "Plex Arabic"; font-weight: 700; src: url(fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2); }
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<img id="portrait" src="../../../hisan-ali-cutout.webp" alt="" style="display:none">
+<script>
+/* Arabic end card for the cinematic cut. render(t) draws second t of 5. */
+const W = 1920, H = 1080, TOP = 128, BOTTOM = 952;
+const ctx = document.getElementById('c').getContext('2d');
+const portrait = document.getElementById('portrait');
+const clamp = v => Math.max(0, Math.min(1, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = k => 1 - Math.pow(1 - k, 3);
+function render(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  const g = ctx.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, 1200);
+  g.addColorStop(0, '#0f1c18'); g.addColorStop(1, '#050908');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const px = 620, py = 560;
+  ctx.beginPath(); ctx.arc(px, py, 330 * ease(seg(t, 0.2, 1.6)), 0, Math.PI * 2); ctx.fillStyle = '#dfff67'; ctx.fill();
+  if (portrait.naturalWidth) {
+    const ph = 830, pw = ph * portrait.naturalWidth / portrait.naturalHeight;
+    ctx.globalAlpha = seg(t, 0.4, 1.4);
+    ctx.drawImage(portrait, px - pw / 2, BOTTOM - ph + 70 + (1 - ease(seg(t, 0.4, 2))) * 60, pw, ph);
+    ctx.globalAlpha = 1;
+  }
+  ctx.direction = 'rtl'; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  const x = 1720, a1 = ease(seg(t, 0.8, 1.8)), a2 = ease(seg(t, 1.3, 2.3)), a3 = ease(seg(t, 1.8, 2.8));
+  ctx.font = '500 30px "Plex Arabic"'; ctx.fillStyle = `rgba(223,255,103,${a1})`;
+  ctx.fillText('عميل واحد. رحلة واحدة.', x, 400 + (1 - a1) * 14);
+  ctx.font = '700 170px "Plex Arabic"'; ctx.fillStyle = `rgba(242,239,231,${a1})`;
+  ctx.fillText('حسان علي', x, 590 + (1 - a1) * 20);
+  ctx.font = '500 44px "Plex Arabic"'; ctx.fillStyle = `rgba(165,177,171,${a2})`;
+  ctx.fillText('خبير تسويق رقمي · مسقط، عُمان', x, 680 + (1 - a2) * 14);
+  ctx.beginPath(); ctx.roundRect(x - 300, 745 + (1 - a3) * 14, 300, 68, 34); ctx.fillStyle = `rgba(223,255,103,${a3})`; ctx.fill();
+  ctx.direction = 'ltr'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '600 27px "JetBrains Mono", monospace'; ctx.fillStyle = `rgba(23,56,45,${a3})`;
+  ctx.fillText('hisanali.com', x - 150, 780 + (1 - a3) * 14);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, TOP); ctx.fillRect(0, BOTTOM, W, H - BOTTOM);
+  const fade = seg(t, 3.5, 4.5);
+  if (fade > 0) { ctx.fillStyle = `rgba(0,0,0,${fade})`; ctx.fillRect(0, 0, W, H); }
+}
+window.render = render;
+window.ready = Promise.all([document.fonts.load('500 30px "Plex Arabic"', 'حسان'), document.fonts.load('700 30px "Plex Arabic"', 'حسان'),
+  document.fonts.load('600 27px "JetBrains Mono"'), portrait.decode().catch(() => {})]);
+if (!navigator.webdriver) window.ready.then(() => { const s = performance.now(); (function loop() { render(((performance.now() - s) / 1000) % 5); requestAnimationFrame(loop); })(); });
+</script>
+</body>
+</html>
