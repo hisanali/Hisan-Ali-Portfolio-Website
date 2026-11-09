@@ -322,6 +322,9 @@
   }
 
   function tick(now) {
+    if (reduced.matches && act === 'walk' && !gone) {
+      target = null; clearTimeout(timer); raf = 0; set('sleep', 'sleep'); return;
+    }
     const dt = Math.min(64, now - last) / 1000; last = now;
     if (target != null && act === 'walk') {
       const d = target - x;
