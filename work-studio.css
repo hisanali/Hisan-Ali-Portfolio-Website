@@ -370,16 +370,35 @@ html[dir="rtl"] .wk-row:hover .wk-row-go .wk-i { transform: scaleX(-1) rotate(45
 .wk-peek img.is-on { opacity: 1; }
 
 /* ---------- Live builds ---------- */
-.wk-build-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 22px); perspective: 1600px; }
-.wk-build-cell { display: flex; }
+/* Six columns: the two feature builds span three each, the monogram builds two each. */
+.wk-build-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 22px); perspective: 1600px; }
+.wk-build-cell { display: flex; grid-column: span 2; }
+.wk-build-cell--feature { grid-column: span 3; }
 .wk-build {
   --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 30%;
   position: relative; isolation: isolate; flex: 1; display: flex; flex-direction: column;
   min-height: clamp(520px, 44vw, 600px); padding: clamp(22px, 2.2vw, 30px); overflow: hidden; border-radius: 22px;
   color: var(--tone-ink); background: var(--tone);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), var(--wk-shadow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), inset 0 0 0 1px var(--tone-edge, transparent), var(--wk-shadow);
   transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .9s var(--wk-ease);
 }
+.wk-build--feature { min-height: 0; }
+
+/* Real screenshots, layered: they drift apart as the card tilts toward the cursor. */
+.wk-build-shots { position: relative; aspect-ratio: 3 / 2; margin-block: clamp(20px, 2.4vw, 30px) clamp(22px, 2.6vw, 32px); }
+.wk-shot {
+  position: absolute; overflow: hidden; border-radius: 12px; background: #0b100e;
+  box-shadow: 0 30px 50px -26px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .1);
+  transition: transform 1.1s var(--wk-ease);
+}
+.wk-shot img { display: block; width: 100%; height: auto; }
+.wk-shot-bar { display: flex; align-items: center; gap: 5px; height: 18px; padding-inline: 9px; background: #1a211d; }
+.wk-shot-bar i { width: 6px; height: 6px; border-radius: 50%; background: #e8695b; }
+.wk-shot-bar i:nth-child(2) { background: #e5b64b; }
+.wk-shot-bar i:nth-child(3) { background: #62c073; }
+.wk-shot--back { inset-inline-start: 0; top: 0; width: 84%; transform: translate3d(calc(var(--tx, 0px) * .3), calc(var(--ty, 0px) * .3), 0); }
+.wk-shot--front { inset-inline-end: 0; bottom: 0; width: 52%; transform: translate3d(calc(var(--tx, 0px) * -.55), calc(var(--ty, 0px) * -.55), 0); }
+.wk-build.is-tilting .wk-shot { transition-duration: .5s; }
 .wk-build.is-tilting { transition: transform .14s linear; }
 .wk-build::before { content: ""; position: absolute; inset: 0; z-index: -2; background: radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 55%); }
 .wk-build-glow { position: absolute; inset: 0; z-index: -1; opacity: 0; background: radial-gradient(380px circle at var(--mx) var(--my), rgba(255, 255, 255, .24), rgba(255, 255, 255, 0) 62%); transition: opacity .5s; }
@@ -521,7 +540,7 @@ html:not(.theme-dark) .wk-btn-lime { box-shadow: 0 14px 28px -16px rgba(19, 38, 
     scrollbar-width: none; perspective: none;
   }
   .wk-build-grid::-webkit-scrollbar { display: none; }
-  .wk-build-cell { scroll-snap-align: start; }
+  .wk-build-cell, .wk-build-cell--feature { grid-column: auto; scroll-snap-align: start; }
   .wk-build { min-height: 500px; }
   .wk-next-grid { grid-template-columns: minmax(0, 1fr); }
   .wk-next-actions { flex-direction: row; flex-wrap: wrap; }
