@@ -2,7 +2,7 @@
 
 Usage: python3 subtitles.py <in.mp4> <out.mp4> <workdir>
 Each line is drawn with the browser (so Arabic shapes correctly) as a
-transparent image, then faded in and out over the picture's lower letterbox."""
+transparent image, then faded in and out along the bottom edge of the picture."""
 import json
 import os
 import subprocess
@@ -34,8 +34,9 @@ page = f"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
 @font-face {{ font-family: "Plex Arabic"; font-weight: 400 500;
   src: url(file://{HERE}/fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2); }}
 html, body {{ margin: 0; width: 1920px; height: 1080px; background: transparent; }}
-p {{ position: absolute; left: 0; right: 0; top: 968px; margin: 0; text-align: center;
-  font: 500 30px/1.5 "Plex Arabic"; color: rgba(242, 239, 231, 0.78); letter-spacing: 0; }}
+p {{ position: absolute; left: 0; right: 0; top: 884px; margin: 0; text-align: center;
+  font: 500 30px/1.5 "Plex Arabic"; color: rgba(255, 255, 255, 0.9); letter-spacing: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 0 14px rgba(0, 0, 0, 0.6); }}
 </style></head><body><p id="t"></p></body></html>"""
 html = os.path.join(work, 'sub.html')
 open(html, 'w', encoding='utf8').write(page)
