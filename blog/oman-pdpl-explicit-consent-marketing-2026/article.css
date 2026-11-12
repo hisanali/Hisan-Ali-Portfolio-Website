@@ -1,0 +1,8 @@
+.pc-guide .pc-wrap { display:flex; align-items:center; gap:28px; flex-wrap:wrap; }
+.pc-guide .pc-form { display:grid; gap:10px; width:260px; padding:18px; border:2px solid var(--fe-ink); border-radius:14px; }
+.pc-guide .pc-f { display:block; padding:8px 10px; border-bottom:1px solid var(--fe-border); font-size:13px; color:var(--fe-muted); }
+.pc-guide .pc-c { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--fe-ink); }
+.pc-guide .pc-c i { display:block; width:20px; height:20px; border:2px solid var(--fe-ink); border-radius:5px; animation:pc-tick 8s ease infinite; }
+.pc-guide .pc-msg { padding:12px 16px; border-radius:14px; background:var(--fe-accent); color:#fff; font-weight:800; opacity:0; animation:pc-msg 8s ease infinite; }
+@keyframes pc-tick { 0%,20% { background:transparent; } 30%,90% { background:var(--fe-accent); border-color:var(--fe-accent); } 100% { background:transparent; } }
+@keyframes pc-msg { 0%,40% { opacity:0; transform:translateX(-10px); } 55%,90% { opacity:1; transform:none; } 100% { opacity:0; } }

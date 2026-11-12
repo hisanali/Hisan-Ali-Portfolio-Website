@@ -1,0 +1,6 @@
+.dp-guide .dp-tag { display:inline-grid; gap:6px; padding:20px 28px; border:3px solid var(--fe-ink); border-radius:14px 40px 40px 14px; }
+.dp-guide .dp-tag s { color:var(--fe-muted); font-size:1.1rem; animation:dp-s 8s ease infinite; }
+.dp-guide .dp-tag b { font-family:'DM Serif Display',serif; font-weight:400; font-size:2rem; color:var(--fe-ink); opacity:0; animation:dp-in 8s ease infinite; animation-delay:.6s; }
+.dp-guide .dp-tag span { justify-self:start; padding:4px 10px; border-radius:999px; background:var(--fe-accent); color:#fff; font-weight:800; opacity:0; animation:dp-in 8s ease infinite; animation-delay:1.2s; }
+@keyframes dp-in { 0%,15% { opacity:0; transform:translateY(6px); } 30%,90% { opacity:1; transform:none; } 100% { opacity:0; } }
+@keyframes dp-s { 0%,10% { text-decoration-color:transparent; } 25%,90% { text-decoration-color:currentColor; } 100% { text-decoration-color:transparent; } }

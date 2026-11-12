@@ -1,0 +1,7 @@
+.wu-guide .wu-head { display:flex; align-items:center; gap:14px; width:min(340px,100%); padding:14px 18px; border:2px solid var(--fe-ink); border-radius:16px; }
+.wu-guide .wu-head > i { flex:0 0 44px; height:44px; border-radius:50%; background:var(--fe-accent); }
+.wu-guide .wu-head > div { position:relative; height:24px; flex:1; }
+.wu-guide .wu-num, .wu-guide .wu-name { position:absolute; left:0; top:0; font-weight:800; font-size:1rem; color:var(--fe-ink); white-space:nowrap; }
+.wu-guide .wu-num { animation:wu-out 8s ease infinite; } .wu-guide .wu-name { color:var(--fe-accent); opacity:0; animation:wu-in 8s ease infinite; }
+@keyframes wu-out { 0%,25% { opacity:1; transform:none; } 35%,90% { opacity:0; transform:translateY(-10px); } 100% { opacity:1; } }
+@keyframes wu-in { 0%,30% { opacity:0; transform:translateY(10px); } 42%,90% { opacity:1; transform:none; } 100% { opacity:0; } }
