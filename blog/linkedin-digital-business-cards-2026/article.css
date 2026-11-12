@@ -1,0 +1,7 @@
+.lc-guide .lc-card { display:flex; align-items:center; gap:14px; width:min(360px,100%); padding:18px; border:2px solid var(--fe-ink); border-radius:16px; }
+.lc-guide .lc-card > i { flex:0 0 52px; height:52px; border-radius:50%; background:var(--fe-accent); }
+.lc-guide .lc-card div { flex:1; opacity:0; animation:lc-in 8s ease infinite; }
+.lc-guide .lc-card b { display:block; font-family:'DM Serif Display',serif; font-weight:400; font-size:1.2rem; color:var(--fe-ink); }
+.lc-guide .lc-card span { display:block; font-size:13px; color:var(--fe-muted); }
+.lc-guide .lc-card em { flex:0 0 54px; height:54px; border-radius:6px; background:repeating-conic-gradient(var(--fe-ink) 0 25%,transparent 0 50%) 0 0/14px 14px; opacity:0; animation:lc-in 8s ease infinite; animation-delay:1s; }
+@keyframes lc-in { 0%,12% { opacity:0; } 28%,90% { opacity:1; } 100% { opacity:0; } }

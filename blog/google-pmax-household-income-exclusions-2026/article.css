@@ -1,0 +1,4 @@
+.hi-guide .hi-wrap { display:grid; grid-template-columns:repeat(6,minmax(0,46px)); gap:12px; height:170px; align-items:end; border-bottom:2px solid var(--fe-ink); }
+.hi-guide .hi-wrap i { display:block; height:var(--h); border-radius:6px 6px 0 0; background:var(--fe-accent); }
+.hi-guide .hi-wrap i.x { animation:hi-out 8s ease infinite; }
+@keyframes hi-out { 0%,15% { opacity:1; } 35%,90% { opacity:.15; } 100% { opacity:1; } }

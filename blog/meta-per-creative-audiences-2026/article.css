@@ -1,0 +1,10 @@
+.cx-guide .cx-wrap { display:grid; gap:10px; max-width:420px; }
+.cx-guide .cx-r { display:grid; grid-template-columns:70px 1fr auto; align-items:center; gap:12px; opacity:.35; animation:cx-on 9s ease infinite; }
+.cx-guide .cx-r:nth-child(2){animation-delay:.8s}.cx-guide .cx-r:nth-child(3){animation-delay:1.6s}
+.cx-guide .cx-r b { padding:10px 0; text-align:center; border:2px solid var(--fe-ink); border-radius:10px; color:var(--fe-ink); }
+.cx-guide .cx-r i { height:2px; background:var(--fe-accent); }
+.cx-guide .cx-r span { font-weight:700; font-size:14px; color:var(--fe-ink); }
+@keyframes cx-on { 0%,8% { opacity:.35; } 20%,90% { opacity:1; } 100% { opacity:.35; } }
+.cx-guide .cx-rows { margin-top:18px; }
+.cx-guide .cx-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 16px; padding:12px 0; border-bottom:1px solid var(--fe-border); color:var(--fe-ink); }
+.cx-guide .cx-row strong { font-family:'DM Serif Display',serif; font-weight:400; font-size:1.3rem; color:var(--fe-accent); white-space:nowrap; }

@@ -1,0 +1,6 @@
+.sl-guide .sl-p { display:flex; align-items:center; gap:16px; width:min(360px,100%); padding:16px 18px; border:2px solid var(--fe-ink); border-radius:16px; }
+.sl-guide .sl-p > i { flex:0 0 52px; height:52px; border-radius:50%; background:var(--fe-accent); }
+.sl-guide .sl-p b { display:block; font-weight:800; color:var(--fe-ink); }
+.sl-guide .sl-l, .sl-guide .sl-v { display:block; font-size:13px; color:var(--fe-muted); opacity:0; animation:sl-in 8s ease infinite; }
+.sl-guide .sl-v { color:var(--fe-accent); font-weight:800; animation-delay:1s; }
+@keyframes sl-in { 0%,15% { opacity:0; transform:translateY(6px); } 30%,90% { opacity:1; transform:none; } 100% { opacity:0; } }
