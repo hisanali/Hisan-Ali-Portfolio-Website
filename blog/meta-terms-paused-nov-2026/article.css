@@ -1,0 +1,7 @@
+.mp-guide .mp-wrap { position:relative; width:180px; height:180px; }
+.mp-guide .mp-cal { width:160px; height:170px; border:3px solid var(--fe-ink); border-radius:16px; display:grid; place-items:center; text-align:center; }
+.mp-guide .mp-cal small { display:block; font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--fe-muted); }
+.mp-guide .mp-cal b { display:block; font-family:'DM Serif Display',serif; font-weight:400; font-size:4rem; color:var(--fe-ink); line-height:1; }
+.mp-guide .mp-p { position:absolute; right:-10px; bottom:-6px; display:flex; gap:8px; padding:14px; border-radius:50%; background:var(--fe-accent); opacity:0; transform:scale(.6); animation:mp-in 8s ease infinite; }
+.mp-guide .mp-p i { display:block; width:9px; height:30px; border-radius:3px; background:#fff; }
+@keyframes mp-in { 0%,15% { opacity:0; transform:scale(.6); } 30%,90% { opacity:1; transform:scale(1); } 100% { opacity:0; } }
