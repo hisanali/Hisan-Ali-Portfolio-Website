@@ -79,7 +79,9 @@
     let score = level * 40;
     if (/\(natural\)|neural/i.test(voice.name)) score += 12;
     if (/premium/i.test(voice.name)) score += 10;
-    if (/multilingual/i.test(voice.name)) score -= 4;
+    // Edge's multilingual neural voices (Ava, Andrew, Emma, Brian) are its most human-sounding.
+    if (/multilingual/i.test(voice.name)) score += 6;
+    if (/\b(ava|andrew|emma|brian)\b/i.test(voice.name) && /natural|neural/i.test(voice.name)) score += 4;
     if (voice.default) score += 2;
     return score;
   };
@@ -159,13 +161,21 @@
 
   /* Turn written text into something that sounds natural when spoken. */
   const ACRONYMS = { SEO: 'S.E.O.', GA4: 'G.A. 4', CRO: 'C.R.O.', ROI: 'R.O.I.', ROAS: 'roas', CTR: 'C.T.R.', CPC: 'C.P.C.', CPA: 'C.P.A.', CPM: 'C.P.M.', KPI: 'K.P.I.', KPIs: 'K.P.I.s', UTM: 'U.T.M.', SME: 'S.M.E.', SMEs: 'S.M.E.s', GCC: 'G.C.C.', CRM: 'C.R.M.', URL: 'U.R.L.', URLs: 'U.R.L.s', UX: 'U.X.', UI: 'U.I.', API: 'A.P.I.', B2B: 'B. to B.', B2C: 'B. to C.', D2C: 'direct to consumer', PPC: 'P.P.C.', SERP: 'serp', SERPs: 'serps', CMS: 'C.M.S.', VAT: 'V.A.T.', FAQ: 'F.A.Q.', FAQs: 'F.A.Q.s', 'E-E-A-T': 'E.E.A.T.', AI: 'A.I.', PDF: 'P.D.F.', QR: 'Q.R.', GBP: 'Google Business Profile', LCP: 'L.C.P.', CLS: 'C.L.S.', INP: 'I.N.P.' };
+  Object.entries({ BNPL: 'buy now, pay later', CTV: 'connected TV', PDPL: 'P.D.P.L.', NCSI: 'N.C.S.I.', IFC: 'I.F.C.', MAU: 'monthly active users', DAU: 'daily active users', CAPI: 'the Conversions API', BSUID: 'business-scoped user I.D.', OTA: 'O.T.A.', COD: 'cash on delivery' })
+    .forEach(([key, spoken]) => { if (!(key in ACRONYMS)) ACRONYMS[key] = spoken; });
+  const MONTHS = { Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', Jun: 'June', Jul: 'July', Aug: 'August', Sep: 'September', Sept: 'September', Oct: 'October', Nov: 'November', Dec: 'December' };
+  const UNITS = { k: 'thousand', m: 'million', mn: 'million', b: 'billion', bn: 'billion' };
+  const ORDINALS = ['', 'first', 'second', 'third', 'fourth'];
   const acronymPattern = new RegExp(`\\b(${Object.keys(ACRONYMS).map((key) => key.replace(/[-]/g, '\\-')).join('|')})\\b`, 'g');
   const speakable = (text, language, role) => {
     let out = ` ${text} `
       .replace(/https?:\/\/\S+/g, '')
       .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
       .replace(/\[\d+\]/g, '')
-      .replace(/[↗→←↓↑›‹★☆✦✓×•▸▪◆]/g, ' ')
+      .replace(/(\d)\s*×\s*(?=\S)/g, language === 'ar' ? '$1 في ' : '$1 times ')
+      .replace(/[↗→←↓↑›‹★☆✦✓✗×•▸▪◆]/g, ' ')
+      .replace(/[−](?=\d)/g, language === 'ar' ? 'سالب ' : 'minus ')
+      .replace(/[~≈]\s?(?=\d)/g, language === 'ar' ? 'نحو ' : 'about ')
       .replace(/\s*—\s*/g, ', ')
       .replace(/\s+–\s+/g, ', ')
       .replace(/\s+/g, ' ');
@@ -177,9 +187,19 @@
         .replace(/%/g, ' بالمئة');
     } else {
       out = out
-        .replace(/\b(?:OMR|RO)\s?(\d[\d,.]*)\s?(k|m|bn)?\b/gi, (_m, n, unit) => `${n}${unit ? ` ${{ k: 'thousand', m: 'million', bn: 'billion' }[unit.toLowerCase()]}` : ''} Omani rials`)
-        .replace(/(\d[\d,.]*)\s?(OMR|RO)\b/g, '$1 Omani rials')
-        .replace(/\$(\d[\d,.]*)\s?(k|m|bn)?\b/gi, (_m, n, unit) => `${n}${unit ? ` ${{ k: 'thousand', m: 'million', bn: 'billion' }[unit.toLowerCase()]}` : ''} dollars`)
+        .replace(/(?:\b(?:OMR|RO)\s?|\$)(\d+(?:[.,]\d+)*)\s?[–-]\s?(?:(?:OMR|RO)\s?|\$)?(\d+(?:[.,]\d+)*)(?:\s?(k|mn|m|bn|b)\b|\s(thousand|million|billion)\b)?/gi, (match, from, to, unit, word) => `${from} to ${to}${unit ? ` ${UNITS[unit.toLowerCase()]}` : word ? ` ${word}` : ''} ${match.trim().startsWith('$') ? 'dollars' : 'Omani rials'}`)
+        .replace(/\b(?:OMR|RO)\s?(\d+(?:[.,]\d+)*)(?:\s?(k|mn|m|bn|b)\b|\s(thousand|million|billion)\b)?/gi, (_m, n, unit, word) => `${n}${unit ? ` ${UNITS[unit.toLowerCase()]}` : word ? ` ${word}` : ''} Omani rials`)
+        .replace(/(\d+(?:[.,]\d+)*)\s?(OMR|RO)\b/g, '$1 Omani rials')
+        .replace(/\$(\d+(?:[.,]\d+)*)(?:\s?(k|mn|m|bn|b)\b|\s(thousand|million|billion)\b)?/gi, (_m, n, unit, word) => `${n}${unit ? ` ${UNITS[unit.toLowerCase()]}` : word ? ` ${word}` : ''} dollars`)
+        .replace(/(\d)(bn|mn|m)\b(?![-’'])/g, (_m, d, unit) => `${d} ${UNITS[unit]}`)
+        .replace(/\bQ([1-4])\b/g, (_m, q) => `${ORDINALS[q]} quarter`)
+        .replace(/\bH([12])\b/g, (_m, h) => `${ORDINALS[h]} half`)
+        .replace(/\b11\.11\b/g, 'eleven eleven')
+        .replace(/\b(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec)\b\.?(?=\s+\d|\s*[,;)]|\s*$)/g, (_m, month) => MONTHS[month])
+        .replace(/(\d)\s+(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec)\b\.?/g, (_m, d, month) => `${d} ${MONTHS[month]}`)
+        .replace(/(\d)\s?(am|pm)\b/g, (_m, d, half) => `${d} ${half === 'am' ? 'A.M.' : 'P.M.'}`)
+        .replace(/(\d+(?:[.,]\d+)*)\+(?=[\s,.;:)]|$)/g, 'more than $1')
+        .replace(/(^|[\s(])\+(?=\d)/g, '$1plus ')
         .replace(/\be\.g\.,?/gi, 'for example,')
         .replace(/\bi\.e\.,?/gi, 'that is,')
         .replace(/\betc\./gi, 'and so on.')
@@ -204,23 +224,35 @@
     return 'body';
   };
 
+  // Not worth hearing: navigation, code, footnotes, source lists, fine print, form tools and captions of animations.
+  const SKIP = '[data-listen-skip], .blog-listen, nav, .toc, .table-of-contents, .article-language-switcher, pre, code, button, form, '
+    + '.ed-src, .ed-fine, .ed-sources, .ed-tool, .ed-figure figcaption, .fe-sources, .fe-stat-src, .source-note, .source-box, .fe-edition, .breadcrumb, thead, .article-continue, .related-posts, .fe-tool, .fe-small, .fe-method, [class$="-small"]';
+  const spokenText = (element) => {
+    if (!element.querySelector('sup, .fe-ref')) return element.innerText || element.textContent;
+    const copy = element.cloneNode(true);
+    copy.querySelectorAll('sup, .fe-ref').forEach((node) => node.remove());
+    return copy.textContent;
+  };
+
   const buildScript = () => {
     const chunks = [];
     const heading = document.querySelector('.blog-post-header h1, .blog-post-hero h1, main h1');
     const add = (element, text, role) => {
-      const clean = text.replace(/\s+/g, ' ').replace(/[↗→←↓↑›‹★☆✦✓×]/g, '').trim();
-      if (!clean || !/[\p{L}\p{N}]/u.test(clean)) return;
+      const clean = text.replace(/\s+/g, ' ').replace(/[↗→←↓↑›‹★☆✦✓]/g, '').trim();
+      if (!clean || !/[\p{L}\p{N}]/u.test(clean) || /^(Related|Read next|See also)\s*:/i.test(clean)) return;
       const lang = isArabic(clean) ? 'ar' : 'en';
       chunks.push({ element, text: speakable(clean, lang, role), role, lang, kind: element.tagName });
     };
     if (heading) add(heading, heading.textContent, 'heading');
     article.querySelectorAll(BLOCKS).forEach((element) => {
-      if (hidden(element) || element.closest('[data-listen-skip], .blog-listen, nav, .toc, .table-of-contents, .article-language-switcher, pre, code, button')) return;
+      // Answers inside closed FAQ items are read too, so a question is never left hanging.
+      const inClosedFaq = Boolean(element.closest('details:not([open])'));
+      if ((hidden(element) && !inClosedFaq) || element.closest(SKIP)) return;
       // Read only the innermost blocks so nothing is spoken twice.
       if (element.querySelector(BLOCKS)) return;
       const text = element.tagName === 'TR'
         ? [...element.children].map((cell) => (cell.innerText || cell.textContent).trim()).filter(Boolean).join(', ')
-        : (element.innerText || element.textContent);
+        : spokenText(element);
       add(element, text, roleOf(element));
     });
     return chunks;
@@ -355,13 +387,17 @@
 
   // Chrome's Google voices stop after ~15 s, so they get sentence-sized pieces.
   // Other voices read a whole paragraph in one go, which keeps the intonation natural.
-  const pieceLimit = (voice) => (voice && /^google /i.test(voice.name) ? 190 : voice && /natural|online|neural|premium|enhanced/i.test(voice.name) ? 1400 : 420);
+  // Basic device voices sound flat over long passages, so they read a sentence or two at a time with a breath between.
+  const studioVoice = (voice) => Boolean(voice) && tier(voice) >= 3;
+  const pieceLimit = (voice) => (voice && /^google /i.test(voice.name) ? 190 : studioVoice(voice) ? 1400 : 240);
+  const breath = (voice, piece) => (studioVoice(voice) ? 0 : /[?؟!]["”’»)]*$/.test(piece) ? 260 : /[,،;:]$/.test(piece) ? 90 : 190);
   const pauseAfter = (chunk, next) => {
     if (!next) return 0;
-    if (chunk.role === 'heading') return 520;
-    if (next.role === 'heading') return 420;
-    if (chunk.kind === 'LI' || chunk.kind === 'TR') return 140;
-    return 240;
+    if (chunk.role === 'heading') return 620;
+    if (next.role === 'heading') return 560;
+    if (chunk.kind === 'SUMMARY') return 380;
+    if (chunk.kind === 'LI' || chunk.kind === 'TR') return 200;
+    return 340;
   };
 
   let timer = 0;
@@ -389,12 +425,19 @@
         if (mySession !== session || !playing) return;
         const utterance = new SpeechSynthesisUtterance(pieces[part]);
         if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else utterance.lang = chunk.lang === 'ar' ? 'ar-SA' : 'en-GB';
-        utterance.rate = prefs.rate * (chunk.role === 'heading' ? 0.95 : 1);
-        utterance.pitch = chunk.role === 'heading' && voice === cast?.body ? 0.98 : 1;
+        const piece = pieces[part];
+        const basic = !studioVoice(voice);
+        // Basic voices: a touch slower, questions lift slightly, and small variation so sentences don't sound identical.
+        utterance.rate = prefs.rate * (chunk.role === 'heading' ? 0.94 : 1) * (basic ? 0.95 + (part % 3) * 0.012 : 1);
+        utterance.pitch = (chunk.role === 'heading' && voice === cast?.body ? 0.98 : 1) * (basic ? (/[?؟]["”’»)]*$/.test(piece) ? 1.05 : 1 - (part % 2) * 0.02) : 1);
         const done = () => {
           if (mySession !== session) return;
           part += 1;
-          if (part < pieces.length) { sayPiece(); return; }
+          if (part < pieces.length) {
+            const gap = breath(voice, pieces[part - 1]) / Math.max(prefs.rate, 0.85);
+            if (gap) timer = setTimeout(sayPiece, gap); else sayPiece();
+            return;
+          }
           const wait = pauseAfter(chunk, chunks[index + 1]) / Math.max(prefs.rate, 0.85);
           index += 1;
           timer = setTimeout(step, wait);
