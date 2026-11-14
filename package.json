@@ -17,7 +17,8 @@
     "build:evermile": "esbuild evermile/realtime-client.entry.js --bundle --minify --format=esm --target=es2020 --outfile=evermile/vendor/realtime-client.js",
     "test:evermile": "node --test tests/evermile/*.test.mjs",
     "test:evermile-browser": "node scripts/test-evermile-browser.cjs",
-    "build:avatar": "esbuild home-avatar.entry.js --bundle --minify --format=iife --target=es2020 --outfile=home-avatar.bundle.js"
+    "build:avatar": "esbuild home-avatar.entry.js --bundle --minify --format=iife --target=es2020 --outfile=home-avatar.bundle.js",
+    "build:foundry": "esbuild work/foundry/src/main.js --bundle --minify --format=iife --target=es2020 --outfile=work/foundry/foundry.bundle.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
