@@ -370,10 +370,10 @@ html[dir="rtl"] .wk-row:hover .wk-row-go .wk-i { transform: scaleX(-1) rotate(45
 .wk-peek img.is-on { opacity: 1; }
 
 /* ---------- Live builds ---------- */
-/* Six columns: the two feature builds span three each, the monogram builds two each. */
+/* Six columns: feature builds and half-width builds span three each, so every row holds two. */
 .wk-build-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 22px); perspective: 1600px; }
 .wk-build-cell { display: flex; grid-column: span 2; }
-.wk-build-cell--feature { grid-column: span 3; }
+.wk-build-cell--feature, .wk-build-cell--half { grid-column: span 3; }
 .wk-build {
   --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 30%;
   position: relative; isolation: isolate; flex: 1; display: flex; flex-direction: column;
@@ -408,6 +408,9 @@ html[dir="rtl"] .wk-row:hover .wk-row-go .wk-i { transform: scaleX(-1) rotate(45
   font: italic 400 clamp(250px, 25vw, 390px)/.78 var(--wk-display); letter-spacing: -.05em;
   transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0); transition: transform 1.1s var(--wk-ease); pointer-events: none; user-select: none;
 }
+/* A build shown by a photograph of itself instead of a monogram, darkened so the text stays readable. */
+.wk-build-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
+.wk-build--photo::before { z-index: -1; background: linear-gradient(180deg, rgba(3, 8, 20, .5) 0%, rgba(3, 8, 20, .05) 30%, rgba(3, 8, 20, .78) 64%, rgba(3, 8, 20, .95) 100%); }
 .wk-build-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .wk-build-num { font: 400 22px/1 var(--wk-display); }
 .wk-build-url {
@@ -540,7 +543,7 @@ html:not(.theme-dark) .wk-btn-lime { box-shadow: 0 14px 28px -16px rgba(19, 38, 
     scrollbar-width: none; perspective: none;
   }
   .wk-build-grid::-webkit-scrollbar { display: none; }
-  .wk-build-cell, .wk-build-cell--feature { grid-column: auto; scroll-snap-align: start; }
+  .wk-build-cell, .wk-build-cell--feature, .wk-build-cell--half { grid-column: auto; scroll-snap-align: start; }
   .wk-build { min-height: 500px; }
   .wk-next-grid { grid-template-columns: minmax(0, 1fr); }
   .wk-next-actions { flex-direction: row; flex-wrap: wrap; }

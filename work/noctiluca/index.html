@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PNT5FCX5');</script><!-- End Google Tag Manager --><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Noctiluca: Interactive 3D Sea Concept Site | Hisan Ali</title>
+  <meta name="description" content="A concept site by Hisan Ali set on a real-time 3D sea. Scroll from golden hour to night, watch the names light up on the horizon, and touch the water to make it ripple and glow.">
+  <link rel="canonical" href="https://hisanali.com/work/noctiluca/">
+  <meta name="theme-color" content="#020611">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hisanali.com/work/noctiluca/">
+  <meta property="og:title" content="Noctiluca: Interactive 3D Sea Concept Site">
+  <meta property="og:description" content="A concept site by Hisan Ali set on a real-time 3D sea. Scroll from golden hour to night, watch the names light up on the horizon, and touch the water to make it ripple and glow.">
+  <meta property="og:image" content="https://hisanali.com/work/noctiluca/og.jpg">
+  <meta property="og:site_name" content="Hisan Ali - Digital Marketing Expert">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.png">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "CreativeWork", "name": "Noctiluca", "url": "https://hisanali.com/work/noctiluca/", "description": "A concept site by Hisan Ali set on a real-time 3D sea. Scroll from golden hour to night, watch the names light up on the horizon, and touch the water to make it ripple and glow.", "genre": "Interactive 3D website concept", "inLanguage": "en", "image": "https://hisanali.com/work/noctiluca/og.jpg", "author": {"@type": "Person", "name": "Hisan Ali", "url": "https://hisanali.com/about/"}, "isPartOf": {"@type": "CollectionPage", "name": "Selected Work & Case Studies", "url": "https://hisanali.com/work/"}}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Gothic&amp;family=Libre+Franklin:wght@400;500;600&amp;display=swap">
+<style>
+/* Layout: one sticky full-viewport stage showing a real sea. Scrolling is the evening passing.
+   The names are not on the page: they stand out on the horizon as letters, dark against the
+   sunset and lit after dark, and the water mirrors them. The page itself carries only a few
+   small lines in the corners. */
+:root{
+  color-scheme:dark;
+  --night:#020611;
+  --deep:#0b1d33;
+  --dusk:#5a3a4e;
+  --ink:#f6f7f8;
+  --ink-2:#d9e0e6;
+  --shade:rgba(2,6,17,.56);
+  --shade-top:rgba(2,6,17,.3);
+  --font:"Libre Franklin","Franklin Gothic Medium","Helvetica Neue",Arial,sans-serif;
+  --font-sign:"League Gothic",Impact,"Arial Narrow",sans-serif;
+  --size-line:1.0625rem;
+  --size-small:.8125rem;
+  --side:max(16px,3.4vw);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--night);color:var(--ink);font:400 1rem/1.4 var(--font);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
+
+.scroll{height:1000vh}
+.stage{position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,var(--deep) 0%,var(--dusk) 46%,var(--deep) 47%,var(--night) 100%);-webkit-tap-highlight-color:transparent}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.no-gl #gl{display:none}
+.scrim,.grain{position:absolute;inset:0;pointer-events:none}
+.scrim{background:radial-gradient(130% 100% at 50% 45%,transparent 58%,var(--shade) 100%),linear-gradient(180deg,var(--shade-top) 0%,transparent 11%,transparent 62%,var(--shade) 100%)}
+.grain{opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>")}
+
+.hud{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(8px,1.6vh,16px);
+  padding-left:max(var(--side),env(safe-area-inset-left,0px));padding-right:max(var(--side),env(safe-area-inset-right,0px));
+  padding-block:calc(env(safe-area-inset-top,0px) + clamp(6px,1.6vh,18px)) calc(env(safe-area-inset-bottom,0px) + clamp(14px,2.6vh,26px));
+  pointer-events:none;text-shadow:0 1px 3px var(--shade),0 2px 24px var(--shade)}
+.hud button,.hud a{pointer-events:auto}
+a{color:inherit}
+[hidden]{display:none!important}
+
+.top,.bottom{display:flex;align-items:baseline;justify-content:space-between;gap:16px;font-size:var(--size-small);font-weight:500}
+.brand{font-size:.9375rem;font-weight:600;letter-spacing:-.01em}
+.top__right{display:flex;align-items:baseline;gap:clamp(16px,2.4vw,30px)}
+.sound{padding:12px 0;opacity:.85;transition:opacity .25s;text-decoration:none}
+.sound:hover{opacity:1}
+
+.caps{display:grid;min-height:0;min-width:0}
+.cap{grid-area:1/1;align-self:end;justify-self:start;min-width:0;max-width:min(30rem,100%);display:grid;gap:3px;opacity:0;will-change:opacity,transform}
+.cap:not(.is-on) button{pointer-events:none}
+.cap--hero{opacity:1}
+.cap p{font-size:var(--size-line);font-weight:500;line-height:1.35}
+.cap .quiet{font-size:var(--size-small);font-weight:400;color:var(--ink-2)}
+/* The name is drawn in the scene; this copy is for screen readers, and shows if the scene cannot run. */
+.name{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.no-gl .name{position:static;width:auto;height:auto;clip-path:none;font:400 clamp(4rem,17vw,11rem)/.85 var(--font-sign);text-transform:uppercase;letter-spacing:.02em;margin-bottom:10px}
+.mail{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 16px}
+.mail__addr{user-select:all;-webkit-user-select:all;pointer-events:auto}
+.link{font-size:var(--size-small);font-weight:500;padding:10px 0;display:inline-block;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px}
+
+.bottom{color:var(--ink-2);font-variant-numeric:tabular-nums}
+.bottom b{font-weight:500;color:var(--ink)}
+
+.boot{position:absolute;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;gap:6px;background:var(--night);transition:opacity .9s ease,visibility 0s linear .9s}
+.boot.is-done{opacity:0;visibility:hidden}
+.boot__n{font-size:var(--size-small);font-weight:500;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+@media (max-height:520px){ .cap .quiet{display:none} }
+@media (prefers-reduced-motion:reduce){ .boot{transition-duration:.01s} }
+</style>
+</head>
+<body><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
+<div class="scroll" id="scroll">
+  <div class="stage" id="stage">
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <div class="scrim"></div>
+    <div class="grain"></div>
+
+    <div class="hud">
+      <header class="top">
+        <span class="brand">Noctiluca</span>
+        <span class="top__right"><a class="sound" href="/work/">Back to work</a><button type="button" class="sound" id="sound" aria-pressed="false">Sound <span id="soundLabel">off</span></button></span>
+      </header>
+
+      <main class="caps">
+        <section class="cap cap--hero" data-a="0" data-b=".252">
+          <h1 class="name">Noctiluca</h1>
+          <p>Studio for brands, products and film.</p>
+          <p class="quiet">A concept site by Hisan Ali. Touch the water, then scroll and the sun goes down.</p>
+        </section>
+
+        <article class="cap" data-a=".262" data-b=".41">
+          <h2 class="name">Tessel</h2>
+          <p>Design system, 2024</p>
+        </article>
+
+        <article class="cap" data-a=".422" data-b=".57">
+          <h2 class="name">Halden</h2>
+          <p>Outage alerts for a grid operator, 2023</p>
+        </article>
+
+        <article class="cap" data-a=".582" data-b=".73">
+          <h2 class="name">Nine Winters</h2>
+          <p>Short film, 2022</p>
+        </article>
+
+        <section class="cap" data-a=".765" data-b=".855">
+          <p>Touch the water now.</p>
+          <p class="quiet">The blue light is plankton. It flashes where the sea is stirred.</p>
+        </section>
+
+        <section class="cap" data-a=".885" data-b="1">
+          <h2 class="name">Noctiluca</h2>
+          <p>Concept and build by Hisan Ali.</p>
+          <p class="quiet">Noctiluca is an imaginary studio. Tap the water to float a lantern, or <a class="link" href="/contact/">get in touch</a>.</p>
+        </section>
+      </main>
+
+      <footer class="bottom" aria-hidden="true">
+        <span id="roPhase">Golden hour</span>
+        <b id="roTime">18:52</b>
+      </footer>
+    </div>
+
+    <div class="boot" id="boot" role="status">
+      <span class="brand">Noctiluca</span>
+      <span class="boot__n" id="bootPct">000</span>
+    </div>
+  </div>
+</div>
+
+<script src="/work/noctiluca/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const TAU = Math.PI * 2, RAD = Math.PI / 180;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = matchMedia('(pointer: coarse)').matches;
+
+// A smooth curve through keyframes that never overshoots, so held values stay flat.
+function track(keys) {
+  const n = keys.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((keys[i + 1][1] - keys[i][1]) / (keys[i + 1][0] - keys[i][0]));
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : 2 * d[i - 1] * d[i] / (d[i - 1] + d[i]);
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  return p => {
+    if (p <= keys[0][0]) return keys[0][1];
+    if (p >= keys[n - 1][0]) return keys[n - 1][1];
+    let i = 0; while (p > keys[i + 1][0]) i++;
+    const h = keys[i + 1][0] - keys[i][0], t = (p - keys[i][0]) / h, t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * keys[i][1] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * keys[i + 1][1] + (t3 - t2) * h * m[i + 1];
+  };
+}
+const KP = [0, .16, .33, .5, .655, .81, 1];                 // scroll positions of the evening's keyframes
+const scalar = vals => track(vals.map((v, i) => [KP[i], v]));
+const colour = vals => { const tr = [0, 1, 2].map(c => scalar(vals.map(v => v[c]))); return (p, out) => out.set(Math.max(0, tr[0](p)), Math.max(0, tr[1](p)), Math.max(0, tr[2](p))); };
+
+/* ---------- the evening: scroll -> clock, sun, sky ---------- */
+const minutesAt = track([[0, 1132], [.16, 1161], [.33, 1184], [.5, 1206], [.655, 1231], [.81, 1330], [.95, 1420], [1, 1424]]);
+const sunElAt = scalar([9.5, .3, -4.5, -9, -14, -30, -42]);   // degrees above the horizon
+const phaseAt = e => e > 1 ? 'Golden hour' : e > -6 ? 'Civil twilight' : e > -12 ? 'Nautical twilight' : 'Night';
+const clock = m => { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const LAMP_AT = [.262, .422, .582];                          // where each project's lantern is set down
+
+/* ---------- the sea: a sum of swells obeying deep-water dispersion ---------- */
+const WAVES = [[46, .22, 8], [29, .14, -22], [17.5, .09, 31], [10.4, .055, -9], [6.3, .034, 47], [3.9, .02, -38], [2.4, .012, 19], [1.5, .007, -55]].map(([L, A, deg], i) => {
+  const k = TAU / L; return { L, A, k, w: Math.sqrt(9.81 * k), dx: Math.sin(deg * RAD), dz: Math.cos(deg * RAD), ph: i * 1.7 };
+});
+const seaH = (x, z, t) => { let h = 0; for (const w of WAVES) h += w.A * Math.sin((x * w.dx + z * w.dz) * w.k - t * w.w + w.ph); return h; };
+const seaSlope = (x, z, t) => { let sx = 0, sz = 0; for (const w of WAVES) { const c = w.A * w.k * Math.cos((x * w.dx + z * w.dz) * w.k - t * w.w + w.ph); sx += c * w.dx; sz += c * w.dz; } return [sx, sz]; };
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ---------- overlay ---------- */
+const stage = $('#stage'), boot = $('#boot'), bootPct = $('#bootPct');
+const roTime = $('#roTime'), roPhase = $('#roPhase');
+const navBtns = $$('[data-go]');
+const caps = $$('.cap').map(el => ({ el, a: +el.dataset.a, b: +el.dataset.b, on: null }));
+const setText = (el, s) => { if (el.textContent !== s) el.textContent = s; };
+const WORDS = caps.filter(c => c.el.querySelector('.name')).map(c => ({ t: c.el.querySelector('.name').textContent.trim().toUpperCase(), a: c.a, b: c.b }));
+let gl = null, userLights = 0;
+function hud(p) {
+  setText(roTime, clock(minutesAt(p)));
+  setText(roPhase, phaseAt(sunElAt(p)));
+  const F = .022;
+  for (const c of caps) {
+    const fin = c.a <= 0 ? 1 : smooth(c.a, c.a + F, p), fout = c.b >= 1 ? 1 : 1 - smooth(c.b - F, c.b, p), o = Math.min(fin, fout);
+    c.el.style.opacity = o.toFixed(3);
+    c.el.style.transform = 'translate3d(0,' + ((1 - o) * (p < c.a + F ? 18 : -18)).toFixed(1) + 'px,0)';
+    c.el.style.filter = o > .995 || o < .005 || reduced ? 'none' : 'blur(' + ((1 - o) * 7).toFixed(1) + 'px)';
+    const on = o > .35;
+    if (on !== c.on) { c.on = on; c.el.classList.toggle('is-on', on); }
+  }
+  let cur = navBtns[0];
+  for (const b of navBtns) if (p >= +b.dataset.from - .001) cur = b;
+  for (const b of navBtns) {
+    const is = b === cur;
+    if (b.classList.contains('is-current') !== is) { b.classList.toggle('is-current', is); if (is) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }
+  }
+}
+const scrollMax = () => document.documentElement.scrollHeight - window.innerHeight;
+const readP = () => { const m = scrollMax(); return m > 0 ? clamp(window.scrollY / m) : 0; };
+const goTo = (p, instant) => window.scrollTo({ top: p * scrollMax(), behavior: instant || reduced ? 'auto' : 'smooth' });
+navBtns.forEach(b => b.addEventListener('click', () => goTo(+b.dataset.go)));
+caps.forEach(c => c.el.addEventListener('focusin', () => { if (!c.on) goTo((c.a + c.b) / 2 + .02, true); }));
+
+const copyBtn = $('#copyMail'), mailAddr = $('#mailAddr');
+if (copyBtn) copyBtn.addEventListener('click', () => {
+  const back = () => setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1600);
+  const done = () => { copyBtn.textContent = 'Copied'; back(); };
+  const select = () => { const r = document.createRange(); r.selectNodeContents(mailAddr); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copyBtn.textContent = 'Selected'; back(); };
+  try { navigator.clipboard.writeText(mailAddr.textContent).then(done, select); } catch (e) { select(); }
+});
+
+/* ---------- sound: all synthesised, starts only from the button ---------- */
+const soundBtn = $('#sound'), soundLabel = $('#soundLabel');
+let audio = null, soundOn = false, lastPlip = 0;
+function buildAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  const ctx = new AC(), master = ctx.createGain();
+  master.gain.value = 0; master.connect(ctx.destination);
+  const delay = ctx.createDelay(2), fb = ctx.createGain(), wet = ctx.createGain(), damp = ctx.createBiquadFilter();
+  delay.delayTime.value = .37; fb.gain.value = .38; wet.gain.value = .45; damp.type = 'lowpass'; damp.frequency.value = 2000;
+  delay.connect(damp); damp.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(master);
+  const bus = ctx.createGain(); bus.connect(master); bus.connect(delay);
+  // The sea itself: filtered noise that swells and falls back every few seconds.
+  const len = ctx.sampleRate * 4, buf = ctx.createBuffer(1, len, ctx.sampleRate), ch = buf.getChannelData(0);
+  let v = 0;
+  for (let i = 0; i < len; i++) { v = (v + .02 * (Math.random() * 2 - 1)) / 1.02; ch[i] = v * 3.2; }
+  for (let i = 0; i < 2048; i++) { const k = i / 2048; ch[i] *= k; ch[len - 1 - i] *= k; }
+  const src = ctx.createBufferSource(), band = ctx.createBiquadFilter(), wash = ctx.createGain();
+  src.buffer = buf; src.loop = true; band.type = 'bandpass'; band.frequency.value = 520; band.Q.value = .4; wash.gain.value = .55;
+  src.connect(band); band.connect(wash); wash.connect(master); src.start();
+  const lfo = ctx.createOscillator(), lfoG = ctx.createGain(); lfo.frequency.value = .13; lfoG.gain.value = .3; lfo.connect(lfoG); lfoG.connect(wash.gain); lfo.start();
+  const tone = (f0, f1, dur, vol, type = 'sine', when = 0) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + when;
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + .05);
+  };
+  return { ctx, master, tone };
+}
+const SCALE = [523.25, 587.33, 698.46, 783.99, 880, 1046.5, 1174.66];
+const sfx = {
+  plip: night => {
+    const now = performance.now(); if (now - lastPlip < 90) return; lastPlip = now;
+    audio.tone(620 + Math.random() * 520, 210, .13, .05);
+    if (night) { const f = SCALE[(Math.random() * SCALE.length) | 0]; audio.tone(f, f * .996, .7, .022); }
+  },
+  splash: () => { audio.tone(480, 120, .22, .09); audio.tone(900, 260, .16, .04, 'sine', .03); },
+  lantern: () => [392, 587.33, 783.99].forEach((f, i) => audio.tone(f, f, 1.6, .05, 'sine', i * .12))
+};
+const play = (name, arg) => { if (soundOn) sfx[name](arg); };
+soundBtn.addEventListener('click', () => {
+  if (!audio) audio = buildAudio();
+  if (!audio) { soundLabel.textContent = 'unavailable'; return; }
+  soundOn = !soundOn;
+  audio.ctx.resume();
+  audio.master.gain.setTargetAtTime(soundOn ? .6 : 0, audio.ctx.currentTime, .35);
+  soundBtn.setAttribute('aria-pressed', String(soundOn));
+  soundLabel.textContent = soundOn ? 'on' : 'off';
+});
+
+/* ---------- the picture ---------- */
+let time = 0, p = 0, last = 0;
+const ptr = { x: 0, y: 0, nx: 0, ny: 0, lastX: 9, lastY: 9, lastT: 0 };
+async function buildGL(step) {
+  if (!window.THREE) throw new Error('three.js did not load');
+  const T = THREE, canvas = $('#gl');
+  const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  let dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 1.6);
+  renderer.setPixelRatio(dpr);
+  renderer.setClearColor(0x020611, 1);
+  const scene = new T.Scene(), camera = new T.PerspectiveCamera(45, 1, .1, 9500);
+  camera.rotation.order = 'YXZ';
+  const rnd = mulberry32(9), R = (a, b) => a + rnd() * (b - a);
+  const v3 = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
+  const drops = new Float32Array(16 * 4).fill(-99), lights = new Float32Array(9 * 4);
+  const U = {
+    uTime: { value: 0 }, uExposure: { value: 1 }, uNight: { value: 0 }, uStars: { value: 0 }, uGlowAmt: { value: .7 }, uSunK: { value: 1 }, uMoonK: { value: 0 },
+    uSunDir: { value: v3(0, .1, -1) }, uMoonDir: { value: v3(0, -.1, -1) }, uZen: { value: v3() }, uHor: { value: v3() }, uGlowCol: { value: v3() },
+    uSunCol: { value: v3() }, uMoonCol: { value: v3(1.2, 1.33, 1.6) }, uCloudLit: { value: v3() }, uCloudShade: { value: v3() }, uAmb: { value: v3() },
+    uSign: { value: null }, uSignGeo: { value: new T.Vector4(0, -230, 100, 30) }, uSignDir: { value: new T.Vector2(0, -1) }, uSignY: { value: 0 }, uSignOp: { value: 0 }, uSignLit: { value: 0 },
+    uSignN: { value: 9 }, uSignFault: { value: -1 }, uStutter: { value: reduced ? 0 : 1 }, uSignDark: { value: v3(.012, .014, .02) }, uSignCol: { value: v3(2, 1.55, 1) }
+  };
+  const mat = (vs, fs, u = {}, opts = {}) => new T.ShaderMaterial(Object.assign({ uniforms: Object.assign({}, U, u), vertexShader: vs, fragmentShader: fs, defines: { CLOUD_OCT: 3 } }, opts));
+  const f = n => { const s = String(Math.round(n * 1e5) / 1e5); return /[.e]/.test(s) ? s : s + '.'; };
+
+  // Shared by the sky and by everything that reflects it.
+  const COMMON = `
+    uniform float uTime,uExposure,uNight,uStars,uGlowAmt,uSunK,uMoonK;
+    uniform vec3 uSunDir,uMoonDir,uZen,uHor,uGlowCol,uSunCol,uMoonCol,uCloudLit,uCloudShade;
+    float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+    uniform sampler2D uSign; uniform vec4 uSignGeo; uniform vec2 uSignDir; uniform float uSignY,uSignOp,uSignLit,uSignN,uSignFault,uStutter; uniform vec3 uSignDark,uSignCol;
+    // Each letter of the sign comes on in turn at dusk, stuttering like a tube warming up; one of them never quite settles.
+    float letterOn(float b){ float i=floor(b*16.+.5);
+      float k=(uSignLit-(.1+.62*i/max(uSignN-1.,1.)))/.16;
+      if(k<=0.) return 0.;
+      float fl=uStutter>.5?step(.42,h21(vec2(i*7.3+1.,floor(uTime*16.)))):step(.5,k);
+      float on=k>=1.?1.:fl*(.5+.5*k);
+      if(abs(i-uSignFault)<.5&&uStutter>.5) on*=1.-.75*step(.9,h21(vec2(floor(uTime*11.),3.1)))*step(.72,h21(vec2(floor(uTime*.4),9.7)));
+      return on; }
+    float h31(vec3 p){ p=fract(p*vec3(.1031,.1030,.0973)); p+=dot(p,p.yxz+33.33); return fract((p.x+p.y)*p.z); }
+    float n2(vec2 x){ vec2 i=floor(x), q=fract(x); q=q*q*(3.-2.*q); return mix(mix(h21(i),h21(i+vec2(1.,0.)),q.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),q.x),q.y); }
+    // value noise that also returns its slope, for water normals
+    vec3 n2d(vec2 x){ vec2 i=floor(x), q=fract(x); vec2 u=q*q*q*(q*(q*6.-15.)+10.), du=30.*q*q*(q*(q-2.)+1.);
+      float a=h21(i), b=h21(i+vec2(1.,0.)), c=h21(i+vec2(0.,1.)), d=h21(i+vec2(1.,1.));
+      return vec3(a+(b-a)*u.x+(c-a)*u.y+(a-b-c+d)*u.x*u.y, du*(vec2(b-a,c-a)+(a-b-c+d)*u.yx)); }
+    // filmic response, then display gamma, then a little dither against banding
+    vec3 finish(vec3 c){ c*=uExposure; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); c=pow(c,vec3(.4545)); return c+(h21(gl_FragCoord.xy+fract(uTime)*61.)-.5)*.008; }
+    float cloudField(vec3 d){ vec2 cp=d.xz/(d.y+.14)*vec2(1.5,3.3)+vec2(uTime*.009,uTime*.003); float c=0., a=.5;
+      for(int i=0;i<CLOUD_OCT;i++){ c+=a*n2(cp); cp=cp*2.07+11.3; a*=.5; } return c; }
+    vec3 skyBase(vec3 d){ float h=clamp(d.y,0.,1.); vec3 col=mix(uHor,uZen,pow(h,.42));
+      float az=max(dot(normalize(d.xz+1e-5),normalize(uSunDir.xz)),0.);
+      col=mix(col,uGlowCol,pow(az,2.5)*exp(-h*5.5)*uGlowAmt);
+      float sd=max(dot(d,uSunDir),0.); col+=uSunCol*uSunK*(pow(sd,64.)*.5+pow(sd,7.)*.1);
+      float md=max(dot(d,uMoonDir),0.); col+=uMoonCol*uMoonK*(pow(md,260.)*.09+pow(md,18.)*.008);
+      return col; }
+    vec3 clouds(vec3 col,vec3 d,float c){ float az=max(dot(normalize(d.xz+1e-5),normalize(uSunDir.xz)),0.);
+      float cov=smoothstep(.47,.7,c)*smoothstep(.01,.15,d.y)*(1.-.85*pow(max(dot(d,uSunDir),0.),24.)*uSunK);
+      vec3 lit=mix(uCloudShade,uCloudLit,(1.-smoothstep(.47,.9,c))*(.3+.7*pow(az,1.5)));
+      return mix(col,lit,cov*.92); }`;
+
+  /* ----- sky ----- */
+  const sky = new T.Mesh(new T.SphereGeometry(8000, 48, 24), mat(
+    'varying vec3 vDir; void main(){ vDir=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+    `${COMMON} varying vec3 vDir;
+     void main(){ vec3 d=normalize(vDir); d.y=max(d.y,0.); d=normalize(d);
+       vec3 col=skyBase(d);
+       float sd=dot(d,uSunDir); col+=uSunCol*uSunK*smoothstep(.99972,.99986,sd)*mix(.6,16.,smoothstep(0.,.12,uSunDir.y));
+       float md=dot(d,uMoonDir); col+=uMoonCol*uMoonK*smoothstep(.99966,.99978,md)*(2.2-.9*n2(d.xy*70.+3.));
+       if(uStars>.01){ vec3 g=d*210., id=floor(g); float r=h31(id);
+         vec3 o=(vec3(h31(id+1.7),h31(id+5.3),h31(id+9.1))-.5)*.5;
+         float s=smoothstep(.975,1.,r)*smoothstep(.26,0.,length(fract(g)-.5-o));
+         float band=exp(-pow(dot(d,vec3(.403,-.843,-.355)),2.)*14.);
+         vec3 st=vec3(.82,.9,1.)*s*(1.+3.2*fract(r*57.))*(.75+.25*sin(uTime*2.3+r*400.));
+         st+=vec3(.42,.5,.8)*band*(.25+.9*n2(d.xz*7.+d.y*5.)*n2(d.zy*13.+4.))*.13;
+         col+=st*uStars*smoothstep(0.,.14,d.y)*(1.-uMoonK*pow(max(md,0.),40.)*.8); }
+       col=clouds(col,d,cloudField(d));
+       gl_FragColor=vec4(finish(col),1.); }`, {}, { side: T.BackSide, depthWrite: false, defines: { CLOUD_OCT: 5 } }));
+  sky.renderOrder = -10; sky.frustumCulled = false; scene.add(sky);
+  await step(18);
+
+  /* ----- sea: a fan of rings that grow with distance, lifted by the swell ----- */
+  const seaU = { uDrops: { value: drops }, uLights: { value: lights }, uWater: { value: v3() }, uScatter: { value: v3() }, uSunSpec: { value: 1 }, uMoonSpec: { value: 0 }, uPix: { value: .001 } };
+  {
+    const NR = 150, NA = 200, r0 = .35, ratio = Math.pow(7200 / r0, 1 / NR), span = 115 * RAD;
+    const pos = new Float32Array((NR + 1) * (NA + 1) * 3), idx = new Uint32Array(NR * NA * 6);
+    for (let i = 0, k = 0; i <= NR; i++) { const r = r0 * Math.pow(ratio, i); for (let j = 0; j <= NA; j++) { const a = lerp(-span, span, j / NA); pos[k++] = Math.sin(a) * r; pos[k++] = 0; pos[k++] = -Math.cos(a) * r; } }
+    for (let i = 0, k = 0; i < NR; i++) for (let j = 0; j < NA; j++) { const a = i * (NA + 1) + j, b = a + 1, c = a + NA + 1, d = c + 1; idx[k++] = a; idx[k++] = c; idx[k++] = b; idx[k++] = b; idx[k++] = c; idx[k++] = d; }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setIndex(new T.BufferAttribute(idx, 1));
+    const waveVS = WAVES.slice(0, 6).map(w => `h+=${f(w.A)}*sin(dot(xz,vec2(${f(w.dx)},${f(w.dz)}))*${f(w.k)}-uTime*${f(w.w)}+${f(w.ph)})*clamp(1.-sp/${f(w.L * .3)},0.,1.);`).join('\n');
+    const waveFS = WAVES.map(w => `th=dot(vXZ,vec2(${f(w.dx)},${f(w.dz)}))*${f(w.k)}-uTime*${f(w.w)}+${f(w.ph)}; g+=vec2(${f(w.dx)},${f(w.dz)})*(${f(w.A * w.k)}*cos(th)*clamp(1.-foot/${f(w.L * .5)},0.,1.)); hgt+=${f(w.A)}*sin(th);`).join('\n');
+    const sea = new T.Mesh(g, mat(
+      `uniform float uTime; varying vec3 vW; varying vec2 vXZ;
+       void main(){ vec4 w=modelMatrix*vec4(position,1.); vec2 xz=w.xz; float sp=length(position.xz)*${f(ratio - 1)}; float h=0.;
+         ${waveVS}
+         w.y+=h; vW=w.xyz; vXZ=xz; gl_Position=projectionMatrix*viewMatrix*w; }`,
+      `${COMMON}
+       uniform vec4 uDrops[16]; uniform vec4 uLights[9]; uniform vec3 uWater,uScatter; uniform float uSunSpec,uMoonSpec,uPix;
+       varying vec3 vW; varying vec2 vXZ;
+       // how strongly a patch of water with this normal mirrors a light at L into the eye
+       float glint(vec3 N,vec3 V,vec3 L,float s2){ vec3 H=normalize(V+L); float c=max(dot(N,H),1e-4); return exp(-(1.-c*c)/(c*c*s2))*sqrt(.02/s2); }
+       void main(){
+         vec3 Vv=cameraPosition-vW; float dist=length(Vv); vec3 V=Vv/dist;
+         float foot=dist*dist*uPix/max(cameraPosition.y,.5);          // metres of sea covered by one pixel
+         vec2 g=vec2(0.); float hgt=0., th;
+         ${waveFS}
+         vec3 a=n2d(vXZ*.62+vec2(uTime*.12,-uTime*.09)), b=n2d(vXZ*1.9+vec2(uTime*.35,uTime*.22)), c=n2d(vXZ*4.7+vec2(-uTime*.5,uTime*.41));
+         g+=a.yz*.05*clamp(1.-foot/1.6,0.,1.)+b.yz*.13*clamp(1.-foot/.5,0.,1.)+c.yz*.1*clamp(1.-foot/.2,0.,1.);
+         // rings spreading from every touch
+         float bio=0.;
+         if(dist<80.){ for(int i=0;i<16;i++){ vec4 dr=uDrops[i]; float age=uTime-dr.z; if(age<0.||age>7.) continue;
+           vec2 dv=vXZ-dr.xy; float r=length(dv)+1e-4, ring=age*1.5, wd=.35+age*.22, x=(r-ring)/wd;
+           float env=dr.w*exp(-age*.6)*exp(-x*x)/(1.+ring*.45), ph=(r-ring)*8.5;
+           g+=(dv/r)*env*(-.33*sin(ph)-.08*x/wd*cos(ph)); bio+=env*exp(-age*.45)*(.2+.8*pow(max(cos(ph),0.),2.)); } }
+         vec3 N=normalize(vec3(-g.x,1.,-g.y));
+         float F=.02+.98*pow(1.-max(dot(N,V),0.),5.);
+         vec3 Rr=reflect(-V,N); Rr.y=abs(Rr.y)+.015; Rr=normalize(Rr);
+         vec3 refl=clouds(skyBase(Rr),Rr,cloudField(Rr));
+         float signA=0.;
+         if(uSignOp>.003){ float den=dot(Rr.xz,uSignDir);
+           if(den>.02){ vec3 Hh=vW+Rr*(dot(uSignGeo.xy-vW.xz,uSignDir)/den);
+             float su=dot(Hh.xz-uSignGeo.xy,vec2(-uSignDir.y,uSignDir.x))/uSignGeo.z+.5, sv=(Hh.y-uSignY)/uSignGeo.w;
+             if(su>0.&&su<1.&&sv>-.25&&sv<1.25){ float sm=.03+.45*sqrt(mix(.0007,.02,foot/(foot+2.))); vec3 acc=vec3(0.);
+               for(int i=0;i<5;i++){ float y=sv+(float(i)-2.)*sm*.5; acc+=texture2D(uSign,vec2(su,clamp(y,0.,1.))).rgb*step(0.,y)*step(y,1.); }
+               acc*=.2; float on=letterOn(texture2D(uSign,vec2(su,clamp(sv,.02,.98))).b);
+               signA=acc.r*uSignOp;
+               refl=mix(refl,mix(uSignDark,uSignCol,on),signA)+uSignCol*acc.g*on*uSignOp*.3; } } }
+         vec3 body=uWater*(.55+.45*N.y)+uScatter*pow(max(dot(-V,normalize(vec3(uSunDir.x,0.,uSunDir.z))),0.),3.)*clamp(hgt*1.6+.45,0.,1.3);
+         vec3 col=mix(body,refl,F);
+         // the glitter path: sharp sparks up close, a long soft column where the waves are too small to see
+         float s2=mix(.0007,.02,foot/(foot+2.)), gain=mix(.3,1.,F);
+         col+=(uSunCol*uSunSpec*glint(N,V,uSunDir,s2)+uMoonCol*uMoonSpec*glint(N,V,uMoonDir,s2))*gain*(1.-signA);
+         for(int i=0;i<9;i++){ vec4 Lp=uLights[i]; if(Lp.w<.002) continue;
+           vec3 L=Lp.xyz-vW; float d2=dot(L,L);
+           col+=vec3(1.,.5,.16)*Lp.w*(glint(N,V,L*inversesqrt(d2),max(s2,.0025))*3.2/(1.+d2*.03)+.022/(1.+d2*1.1)); }
+         float tw=n2(vXZ*24.+uTime*.5); col+=vec3(.08,.5,1.)*2.6*bio*(.4+1.2*tw*tw)*uNight;
+         col=mix(skyBase(normalize(vec3(-V.x,.003,-V.z))),col,exp(-dist*.00034));
+         gl_FragColor=vec4(finish(col),1.); }`, seaU, { side: T.DoubleSide, defines: { CLOUD_OCT: 3 } }));
+    sea.frustumCulled = false; scene.add(sea);
+  }
+  await step(46);
+
+  /* ----- paper lanterns ----- */
+  const glowTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.2, 'rgba(255,255,255,.4)'); g.addColorStop(.55, 'rgba(255,255,255,.08)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+  })();
+  const lampVS = 'varying vec2 vUv; varying vec3 vL; varying vec3 vN; void main(){ vUv=uv; vL=position; vN=normalize(mat3(modelMatrix)*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }';
+  const lampFS = `${COMMON} uniform float uLit,uFlick; uniform vec3 uAmb; varying vec2 vUv; varying vec3 vL; varying vec3 vN;
+    void main(){ vec2 q=abs(vUv*2.-1.);
+      float frame=max(smoothstep(.86,.9,q.x),smoothstep(.9,.93,q.y));
+      float fibre=.9+.2*n2(vUv*vec2(60.,90.))-.08*n2(vUv*300.);
+      float candle=exp(-length(vL-vec3(0.,-.16,0.))*3.4);
+      vec3 lit=vec3(1.,.5,.17)*(.9+5.*candle)*fibre*uFlick;
+      vec3 col=mix(uAmb*vec3(.9,.9,.95)*(.7+.3*vN.y)*fibre,lit,uLit);
+      col=mix(col,vec3(.03,.02,.012)+lit*.04*uLit,frame);
+      if(abs(vN.y)>.5) col=mix(uAmb*.08,vec3(1.,.5,.17)*1.6*uLit*uFlick,step(0.,vN.y)*(1.-smoothstep(.45,.85,max(q.x,q.y))));
+      gl_FragColor=vec4(finish(col),1.); }`;
+  const raftFS = `${COMMON} uniform float uLit,uFlick; uniform vec3 uAmb; varying vec2 vUv; varying vec3 vL; varying vec3 vN;
+    void main(){ float grain=.7+.6*n2(vec2(vL.x*40.,vL.z*4.));
+      vec3 col=vec3(.05,.032,.018)*grain*(uAmb*1.5+vec3(1.,.5,.17)*uLit*uFlick*2.2*max(vN.y,0.)*exp(-length(vL.xz)*3.));
+      gl_FragColor=vec4(finish(col),1.); }`;
+  const boxGeo = new T.BoxGeometry(.42, .54, .42), raftGeo = new T.BoxGeometry(.64, .05, .64);
+  const glowSprite = size => { const s = new T.Sprite(new T.SpriteMaterial({ map: glowTex, color: new T.Color().setRGB(1, .56, .22), opacity: 0, blending: T.AdditiveBlending, depthWrite: false, transparent: true })); s.scale.setScalar(size); s.position.y = .36; return s; };
+  function makeLantern(x, z) {
+    const u = { uLit: { value: 0 }, uFlick: { value: 1 }, uAmb: U.uAmb };
+    const body = new T.Mesh(boxGeo, mat(lampVS, lampFS, u)); body.position.y = .32;
+    const g = new T.Group(), g1 = glowSprite(2.6), g2 = glowSprite(9);
+    g.add(new T.Mesh(raftGeo, mat(lampVS, raftFS, u)), body, g1, g2); g.visible = false; scene.add(g);
+    return { g, u, g1, g2, x, z, lit: 0, target: 0, spin: R(0, TAU) };
+  }
+  const lamps = [makeLantern(2.2, -7.8), makeLantern(3.6, -10.2), makeLantern(1, -12)];
+  for (let i = 0; i < 6; i++) lamps.push(makeLantern(0, -10));
+  let nextUser = 0;
+  await step(64);
+
+  /* ----- the names: letters standing out at sea, dark by day and lit after dusk ----- */
+  const SIGN_D = 230;
+  await Promise.race([document.fonts.load('400 120px "League Gothic"'), new Promise(res => setTimeout(res, 2500))]).catch(() => {});
+  const signFont = document.fonts.check('400 120px "League Gothic"') ? '"League Gothic"' : 'Impact, "Arial Narrow", sans-serif';
+  const wordCache = {};
+  // One texture per name: red is the letter shapes, green their halo, blue says which letter a pixel belongs to.
+  function makeWord(text, stack) {
+    const lines = stack && text.includes(' ') ? text.split(' ') : [text], size = 300, track = size * .055, pad = 90;
+    const c = document.createElement('canvas'), x = c.getContext('2d'), font = '400 ' + size + 'px ' + signFont;
+    x.font = font;
+    const cap = x.measureText('H').actualBoundingBoxAscent || size * .72, gap = cap * .2;
+    const rows = lines.map(l => { const ws = [...l].map(ch => x.measureText(ch).width); return { l, ws, w: ws.reduce((a, b) => a + b, 0) + track * (l.length - 1) }; });
+    const blockW = Math.max(...rows.map(r => r.w)), blockH = lines.length * cap + (lines.length - 1) * gap;
+    c.width = Math.ceil(blockW + pad * 2); c.height = Math.ceil(blockH + pad * 2);
+    const draw = blur => {
+      x.clearRect(0, 0, c.width, c.height);
+      x.font = font; x.textBaseline = 'alphabetic'; x.fillStyle = '#fff'; x.shadowColor = '#fff'; x.shadowBlur = blur;
+      const boxes = [];
+      rows.forEach((r, li) => {
+        let px = (c.width - r.w) / 2; const base = pad + cap + li * (cap + gap);
+        [...r.l].forEach((ch, k) => {
+          for (let n = blur ? 3 : 1; n > 0; n--) x.fillText(ch, px, base);
+          if (ch !== ' ') boxes.push([k === 0 ? 0 : px - track / 2, k === r.l.length - 1 ? c.width : px + r.ws[k] + track / 2, li === 0 ? 0 : base - cap - gap / 2, li === lines.length - 1 ? c.height : base + gap / 2]);
+          px += r.ws[k] + track;
+        });
+      });
+      return [x.getImageData(0, 0, c.width, c.height).data, boxes];
+    };
+    const [sharp, boxes] = draw(0), [soft] = draw(pad * .5);
+    const out = x.createImageData(c.width, c.height), o = out.data;
+    for (let i = 0; i < o.length; i += 4) { o[i] = sharp[i + 3]; o[i + 1] = soft[i + 3]; o[i + 3] = 255; }
+    boxes.forEach(([x0, x1, y0, y1], n) => {
+      const v = Math.round(n / 16 * 255);
+      for (let yy = Math.max(0, Math.floor(y0)); yy < Math.min(c.height, Math.ceil(y1)); yy++) for (let xx = Math.max(0, Math.floor(x0)); xx < Math.min(c.width, Math.ceil(x1)); xx++) o[(yy * c.width + xx) * 4 + 2] = v;
+    });
+    x.shadowBlur = 0; x.putImageData(out, 0, 0);
+    const tex = new T.CanvasTexture(c); tex.anisotropy = 4;
+    return { tex, stack, aspect: c.width / c.height, n: boxes.length, capFrac: blockH / c.height, padFrac: pad / c.height, lines: lines.length };
+  }
+  const signVS = 'varying vec2 vUv; varying vec3 vW; void main(){ vUv=uv; vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }';
+  const signGeo = new T.PlaneGeometry(1, 1);
+  const sign = new T.Mesh(signGeo, mat(signVS, `${COMMON} varying vec2 vUv; varying vec3 vW;
+    void main(){ vec4 t=texture2D(uSign,vUv); float on=letterOn(t.b);
+      vec3 d=normalize(vW-cameraPosition); vec3 haze=skyBase(normalize(vec3(d.x,max(d.y,.03),d.z)));
+      vec3 col=mix(mix(uSignDark,haze,.1),uSignCol*(.85+.3*vUv.y),on);
+      gl_FragColor=vec4(finish(col),t.r*uSignOp); }`, {}, { transparent: true, depthWrite: false }));
+  const signGlow = new T.Mesh(signGeo, mat(signVS, `${COMMON} varying vec2 vUv; varying vec3 vW;
+    void main(){ vec4 t=texture2D(uSign,vUv); gl_FragColor=vec4(finish(uSignCol*.45)*t.g*letterOn(t.b)*uSignOp*.34,1.); }`, {}, { transparent: true, depthWrite: false, blending: T.AdditiveBlending }));
+  sign.frustumCulled = signGlow.frustumCulled = false; sign.renderOrder = 1; signGlow.renderOrder = 2;
+  scene.add(sign, signGlow);
+  let signNow = -1, word = null, signW = 100, signH = 30, signY = 0;
+  function layoutSign() {
+    if (signNow < 0) return;
+    const stack = camera.aspect < .8;
+    if (!word || word.stack !== stack) {
+      const key = signNow + (stack ? 's' : 'w');
+      word = wordCache[key] || (wordCache[key] = makeWord(WORDS[signNow].t, stack));
+      U.uSign.value = word.tex; U.uSignN.value = word.n;
+      U.uSignFault.value = !reduced && WORDS[signNow].t === WORDS[0].t ? 2 : -1;
+    }
+    const hw = Math.tan(camera.fov * RAD / 2) * camera.aspect;
+    signW = 2 * SIGN_D * hw * (stack ? .94 : .64); signH = signW / word.aspect;
+    const most = SIGN_D * Math.tan(8.6 * RAD) * (word.lines > 1 ? 2.1 : 1), tallness = signH * word.capFrac;
+    if (tallness > most) { signW *= most / tallness; signH *= most / tallness; }
+    signY = -word.padFrac * signH - .9;
+  }
+  function setWord(i) { signNow = i; word = null; layoutSign(); }
+
+  /* ----- the evening's palette, one value per keyframe ----- */
+  const K = {
+    zen: colour([[.07, .17, .42], [.04, .09, .28], [.012, .03, .12], [.006, .014, .05], [.0045, .01, .032], [.004, .009, .028], [.004, .009, .028]]),
+    hor: colour([[.8, .42, .2], [.75, .3, .14], [.3, .13, .16], [.06, .04, .09], [.016, .022, .05], [.012, .02, .045], [.012, .02, .045]]),
+    glow: colour([[1.1, .42, .1], [1.2, .3, .06], [.75, .2, .1], [.18, .07, .09], [.03, .03, .06], [.016, .024, .05], [.016, .024, .05]]),
+    sun: colour([[3.2, 2, .95], [3, .75, .16], [2, .6, .25], [1, .3, .15], [1, .3, .15], [1, .3, .15], [1, .3, .15]]),
+    lit: colour([[1.3, .62, .3], [1.4, .4, .2], [.5, .18, .2], [.08, .05, .09], [.035, .04, .07], [.03, .04, .075], [.03, .04, .075]]),
+    shade: colour([[.26, .2, .3], [.16, .1, .2], [.05, .035, .08], [.012, .012, .03], [.006, .008, .018], [.005, .007, .016], [.005, .007, .016]]),
+    water: colour([[.01, .05, .07], [.007, .028, .045], [.004, .012, .028], [.002, .007, .017], [.0015, .005, .013], [.0013, .0045, .012], [.0013, .0045, .012]]),
+    scatter: colour([[.04, .26, .22], [.03, .13, .11], [.008, .025, .03], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+    glowAmt: scalar([.7, .9, .85, .6, .35, .2, .2]), sunK: scalar([1, .9, .12, 0, 0, 0, 0]), sunSpec: scalar([1.6, 1.2, 0, 0, 0, 0, 0]),
+    night: scalar([0, 0, .12, .5, .88, 1, 1]), stars: scalar([0, 0, .06, .45, .9, 1, 1]), exposure: scalar([1, 1, 1.15, 1.4, 1.7, 1.8, 1.8]),
+    sunAz: scalar([3, 9, 13, 17, 21, 30, 40]), moonEl: scalar([-8, -8, -4, 5, 13, 21, 26])
+  };
+  const pitchAt = track([[0, -1.5], [.1, -2], [.2, -3], [.27, -9], [.72, -9], [.79, 6], [.855, 6], [.91, -8], [1, -8]]);
+  const lampAz = lamps.slice(0, 3).map(l => Math.atan2(l.x, -l.z) / RAD);
+  const yawAt = track([[.2, 0], [.27, lampAz[0]], [.4, lampAz[0]], [.43, lampAz[1]], [.56, lampAz[1]], [.59, lampAz[2]], [.72, lampAz[2]], [.78, 0]]);
+  const dirOf = (az, el, out) => out.set(Math.sin(az * RAD) * Math.cos(el * RAD), Math.sin(el * RAD), -Math.cos(az * RAD) * Math.cos(el * RAD));
+  const tmp = v3();
+  let tall = 0, dirty = false, slow = 0, live = false, dropAt = 0, autoDrop = 0;
+  function addDrop(x, z, amp) { drops.set([x, z, time, amp], dropAt * 4); dropAt = (dropAt + 1) % 16; }
+  // Where a point on the screen meets the water, or null if it is sky.
+  function waterAt(nx, ny) {
+    tmp.set(nx, ny, .5).unproject(camera).sub(camera.position).normalize();
+    if (tmp.y > -.015) return null;
+    const k = -camera.position.y / tmp.y;
+    return k > 70 ? null : [camera.position.x + tmp.x * k, camera.position.z + tmp.z * k];
+  }
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    tall = 1 - smooth(.62, 1.25, camera.aspect);
+    camera.fov = lerp(45, 60, tall);
+    camera.updateProjectionMatrix();
+    seaU.uPix.value = camera.fov * RAD / renderer.domElement.height;
+    layoutSign();
+  }
+  function render(q, t, dt) {
+    if (dirty) { dirty = false; renderer.setPixelRatio(dpr); resize(); }
+    U.uTime.value = t;
+    K.zen(q, U.uZen.value); K.hor(q, U.uHor.value); K.glow(q, U.uGlowCol.value); K.sun(q, U.uSunCol.value);
+    K.lit(q, U.uCloudLit.value); K.shade(q, U.uCloudShade.value); K.water(q, seaU.uWater.value); K.scatter(q, seaU.uScatter.value);
+    U.uGlowAmt.value = K.glowAmt(q); U.uSunK.value = Math.max(0, K.sunK(q)); U.uNight.value = clamp(K.night(q)); U.uStars.value = clamp(K.stars(q)); U.uExposure.value = K.exposure(q);
+    seaU.uSunSpec.value = Math.max(0, K.sunSpec(q));
+    const moonEl = K.moonEl(q), moonK = smooth(0, 6, moonEl);
+    U.uMoonK.value = moonK; seaU.uMoonSpec.value = .55 * moonK;
+    dirOf(K.sunAz(q), sunElAt(q), U.uSunDir.value); dirOf(-14, moonEl, U.uMoonDir.value);
+    U.uAmb.value.copy(U.uZen.value).multiplyScalar(1.6).addScaledVector(U.uHor.value, .5);
+
+    // The camera rides the swell like something afloat.
+    const [sx, sz] = seaSlope(0, 0, t);
+    camera.position.set(0, 2.2 + seaH(0, 0, t) * .6, 0);
+    camera.rotation.set((pitchAt(q) + ptr.y * 1.2) * RAD - sz * .25, (-yawAt(q) * tall - ptr.x * 1.6) * RAD, sx * .35);
+    camera.updateMatrixWorld();
+    sky.position.copy(camera.position);
+
+    // The name on the horizon: pick the one for this part of the evening, face it to the camera, and hand its place to the water.
+    let pick = -1, op = 0;
+    WORDS.forEach((w, i) => { const o = Math.min(w.a <= 0 ? 1 : smooth(w.a, w.a + .022, q), w.b >= 1 ? 1 : 1 - smooth(w.b - .022, w.b, q)); if (o > op) { op = o; pick = i; } });
+    if (pick >= 0 && pick !== signNow) setWord(pick);
+    const ry = -yawAt(q) * tall * RAD, sxz = [-Math.sin(ry) * SIGN_D, -Math.cos(ry) * SIGN_D];
+    sign.visible = signGlow.visible = op > .003 && signNow >= 0;
+    U.uSignOp.value = signNow >= 0 ? op : 0; U.uSignLit.value = smooth(.165, .215, q);
+    U.uSignDir.value.set(-Math.sin(ry), -Math.cos(ry)); U.uSignGeo.value.set(sxz[0], sxz[1], signW, signH); U.uSignY.value = signY;
+    for (const m of [sign, signGlow]) { m.position.set(sxz[0], signY + signH / 2, sxz[1]); m.rotation.y = ry; m.scale.set(signW, signH, 1); }
+
+    let count = 0;
+    lamps.forEach((L, i) => {
+      if (i < 3) L.target = q > LAMP_AT[i] ? 1 : 0;
+      const before = L.lit;
+      L.lit += (L.target - L.lit) * (1 - Math.exp(-dt * 2.4)); if (dt === 0) L.lit = L.target;
+      if (live && before < .1 && L.lit >= .1) { addDrop(L.x, L.z, 1.3); if (i < 3) play('lantern'); }
+      if (i >= 3 && L.target) { L.x += dt * .035; L.z += dt * .05; if (L.z > -3) L.target = 0; }
+      const k = L.lit, h = seaH(L.x, L.z, t), [lx, lz] = seaSlope(L.x, L.z, t), fl = .92 + .08 * Math.sin(t * 11 + L.spin) * Math.sin(t * 7.3 + L.spin * 2);
+      L.g.visible = k > .01;
+      L.g.position.set(L.x, h + .02, L.z); L.g.rotation.set(-lz * .8, L.spin + Math.sin(t * .15 + L.spin) * .3, lx * .8); L.g.scale.setScalar(Math.max(.001, k * (2 - k)));
+      L.u.uLit.value = k; L.u.uFlick.value = fl; L.g1.material.opacity = .6 * k * fl; L.g2.material.opacity = .13 * k;
+      lights.set([L.x, h + .4, L.z, k * fl], i * 4);
+      if (i >= 3 && L.target) count++;
+    });
+    userLights = count;
+    // After dark the sea is touched now and then on its own, so the glow is there to be found.
+    if (live && q > .55 && t > autoDrop) { addDrop(R(-9, 9), -R(5, 24), .7); autoDrop = t + R(1.4, 3.2); }
+
+    renderer.render(scene, camera);
+    if (dt > .034) slow++; else slow = Math.max(0, slow - 1);
+    if (slow > 45 && dpr > .8) { dpr = Math.max(.75, dpr - .35); dirty = true; slow = 0; }
+  }
+  function touch(nx, ny, amp) { const w = waterAt(nx, ny); if (!w) return false; addDrop(w[0], w[1], amp); return true; }
+  function tap(nx, ny, q) {
+    const w = waterAt(nx, ny);
+    if (!w) return null;
+    if (q > .86 && w[1] < -3.5) {
+      const L = lamps[3 + nextUser]; nextUser = (nextUser + 1) % 6;
+      L.x = w[0]; L.z = w[1]; L.lit = 0; L.target = 1; L.spin = R(0, TAU);
+      return 'lantern';
+    }
+    addDrop(w[0], w[1], 1.6);
+    return 'splash';
+  }
+  resize();
+  new ResizeObserver(() => { dirty = true; }).observe(stage);
+  // Draw each part of the evening once behind the loading screen so scrolling never stalls on a shader compile.
+  for (const q of [.95, .65, .33, 0]) { render(q, 0, 0); await step(70 + Math.round((1 - q) * 28)); }
+  live = true;
+  return { render, tap, touch };
+}
+
+/* ---------- touch ---------- */
+function moved(cx, cy) {
+  const r = stage.getBoundingClientRect(), nx = (cx - r.left) / r.width * 2 - 1, ny = -((cy - r.top) / r.height * 2 - 1);
+  const dist = Math.hypot(nx - ptr.lastX, ny - ptr.lastY), now = performance.now();
+  ptr.nx = nx; ptr.ny = ny;
+  if (dist > .05 || (dist > .006 && now - ptr.lastT > 130)) {
+    ptr.lastX = nx; ptr.lastY = ny; ptr.lastT = now;
+    if (gl && gl.touch(nx, ny, clamp(.4 + dist * 4, .4, 1))) play('plip', p > .55);
+  }
+}
+addEventListener('mousemove', e => moved(e.clientX, e.clientY), { passive: true });
+addEventListener('touchstart', e => { const t = e.touches[0]; if (t) moved(t.clientX, t.clientY); }, { passive: true });
+addEventListener('touchmove', e => { const t = e.touches[0]; if (t) moved(t.clientX, t.clientY); }, { passive: true });
+stage.addEventListener('click', e => {
+  if (!gl || e.target.closest('button, a, .mail__addr')) return;
+  const r = stage.getBoundingClientRect(), kind = gl.tap((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height * 2 - 1), p);
+  if (kind === 'splash') play('splash');
+});
+
+/* ---------- run ---------- */
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now;
+  time += dt * (reduced ? .35 : 1);
+  const target = readP();
+  p += (target - p) * (1 - Math.exp(-dt * (reduced ? 40 : 5)));
+  if (Math.abs(target - p) < 2e-5) p = target;
+  ptr.x += (ptr.nx - ptr.x) * (1 - Math.exp(-dt * 3)); ptr.y += (ptr.ny - ptr.y) * (1 - Math.exp(-dt * 3));
+  if (gl) gl.render(p, time, dt);
+  hud(p);
+}
+const step = n => {
+  bootPct.textContent = String(Math.min(100, n)).padStart(3, '0');
+  return new Promise(res => { const t = setTimeout(res, 80); requestAnimationFrame(() => { clearTimeout(t); res(); }); });
+};
+(async () => {
+  hud(0);
+  try { gl = await buildGL(step); }
+  catch (err) { console.warn('Scene unavailable:', err); document.documentElement.classList.add('no-gl'); }
+  await step(100);
+  boot.classList.add('is-done');
+  p = readP(); last = performance.now();
+  requestAnimationFrame(tick);
+})();
+})();
+</script>
+</body>
+</html>
