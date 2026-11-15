@@ -1,0 +1,21 @@
+{
+  "source": "https://registry.opendata.aws/terrain-tiles/",
+  "provider": "Mapzen Terrain Tiles",
+  "format": "little-endian uint16 decimetres",
+  "samples": [
+    513,
+    513
+  ],
+  "spanMetres": 6799.406182216071,
+  "center": [
+    45.9763,
+    7.6586
+  ],
+  "min": 2048.44921875,
+  "max": 4354.484375,
+  "maxIndex": [
+    253,
+    246
+  ],
+  "accessed": "2026-11-15"
+}

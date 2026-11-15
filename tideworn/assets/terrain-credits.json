@@ -1,0 +1,12 @@
+{
+  "name": "Alpine elevation near the Matterhorn",
+  "source": "https://registry.opendata.aws/terrain-tiles/",
+  "attribution": "Produced using Copernicus data and information funded by the European Union - EU-DEM layers. SRTM data courtesy of the U.S. Geological Survey. Distributed by Mapzen Terrain Tiles.",
+  "licenseInfo": "https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+  "accessed": "2026-11-15",
+  "modifications": "Cropped, resampled and scaled for a cinematic landscape; material and snow cover are authored.",
+  "files": [
+    "alpine-terrain.bin",
+    "alpine-terrain.json"
+  ]
+}

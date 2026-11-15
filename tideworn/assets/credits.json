@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Ship Pinnace",
+    "creators": [
+      "James Ray Cock",
+      "Rico Cilliers",
+      "Nicol\u00f2 Zubbini",
+      "Yann Kervran"
+    ],
+    "source": "https://polyhaven.com/a/ship_pinnace",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "changes": "Self-contained GLB, WebP textures, deduplication, welded geometry and explicit MikkTSpace tangents. Desktop: 2K hull maps and 1K other maps. Mobile: 512px textures with conservative geometry simplification. Original sail mesh and alpha mask retained.",
+    "files": [
+      "ship.glb",
+      "ship-low.glb"
+    ]
+  },
+  {
+    "name": "Rock Face 03",
+    "source": "https://polyhaven.com/a/rock_face_03",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "files": [
+      "rock.jpg",
+      "rock-normal.jpg"
+    ]
+  },
+  {
+    "name": "Forest Floor",
+    "source": "https://polyhaven.com/a/forest_floor",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "files": [
+      "ground.jpg"
+    ]
+  },
+  {
+    "name": "Wood Planks Dirt",
+    "source": "https://polyhaven.com/a/wood_planks_dirt",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "files": [
+      "wood.jpg"
+    ]
+  },
+  {
+    "name": "Fir Tree 01 \u2014 twig atlas and bark textures",
+    "creators": [
+      "Rob Tuytel",
+      "Rico Cilliers"
+    ],
+    "source": "https://polyhaven.com/a/fir_tree_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "changes": "Photographed needle and bark textures applied to custom instanced organic branch geometry; diffuse, alpha and normal maps retained.",
+    "files": [
+      "tree-needles.jpg",
+      "tree-needles-alpha.jpg",
+      "tree-needles-normal.jpg",
+      "tree-bark.jpg",
+      "tree-bark-normal.jpg"
+    ]
+  },
+  {
+    "name": "Kloppenheim 06 Pure Sky",
+    "source": "https://polyhaven.com/a/kloppenheim_06_puresky",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "files": [
+      "clear-sky.hdr"
+    ]
+  }
+]
