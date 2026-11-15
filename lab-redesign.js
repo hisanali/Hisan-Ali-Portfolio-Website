@@ -37,8 +37,8 @@
 
   /* ---------- Experiment index (single source for search and surprise) ---------- */
 
-  const categoryLabels = { studio: 'Studio', game: 'Game', file: 'Files', growth: 'Business' };
-  const categoryWords = { studio: 'studio studios create', game: 'game games play arcade', file: 'file files document documents convert', growth: 'business web marketing' };
+  const categoryLabels = { studio: 'Studio', '3d': '3D piece', game: 'Game', file: 'Files', growth: 'Business' };
+  const categoryWords = { studio: 'studio studios create', '3d': '3d three dimensional webgl interactive piece', game: 'game games play arcade', file: 'file files document documents convert', growth: 'business web marketing' };
   const normalize = (value) => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’']/g, '');
   const words = (value) => value.split(/[^a-z0-9]+/).filter(Boolean);
   const items = $$('[data-lx-item]').map((link) => {
@@ -1133,7 +1133,7 @@
   const filterButtons = $$('[data-lx-filters] button');
   const gridItems = $$('[data-lx-grid] > li');
   const filterStatus = $('[data-lx-filter-status]');
-  const filterNames = { all: 'experiments', studio: 'studios', game: 'games', file: 'file and image tools', growth: 'business and web tools' };
+  const filterNames = { all: 'experiments', studio: 'studios', '3d': '3D pieces', game: 'games', file: 'file and image tools', growth: 'business and web tools' };
 
   filterButtons.forEach((button) => button.addEventListener('click', () => {
     const filter = button.dataset.filter;

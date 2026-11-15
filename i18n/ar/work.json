@@ -91,7 +91,7 @@
  "Budgeting · Efficiency · Scaling": "الميزانية · الكفاءة · التوسّع",
  "Open the framework<0/>": "افتح الإطار<0/>",
  "More live work": "مزيد من الأعمال المنشورة",
- "Six more<0/>live builds.": "ستة مواقع<0/>أخرى منشورة.",
+ "Seven more<0/>live builds.": "سبعة مواقع<0/>أخرى منشورة.",
  "Each record explains the purpose, focus, and visible scope of the build. Open the live website to inspect the work directly.": "يشرح كل سجل الغرض والتركيز والنطاق الظاهر للعمل. افتح الموقع المباشر لتفحّص العمل بنفسك.",
  "SOAL Oman homepage: the headline “Built to be felt.” beside an interactive 3D sculpture of the SOAL logo": "الصفحة الرئيسية لموقع SOAL Oman: عنوان «Built to be felt.» بجانب مجسّم تفاعلي ثلاثي الأبعاد لشعار SOAL",
  "SOAL Oman Arabic homepage, laid out right to left": "الصفحة الرئيسية العربية لموقع SOAL Oman، بتخطيط من اليمين إلى اليسار",
@@ -127,5 +127,14 @@
  "A concept site for an imaginary studio, set on a real-time sea that runs from golden hour to night. The names stand as lit letters on the horizon, and the water answers when you touch it.": "موقع تجريبي لاستوديو متخيَّل، على بحر يُرسم لحظيًا ويمتد من الساعة الذهبية إلى الليل. تقف الأسماء حروفًا مضيئة على الأفق، ويتجاوب الماء مع لمستك.",
  "Real-time 3D water": "ماء ثلاثي الأبعاد يُرسم لحظيًا",
  "Scroll-driven evening": "مساء يتقدّم مع التمرير",
- "Touch interaction": "تفاعل باللمس"
+ "Touch interaction": "تفاعل باللمس",
+ "See the work in 3D": "شاهد الأعمال بالأبعاد الثلاثية",
+ "Foundry: the name Hisan in white-hot steel letters on a casting table, with embers rising": "Foundry: اسم Hisan بحروف فولاذية متوهجة بالحرارة البيضاء على طاولة صبّ، تتصاعد منها الجمرات",
+ "Foundry: SOAL OMAN in steel letters, cooled to blue and purple, mirrored in the table": "Foundry: اسم SOAL OMAN بحروف فولاذية بردت إلى الأزرق والبنفسجي، تنعكس على الطاولة",
+ "Interactive 3D piece": "عمل تفاعلي ثلاثي الأبعاد",
+ "Foundry": "Foundry",
+ "My name and three of the projects above, cast as steel letters in a real-time foundry. They cool from white heat as you scroll, glow again where you touch them and throw sparks when you tap.": "اسمي وثلاثة من المشاريع أعلاه، مصبوبة حروفًا فولاذية في مسبك يُرسم لحظيًا. تبرد من الحرارة البيضاء مع التمرير، وتتوهج من جديد حيث تلمسها، وتتطاير منها الشرارات عند النقر.",
+ "Real-time 3D steel": "فولاذ ثلاثي الأبعاد يُرسم لحظيًا",
+ "Scroll-driven cooling": "تبريد يتقدّم مع التمرير",
+ "Touch & tap interaction": "تفاعل باللمس والنقر"
 }

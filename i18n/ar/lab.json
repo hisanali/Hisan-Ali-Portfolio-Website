@@ -3,7 +3,7 @@
  "Solve a Rubik’s Cube in 3D, sketch in a browser painting studio, play 13 quick games and use free PDF, image and marketing tools. No sign-up needed.": "حُلّ مكعب روبيك بتقنية ثلاثية الأبعاد، وارسم في استوديو داخل المتصفح، والعب 13 لعبة سريعة، واستخدم أدوات مجانية لملفات PDF والصور والتسويق. دون تسجيل.",
  "Hisan Lab — Where curiosity gets to work": "مختبر حسان — حيث يتحوّل الفضول إلى عمل",
  "A 3D Rubik’s Cube solver, a painting studio, 13 quick games and free browser tools. Everything runs in your browser.": "حلّال مكعب روبيك ثلاثي الأبعاد، واستوديو رسم، و13 لعبة سريعة، وأدوات مجانية في المتصفح. كل شيء يعمل داخل متصفحك.",
- "<0/>Hisan Lab · 26 free experiments": "<0/>مختبر حسان · 26 تجربة مجانية",
+ "<0/>Hisan Lab · 28 free experiments": "<0/>مختبر حسان · 28 تجربة مجانية",
  "Where <0/> <1>gets to work.</1>": "حيث يتحوّل <0/> <1>إلى عمل.</1>",
  "curiosity<0/>": "الفضول<0/>",
  "Solve a real Rubik’s Cube in 3D, sketch on an open canvas, play a quick game or fix a PDF in seconds. Free, private and ready in your browser.": "حُلّ مكعب روبيك حقيقيًا بتقنية ثلاثية الأبعاد، أو ارسم على لوحة مفتوحة، أو العب لعبة سريعة، أو أصلح ملف PDF في ثوانٍ. مجاني وخاص وجاهز في متصفحك.",
@@ -98,7 +98,7 @@
  "<0>Your 30-day plan</0> Four weekly sprints, in priority order": "<0>خطتك لـ 30 يومًا</0> أربع مراحل أسبوعية مرتبة حسب الأولوية",
  "<0/> The full index": "<0/> الفهرس الكامل",
  "Everything in <0>the Lab.</0>": "كل ما في <0>المختبر.</0>",
- "Twenty-six free experiments, grouped by what you want to do. Pick one and it opens instantly.": "ست وعشرون تجربة مجانية، مصنّفة حسب ما تريد فعله. اختر واحدة وستفتح فورًا.",
+ "Twenty-eight free experiments, grouped by what you want to do. Pick one and it opens instantly.": "ثمانٍ وعشرون تجربة مجانية، مصنّفة حسب ما تريد فعله. اختر واحدة وستفتح فورًا.",
  "Filter experiments": "تصفية التجارب",
  "All <0/>": "الكل <0/>",
  "Studios <0/>": "الاستوديوهات <0/>",
@@ -221,5 +221,12 @@
  "re:^Solved in (.+?) moves\\.$": "تم الحل في $1 حركة.",
  "re:^Face (.+?) of 6$": "الوجه $1 من 6",
  "re:^(.+?)(.+?) Tap to play again\\.$": "$1$2 اضغط للعب مجددًا.",
- "re:^Showing (.+?) (.+?)\\.$": "عرض $1 $2."
+ "re:^Showing (.+?) (.+?)\\.$": "عرض $1 $2.",
+ "3D pieces <0/>": "أعمال ثلاثية الأبعاد <0/>",
+ "Foundry": "Foundry",
+ "Steel letters that cool as you scroll. Touch them to reheat the metal, or tap to strike sparks.": "حروف فولاذية تبرد مع التمرير. المسها لتعيد تسخين المعدن، أو انقر لتتطاير الشرارات.",
+ "3D piece · Hot steel": "عمل ثلاثي الأبعاد · فولاذ ساخن",
+ "Noctiluca": "Noctiluca",
+ "A sea that runs from golden hour to night. Touch the water and it ripples, then glows.": "بحر يمتد من الساعة الذهبية إلى الليل. المس الماء فيتموّج، ثم يتوهّج.",
+ "3D piece · Night sea": "عمل ثلاثي الأبعاد · بحر ليلي"
 }

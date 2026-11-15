@@ -1,11 +1,19 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8">
+<head><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PNT5FCX5');</script><!-- End Google Tag Manager --><meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Foundry: Hisan Ali's Work Cast in Steel | Hisan Ali</title>
   <meta name="description" content="Hisan Ali's name and client work as cast steel letters in a real-time 3D foundry. Scroll to let the metal cool, touch it to reheat it, tap to strike sparks.">
   <link rel="canonical" href="https://hisanali.com/work/foundry/">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hisanali.com/work/foundry/">
+  <meta property="og:title" content="Foundry: Hisan Ali's Work Cast in Steel">
+  <meta property="og:description" content="Hisan Ali's name and client work as cast steel letters in a real-time 3D foundry. Scroll to let the metal cool, touch it to reheat it, tap to strike sparks.">
+  <meta property="og:image" content="https://hisanali.com/work/foundry/og.jpg">
+  <meta property="og:site_name" content="Hisan Ali - Digital Marketing Expert">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "CreativeWork", "name": "Foundry", "url": "https://hisanali.com/work/foundry/", "description": "Hisan Ali's name and client work as cast steel letters in a real-time 3D foundry. Scroll to let the metal cool, touch it to reheat it, tap to strike sparks.", "genre": "Interactive 3D website", "inLanguage": "en", "image": "https://hisanali.com/work/foundry/og.jpg", "author": {"@type": "Person", "name": "Hisan Ali", "url": "https://hisanali.com/about/"}, "isPartOf": {"@type": "CollectionPage", "name": "Selected Work & Case Studies", "url": "https://hisanali.com/work/"}}</script>
   <meta name="theme-color" content="#030304">
   <link rel="icon" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,7 +61,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .top,.bottom{display:flex;align-items:baseline;justify-content:space-between;gap:16px;font-size:var(--size-small);font-weight:600}
 .brand{font:400 1.625rem/1 var(--font-display);letter-spacing:-.04em;text-decoration:none}
 .brand span{color:var(--hot)}
-.sound{padding:12px 0;opacity:.85;transition:opacity .25s}
+.top__right{display:flex;align-items:baseline;gap:clamp(16px,2.4vw,30px)}
+.sound{padding:12px 0;opacity:.85;transition:opacity .25s;text-decoration:none}
 .sound:hover{opacity:1}
 
 .caps{display:grid;min-height:0;min-width:0}
@@ -81,7 +90,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 @media (prefers-reduced-motion:reduce){ .boot{transition-duration:.01s} }
 </style>
 </head>
-<body>
+<body><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
 <div class="scroll" id="scroll">
   <div class="stage" id="stage">
     <canvas id="gl" aria-hidden="true"></canvas>
@@ -90,8 +99,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 
     <div class="hud">
       <header class="top">
-        <a class="brand" href="https://hisanali.com/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
-        <button type="button" class="sound" id="sound" aria-pressed="false">Sound <span id="soundLabel">off</span></button>
+        <a class="brand" href="/" aria-label="Hisan Ali home">Hisan<span>.</span></a>
+        <span class="top__right"><a class="sound" href="/work/">Back to work</a><button type="button" class="sound" id="sound" aria-pressed="false">Sound <span id="soundLabel">off</span></button></span>
       </header>
 
       <main class="caps">
