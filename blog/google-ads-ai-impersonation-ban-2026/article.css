@@ -1,0 +1,7 @@
+.gi-guide .gi-ad { position:relative; display:flex; align-items:center; gap:14px; width:min(360px,100%); padding:16px 18px; border:2px solid var(--fe-ink); border-radius:16px; }
+.gi-guide .gi-ad > i { flex:0 0 56px; height:56px; border-radius:50%; background:radial-gradient(circle at 50% 38%,var(--fe-muted) 0 30%,transparent 31%),var(--fe-border); }
+.gi-guide .gi-ad span { font-weight:700; color:var(--fe-ink); }
+.gi-guide .gi-l { position:absolute; top:-10px; right:44px; padding:2px 8px; border-radius:6px; background:var(--fe-border); color:var(--fe-ink); font-style:normal; font-size:12px; font-weight:800; opacity:0; animation:gi-l 8s ease infinite; }
+.gi-guide .gi-x { position:absolute; inset:0; display:grid; place-items:center; border-radius:14px; background:color-mix(in srgb,var(--fe-accent) 18%,transparent); color:var(--fe-accent); font-size:3rem; opacity:0; animation:gi-x 8s ease infinite; }
+@keyframes gi-l { 0%,15% { opacity:0; } 25%,90% { opacity:1; } 100% { opacity:0; } }
+@keyframes gi-x { 0%,40% { opacity:0; } 52%,90% { opacity:1; } 100% { opacity:0; } }
