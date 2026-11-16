@@ -11,6 +11,7 @@ const listenScript = '<script src="/blog-listen.js?v=20261112-1" defer></script>
 
 export function prepareInteriorPage(html: string, pathname: string) {
   if (/^\/tideworn(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
+  if (/^\/eight-worlds(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/evermile(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/chess(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
   if (/^\/ludo(?:\/index\.html)?\/?$/.test(pathname)) return ensureTracking(html);
