@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eight Worlds</title>
+<style>
+  :root { --ink: rgba(255,255,255,.92); --dim: rgba(255,255,255,.58); --line: rgba(255,255,255,.16); --glass: rgba(14,17,20,.52); --accent: #e9d8b4; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #07090b; color: var(--ink); overflow: hidden; font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+  .ui { transition: opacity .6s ease; }
+  body.idle .ui { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
+
+  #title { position: fixed; left: max(22px, env(safe-area-inset-left)); bottom: calc(86px + env(safe-area-inset-bottom)); max-width: min(420px, 78vw); text-shadow: 0 1px 14px rgba(0,0,0,.55); pointer-events: none; transition: opacity 1.2s ease; }
+  #title h1 { margin: 0 0 4px; font: 500 26px/1.15 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; letter-spacing: .01em; }
+  #title p { margin: 0; color: rgba(255,255,255,.8); font-size: 13.5px; }
+  #title.faded { opacity: 0; }
+
+  #bar { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 2px; align-items: center; padding: 5px; background: var(--glass); border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); max-width: calc(100vw - 16px); }
+  #bar button { height: 36px; padding: 0 12px; border-radius: 10px; color: var(--dim); white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: background .15s, color .15s; }
+  #bar button:hover, #bar button.open { background: rgba(255,255,255,.09); color: var(--ink); }
+  #bar button.on { color: var(--ink); background: rgba(255,255,255,.13); }
+  #bar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; flex: none; }
+  #bar svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  #bar .val { color: var(--ink); }
+
+  .pop { position: fixed; bottom: calc(72px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(6px); background: var(--glass); border: 1px solid var(--line); border-radius: 14px; padding: 12px; backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; max-width: calc(100vw - 16px); }
+  .pop.show { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
+  .pop h2 { margin: 0 0 8px 2px; font: 600 10.5px/1 inherit; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; max-width: 430px; }
+  .chips button { padding: 7px 11px; border-radius: 9px; border: 1px solid var(--line); color: var(--dim); }
+  .chips button:hover { color: var(--ink); border-color: rgba(255,255,255,.35); }
+  .chips button.on { color: #111; background: var(--accent); border-color: var(--accent); }
+  #worlds { display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 6px; width: min(430px, calc(100vw - 42px)); }
+  #worlds button { text-align: left; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); }
+  #worlds button b { display: block; font-weight: 550; font-size: 13.5px; color: var(--ink); }
+  #worlds button span { color: var(--dim); font-size: 12px; }
+  #worlds button:hover { border-color: rgba(255,255,255,.4); }
+  #worlds button.on { border-color: var(--accent); }
+  #worlds button.on b { color: var(--accent); }
+  .row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .row label { color: var(--dim); min-width: 44px; }
+  .row output { min-width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 250px; max-width: 52vw; height: 22px; background: none; margin: 0; }
+  input[type=range]::-webkit-slider-runnable-track { height: 2px; background: rgba(255,255,255,.3); border-radius: 2px; }
+  input[type=range]::-moz-range-track { height: 2px; background: rgba(255,255,255,.3); border-radius: 2px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; margin-top: -6px; box-shadow: 0 1px 6px rgba(0,0,0,.5); }
+  input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: #fff; }
+  .hint { color: var(--dim); font-size: 12px; margin-top: 9px; max-width: 400px; }
+  kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); }
+  #help table { border-collapse: collapse; } #help td { padding: 3px 14px 3px 2px; color: var(--dim); vertical-align: top; } #help td:first-child { white-space: nowrap; }
+
+  #poi { position: fixed; top: max(18px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 10px; padding: 6px 8px; background: var(--glass); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(12px); }
+  #poi.show { display: flex; }
+  #poi button { width: 28px; height: 28px; border-radius: 8px; color: var(--dim); } #poi button:hover { background: rgba(255,255,255,.1); color: var(--ink); }
+  #poi span { min-width: 120px; text-align: center; }
+  #toast { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 9px; background: var(--glass); border: 1px solid var(--line); opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+
+  #veil { position: fixed; inset: 0; background: #07090b; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; transition: opacity .9s ease; z-index: 5; text-align: center; padding: 24px; }
+  #veil.hide { opacity: 0; pointer-events: none; }
+  #veil h1 { margin: 0; font: 500 34px/1.1 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  #veil p { margin: 0; color: var(--dim); max-width: 440px; }
+  #veil .bar { width: 180px; height: 2px; background: rgba(255,255,255,.14); border-radius: 2px; overflow: hidden; }
+  #veil .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+  #enter { margin-top: 6px; padding: 11px 26px; border-radius: 999px; border: 1px solid rgba(255,255,255,.4); letter-spacing: .04em; display: none; }
+  #enter:hover { background: #fff; color: #111; }
+  #veil.ready #enter { display: inline-block; } #veil.ready .bar { display: none; }
+  #veil .small { font-size: 12px; }
+  #err { position: fixed; left: 12px; top: 12px; color: #ffb4a8; font: 12px ui-monospace, monospace; white-space: pre-wrap; max-width: 80vw; z-index: 9; }
+  @media (max-width: 640px) { #bar button span.lbl { display: none; } #bar button { padding: 0 10px; } #title { bottom: calc(76px + env(safe-area-inset-bottom)); } #title h1 { font-size: 21px; } }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }</script>
+</head>
+<body>
+<canvas id="view" tabindex="0"></canvas>
+
+<div id="title" class="ui"><h1></h1><p></p></div>
+<div id="poi" class="ui"><button data-poi="-1" aria-label="Previous view">‹</button><span></span><button data-poi="1" aria-label="Next view">›</button></div>
+<div id="toast"></div>
+
+<div id="bar" class="ui">
+  <button data-pop="pWorlds"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.500 0 18M12 3c-3 3.500-3 14.500 0 18"/></svg><span class="lbl val" id="worldName">World</span></button>
+  <span class="sep"></span>
+  <button data-mode="explore" title="Walk or fly"><svg viewBox="0 0 24 24"><path d="M12 3l3 7h-6zM12 21V10M6 14l6 3 6-3"/></svg><span class="lbl">Explore</span></button>
+  <button data-mode="orbit" title="Orbit a scene"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="9.500" ry="4.500"/></svg><span class="lbl">Orbit</span></button>
+  <button data-mode="tour" title="Cinematic tour"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.500l5-3v9l-5-3"/></svg><span class="lbl">Tour</span></button>
+  <span class="sep"></span>
+  <button data-pop="pTime"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg><span class="lbl" id="timeLbl">Day</span></button>
+  <button data-pop="pWeather"><svg viewBox="0 0 24 24"><path d="M7 18a4.500 4.500 0 0 1 .5-9A6 6 0 0 1 19 10.500 3.800 3.800 0 0 1 18 18z"/></svg><span class="lbl" id="wxLbl">Clear</span></button>
+  <button data-pop="pWind"><svg viewBox="0 0 24 24"><path d="M3 9h11a3 3 0 1 0-3-3M3 14h15a3 3 0 1 1-3 3M3 19h6"/></svg><span class="lbl">Wind</span></button>
+  <button data-pop="pSound" id="sndBtn"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10z"/><path id="sndWave" d="M16.500 9a4 4 0 0 1 0 6M19 6.500a8 8 0 0 1 0 11"/></svg><span class="lbl">Sound</span></button>
+  <span class="sep"></span>
+  <button data-pop="pHelp" aria-label="Controls"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.400-1 1-1 1.700M12 17h.01"/></svg></button>
+</div>
+
+<div class="pop" id="pWorlds"><h2>Worlds</h2><div id="worlds"></div></div>
+<div class="pop" id="pTime"><h2>Time of day</h2><div class="chips" id="timeChips"></div>
+  <div class="row"><label>Hour</label><input type="range" id="hour" min="0" max="24" step="0.01"><output id="hourOut"></output></div>
+  <div class="row"><label>Flow</label><div class="chips" id="flowChips"><button data-flow="0" class="on">Still</button><button data-flow="0.02">Slow</button><button data-flow="0.25">Fast</button></div></div></div>
+<div class="pop" id="pWeather"><h2>Weather</h2><div class="chips" id="wxChips"></div></div>
+<div class="pop" id="pWind"><h2>Wind</h2><div class="row" style="margin-top:0"><label>Speed</label><input type="range" id="wind" min="0" max="1" step="0.01"><output id="windOut"></output></div><div class="hint">Follows the weather until you move it. <button id="windAuto" style="text-decoration:underline">Follow weather</button></div></div>
+<div class="pop" id="pSound"><h2>Sound</h2><div class="row" style="margin-top:0"><label>Level</label><input type="range" id="vol" min="0" max="1" step="0.01" value="0.8"><output id="volOut"></output></div><div class="row"><div class="chips"><button id="mute">Mute</button></div></div></div>
+<div class="pop" id="pHelp"><h2>Controls</h2><div id="help"><table>
+  <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Move. Click the view to look around.</td></tr>
+  <tr><td><kbd>Shift</kbd></td><td>Run, or fly faster</td></tr>
+  <tr><td><kbd>F</kbd></td><td>Switch between walking and flying</td></tr>
+  <tr><td><kbd>Space</kbd> <kbd>C</kbd></td><td>Up and down while flying</td></tr>
+  <tr><td>Drag, wheel</td><td>Turn and zoom in Orbit. <kbd>←</kbd> <kbd>→</kbd> change the view.</td></tr>
+  <tr><td><kbd>1</kbd>–<kbd>8</kbd></td><td>Change world</td></tr>
+  <tr><td><kbd>T</kbd> <kbd>O</kbd> <kbd>X</kbd></td><td>Tour, orbit, explore</td></tr>
+  <tr><td><kbd>H</kbd></td><td>Hide the interface</td></tr>
+</table></div></div>
+
+<div id="veil"><h1 id="vTitle">Eight Worlds</h1><p id="vText">A ship at sea, and seven places to make landfall.</p><div class="bar"><i id="vBar"></i></div><button id="enter">Enter</button><p class="small" id="vSmall">Best with headphones.</p></div>
+<div id="err"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

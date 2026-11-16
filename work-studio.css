@@ -374,6 +374,7 @@ html[dir="rtl"] .wk-row:hover .wk-row-go .wk-i { transform: scaleX(-1) rotate(45
 .wk-build-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 22px); perspective: 1600px; }
 .wk-build-cell { display: flex; grid-column: span 2; }
 .wk-build-cell--feature, .wk-build-cell--half { grid-column: span 3; }
+.wk-build-cell--wide { grid-column: 1 / -1; }
 .wk-build {
   --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 30%;
   position: relative; isolation: isolate; flex: 1; display: flex; flex-direction: column;
@@ -543,7 +544,7 @@ html:not(.theme-dark) .wk-btn-lime { box-shadow: 0 14px 28px -16px rgba(19, 38, 
     scrollbar-width: none; perspective: none;
   }
   .wk-build-grid::-webkit-scrollbar { display: none; }
-  .wk-build-cell, .wk-build-cell--feature, .wk-build-cell--half { grid-column: auto; scroll-snap-align: start; }
+  .wk-build-cell, .wk-build-cell--feature, .wk-build-cell--half, .wk-build-cell--wide { grid-column: auto; scroll-snap-align: start; }
   .wk-build { min-height: 500px; }
   .wk-next-grid { grid-template-columns: minmax(0, 1fr); }
   .wk-next-actions { flex-direction: row; flex-wrap: wrap; }
