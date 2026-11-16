@@ -1,0 +1,16 @@
+{
+  "name": "Coastal Cliff 02",
+  "source": "https://polyhaven.com/a/coastal_cliff_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    "coastal-cliff.glb"
+  ],
+  "changes": "Photogrammetric source simplified from 943,284 to 28,295 triangles; Meshopt geometry compression; 1024px WebP albedo, normal and roughness textures. Embedded in authored headland with a dynamic wet tide line.",
+  "sourceBoundsMetres": {
+    "width": 40.9276,
+    "height": 10.0532,
+    "depth": 8.6477
+  },
+  "downloadBytes": 615332
+}

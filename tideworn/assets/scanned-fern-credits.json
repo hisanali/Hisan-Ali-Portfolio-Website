@@ -1,0 +1,34 @@
+{
+  "name": "Fern 02",
+  "source": "https://polyhaven.com/a/fern_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "authors": [
+    {
+      "name": "Rico Cilliers",
+      "role": "Modeling"
+    },
+    {
+      "name": "Rob Tuytel",
+      "role": "Scanning"
+    }
+  ],
+  "sourceModel": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fern_02/fern_02_1k.gltf",
+  "sourceTextures": {
+    "textures/fern_02_arm_1k.jpg": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_arm_1k.jpg",
+    "textures/fern_02_diff_1k.jpg": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg",
+    "textures/fern_02_nor_gl_1k.jpg": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_nor_gl_1k.jpg",
+    "fern_02.bin": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fern_02/fern_02.bin"
+  },
+  "sourceAlpha": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fern_02/fern_02_alpha_1k.png",
+  "modifications": "Four original fern variants re-centered at their own roots; gently simplified; official alpha map merged into RGBA diffuse; 1K WebP textures; meshopt compression.",
+  "output": "scanned-fern.glb",
+  "bytes": 221604,
+  "sha256": "98ccbd2cf5d9653429d93ef9783e9976526a76b96808c2e53c04cf9ca2450d73",
+  "trianglesPerVariant": [
+    1704,
+    1608,
+    649,
+    668
+  ]
+}

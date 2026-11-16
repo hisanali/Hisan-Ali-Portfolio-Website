@@ -1,0 +1,68 @@
+{
+  "assets": [
+    {
+      "file": "snow-diffuse.jpg",
+      "source_asset": "snow_02",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_diff_1k.jpg",
+      "asset_page": "https://polyhaven.com/a/snow_02",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "bytes": 325497,
+      "source_md5": "fc54766c6b36ff298699115a619d440b"
+    },
+    {
+      "file": "snow-normal.jpg",
+      "source_asset": "snow_02",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_nor_gl_1k.jpg",
+      "asset_page": "https://polyhaven.com/a/snow_02",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "bytes": 1081858,
+      "source_md5": "f16b5701f9ad521cdd6af10c1d6d2b48"
+    },
+    {
+      "file": "snow-roughness.jpg",
+      "source_asset": "snow_02",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_rough_1k.jpg",
+      "asset_page": "https://polyhaven.com/a/snow_02",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "bytes": 146089,
+      "source_md5": "1dbae0269e53dbf80d4fd1c4335f25a2"
+    },
+    {
+      "file": "sand-diffuse.jpg",
+      "source_asset": "sand_01",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_01/sand_01_diff_1k.jpg",
+      "asset_page": "https://polyhaven.com/a/sand_01",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "bytes": 485088,
+      "source_md5": "c914c8edb419f040e04224081a3f79a5"
+    },
+    {
+      "file": "sand-normal.jpg",
+      "source_asset": "sand_01",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_01/sand_01_nor_gl_1k.jpg",
+      "asset_page": "https://polyhaven.com/a/sand_01",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "bytes": 877821,
+      "source_md5": "369b82aa417c77ec85c4c07c4c7b60a0"
+    },
+    {
+      "file": "sand-roughness.jpg",
+      "source_asset": "sand_01",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_01/sand_01_rough_1k.jpg",
+      "asset_page": "https://polyhaven.com/a/sand_01",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "bytes": 189667,
+      "source_md5": "663d0ddf782a427b7da4e247c939e73b"
+    }
+  ],
+  "material_notes": {
+    "ice": "Frosted glacial material uses the snow_02 maps with original procedural colour, striations and fracture masks; no separate photographic ice source.",
+    "snow_rock": "Steep-slope rock uses the existing rock.jpg and rock-normal.jpg assets credited in credits.json."
+  }
+}

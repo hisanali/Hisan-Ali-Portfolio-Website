@@ -374,7 +374,6 @@ html[dir="rtl"] .wk-row:hover .wk-row-go .wk-i { transform: scaleX(-1) rotate(45
 .wk-build-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 22px); perspective: 1600px; }
 .wk-build-cell { display: flex; grid-column: span 2; }
 .wk-build-cell--feature, .wk-build-cell--half { grid-column: span 3; }
-.wk-build-cell--wide { grid-column: 1 / -1; }
 .wk-build {
   --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 30%;
   position: relative; isolation: isolate; flex: 1; display: flex; flex-direction: column;
@@ -384,11 +383,6 @@ html[dir="rtl"] .wk-row:hover .wk-row-go .wk-i { transform: scaleX(-1) rotate(45
   transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .9s var(--wk-ease);
 }
 .wk-build--feature { min-height: 0; }
-/* A full-row build: the words on the left, the screenshots on the right. */
-.wk-build--wide { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: clamp(28px, 4vw, 64px); min-height: 0; }
-.wk-build--wide .wk-build-top { grid-column: 1 / -1; }
-.wk-build--wide .wk-build-shots { grid-column: 2; grid-row: 2; align-self: center; margin-block: clamp(20px, 2.4vw, 30px) 0; }
-.wk-build--wide .wk-build-body { grid-column: 1; grid-row: 2; align-self: end; margin-top: clamp(20px, 2.4vw, 30px); max-width: 34rem; }
 
 /* Real screenshots, layered: they drift apart as the card tilts toward the cursor. */
 .wk-build-shots { position: relative; aspect-ratio: 3 / 2; margin-block: clamp(20px, 2.4vw, 30px) clamp(22px, 2.6vw, 32px); }
@@ -549,10 +543,7 @@ html:not(.theme-dark) .wk-btn-lime { box-shadow: 0 14px 28px -16px rgba(19, 38, 
     scrollbar-width: none; perspective: none;
   }
   .wk-build-grid::-webkit-scrollbar { display: none; }
-  .wk-build-cell, .wk-build-cell--feature, .wk-build-cell--half, .wk-build-cell--wide { grid-column: auto; scroll-snap-align: start; }
-  .wk-build--wide { display: flex; }
-  .wk-build--wide .wk-build-shots { align-self: auto; margin-block: clamp(20px, 2.4vw, 30px) clamp(22px, 2.6vw, 32px); }
-  .wk-build--wide .wk-build-body { margin-top: auto; }
+  .wk-build-cell, .wk-build-cell--feature, .wk-build-cell--half { grid-column: auto; scroll-snap-align: start; }
   .wk-build { min-height: 500px; }
   .wk-next-grid { grid-template-columns: minmax(0, 1fr); }
   .wk-next-actions { flex-direction: row; flex-wrap: wrap; }
