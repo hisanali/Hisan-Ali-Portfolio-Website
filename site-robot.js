@@ -1,7 +1,12 @@
 (() => {
   if(document.querySelector('.site-robot')) return;
+  // Stay off games and full-screen 3D pieces, where the ghost covers the play area.
+  if(/^\/(?:games|duneglider|nightdrift|reefdive|chess|ludo|penalty|football|evermile|eight-worlds|tideworn)(?:\/|$)|^\/work\/(?:noctiluca|foundry)(?:\/|$)/.test(location.pathname)) return;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const robot=document.createElement('div');robot.className='site-robot';robot.dataset.state='idle';
+  // Fade out while a no-ghost area (such as the interactive 3D cards) is on screen.
+  const quiet=document.querySelectorAll('[data-no-ghost]');
+  if(quiet.length&&'IntersectionObserver' in window){const seen=new Set();const io=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?seen.add(e.target):seen.delete(e.target));robot.classList.toggle('is-away',seen.size>0);},{threshold:.12});quiet.forEach(el=>io.observe(el));}
   robot.innerHTML=`<button class="robot-touch" aria-label="Play with the paper ghost"><svg viewBox="0 0 94 124" aria-hidden="true"><defs><linearGradient id="paper-sheet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6ffff" stop-opacity=".9"/><stop offset=".45" stop-color="#e4f1f2" stop-opacity=".55"/><stop offset=".78" stop-color="#d6e1ef" stop-opacity=".62"/><stop offset="1" stop-color="#d5dcee" stop-opacity=".88"/></linearGradient><linearGradient id="paper-fold"><stop stop-color="#b9cbd5" stop-opacity=".65"/><stop offset="1" stop-color="#ffffff" stop-opacity=".85"/></linearGradient><linearGradient id="ghost-rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff" stop-opacity=".95"/><stop offset=".5" stop-color="#b2c7d1" stop-opacity=".65"/><stop offset="1" stop-color="#f6ffff" stop-opacity=".9"/></linearGradient><radialGradient id="paper-shadow"><stop stop-color="#28382d" stop-opacity=".18"/><stop offset="1" stop-color="#28382d" stop-opacity="0"/></radialGradient></defs><ellipse cx="47" cy="116" rx="27" ry="5" fill="url(#paper-shadow)"/><g class="robot-upper"><g class="robot-head"><g class="robot-arm-l"><path d="M22 62L7 76L22 73" fill="url(#paper-fold)" stroke="#b6b9b0" stroke-width="1"/></g><g class="robot-arm-r"><path d="M72 62L87 73L73 76" fill="url(#paper-fold)" stroke="#b6b9b0" stroke-width="1"/></g><path d="M20 49Q20 23 46 23Q72 23 74 49L79 101Q69 94 62 104Q54 95 47 104Q39 95 31 103Q24 95 15 101Z" fill="url(#paper-sheet)" stroke="url(#ghost-rim)" stroke-width="1.8" stroke-linejoin="round"/><path d="M61 27Q71 32 73 46L61 41Z" fill="url(#paper-fold)"/><path d="M61 27L61 41L73 46" fill="none" stroke="#c8c9bf" stroke-width=".8"/><path d="M25 50Q27 32 43 30" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" opacity=".85"/><path d="M70 55L73 88" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity=".55"/><path d="M31 80L29 96M62 80L64 96" stroke="#d9dacf" stroke-width=".8" fill="none"/><g class="robot-eyes" fill="#293b36"><ellipse cx="34" cy="59" rx="4" ry="7"/><ellipse cx="60" cy="59" rx="4" ry="7"/><circle cx="35" cy="57" r="1.2" fill="white"/><circle cx="61" cy="57" r="1.2" fill="white"/></g><ellipse cx="26" cy="70" rx="5" ry="2" fill="#edc1b4" opacity=".65"/><ellipse cx="68" cy="70" rx="5" ry="2" fill="#edc1b4" opacity=".65"/><path class="ghost-mouth" d="M43 72Q47 77 51 72" stroke="#293b36" stroke-width="1.5" stroke-linecap="round" fill="none"/></g></g></svg></button>`;
   document.body.append(robot);
   let x=innerWidth-130,y=innerHeight-150,target=null,until=performance.now()+1200,last=0,raf=0,gone=false,lastReaction=-Infinity,hoverAt=0;
@@ -14,10 +19,11 @@
   const express=name=>{robot.dataset.expression=name;};
   let petDistance=0,petX=null,petAt=0,blinkUntil=0,nextBlink=performance.now()+2200;
   const moveEyes=(cx,cy)=>{eyes.style.transform=`translate(${clamp((cx-x-47)/40,-4,4)}px,${clamp((cy-y-42)/55,-3,3)}px)`;};
-  const blocked=p=>[25,68].some(dx=>[30,85].some(dy=>document.elementsFromPoint(p.x+dx,p.y+dy).some(el=>!robot.contains(el)&&el.matches('button,input,textarea,select,nav,[role=dialog]'))));
+  const blocked=p=>[25,68].some(dx=>[30,85].some(dy=>document.elementsFromPoint(p.x+dx,p.y+dy).some(el=>!robot.contains(el)&&el.matches('button,input,textarea,select,nav,[role=dialog],[data-no-ghost],[data-no-ghost] *'))));
   const spots=()=>{
     const result=[];
     document.querySelectorAll('.project-card,.featured-work,.made-card,.hero-visual,.about-portrait,.engine-item,main article').forEach(el=>{
+      if(el.closest('[data-no-ghost]'))return;
       const r=el.getBoundingClientRect();if(r.bottom<180||r.top>innerHeight-120||r.width<90)return;
       if(r.top>165&&r.top<innerHeight-70)result.push(point(r.right-95,r.top-116,true));
       if(r.left>110)result.push(point(r.left-96,clamp(r.top+24,110,innerHeight-155)));

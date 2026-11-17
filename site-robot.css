@@ -116,3 +116,6 @@ body.menu-open .paper-ball,body:has(dialog[open]) .paper-ball{visibility:hidden}
 .site-robot[data-state=wake] .robot-upper{animation:ghost-reveal 1s ease-out}
 @keyframes ghost-reveal{0%{scale:.75;opacity:.3}60%{scale:1.08;opacity:1}100%{scale:1;opacity:1}}
 @keyframes ghost-sleep{50%{transform:translateY(21px) rotate(-18deg) scale(.92,.76)}}
+
+.site-robot{transition:opacity .45s ease}
+.site-robot.is-away{opacity:0!important;pointer-events:none!important;visibility:hidden;transition:opacity .45s ease,visibility 0s .45s}
