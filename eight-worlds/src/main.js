@@ -112,7 +112,7 @@ class App {
       // exposure follows the light the way an eye or a camera would, without fully flattening night
       const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
       const E = env.lightIntensity * Math.max(env.lightDir.y, 0.08) * lum(env.lightColor) * 0.3 + lum(this.sky.amb) * 3.1 + 0.0006 + (w.ambientE || 0);
-      const target = clamp(1.55 * Math.pow(E, -0.74), 0.3, 60) * (w.exposure || 1) * lerp(1, 0.42, env.night * (1 - (w.ambientE ? 0.6 : 0)));
+      const target = clamp(1.55 * Math.pow(E, -0.74), 0.3, 14) * (w.exposure || 1) * lerp(1, 0.8, env.night * (1 - (w.ambientE ? 0.5 : 0)));
       env.exposure = this.frames < 3 ? target : damp(env.exposure, target, 0.9, dt);
       this.post.u.uFade.value = (this.rig.fade ?? 1);
       this.post.u.uShimmer.value = (w.shimmer || 0) * clamp(env.lightIntensity / 5) * (1 - env.w.cloud * 0.6);

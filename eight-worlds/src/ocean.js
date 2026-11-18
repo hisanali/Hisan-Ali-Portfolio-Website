@@ -95,14 +95,16 @@ void main(){
   if (dot(N, V) < 0.03) N = normalize(N + V*(0.03 - dot(N, V)));
   vec3 L = uA[0].xyz; vec3 lcol = uA[1].rgb*uA[0].w*cloudShade(vWorld);
   float NoV = max(dot(N, V), 0.0);
-  float rough = 0.045 + 0.09*wind + uOpt.w + smoothstep(200.0, 6000.0, dist)*0.1;
+  // widen the highlight where wave detail is smaller than a pixel (stops distant glitter turning into speckle)
+  float nVar = length(fwidth(N))*2.2;
+  float rough = min(0.045 + 0.09*wind + uOpt.w + smoothstep(120.0, 4000.0, dist)*0.16 + nVar, 0.7);
   float F = 0.02 + 0.98*pow(1.0 - NoV, 5.0); F *= 1.0 - rough*1.6*step(0.0, 1.0);
   // reflection
   vec3 R = reflect(-V, N); R.y = abs(R.y) + 0.002; R = normalize(R);
   vec3 refl = textureLod(tSky, R, 1.0 + rough*16.0).rgb;
   if (uOpt.z > 0.0){
     vec4 pc = uPlanarM*vec4(vWorld.x + N.x*2.2, uLevel, vWorld.z + N.z*2.2, 1.0); vec2 puv = pc.xy/pc.w*0.5 + 0.5;
-    if (pc.w > 0.0 && puv.x > 0.0 && puv.x < 1.0 && puv.y > 0.0 && puv.y < 1.0){ vec4 pr = texture2D(tPlanar, puv); float e = smoothstep(0.0, 0.05, puv.x)*smoothstep(1.0, 0.95, puv.x)*smoothstep(0.0, 0.05, puv.y); refl = mix(refl, pr.rgb, pr.a*uOpt.z*e); }
+    if (pc.w > 0.0 && puv.x > 0.0 && puv.x < 1.0 && puv.y > 0.0 && puv.y < 1.0){ vec2 bl = vec2(0.0018, 0.0028)*(0.6 + rough*14.0); vec4 pr = (texture2D(tPlanar, puv)*2.0 + texture2D(tPlanar, puv + bl) + texture2D(tPlanar, puv - bl) + texture2D(tPlanar, puv + vec2(bl.x, -bl.y)) + texture2D(tPlanar, puv + vec2(-bl.x, bl.y)))/6.0; float e = smoothstep(0.0, 0.05, puv.x)*smoothstep(1.0, 0.95, puv.x)*smoothstep(0.0, 0.05, puv.y); refl = mix(refl, pr.rgb, pr.a*uOpt.z*e*(1.0 - smoothstep(140.0, 520.0, dist))); }
   }
   // sun glitter
   vec3 H = normalize(L + V); float NoH = max(dot(N, H), 0.0); float a2 = rough*rough; a2 *= a2;
@@ -258,7 +260,7 @@ export class Ocean {
   }
   _initPlanar() {
     const r = this.app.renderer; const sz = r.getDrawingBufferSize(new THREE.Vector2());
-    const s = Q.level >= 2 ? 0.5 : 0.33;
+    const s = Q.level >= 2 ? 0.75 : Q.level === 1 ? 0.55 : 0.4;
     this.plRT = new THREE.WebGLRenderTarget(Math.max(64, sz.x * s | 0), Math.max(64, sz.y * s | 0), { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
     this.plCam = new THREE.PerspectiveCamera(); this.plPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.u.tPlanar.value = this.plRT.texture; this.u.uOpt.value.z = 1;

@@ -96,7 +96,7 @@ const DOME_VERT = /* glsl */`
 varying vec3 vDir;
 void main(){ vDir = position; vec4 p = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * p; }`;
 
-const DOME_FRAG = /* glsl */`
+const SKY_COMMON = /* glsl */`
 precision highp float; precision highp sampler3D;
 varying vec3 vDir;
 uniform sampler2D tSky; uniform sampler3D tNoise;
@@ -105,7 +105,7 @@ uniform vec4 uCloud;   // base, thickness, coverage, density
 uniform vec4 uCloud2;  // wind offset x,z (m), evolve, cirrus
 uniform vec4 uMisc;    // camH, time, night, flash
 uniform vec4 uFogS;    // height fog density, falloff, base, cube flag
-uniform vec3 uFogCol; uniform float uSteps, uAurora, uMoonLight;
+uniform vec3 uFogCol; uniform float uSteps, uAurora, uMoonLight; uniform sampler2D tPano; uniform float uFrame;
 ${ATMO_GLSL}
 const float PI = 3.14159265; const float Rp = 6371e3;
 vec3 skyLUT(vec3 d){
@@ -166,7 +166,7 @@ vec4 clouds(vec3 rd, float dither, out float dist){
   ph = mix(hg2, hg1, 0.55)*0.25 + 0.38;
   float sig = 0.0105;
   vec3 ld = normalize(uSun + vec3(0.0, 0.12, 0.0));
-  for (int i = 0; i < 40; i++){
+  for (int i = 0; i < 64; i++){
     if (i >= N) break;
     float t = ta + (float(i) + dither)*dt; vec3 p = o + rd*t;
     float h = (length(p) - r0)/uCloud.y; vec3 q = vec3(p.x, 0.0, p.z);
@@ -195,6 +195,8 @@ vec3 aurora(vec3 d){
   float fade = smoothstep(0.04, 0.3, d.y)*smoothstep(1.0, 0.55, d.y);
   return (vec3(0.08, 1.0, 0.45) + vec3(0.6, 0.1, 0.7)*smoothstep(0.3, 0.8, d.y))*band*rays*fade*0.09;
 }
+`;
+const DOME_FRAG = SKY_COMMON + /* glsl */`
 void main(){
   vec3 d = normalize(vDir);
   vec3 dc = vec3(d.x, max(d.y, 0.0015), d.z);
@@ -218,9 +220,8 @@ void main(){
   }
   col += uSunCol*pow(max(mu, 0.0), 2200.0)*1.6;
   // clouds
-  float dither = fract(52.9829189*fract(dot(gl_FragCoord.xy + fract(uMisc.y*3.7)*61.0*(1.0 - cube), vec2(0.06711056, 0.00583715))));
-  float cdist; vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
-  if (uCloud.z > 0.01) c = clouds(dc, dither, cdist);
+  vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
+  if (uCloud.z > 0.01){ vec3 nd = normalize(dc); c = texture2D(tPano, vec2(fract(atan(nd.z, nd.x)/(2.0*PI)), sqrt(max(nd.y, 0.0)))); }
   // cirrus veil
   if (d.y > 0.01 && uCloud2.w > 0.01){
     vec2 cp = d.xz/(d.y + 0.08)*9000.0 + uCloud2.xy*0.3;
@@ -228,11 +229,7 @@ void main(){
     ci = smoothstep(0.22, 0.6, ci)*uCloud2.w*smoothstep(0.0, 0.2, d.y);
     col = mix(col, uLightCol*0.22 + uAmb*0.8, ci*0.5);
   }
-  if (c.a < 0.999){
-    float far = 1.0 - exp(-cdist*0.000028*(1.0 + uFogS.x*900.0));
-    vec3 cc = mix(c.rgb, sky*(1.0 - c.a) + nsky*night*(1.0 - c.a), far);
-    col = col*c.a + cc;
-  }
+  if (c.a < 0.999) col = col*c.a + c.rgb;
   // ground below the horizon
   if (d.y < 0.0) col = mix(col, uGround, smoothstep(0.0, -0.06, d.y));
   // low-lying fog swallows the lower sky
@@ -241,6 +238,22 @@ void main(){
   float sa = max(dot(d, uSun), 0.0);
   col = mix(col, uFogCol*(1.0 + sa*sa*0.4), 1.0 - exp(-od));
   gl_FragColor = vec4(max(col, 0.0), 1.0);
+}`;
+const PANO_FRAG = SKY_COMMON + /* glsl */`
+varying vec2 vUv; uniform sampler2D tPrev; uniform float uBlend; uniform vec2 uJit;
+void main(){
+  vec2 uv = vUv + uJit; float y = max(uv.y*uv.y, 0.0015); float az = uv.x*2.0*PI; float ch = sqrt(1.0 - y*y);
+  vec3 d = vec3(cos(az)*ch, y, sin(az)*ch);
+  float dither = fract(52.9829189*fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uFrame*0.6180339);
+  float cdist; vec4 c = clouds(d, dither, cdist); vec3 cc = c.rgb;
+  if (c.a < 0.999){
+    vec3 sky = skyLUT(d); float night = uMisc.z;
+    vec3 nsky = vec3(0.0016, 0.0026, 0.0055)*(1.0 + 1.5*pow(1.0 - y, 4.0)) + vec3(0.01, 0.014, 0.024)*uMoonLight*(0.4 + pow(max(dot(d, uMoon), 0.0), 3.0));
+    float far = 1.0 - exp(-cdist*0.000028*(1.0 + uFogS.x*900.0));
+    cc = mix(c.rgb, (sky + nsky*night)*(1.0 - c.a), far);
+  }
+  vec4 now = vec4(max(cc, 0.0), c.a);
+  gl_FragColor = mix(texture2D(tPrev, vUv), now, uBlend);
 }`;
 
 export class Sky {
@@ -261,8 +274,16 @@ export class Sky {
       uFlashDir: { value: new THREE.Vector3(1, 0.3, 0) }, uAmb: { value: new THREE.Color() },
       uCloud: { value: new THREE.Vector4(1300, 1700, 0.4, 0.7) }, uCloud2: { value: new THREE.Vector4(0, 0, 0, 0.3) },
       uMisc: { value: new THREE.Vector4(2, 0, 0, 0) }, uFogS: { value: new THREE.Vector4(0, 0.01, 0, 0) }, uFogCol: { value: new THREE.Color() },
-      uSteps: { value: Q.steps }, uAurora: { value: 0 }, uMoonLight: { value: 1 }, uA: atmoUniform,
+      uSteps: { value: Q.steps }, uAurora: { value: 0 }, uMoonLight: { value: 1 }, uA: atmoUniform, tPano: { value: null }, uFrame: { value: 0 },
     };
+    // clouds are marched into a direction-space panorama and averaged over frames: no per-pixel noise on screen
+    const PW = Q.level >= 2 ? 1280 : Q.level === 1 ? 960 : 640, PH = Q.level >= 2 ? 448 : Q.level === 1 ? 320 : 224;
+    const popt = { type: THREE.HalfFloatType, depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, wrapS: THREE.RepeatWrapping, wrapT: THREE.ClampToEdgeWrapping, generateMipmaps: false };
+    this.panoA = new THREE.WebGLRenderTarget(PW, PH, popt); this.panoB = new THREE.WebGLRenderTarget(PW, PH, popt); this.panoSize = [PW, PH];
+    this.panoU = Object.assign({}, this.u, { tPrev: { value: null }, uBlend: { value: 1 }, uJit: { value: new THREE.Vector2() } });
+    this.panoMat = new THREE.ShaderMaterial({ uniforms: this.panoU, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: PANO_FRAG, depthTest: false, depthWrite: false });
+    this.panoQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.panoMat); this.panoQuad.frustumCulled = false; this.panoScene = new THREE.Scene(); this.panoScene.add(this.panoQuad);
+    this.panoFresh = true; this.lastAlt = null;
     const mk = () => new THREE.ShaderMaterial({ uniforms: this.u, vertexShader: DOME_VERT, fragmentShader: DOME_FRAG, side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false });
     this.mat = mk();
     this.dome = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), this.mat);
@@ -270,7 +291,7 @@ export class Sky {
     scene.add(this.dome);
     // capture scene for reflections and image-based lighting
     this.capScene = new THREE.Scene(); this.capDome = new THREE.Mesh(this.dome.geometry, mk()); this.capDome.material.depthTest = false; this.capDome.scale.setScalar(50); this.capScene.add(this.capDome);
-    this.cubeRT = new THREE.WebGLCubeRenderTarget(Q.level >= 2 ? 256 : 128, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+    this.cubeRT = new THREE.WebGLCubeRenderTarget(Q.level >= 2 ? 512 : 256, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     this.cubeCam = new THREE.CubeCamera(1, 200, this.cubeRT);
     this.pmrem = new THREE.PMREMGenerator(renderer); this.envRT = null;
     this.envTimer = 0; this.envLum0 = 1; this.envStage = 0; this.lastKey = '';
@@ -352,6 +373,15 @@ export class Sky {
     const E = env.lightIntensity * Math.max(env.lightDir.y, 0) * lum(env.lightColor) / Math.PI + lum(this.amb);
     u.uGround.value.copy(W.ground).multiplyScalar(E * 1.0);
 
+    // update the cloud panorama
+    if (this.forceEnv) this.panoFresh = true;
+    { const steps = Math.min(64, Math.round(Q.steps * 1.6)); const keep = u.uSteps.value; u.uSteps.value = steps; u.uFrame.value = (u.uFrame.value + 1) % 4096;
+      if (this.lastAlt == null || Math.abs(camAlt - this.lastAlt) > 300) this.panoFresh = true; this.lastAlt = camAlt;
+      const t = this.panoA; this.panoA = this.panoB; this.panoB = t; const f = u.uFrame.value;
+      this.panoU.tPrev.value = this.panoB.texture; this.panoU.uBlend.value = this.panoFresh ? 1 : 0.2;
+      this.panoU.uJit.value.set((((f * 0.7548777) % 1) - 0.5) / this.panoSize[0], (((f * 0.5698403) % 1) - 0.5) / this.panoSize[1]);
+      const pr = r.getRenderTarget(); r.setRenderTarget(this.panoA); r.render(this.panoScene, this.quadCam); r.setRenderTarget(pr);
+      u.tPano.value = this.panoA.texture; u.uSteps.value = keep; this.panoFresh = false; }
     this.dome.matrix.makeScale(camera.far * 0.85, camera.far * 0.85, camera.far * 0.85).setPosition(camera.position);
     this.dome.matrixWorld.copy(this.dome.matrix);
 
@@ -365,9 +395,9 @@ export class Sky {
     if (this.envStage === 1) { this._pmrem(); this.envStage = 0; }
     else if ((this.envTimer <= 0 && key !== this.lastKey) || this.forceEnv) {
       this.lastKey = key; this.forceEnv = false; this.envTimer = Q.level >= 2 ? 1.2 : 4;
-      const st = u.uSteps.value; u.uSteps.value = Math.max(6, st * 0.5 | 0); u.uFogS.value.w = 1;
+      u.uFogS.value.w = 1;
       const xr = r.xr.enabled; this.cubeCam.position.set(0, 0, 0); this.cubeCam.update(r, this.capScene);
-      u.uSteps.value = st; u.uFogS.value.w = 0; this.envStage = 1; this.envLum0 = this.lumNow;
+      u.uFogS.value.w = 0; this.envStage = 1; this.envLum0 = this.lumNow;
     }
     this.scene.environmentIntensity = clamp(this.lumNow / Math.max(this.envLum0, 1e-5), 0.3, 3) * (1 + env.flash * 3);
   }

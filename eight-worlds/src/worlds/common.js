@@ -24,8 +24,11 @@ void main(){
   float edge = smoothstep(0.0, 0.16, vUv.x)*smoothstep(1.0, 0.84, vUv.x);
   vec3 col = mix(bed*0.6, refl, F*0.7);
   vec3 H = normalize(L + V); col += lcol*pow(max(dot(N, H), 0.0), 380.0)*1.2*step(0.0, L.y);
-  float fo = clamp(vFoam*(0.2 + 1.6*smoothstep(0.02, 0.12, n1.x*n2.y + n1.y*n2.x)) + smoothstep(0.05, 0.14, n1.x*n2.y)*0.25, 0.0, 1.0);
-  col = mix(col, (amb*1.3 + lcol*0.12)*0.95, fo);
+  // white water: streaks that run with the current instead of a flat sheet
+  float s1 = texture2D(tNormal, f*vec2(1.7, 0.22) + vec2(0.0, -uT*0.55)).r, s2 = texture2D(tNormal, f*vec2(3.3, 0.45) + vec2(0.31, -uT*0.85)).g;
+  float streak = smoothstep(0.42, 0.66, s1*0.6 + s2*0.55);
+  float fo = clamp(vFoam*(0.15 + 0.85*streak)*0.85 + smoothstep(0.05, 0.14, n1.x*n2.y)*0.18, 0.0, 1.0);
+  col = mix(col, (amb*1.0 + lcol*0.09)*0.9, fo);
   col = applyAtmo(col, vW, cameraPosition);
   gl_FragColor = vec4(col, mix(0.72, 1.0, max(F, fo))*edge);
 }`;
@@ -58,7 +61,7 @@ let _cardMats = {};
 export function cardMat(tint = 0xffffff, radius = 60) {
   const k = tint + ':' + radius; if (_cardMats[k]) return _cardMats[k];
   const map = texD('broadleaf.png'); map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
-  const m = new THREE.MeshStandardMaterial({ map, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, envMapIntensity: 0.45, color: new THREE.Color(tint).multiply(new THREE.Color(0.7, 0.8, 0.6)), alphaToCoverage: Q.level >= 2 });
+  const m = new THREE.MeshStandardMaterial({ map, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, envMapIntensity: 0.45, color: new THREE.Color(tint).multiply(new THREE.Color(0.7, 0.8, 0.6)), alphaToCoverage: true });
   windPatch(m, { stiff: 0.03, flutter: 0.12, fadeOut: radius, translucent: 0.3 });
   const d = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map, alphaTest: 0.4, side: THREE.DoubleSide }); windPatch(d, { stiff: 0.03, flutter: 0.12, depth: true });
   return (_cardMats[k] = { mat: m, depthMat: d });
