@@ -19,6 +19,8 @@ export const QUALITY = (() => {
   return matchMedia('(pointer:coarse)').matches ? 'medium' : 'high';
 })();
 export const Q = PRESETS[QUALITY];
+export const TOD = (() => { try { const q = new URLSearchParams(location.search).get('tod') || localStorage.getItem('afterdark:tod'); if (q === 'night' || q === 'sunset') return q; } catch (e) {} return 'sunset'; })();
+export const NIGHT = TOD === 'night';
 
 const VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
 // Removes NaN/Inf pixels and caps runaway highlights before bloom spreads them.
@@ -51,18 +53,20 @@ export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Q.dpr));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = !NIGHT && QUALITY !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(58, 1, 0.25, 1600);
   const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: Q.msaa });
   const composer = new EffectComposer(renderer, rt);
   composer.addPass(new RenderPass(scene, camera));
   composer.addPass(new ShaderPass(Clean));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.48, 0.7, 1.0); composer.addPass(bloom);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), NIGHT ? 0.48 : 0.22, 0.7, NIGHT ? 1.0 : 1.05); composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const film = new ShaderPass(Film); composer.addPass(film);
 
   // ---- Planar reflection of everything above the road (y = 0) ----
-  const refl = { on: Q.refl > 0, target: null, cam: new THREE.PerspectiveCamera(), matrix: new THREE.Matrix4(), hide: [], uniforms: { uRefl: { value: null }, uReflVP: { value: new THREE.Matrix4() }, uReflOn: { value: Q.refl > 0 ? 1 : 0 }, uTime: { value: 0 } } };
+  const reflOn = Q.refl > 0 && NIGHT;
+  const refl = { on: reflOn, target: null, cam: new THREE.PerspectiveCamera(), matrix: new THREE.Matrix4(), hide: [], uniforms: { uRefl: { value: null }, uReflVP: { value: new THREE.Matrix4() }, uReflOn: { value: reflOn ? 1 : 0 }, uTime: { value: 0 }, uWet: { value: NIGHT ? 1 : 0.1 }, uLitK: { value: NIGHT ? 1 : 0.3 } } };
   if (refl.on) { refl.target = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter }); refl.uniforms.uRefl.value = refl.target.texture; }
   else refl.uniforms.uRefl.value = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
   if (!refl.on) refl.uniforms.uRefl.value.needsUpdate = true;

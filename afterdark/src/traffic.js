@@ -8,7 +8,7 @@ const STYLES = ['sedan', 'hatch', 'suv', 'wagon', 'van', 'pickup'];
 const TINTS = [0xdadde2, 0x15171b, 0x8c9198, 0x2a3140, 0x7a1418, 0x1f3d6b, 0xb9b3a4, 0x3c4a3f, 0xc8a24a, 0x505560];
 const dummy = new THREE.Object3D(), mat = new THREE.Matrix4(), col = new THREE.Color(), clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
-export async function createTraffic(scene, city, count, seed = 7) {
+export async function createTraffic(scene, city, count, night, seed = 7) {
   const R = rng(seed), kits = [];
   for (const style of STYLES) {
     const g = await loadGLB(`/evermile/assets/models/road-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
@@ -41,7 +41,7 @@ export async function createTraffic(scene, city, count, seed = 7) {
   // ---- Instanced meshes: moving cars take the first slots, nearby parked cars fill the rest ----
   const PARK_MAX = 26;
   const groups = kits.map((kit, ki) => { const nM = cars.filter(c => c.kit === ki).length;
-    return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = nM; scene.add(im); return im; }); });
+    return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = nM; im.castShadow = !night; im.receiveShadow = !night; scene.add(im); return im; }); });
   kits.forEach((kit, ki) => { let m = 0; for (const c of cars) { if (c.kit !== ki) continue; c.slot = m++; }
     for (const im of groups[ki]) if (im.userData.part.paint) { for (let k = 0; k < im.instanceMatrix.count; k++) im.setColorAt(k, col.set(0xffffff)); for (const c of cars) if (c.kit === ki) im.setColorAt(c.slot, col.set(c.tint)); im.instanceColor.needsUpdate = true; } });
   const byKit = kits.map((_, ki) => parked.filter(p => p.kit === ki)); let parkTick = 0; const nearParked = [];
@@ -59,9 +59,9 @@ export async function createTraffic(scene, city, count, seed = 7) {
   const n = cars.length, lp = new Float32Array(n * 12), lc = new Float32Array(n * 12);
   for (let k = 0; k < n; k++) { lc.set([2.2, 2.0, 1.7, 2.2, 2.0, 1.7, 1.6, 0.08, 0.05, 1.6, 0.08, 0.05], k * 12); }
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(lp, 3)); lg.setAttribute('color', new THREE.BufferAttribute(lc, 3));
-  const pts = new THREE.Points(lg, new THREE.PointsMaterial({ size: 1.25, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); pts.frustumCulled = false; scene.add(pts);
+  const pts = new THREE.Points(lg, new THREE.PointsMaterial({ size: 1.25, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); pts.frustumCulled = false; if (!night) pts.material.opacity = 0.4; scene.add(pts);
   const poolG = new THREE.PlaneGeometry(7, 16); poolG.rotateX(-Math.PI / 2); poolG.translate(0, 0, 9.5);
-  const pools = new THREE.InstancedMesh(poolG, new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(0.75, 0.7, 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), n); pools.frustumCulled = false; pools.renderOrder = 4; scene.add(pools);
+  const pools = new THREE.InstancedMesh(poolG, new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(0.75, 0.7, 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), n); pools.frustumCulled = false; pools.renderOrder = 4; pools.visible = night; scene.add(pools);
 
   const tmp = { x: 0, z: 0 }, v3 = new THREE.Vector3();
   function planFor(c, k) { // choose what to do at junction k (index along the car's travel axis)

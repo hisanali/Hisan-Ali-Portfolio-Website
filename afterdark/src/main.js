@@ -1,5 +1,5 @@
 // Afterdark: free-roam night driving. Boot, input, game state, camera, HUD and the frame loop.
-import { THREE, createRenderer, Q, QUALITY } from './render.js';
+import { THREE, createRenderer, Q, QUALITY, TOD, NIGHT } from './render.js';
 import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
@@ -19,9 +19,10 @@ let city, street, player, traffic, audio = null, actx = null, rainGain = null;
 const RAIN = Q.rain, RR = 34, rainPos = new Float32Array(RAIN * 6), rainGeo = new THREE.BufferGeometry();
 for (let i = 0; i < RAIN; i++) { const x = (Math.random() - 0.5) * RR * 2, y = Math.random() * 26, z = (Math.random() - 0.5) * RR * 2; rainPos.set([x, y, z, x, y - 0.9, z], i * 6); }
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
-const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaab8d8, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending })); rain.frustumCulled = false; scene.add(rain);
+const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaab8d8, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending })); rain.frustumCulled = false; rain.visible = NIGHT; scene.add(rain);
 R.refl.hide.push(rain); R.cube.hide.push(rain);
 function stepRain(dt, cx, cz, vx, vz) {
+  if (!NIGHT) return;
   const fall = 21 * dt, wx = 2.2 * dt - vx * dt * 0.0, wz = 0;
   for (let i = 0; i < RAIN; i++) { const o = i * 6; let x = rainPos[o] + wx, y = rainPos[o + 1] - fall, z = rainPos[o + 2] + wz;
     if (y < 0 || Math.abs(x - cx) > RR || Math.abs(z - cz) > RR) { y = y < 0 ? 20 + Math.random() * 8 : y; x = cx + (Math.random() - 0.5) * RR * 2; z = cz + (Math.random() - 0.5) * RR * 2; }
@@ -49,7 +50,7 @@ function moveBeacon() {
 }
 
 // ---------- Street-lamp light pool ----------
-const lampLights = Array.from({ length: Q.lights }, () => { const l = new THREE.PointLight(0xffcf9a, 42, 34, 1.7); scene.add(l); return l; });
+const lampLights = Array.from({ length: NIGHT ? Q.lights : 0 }, () => { const l = new THREE.PointLight(0xffcf9a, 42, 34, 1.7); scene.add(l); return l; });
 let lampTick = 0;
 function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; const L = city.lamps, best = [];
   for (let i = 0; i < L.length; i++) { const d = (L[i].x - p.x) ** 2 + (L[i].z - p.z) ** 2; if (d > 3600) continue; best.push([d, i]); }
@@ -76,6 +77,7 @@ let paintSel = store.get('paint', '#b9bdc6');
 seg($('#seg-mode'), [['run', 'Night Run'], ['free', 'Free Roam']], S.kind, v => { S.kind = v; store.set('kind', v); $('#mode-note').textContent = v === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time.' : 'No clock. Cruise the city, chase beacons if you feel like it.'; });
 $('#mode-note').textContent = S.kind === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time.' : 'No clock. Cruise the city, chase beacons if you feel like it.';
 seg($('#seg-paint'), PAINTS, paintSel, v => { paintSel = v; store.set('paint', v); player?.setPaint(v); });
+seg($('#seg-tod'), [['sunset', 'Sunset'], ['night', 'Rainy night']], TOD, v => { if (v === TOD) return; store.set('tod', v); const u = new URL(location.href); u.searchParams.delete('tod'); location.href = u.href; });
 seg($('#seg-gfx'), [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], QUALITY, v => { if (v === QUALITY) return; store.set('gfx', v); const u = new URL(location.href); u.searchParams.delete('gfx'); location.href = u.href; });
 $('#best').textContent = store.get('best', '0');
 $('#play').addEventListener('click', () => start());
@@ -104,7 +106,7 @@ function start() {
   if (S.mode === 'boot') return; ensureAudio();
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0 });
-  camYaw = 0; snapCam = true; moveBeacon(); show(null); toast(S.kind === 'run' ? 'Follow the arrow to the beacon' : 'The city is yours');
+  camYaw = 0; snapCam = true; moveBeacon(); show(null); toast(S.kind === 'run' ? 'Follow the arrow to the beacon' : 'The city is yours'); document.body.dataset.tod = TOD;
 }
 function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); }
 function toMenu() { S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); show('menu'); }
@@ -178,7 +180,7 @@ function frame() {
         drawHud();
       }
       // Wet-road spray from the rear tyres, thicker when sliding.
-      const sp2 = Math.abs(player.speed); if (sp2 > 7) { const n = sp2 > 30 || player.slip > 3 ? 3 : 1, h = player.heading; for (let k = 0; k < n; k++) { const side = Math.random() < 0.5 ? -0.8 : 0.8; const g = player.slip > 3 ? 1.1 : 0.42;
+      const sp2 = Math.abs(player.speed); if (sp2 > 7 && (NIGHT || player.slip > 3)) { const n = sp2 > 30 || player.slip > 3 ? 3 : 1, h = player.heading; for (let k = 0; k < n; k++) { const side = Math.random() < 0.5 ? -0.8 : 0.8; const g = player.slip > 3 ? 1.1 : 0.42;
         puff(player.pos.x - Math.sin(h) * 1.7 + Math.cos(h) * side, 0.15, player.pos.z - Math.cos(h) * 1.7 - Math.sin(h) * side, -player.vel.x * 0.12 + (Math.random() - 0.5) * 2, 1 + Math.random() * 1.6 + sp2 * 0.03, -player.vel.z * 0.12 + (Math.random() - 0.5) * 2, 0.75, g, g * 1.05, g * 1.2); } }
       chase(dt, snapCam); snapCam = false;
     } else orbit(S.time);
@@ -186,27 +188,27 @@ function frame() {
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
-  city.sky.position.copy(camera.position);
+  city.sky.position.copy(camera.position); city.updateSun(player.pos);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { try { audio.update(dt, { speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, steer: player.steer, offroad: false, volume: S.sound && (playing || S.mode === 'menu') ? 0.85 : 0, vehicle: 'coupe', reverse: player.speed < -0.5, grounded: true }); rainGain.gain.value = S.sound ? 0.035 : 0; } catch (e) {} }
+  if (audio) { try { audio.update(dt, { speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, steer: player.steer, offroad: false, volume: S.sound && (playing || S.mode === 'menu') ? 0.85 : 0, vehicle: 'coupe', reverse: player.speed < -0.5, grounded: true }); rainGain.gain.value = S.sound && NIGHT ? 0.035 : 0; } catch (e) {} }
   probe.set(player.pos.x, 1.15, player.pos.z); R.render(probe);
 }
 
 async function boot() {
   setLoad('Raising the skyline'); await nextFrame();
-  city = buildCity(scene, R.refl, Q);
+  city = await buildCity(scene, R.refl, Q, NIGHT, renderer);
   spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ size: 1.5, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 })); spray.frustumCulled = false; scene.add(spray); R.refl.hide.push(spray);
   setLoad('Planting the avenues'); await nextFrame();
-  street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
+  street = buildStreet(scene, city, R, Q, NIGHT); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
-  { rain.visible = false; const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(city.spawn.x, 3.2, city.spawn.z) }); scene.environment = env.texture; scene.environmentIntensity = 0.6; pm.dispose(); rain.visible = true; }
+  { rain.visible = false; city.sky.position.set(city.spawn.x, 0, city.spawn.z); const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(city.spawn.x, 3.2, city.spawn.z) }); scene.environment = env.texture; scene.environmentIntensity = NIGHT ? 0.6 : 1.5; pm.dispose(); rain.visible = NIGHT; }
   setLoad('Rolling out the coupé'); await nextFrame();
-  player = await createPlayer(scene, R.cube.texture, city); R.cube.hide.push(player.root);
+  player = await createPlayer(scene, R.cube.texture, city, NIGHT); R.cube.hide.push(player.root);
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
-  traffic = await createTraffic(scene, city, Q.traffic);
+  traffic = await createTraffic(scene, city, Q.traffic, NIGHT);
   traffic.update(0.016, 0, null, player.pos);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
   window.__afterdark = { S, player, traffic, city, street, R, start, input };
