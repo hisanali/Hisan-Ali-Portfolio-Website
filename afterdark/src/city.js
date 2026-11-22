@@ -329,8 +329,8 @@ export async function buildCity(scene, refl, quality, renderer) {
 
   // ---- Sky and light: one sun that crosses the sky, setting over the sea, with an overcast neon night between ----
   const skyG = new THREE.Group(); scene.add(skyG); city.sky = skyG;
-  const sky = new Sky(); sky.scale.setScalar(1500); const su = sky.material.uniforms; su.turbidity.value = 5.5; su.rayleigh.value = 2.2; su.mieCoefficient.value = 0.008; su.mieDirectionalG.value = 0.86; skyG.add(sky);
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(1350, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: { uA: { value: 0 } },
+  const sky = new Sky(); sky.scale.setScalar(16000); const su = sky.material.uniforms; su.turbidity.value = 5.5; su.rayleigh.value = 2.2; su.mieCoefficient.value = 0.008; su.mieDirectionalG.value = 0.86; skyG.add(sky);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(7500, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: { uA: { value: 0 } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `uniform float uA; varying vec3 vD;\n${GLSL_HASH} void main(){ float h = max(vD.y, 0.0); vec2 p = vD.xz / (h + 0.18);
       float cl = adN(p * 1.3) * 0.6 + adN(p * 3.1 + 4.0) * 0.4;
@@ -352,14 +352,14 @@ export async function buildCity(scene, refl, quality, renderer) {
     const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), e = { hour, el, night, day, high, wet: night, rain: sst(0.75, 1, night) };
     C(0xffa060, 0xfff4e6, high, sun.color); sun.intensity = 5.6 * day * (0.8 + 0.2 * high); sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
     C(0xb9cdf2, 0x33325a, night, hemi.color); C(0xa08468, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(3.4, 3.9, high), 0.42, night);
-    C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(0x0e0b18), night); scene.fog.density = mix(mix(0.00065, 0.00045, high), 0.0021, night);
+    C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(0x0e0b18), night); scene.fog.density = mix(mix(0.00034, 0.00024, high), 0.0017, night);
     su.rayleigh.value = mix(2.2, 1.1, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night; dome.visible = night > 0.01;
     refl.uniforms.uWet.value = mix(0.06, 1, e.wet); refl.uniforms.uLitK.value = mix(0.04, 1, night);
     for (const f of hooks) f(e, mix, C); return e;
   };
 
   // ---- Road surface ----
-  const WEST = -(HALF + 13.5), roadW = SPAN / 2 + ext / 2 + 120 - WEST, roadL = ext + 240;
+  const WEST = -(HALF + 13.5), EAST = SPAN + HALF + SW + 1, roadW = EAST - WEST, roadL = SPAN + (HALF + SW + 1) * 2; city.wetUniform = refl.uniforms.uWet;
   const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, roadL), roadMaterial(refl, roadW / 6.3, roadL / 6.3)); road.rotation.x = -Math.PI / 2; road.position.set(WEST + roadW / 2, 0, SPAN / 2); road.receiveShadow = SH; scene.add(road);
   refl.hide.push(road);
 
@@ -367,7 +367,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   const pave = canvasTex(512, 512, (c, w) => { c.fillStyle = '#3d3d42'; c.fillRect(0, 0, w, w); const r = rng(5); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { const v = 52 + r() * 16; c.fillStyle = `rgb(${v},${v},${v + 4})`; c.fillRect(x * 64 + 2, y * 64 + 2, 60, 60); } const img = c.getImageData(0, 0, w, w); for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 18; img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n; } c.putImageData(img, 0, 0); });
   pave.wrapS = pave.wrapT = THREE.RepeatWrapping; pave.repeat.set(22, 22);
   const slabSize = P - HALF * 2, blocks = [];
-  for (let i = 0; i < ROADS; i++) for (let j = -1; j < ROADS; j++) blocks.push({ i, j, cx: (i + 0.5) * P, cz: (j + 0.5) * P });
+  for (let i = 0; i < ROADS - 1; i++) for (let j = 0; j < ROADS - 1; j++) blocks.push({ i, j, cx: (i + 0.5) * P, cz: (j + 0.5) * P });
   const slabHalf = (P - HALF * 2) / 2;
   const slabMat = new THREE.MeshStandardMaterial({ map: pave, roughness: 0.4, metalness: 0, envMapIntensity: 0.12, color: 0xf2efe8 });
   hooks.push((e, mix, C) => C(0xf2efe8, 0x8d8d95, e.night, slabMat.color));
@@ -451,8 +451,8 @@ export async function buildCity(scene, refl, quality, renderer) {
       }
     }
   }
-  // Far skyline beyond the playable grid, mostly lost in the haze.
-  for (let k = 0; k < 110; k++) { const ang = R() * Math.PI * 2, rad = SPAN * 0.78 + 110 + R() * 260, w = 30 + R() * 40; if (mid + Math.cos(ang) * rad < 40) continue; addBox(mid + Math.cos(ang) * rad, mid + Math.sin(ang) * rad, w, 60 + R() * R() * 300, w, R() < 0.6 ? 0 : 2); }
+  // (The land beyond the grid is built in world.js.)
+
 
   // ---- Street furniture ----
   const VIA = 2; city.viaduct = VIA * P; // the avenue that carries the elevated line
@@ -513,8 +513,8 @@ export async function buildCity(scene, refl, quality, renderer) {
     const wn = canvasTex(256, 256, (c, w) => { const img = c.createImageData(w, w), hgt = new Float32Array(w * w); const wv = Array.from({ length: 12 }, (_, i) => ({ kx: Math.round(Math.sin(i * 3.1) * 8), ky: Math.round(Math.cos(i * 2.3) * 8) || 1, a: 0.3 + (i % 5) * 0.14, p: i * 1.7 }));
       for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { let v = 0; for (const q of wv) v += q.a * Math.sin((q.kx * x + q.ky * y) / w * Math.PI * 2 + q.p); hgt[y * w + x] = v; }
       for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { const dx = hgt[y * w + (x + 1) % w] - hgt[y * w + (x - 1 + w) % w], dy = hgt[((y + 1) % w) * w + x] - hgt[((y - 1 + w) % w) * w + x], l = Math.hypot(dx * 0.4, dy * 0.4, 1), i = (y * w + x) * 4; img.data[i] = (-dx * 0.4 / l * 0.5 + 0.5) * 255; img.data[i + 1] = (-dy * 0.4 / l * 0.5 + 0.5) * 255; img.data[i + 2] = (1 / l * 0.5 + 0.5) * 255; img.data[i + 3] = 255; } c.putImageData(img, 0, 0); }, false);
-    wn.wrapS = wn.wrapT = THREE.RepeatWrapping; wn.repeat.set(260, 260);
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(5000, 6000), new THREE.MeshStandardMaterial({ color: 0x0d3a48, roughness: 0.13, metalness: 0.0, normalMap: wn, normalScale: new THREE.Vector2(0.55, 0.55), envMapIntensity: 1.5 })); sea.rotation.x = -Math.PI / 2; sea.position.set(px - 78 - 2500, -0.62, mid); scene.add(sea);
+    wn.wrapS = wn.wrapT = THREE.RepeatWrapping; wn.repeat.set(820, 820);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000), new THREE.MeshStandardMaterial({ color: 0x0d3a48, roughness: 0.13, metalness: 0.0, normalMap: wn, normalScale: new THREE.Vector2(0.55, 0.55), envMapIntensity: 1.5 })); sea.rotation.x = -Math.PI / 2; sea.position.set(mid, -0.62, mid); scene.add(sea);
     const foam = new THREE.Mesh(new THREE.PlaneGeometry(9, len), new THREE.MeshBasicMaterial({ color: 0xfff2e2, transparent: true, opacity: 0.5, depthWrite: false, alphaMap: canvasTex(64, 64, (c) => { const g = c.createLinearGradient(0, 0, 64, 0); g.addColorStop(0, '#000'); g.addColorStop(0.45, '#fff'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }, false) })); foam.rotation.x = -Math.PI / 2; foam.position.set(px - 79, -0.55, mid); scene.add(foam);
     city.sea = { normal: wn, foam }; city.beachX = px;
     hooks.push((e, mix, C) => { C(0x0d3a48, 0x04090f, e.night, sea.material.color); sea.material.envMapIntensity = mix(1.5, 0.3, e.night); sea.material.normalScale.setScalar(mix(0.55, 0.25, e.night)); C(0xfff2e2, 0x3a4250, e.night, foam.material.color); }); }

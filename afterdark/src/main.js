@@ -4,6 +4,7 @@ import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
+import { buildWorld } from './world.js';
 import { createSound } from './sound.js';
 
 const $ = s => document.querySelector(s), clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
@@ -14,7 +15,8 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const R = createRenderer($('#scene')), { scene, camera, renderer } = R;
 const S = { mode: 'boot', kind: store.get('kind', 'run'), time: 0, clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, cam: 0, sound: store.get('sound', 'on') === 'on', flash: 0 };
 const input = { left: 0, right: 0, up: 0, down: 0, hand: 0 };
-let city, street, player, traffic, audio = null;
+let city, street, world, player, traffic, audio = null;
+const inCity = (x, z) => x <= SPAN + HALF + 4 && z >= -(HALF + 4) && z <= SPAN + HALF + 4;
 
 // ---------- Rain and tyre spray ----------
 const RAIN = Q.rain, RR = 34, rainPos = new Float32Array(RAIN * 6), rainGeo = new THREE.BufferGeometry();
@@ -48,9 +50,12 @@ const beacon = new THREE.Group(); beacon.visible = false; scene.add(beacon);
   beacon.add(new THREE.Mesh(g, m));
   const ring = new THREE.Mesh(new THREE.RingGeometry(4.2, 4.9, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 3, 2.6), transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06; beacon.add(ring); }
 function moveBeacon() {
-  for (let n = 0; n < 40; n++) { const ax = Math.random() < 0.5, r = Math.floor(Math.random() * ROADS) * P, s = (Math.floor(Math.random() * (ROADS - 1)) + 0.5) * P, x = ax ? r : s, z = ax ? s : r;
-    const d = Math.hypot(x - player.pos.x, z - player.pos.z); if (d > 230 && d < 520) { beacon.position.set(x, 0, z); break; } }
-  beacon.visible = true;
+  const far = S.beacons > 0 && Math.random() < 0.45 || !inCity(player.pos.x, player.pos.z);
+  for (let n = 0; n < 60; n++) { let x, z, y = 0;
+    if (far) { const s = world.samples[Math.floor(Math.random() * world.samples.length)]; if (s.tunnel) continue; x = s.x; z = s.z; y = s.y; }
+    else { const ax = Math.random() < 0.5, r = Math.floor(Math.random() * ROADS) * P, s = (Math.floor(Math.random() * (ROADS - 1)) + 0.5) * P; x = ax ? r : s; z = ax ? s : r; }
+    const d = Math.hypot(x - player.pos.x, z - player.pos.z); if (d > 230 && d < (far ? 1500 : 560)) { beacon.position.set(x, y, z); break; } }
+  S.lastBeaconDist = Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z); beacon.visible = true;
 }
 
 // ---------- Street-lamp light pool ----------
@@ -110,7 +115,9 @@ function ensureAudio() { // must run inside the tap itself or iOS keeps the audi
 }
 for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, () => audio?.resume(), { passive: true });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); else if (S.mode === 'play') pause(true); });
-function respawn() { const p = player.pos, ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P); const rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
+function respawn() { const p = player.pos;
+  if (!inCity(p.x, p.z)) { const r = world.nearRoad(p.x, p.z, 900); if (r) { player.place(r.s.x - r.s.lx * 2.5, r.s.z - r.s.lz * 2.5, Math.atan2(r.s.tx, r.s.tz)); toast('Back on the road'); return; } }
+  const ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P), rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
 function start() {
   if (S.mode === 'boot') return; ensureAudio();
@@ -131,12 +138,13 @@ function finish() {
 // ---------- HUD ----------
 const hud = { speed: $('#hud-speed'), gear: $('#hud-gear'), rev: $('#hud-rev'), time: $('#hud-time'), score: $('#hud-score'), dist: $('#hud-dist'), arrow: $('#hud-arrow'), timeBox: $('#hud-timebox') };
 const map = $('#map'), mctx = map.getContext('2d');
-function drawMap() {
-  const w = map.width, k = (w - 24) / SPAN, o = 12; mctx.clearRect(0, 0, w, w); mctx.lineCap = 'round';
-  mctx.strokeStyle = 'rgba(190,205,235,.34)'; mctx.lineWidth = 3; mctx.beginPath(); for (let i = 0; i < ROADS; i++) { const c = o + i * P * k; mctx.moveTo(c, o); mctx.lineTo(c, w - o); mctx.moveTo(o, c); mctx.lineTo(w - o, c); } mctx.stroke();
-  mctx.fillStyle = 'rgba(255,214,150,.75)'; for (const c of traffic.cars) mctx.fillRect(w - (o + c.x * k) - 1.5, w - (o + c.z * k) - 1.5, 3, 3);
-  if (beacon.visible) { const bx = w - (o + beacon.position.x * k), by = w - (o + beacon.position.z * k); mctx.fillStyle = '#35ffe0'; mctx.beginPath(); mctx.arc(bx, by, 5 + Math.sin(S.time * 5) * 1.5, 0, 7); mctx.fill(); }
-  mctx.save(); mctx.translate(w - (o + player.pos.x * k), w - (o + player.pos.z * k)); mctx.rotate(-player.heading); mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.moveTo(0, -8); mctx.lineTo(5.5, 6); mctx.lineTo(0, 3); mctx.lineTo(-5.5, 6); mctx.closePath(); mctx.fill(); mctx.restore();
+function drawMap() { // a 1 km window around the car, north up
+  const w = map.width, c = w / 2, k = (c - 6) / 520, px = player.pos.x, pz = player.pos.z, X = x => c - (x - px) * k, Y = z => c - (z - pz) * k; mctx.clearRect(0, 0, w, w); mctx.lineCap = 'round'; mctx.lineJoin = 'round';
+  mctx.strokeStyle = 'rgba(190,205,235,.34)'; mctx.lineWidth = 3; mctx.beginPath(); for (let i = 0; i < ROADS; i++) { mctx.moveTo(X(i * P), Y(0)); mctx.lineTo(X(i * P), Y(SPAN)); mctx.moveTo(X(0), Y(i * P)); mctx.lineTo(X(SPAN), Y(i * P)); } mctx.stroke();
+  mctx.strokeStyle = 'rgba(255,214,150,.6)'; mctx.lineWidth = 3.5; mctx.beginPath(); for (const rd of world.roads) for (let i = rd.from; i <= rd.to; i += 6) { const s = world.samples[i]; if (i === rd.from) mctx.moveTo(X(s.x), Y(s.z)); else mctx.lineTo(X(s.x), Y(s.z)); } mctx.stroke();
+  mctx.fillStyle = 'rgba(255,214,150,.75)'; for (const t of traffic.cars) mctx.fillRect(X(t.x) - 1.5, Y(t.z) - 1.5, 3, 3);
+  if (beacon.visible) { let bx = X(beacon.position.x) - c, by = Y(beacon.position.z) - c; const bl = Math.hypot(bx, by), lim = c - 10; if (bl > lim) { bx *= lim / bl; by *= lim / bl; } mctx.fillStyle = '#35ffe0'; mctx.beginPath(); mctx.arc(c + bx, c + by, 5 + Math.sin(S.time * 5) * 1.5, 0, 7); mctx.fill(); }
+  mctx.save(); mctx.translate(c, c); mctx.rotate(-player.heading); mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.moveTo(0, -8); mctx.lineTo(5.5, 6); mctx.lineTo(0, 3); mctx.lineTo(-5.5, 6); mctx.closePath(); mctx.fill(); mctx.restore();
 }
 let hudTick = 0;
 function drawHud() {
@@ -161,7 +169,7 @@ function nextCam() { audio?.camera(); S.cam = (S.cam + 1) % CAMS.length; view.ya
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   cv.addEventListener('wheel', e => { if (S.mode !== 'play') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
 const CAMW = HALF + 3.4;
-function keepInStreet(v) { const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
+function keepInStreet(v) { if (!inCity(v.x, v.z)) { if (!player.tunnel) v.y = Math.max(v.y, world.terrain(v.x, v.z) + 0.9); return v; } const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
   if (v.x >= 0 && ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
   v.x = clamp(v.x, -(HALF + 95), SPAN + CAMW); v.z = clamp(v.z, -CAMW, SPAN + CAMW); if (Math.abs(v.x - city.viaduct) < 12 && v.y > 8) v.y = 8; return v; }
 let camYaw = 0, snapCam = true; const camPos = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
@@ -174,7 +182,7 @@ function chase(dt, snap) {
     camPos.set(player.pos.x + sn * lz + cs * lx, ly + player.groundY, player.pos.z + cs * lz - sn * lx); const a = h + view.yaw, cp = Math.cos(view.pitch * 0.7);
     look.set(camPos.x + Math.sin(a) * cp * 30, camPos.y - 0.6 + Math.sin(view.pitch * 0.7) * -30 * 0 - view.pitch * 12, camPos.z + Math.cos(a) * cp * 30); }
   else { const base = S.cam === 1 ? [10.5, 3.3, 0] : S.cam === 4 ? [4.3, 0.55, 0.62] : [6.3, 1.75, 0], dist = (base[0] + sp * 0.028) * view.zoom, a = camYaw + base[2] + view.yaw, pc = Math.cos(view.pitch), ps = Math.sin(view.pitch);
-    want.set(player.pos.x - Math.sin(a) * dist * pc, Math.max(0.35, base[1] + sp * 0.006 + dist * ps), player.pos.z - Math.cos(a) * dist * pc);
+    want.set(player.pos.x - Math.sin(a) * dist * pc, player.groundY + Math.max(0.35, base[1] + sp * 0.006 + dist * ps), player.pos.z - Math.cos(a) * dist * pc);
     keepInStreet(want); if (snap || view.drag) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt)); keepInStreet(camPos);
     const ahead = S.cam === 4 ? 1.2 : 4.5 * Math.max(0, 1 - Math.abs(view.yaw) * 0.8); look.set(player.pos.x + Math.sin(h) * ahead, 0.95 + player.groundY, player.pos.z + Math.cos(h) * ahead); }
   const sh = S.shake; S.shake = Math.max(0, sh - dt * 2.4);
@@ -182,16 +190,16 @@ function chase(dt, snap) {
   camera.lookAt(look); const near = inside ? 0.08 : 0.25; if (camera.near !== near) camera.near = near;
   camera.fov = lerp(camera.fov, (S.cam === 3 ? 66 : 56) + clamp(sp * 0.24, 0, 20), Math.min(1, dt * 4)); camera.updateProjectionMatrix();
 }
-function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
+function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, player.groundY + 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, player.groundY + 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
 
 // ---------- Time of day ----------
 let hour = 17.2, env = null, envHour = -99, pmrem = null, envRT = null;
 const DAY_SECONDS = 720; // one full day and night
 function captureEnv() { // image-based lighting from the street itself, refreshed as the light changes
   const rv = rain.visible; rain.visible = false; const hid = street ? street.hide.map(o => [o, o.visible]) : []; hid.forEach(([o]) => { o.visible = false; });
-  city.sky.position.set(city.spawn.x, 0, city.spawn.z); pmrem ??= new THREE.PMREMGenerator(renderer); renderer.shadowMap.needsUpdate = true;
-  const p = player ? player.pos : city.spawn, rt = pmrem.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(p.x, 3.2, p.z) });
-  scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
+  city.sky.position.copy(player ? player.pos : new THREE.Vector3(city.spawn.x, 0, city.spawn.z)); city.sky.scale.setScalar(0.1); city.sky.updateMatrixWorld(true); pmrem ??= new THREE.PMREMGenerator(renderer); renderer.shadowMap.needsUpdate = true;
+  const p = player ? player.pos : city.spawn, rt = pmrem.fromScene(scene, 0.012, 0.5, 1900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(p.x, 3.2, p.z) });
+  scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; city.sky.scale.setScalar(1); rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
 }
 function stepTime(dt, running) {
   if (timeMode === 'auto') { if (running) hour = (hour + dt * 24 / DAY_SECONDS) % 24; } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
@@ -254,7 +262,7 @@ function frame() {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
-        if (Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z) < 9) { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(180, S.left + 16); S.flash = 0.18; audio?.beacon(); toast(`Beacon +${gain}` + (S.kind === 'run' ? ' · +16 s' : '')); moveBeacon(); }
+        if (Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z) < 9) { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(240, S.left + clamp(S.lastBeaconDist / 20, 16, 55)); S.flash = 0.18; audio?.beacon(); toast(`Beacon +${gain}`); moveBeacon(); }
         if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
         drawHud();
       }
@@ -280,6 +288,8 @@ function frame() {
 async function boot() {
   setLoad('Raising the skyline'); await nextFrame();
   city = await buildCity(scene, R.refl, Q, renderer);
+  setLoad('Raising the mountains'); await nextFrame();
+  world = city.world = await buildWorld(scene, city, Q);
   { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
     drops.pts = new THREE.Points(drops.geo, new THREE.PointsMaterial({ size: drops.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
     haze.pts = new THREE.Points(haze.geo, new THREE.PointsMaterial({ size: haze.size, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.35 }));
@@ -297,7 +307,7 @@ async function boot() {
   traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
   setPerf(perf.on); city.cull(player.pos, true);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
-  window.__afterdark = { S, player, traffic, city, street, R, start, input };
+  window.__afterdark = { S, player, traffic, city, street, world, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
   window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };
