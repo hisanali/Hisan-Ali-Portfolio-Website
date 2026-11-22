@@ -9,18 +9,16 @@ import { ShaderPass } from '/evermile/vendor/postprocessing/ShaderPass.js';
 export { THREE };
 
 const PRESETS = {
-  ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 34, lights: 8, people: 12 },
-  high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 28, lights: 6, people: 8 },
-  medium: { dpr: 1.25, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 20, lights: 5, people: 4 },
-  low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 14, lights: 4, people: 0 }
+  ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 50, lights: 8, people: 12 },
+  high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 40, lights: 6, people: 8 },
+  medium: { dpr: 1.25, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 28, lights: 5, people: 4 },
+  low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 18, lights: 4, people: 0 }
 };
 export const QUALITY = (() => {
   try { const q = new URLSearchParams(location.search).get('gfx') || localStorage.getItem('afterdark:gfx'); if (PRESETS[q]) return q; } catch (e) {}
   return matchMedia('(pointer:coarse)').matches ? 'medium' : 'high';
 })();
 export const Q = PRESETS[QUALITY];
-export const TOD = (() => { try { const q = new URLSearchParams(location.search).get('tod') || localStorage.getItem('afterdark:tod'); if (q === 'night' || q === 'sunset') return q; } catch (e) {} return 'sunset'; })();
-export const NIGHT = TOD === 'night';
 
 const VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
 // Removes NaN/Inf pixels and caps runaway highlights before bloom spreads them.
@@ -53,26 +51,26 @@ export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Q.dpr));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = !NIGHT && QUALITY !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = QUALITY !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(58, 1, 0.25, 1600);
   const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: Q.msaa });
   const composer = new EffectComposer(renderer, rt);
   composer.addPass(new RenderPass(scene, camera));
   composer.addPass(new ShaderPass(Clean));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), NIGHT ? 0.48 : 0.22, 0.7, NIGHT ? 1.0 : 1.05); composer.addPass(bloom);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.3, 0.7, 1.0); composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const film = new ShaderPass(Film); composer.addPass(film);
 
   // ---- Planar reflection of everything above the road (y = 0) ----
-  const reflOn = Q.refl > 0 && NIGHT;
-  const refl = { on: reflOn, target: null, cam: new THREE.PerspectiveCamera(), matrix: new THREE.Matrix4(), hide: [], uniforms: { uRefl: { value: null }, uReflVP: { value: new THREE.Matrix4() }, uReflOn: { value: reflOn ? 1 : 0 }, uTime: { value: 0 }, uWet: { value: NIGHT ? 1 : 0.1 }, uLitK: { value: NIGHT ? 1 : 0.3 } } };
+  const reflOn = Q.refl > 0;
+  const refl = { on: reflOn, target: null, cam: new THREE.PerspectiveCamera(), matrix: new THREE.Matrix4(), hide: [], uniforms: { uRefl: { value: null }, uReflVP: { value: new THREE.Matrix4() }, uReflOn: { value: reflOn ? 1 : 0 }, uTime: { value: 0 }, uWet: { value: 0.1 }, uLitK: { value: 0.3 } }, active: false };
   if (refl.on) { refl.target = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter }); refl.uniforms.uRefl.value = refl.target.texture; }
   else refl.uniforms.uRefl.value = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
   if (!refl.on) refl.uniforms.uRefl.value.needsUpdate = true;
   const dir = new THREE.Vector3(), tgt = new THREE.Vector3();
   function renderReflection() {
-    if (!refl.on) return;
+    if (!refl.on || !refl.active) return;
     const c = refl.cam; c.fov = camera.fov; c.aspect = camera.aspect; c.near = 0.3; c.far = 900; c.updateProjectionMatrix();
     camera.getWorldDirection(dir); c.position.set(camera.position.x, -camera.position.y, camera.position.z);
     tgt.set(c.position.x + dir.x, c.position.y - dir.y, c.position.z + dir.z); c.up.set(0, 1, 0); c.lookAt(tgt); c.updateMatrixWorld();

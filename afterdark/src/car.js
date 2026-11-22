@@ -15,7 +15,8 @@ function beam(color, strength) {
     fragmentShader: 'uniform vec3 uColor; uniform float uStrength; varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(abs(dot(normalize(vN), normalize(vV))), 2.2); gl_FragColor = vec4(uColor * pow(vUv.y, 2.0) * f * uStrength, 1.0); }' });
 }
 
-export async function createPlayer(scene, envTexture, city, night) {
+export async function createPlayer(scene, envTexture, city) {
+  let nightK = 0;
   const gltf = await loadGLB('/evermile/assets/sports-coupe.glb');
   const model = gltf.scene; model.rotation.y = Math.PI; model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
@@ -39,7 +40,7 @@ export async function createPlayer(scene, envTexture, city, night) {
   model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
     o.material = n === 'body' ? paint : /glass/i.test(n) ? M.glass : n === 'lights_red' ? M.tail : n === 'leds' ? M.led : n === 'lights' ? M.lens : /^rim_|^wheel$|^nuts$|^centre$/.test(n) ? M.rim : n === 'chrome' || n === 'metal' ? M.chrome : n === 'tire' ? M.tyre
       : n === 'brakes' || n === 'brake' ? (n === 'brakes' ? M.caliper : M.rim) : /carbon/.test(n) ? M.carbon : /grills|wipers|plastic|trim$/.test(n) ? M.dark : /Leather|Carpet|Interior/i.test(mn) || /interior|leather|carpet|steering/.test(n) ? M.cabin : M.dark; });
-  if (!night) model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const root = new THREE.Group(), tilt = new THREE.Group(); tilt.add(model); root.add(tilt); scene.add(root);
   const wheels = ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr'].map(name => { const node = model.getObjectByName(name); return node && { node, base: node.quaternion.clone(), front: name[6] === 'f', up: Y.clone().applyQuaternion(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()) }; }).filter(Boolean);
   const wheelR = 0.358;
@@ -49,19 +50,21 @@ export async function createPlayer(scene, envTexture, city, night) {
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.5, len * 1.28), new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
 
   // Headlights: two real spot lights, volumetric cones and the pool they throw on the wet road.
-  const front = len / 2 - 0.25, lights = [];
-  for (const sx of [-0.68, 0.68]) { const s = new THREE.SpotLight(0xfff0dc, 260, 110, 0.5, 0.65, 1.7); s.position.set(sx, 0.66, front); s.target.position.set(sx * 1.6, -0.9, front + 30); s.visible = night; tilt.add(s, s.target); lights.push(s);
-    const g = new THREE.ConeGeometry(2.6, 22, 24, 1, true); g.translate(0, -11, 0); g.rotateX(-Math.PI / 2); const cone = new THREE.Mesh(g, beam(0xdde8ff, 0.05)); cone.position.set(sx, 0.64, front); cone.rotation.x = 0.045; cone.renderOrder = 6; cone.visible = night; tilt.add(cone); }
+  const front = len / 2 - 0.25, lights = [], cones = [];
+  for (const sx of [-0.68, 0.68]) { const s = new THREE.SpotLight(0xfff0dc, 260, 110, 0.5, 0.65, 1.7); s.position.set(sx, 0.66, front); s.target.position.set(sx * 1.6, -0.9, front + 30); tilt.add(s, s.target); lights.push(s);
+    const g = new THREE.ConeGeometry(2.6, 22, 24, 1, true); g.translate(0, -11, 0); g.rotateX(-Math.PI / 2); const cone = new THREE.Mesh(g, beam(0xdde8ff, 0.05)); cone.position.set(sx, 0.64, front); cone.rotation.x = 0.045; cone.renderOrder = 6; tilt.add(cone); cones.push(cone); }
   const poolM = new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(1.0, 0.94, 0.84), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.55, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-  const pool = new THREE.Mesh(new THREE.PlaneGeometry(9, 26), poolM); pool.rotation.x = -Math.PI / 2; pool.position.set(0, 0.035, front + 12); pool.renderOrder = 4; pool.visible = night; root.add(pool);
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(9, 26), poolM); pool.rotation.x = -Math.PI / 2; pool.position.set(0, 0.035, front + 12); pool.renderOrder = 4; root.add(pool);
   const tailM = new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(1, 0.06, 0.03), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.1, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-  const tailPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), tailM); tailPool.rotation.x = -Math.PI / 2; tailPool.position.set(0, 0.035, -len / 2 - 2.2); tailPool.renderOrder = 4; tailPool.visible = night; root.add(tailPool);
-  if (!night) { M.lens.emissiveIntensity = 1.6; M.led.emissiveIntensity = 2.5; shadow.material.opacity = 0.55; }
+  const tailPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), tailM); tailPool.rotation.x = -Math.PI / 2; tailPool.position.set(0, 0.035, -len / 2 - 2.2); tailPool.renderOrder = 4; root.add(tailPool);
 
   const car = { root, tilt, model, paint, len, wid, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, bump: 0, impact: 0, cubeHide: [root] };
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
   car.place = (x, z, h) => { car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.sync(0); };
   car.setPaint = hex => paint.color.set(hex);
+  car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
+  car.setTime = e => { nightK = e.night; for (const s of lights) s.intensity = 260 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
+    M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.55 + 0.45 * e.night; };
 
   // ctrl: steer (+1 = left), throttle, brake, hand. Returns the strength of any wall impact this step.
   car.drive = (dt, ctrl) => {
@@ -108,7 +111,7 @@ export async function createPlayer(scene, envTexture, city, night) {
     tilt.position.y = Math.sin(car.bump * Math.PI) * 0.07;
     car.spin -= car.speed * dt / wheelR;
     for (const w of wheels) { q1.setFromAxisAngle(w.up, w.front ? car.steer * 0.5 : 0); q2.setFromAxisAngle(X, car.spin); w.node.quaternion.copy(q1).multiply(w.base).multiply(q2); }
-    M.tail.emissiveIntensity = car.braking ? (night ? 9 : 5) : (night ? 1.6 : 0.5); tailM.opacity = car.braking ? 0.5 : 0.1;
+    M.tail.emissiveIntensity = car.braking ? 5 + 4 * nightK : 0.5 + 1.1 * nightK; tailM.opacity = (car.braking ? 0.5 : 0.1) * nightK;
   };
   return car;
 }

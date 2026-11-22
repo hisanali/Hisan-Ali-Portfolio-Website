@@ -1,5 +1,5 @@
 // Afterdark: free-roam night driving. Boot, input, game state, camera, HUD and the frame loop.
-import { THREE, createRenderer, Q, QUALITY, TOD, NIGHT } from './render.js';
+import { THREE, createRenderer, Q, QUALITY } from './render.js';
 import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
@@ -19,10 +19,10 @@ let city, street, player, traffic, audio = null, actx = null, rainGain = null;
 const RAIN = Q.rain, RR = 34, rainPos = new Float32Array(RAIN * 6), rainGeo = new THREE.BufferGeometry();
 for (let i = 0; i < RAIN; i++) { const x = (Math.random() - 0.5) * RR * 2, y = Math.random() * 26, z = (Math.random() - 0.5) * RR * 2; rainPos.set([x, y, z, x, y - 0.9, z], i * 6); }
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
-const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaab8d8, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending })); rain.frustumCulled = false; rain.visible = NIGHT; scene.add(rain);
+const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaab8d8, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending })); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
 R.refl.hide.push(rain); R.cube.hide.push(rain);
 function stepRain(dt, cx, cz, vx, vz) {
-  if (!NIGHT) return;
+  if (!rain.visible) return;
   const fall = 21 * dt, wx = 2.2 * dt - vx * dt * 0.0, wz = 0;
   for (let i = 0; i < RAIN; i++) { const o = i * 6; let x = rainPos[o] + wx, y = rainPos[o + 1] - fall, z = rainPos[o + 2] + wz;
     if (y < 0 || Math.abs(x - cx) > RR || Math.abs(z - cz) > RR) { y = y < 0 ? 20 + Math.random() * 8 : y; x = cx + (Math.random() - 0.5) * RR * 2; z = cz + (Math.random() - 0.5) * RR * 2; }
@@ -50,16 +50,16 @@ function moveBeacon() {
 }
 
 // ---------- Street-lamp light pool ----------
-const lampLights = Array.from({ length: NIGHT ? Q.lights : 0 }, () => { const l = new THREE.PointLight(0xffcf9a, 42, 34, 1.7); scene.add(l); return l; });
+const lampLights = Array.from({ length: Q.lights }, () => { const l = new THREE.PointLight(0xffcf9a, 42, 34, 1.7); scene.add(l); return l; });
 let lampTick = 0;
 function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; const L = city.lamps, best = [];
   for (let i = 0; i < L.length; i++) { const d = (L[i].x - p.x) ** 2 + (L[i].z - p.z) ** 2; if (d > 3600) continue; best.push([d, i]); }
-  best.sort((a, b) => a[0] - b[0]); lampLights.forEach((l, k) => { if (best[k]) { l.position.copy(L[best[k][1]]); l.visible = true; } else l.visible = false; }); }
+  best.sort((a, b) => a[0] - b[0]); lampLights.forEach((l, k) => { if (best[k]) { l.position.copy(L[best[k][1]]); l.userData.on = 1; } else l.userData.on = 0; l.intensity = 42 * l.userData.on * (env ? env.night : 0); }); }
 
 // ---------- Input ----------
 const KEYS = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', ' ': 'hand' };
 addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) { input[KEYS[k]] = 1; if (S.mode === 'play') e.preventDefault(); }
-  if (k === 'c' && S.mode === 'play') { S.cam = (S.cam + 1) % 3; toast(['Chase camera', 'Bonnet camera', 'Wide camera'][S.cam]); }
+  if (k === 'c' && S.mode === 'play') nextCam();
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'enter' && S.mode === 'menu') start(); });
@@ -77,7 +77,8 @@ let paintSel = store.get('paint', '#b9bdc6');
 seg($('#seg-mode'), [['run', 'Night Run'], ['free', 'Free Roam']], S.kind, v => { S.kind = v; store.set('kind', v); $('#mode-note').textContent = v === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time.' : 'No clock. Cruise the city, chase beacons if you feel like it.'; });
 $('#mode-note').textContent = S.kind === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time.' : 'No clock. Cruise the city, chase beacons if you feel like it.';
 seg($('#seg-paint'), PAINTS, paintSel, v => { paintSel = v; store.set('paint', v); player?.setPaint(v); });
-seg($('#seg-tod'), [['sunset', 'Sunset'], ['night', 'Rainy night']], TOD, v => { if (v === TOD) return; store.set('tod', v); const u = new URL(location.href); u.searchParams.delete('tod'); location.href = u.href; });
+const TIMES = { auto: null, day: 12.5, sunset: 17.4, night: 23, fixed: 12 }; let timeMode = store.get('time', 'auto'); if (!(timeMode in TIMES)) timeMode = 'auto';
+seg($('#seg-tod'), [['auto', 'Live cycle'], ['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Rainy night']], timeMode, v => { timeMode = v; store.set('time', v); if (TIMES[v] != null) hour = TIMES[v]; });
 seg($('#seg-gfx'), [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], QUALITY, v => { if (v === QUALITY) return; store.set('gfx', v); const u = new URL(location.href); u.searchParams.delete('gfx'); location.href = u.href; });
 $('#best').textContent = store.get('best', '0');
 $('#play').addEventListener('click', () => start());
@@ -86,7 +87,7 @@ $('#to-menu').addEventListener('click', () => toMenu());
 $('#resume').addEventListener('click', () => pause(false));
 $('#quit').addEventListener('click', () => toMenu());
 $('#btn-pause').addEventListener('click', () => { if (S.mode === 'play') pause(true); });
-$('#btn-cam').addEventListener('click', () => { S.cam = (S.cam + 1) % 3; });
+$('#btn-cam').addEventListener('click', () => nextCam());
 $('#btn-sound').addEventListener('click', () => { S.sound = !S.sound; store.set('sound', S.sound ? 'on' : 'off'); document.body.classList.toggle('muted', !S.sound); });
 document.body.classList.toggle('muted', !S.sound);
 $('#btn-full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
@@ -106,7 +107,7 @@ function start() {
   if (S.mode === 'boot') return; ensureAudio();
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0 });
-  camYaw = 0; snapCam = true; moveBeacon(); show(null); toast(S.kind === 'run' ? 'Follow the arrow to the beacon' : 'The city is yours'); document.body.dataset.tod = TOD;
+  camYaw = 0; snapCam = true; view.yaw = view.pitch = 0; view.zoom = 1; moveBeacon(); show(null); toast(S.kind === 'run' ? 'Follow the arrow to the beacon' : 'The city is yours'); setTimeout(() => { if (S.mode === 'play') toast('Drag to look around · C changes camera'); }, 2600);
 }
 function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); }
 function toMenu() { S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); show('menu'); }
@@ -139,21 +140,54 @@ function drawHud() {
   drawMap();
 }
 
-// ---------- Camera ----------
+// ---------- Camera: five views, drag to look around, wheel to zoom ----------
+const CAMS = ['Chase', 'Far chase', 'Bonnet', 'Cockpit', 'Low wheel'];
+const view = { yaw: 0, pitch: 0, zoom: 1, drag: false, idle: 9, x: 0, y: 0, id: -1 };
+function nextCam() { S.cam = (S.cam + 1) % CAMS.length; view.yaw = view.pitch = 0; snapCam = true; toast(CAMS[S.cam] + ' camera'); }
+{ const cv = $('#scene');
+  cv.addEventListener('pointerdown', e => { if (S.mode !== 'play') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
+  cv.addEventListener('pointermove', e => { if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, -0.3, 1.1); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
+  const end = e => { if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  cv.addEventListener('wheel', e => { if (S.mode !== 'play') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
 let camYaw = 0, snapCam = true; const camPos = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
 function chase(dt, snap) {
-  const h = player.heading, sp = Math.abs(player.speed);
-  let dy = h - camYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); camYaw += dy * Math.min(1, dt * (S.cam === 1 ? 30 : 4.2));
-  const fx = Math.sin(camYaw), fz = Math.cos(camYaw);
-  if (S.cam === 1) { want.set(player.pos.x + Math.sin(h) * 0.35, 1.08, player.pos.z + Math.cos(h) * 0.35); camPos.copy(want); look.set(player.pos.x + Math.sin(h) * 30, 0.9, player.pos.z + Math.cos(h) * 30); }
-  else { const dist = (S.cam === 2 ? 10.5 : 6.3) + sp * 0.028, hgt = (S.cam === 2 ? 3.3 : 1.75) + sp * 0.006;
-    want.set(player.pos.x - fx * dist, hgt, player.pos.z - fz * dist); if (snap) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt));
-    look.set(player.pos.x + Math.sin(h) * 4.5, 0.95, player.pos.z + Math.cos(h) * 4.5); }
+  const h = player.heading, sp = Math.abs(player.speed), inside = S.cam === 2 || S.cam === 3;
+  if (view.inCab !== (S.cam === 3)) { view.inCab = S.cam === 3; player.setInterior(view.inCab); }
+  if (!view.drag) { view.idle += dt; if (view.idle > 2.2 && sp > 2) { const k = Math.exp(-2.6 * dt); view.yaw *= k; view.pitch *= k; } }
+  let dy = h - camYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); camYaw += dy * Math.min(1, dt * (inside ? 30 : 4.2)); if (snap) camYaw = h;
+  if (inside) { const lx = S.cam === 3 ? 0.36 : 0, ly = S.cam === 3 ? 1.06 : 1.1, lz = S.cam === 3 ? -0.32 : 0.45, sn = Math.sin(h), cs = Math.cos(h);
+    camPos.set(player.pos.x + sn * lz + cs * lx, ly, player.pos.z + cs * lz - sn * lx); const a = h + view.yaw, cp = Math.cos(view.pitch * 0.7);
+    look.set(camPos.x + Math.sin(a) * cp * 30, camPos.y - 0.6 + Math.sin(view.pitch * 0.7) * -30 * 0 - view.pitch * 12, camPos.z + Math.cos(a) * cp * 30); }
+  else { const base = S.cam === 1 ? [10.5, 3.3, 0] : S.cam === 4 ? [4.3, 0.55, 0.62] : [6.3, 1.75, 0], dist = (base[0] + sp * 0.028) * view.zoom, a = camYaw + base[2] + view.yaw, pc = Math.cos(view.pitch), ps = Math.sin(view.pitch);
+    want.set(player.pos.x - Math.sin(a) * dist * pc, Math.max(0.35, base[1] + sp * 0.006 + dist * ps), player.pos.z - Math.cos(a) * dist * pc);
+    if (snap || view.drag) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt));
+    const ahead = S.cam === 4 ? 1.2 : 4.5 * Math.max(0, 1 - Math.abs(view.yaw) * 0.8); look.set(player.pos.x + Math.sin(h) * ahead, 0.95, player.pos.z + Math.cos(h) * ahead); }
   const sh = S.shake; S.shake = Math.max(0, sh - dt * 2.4);
-  camera.position.set(camPos.x + (Math.random() - 0.5) * sh * 0.5, Math.max(0.5, camPos.y + (Math.random() - 0.5) * sh * 0.35), camPos.z + (Math.random() - 0.5) * sh * 0.5);
-  camera.lookAt(look); camera.fov = lerp(camera.fov, 56 + clamp(sp * 0.24, 0, 20), Math.min(1, dt * 4)); camera.updateProjectionMatrix();
+  camera.position.set(camPos.x + (Math.random() - 0.5) * sh * 0.5, Math.max(0.3, camPos.y + (Math.random() - 0.5) * sh * 0.35), camPos.z + (Math.random() - 0.5) * sh * 0.5);
+  camera.lookAt(look); const near = inside ? 0.08 : 0.25; if (camera.near !== near) camera.near = near;
+  camera.fov = lerp(camera.fov, (S.cam === 3 ? 66 : 56) + clamp(sp * 0.24, 0, 20), Math.min(1, dt * 4)); camera.updateProjectionMatrix();
 }
 function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); camera.lookAt(player.pos.x, 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
+
+// ---------- Time of day ----------
+let hour = 17.2, env = null, envHour = -99, pmrem = null, envRT = null;
+const DAY_SECONDS = 720; // one full day and night
+function captureEnv() { // image-based lighting from the street itself, refreshed as the light changes
+  const rv = rain.visible; rain.visible = false; const hid = street ? street.hide.map(o => [o, o.visible]) : []; hid.forEach(([o]) => { o.visible = false; });
+  city.sky.position.set(city.spawn.x, 0, city.spawn.z); pmrem ??= new THREE.PMREMGenerator(renderer);
+  const p = player ? player.pos : city.spawn, rt = pmrem.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(p.x, 3.2, p.z) });
+  scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
+}
+function stepTime(dt, running) {
+  if (timeMode === 'auto') { if (running) hour = (hour + dt * 24 / DAY_SECONDS) % 24; } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
+  env = city.setTime(hour); street.setTime(env); player.setTime(env); traffic.setTime(env);
+  scene.environmentIntensity = 1.5 - 0.9 * env.night; rain.visible = env.rain > 0.03; rain.material.opacity = 0.17 * env.rain;
+  R.refl.active = env.wet > 0.2; R.refl.uniforms.uReflOn.value = R.refl.on ? Math.min(1, Math.max(0, (env.wet - 0.2) / 0.4)) : 0;
+  R.bloom.strength = 0.22 + 0.26 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
+  let dh = Math.abs(hour - envHour); dh = Math.min(dh, 24 - dh); if (dh > (env.day > 0.05 && env.day < 0.95 ? 0.3 : 0.9)) captureEnv();
+}
+addEventListener('keydown', e => { if (e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
 
 // ---------- Frame ----------
 const clock = new THREE.Clock(); const probe = new THREE.Vector3(); let crashCool = 0;
@@ -163,7 +197,7 @@ function frame() {
   if (S.mode === 'boot') return;
   const playing = S.mode === 'play';
   if (S.mode !== 'pause') {
-    city.update(S.time); street.update(dt, S.time, player.pos);
+    stepTime(dt, playing || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos);
     traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (playing || S.mode === 'over') {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up || (coarse && !input.down && !input.hand) ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
@@ -180,7 +214,7 @@ function frame() {
         drawHud();
       }
       // Wet-road spray from the rear tyres, thicker when sliding.
-      const sp2 = Math.abs(player.speed); if (sp2 > 7 && (NIGHT || player.slip > 3)) { const n = sp2 > 30 || player.slip > 3 ? 3 : 1, h = player.heading; for (let k = 0; k < n; k++) { const side = Math.random() < 0.5 ? -0.8 : 0.8; const g = player.slip > 3 ? 1.1 : 0.42;
+      const sp2 = Math.abs(player.speed); if (sp2 > 7 && (env.wet > 0.5 || player.slip > 3)) { const n = sp2 > 30 || player.slip > 3 ? 3 : 1, h = player.heading; for (let k = 0; k < n; k++) { const side = Math.random() < 0.5 ? -0.8 : 0.8; const g = player.slip > 3 ? 1.1 : 0.42;
         puff(player.pos.x - Math.sin(h) * 1.7 + Math.cos(h) * side, 0.15, player.pos.z - Math.cos(h) * 1.7 - Math.sin(h) * side, -player.vel.x * 0.12 + (Math.random() - 0.5) * 2, 1 + Math.random() * 1.6 + sp2 * 0.03, -player.vel.z * 0.12 + (Math.random() - 0.5) * 2, 0.75, g, g * 1.05, g * 1.2); } }
       chase(dt, snapCam); snapCam = false;
     } else orbit(S.time);
@@ -191,28 +225,29 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(player.pos);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { try { audio.update(dt, { speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, steer: player.steer, offroad: false, volume: S.sound && (playing || S.mode === 'menu') ? 0.85 : 0, vehicle: 'coupe', reverse: player.speed < -0.5, grounded: true }); rainGain.gain.value = S.sound && NIGHT ? 0.035 : 0; } catch (e) {} }
+  if (audio) { try { audio.update(dt, { speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, steer: player.steer, offroad: false, volume: S.sound && (playing || S.mode === 'menu') ? 0.85 : 0, vehicle: 'coupe', reverse: player.speed < -0.5, grounded: true }); rainGain.gain.value = S.sound ? 0.035 * env.rain : 0; } catch (e) {} }
   probe.set(player.pos.x, 1.15, player.pos.z); R.render(probe);
 }
 
 async function boot() {
   setLoad('Raising the skyline'); await nextFrame();
-  city = await buildCity(scene, R.refl, Q, NIGHT, renderer);
+  city = await buildCity(scene, R.refl, Q, renderer);
   spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ size: 1.5, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 })); spray.frustumCulled = false; scene.add(spray); R.refl.hide.push(spray);
   setLoad('Planting the avenues'); await nextFrame();
-  street = buildStreet(scene, city, R, Q, NIGHT); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
+  street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
-  { rain.visible = false; city.sky.position.set(city.spawn.x, 0, city.spawn.z); const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(city.spawn.x, 3.2, city.spawn.z) }); scene.environment = env.texture; scene.environmentIntensity = NIGHT ? 0.6 : 1.5; pm.dispose(); rain.visible = NIGHT; }
+  env = city.setTime(hour); captureEnv();
   setLoad('Rolling out the coupé'); await nextFrame();
-  player = await createPlayer(scene, R.cube.texture, city, NIGHT); R.cube.hide.push(player.root);
+  player = await createPlayer(scene, R.cube.texture, city); R.cube.hide.push(player.root);
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
-  traffic = await createTraffic(scene, city, Q.traffic, NIGHT);
-  traffic.update(0.016, 0, null, player.pos);
+  traffic = await createTraffic(scene, city, Q.traffic);
+  traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
   window.__afterdark = { S, player, traffic, city, street, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
+  window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });
 frame();

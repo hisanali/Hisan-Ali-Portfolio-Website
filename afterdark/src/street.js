@@ -8,19 +8,20 @@ import { loadGLB } from './car.js';
 const dummy = new THREE.Object3D(), col = new THREE.Color();
 function tex(size, draw, srgb = true) { const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
 
-export function buildStreet(scene, city, R3, Q, night) {
-  const SH = !night;
+export function buildStreet(scene, city, R3, Q) {
+  const SH = true; let env = { night: 0, rain: 0 };
   const R = rng(4242), street = { people: [], update: () => {} };
 
-  // ---- Trees: a branching trunk and a crown of overlapping leaf clusters ----
-  const leaf = tex(256, (c, s) => { c.fillStyle = '#1c2a14'; c.fillRect(0, 0, s, s); const r = rng(9); for (let i = 0; i < 2600; i++) { const g = 40 + r() * 70; c.fillStyle = `rgba(${g * 0.55 | 0},${g | 0},${g * 0.35 | 0},${0.5 + r() * 0.5})`; c.beginPath(); c.ellipse(r() * s, r() * s, 2 + r() * 5, 1 + r() * 2.5, r() * 3.14, 0, 7); c.fill(); } for (let i = 0; i < 500; i++) { c.fillStyle = 'rgba(4,8,3,.8)'; c.beginPath(); c.arc(r() * s, r() * s, 1 + r() * 4, 0, 7); c.fill(); } });
-  leaf.repeat.set(3, 2);
-  const crownParts = [];
-  for (let k = 0; k < 7; k++) { const g = new THREE.IcosahedronGeometry(1, 2), p = g.attributes.position, r2 = rng(30 + k);
-    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), n = 1 + 0.22 * Math.sin(x * 5.1 + k) * Math.cos(z * 4.3 + k * 2) + 0.14 * Math.sin(y * 7 + k * 3); p.setXYZ(i, x * n, y * n * 0.82, z * n); g.attributes.normal.setXYZ(i, x, y, z); } const a = k / 7 * Math.PI * 2, rad = k === 0 ? 0 : 1.15 + r2() * 0.5, sc = k === 0 ? 1.7 : 1.05 + r2() * 0.5; g.scale(sc, sc, sc); g.translate(Math.cos(a) * rad, 5.4 + (k === 0 ? 0.9 : (r2() - 0.4) * 1.5), Math.sin(a) * rad); crownParts.push(g); }
-  const crownG = mergeGeometries(crownParts);
-  const trunkParts = [(() => { const g = new THREE.CylinderGeometry(0.1, 0.19, 4.4, 7); g.translate(0, 2.2, 0); return g; })()];
-  for (let k = 0; k < 4; k++) { const g = new THREE.CylinderGeometry(0.035, 0.085, 2.3, 5); g.translate(0, 1.15, 0); g.rotateZ(0.6 + (k % 2) * 0.2); g.rotateY(k * 1.7); g.translate(0, 3.4 + k * 0.25, 0); trunkParts.push(g); }
+  // ---- Trees: a branching trunk carrying a few hundred leaf sprays, shaded as one rounded crown ----
+  const leaf = tex(256, (c, s) => { c.clearRect(0, 0, s, s); const r = rng(9); for (let i = 0; i < 150; i++) { const a = r() * 6.28, d = Math.sqrt(r()) * s * 0.44, x = s / 2 + Math.cos(a) * d, y = s / 2 + Math.sin(a) * d, g = 70 + r() * 95, L = 10 + r() * 12; c.save(); c.translate(x, y); c.rotate(r() * 6.28); c.fillStyle = `rgb(${g * 0.42 | 0},${g | 0},${g * 0.26 | 0})`; c.beginPath(); c.ellipse(0, 0, L, L * 0.42, 0, 0, 7); c.fill(); c.strokeStyle = 'rgba(10,30,6,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-L, 0); c.lineTo(L, 0); c.stroke(); c.restore(); } });
+  leaf.wrapS = leaf.wrapT = THREE.ClampToEdgeWrapping;
+  const cards = [], r3 = rng(55), cc = new THREE.Vector3(0, 6.3, 0);
+  for (let k = 0; k < 130; k++) { const u = r3() * 2 - 1, a = r3() * 6.28, rr = Math.cbrt(0.25 + 0.75 * r3()), sq = Math.sqrt(1 - u * u), px = sq * Math.cos(a) * 2.5 * rr, py = 6.3 + u * 2.0 * rr, pz = sq * Math.sin(a) * 2.5 * rr;
+    const g = new THREE.PlaneGeometry(1.7, 1.7); g.rotateX((r3() - 0.5) * 2.2); g.rotateY(r3() * 6.28); g.translate(px, py, pz);
+    const n = g.attributes.normal, p = g.attributes.position; for (let i = 0; i < n.count; i++) { const v = new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i)).sub(cc).normalize(); n.setXYZ(i, v.x, v.y * 0.8 + 0.35, v.z); } cards.push(g); }
+  const crownG = mergeGeometries(cards);
+  const trunkParts = [(() => { const g = new THREE.CylinderGeometry(0.1, 0.2, 4.6, 7); g.translate(0, 2.3, 0); return g; })()];
+  for (let k = 0; k < 6; k++) { const g = new THREE.CylinderGeometry(0.03, 0.085, 2.8, 5); g.translate(0, 1.4, 0); g.rotateZ(0.5 + (k % 3) * 0.2); g.rotateY(k * 1.05); g.translate(0, 3.5 + (k % 3) * 0.35, 0); trunkParts.push(g); }
   const trunkG = mergeGeometries(trunkParts);
   const spots = [], palmSpots = [];
   for (let r = 0; r < ROADS; r++) for (const ax of [0, 1]) for (const side of [-1, 1]) for (let s = 22.5; s < SPAN; s += 15) {
@@ -41,15 +42,48 @@ export function buildStreet(scene, city, R3, Q, night) {
     palmSpots.forEach((t2, k) => { dummy.position.set(t2.x, 0.17, t2.z); dummy.rotation.set(0, t2.rot, 0); dummy.scale.set(t2.sc, t2.sc * (0.85 + (k % 5) * 0.07), t2.sc); dummy.updateMatrix(); pf.setMatrixAt(k, dummy.matrix); pt.setMatrixAt(k, dummy.matrix); });
     for (const m of [pf, pt]) { m.frustumCulled = false; m.castShadow = SH; m.receiveShadow = SH; scene.add(m); } }
   dummy.scale.set(1, 1, 1);
-  const crownM = new THREE.MeshStandardMaterial({ map: leaf, color: 0xffffff, roughness: 0.42, metalness: 0, envMapIntensity: 0.7 });
+  const crownM = new THREE.MeshStandardMaterial({ map: leaf, color: 0xffffff, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, metalness: 0, envMapIntensity: 0.45 });
   const crowns = new THREE.InstancedMesh(crownG, crownM, spots.length), trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x1a1512, roughness: 0.8 }), spots.length);
   const fairy = [], grates = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.03, 1.5), new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: 0.5, metalness: 0.7 }), spots.length);
   spots.forEach((t, k) => { dummy.position.set(t.x, 0.17, t.z); dummy.rotation.set(0, t.rot, 0); dummy.scale.set(t.sc, t.sc, t.sc); dummy.updateMatrix(); crowns.setMatrixAt(k, dummy.matrix); trunks.setMatrixAt(k, dummy.matrix);
-    crowns.setColorAt(k, col.setRGB(0.55 + R() * 0.5, 0.6 + R() * 0.5, 0.45 + R() * 0.3)); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1, 1); dummy.position.y = 0.18; dummy.updateMatrix(); grates.setMatrixAt(k, dummy.matrix);
+    crowns.setColorAt(k, col.setRGB(0.5 + R() * 0.28, 0.5 + R() * 0.22, 0.4 + R() * 0.2)); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1, 1); dummy.position.y = 0.18; dummy.updateMatrix(); grates.setMatrixAt(k, dummy.matrix);
     if (t.lit) for (let i = 0; i < 46; i++) { const a = R() * 6.28, rr = (0.6 + R() * 1.9) * t.sc, y = (4.2 + R() * 3.4) * t.sc; fairy.push(t.x + Math.cos(a) * rr, 0.17 + y, t.z + Math.sin(a) * rr); } });
+  crowns.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leaf, alphaTest: 0.45 });
   for (const m of [crowns, trunks, grates]) { m.frustumCulled = false; m.castShadow = SH && m !== grates; m.receiveShadow = SH; scene.add(m); }
   const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fairy, 3));
-  const fairyPts = new THREE.Points(fg, new THREE.PointsMaterial({ size: 0.42, map: city.dot, color: new THREE.Color(3.2, 2.2, 1.0).multiplyScalar(night ? 1 : 0.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(fairyPts);
+  const fairyPts = new THREE.Points(fg, new THREE.PointsMaterial({ size: 0.42, map: city.dot, color: new THREE.Color(3.2, 2.2, 1.0), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(fairyPts);
+
+  // ---- Festoon lights strung across the side streets ----
+  const fest = [[], []];
+  for (let r = 1; r < ROADS - 1; r++) for (let s = 34; s < SPAN - 30; s += 17) { if (Math.abs(s - Math.round(s / P) * P) < 22 || R() < 0.45) continue;
+    for (let i = 0; i <= 26; i++) { const u = i / 26, off = (u - 0.5) * (HALF + SW) * 2, y = 9.6 - Math.sin(u * Math.PI) * 2.1; fest[i % 2].push(s + (u - 0.5) * 1.5, y, r * P + off); } }
+  const festPts = fest.map((arr, k) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.5, map: city.dot, color: new THREE.Color(k ? 3.0 : 3.2, k ? 2.4 : 1.9, k ? 1.6 : 0.8), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(p); return p; });
+
+  // ---- The big wheel on the beach, its lights running round the rim and down the spokes ----
+  const wheel = new THREE.Group(), WR = 27, WY = 31, wheelX = city.beachX - 34, wheelZ = SPAN * 0.42; let wheelLights = null;
+  { const steel = new THREE.MeshStandardMaterial({ color: 0xdfe3e8, roughness: 0.4, metalness: 0.7 }), parts = [];
+    for (const e of [-1.3, 1.3]) { const rim = new THREE.TorusGeometry(WR, 0.16, 6, 72); rim.rotateY(Math.PI / 2); rim.translate(e, 0, 0); parts.push(rim); const rim2 = new THREE.TorusGeometry(WR * 0.62, 0.1, 5, 60); rim2.rotateY(Math.PI / 2); rim2.translate(e, 0, 0); parts.push(rim2);
+      for (let k = 0; k < 16; k++) { const g = new THREE.CylinderGeometry(0.07, 0.07, WR, 5); g.translate(0, WR / 2, 0); g.rotateX(k / 16 * Math.PI * 2); g.translate(e, 0, 0); parts.push(g); } }
+    const hub = new THREE.CylinderGeometry(1.1, 1.1, 3.4, 16); hub.rotateZ(Math.PI / 2); parts.push(hub);
+    const rimMesh = new THREE.Mesh(mergeGeometries(parts), steel); rimMesh.castShadow = SH; wheel.add(rimMesh);
+    const cabM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.2 }); wheel.userData.cabs = [];
+    for (let k = 0; k < 16; k++) { const cab = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.3, 2.2), cabM); cab.castShadow = SH; wheel.add(cab); wheel.userData.cabs.push(cab); }
+    const lp = [], N = 16; for (let k = 0; k < N; k++) for (let i = 1; i <= 12; i++) { const a = k / N * Math.PI * 2, d = i / 12 * WR; lp.push(1.5, Math.cos(a) * d, Math.sin(a) * d); }
+    for (let i = 0; i < 120; i++) { const a = i / 120 * Math.PI * 2; lp.push(1.5, Math.cos(a) * WR, Math.sin(a) * WR); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(lp.length), 3));
+    wheelLights = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); wheelLights.frustumCulled = false; wheel.add(wheelLights);
+    wheel.position.set(wheelX, WY, wheelZ); scene.add(wheel);
+    const legs = []; for (const e of [-2.6, 2.6]) for (const lz of [-13, 13]) { const len = Math.hypot(WY, lz), g2 = new THREE.CylinderGeometry(0.35, 0.5, len, 8); g2.translate(0, len / 2, 0); g2.rotateX(-Math.atan2(lz, WY)); g2.translate(e, 0, lz); legs.push(g2); }
+    const base = new THREE.BoxGeometry(9, 0.6, 32); base.translate(0, 0.2, 0); legs.push(base);
+    const legMesh = new THREE.Mesh(mergeGeometries(legs), new THREE.MeshStandardMaterial({ color: 0xc8ccd2, roughness: 0.45, metalness: 0.6 })); legMesh.position.set(wheelX, -0.2, wheelZ); legMesh.castShadow = SH; scene.add(legMesh); }
+  const wc = new THREE.Color();
+  function stepWheel(t) { const rot = t * 0.05; wheel.rotation.x = rot; wheel.userData.cabs.forEach((cab, k) => { const a = k / 16 * Math.PI * 2; cab.position.set(0, Math.cos(a) * WR, Math.sin(a) * WR - 0); cab.rotation.x = -rot; cab.position.y -= 0; });
+    const ca = wheelLights.geometry.attributes.color, gain = 0.25 + 0.75 * env.night, mode = Math.floor(t / 9) % 3;
+    for (let k = 0; k < 16; k++) for (let i = 0; i < 12; i++) { const idx = k * 12 + i; let v, hue;
+      if (mode === 0) { v = (Math.sin(i * 0.9 - t * 4) > 0.2 ? 1 : 0.12); hue = (k / 16 + t * 0.05) % 1; } else if (mode === 1) { v = ((k + Math.floor(t * 6)) % 4 === 0 ? 1 : 0.1); hue = (i / 12 * 0.3 + t * 0.08) % 1; } else { v = 0.55 + 0.45 * Math.sin(t * 3 + k); hue = (t * 0.1 + i * 0.02) % 1; }
+      wc.setHSL(hue, 1, 0.55); ca.setXYZ(idx, wc.r * v * 2.6 * gain, wc.g * v * 2.6 * gain, wc.b * v * 2.6 * gain); }
+    for (let i = 0; i < 120; i++) { const v = (i + Math.floor(t * 20)) % 6 < 3 ? 1 : 0.15; wc.setHSL((i / 120 + t * 0.07) % 1, 1, 0.6); ca.setXYZ(192 + i, wc.r * v * 3 * gain, wc.g * v * 3 * gain, wc.b * v * 3 * gain); }
+    ca.needsUpdate = true; }
 
   // ---- The train on the elevated line ----
   const train = new THREE.Group(); const CARS = 5, CL = 17.5;
@@ -67,7 +101,7 @@ export function buildStreet(scene, city, R3, Q, night) {
   let ventTick = 0, nearVents = [];
 
   // ---- People ----
-  const walkers = []; const NP = Q.people || 0;
+  const walkers = [], brollies = []; const NP = Q.people || 0;
   const PEOPLE = ['citizen-man-suit', 'citizen-woman-casual', 'citizen-man-casual_hoodie', 'citizen-woman-formal'];
   async function loadPeople() {
     if (!NP) return; const kits = [];
@@ -77,7 +111,7 @@ export function buildStreet(scene, city, R3, Q, night) {
     for (let k = 0; k < NP; k++) { const kit = kits[k % kits.length], root = new THREE.Group(), body = SkeletonUtils.clone(kit.scene); body.scale.setScalar(kit.scale * (0.95 + R() * 0.1)); root.add(body);
       body.traverse(o => { if (o.isMesh) { o.frustumCulled = false; o.material = o.material.clone(); o.material.envMapIntensity = 0.5; } });
       body.traverse(o => { if (o.isMesh) o.castShadow = SH; });
-      if (night && R() < 0.7) { const br = new THREE.Mesh(brollyG, new THREE.MeshStandardMaterial({ color: [0x0d0e12, 0x14213f, 0x5a1218, 0x1d1d22][Math.floor(R() * 4)], roughness: 0.35, side: THREE.DoubleSide })); br.position.set(0.12, 0, 0.1); root.add(br); }
+      if (R() < 0.7) { const br = new THREE.Mesh(brollyG, new THREE.MeshStandardMaterial({ color: [0x0d0e12, 0x14213f, 0x5a1218, 0x1d1d22][Math.floor(R() * 4)], roughness: 0.35, side: THREE.DoubleSide })); br.position.set(0.12, 0, 0.1); root.add(br); brollies.push(br); }
       const mixer = new THREE.AnimationMixer(body); if (kit.clip) { const act = mixer.clipAction(kit.clip); act.play(); act.time = R() * kit.clip.duration; }
       root.visible = false; scene.add(root); walkers.push({ root, mixer, live: false, ax: 0, fixed: 0, s: 0, dir: 1, v: 1.2 + R() * 0.45 }); }
     street.people = walkers;
@@ -94,14 +128,16 @@ export function buildStreet(scene, city, R3, Q, night) {
     // Train shuttles end to end with a pause out of sight.
     trainZ += trainDir * 24 * dt; if (trainZ > SPAN + 520) { trainDir = -1; } else if (trainZ < -520) { trainDir = 1; }
     train.position.z = trainZ; train.rotation.y = trainDir > 0 ? 0 : Math.PI;
-    fairyPts.material.opacity = 0.85 + 0.15 * Math.sin(t * 3);
+    fairyPts.material.opacity = (0.85 + 0.15 * Math.sin(t * 3)) * (0.3 + 0.7 * env.night); stepWheel(t);
+    festPts[0].material.opacity = (0.55 + 0.45 * Math.sin(t * 2.2)) * (0.25 + 0.75 * env.night); festPts[1].material.opacity = (0.55 - 0.45 * Math.sin(t * 2.2)) * (0.25 + 0.75 * env.night);
     if ((ventTick++ % 50) === 0) { nearVents = vents.map(v => [(v.x - focus.x) ** 2 + (v.z - focus.z) ** 2, v]).filter(a => a[0] < 150 * 150).sort((a, b) => a[0] - b[0]).slice(0, 6).map(a => a[1]); }
     puffs.forEach((p, k) => { const u = p.userData; u.t += dt; if (u.t > 5 || !u.vent) { u.t = u.t % 5; u.vent = nearVents.length ? nearVents[k % nearVents.length] : null; u.dx = (Math.random() - 0.5) * 0.5; u.dz = (Math.random() - 0.5) * 0.5; }
-      if (!u.vent || !night) { p.visible = false; return; } const q = u.t / 5; p.visible = true; p.position.set(u.vent.x + u.dx * u.t * 2 + q * q * 2.5, 0.3 + q * 7.5, u.vent.z + u.dz * u.t * 2); const sc = 1.2 + q * 6; p.scale.set(sc, sc, 1); p.material.opacity = Math.sin(Math.min(1, q * 4) * Math.PI / 2) * (1 - q) * 0.4; p.material.rotation = k + q * 0.6; });
+      if (!u.vent || env.night < 0.5) { p.visible = false; return; } const q = u.t / 5; p.visible = true; p.position.set(u.vent.x + u.dx * u.t * 2 + q * q * 2.5, 0.3 + q * 7.5, u.vent.z + u.dz * u.t * 2); const sc = 1.2 + q * 6; p.scale.set(sc, sc, 1); p.material.opacity = Math.sin(Math.min(1, q * 4) * Math.PI / 2) * (1 - q) * 0.4; p.material.rotation = k + q * 0.6; });
     for (const w of walkers) { if (!w.live || Math.abs((w.ax ? w.fixed : w.s) - focus.x) + Math.abs((w.ax ? w.s : w.fixed) - focus.z) > 150) { respawn(w, focus.x, focus.z, !w.seen); w.seen = true; if (!w.live) continue; }
       w.s += w.dir * w.v * dt; const near = Math.abs(w.s - Math.round(w.s / P) * P); if (near < 13.5 || w.s < 14 || w.s > SPAN - 14) { w.dir = -w.dir; w.s += w.dir * w.v * dt * 2; }
       w.root.position.set(w.ax ? w.fixed : w.s, 0.17, w.ax ? w.s : w.fixed); w.root.rotation.y = w.ax ? (w.dir > 0 ? 0 : Math.PI) : (w.dir > 0 ? Math.PI / 2 : -Math.PI / 2); w.mixer.update(dt * w.v / 1.35); }
   };
+  street.setTime = e => { env = e; for (const b of brollies) b.visible = e.rain > 0.2; };
   street.loadPeople = loadPeople; street.hide = [...puffs]; street.stats = { trees: spots.length, vents: vents.length };
   return street;
 }

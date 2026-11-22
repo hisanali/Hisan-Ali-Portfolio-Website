@@ -16,7 +16,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.png">
   <link rel="modulepreload" href="/evermile/vendor/three.module.js">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Afterdark","url":"https://hisanali.com/afterdark/","description":"Drive a sports coupé through a coastal city at sunset or on a rainy neon night. Palm-lined seafront, real-time reflections on wet streets, live traffic and signals, free roam or a timed beacon run. A free 3D driving game in your browser.","genre":["Driving","Open world"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/about/"},"image":"https://hisanali.com/games/thumbs/afterdark.webp"}</script>
 </head>
 <body data-mode="boot"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
@@ -26,7 +26,7 @@
 <header class="top">
   <a class="back" href="/games/" aria-label="Back to the Game Center"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Game Center</span></a>
   <div class="top-actions">
-    <button id="btn-cam" type="button" aria-label="Change camera" title="Camera (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+    <button id="btn-cam" type="button" aria-label="Change camera" title="Camera (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Camera</span></button>
     <button id="btn-sound" type="button" aria-label="Sound" title="Sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h3l5-4v12l-5-4H4z"/><path class="wave" d="M16 9c1.3 1.6 1.3 4.4 0 6M18.5 6.5c2.8 3 2.8 8 0 11"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg></button>
     <button id="btn-full" type="button" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     <button id="btn-pause" type="button" aria-label="Pause" title="Pause (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
@@ -49,19 +49,19 @@
   <div class="card">
     <p class="eyebrow">Free-roam night drive</p>
     <h1>AFTER<em>DARK</em></h1>
-    <p class="lede">A coastal city at golden hour or in the rain after dark, a rear-engined coupé and nowhere you need to be.</p>
+    <p class="lede">A coastal city that runs from daylight through sunset into a rainy neon night, a rear-engined coupé and nowhere you need to be.</p>
     <div class="field"><span>Mode</span><div class="seg" id="seg-mode"></div></div>
     <p class="note" id="mode-note"></p>
     <div class="field"><span>Time</span><div class="seg" id="seg-tod"></div></div>
     <div class="field"><span>Paint</span><div class="seg" id="seg-paint"></div></div>
     <div class="field"><span>Graphics</span><div class="seg" id="seg-gfx"></div></div>
     <button class="primary" id="play" type="button"><span>Drive</span><span aria-hidden="true">→</span></button>
-    <p class="keys"><b>W / ↑</b> throttle · <b>S / ↓</b> brake &amp; reverse · <b>A D</b> steer · <b>Space</b> handbrake · <b>C</b> camera · <b>R</b> reset · <b>P</b> pause<br>Best run: <b id="best">0</b></p>
+    <p class="keys"><b>W / ↑</b> throttle · <b>S / ↓</b> brake &amp; reverse · <b>A D</b> steer · <b>Space</b> handbrake · <b>C</b> camera · <b>drag</b> look around · <b>wheel</b> zoom · <b>R</b> reset · <b>T</b> skip time · <b>P</b> pause<br>Best run: <b id="best">0</b></p>
   </div>
 </section>
 <section class="panel" id="pause" hidden aria-label="Paused"><div class="card small"><p class="eyebrow">Paused</p><h2>Engine idling</h2><button class="primary" id="resume" type="button"><span>Resume</span><span aria-hidden="true">→</span></button><button class="secondary" id="quit" type="button">Back to menu</button></div></section>
 <section class="panel" id="result" hidden aria-live="assertive"><div class="card small"><p class="eyebrow" id="result-label">Run complete</p><h2 id="result-score">0</h2><div class="stats" id="result-stats"></div><button class="primary" id="again" type="button"><span>Drive again</span><span aria-hidden="true">→</span></button><button class="secondary" id="to-menu" type="button">Menu</button></div></section>
 <p class="credit">Sports coupé model by vicent091036 via three.js. Traffic: Generic Passenger Car Pack by Comrade1280 (CC BY 4.0). Asphalt: Poly Haven (CC0). Buildings and people: see Evermile asset credits.</p>
-<script type="module" src="src/main.js?v=2"></script>
+<script type="module" src="src/main.js?v=3"></script>
 </body>
 </html>

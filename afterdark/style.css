@@ -85,3 +85,6 @@ body[data-mode=play] .credit,body.is-touch .credit{display:none}
 @media (prefers-reduced-motion:reduce){.ld-bar i,#hud-timebox.low b{animation:none}}
 /* The site cookie notice sits bottom-left: let clicks through its empty areas so it never blocks the menu. */
 .journey-privacy{pointer-events:none}.journey-privacy>*{pointer-events:auto}
+
+.top-actions #btn-cam{width:auto;padding:0 14px 0 12px}
+#scene.dragging{cursor:grabbing}body[data-mode=play] #scene{cursor:grab}
