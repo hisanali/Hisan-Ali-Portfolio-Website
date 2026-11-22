@@ -2,7 +2,7 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import * as SkeletonUtils from '/evermile/vendor/utils/SkeletonUtils.js';
-import { P, ROADS, HALF, SW, SPAN, rng } from './city.js';
+import { P, ROADS, HALF, SW, SPAN, rng, splitChunks } from './city.js';
 import { loadGLB } from './car.js';
 
 const dummy = new THREE.Object3D(), col = new THREE.Color();
@@ -23,7 +23,7 @@ export function buildStreet(scene, city, R3, Q) {
   const trunkParts = [(() => { const g = new THREE.CylinderGeometry(0.1, 0.2, 4.6, 7); g.translate(0, 2.3, 0); return g; })()];
   for (let k = 0; k < 6; k++) { const g = new THREE.CylinderGeometry(0.03, 0.085, 2.8, 5); g.translate(0, 1.4, 0); g.rotateZ(0.5 + (k % 3) * 0.2); g.rotateY(k * 1.05); g.translate(0, 3.5 + (k % 3) * 0.35, 0); trunkParts.push(g); }
   const trunkG = mergeGeometries(trunkParts);
-  const spots = [], palmSpots = [];
+  const spots = [], palmSpots = [], later = [];
   for (let r = 0; r < ROADS; r++) for (const ax of [0, 1]) for (const side of [-1, 1]) for (let s = 22.5; s < SPAN; s += 15) {
     if (Math.abs(s - Math.round(s / P) * P) < 21 || R() < 0.22) continue; if (ax === 1 && r * P === city.viaduct) continue;
     const lat = r * P + side * (HALF + 1.45), spot = { x: ax ? lat : s, z: ax ? s : lat, sc: 0.85 + R() * 0.45, rot: R() * 6.28, lit: R() < 0.16 };
@@ -32,15 +32,15 @@ export function buildStreet(scene, city, R3, Q) {
   // Palms: a leaning trunk with a crown of drooping fronds.
   { const fr = tex(256, (c, s) => { c.clearRect(0, 0, s, s); c.strokeStyle = '#3d5a1e'; c.lineWidth = 5; c.beginPath(); c.moveTo(s / 2, 0); c.lineTo(s / 2, s); c.stroke(); for (let y = 4; y < s - 4; y += 5) { const w = (s / 2 - 6) * Math.sin(Math.PI * (0.12 + 0.88 * y / s)) , g = 70 + (y * 13 % 60); c.strokeStyle = `rgb(${g * 0.5 | 0},${g | 0},${g * 0.3 | 0})`; c.lineWidth = 3.4; c.beginPath(); c.moveTo(s / 2, y); c.lineTo(s / 2 - w, y + 16); c.moveTo(s / 2, y); c.lineTo(s / 2 + w, y + 16); c.stroke(); } });
     fr.wrapS = fr.wrapT = THREE.ClampToEdgeWrapping;
-    const fronds = []; for (let k = 0; k < 13; k++) { const g = new THREE.PlaneGeometry(1.5, 4.6, 2, 8), p = g.attributes.position, droop = 0.55 + (k % 3) * 0.22, a = k / 13 * Math.PI * 2 + (k % 2) * 0.2;
+    const fronds = []; for (let k = 0; k < 10; k++) { const g = new THREE.PlaneGeometry(1.7, 4.6, 2, 4), p = g.attributes.position, droop = 0.55 + (k % 3) * 0.22, a = k / 10 * Math.PI * 2 + (k % 2) * 0.2;
       for (let i = 0; i < p.count; i++) { const u = (p.getY(i) + 2.3) / 4.6, x = p.getX(i); p.setXYZ(i, x, u * 4.6 * (0.55 - u * droop * 0.55) - Math.abs(x) * 0.35, u * 4.6 * (0.75 + 0.1 * droop)); }
       g.rotateY(a); g.translate(0.9 + Math.sin(a) * 0.1, 9.0, Math.cos(a) * 0.1); fronds.push(g); }
     const frondG = mergeGeometries(fronds); frondG.computeVertexNormals();
     const pts = []; for (let i = 0; i <= 8; i++) { const u = i / 8; pts.push(new THREE.Vector3(u * u * 0.9, u * 9.0, 0)); }
-    const trunkPG = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.2, 7, false); const tp = trunkPG.attributes.position; for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = 1.25 - y / 9 * 0.55 + 0.06 * Math.sin(y * 9); const cx = (y / 9) ** 2 * 0.9; tp.setX(i, cx + (tp.getX(i) - cx) * k); tp.setZ(i, tp.getZ(i) * k); } trunkPG.computeVertexNormals();
+    const trunkPG = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 6, 0.2, 5, false); const tp = trunkPG.attributes.position; for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = 1.25 - y / 9 * 0.55 + 0.06 * Math.sin(y * 9); const cx = (y / 9) ** 2 * 0.9; tp.setX(i, cx + (tp.getX(i) - cx) * k); tp.setZ(i, tp.getZ(i) * k); } trunkPG.computeVertexNormals();
     const pf = new THREE.InstancedMesh(frondG, new THREE.MeshStandardMaterial({ map: fr, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.55, envMapIntensity: 0.6 }), palmSpots.length), pt = new THREE.InstancedMesh(trunkPG, new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.85 }), palmSpots.length);
     palmSpots.forEach((t2, k) => { city.colliders.push({ x: t2.x, z: t2.z, r: 0.3 }); dummy.position.set(t2.x, 0.17, t2.z); dummy.rotation.set(0, t2.rot, 0); dummy.scale.set(t2.sc, t2.sc * (0.85 + (k % 5) * 0.07), t2.sc); dummy.updateMatrix(); pf.setMatrixAt(k, dummy.matrix); pt.setMatrixAt(k, dummy.matrix); });
-    for (const m of [pf, pt]) { m.frustumCulled = false; m.castShadow = SH; m.receiveShadow = SH; scene.add(m); } }
+    for (const m of [pf, pt]) { m.frustumCulled = false; m.castShadow = (Q.reach || 1) >= 1 || m === pf; m.receiveShadow = SH; scene.add(m); later.push([m, 620]); } }
   dummy.scale.set(1, 1, 1);
   const crownM = new THREE.MeshStandardMaterial({ map: leaf, color: 0xffffff, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, metalness: 0, envMapIntensity: 0.45 });
   const crowns = new THREE.InstancedMesh(crownG, crownM, spots.length), trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x1a1512, roughness: 0.8 }), spots.length);
@@ -138,6 +138,7 @@ export function buildStreet(scene, city, R3, Q) {
       w.root.position.set(w.ax ? w.fixed : w.s, 0.17, w.ax ? w.s : w.fixed); w.root.rotation.y = w.ax ? (w.dir > 0 ? 0 : Math.PI) : (w.dir > 0 ? Math.PI / 2 : -Math.PI / 2); w.mixer.update(dt * w.v / 1.35); }
   };
   street.setTime = e => { env = e; for (const b of brollies) b.visible = e.rain > 0.2; };
-  street.trainZ = () => trainZ; street.loadPeople = loadPeople; street.hide = [...puffs]; street.stats = { trees: spots.length, vents: vents.length };
+  street.trainZ = () => trainZ; street.loadPeople = loadPeople;
+  later.push([crowns, 520], [trunks, 380], [grates, 150]); for (const [m, d] of later) splitChunks(m, d, city.chunks); street.hide = [...puffs]; street.stats = { trees: spots.length, vents: vents.length };
   return street;
 }

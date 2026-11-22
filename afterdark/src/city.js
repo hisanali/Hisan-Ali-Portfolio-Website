@@ -11,6 +11,24 @@ const NEON = [0x19e3ff, 0xff2bd6, 0xffa329, 0x8a5cff, 0xff3048, 0x38ffb0, 0xfff1
 const dummy = new THREE.Object3D(), col = new THREE.Color(), mtmp = new THREE.Matrix4();
 const GLSL_HASH = 'float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }\nfloat adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(adH(i), adH(i + vec2(1, 0)), f.x), mix(adH(i + vec2(0, 1)), adH(i + vec2(1, 1)), f.x), f.y); }\n';
 
+// Splits one big instanced mesh into 320 m district chunks. Each chunk has its own bounds, so districts that are
+// off screen (or out of the sun's shadow box) are skipped, and chunks beyond maxDist are hidden outright.
+// The original mesh stays as an empty parent, so code that toggles it or shares its material keeps working.
+export const CHUNK = 320;
+export function splitChunks(mesh, maxDist, list) {
+  const n = mesh.count, m4 = new THREE.Matrix4(), groups = new Map(), c = new THREE.Color();
+  for (let i = 0; i < n; i++) { mesh.getMatrixAt(i, m4); const e = m4.elements, key = Math.floor(e[12] / CHUNK) * 1000 + Math.floor(e[14] / CHUNK); (groups.get(key) || groups.set(key, []).get(key)).push(i); }
+  const inst = Object.entries(mesh.geometry.attributes).filter(([, a]) => a.isInstancedBufferAttribute);
+  for (const idx of groups.values()) { let geo = mesh.geometry;
+    if (inst.length) { geo = mesh.geometry.clone(); for (const [name, a] of inst) { const arr = new a.array.constructor(idx.length * a.itemSize); idx.forEach((src, k) => { for (let q = 0; q < a.itemSize; q++) arr[k * a.itemSize + q] = a.array[src * a.itemSize + q]; }); geo.setAttribute(name, new THREE.InstancedBufferAttribute(arr, a.itemSize)); } }
+    const part = new THREE.InstancedMesh(geo, mesh.material, idx.length);
+    idx.forEach((src, k) => { mesh.getMatrixAt(src, m4); part.setMatrixAt(k, m4); if (mesh.instanceColor) { mesh.getColorAt(src, c); part.setColorAt(k, c); } });
+    part.castShadow = mesh.castShadow; part.receiveShadow = mesh.receiveShadow; part.renderOrder = mesh.renderOrder; if (mesh.customDepthMaterial) part.customDepthMaterial = mesh.customDepthMaterial;
+    part.computeBoundingSphere(); part.frustumCulled = true; mesh.add(part);
+    if (list && isFinite(maxDist)) list.push({ mesh: part, x: part.boundingSphere.center.x, z: part.boundingSphere.center.z, r: part.boundingSphere.radius, max: maxDist }); }
+  mesh.count = 0; mesh.frustumCulled = false; return mesh;
+}
+
 // Cycle of a junction's signals: 'g', 'y' or 'r' for traffic travelling along the given axis.
 export function signal(i, j, axis, t) { const ph = (t + ((i + j) & 1) * 8 + (axis === 'z' ? 8 : 0)) % 16; return ph < 6 ? 'g' : ph < 7.5 ? 'y' : 'r'; }
 
@@ -471,11 +489,19 @@ export async function buildCity(scene, refl, quality, renderer) {
   unit.setAttribute('aInfo', new THREE.InstancedBufferAttribute(aInfo, 4));
   const trimMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.15, envMapIntensity: 0.9 }), trim.length);
   trim.forEach((t, k) => { dummy.position.set(t.x, t.y, t.z); dummy.rotation.set(t.tilt, t.yaw, 0, 'YXZ'); dummy.scale.set(t.sx, t.sy, t.sz); dummy.updateMatrix(); trimMesh.setMatrixAt(k, dummy.matrix); trimMesh.setColorAt(k, col.set(t.c)); });
-  dummy.rotation.order = 'XYZ'; trimMesh.frustumCulled = false; trimMesh.castShadow = trimMesh.receiveShadow = SH; scene.add(trimMesh);
-  for (const kp of kit) { const chunks = new Map(); for (const u of kp.uses) { const key = Math.min(2, Math.max(0, Math.floor(u.x / (SPAN / 3)))) * 3 + Math.min(2, Math.max(0, Math.floor(u.z / (SPAN / 3)))); if (!chunks.has(key)) chunks.set(key, []); chunks.get(key).push(u); }
-    for (const list of chunks.values()) for (const part of kp.meshes) { const im = new THREE.InstancedMesh(part.geo, part.mat, list.length);
+  dummy.rotation.order = 'XYZ'; trimMesh.frustumCulled = false; trimMesh.castShadow = (quality.reach || 1) >= 1; trimMesh.receiveShadow = SH; scene.add(trimMesh);
+  // Photo-textured buildings by district. Far districts swap to plain lit blocks of the same size, which cost
+  // a few triangles each instead of a few thousand.
+  const kitLod = city.kitLod = [], districts = new Map(), dkey = u => Math.min(2, Math.max(0, Math.floor(u.x / (SPAN / 3)))) * 3 + Math.min(2, Math.max(0, Math.floor(u.z / (SPAN / 3))));
+  for (const kp of kit) for (const u of kp.uses) { const k = dkey(u); if (!districts.has(k)) districts.set(k, { near: new THREE.Group(), by: new Map(), all: [] }); const d = districts.get(k); (d.by.get(kp) || d.by.set(kp, []).get(kp)).push(u); d.all.push([kp, u]); }
+  for (const d of districts.values()) { const box3 = new THREE.Box3();
+    for (const [kp, list] of d.by) for (const part of kp.meshes) { const im = new THREE.InstancedMesh(part.geo, part.mat, list.length);
       list.forEach((u, k) => { dummy.position.set(u.x, u.y, u.z); dummy.rotation.set(0, u.rot, 0); dummy.scale.set(u.sx, u.sy, u.sz); dummy.updateMatrix(); im.setMatrixAt(k, mtmp.multiplyMatrices(dummy.matrix, part.local)); });
-      im.computeBoundingSphere(); im.castShadow = im.receiveShadow = SH; scene.add(im); } }
+      im.computeBoundingSphere(); im.castShadow = im.receiveShadow = SH; d.near.add(im); }
+    const fg = new THREE.BoxGeometry(1, 1, 1); fg.translate(0, 0.5, 0); const info = new Float32Array(d.all.length * 4), farM = new THREE.InstancedMesh(fg, bm.material, d.all.length);
+    d.all.forEach(([kp, u], k) => { const quarter = Math.abs(Math.sin(u.rot)) > 0.5, w = (quarter ? kp.d : kp.w) * u.sx * 0.96, dd = (quarter ? kp.w : kp.d) * u.sz * 0.96; dummy.position.set(u.x, u.y, u.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, kp.h * u.sy, dd); dummy.updateMatrix(); farM.setMatrixAt(k, dummy.matrix); info.set([(k * 131 + 7) % 4096, 2, 3.4, 3.0], k * 4); box3.expandByPoint(dummy.position); });
+    fg.setAttribute('aInfo', new THREE.InstancedBufferAttribute(info, 4)); farM.computeBoundingSphere(); farM.castShadow = farM.receiveShadow = SH; farM.visible = false;
+    scene.add(d.near, farM); const c = box3.getCenter(new THREE.Vector3()); kitLod.push({ near: d.near, far: farM, x: c.x, z: c.z, r: box3.getSize(new THREE.Vector3()).length() / 2 }); }
   dummy.scale.set(1, 1, 1);
 
   // ---- The seafront: promenade rail, beach and water along the western edge ----
@@ -495,8 +521,8 @@ export async function buildCity(scene, refl, quality, renderer) {
   bm.frustumCulled = false; scene.add(bm);
 
   // ---- Street lamps ----
-  const poleG = new THREE.CylinderGeometry(0.09, 0.14, 8.2, 8); poleG.translate(0, 4.1, 0);
-  const armG = new THREE.CylinderGeometry(0.06, 0.07, 4.4, 6); armG.rotateZ(Math.PI / 2 - 0.12); armG.translate(-2.15, 8.35, 0);
+  const poleG = new THREE.CylinderGeometry(0.09, 0.14, 8.2, 5); poleG.translate(0, 4.1, 0);
+  const armG = new THREE.CylinderGeometry(0.06, 0.07, 4.4, 4); armG.rotateZ(Math.PI / 2 - 0.12); armG.translate(-2.15, 8.35, 0);
   const lampG = mergeGeometries([poleG, armG]);
   const lampSpots = [];
   for (let r = 0; r < ROADS; r++) for (let s = 30; s < SPAN; s += 30) { if (Math.abs(s - Math.round(s / P) * P) < 16) continue;
@@ -507,7 +533,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   lampSpots.forEach((l, k) => { solid.push({ x: l.x, z: l.z, r: 0.2 }); dummy.position.set(l.x, 0.17, l.z); dummy.rotation.set(0, l.rot, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); lampMesh.setMatrixAt(k, dummy.matrix);
     const warm = (k * 7) % 5 === 0 ? 0xbfe0ff : 0xffc98f; glows.push([l.hx, 8.72, l.hz, l.rot % Math.PI ? 0.5 : 1.0, 0.1, l.rot % Math.PI ? 1.0 : 0.5, warm, 5]);
     decals.push([l.hx, 0.03, l.hz, 22, warm, 0.2]); city.lamps.push(new THREE.Vector3(l.hx, 8.2, l.hz)); });
-  lampMesh.castShadow = SH; scene.add(lampMesh);
+  scene.add(lampMesh);
 
   // ---- Traffic signals ----
   const sigG = mergeGeometries([(() => { const g = new THREE.CylinderGeometry(0.09, 0.13, 6.6, 8); g.translate(0, 3.3, 0); return g; })(), (() => { const g = new THREE.CylinderGeometry(0.055, 0.075, 6.8, 6); g.rotateZ(Math.PI / 2); g.translate(3.3, 6.35, 0); return g; })(), (() => { const g = new THREE.BoxGeometry(0.36, 1.3, 0.42); g.translate(6.6, 5.72, 0); return g; })(), (() => { const g = new THREE.BoxGeometry(0.5, 0.42, 0.3); g.translate(0.2, 2.6, 0); return g; })()]);
@@ -517,7 +543,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   const sigMesh = new THREE.InstancedMesh(sigG, new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.5, metalness: 0.6 }), sigSpots.length);
   const sigPos = new Float32Array(sigSpots.length * 3), sigCol = new Float32Array(sigSpots.length * 3);
   sigSpots.forEach((s, k) => { solid.push({ x: s.x, z: s.z, r: 0.2 }); const cx = s.i * P, cz = s.j * P, ax = s.axis === 'z' ? Math.sign(cx - s.x) : 0, az = s.axis === 'x' ? Math.sign(cz - s.z) : 0; dummy.position.set(s.x, 0.17, s.z); dummy.rotation.set(0, Math.atan2(-az, ax), 0); dummy.updateMatrix(); sigMesh.setMatrixAt(k, dummy.matrix); sigPos.set([s.x + ax * 6.6 + s.fx * 0.26, 5.89, s.z + az * 6.6 + s.fz * 0.26], k * 3); });
-  sigMesh.castShadow = SH;
+
   scene.add(sigMesh);
   const dot = canvasTex(64, 64, (c) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
   const sigGeo = new THREE.BufferGeometry(); sigGeo.setAttribute('position', new THREE.BufferAttribute(sigPos, 3)); sigGeo.setAttribute('color', new THREE.BufferAttribute(sigCol, 3));
@@ -589,6 +615,13 @@ export async function buildCity(scene, refl, quality, renderer) {
   decals.forEach(([x, y, z, s, hex, k2], k) => { dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(s, 1, s); dummy.updateMatrix(); decalMesh.setMatrixAt(k, dummy.matrix); col.set(hex).multiplyScalar(k2); decalMesh.setColorAt(k, col); });
   decalMesh.frustumCulled = false; decalMesh.renderOrder = 2; hooks.push(e => { decalMesh.visible = e.night > 0.03; decalMesh.material.opacity = e.night; }); scene.add(decalMesh);
 
+  // District chunks: frustum culling comes free, and distant street-level detail is switched off.
+  const far = city.chunks = [];
+  for (const [mesh, dist] of [[bm, Infinity], [trimMesh, 430], [lampMesh, 430], [sigMesh, 380], [signMesh, 650], [adMesh, 900], [glowMesh, 760], [decalMesh, 330]]) splitChunks(mesh, dist, far);
+  let cullTick = 0;
+  const reach = quality.reach || 1; // lighter presets draw street detail less far
+  city.cull = (p, force) => { if ((cullTick++ & 7) && !force) return; for (const c of far) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) < c.max * reach + c.r;
+    for (const k of kitLod) { const close = Math.hypot(k.x - p.x, k.z - p.z) < 330 * reach + k.r; k.near.visible = close; k.far.visible = !close; } };
   city.update = (t) => { updateSignals(t); city.sea.normal.offset.set(t * 0.004, t * 0.0026); city.sea.foam.position.x = city.beachX - 79 + Math.sin(t * 0.5) * 1.6; city.sea.foam.material.opacity = 0.35 + 0.2 * Math.sin(t * 0.5 + 1.0); beaconPts.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.4)); };
   city.dot = dot; city.pool = pool; city.stats = { kit: kit.reduce((n, k) => n + k.uses.length, 0), trim: trim.length, buildings: boxes.length, signs: signs.length, lamps: lampSpots.length, screens: screens.length };
   return city;

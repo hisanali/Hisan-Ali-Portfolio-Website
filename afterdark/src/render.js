@@ -9,10 +9,10 @@ import { ShaderPass } from '/evermile/vendor/postprocessing/ShaderPass.js';
 export { THREE };
 
 const PRESETS = {
-  ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 50, lights: 8, people: 12 },
-  high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 40, lights: 6, people: 8 },
-  medium: { dpr: 1.3, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 28, lights: 5, people: 4 },
-  low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 18, lights: 4, people: 0 }
+  ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 50, lights: 8, people: 12, reach: 1.25 },
+  high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 40, lights: 6, people: 8, reach: 1 },
+  medium: { dpr: 1.3, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 28, lights: 5, people: 4, reach: 0.7 },
+  low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 18, lights: 4, people: 0, reach: 0.5 }
 };
 export const QUALITY = (() => {
   try { const q = new URLSearchParams(location.search).get('gfx') || localStorage.getItem('afterdark:gfx'); if (PRESETS[q]) return q; } catch (e) {}
@@ -51,7 +51,7 @@ export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Q.dpr));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = QUALITY !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = QUALITY !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; renderer.info.autoReset = false;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(58, 1, 0.25, 1600);
   const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: Q.msaa });
@@ -106,10 +106,12 @@ export function createRenderer(canvas) {
     if (refl.on) { const pr = renderer.getPixelRatio() * Q.refl; refl.target.setSize(Math.max(2, Math.round(w * pr)), Math.max(2, Math.round(h * pr))); }
   }
   window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250)); window.visualViewport?.addEventListener('resize', resize); resize();
-  const t0 = performance.now();
+  const t0 = performance.now(), stats = { calls: 0, tris: 0 }; let frameNo = 0;
   function render(pos) {
     const t = (performance.now() - t0) * 0.001; film.uniforms.uTime.value = t % 100; refl.uniforms.uTime.value = t;
+    renderer.info.reset(); frameNo++; renderer.shadowMap.needsUpdate = QUALITY === 'ultra' || QUALITY === 'high' || frameNo % 2 === 0;
     updateCube(pos); renderReflection(); composer.render();
+    stats.calls = renderer.info.render.calls; stats.tris = renderer.info.render.triangles;
   }
-  return { renderer, scene, camera, composer, bloom, film, refl, cube, render, resize, primeCube, setScale };
+  return { renderer, scene, camera, composer, bloom, film, refl, cube, render, resize, primeCube, setScale, stats, getScale: () => scale };
 }

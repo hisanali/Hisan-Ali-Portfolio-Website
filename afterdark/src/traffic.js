@@ -8,7 +8,7 @@ const STYLES = ['sedan', 'hatch', 'suv', 'wagon', 'van', 'pickup'];
 const TINTS = [0xdadde2, 0x15171b, 0x8c9198, 0x2a3140, 0x7a1418, 0x1f3d6b, 0xb9b3a4, 0x3c4a3f, 0xc8a24a, 0x505560];
 const dummy = new THREE.Object3D(), mat = new THREE.Matrix4(), col = new THREE.Color(), clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
-export async function createTraffic(scene, city, count, seed = 7) {
+export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const R = rng(seed), kits = [];
   for (const style of STYLES) {
     const g = await loadGLB(`/evermile/assets/models/road-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
@@ -40,21 +40,17 @@ export async function createTraffic(scene, city, count, seed = 7) {
   cars.forEach(place);
 
   // ---- Instanced meshes: moving cars take the first slots, nearby parked cars fill the rest ----
-  const PARK_MAX = 26;
+  const PARK_MAX = 12, DRAW_R = 270 * Math.max(0.6, reach); // cars further than this from the player are simulated but not drawn
   const groups = kits.map((kit, ki) => { const nM = cars.filter(c => c.kit === ki).length;
-    return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = nM; im.castShadow = true; im.receiveShadow = true; scene.add(im); return im; }); });
+    return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = 0; im.castShadow = true; im.receiveShadow = true; scene.add(im); return im; }); });
   kits.forEach((kit, ki) => { let m = 0; for (const c of cars) { if (c.kit !== ki) continue; c.slot = m++; }
     for (const im of groups[ki]) if (im.userData.part.paint) { for (let k = 0; k < im.instanceMatrix.count; k++) im.setColorAt(k, col.set(0xffffff)); for (const c of cars) if (c.kit === ki) im.setColorAt(c.slot, col.set(c.tint)); im.instanceColor.needsUpdate = true; } });
   const byKit = kits.map((_, ki) => parked.filter(p => p.kit === ki)); let parkTick = 0; const nearParked = [];
+  const parkedNear = []; let movingShown = 0;
   function refreshParked(px, pz) {
     nearParked.length = 0;
-    kits.forEach((kit, ki) => { const near = []; for (const p of byKit[ki]) { const d = (p.x - px) ** 2 + (p.z - pz) ** 2; if (d < 190 * 190) near.push([d, p]); }
-      near.sort((a, b) => a[0] - b[0]); near.length = Math.min(near.length, PARK_MAX);
-      const g = groups[ki], nM = g[0].userData.nM;
-      near.forEach(([, p], k) => { nearParked.push(p); dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix();
-        for (const im of g) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(nM + k, mat); if (im.userData.part.paint) im.setColorAt(nM + k, col.set(p.tint)); } });
-      for (const im of g) { im.count = nM + near.length; if (im.instanceColor) im.instanceColor.needsUpdate = true; } });
-    nearParked.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); blobs.setMatrixAt(cars.length + k, dummy.matrix); }); blobs.count = cars.length + nearParked.length; blobs.instanceMatrix.needsUpdate = true;
+    kits.forEach((kit, ki) => { const near = []; for (const p of byKit[ki]) { const d = (p.x - px) ** 2 + (p.z - pz) ** 2; if (d < 150 * 150) near.push([d, p]); }
+      near.sort((a, b) => a[0] - b[0]); near.length = Math.min(near.length, PARK_MAX); parkedNear[ki] = near.map(n => n[1]); nearParked.push(...parkedNear[ki]); });
   }
 
   // ---- Lamps as glowing points, and the light they spill on the road ----
@@ -121,11 +117,18 @@ export async function createTraffic(scene, city, count, seed = 7) {
         if (u >= 1) { Object.assign(c, tr.next); c.mode = 0; c.turn = null; c.plan = null; place(c); } }
       c.push.multiplyScalar(Math.exp(-2.2 * dt));
     }
-    // Write instance transforms and lamp positions.
-    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + c.push.x, 0, c.z + c.push.y); dummy.rotation.set(0, c.h, 0); dummy.updateMatrix();
-      for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(c.slot, mat); }
-      pools.setMatrixAt(k, dummy.matrix); blobs.setMatrixAt(k, dummy.matrix);
-      [kit.head[0], kit.head[1], kit.tail[0], kit.tail[1]].forEach((lpos, q) => { v3.copy(lpos).applyMatrix4(dummy.matrix); lp.set([v3.x, v3.y, v3.z], k * 12 + q * 3); }); });
+    // Write instance transforms and lamp positions. Only cars near the focus are drawn; each body style packs its
+    // visible moving cars into the first slots, with the nearby parked cars after them.
+    const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
+    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + c.push.x, 0, c.z + c.push.y); dummy.rotation.set(0, c.h, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix();
+      const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
+      if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(slot, mat); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
+        pools.setMatrixAt(shown, dummy.matrix); blobs.setMatrixAt(shown, dummy.matrix);
+        [kit.head[0], kit.head[1], kit.tail[0], kit.tail[1]].forEach((lpos, q) => { v3.copy(lpos).applyMatrix4(dummy.matrix); lp.set([v3.x, v3.y, v3.z], shown * 12 + q * 3); }); shown++; } else c.shownSlot = -1; });
+    movingShown = shown; pools.count = shown; lg.setDrawRange(0, shown * 4);
+    kits.forEach((kit, ki) => { const g = groups[ki], list = parkedNear[ki] || []; list.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); for (const im of g) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(used[ki] + k, mat); if (im.userData.part.paint) im.setColorAt(used[ki] + k, col.set(p.tint)); } });
+      for (const im of g) { im.count = used[ki] + list.length; if (im.instanceColor) im.instanceColor.needsUpdate = true; } });
+    nearParked.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); blobs.setMatrixAt(shown + k, dummy.matrix); }); blobs.count = shown + nearParked.length;
     for (const g of groups) for (const im of g) im.instanceMatrix.needsUpdate = true;
     pools.instanceMatrix.needsUpdate = true; blobs.instanceMatrix.needsUpdate = true; lg.attributes.position.needsUpdate = true;
   }

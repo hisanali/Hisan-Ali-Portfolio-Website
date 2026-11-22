@@ -189,7 +189,7 @@ let hour = 17.2, env = null, envHour = -99, pmrem = null, envRT = null;
 const DAY_SECONDS = 720; // one full day and night
 function captureEnv() { // image-based lighting from the street itself, refreshed as the light changes
   const rv = rain.visible; rain.visible = false; const hid = street ? street.hide.map(o => [o, o.visible]) : []; hid.forEach(([o]) => { o.visible = false; });
-  city.sky.position.set(city.spawn.x, 0, city.spawn.z); pmrem ??= new THREE.PMREMGenerator(renderer);
+  city.sky.position.set(city.spawn.x, 0, city.spawn.z); pmrem ??= new THREE.PMREMGenerator(renderer); renderer.shadowMap.needsUpdate = true;
   const p = player ? player.pos : city.spawn, rt = pmrem.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(p.x, 3.2, p.z) });
   scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
 }
@@ -202,6 +202,19 @@ function stepTime(dt, running) {
   let dh = Math.abs(hour - envHour); dh = Math.min(dh, 24 - dh); if (dh > (env.day > 0.05 && env.day < 0.95 ? 0.3 : 0.9)) captureEnv();
 }
 addEventListener('keydown', e => { if (e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
+
+// ---------- Performance read-out (F) and a report you can copy ----------
+const perf = { on: store.get('fps', 'off') === 'on', t: 0, n: 0, worst: 0, fps: 0, low: 0, sum: 0, secs: 0, minFps: 999, el: $('#perf') };
+function perfText() { const r = renderer.getDrawingBufferSize(new THREE.Vector2());
+  return `Afterdark report\nFPS now ${perf.fps.toFixed(0)}, slowest frame ${perf.low.toFixed(0)} fps, session average ${(perf.secs ? perf.sum / perf.secs : 0).toFixed(0)}, session minimum ${perf.minFps === 999 ? '-' : perf.minFps.toFixed(0)}\nGraphics ${QUALITY}, auto level ${gov.level}, scale ${R.getScale().toFixed(2)}, canvas ${r.x}x${r.y}, screen ${innerWidth}x${innerHeight} @${devicePixelRatio}\nDraw calls ${R.stats.calls}, triangles ${(R.stats.tris / 1000).toFixed(0)}k, hour ${hour.toFixed(1)}, camera ${S.cam}\nPosition ${player.pos.x.toFixed(0)}, ${player.pos.z.toFixed(0)}, speed ${(Math.abs(player.speed) * 3.6).toFixed(0)} km/h\n${navigator.userAgent}`; }
+function stepPerf(rawDt, playing) { perf.t += rawDt; perf.n++; perf.worst = Math.max(perf.worst, rawDt); if (perf.t < 1) return;
+  perf.fps = perf.n / perf.t; perf.low = 1 / perf.worst; if (playing && rawDt < 0.3) { perf.sum += perf.fps; perf.secs++; if (S.clock > 6) perf.minFps = Math.min(perf.minFps, perf.fps); }
+  perf.t = 0; perf.n = 0; perf.worst = 0;
+  if (perf.on) perf.el.textContent = `${perf.fps.toFixed(0)} fps · low ${perf.low.toFixed(0)} · ${R.stats.calls} draws · ${(R.stats.tris / 1000).toFixed(0)}k tris · ${QUALITY}${gov.level ? ' L' + gov.level : ''}`; }
+function setPerf(on) { perf.on = on; store.set('fps', on ? 'on' : 'off'); perf.el.hidden = !on; $('#btn-fps').textContent = on ? 'Hide frame rate' : 'Show frame rate'; }
+$('#btn-fps').addEventListener('click', () => setPerf(!perf.on));
+$('#btn-report').addEventListener('click', async () => { const text = perfText(); try { await navigator.clipboard.writeText(text); $('#btn-report').textContent = 'Copied — paste it to me'; } catch (e) { $('#report-text').hidden = false; $('#report-text').value = text; $('#report-text').select(); } setTimeout(() => { $('#btn-report').textContent = 'Copy performance report'; }, 2500); });
+addEventListener('keydown', e => { if (e.key.toLowerCase() === 'f' && (S.mode === 'play' || S.mode === 'pause')) setPerf(!perf.on); });
 
 // ---------- Keeps the frame rate up: if the device struggles, step the cost down without a reload ----------
 const gov = { level: 0, t: 0, frames: 0, warm: 6 };
@@ -224,7 +237,7 @@ function frame() {
   requestAnimationFrame(frame);
   const rawDt = clock.getDelta(), dt = Math.min(0.05, rawDt); S.time += dt;
   if (S.mode === 'boot') return;
-  const playing = S.mode === 'play'; govern(rawDt, playing);
+  const playing = S.mode === 'play'; govern(rawDt, playing); stepPerf(rawDt, playing);
   if (S.mode !== 'pause') {
     stepTime(dt, playing || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos);
     traffic.update(dt, S.time, playing ? player : null, player.pos);
@@ -256,7 +269,7 @@ function frame() {
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
-  city.sky.position.copy(camera.position); city.updateSun(player.pos);
+  city.sky.position.copy(camera.position); city.updateSun(player.pos); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
   if (audio) { const ev = audio.update(dt, { playing, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
@@ -280,12 +293,13 @@ async function boot() {
   player = await createPlayer(scene, R.cube.texture, city); R.cube.hide.push(player.root);
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
-  traffic = await createTraffic(scene, city, Q.traffic);
+  traffic = await createTraffic(scene, city, Q.traffic, Q.reach);
   traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
+  setPerf(perf.on); city.cull(player.pos, true);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
   window.__afterdark = { S, player, traffic, city, street, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
-  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov;
+  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
   window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });

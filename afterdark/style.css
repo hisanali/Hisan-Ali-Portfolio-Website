@@ -95,3 +95,7 @@ body[data-mode=play] .credit,body.is-touch .credit{display:none}
 
 .top-actions #btn-cam{width:auto;padding:0 14px 0 12px}
 #scene.dragging{cursor:grabbing}body[data-mode=play] #scene{cursor:grab}
+
+#perf{position:fixed;z-index:26;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);padding:4px 10px;border-radius:8px;background:rgba(0,0,0,.55);font:600 11px/1.4 ui-monospace,Menlo,monospace;color:#9fffe6;pointer-events:none;white-space:nowrap}
+#report-text{width:100%;border-radius:10px;background:#0b0c12;color:#cfd4e3;border:1px solid rgba(255,255,255,.15);font:11px/1.4 ui-monospace,Menlo,monospace;padding:8px;user-select:text;-webkit-user-select:text}
+.card.small{gap:10px}
