@@ -9,10 +9,10 @@ import { ShaderPass } from '/evermile/vendor/postprocessing/ShaderPass.js';
 export { THREE };
 
 const PRESETS = {
-  ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 34, lights: 8 },
-  high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 28, lights: 6 },
-  medium: { dpr: 1.25, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 20, lights: 5 },
-  low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 14, lights: 4 }
+  ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 34, lights: 8, people: 12 },
+  high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 28, lights: 6, people: 8 },
+  medium: { dpr: 1.25, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 20, lights: 5, people: 4 },
+  low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 14, lights: 4, people: 0 }
 };
 export const QUALITY = (() => {
   try { const q = new URLSearchParams(location.search).get('gfx') || localStorage.getItem('afterdark:gfx'); if (PRESETS[q]) return q; } catch (e) {}

@@ -92,7 +92,7 @@ export async function createPlayer(scene, envTexture, city) {
     }
     p.x = clamp(p.x, -DRIVE, SPAN + DRIVE); p.z = clamp(p.z, -DRIVE, SPAN + DRIVE);
     if (hit > 0) car.vel.multiplyScalar(hit > 5 ? 0.72 : 0.97);
-    const kerb = Math.min(Math.abs(dx), Math.abs(dz)) > HALF; if (kerb !== car.onKerb) { car.onKerb = kerb; car.bump = Math.min(1, Math.abs(vF) * 0.06); }
+    const kerb = false; if (kerb !== car.onKerb) { car.onKerb = kerb; car.bump = Math.min(1, Math.abs(vF) * 0.06); }
     fwd.set(Math.sin(car.heading), 0, Math.cos(car.heading)); left.set(fwd.z, 0, -fwd.x);
     car.speed = car.vel.dot(fwd); car.slip = Math.abs(car.vel.dot(left)); car.braking = ctrl.brake > 0 || ctrl.hand;
     car.sync(dt); return hit;

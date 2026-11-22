@@ -3,6 +3,7 @@ import { THREE, createRenderer, Q, QUALITY } from './render.js';
 import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
+import { buildStreet } from './street.js';
 
 const $ = s => document.querySelector(s), clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
 const store = { get: (k, d) => { try { return localStorage.getItem('afterdark:' + k) ?? d; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem('afterdark:' + k, v); } catch (e) {} } };
@@ -12,7 +13,7 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const R = createRenderer($('#scene')), { scene, camera, renderer } = R;
 const S = { mode: 'boot', kind: store.get('kind', 'run'), time: 0, clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, cam: 0, sound: store.get('sound', 'on') === 'on', flash: 0 };
 const input = { left: 0, right: 0, up: 0, down: 0, hand: 0 };
-let city, player, traffic, audio = null, actx = null, rainGain = null;
+let city, street, player, traffic, audio = null, actx = null, rainGain = null;
 
 // ---------- Rain and tyre spray ----------
 const RAIN = Q.rain, RR = 34, rainPos = new Float32Array(RAIN * 6), rainGeo = new THREE.BufferGeometry();
@@ -160,7 +161,7 @@ function frame() {
   if (S.mode === 'boot') return;
   const playing = S.mode === 'play';
   if (S.mode !== 'pause') {
-    city.update(S.time);
+    city.update(S.time); street.update(dt, S.time, player.pos);
     traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (playing || S.mode === 'over') {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up || (coarse && !input.down && !input.hand) ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
@@ -196,6 +197,8 @@ async function boot() {
   setLoad('Raising the skyline'); await nextFrame();
   city = buildCity(scene, R.refl, Q);
   spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ size: 1.5, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 })); spray.frustumCulled = false; scene.add(spray); R.refl.hide.push(spray);
+  setLoad('Planting the avenues'); await nextFrame();
+  street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
   { rain.visible = false; const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromScene(scene, 0.012, 0.5, 900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(city.spawn.x, 3.2, city.spawn.z) }); scene.environment = env.texture; scene.environmentIntensity = 0.6; pm.dispose(); rain.visible = true; }
@@ -206,7 +209,8 @@ async function boot() {
   traffic = await createTraffic(scene, city, Q.traffic);
   traffic.update(0.016, 0, null, player.pos);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
-  window.__afterdark = { S, player, traffic, city, R, start, input };
+  window.__afterdark = { S, player, traffic, city, street, R, start, input };
+  street.loadPeople().catch(e => console.warn('people', e));
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });
 frame();
