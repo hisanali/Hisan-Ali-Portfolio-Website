@@ -83,3 +83,5 @@ body[data-mode=play] .credit,body.is-touch .credit{display:none}
 @media (max-width:640px){#map{width:118px;height:118px}.speed b{font-size:52px}.hud-top{gap:16px}.hud-top b{font-size:20px}.field{grid-template-columns:1fr}.note{margin-left:0}.panel{padding-top:66px;background:rgba(5,5,10,.62)}.back span{display:none}}
 @media (max-height:520px){.lede,.keys{display:none}h1{font-size:44px}.card{gap:9px}}
 @media (prefers-reduced-motion:reduce){.ld-bar i,#hud-timebox.low b{animation:none}}
+/* The site cookie notice sits bottom-left: let clicks through its empty areas so it never blocks the menu. */
+.journey-privacy{pointer-events:none}.journey-privacy>*{pointer-events:auto}
