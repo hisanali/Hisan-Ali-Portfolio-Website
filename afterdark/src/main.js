@@ -30,11 +30,14 @@ function stepRain(dt, cx, cz, vx, vz) {
     rainPos[o] = x; rainPos[o + 1] = y; rainPos[o + 2] = z; rainPos[o + 3] = x - 0.1 - vx * 0.012; rainPos[o + 4] = y - 0.95; rainPos[o + 5] = z - vz * 0.012; }
   rainGeo.attributes.position.needsUpdate = true;
 }
-const SPRAY = 260, sp = { pos: new Float32Array(SPRAY * 3), vel: new Float32Array(SPRAY * 3), life: new Float32Array(SPRAY), col: new Float32Array(SPRAY * 3), n: 0 };
-const sprayGeo = new THREE.BufferGeometry(); sprayGeo.setAttribute('position', new THREE.BufferAttribute(sp.pos, 3)); sprayGeo.setAttribute('color', new THREE.BufferAttribute(sp.col, 3));
-let spray = null;
-function puff(x, y, z, vx, vy, vz, life, r, g, b) { const i = sp.n++ % SPRAY; sp.pos.set([x, y, z], i * 3); sp.vel.set([vx, vy, vz], i * 3); sp.life[i] = life; sp.col.set([r, g, b], i * 3); }
-function stepSpray(dt) { for (let i = 0; i < SPRAY; i++) { if (sp.life[i] <= 0) { sp.pos[i * 3 + 1] = -50; continue; } sp.life[i] -= dt; const o = i * 3; sp.vel[o + 1] -= 3 * dt; sp.pos[o] += sp.vel[o] * dt; sp.pos[o + 1] += sp.vel[o + 1] * dt; sp.pos[o + 2] += sp.vel[o + 2] * dt; const f = Math.exp(-2.6 * dt); sp.col[o] *= f; sp.col[o + 1] *= f; sp.col[o + 2] *= f; } sprayGeo.attributes.position.needsUpdate = true; sprayGeo.attributes.color.needsUpdate = true; }
+// Two particle sets: small bright points with gravity (water thrown up by the tyres, sparks from a hit)
+// and soft grey puffs (tyre smoke on a dry slide, dust).
+function particles(n, size, additive, grav, drag) { const o = { n, i: 0, grav, drag, pos: new Float32Array(n * 3), vel: new Float32Array(n * 3), life: new Float32Array(n), col: new Float32Array(n * 3), geo: new THREE.BufferGeometry(), size, additive, pts: null };
+  o.pos.fill(-50); o.geo.setAttribute('position', new THREE.BufferAttribute(o.pos, 3)); o.geo.setAttribute('color', new THREE.BufferAttribute(o.col, 3)); return o; }
+const drops = particles(1800, 0.075, true, 13, 0.6), haze = particles(160, 2.2, false, -0.6, 1.8);
+function emit(o, x, y, z, vx, vy, vz, life, r, g, b) { const i = o.i++ % o.n, k = i * 3; o.pos[k] = x; o.pos[k + 1] = y; o.pos[k + 2] = z; o.vel[k] = vx; o.vel[k + 1] = vy; o.vel[k + 2] = vz; o.life[i] = life; o.col[k] = r; o.col[k + 1] = g; o.col[k + 2] = b; }
+function stepParticles(o, dt) { const f = Math.exp(-o.drag * dt), fade = Math.exp(-(o.additive ? 2.2 : 1.6) * dt); for (let i = 0; i < o.n; i++) { const k = i * 3; if (o.life[i] <= 0) { o.pos[k + 1] = -50; continue; } o.life[i] -= dt; o.vel[k + 1] -= o.grav * dt; o.vel[k] *= f; o.vel[k + 2] *= f; o.pos[k] += o.vel[k] * dt; o.pos[k + 1] += o.vel[k + 1] * dt; o.pos[k + 2] += o.vel[k + 2] * dt; if (o.additive && o.pos[k + 1] < 0.02) o.life[i] = 0; o.col[k] *= fade; o.col[k + 1] *= fade; o.col[k + 2] *= fade; }
+  o.geo.attributes.position.needsUpdate = true; o.geo.attributes.color.needsUpdate = true; }
 
 // ---------- Objective beacon ----------
 const beacon = new THREE.Group(); beacon.visible = false; scene.add(beacon);
@@ -157,10 +160,10 @@ function nextCam() { audio?.camera(); S.cam = (S.cam + 1) % CAMS.length; view.ya
   const end = e => { if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   cv.addEventListener('wheel', e => { if (S.mode !== 'play') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
-const CAMW = HALF + 3.1;
+const CAMW = HALF + 3.4;
 function keepInStreet(v) { const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
-  if (ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
-  v.x = clamp(v.x, -CAMW, SPAN + CAMW); v.z = clamp(v.z, -CAMW, SPAN + CAMW); if (Math.abs(v.x - city.viaduct) < 12 && v.y > 8) v.y = 8; return v; }
+  if (v.x >= 0 && ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
+  v.x = clamp(v.x, -(HALF + 95), SPAN + CAMW); v.z = clamp(v.z, -CAMW, SPAN + CAMW); if (Math.abs(v.x - city.viaduct) < 12 && v.y > 8) v.y = 8; return v; }
 let camYaw = 0, snapCam = true; const camPos = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
 function chase(dt, snap) {
   const h = player.heading, sp = Math.abs(player.speed), inside = S.cam === 2 || S.cam === 3;
@@ -168,14 +171,14 @@ function chase(dt, snap) {
   if (!view.drag) { view.idle += dt; if (view.idle > 2.2 && sp > 2) { const k = Math.exp(-2.6 * dt); view.yaw *= k; view.pitch *= k; } }
   let dy = h - camYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); camYaw += dy * Math.min(1, dt * (inside ? 30 : 4.2)); if (snap) camYaw = h;
   if (inside) { const lx = S.cam === 3 ? 0.36 : 0, ly = S.cam === 3 ? 1.06 : 1.1, lz = S.cam === 3 ? -0.32 : 0.45, sn = Math.sin(h), cs = Math.cos(h);
-    camPos.set(player.pos.x + sn * lz + cs * lx, ly, player.pos.z + cs * lz - sn * lx); const a = h + view.yaw, cp = Math.cos(view.pitch * 0.7);
+    camPos.set(player.pos.x + sn * lz + cs * lx, ly + player.groundY, player.pos.z + cs * lz - sn * lx); const a = h + view.yaw, cp = Math.cos(view.pitch * 0.7);
     look.set(camPos.x + Math.sin(a) * cp * 30, camPos.y - 0.6 + Math.sin(view.pitch * 0.7) * -30 * 0 - view.pitch * 12, camPos.z + Math.cos(a) * cp * 30); }
   else { const base = S.cam === 1 ? [10.5, 3.3, 0] : S.cam === 4 ? [4.3, 0.55, 0.62] : [6.3, 1.75, 0], dist = (base[0] + sp * 0.028) * view.zoom, a = camYaw + base[2] + view.yaw, pc = Math.cos(view.pitch), ps = Math.sin(view.pitch);
     want.set(player.pos.x - Math.sin(a) * dist * pc, Math.max(0.35, base[1] + sp * 0.006 + dist * ps), player.pos.z - Math.cos(a) * dist * pc);
     keepInStreet(want); if (snap || view.drag) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt)); keepInStreet(camPos);
-    const ahead = S.cam === 4 ? 1.2 : 4.5 * Math.max(0, 1 - Math.abs(view.yaw) * 0.8); look.set(player.pos.x + Math.sin(h) * ahead, 0.95, player.pos.z + Math.cos(h) * ahead); }
+    const ahead = S.cam === 4 ? 1.2 : 4.5 * Math.max(0, 1 - Math.abs(view.yaw) * 0.8); look.set(player.pos.x + Math.sin(h) * ahead, 0.95 + player.groundY, player.pos.z + Math.cos(h) * ahead); }
   const sh = S.shake; S.shake = Math.max(0, sh - dt * 2.4);
-  camera.position.set(camPos.x + (Math.random() - 0.5) * sh * 0.5, Math.max(0.3, camPos.y + (Math.random() - 0.5) * sh * 0.35), camPos.z + (Math.random() - 0.5) * sh * 0.5);
+  camera.position.set(camPos.x + (Math.random() - 0.5) * sh * 0.5, Math.max(0.3 + player.groundY, camPos.y + (Math.random() - 0.5) * sh * 0.35), camPos.z + (Math.random() - 0.5) * sh * 0.5);
   camera.lookAt(look); const near = inside ? 0.08 : 0.25; if (camera.near !== near) camera.near = near;
   camera.fov = lerp(camera.fov, (S.cam === 3 ? 66 : 56) + clamp(sp * 0.24, 0, 20), Math.min(1, dt * 4)); camera.updateProjectionMatrix();
 }
@@ -227,10 +230,13 @@ function frame() {
     traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (playing || S.mode === 'over') {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
+      player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
       crashCool -= dt;
-      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.4, hit * 0.09); S.hits++; S.combo = 0; S.flash = Math.min(0.5, hit * 0.02); S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
-        for (let k = 0; k < 26; k++) puff(player.pos.x + (Math.random() - 0.5) * 2, 0.5 + Math.random(), player.pos.z + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 12, Math.random() * 7, (Math.random() - 0.5) * 12, 0.7, 3, 1.6, 0.5); }
+      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
+        const hx = player.pos.x + Math.sin(player.heading) * 1.9, hz = player.pos.z + Math.cos(player.heading) * 1.9, ns = Math.round(clamp(hit * 1.2, 6, 26));
+        for (let k = 0; k < ns; k++) emit(drops, hx + (Math.random() - 0.5), 0.35 + Math.random() * 0.5, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
+        for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
       if (live) {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
@@ -239,12 +245,14 @@ function frame() {
         if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
         drawHud();
       }
-      // Wet-road spray from the rear tyres, thicker when sliding.
-      const sp2 = Math.abs(player.speed); if (sp2 > 7 && (env.wet > 0.5 || player.slip > 3)) { const n = sp2 > 30 || player.slip > 3 ? 3 : 1, h = player.heading; for (let k = 0; k < n; k++) { const side = Math.random() < 0.5 ? -0.8 : 0.8; const g = player.slip > 3 ? 1.1 : 0.42;
-        puff(player.pos.x - Math.sin(h) * 1.7 + Math.cos(h) * side, 0.15, player.pos.z - Math.cos(h) * 1.7 - Math.sin(h) * side, -player.vel.x * 0.12 + (Math.random() - 0.5) * 2, 1 + Math.random() * 1.6 + sp2 * 0.03, -player.vel.z * 0.12 + (Math.random() - 0.5) * 2, 0.75, g, g * 1.05, g * 1.2); } }
+      // Water thrown up by the tyres on a wet road: droplets fanning out behind each wheel. On a dry road a slide lays smoke.
+      { const sp2 = Math.abs(player.speed), h = player.heading, sn = Math.sin(h), cs = Math.cos(h), gy = player.groundY;
+        if (env.wet > 0.45 && sp2 > 5 && !player.onSand) { const n = Math.min(26, Math.round(sp2 * 0.42 * env.wet + player.slip * 2)); for (let k = 0; k < n; k++) { const side = (k & 1 ? -0.82 : 0.82), back = k % 4 < 3 ? -1.45 : 1.25, b = 0.5 + Math.random() * 0.5;
+            emit(drops, player.pos.x + sn * back + cs * side, gy + 0.08, player.pos.z + cs * back - sn * side, player.vel.x * (0.25 + Math.random() * 0.3) + cs * side * (1 + Math.random() * 2.5), 0.8 + Math.random() * (1.2 + sp2 * 0.09), player.vel.z * (0.25 + Math.random() * 0.3) - sn * side * (1 + Math.random() * 2.5), 0.35 + Math.random() * 0.3, 1.1 * b, 1.25 * b, 1.5 * b); } }
+        else if ((player.slip > 4.5 && sp2 > 8) || (player.onSand && sp2 > 6)) { const sand = player.onSand, g = sand ? 0.34 : 0.3; for (const side of [-0.82, 0.82]) if (Math.random() < 0.6) emit(haze, player.pos.x - sn * 1.5 + cs * side, gy + 0.2, player.pos.z - cs * 1.5 - sn * side, (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2, g * (sand ? 1.25 : 1), g * (sand ? 1.05 : 1), g * (sand ? 0.75 : 1.02)); } }
       chase(dt, snapCam); snapCam = false;
     } else orbit(S.time);
-    stepSpray(dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
+    stepParticles(drops, dt); stepParticles(haze, dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
@@ -259,7 +267,10 @@ function frame() {
 async function boot() {
   setLoad('Raising the skyline'); await nextFrame();
   city = await buildCity(scene, R.refl, Q, renderer);
-  spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ size: 1.5, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 })); spray.frustumCulled = false; scene.add(spray); R.refl.hide.push(spray);
+  { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
+    drops.pts = new THREE.Points(drops.geo, new THREE.PointsMaterial({ size: drops.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
+    haze.pts = new THREE.Points(haze.geo, new THREE.PointsMaterial({ size: haze.size, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.35 }));
+    for (const o of [drops, haze]) { o.pts.frustumCulled = false; scene.add(o.pts); R.refl.hide.push(o.pts); R.cube.hide.push(o.pts); } }
   setLoad('Planting the avenues'); await nextFrame();
   street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();

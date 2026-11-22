@@ -39,13 +39,13 @@ export function buildStreet(scene, city, R3, Q) {
     const pts = []; for (let i = 0; i <= 8; i++) { const u = i / 8; pts.push(new THREE.Vector3(u * u * 0.9, u * 9.0, 0)); }
     const trunkPG = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.2, 7, false); const tp = trunkPG.attributes.position; for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = 1.25 - y / 9 * 0.55 + 0.06 * Math.sin(y * 9); const cx = (y / 9) ** 2 * 0.9; tp.setX(i, cx + (tp.getX(i) - cx) * k); tp.setZ(i, tp.getZ(i) * k); } trunkPG.computeVertexNormals();
     const pf = new THREE.InstancedMesh(frondG, new THREE.MeshStandardMaterial({ map: fr, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.55, envMapIntensity: 0.6 }), palmSpots.length), pt = new THREE.InstancedMesh(trunkPG, new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.85 }), palmSpots.length);
-    palmSpots.forEach((t2, k) => { dummy.position.set(t2.x, 0.17, t2.z); dummy.rotation.set(0, t2.rot, 0); dummy.scale.set(t2.sc, t2.sc * (0.85 + (k % 5) * 0.07), t2.sc); dummy.updateMatrix(); pf.setMatrixAt(k, dummy.matrix); pt.setMatrixAt(k, dummy.matrix); });
+    palmSpots.forEach((t2, k) => { city.colliders.push({ x: t2.x, z: t2.z, r: 0.3 }); dummy.position.set(t2.x, 0.17, t2.z); dummy.rotation.set(0, t2.rot, 0); dummy.scale.set(t2.sc, t2.sc * (0.85 + (k % 5) * 0.07), t2.sc); dummy.updateMatrix(); pf.setMatrixAt(k, dummy.matrix); pt.setMatrixAt(k, dummy.matrix); });
     for (const m of [pf, pt]) { m.frustumCulled = false; m.castShadow = SH; m.receiveShadow = SH; scene.add(m); } }
   dummy.scale.set(1, 1, 1);
   const crownM = new THREE.MeshStandardMaterial({ map: leaf, color: 0xffffff, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, metalness: 0, envMapIntensity: 0.45 });
   const crowns = new THREE.InstancedMesh(crownG, crownM, spots.length), trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x1a1512, roughness: 0.8 }), spots.length);
   const fairy = [], grates = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.03, 1.5), new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: 0.5, metalness: 0.7 }), spots.length);
-  spots.forEach((t, k) => { dummy.position.set(t.x, 0.17, t.z); dummy.rotation.set(0, t.rot, 0); dummy.scale.set(t.sc, t.sc, t.sc); dummy.updateMatrix(); crowns.setMatrixAt(k, dummy.matrix); trunks.setMatrixAt(k, dummy.matrix);
+  spots.forEach((t, k) => { city.colliders.push({ x: t.x, z: t.z, r: 0.26 }); dummy.position.set(t.x, 0.17, t.z); dummy.rotation.set(0, t.rot, 0); dummy.scale.set(t.sc, t.sc, t.sc); dummy.updateMatrix(); crowns.setMatrixAt(k, dummy.matrix); trunks.setMatrixAt(k, dummy.matrix);
     crowns.setColorAt(k, col.setRGB(0.5 + R() * 0.28, 0.5 + R() * 0.22, 0.4 + R() * 0.2)); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1, 1); dummy.position.y = 0.18; dummy.updateMatrix(); grates.setMatrixAt(k, dummy.matrix);
     if (t.lit) for (let i = 0; i < 46; i++) { const a = R() * 6.28, rr = (0.6 + R() * 1.9) * t.sc, y = (4.2 + R() * 3.4) * t.sc; fairy.push(t.x + Math.cos(a) * rr, 0.17 + y, t.z + Math.sin(a) * rr); } });
   crowns.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leaf, alphaTest: 0.45 });
@@ -74,7 +74,7 @@ export function buildStreet(scene, city, R3, Q) {
     wheelLights = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); wheelLights.frustumCulled = false; wheel.add(wheelLights);
     wheel.position.set(wheelX, WY, wheelZ); scene.add(wheel);
     const legs = []; for (const e of [-2.6, 2.6]) for (const lz of [-13, 13]) { const len = Math.hypot(WY, lz), g2 = new THREE.CylinderGeometry(0.35, 0.5, len, 8); g2.translate(0, len / 2, 0); g2.rotateX(-Math.atan2(lz, WY)); g2.translate(e, 0, lz); legs.push(g2); }
-    const base = new THREE.BoxGeometry(9, 0.6, 32); base.translate(0, 0.2, 0); legs.push(base);
+    const base = new THREE.BoxGeometry(9, 0.3, 32); base.translate(0, -0.55, 0); legs.push(base); for (const e of [-2.6, 2.6]) for (const lz of [-13, 13]) city.colliders.push({ x: wheelX + e, z: wheelZ + lz, r: 0.8 });
     const legMesh = new THREE.Mesh(mergeGeometries(legs), new THREE.MeshStandardMaterial({ color: 0xc8ccd2, roughness: 0.45, metalness: 0.6 })); legMesh.position.set(wheelX, -0.2, wheelZ); legMesh.castShadow = SH; scene.add(legMesh); }
   const wc = new THREE.Color();
   function stepWheel(t) { const rot = t * 0.05; wheel.rotation.x = rot; wheel.userData.cabs.forEach((cab, k) => { const a = k / 16 * Math.PI * 2; cab.position.set(0, Math.cos(a) * WR, Math.sin(a) * WR - 0); cab.rotation.x = -rot; cab.position.y -= 0; });

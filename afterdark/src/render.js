@@ -23,7 +23,7 @@ export const Q = PRESETS[QUALITY];
 const VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
 // Removes NaN/Inf pixels and caps runaway highlights before bloom spreads them.
 const Clean = { uniforms: { tDiffuse: { value: null } }, vertexShader: VERT, fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
-  void main(){ vec4 c = texture2D(tDiffuse, vUv); if (!(c.r >= 0.0 && c.r < 1e20) || !(c.g >= 0.0 && c.g < 1e20) || !(c.b >= 0.0 && c.b < 1e20)) c.rgb = vec3(0.0); gl_FragColor = vec4(min(c.rgb, vec3(40.0)), 1.0); }` };
+  void main(){ vec4 c = texture2D(tDiffuse, vUv); if (!(c.r >= 0.0 && c.r < 1e20) || !(c.g >= 0.0 && c.g < 1e20) || !(c.b >= 0.0 && c.b < 1e20)) c.rgb = vec3(0.0); gl_FragColor = vec4(min(c.rgb, vec3(9.0)), 1.0); }` };
 // Lens and film: speed blur toward the vanishing point, chromatic fringing, vignette, grain and a cool/warm grade.
 const Film = {
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uSpeed: { value: 0 }, uCenter: { value: new THREE.Vector2(0.5, 0.5) }, uFlash: { value: 0 } },
@@ -34,7 +34,7 @@ const Film = {
     vec2 d = vUv - uCenter; float r2 = dot(d, d);
     float blur = uSpeed * smoothstep(0.02, 0.45, r2) * 0.06;
     vec3 col = vec3(0.0); float j = h(vUv * 913.0 + uTime) - 0.5;
-    for (int i = 0; i < 6; i++) { float t = (float(i) + j) / 6.0; vec2 uv = vUv - d * blur * t; float ca = (0.0015 + 0.004 * uSpeed) * r2 * 2.0;
+    for (int i = 0; i < 6; i++) { float t = (float(i) + j) / 6.0; vec2 uv = vUv - d * blur * t; float ca = (0.0006 + 0.002 * uSpeed) * r2 * 2.0;
       col += vec3(texture2D(tDiffuse, uv + d * ca).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - d * ca).b); }
     col /= 6.0;
     float l = dot(col, vec3(0.2126, 0.7152, 0.0722));

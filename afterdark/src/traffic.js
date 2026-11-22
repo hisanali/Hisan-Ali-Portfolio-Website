@@ -30,8 +30,9 @@ export async function createTraffic(scene, city, count, seed = 7) {
       parked.push({ x: ax ? lat + j : s, z: ax ? s : lat + j, h: ax ? (side < 0 ? 0 : Math.PI) : (side > 0 ? Math.PI / 2 : -Math.PI / 2), kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)] }); } }
   // ---- Moving cars ----
   const cars = [];
-  for (let k = 0; k < count; k++) { const ax = R() < 0.5 ? 0 : 1, dir = R() < 0.5 ? 1 : -1, road = Math.floor(R() * ROADS), seg = Math.floor(R() * (ROADS - 1));
-    cars.push({ ax, dir, road, lane: R() < 0.5 ? 0 : 1, s: seg * P + 22 + R() * (P - 44), v: 8, vmax: 10.5 + R() * 5.5, kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false }); }
+  for (let k = 0, tries = 0; k < count && tries < count * 40; tries++) { const ax = R() < 0.5 ? 0 : 1, dir = R() < 0.5 ? 1 : -1, road = Math.floor(R() * ROADS), seg = Math.floor(R() * (ROADS - 1)), lane = R() < 0.5 ? 0 : 1, s = seg * P + 24 + R() * (P - 48);
+    if (cars.some(o => o.ax === ax && o.dir === dir && o.road === road && o.lane === lane && Math.abs(o.s - s) < 16)) continue;
+    cars.push({ id: k, ax, dir, road, lane, s, v: 8, vmax: 10.5 + R() * 5.5, kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false, wait: 0, go: 0 }); k++; }
   const laneOff = c => 1.9 + c.lane * 3.6;
   const headingOf = (ax, dir) => ax ? (dir > 0 ? 0 : Math.PI) : (dir > 0 ? Math.PI / 2 : -Math.PI / 2);
   const posOf = (ax, dir, road, off, s, out) => { if (ax) { out.x = road * P - dir * off; out.z = s; } else { out.x = s; out.z = road * P + dir * off; } return out; };
@@ -75,7 +76,7 @@ export async function createTraffic(scene, city, count, seed = 7) {
     const rDir = c.ax ? -c.dir : c.dir, lDir = c.ax ? c.dir : -c.dir;
     const ok = d => c.road + d >= 0 && c.road + d <= ROADS - 1;
     let kind = 's'; const r = R();
-    if (c.lane === 1 && ok(rDir) && (r < 0.34 || !straight)) kind = 'r'; else if (c.lane === 0 && ok(lDir) && (r < 0.1 || !straight)) kind = 'l';
+    if (c.lane === 1 && ok(rDir) && (r < 0.34 || !straight)) kind = 'r'; else if (c.lane === 0 && ok(lDir) && !straight) kind = 'l';
     else if (!straight) kind = ok(rDir) ? 'r' : 'l';
     return { k, kind, dir: kind === 'r' ? rDir : lDir };
   }
@@ -86,11 +87,18 @@ export async function createTraffic(scene, city, count, seed = 7) {
       if (c.stun > 0) { c.stun -= dt; target = 0; }
       // Anything ahead in my path?
       const look = 7 + c.v * 1.3;
-      const test = (ox, oz, half) => { const rx = ox - c.x, rz = oz - c.z, ahead = rx * fx + rz * fz, side = Math.abs(rx * fz - rz * fx); if (ahead > 0.5 && ahead < look + half && side < 1.75) target = Math.min(target, Math.max(0, (ahead - half - 4.2) * 1.1)); };
-      for (const o of cars) if (o !== c && Math.abs(o.x - c.x) + Math.abs(o.z - c.z) < 40) test(o.x, o.z, 2.2);
-      if (player) test(player.pos.x, player.pos.z, 2.3);
+      let blocker = null;
+      const test = (ox, oz, half, o) => { const rx = ox - c.x, rz = oz - c.z, ahead = rx * fx + rz * fz, side = Math.abs(rx * fz - rz * fx); if (ahead > -0.5 && ahead < look + half && side < 1.9) {
+          if (o && ahead < 1.2 && o.id > c.id) return; // nose to nose or overlapping: the lower number moves off first
+          if (o && c.go > 0 && Math.abs(Math.sin(o.h - c.h)) > 0.5) return; // breaking a junction stand-off
+          const tg = Math.max(0, (ahead - half - 4.4) * 1.1); if (tg < target) { target = tg; blocker = o || null; } } };
+      for (const o of cars) if (o !== c && Math.abs(o.x - c.x) + Math.abs(o.z - c.z) < 40) test(o.x, o.z, 2.2, o);
+      if (player) test(player.pos.x, player.pos.z, 2.3, null);
+      // Two cars waiting on each other at a junction: after a few seconds the lower number goes.
+      if (c.go > 0) c.go -= dt; if (target === 0 && c.v < 0.1 && blocker && blocker.v < 0.1) { c.wait += dt; if (c.wait > 3.5 && blocker.id > c.id) { c.go = 2.5; c.wait = 0; } } else c.wait = 0;
+      if (c.mode === 1) target = Math.min(target, 6.2);
       if (c.mode === 0) {
-        const k = c.dir > 0 ? Math.ceil((c.s + HALF) / P - 1e-6) : Math.floor((c.s - HALF) / P + 1e-6);
+        const k = c.dir > 0 ? Math.ceil((c.s + HALF - 1.2) / P) : Math.floor((c.s - HALF + 1.2) / P); // the junction ahead, held until just past its entry line
         if (k >= 0 && k <= ROADS - 1) {
           if (!c.plan || c.plan.k !== k) c.plan = planFor(c, k);
           const stop = k * P - c.dir * 17.6, dist = c.dir * (stop - c.s);
@@ -105,7 +113,7 @@ export async function createTraffic(scene, city, count, seed = 7) {
           }
         } else if (c.dir * (c.s - (c.dir > 0 ? SPAN : 0)) > 0) { c.dir = -c.dir; }
       }
-      c.v += clamp(target - c.v, -9 * dt, 2.6 * dt); if (c.v < 0.05 && target === 0) c.v = 0;
+      c.v += clamp(target - c.v, -(target === 0 && c.v > 6 ? 16 : 9) * dt, 2.6 * dt); if (c.v < 0.05 && target === 0) c.v = 0;
       if (c.mode === 0) { c.s += c.dir * c.v * dt; place(c); }
       else { const tr = c.turn; tr.u = Math.min(1, tr.u + Math.max(c.v, 1.2) * dt / tr.len); const u = tr.u, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), d = u * u;
         c.x = a * tr.p0.x + b * tr.p1.x + d * tr.p2.x; c.z = a * tr.p0.z + b * tr.p1.z + d * tr.p2.z;

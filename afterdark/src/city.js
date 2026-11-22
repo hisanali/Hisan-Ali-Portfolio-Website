@@ -5,7 +5,7 @@ import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
 import { loadGLB } from './car.js';
 
-export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1), DRIVE = HALF + 0.75;
+export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
 export function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const NEON = [0x19e3ff, 0xff2bd6, 0xffa329, 0x8a5cff, 0xff3048, 0x38ffb0, 0xfff1d0, 0x2f7bff];
 const dummy = new THREE.Object3D(), col = new THREE.Color(), mtmp = new THREE.Matrix4();
@@ -19,7 +19,7 @@ function canvasTex(w, h, draw, srgb = true) { const c = document.createElement('
 function roadMaterial(refl, repX, repY) {
   const L = new THREE.TextureLoader();
   const tex = (s, srgb) => { const t = L.load(`/evermile/assets/materials/asphalt_03_${s}_1k.jpg`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repX, repY); t.anisotropy = 16; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
-  const m = new THREE.MeshStandardMaterial({ map: tex('diff', true), normalMap: tex('nor_gl'), roughnessMap: tex('rough'), roughness: 1, metalness: 0, envMapIntensity: 0.3, normalScale: new THREE.Vector2(0.8, 0.8) });
+  const m = new THREE.MeshStandardMaterial({ map: tex('diff', true), normalMap: tex('nor_gl'), roughnessMap: tex('rough'), roughness: 1, metalness: 0, envMapIntensity: 0.3, normalScale: new THREE.Vector2(0.5, 0.5) });
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, refl.uniforms);
     sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
@@ -63,7 +63,8 @@ vec2 adMark(float lat, float sLat, float along, float run){
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
   roughnessFactor = mix(mix(clamp(roughnessFactor * 0.9 + 0.12, 0.5, 0.95), clamp(roughnessFactor * 0.52 + 0.08, 0.16, 0.6), uWet), 0.025, adPud);
   roughnessFactor = mix(roughnessFactor, 0.3, max(adMk.x, adMk.y) * (1.0 - adPud));
-  roughnessFactor = mix(mix(roughnessFactor, 0.7, adPatch), 0.3, adHole);`)
+  roughnessFactor = mix(mix(roughnessFactor, 0.7, adPatch), 0.3, adHole);
+  float adRR = roughnessFactor; roughnessFactor = max(roughnessFactor, 0.34);`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   normal = normalize(mix(normal, nonPerturbedNormal, adPud * 0.97));`)
       .replace('#include <opaque_fragment>', `
@@ -77,15 +78,15 @@ vec2 adMark(float lat, float sLat, float along, float run){
     float adRing = sin(46.0 * (adD - adT * 0.45)) * smoothstep(0.45 * adT + 0.04, 0.45 * adT, adD) * smoothstep(0.45 * adT - 0.14, 0.45 * adT, adD) * (1.0 - adT);
     vec2 adDis = (normal.xy - nonPerturbedNormal.xy) * 0.018 + (adCf / max(adD, 0.01)) * adRing * 0.006 * adPud;
     float adDist = length(vViewPosition);
-    float adBias = roughnessFactor * 9.5 + smoothstep(120.0, 500.0, adDist) * 1.5;
-    float adSpread = roughnessFactor * 0.11 + 0.0015;
+    float adBias = adRR * 9.5 + smoothstep(120.0, 500.0, adDist) * 1.5;
+    float adSpread = adRR * 0.11 + 0.0015;
     vec3 adCol = vec3(0.0);
     adCol += texture2D(uRefl, adUv + adDis, adBias).rgb * 0.32;
     adCol += texture2D(uRefl, adUv + adDis + vec2(0.0, adSpread), adBias).rgb * 0.2;
     adCol += texture2D(uRefl, adUv + adDis - vec2(0.0, adSpread), adBias).rgb * 0.2;
     adCol += texture2D(uRefl, adUv + adDis + vec2(0.0, adSpread * 2.2), adBias + 0.6).rgb * 0.14;
     adCol += texture2D(uRefl, adUv + adDis - vec2(0.0, adSpread * 2.2), adBias + 0.6).rgb * 0.14;
-    float adWet = mix(0.3, 1.0, adPud) * (1.0 - roughnessFactor * 0.7);
+    float adWet = mix(0.3, 1.0, adPud) * (1.0 - adRR * 0.7);
     outgoingLight += min(adCol, vec3(3.5)) * adF * adWet * uReflOn;
   }
 #include <opaque_fragment>`);
@@ -305,7 +306,7 @@ function adAtlas() {
 
 export async function buildCity(scene, refl, quality, renderer) {
   const R = rng(20261122), city = { lamps: [], signalsAt: [], update: () => {}, spawn: { x: P * 3 - 5.5, z: P * 3 + 40 } };
-  const SH = true, hooks = [];
+  const SH = true, hooks = [], solid = city.colliders = []; // upright things the car cannot pass through: { x, z, r }
   const ext = P * ROADS + P; // ground covers the outer ring of blocks too
 
   // ---- Sky and light: one sun that crosses the sky, setting over the sea, with an overcast neon night between ----
@@ -355,12 +356,12 @@ export async function buildCity(scene, refl, quality, renderer) {
   slabMat.onBeforeCompile = sh => { Object.assign(sh.uniforms, refl.uniforms);
     sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;');
     sh.fragmentShader = `uniform sampler2D uRefl; uniform mat4 uReflVP; uniform float uReflOn, uWet; varying vec3 vWPos;\n${GLSL_HASH}` + sh.fragmentShader
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  vec2 adL = abs(fract(vWPos.xz / 120.0) - 0.5) * 120.0; float adEdge = 50.0 - max(adL.x, adL.y); float adKerb = step(adEdge, 0.34) * step(0.16, vWPos.y); float adRunS = adL.x > adL.y ? vWPos.z : vWPos.x;\n  float adPd = smoothstep(0.5, 0.72, adN(vWPos.xz * 0.11 + 3.0)) * (1.0 - adKerb) * uWet; roughnessFactor = mix(mix(mix(0.85, 0.42, uWet), 0.55, adKerb), 0.05, adPd); diffuseColor.rgb *= mix(mix(1.0, 0.62, uWet), 0.36, adPd);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.13, 0.135) * mix(2.6, 1.0, uWet) * (0.8 + 0.3 * adH(vec2(floor(adRunS / 0.9), 2.0))) * (1.0 - 0.6 * step(fract(adRunS / 0.9), 0.03)), adKerb);\n  float adAlongS = adL.x > adL.y ? adL.y : adL.x; float adTact = step(adEdge, 0.95) * step(0.34, adEdge) * step(46.0, adAlongS) * step(adAlongS, 49.4) * step(0.16, vWPos.y);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.38, 0.07) * (0.7 + 0.5 * step(0.5, fract(vWPos.x * 5.0)) * step(0.5, fract(vWPos.z * 5.0))), adTact);')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  vec2 adL = abs(fract(vWPos.xz / 120.0) - 0.5) * 120.0; float adEdge = 50.0 - max(adL.x, adL.y); float adKerb = step(adEdge, 0.34) * step(0.16, vWPos.y); float adRunS = adL.x > adL.y ? vWPos.z : vWPos.x;\n  float adPd = smoothstep(0.5, 0.72, adN(vWPos.xz * 0.11 + 3.0)) * (1.0 - adKerb) * uWet; roughnessFactor = mix(mix(mix(0.85, 0.42, uWet), 0.55, adKerb), 0.05, adPd); float adRR = roughnessFactor; roughnessFactor = max(roughnessFactor, 0.34); diffuseColor.rgb *= mix(mix(1.0, 0.62, uWet), 0.36, adPd);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.13, 0.135) * mix(2.6, 1.0, uWet) * (0.8 + 0.3 * adH(vec2(floor(adRunS / 0.9), 2.0))) * (1.0 - 0.6 * step(fract(adRunS / 0.9), 0.03)), adKerb);\n  float adAlongS = adL.x > adL.y ? adL.y : adL.x; float adTact = step(adEdge, 0.95) * step(0.34, adEdge) * step(46.0, adAlongS) * step(adAlongS, 49.4) * step(0.16, vWPos.y);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.38, 0.07) * (0.7 + 0.5 * step(0.5, fract(vWPos.x * 5.0)) * step(0.5, fract(vWPos.z * 5.0))), adTact);')
       .replace('#include <opaque_fragment>', `{ vec4 adRc = uReflVP * vec4(vWPos.x, 0.0, vWPos.z, 1.0); vec2 adUv = adRc.xy / adRc.w * 0.5 + 0.5; float adNdv = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0);
         float adF = (0.03 + 0.97 * pow(1.0 - adNdv, 4.2));
-        float adB = roughnessFactor * 9.5, adSp = roughnessFactor * 0.1 + 0.0015;
+        float adB = adRR * 9.5, adSp = adRR * 0.1 + 0.0015;
         vec3 adCol = texture2D(uRefl, adUv, adB).rgb * 0.4 + texture2D(uRefl, adUv + vec2(0.0, adSp), adB).rgb * 0.3 + texture2D(uRefl, adUv - vec2(0.0, adSp), adB).rgb * 0.3;
-        outgoingLight += min(adCol, vec3(3.5)) * adF * mix(0.2, 0.8, adPd) * (1.0 - roughnessFactor * 0.7) * uReflOn * step(0.16, vWPos.y); }\n#include <opaque_fragment>`); };
+        outgoingLight += min(adCol, vec3(3.5)) * adF * mix(0.2, 0.8, adPd) * (1.0 - adRR * 0.7) * uReflOn * step(0.16, vWPos.y); }\n#include <opaque_fragment>`); };
   const slabs = new THREE.InstancedMesh(new THREE.BoxGeometry(slabSize, 0.17, slabSize), slabMat, blocks.length + 1);
   refl.hide.push(slabs); slabs.receiveShadow = SH;
   blocks.forEach((b, k) => { dummy.position.set(b.cx, 0.085, b.cz); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); slabs.setMatrixAt(k, dummy.matrix); });
@@ -425,7 +426,7 @@ export async function buildCity(scene, refl, quality, renderer) {
       for (const [nx, nz] of street) {
         const fx = lx + nx * w / 2, fz = lz + nz * d / 2, along = (R() - 0.5) * (w - 9), px = fx + (nz ? along : 0), pz = fz + (nx ? along : 0);
         if (R() < 0.8) signs.push({ x: px + nx * 0.25, y: 4.72, z: pz + nz * 0.25, nx, nz, w: 4.4, h: 1.1, kind: 0 });
-        if (R() < 0.5 && signTop > 13) signs.push({ x: px + nx * (kp ? 2.6 : 1.5), y: 9.5 + R() * Math.max(0, Math.min(signTop, 30) - 15), z: pz + nz * 1.5, nx, nz, w: 5.6, h: 2.8, kind: 1 });
+        if (!kp && R() < 0.5 && podium > 13) signs.push({ x: px + nx * 1.5, y: Math.min(9.5 + R() * Math.max(0, Math.min(podium, 30) - 15), podium - 3.2), z: pz + nz * 1.5, nx, nz, w: 5.6, h: 2.8, kind: 1 });
         if (!kp && R() < 0.34 && podium > 14) { const bw = Math.min(16, w - 3), by = Math.max(10, podium - bw / 4 - 1 - R() * 4); ads.push({ x: fx + nx * 0.5, y: by, z: fz + nz * 0.5, nx, nz, w: bw, h: bw / 2 }); onFace(base, nx, nz, 0, 0.3, by, bw + 0.5, bw / 2 + 0.5, 0.3, METAL); }
         if (!kp && h <= 34 && R() < 0.3) { const bw = Math.min(13, w - 4), by = podium + 1.6 + bw / 4; ads.push({ x: fx - nx * 0.5, y: by, z: fz - nz * 0.5, nx, nz, w: bw, h: bw / 2 }); onFace(base, nx, nz, 0, -0.75, by, bw + 0.4, bw / 2 + 0.4, 0.22, METAL); for (const e of [-bw * 0.32, bw * 0.32]) onFace(base, nx, nz, e, -1.0, podium + 0.9, 0.2, 1.9, 0.2, METAL); }
         if (!kp && h > 80 && top.w > 16 && R() < 0.5 && screens.length < 40) { const sw = Math.min(22, top.w - 2); screens.push({ x: (nx ? top.x + nx * top.w / 2 : top.x) + nx * 0.35, y: podium + 9 + sw * 0.25, z: (nz ? top.z + nz * top.d / 2 : top.z) + nz * 0.35, nx, nz, w: sw, h: sw * 0.5 }); }
@@ -437,14 +438,14 @@ export async function buildCity(scene, refl, quality, renderer) {
 
   // ---- Street furniture ----
   const VIA = 2; city.viaduct = VIA * P; // the avenue that carries the elevated line
-  const place = (ax, r, side, s, lat, f) => { const fixed = r * P + side * lat; f(ax ? fixed : s, ax ? s : fixed, ax ? (side > 0 ? -Math.PI / 2 : Math.PI / 2) : (side > 0 ? Math.PI : 0), ax ? [0, 1] : [1, 0]); };
+  const place = (ax, r, side, s, lat, f, rad = 0.4) => { const fixed = r * P + side * lat; if (rad) solid.push({ x: ax ? fixed : s, z: ax ? s : fixed, r: rad }); f(ax ? fixed : s, ax ? s : fixed, ax ? (side > 0 ? -Math.PI / 2 : Math.PI / 2) : (side > 0 ? Math.PI : 0), ax ? [0, 1] : [1, 0]); };
   const prop = (x, z, yaw, lx, y, lz, sx, sy, sz, c) => { const cs = Math.cos(yaw), sn = Math.sin(yaw); trim.push({ x: x + lx * cs + lz * sn, y, z: z - lx * sn + lz * cs, sx, sy, sz, yaw, tilt: 0, c }); };
   for (let r = 0; r < ROADS; r++) for (const ax of [0, 1]) for (const side of [-1, 1]) for (let seg = 0; seg < ROADS - 1; seg++) { const s0 = seg * P;
     if (R() < 0.42) place(ax, r, side, s0 + 44 + R() * 30, HALF + 1.7, (x, z, yaw, dir) => { // bus shelter: yaw faces the road
       for (const e of [-1.7, 1.7]) prop(x, z, yaw, e, 1.37, -0.55, 0.09, 2.4, 0.09, METAL);
       prop(x, z, yaw, 0, 2.6, 0, 3.9, 0.09, 1.55, METAL); prop(x, z, yaw, 0, 1.45, -0.6, 3.4, 2.0, 0.04, 0x1a2630); prop(x, z, yaw, 0, 0.62, -0.25, 2.6, 0.07, 0.42, 0x3a2c1e);
       for (const e of [-1.1, 1.1]) prop(x, z, yaw, e, 0.4, -0.25, 0.07, 0.45, 0.4, METAL);
-      const cs = Math.cos(yaw), sn = Math.sin(yaw); ads.push({ x: x - 0.56 * sn, y: 1.5, z: z - 0.56 * cs, nx: sn, nz: cs, w: 2.9, h: 1.45, lit: 1 }); decals.push([x, 0.2, z, 7, 0xcfe4ff, 0.3]); });
+      const cs = Math.cos(yaw), sn = Math.sin(yaw); for (const e of [-1.2, 0, 1.2]) solid.push({ x: x + e * cs - 0.3 * sn, z: z - e * sn - 0.3 * cs, r: 0.7 }); ads.push({ x: x - 0.56 * sn, y: 1.5, z: z - 0.56 * cs, nx: sn, nz: cs, w: 2.9, h: 1.45, lit: 1 }); decals.push([x, 0.2, z, 7, 0xcfe4ff, 0.3]); });
     for (let s = s0 + 24; s < s0 + P - 22; s += 9.5) { const pick = R();
       if (pick < 0.12) place(ax, r, side, s, HALF + 1.0, (x, z, yaw) => { prop(x, z, yaw, 0, 0.67, 0, 0.5, 1.0, 0.5, 0x15171a); prop(x, z, yaw, 0, 1.2, 0, 0.56, 0.07, 0.56, 0x2a2d31); }); // litter bin
       else if (pick < 0.2) place(ax, r, side, s, HALF + 2.5, (x, z, yaw) => { prop(x, z, yaw, 0, 0.62, 0, 1.8, 0.07, 0.5, 0x3a2c1e); prop(x, z, yaw, 0, 0.95, -0.24, 1.8, 0.5, 0.06, 0x3a2c1e); for (const e of [-0.75, 0.75]) prop(x, z, yaw, e, 0.4, 0, 0.07, 0.45, 0.46, METAL); }); // bench
@@ -453,13 +454,13 @@ export async function buildCity(scene, refl, quality, renderer) {
       else if (pick < 0.4) place(ax, r, side, s, HALF + 0.55, (x, z, yaw) => { prop(x, z, yaw, 0, 0.72, 0, 0.07, 1.1, 0.07, METAL); prop(x, z, yaw, 0, 1.38, 0, 0.2, 0.32, 0.16, 0x30343a); }); // parking meter
       else if (pick < 0.44) place(ax, r, side, s, HALF + 0.9, (x, z, yaw) => { prop(x, z, yaw, 0, 0.5, 0, 0.22, 0.66, 0.22, 0x8a1a14); prop(x, z, yaw, 0, 0.62, 0, 0.42, 0.14, 0.14, 0x8a1a14); }); // hydrant
     } }
-  for (let i = 0; i < ROADS; i++) for (let j = 0; j < ROADS; j++) for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const [ox, oz] of [[1.5, 0.4], [0.4, 1.5], [0.6, 0.6]]) { const x = i * P + sx * (HALF + ox), z = j * P + sz * (HALF + oz); trim.push({ x, y: 0.6, z, sx: 0.17, sy: 0.9, sz: 0.17, yaw: 0, tilt: 0, c: 0x25272c }); glows.push([x, 0.92, z, 0.19, 0.06, 0.19, 0xffe9b0, 0.9]); }
+  for (let i = 0; i < ROADS; i++) for (let j = 0; j < ROADS; j++) for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const [ox, oz] of [[1.5, 0.4], [0.4, 1.5], [0.6, 0.6]]) { const x = i * P + sx * (HALF + ox), z = j * P + sz * (HALF + oz); solid.push({ x, z, r: 0.14 }); trim.push({ x, y: 0.6, z, sx: 0.17, sy: 0.9, sz: 0.17, yaw: 0, tilt: 0, c: 0x25272c }); glows.push([x, 0.92, z, 0.19, 0.06, 0.19, 0xffe9b0, 0.9]); }
   // ---- Elevated railway over one avenue ----
   { const vx = VIA * P, CONC = 0x4d4f54;
     trim.push({ x: vx, y: 10.4, z: mid, sx: 8.6, sy: 1.0, sz: SPAN + 80, yaw: 0, tilt: 0, c: CONC });
     for (const e of [-4.25, 4.25]) trim.push({ x: vx + e, y: 11.5, z: mid, sx: 0.25, sy: 1.2, sz: SPAN + 80, yaw: 0, tilt: 0, c: 0x1c1d21 });
     for (let z = 15; z < SPAN; z += 30) { if (Math.abs(z - Math.round(z / P) * P) < 14) continue;
-      for (const e of [-1, 1]) trim.push({ x: vx + e * (HALF + 1.5), y: 4.9, z, sx: 1.1, sy: 9.5, sz: 1.1, yaw: 0, tilt: 0, c: CONC });
+      for (const e of [-1, 1]) { solid.push({ x: vx + e * (HALF + 1.5), z, r: 0.72 }); trim.push({ x: vx + e * (HALF + 1.5), y: 4.9, z, sx: 1.1, sy: 9.5, sz: 1.1, yaw: 0, tilt: 0, c: CONC }); }
       trim.push({ x: vx, y: 9.25, z, sx: (HALF + 1.5) * 2 + 1.5, sy: 1.3, sz: 1.5, yaw: 0, tilt: 0, c: CONC });
       glows.push([vx - 4.6, 8.5, z, 5, 0.07, 0.3, 0xcfe2ff, 2.4], [vx + 4.6, 8.5, z, 5, 0.07, 0.3, 0xcfe2ff, 2.4]); decals.push([vx, 0.03, z, 24, 0xbcd4ff, 0.16]); } }
 
@@ -479,9 +480,6 @@ export async function buildCity(scene, refl, quality, renderer) {
 
   // ---- The seafront: promenade rail, beach and water along the western edge ----
   { const px = -(HALF + 13.2), len = ext + 200;
-    const railM = new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.35, metalness: 0.9 });
-    const posts = new THREE.InstancedMesh(new THREE.BoxGeometry(0.07, 1.05, 0.07), railM, Math.floor(len / 3)); for (let k = 0; k < posts.count; k++) { dummy.position.set(px, 0.69, mid - len / 2 + k * 3); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); posts.setMatrixAt(k, dummy.matrix); } posts.frustumCulled = false; posts.castShadow = SH; scene.add(posts);
-    for (const y of [1.2, 0.75]) { const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, len), railM); rail.position.set(px, y, mid); scene.add(rail); }
     const sandT = canvasTex(512, 512, (c, w) => { c.fillStyle = '#cbb488'; c.fillRect(0, 0, w, w); const r = rng(8), img = c.getImageData(0, 0, w, w); for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 34; img.data[i] += n; img.data[i + 1] += n * 0.95; img.data[i + 2] += n * 0.8; } c.putImageData(img, 0, 0); c.globalAlpha = 0.12; for (let i = 0; i < 90; i++) { c.fillStyle = r() < 0.5 ? '#8f7a55' : '#e6d4ab'; c.beginPath(); c.ellipse(r() * w, r() * w, 20 + r() * 60, 3 + r() * 6, r() * 0.4, 0, 7); c.fill(); } });
     sandT.wrapS = sandT.wrapT = THREE.RepeatWrapping; sandT.repeat.set(10, 110);
     const sg = new THREE.PlaneGeometry(92, len, 6, 1); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { const t = (46 - sp.getX(i)) / 92; sp.setY(i, 0.17 - t * t * 1.5); } sg.computeVertexNormals();
@@ -506,7 +504,7 @@ export async function buildCity(scene, refl, quality, renderer) {
       lampSpots.push({ x: r * P + side * (HALF + SW - 0.5), z: s + stag, rot: side > 0 ? 0 : Math.PI, hx: r * P + side * (HALF - 0.9), hz: s + stag });
       lampSpots.push({ x: s + stag, z: r * P + side * (HALF + SW - 0.5), rot: side > 0 ? -Math.PI / 2 : Math.PI / 2, hx: s + stag, hz: r * P + side * (HALF - 0.9) }); } }
   const lampMesh = new THREE.InstancedMesh(lampG, new THREE.MeshStandardMaterial({ color: 0x1c1f26, roughness: 0.45, metalness: 0.8 }), lampSpots.length);
-  lampSpots.forEach((l, k) => { dummy.position.set(l.x, 0.17, l.z); dummy.rotation.set(0, l.rot, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); lampMesh.setMatrixAt(k, dummy.matrix);
+  lampSpots.forEach((l, k) => { solid.push({ x: l.x, z: l.z, r: 0.2 }); dummy.position.set(l.x, 0.17, l.z); dummy.rotation.set(0, l.rot, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); lampMesh.setMatrixAt(k, dummy.matrix);
     const warm = (k * 7) % 5 === 0 ? 0xbfe0ff : 0xffc98f; glows.push([l.hx, 8.72, l.hz, l.rot % Math.PI ? 0.5 : 1.0, 0.1, l.rot % Math.PI ? 1.0 : 0.5, warm, 5]);
     decals.push([l.hx, 0.03, l.hz, 22, warm, 0.2]); city.lamps.push(new THREE.Vector3(l.hx, 8.2, l.hz)); });
   lampMesh.castShadow = SH; scene.add(lampMesh);
@@ -518,7 +516,7 @@ export async function buildCity(scene, refl, quality, renderer) {
     sigSpots.push({ i, j, axis: 'z', x: cx - o, z: cz - o, fx: 0, fz: -1 }, { i, j, axis: 'z', x: cx + o, z: cz + o, fx: 0, fz: 1 }, { i, j, axis: 'x', x: cx - o, z: cz + o, fx: -1, fz: 0 }, { i, j, axis: 'x', x: cx + o, z: cz - o, fx: 1, fz: 0 }); }
   const sigMesh = new THREE.InstancedMesh(sigG, new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.5, metalness: 0.6 }), sigSpots.length);
   const sigPos = new Float32Array(sigSpots.length * 3), sigCol = new Float32Array(sigSpots.length * 3);
-  sigSpots.forEach((s, k) => { const cx = s.i * P, cz = s.j * P, ax = s.axis === 'z' ? Math.sign(cx - s.x) : 0, az = s.axis === 'x' ? Math.sign(cz - s.z) : 0; dummy.position.set(s.x, 0.17, s.z); dummy.rotation.set(0, Math.atan2(-az, ax), 0); dummy.updateMatrix(); sigMesh.setMatrixAt(k, dummy.matrix); sigPos.set([s.x + ax * 6.6 + s.fx * 0.26, 5.89, s.z + az * 6.6 + s.fz * 0.26], k * 3); });
+  sigSpots.forEach((s, k) => { solid.push({ x: s.x, z: s.z, r: 0.2 }); const cx = s.i * P, cz = s.j * P, ax = s.axis === 'z' ? Math.sign(cx - s.x) : 0, az = s.axis === 'x' ? Math.sign(cz - s.z) : 0; dummy.position.set(s.x, 0.17, s.z); dummy.rotation.set(0, Math.atan2(-az, ax), 0); dummy.updateMatrix(); sigMesh.setMatrixAt(k, dummy.matrix); sigPos.set([s.x + ax * 6.6 + s.fx * 0.26, 5.89, s.z + az * 6.6 + s.fz * 0.26], k * 3); });
   sigMesh.castShadow = SH;
   scene.add(sigMesh);
   const dot = canvasTex(64, 64, (c) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
@@ -574,7 +572,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   const screenMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), screenM, Math.max(1, screens.length));
   screens.forEach((s2, k) => { dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); screenMesh.setMatrixAt(k, dummy.matrix); decals.push([s2.x + s2.nx * 12, 0.03, s2.z + s2.nz * 12, 40, 0x8fa8ff, 0.16]);
     late.push({ x: s2.x - s2.nx * 0.12, y: s2.y, z: s2.z - s2.nz * 0.12, sx: s2.nx ? 0.2 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 0.2 : s2.w + 0.6 }); });
-  for (const [x, z] of boardPosts) { late.push({ x, y: 5.2, z, sx: 0.5, sy: 10.4, sz: 0.5 }); late.push({ x, y: 10.2, z, sx: 0.5, sy: 7, sz: 1.3 }); }
+  for (const [x, z] of boardPosts) { solid.push({ x, z, r: 0.45 }); late.push({ x, y: 5.2, z, sx: 0.5, sy: 10.4, sz: 0.5 }); late.push({ x, y: 10.2, z, sx: 0.5, sy: 7, sz: 1.3 }); }
   { const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.5, metalness: 0.5 }), Math.max(1, late.length)); late.forEach((t, k) => { dummy.position.set(t.x, t.y, t.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(t.sx, t.sy, t.sz); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.scale.set(1, 1, 1); lm.count = late.length; lm.frustumCulled = false; lm.castShadow = SH; scene.add(lm); }
   screenMesh.count = screens.length; screenMesh.frustumCulled = false; scene.add(screenMesh);
   hooks.push((e, mix) => { ledU.uGain.value = mix(1.15, 2.3, e.night); });
