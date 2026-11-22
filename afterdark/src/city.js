@@ -14,7 +14,7 @@ const GLSL_HASH = 'float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q +=
 // Cycle of a junction's signals: 'g', 'y' or 'r' for traffic travelling along the given axis.
 export function signal(i, j, axis, t) { const ph = (t + ((i + j) & 1) * 8 + (axis === 'z' ? 8 : 0)) % 16; return ph < 6 ? 'g' : ph < 7.5 ? 'y' : 'r'; }
 
-function canvasTex(w, h, draw, srgb = true) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
+function canvasTex(w, h, draw, srgb = true) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x2 = c.getContext('2d'); if (!x2.roundRect) x2.roundRect = function (x, y, ww, hh) { this.rect(x, y, ww, hh); }; draw(x2, w, h); const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
 
 function roadMaterial(refl, repX, repY) {
   const L = new THREE.TextureLoader();
@@ -331,7 +331,7 @@ export async function buildCity(scene, refl, quality, renderer) {
     const h = (hour - 6) / 12 * Math.PI, sn = Math.sin(h), el = (sn > 0 ? sn * 58 : sn * 35), er = THREE.MathUtils.degToRad(el), ce = Math.cos(er);
     sunDir.set(Math.cos(h) * ce, Math.sin(er), 0.38 * ce).normalize(); su.sunPosition.value.copy(sunDir);
     const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), e = { hour, el, night, day, high, wet: night, rain: sst(0.75, 1, night) };
-    C(0xffa060, 0xfff4e6, high, sun.color); sun.intensity = 5.6 * day * (0.8 + 0.2 * high); sun.castShadow = renderer.shadowMap.enabled && day > 0.02;
+    C(0xffa060, 0xfff4e6, high, sun.color); sun.intensity = 5.6 * day * (0.8 + 0.2 * high); sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
     C(0xb9cdf2, 0x33325a, night, hemi.color); C(0xa08468, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(3.4, 3.9, high), 0.42, night);
     C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(0x0e0b18), night); scene.fog.density = mix(mix(0.00065, 0.00045, high), 0.0021, night);
     su.rayleigh.value = mix(2.2, 1.1, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night; dome.visible = night > 0.01;

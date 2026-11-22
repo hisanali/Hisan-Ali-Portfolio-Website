@@ -58,9 +58,10 @@ export async function createPlayer(scene, envTexture, city) {
   const tailM = new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(1, 0.06, 0.03), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.1, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const tailPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), tailM); tailPool.rotation.x = -Math.PI / 2; tailPool.position.set(0, 0.035, -len / 2 - 2.2); tailPool.renderOrder = 4; root.add(tailPool);
 
-  const car = { root, tilt, model, paint, len, wid, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, bump: 0, impact: 0, cubeHide: [root] };
+  const car = { pinDir: 1, slideT: 0, slideH: 0, root, tilt, model, paint, len, wid, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, bump: 0, impact: 0, cubeHide: [root] };
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
-  car.place = (x, z, h) => { car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.sync(0); };
+  const hw = wid / 2 - 0.14, hl = len / 2 - 0.06, CORNERS = [[hw, hl], [-hw, hl], [hw, -hl], [-hw, -hl]], KERB = HALF + 0.04, prevC = [null, null, null, null];
+  car.place = (x, z, h) => { prevC.fill(null); car.slideT = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.sync(0); };
   car.setPaint = hex => paint.color.set(hex);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; for (const s of lights) s.intensity = 260 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
@@ -73,8 +74,9 @@ export async function createPlayer(scene, envTexture, city) {
     car.steer += (ctrl.steer - car.steer) * Math.min(1, dt * (Math.abs(ctrl.steer) > Math.abs(car.steer) ? 5.5 : 9));
     const VMAX = 82; let a = 0;
     if (ctrl.throttle > 0) a += ctrl.throttle * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
-    if (ctrl.brake > 0) a += vF > 0.6 ? -ctrl.brake * 15 : -ctrl.brake * 5 * Math.max(0, 1 + vF / 9);
-    if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, 5);
+    if (ctrl.brake > 0) a += vF > 0.6 ? -ctrl.brake * (22 + Math.min(6, vF * 0.12)) : -ctrl.brake * 6 * Math.max(0, 1 + vF / 9);
+    if (!ctrl.throttle && !ctrl.brake && Math.abs(vF) > 0.3) a -= Math.sign(vF) * Math.min(2.4, Math.abs(vF) / dt);
+    if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, 9);
     a -= 0.00105 * vF * Math.abs(vF) + 0.035 * vF + (car.onKerb ? 0.25 * vF : 0);
     vF += a * dt; car.accel = a;
     const grip = car.onKerb ? 7.5 : 10.2;
@@ -88,16 +90,32 @@ export async function createPlayer(scene, envTexture, city) {
     car.vel.copy(fwd).multiplyScalar(vF).addScaledVector(left, vL);
     car.pos.addScaledVector(car.vel, dt);
     // Stay inside the street canyon: carriageway plus pavement, up to the building line.
-    const p = car.pos, rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
-    const dx = p.x - rx, dz = p.z - rz, ox = Math.abs(dx) - DRIVE, oz = Math.abs(dz) - DRIVE; let hit = 0;
-    const inX = ox <= 0 && p.z > -DRIVE && p.z < SPAN + DRIVE, inZ = oz <= 0 && p.x > -DRIVE && p.x < SPAN + DRIVE;
-    if (!inX && !inZ) {
-      if (ox <= oz) { p.x = rx + Math.sign(dx) * DRIVE; const vn = car.vel.x * Math.sign(dx); if (vn > 0) { hit = vn; car.vel.x *= -0.28; } }
-      else { p.z = rz + Math.sign(dz) * DRIVE; const vn = car.vel.z * Math.sign(dz); if (vn > 0) { hit = vn; car.vel.z *= -0.28; } }
-    }
-    p.x = clamp(p.x, -DRIVE, SPAN + DRIVE); p.z = clamp(p.z, -DRIVE, SPAN + DRIVE);
-    if (hit > 0) car.vel.multiplyScalar(hit > 5 ? 0.72 : 0.97);
-    const kerb = false; if (kerb !== car.onKerb) { car.onKerb = kerb; car.bump = Math.min(1, Math.abs(vF) * 0.06); }
+    // Keep the whole body on the carriageway. Each corner is tested against the kerb line; a touching corner pushes
+    // the car back and turns its nose along the kerb, so a glancing hit slides instead of sticking.
+    const p = car.pos; let hit = 0;
+    for (let pass = 0; pass < 2; pass++) { const sn = Math.sin(car.heading), cs = Math.cos(car.heading); let bx = 0, bz = 0, bm = 0, brx = 0, brz = 0;
+      for (let ci = 0; ci < 4; ci++) { const lx = CORNERS[ci][0], lz = CORNERS[ci][1], ox0 = cs * lx + sn * lz, oz0 = -sn * lx + cs * lz, x = p.x + ox0, z = p.z + oz0;
+        const rx = clamp(Math.round(x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(z / P), 0, ROADS - 1) * P, dx = x - rx, dz = z - rz, ox = Math.abs(dx) - KERB, oz = Math.abs(dz) - KERB; let px = 0, pz = 0;
+        if (ox > 0 && oz > 0) { // which face did this corner come through? Decide from where it was a moment ago, so block corners are not snagged.
+          const q = prevC[ci]; let useX = ox <= oz;
+          if (q) { const oxp = Math.abs(q[0] - rx) - KERB, ozp = Math.abs(q[1] - rz) - KERB; if (oxp <= 0 && ozp > 0) useX = true; else if (ozp <= 0 && oxp > 0) useX = false; else if (oxp <= 0 && ozp <= 0) useX = Math.abs(car.vel.x) < Math.abs(car.vel.z); }
+          if (useX) px = -Math.sign(dx) * ox; else pz = -Math.sign(dz) * oz; }
+        if (x + px < -KERB) px = -KERB - x; else if (x + px > SPAN + KERB) px = SPAN + KERB - x;
+        if (z + pz < -KERB) pz = -KERB - z; else if (z + pz > SPAN + KERB) pz = SPAN + KERB - z;
+        const m = Math.abs(px) + Math.abs(pz); if (m > bm) { bm = m; bx = px; bz = pz; brx = ox0; brz = oz0; } }
+      if (bm <= 0) break;
+      p.x += bx; p.z += bz; const nl = Math.hypot(bx, bz), nx = bx / nl, nz = bz / nl, vn = car.vel.x * nx + car.vel.z * nz;
+      if (vn < 0) { hit = Math.max(hit, -vn); car.vel.x -= nx * vn * 1.12; car.vel.z -= nz * vn * 1.12; car.vel.multiplyScalar(-vn > 6 ? 0.8 : 0.992); }
+      // Turn the nose along the kerb, towards whichever way the car is already heading (or the wheel is turned),
+      // so any contact becomes a slide along the kerb and the car can always drive away.
+      const into = -(sn * nx + cs * nz); if (into > 0.02) { let tx = -nz, tz = nx; const along = sn * tx + cs * tz;
+        let sgn = Math.abs(along) > 0.2 ? Math.sign(along) : 0;
+        if (!sgn) { const d0 = Math.atan2(Math.sin(Math.atan2(tx, tz) - car.heading), Math.cos(Math.atan2(tx, tz) - car.heading)); sgn = ctrl.steer ? (Math.sign(d0) === Math.sign(ctrl.steer) ? 1 : -1) : car.pinDir; }
+        car.pinDir = sgn; tx *= sgn; tz *= sgn; const want = Math.atan2(tx, tz), diff = Math.atan2(Math.sin(want - car.heading), Math.cos(want - car.heading)), rate = (1.1 + 2.6 * into) * (ctrl.throttle > 0 ? 1 : 0.45) * dt;
+        car.heading += clamp(diff, -rate, rate); car.yawRate *= 0.5; if (into > 0.5) { car.slideT = 0.4; car.slideH = want; } } }
+    // After a nose-on hit the car bounces clear for a moment; keep turning it along the kerb through that gap.
+    if (car.slideT > 0) { car.slideT -= dt; const vv = Math.hypot(car.vel.x, car.vel.z); if (ctrl.throttle > 0 && vv < 7) { const d2 = Math.atan2(Math.sin(car.slideH - car.heading), Math.cos(car.slideH - car.heading)); car.heading += clamp(d2, -3.0 * dt, 3.0 * dt); } }
+    { const sn = Math.sin(car.heading), cs = Math.cos(car.heading); for (let ci = 0; ci < 4; ci++) { const lx = CORNERS[ci][0], lz = CORNERS[ci][1]; (prevC[ci] ||= [0, 0])[0] = p.x + cs * lx + sn * lz; prevC[ci][1] = p.z - sn * lx + cs * lz; } }
     fwd.set(Math.sin(car.heading), 0, Math.cos(car.heading)); left.set(fwd.z, 0, -fwd.x);
     car.speed = car.vel.dot(fwd); car.slip = Math.abs(car.vel.dot(left)); car.braking = ctrl.brake > 0 || ctrl.hand;
     car.sync(dt); return hit;

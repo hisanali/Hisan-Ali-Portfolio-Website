@@ -4,6 +4,7 @@ import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
+import { createSound } from './sound.js';
 
 const $ = s => document.querySelector(s), clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
 const store = { get: (k, d) => { try { return localStorage.getItem('afterdark:' + k) ?? d; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem('afterdark:' + k, v); } catch (e) {} } };
@@ -68,7 +69,10 @@ addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h' && S.mode ===
 addEventListener('blur', () => { for (const k in input) input[k] = 0; });
 document.querySelectorAll('#touch [data-k]').forEach(b => { const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = 1; b.classList.add('on'); }, off = e => { e.preventDefault(); input[k] = 0; b.classList.remove('on'); };
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); });
-const coarse = matchMedia('(pointer:coarse)').matches; document.body.classList.toggle('is-touch', coarse);
+const coarse = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1; document.body.classList.toggle('is-touch', coarse);
+addEventListener('contextmenu', e => e.preventDefault()); addEventListener('gesturestart', e => e.preventDefault()); addEventListener('dblclick', e => e.preventDefault());
+document.addEventListener('touchmove', e => { if (!e.target.closest('.panel')) e.preventDefault(); }, { passive: false });
+document.querySelector('#touch [data-horn]')?.addEventListener('pointerdown', e => { e.preventDefault(); audio?.horn(true); }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.querySelector('#touch [data-horn]')?.addEventListener(ev, () => audio?.horn(false));
 
 // ---------- UI ----------
 let toastT = 0; function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600); }
@@ -92,13 +96,17 @@ $('#btn-cam').addEventListener('click', () => nextCam());
 $('#btn-sound').addEventListener('click', () => { S.sound = !S.sound; store.set('sound', S.sound ? 'on' : 'off'); document.body.classList.toggle('muted', !S.sound); audio?.setOn(S.sound); });
 document.addEventListener('click', e => { if (e.target.closest('button')) audio?.click(); });
 document.body.classList.toggle('muted', !S.sound);
-$('#btn-full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
+$('#btn-full').addEventListener('click', () => { const d = document, el = d.documentElement; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen)?.call(d); else { const p = (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el); p?.catch?.(() => {}); } });
+if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('#btn-full').hidden = true;
+$('#scene').addEventListener('webglcontextlost', e => { e.preventDefault(); const el = $('#toast'); el.textContent = 'Graphics were reset. Tap to reload.'; el.classList.add('show'); el.style.pointerEvents = 'auto'; el.onclick = () => location.reload(); });
 const show = id => { for (const s of ['menu', 'pause', 'result']) $('#' + s).hidden = s !== id; document.body.dataset.mode = S.mode; };
 
-async function ensureAudio() {
+function ensureAudio() { // must run inside the tap itself or iOS keeps the audio context suspended
   if (audio) { audio.resume(); return; }
-  try { const { createSound } = await import('./sound.js'); audio = createSound(); audio.setOn(S.sound); audio.start(); } catch (e) { console.warn('audio unavailable', e); audio = null; }
+  try { audio = createSound(); audio.setOn(S.sound); audio.start(); } catch (e) { console.warn('audio unavailable', e); audio = null; }
 }
+for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, () => audio?.resume(), { passive: true });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); else if (S.mode === 'play') pause(true); });
 function respawn() { const p = player.pos, ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P); const rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
 function start() {
@@ -149,6 +157,10 @@ function nextCam() { audio?.camera(); S.cam = (S.cam + 1) % CAMS.length; view.ya
   const end = e => { if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   cv.addEventListener('wheel', e => { if (S.mode !== 'play') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
+const CAMW = HALF + 3.1;
+function keepInStreet(v) { const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
+  if (ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
+  v.x = clamp(v.x, -CAMW, SPAN + CAMW); v.z = clamp(v.z, -CAMW, SPAN + CAMW); if (Math.abs(v.x - city.viaduct) < 12 && v.y > 8) v.y = 8; return v; }
 let camYaw = 0, snapCam = true; const camPos = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
 function chase(dt, snap) {
   const h = player.heading, sp = Math.abs(player.speed), inside = S.cam === 2 || S.cam === 3;
@@ -160,14 +172,14 @@ function chase(dt, snap) {
     look.set(camPos.x + Math.sin(a) * cp * 30, camPos.y - 0.6 + Math.sin(view.pitch * 0.7) * -30 * 0 - view.pitch * 12, camPos.z + Math.cos(a) * cp * 30); }
   else { const base = S.cam === 1 ? [10.5, 3.3, 0] : S.cam === 4 ? [4.3, 0.55, 0.62] : [6.3, 1.75, 0], dist = (base[0] + sp * 0.028) * view.zoom, a = camYaw + base[2] + view.yaw, pc = Math.cos(view.pitch), ps = Math.sin(view.pitch);
     want.set(player.pos.x - Math.sin(a) * dist * pc, Math.max(0.35, base[1] + sp * 0.006 + dist * ps), player.pos.z - Math.cos(a) * dist * pc);
-    if (snap || view.drag) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt));
+    keepInStreet(want); if (snap || view.drag) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt)); keepInStreet(camPos);
     const ahead = S.cam === 4 ? 1.2 : 4.5 * Math.max(0, 1 - Math.abs(view.yaw) * 0.8); look.set(player.pos.x + Math.sin(h) * ahead, 0.95, player.pos.z + Math.cos(h) * ahead); }
   const sh = S.shake; S.shake = Math.max(0, sh - dt * 2.4);
   camera.position.set(camPos.x + (Math.random() - 0.5) * sh * 0.5, Math.max(0.3, camPos.y + (Math.random() - 0.5) * sh * 0.35), camPos.z + (Math.random() - 0.5) * sh * 0.5);
   camera.lookAt(look); const near = inside ? 0.08 : 0.25; if (camera.near !== near) camera.near = near;
   camera.fov = lerp(camera.fov, (S.cam === 3 ? 66 : 56) + clamp(sp * 0.24, 0, 20), Math.min(1, dt * 4)); camera.updateProjectionMatrix();
 }
-function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); camera.lookAt(player.pos.x, 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
+function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
 
 // ---------- Time of day ----------
 let hour = 17.2, env = null, envHour = -99, pmrem = null, envRT = null;
@@ -188,20 +200,35 @@ function stepTime(dt, running) {
 }
 addEventListener('keydown', e => { if (e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
 
+// ---------- Keeps the frame rate up: if the device struggles, step the cost down without a reload ----------
+const gov = { level: 0, t: 0, frames: 0, warm: 6 };
+function govern(rawDt, playing) {
+  if (!playing || rawDt > 0.3) { gov.t = 0; gov.frames = 0; return; }
+  if (gov.warm > 0) { gov.warm -= rawDt; return; }
+  gov.t += rawDt; gov.frames++; if (gov.t < 3) return;
+  const fps = gov.frames / gov.t; gov.t = 0; gov.frames = 0; gov.fps = fps;
+  if (fps < 27 && gov.level < 4) { gov.level++; gov.warm = 2.5;
+    if (gov.level === 1) R.setScale(0.82);
+    else if (gov.level === 2) { city.shadows = false; R.setScale(0.75); }
+    else if (gov.level === 3) { R.refl.on = false; R.cube.frozen = true; R.setScale(0.68); }
+    else R.setScale(0.58);
+    if (gov.level === 1) toast('Graphics adjusted for a smoother drive'); }
+}
+
 // ---------- Frame ----------
 const clock = new THREE.Clock(); const probe = new THREE.Vector3(); let crashCool = 0;
 function frame() {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, clock.getDelta()); S.time += dt;
+  const rawDt = clock.getDelta(), dt = Math.min(0.05, rawDt); S.time += dt;
   if (S.mode === 'boot') return;
-  const playing = S.mode === 'play';
+  const playing = S.mode === 'play'; govern(rawDt, playing);
   if (S.mode !== 'pause') {
     stepTime(dt, playing || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos);
     traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (playing || S.mode === 'over') {
-      const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up || (coarse && !input.down && !input.hand) ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
-      const steps = 2; let hit = 0; for (let i = 0; i < steps; i++) hit = Math.max(hit, player.drive(dt / steps, ctrl));
-      hit = Math.max(hit, traffic.collide(player)); crashCool -= dt;
+      const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
+      const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
+      crashCool -= dt;
       if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.4, hit * 0.09); S.hits++; S.combo = 0; S.flash = Math.min(0.5, hit * 0.02); S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
         for (let k = 0; k < 26; k++) puff(player.pos.x + (Math.random() - 0.5) * 2, 0.5 + Math.random(), player.pos.z + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 12, Math.random() * 7, (Math.random() - 0.5) * 12, 0.7, 3, 1.6, 0.5); }
       if (live) {
@@ -224,7 +251,7 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(player.pos);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { playing, speed: player.speed, throttle: playing ? (input.up || (coarse && !input.down && !input.hand) ? 1 : 0) : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { playing, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   probe.set(player.pos.x, 1.15, player.pos.z); R.render(probe);
 }
@@ -247,7 +274,7 @@ async function boot() {
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
   window.__afterdark = { S, player, traffic, city, street, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
-  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio });
+  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov;
   window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });

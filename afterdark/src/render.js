@@ -11,12 +11,12 @@ export { THREE };
 const PRESETS = {
   ultra: { dpr: 2, msaa: 4, refl: 0.6, cube: 256, cubeEvery: 1, rain: 5000, traffic: 50, lights: 8, people: 12 },
   high: { dpr: 1.5, msaa: 4, refl: 0.5, cube: 128, cubeEvery: 2, rain: 3500, traffic: 40, lights: 6, people: 8 },
-  medium: { dpr: 1.25, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 28, lights: 5, people: 4 },
+  medium: { dpr: 1.3, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 28, lights: 5, people: 4 },
   low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 18, lights: 4, people: 0 }
 };
 export const QUALITY = (() => {
   try { const q = new URLSearchParams(location.search).get('gfx') || localStorage.getItem('afterdark:gfx'); if (PRESETS[q]) return q; } catch (e) {}
-  return matchMedia('(pointer:coarse)').matches ? 'medium' : 'high';
+  return matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1 ? 'medium' : 'high';
 })();
 export const Q = PRESETS[QUALITY];
 
@@ -88,7 +88,7 @@ export function createRenderer(canvas) {
   function primeCube(pos) { cubeCam.position.copy(pos); setHidden(cube.hide, true); cubeCam.update(renderer, scene); setHidden(cube.hide, false); cube.primed = true; }
   function updateCube(pos) {
     if (!cube.primed) return primeCube(pos);
-    if (!Q.cubeEvery) return;
+    if (!Q.cubeEvery || cube.frozen) return;
     if (++cube.tick % Q.cubeEvery) return;
     if (cube.face === 0) { cubeCam.position.copy(pos); cubeCam.updateMatrixWorld(); }
     setHidden(cube.hide, true);
@@ -98,16 +98,18 @@ export function createRenderer(canvas) {
     if (++cube.face === 6) { cube.face = 0; cubeRT.texture.needsPMREMUpdate = true; }
   }
 
+  let scale = 1; const baseDpr = Math.min(window.devicePixelRatio || 1, Q.dpr);
+  function setScale(v) { scale = v; resize(); }
   function resize() {
-    const w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h, false); composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h);
+    const w = window.innerWidth, h = window.innerHeight; renderer.setPixelRatio(Math.max(0.6, baseDpr * scale)); renderer.setSize(w, h, false); composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
     if (refl.on) { const pr = renderer.getPixelRatio() * Q.refl; refl.target.setSize(Math.max(2, Math.round(w * pr)), Math.max(2, Math.round(h * pr))); }
   }
-  window.addEventListener('resize', resize); resize();
+  window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250)); window.visualViewport?.addEventListener('resize', resize); resize();
   const t0 = performance.now();
   function render(pos) {
     const t = (performance.now() - t0) * 0.001; film.uniforms.uTime.value = t % 100; refl.uniforms.uTime.value = t;
     updateCube(pos); renderReflection(); composer.render();
   }
-  return { renderer, scene, camera, composer, bloom, film, refl, cube, render, resize, primeCube };
+  return { renderer, scene, camera, composer, bloom, film, refl, cube, render, resize, primeCube, setScale };
 }

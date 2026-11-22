@@ -7,12 +7,13 @@ const SHOTS = { thunder0: REC + 'thunder.mp3', thunder1: '/tideworn/assets/audio
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 export function createSound() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOS: play even with the silent switch on
+  const ctx = new (window.AudioContext || window.webkitAudioContext)(); ctx.resume?.();
   const master = ctx.createGain(); master.gain.value = 0;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2; master.connect(comp).connect(ctx.destination);
   const drive = new DriveAudio(ctx, master);
   const loops = {}, shots = {}; let nextThunder = 12, hornHeld = false, honkCool = 4, splashCool = 0, on = true;
-  const load = async url => ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
+  const load = async url => { const data = await (await fetch(url)).arrayBuffer(); return new Promise((res, rej) => { const p = ctx.decodeAudioData(data, res, rej); if (p && p.then) p.then(res, rej); }); };
   for (const [name, url] of Object.entries(LOOPS)) load(url).then(buf => { const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; const g = ctx.createGain(); g.gain.value = 0; src.connect(g).connect(master); src.start(0, Math.random() * Math.max(0, buf.duration - 1)); loops[name] = g; }).catch(e => console.warn('sound', name, e));
   for (const [name, url] of Object.entries(SHOTS)) load(url).then(buf => { shots[name] = buf; }).catch(() => {});
   const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
@@ -24,7 +25,7 @@ export function createSound() {
   const burst = (freq, q, gain, len, at = 0, type = 'bandpass', slideTo = 0) => { const t = ctx.currentTime + at, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = noise; f.type = type; f.frequency.setValueAtTime(freq, t); if (slideTo) f.frequency.exponentialRampToValueAtTime(slideTo, t + len); f.Q.value = q; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + len * 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + len); src.connect(f).connect(g).connect(master); src.start(t, Math.random()); src.stop(t + len + 0.05); };
   const api = {
     ctx, drive, master, loops, shots, get gear() { return drive.gear; }, get rpm() { return drive.rpm; },
-    resume() { ctx.resume?.(); }, setOn(v) { on = v; },
+    resume() { if (ctx.state !== 'running') ctx.resume?.(); }, setOn(v) { on = v; },
     click() { tone(1500, 0, 0.05, 0.05, 'triangle'); },
     start() { try { drive.lastVolume = 1; drive.starter(0.9); } catch (e) {} },
     beacon() { [659, 880, 1319, 1760].forEach((f, i) => { tone(f, i * 0.07, 0.5, 0.11, 'triangle'); tone(f * 2, i * 0.07, 0.3, 0.03); }); burst(6000, 2, 0.05, 0.5, 0, 'highpass'); },
