@@ -138,6 +138,6 @@ export function buildStreet(scene, city, R3, Q) {
       w.root.position.set(w.ax ? w.fixed : w.s, 0.17, w.ax ? w.s : w.fixed); w.root.rotation.y = w.ax ? (w.dir > 0 ? 0 : Math.PI) : (w.dir > 0 ? Math.PI / 2 : -Math.PI / 2); w.mixer.update(dt * w.v / 1.35); }
   };
   street.setTime = e => { env = e; for (const b of brollies) b.visible = e.rain > 0.2; };
-  street.loadPeople = loadPeople; street.hide = [...puffs]; street.stats = { trees: spots.length, vents: vents.length };
+  street.trainZ = () => trainZ; street.loadPeople = loadPeople; street.hide = [...puffs]; street.stats = { trees: spots.length, vents: vents.length };
   return street;
 }

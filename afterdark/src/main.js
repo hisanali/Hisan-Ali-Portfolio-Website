@@ -13,7 +13,7 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const R = createRenderer($('#scene')), { scene, camera, renderer } = R;
 const S = { mode: 'boot', kind: store.get('kind', 'run'), time: 0, clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, cam: 0, sound: store.get('sound', 'on') === 'on', flash: 0 };
 const input = { left: 0, right: 0, up: 0, down: 0, hand: 0 };
-let city, street, player, traffic, audio = null, actx = null, rainGain = null;
+let city, street, player, traffic, audio = null;
 
 // ---------- Rain and tyre spray ----------
 const RAIN = Q.rain, RR = 34, rainPos = new Float32Array(RAIN * 6), rainGeo = new THREE.BufferGeometry();
@@ -63,7 +63,8 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) {
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'enter' && S.mode === 'menu') start(); });
-addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYS[k]) input[KEYS[k]] = 0; });
+addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYS[k]) input[KEYS[k]] = 0; if (k === 'h') audio?.horn(false); });
+addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h' && S.mode === 'play') audio?.horn(true); });
 addEventListener('blur', () => { for (const k in input) input[k] = 0; });
 document.querySelectorAll('#touch [data-k]').forEach(b => { const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = 1; b.classList.add('on'); }, off = e => { e.preventDefault(); input[k] = 0; b.classList.remove('on'); };
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); });
@@ -88,18 +89,15 @@ $('#resume').addEventListener('click', () => pause(false));
 $('#quit').addEventListener('click', () => toMenu());
 $('#btn-pause').addEventListener('click', () => { if (S.mode === 'play') pause(true); });
 $('#btn-cam').addEventListener('click', () => nextCam());
-$('#btn-sound').addEventListener('click', () => { S.sound = !S.sound; store.set('sound', S.sound ? 'on' : 'off'); document.body.classList.toggle('muted', !S.sound); });
+$('#btn-sound').addEventListener('click', () => { S.sound = !S.sound; store.set('sound', S.sound ? 'on' : 'off'); document.body.classList.toggle('muted', !S.sound); audio?.setOn(S.sound); });
+document.addEventListener('click', e => { if (e.target.closest('button')) audio?.click(); });
 document.body.classList.toggle('muted', !S.sound);
 $('#btn-full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
 const show = id => { for (const s of ['menu', 'pause', 'result']) $('#' + s).hidden = s !== id; document.body.dataset.mode = S.mode; };
 
 async function ensureAudio() {
-  if (actx) { actx.resume?.(); return; }
-  try { actx = new (window.AudioContext || window.webkitAudioContext)(); const { DriveAudio } = await import('/evermile/audio.js'); audio = new DriveAudio(actx);
-    // Rain on the roof: filtered noise.
-    const buf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const src = actx.createBufferSource(); src.buffer = buf; src.loop = true; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 0.4; rainGain = actx.createGain(); rainGain.gain.value = 0; src.connect(f).connect(rainGain).connect(actx.destination); src.start();
-  } catch (e) { console.warn('audio unavailable', e); audio = null; }
+  if (audio) { audio.resume(); return; }
+  try { const { createSound } = await import('./sound.js'); audio = createSound(); audio.setOn(S.sound); audio.start(); } catch (e) { console.warn('audio unavailable', e); audio = null; }
 }
 function respawn() { const p = player.pos, ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P); const rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
@@ -113,6 +111,7 @@ function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); 
 function toMenu() { S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); show('menu'); }
 function finish() {
   S.mode = 'over'; const best = +store.get('best', '0'), isBest = S.score > best; if (isBest) store.set('best', String(Math.round(S.score)));
+  audio?.finish(isBest);
   $('#result-label').textContent = isBest ? 'New best run' : 'Run complete'; $('#result-score').textContent = Math.round(S.score).toLocaleString();
   $('#result-stats').innerHTML = `<div><small>Beacons</small><b>${S.beacons}</b></div><div><small>Top speed</small><b>${Math.round(S.top * 3.6)} km/h</b></div><div><small>Contacts</small><b>${S.hits}</b></div>`;
   show('result');
@@ -143,7 +142,7 @@ function drawHud() {
 // ---------- Camera: five views, drag to look around, wheel to zoom ----------
 const CAMS = ['Chase', 'Far chase', 'Bonnet', 'Cockpit', 'Low wheel'];
 const view = { yaw: 0, pitch: 0, zoom: 1, drag: false, idle: 9, x: 0, y: 0, id: -1 };
-function nextCam() { S.cam = (S.cam + 1) % CAMS.length; view.yaw = view.pitch = 0; snapCam = true; toast(CAMS[S.cam] + ' camera'); }
+function nextCam() { audio?.camera(); S.cam = (S.cam + 1) % CAMS.length; view.yaw = view.pitch = 0; snapCam = true; toast(CAMS[S.cam] + ' camera'); }
 { const cv = $('#scene');
   cv.addEventListener('pointerdown', e => { if (S.mode !== 'play') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
   cv.addEventListener('pointermove', e => { if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, -0.3, 1.1); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
@@ -203,13 +202,13 @@ function frame() {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up || (coarse && !input.down && !input.hand) ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
       const steps = 2; let hit = 0; for (let i = 0; i < steps; i++) hit = Math.max(hit, player.drive(dt / steps, ctrl));
       hit = Math.max(hit, traffic.collide(player)); crashCool -= dt;
-      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.4, hit * 0.09); S.hits++; S.combo = 0; S.flash = Math.min(0.5, hit * 0.02); S.score = Math.max(0, S.score - Math.round(hit * 6)); if (S.sound) try { audio?.crash(clamp(hit / 30, 0.2, 1)); } catch (e) {}
+      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.4, hit * 0.09); S.hits++; S.combo = 0; S.flash = Math.min(0.5, hit * 0.02); S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
         for (let k = 0; k < 26; k++) puff(player.pos.x + (Math.random() - 0.5) * 2, 0.5 + Math.random(), player.pos.z + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 12, Math.random() * 7, (Math.random() - 0.5) * 12, 0.7, 3, 1.6, 0.5); }
       if (live) {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
-        const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); }
+        const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
-        if (Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z) < 9) { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(180, S.left + 16); S.flash = 0.18; toast(`Beacon +${gain}` + (S.kind === 'run' ? ' · +16 s' : '')); moveBeacon(); }
+        if (Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z) < 9) { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(180, S.left + 16); S.flash = 0.18; audio?.beacon(); toast(`Beacon +${gain}` + (S.kind === 'run' ? ' · +16 s' : '')); moveBeacon(); }
         if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
         drawHud();
       }
@@ -225,7 +224,8 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(player.pos);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { try { audio.update(dt, { speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, steer: player.steer, offroad: false, volume: S.sound && (playing || S.mode === 'menu') ? 0.85 : 0, vehicle: 'coupe', reverse: player.speed < -0.5, grounded: true }); rainGain.gain.value = S.sound ? 0.035 * env.rain : 0; } catch (e) {} }
+  if (audio) { const ev = audio.update(dt, { playing, speed: player.speed, throttle: playing ? (input.up || (coarse && !input.down && !input.hand) ? 1 : 0) : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+    if (ev === 'thunder') S.flash = 0.35; }
   probe.set(player.pos.x, 1.15, player.pos.z); R.render(probe);
 }
 
@@ -247,6 +247,7 @@ async function boot() {
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
   window.__afterdark = { S, player, traffic, city, street, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
+  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio });
   window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });
