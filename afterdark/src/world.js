@@ -3,7 +3,7 @@
 // east gate. The mountain road leaves the east side, climbs by hairpins to a summit lay-by and drops to the north gate.
 import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SW, SPAN, rng, splitChunks } from './city.js';
-import { loadGLB } from './car.js';
+import { buildForest } from './forest.js';
 import { planAirfield, sitePaved, sitePosition } from './landmarks.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), mix = (a, b, t) => a + (b - a) * t;
@@ -73,7 +73,7 @@ export async function buildWorld(scene, city, Q) {
     const side = pick === 'low' ? (nl < nr ? 1 : -1) : (Math.abs(nl - s.y) < Math.abs(nr - s.y) ? 1 : -1);
     return { key, name, x: s.x + s.lx * side * off, z: s.z + s.lz * side * off, y: Math.max(s.y, 1.5), r, side, ux: s.tx, uz: s.tz, vx: s.lx * side, vz: s.lz * side, yaw: Math.atan2(s.tx, s.tz), blend: key === 'harbour' ? 9 : 46, road: s }; });
   const fuel = world.places.find(p => p.key === 'petrol');
-  fuel.paving = [[0, 0, 35, 40], [0, -26, 9.5, 13]];
+  fuel.paving = [[0, 0, 35, 40], [0, -25.4, 11.0, 10.8]];
   const [fx, fz] = sitePosition(fuel, 0, -15);
   fuel.arrival = { x: fx, z: fz, name: fuel.name };
   const airfield = planAirfield(samples);
@@ -87,7 +87,9 @@ export async function buildWorld(scene, city, Q) {
   world.strips = STRIPS.map(([key, name, road, a, b]) => { const rd = world.roads.find(r => r.name === road), i0 = Math.round(rd.from + (rd.to - rd.from) * a), i1 = Math.round(rd.from + (rd.to - rd.from) * b); for (let i = i0; i <= i1; i++) samples[i].wide = 30 * sst(i0, i0 + 14, i) * sst(i1, i1 - 14, i); const m = samples[Math.round((i0 + i1) / 2)]; return { key, name, i0, i1, x: m.x, z: m.z, y: m.y, r: (i1 - i0) * STEP / 2 }; });
 
   // ---- Heightfield: natural land, graded flat along the roads (not under bridges or over tunnels) ----
+  const canopyCover = (x, z) => fbm(x / 103, z / 103, 4) * 0.62 + fbm(x / 290 + 17, z / 290, 3) * 0.38;
   const cand = [];
+  const woodland = new Float32Array(nx * nz);
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = WORLD.x0 + i * WORLD.cell, z = WORLD.z0 + j * WORLD.cell; let h = natural(x, z);
     let roadDistance = Infinity, tunnelDistance = Infinity;
     { const rr = Math.ceil(100 / GC), cx = Math.floor(x / GC), cz = Math.floor(z / GC); let dmin = 999, dall = 999, covered = false; cand.length = 0;
@@ -109,10 +111,12 @@ export async function buildWorld(scene, city, Q) {
       h = mix(h, grade - 0.05, Math.max(pad, access) * sst(32, 88, tunnelDistance));
     }
     if (h > roadbed) h = mix(roadbed, h, sst(12, 26, roadDistance));
-    H[j * nx + i] = h; }
+    H[j * nx + i] = h;
+    woodland[j * nx + i] = sst(0.34, 0.66, canopyCover(x, z)) * sst(4, 12, h) * (1 - sst(218, 285, h)) * sst(16, 38, roadDistance); }
   const hAt = (x, z) => { const fx = clamp((x - WORLD.x0) / WORLD.cell, 0, nx - 1.001), fz = clamp((z - WORLD.z0) / WORLD.cell, 0, nz - 1.001), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, a = H[j * nx + i], b = H[j * nx + i + 1], c = H[(j + 1) * nx + i], d = H[(j + 1) * nx + i + 1];
     return u + v < 1 ? a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v); };
   world.terrain = hAt;
+  city.sea.setTerrain(WORLD, nx, nz, H);
   for (const site of pavedPlaces) site.arrival.y = hAt(site.arrival.x, site.arrival.z);
   // Drop-side barriers: wherever the land falls away beside the road.
   for (const s of samples) { if (s.bridge || s.tunnel) { s.wallL = s.wallR = true; continue; } s.wallL = hAt(s.x + s.lx * 30, s.z + s.lz * 30) < s.y - 5.5; s.wallR = hAt(s.x - s.lx * 30, s.z - s.lz * 30) < s.y - 5.5; }
@@ -136,8 +140,8 @@ export async function buildWorld(scene, city, Q) {
   const rock = loadTerrainTex('rock-face.jpg'), strata = loadTerrainTex('rocky-terrain.jpg');
   const landM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0, envMapIntensity: 0.35 });
   landM.onBeforeCompile = sh => { sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata };
-    sh.vertexShader = 'varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal;');
-    sh.fragmentShader = `uniform sampler2D uGrass, uRock, uStrata; varying vec3 vWPos; varying vec3 vWN;
+    sh.vertexShader = 'attribute float aWoodland; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal; vWoodland = aWoodland;');
+    sh.fragmentShader = `uniform sampler2D uGrass, uRock, uStrata; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
 float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(adH(i), adH(i + vec2(1, 0)), f.x), mix(adH(i + vec2(0, 1)), adH(i + vec2(1, 1)), f.x), f.y); }\n` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
   vec2 adP = vWPos.xz;
@@ -148,13 +152,15 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   vec3 adAerial = texture2D(uStrata, adP / 88.0).rgb;
   vec3 adGround = texture2D(uGrass, adP / 7.0).rgb;
   vec3 adG = mix(adGround * 1.22, adAerial, 0.27) * mix(vec3(0.54, 0.7, 0.46), vec3(1.12, 1.12, 0.88), smoothstep(0.19, 0.77, adMacro));
+  adG = mix(adG, adG * vec3(0.52, 0.69, 0.48), vWoodland * 0.75);
   vec3 adBlend = pow(abs(adNn), vec3(3.0));
   adBlend /= adBlend.x + adBlend.y + adBlend.z;
   vec3 adRock = texture2D(uRock, vWPos.zy / vec2(9.0, 5.0)).rgb * adBlend.x
               + texture2D(uRock, adP / 9.0).rgb * adBlend.y
               + texture2D(uRock, vWPos.xy / vec2(9.0, 5.0)).rgb * adBlend.z;
-  vec3 adStrata = texture2D(uStrata, vec2(adP.x + adP.y * 0.44, vWPos.y * 1.75 + adP.y * 0.52) / 77.0).rgb;
-  vec3 adR = mix(adRock * vec3(0.78, 0.73, 0.66), adStrata * vec3(0.91, 0.84, 0.72), 0.62);
+  vec2 adWarp = vec2(adN(adP * 0.028), adN(adP * 0.023 + 41.0)) * 0.24;
+  vec3 adStrata = texture2D(uStrata, vec2(adP.x + adP.y * 0.51, vWPos.y * 1.59 + adP.y * 0.34) / 82.0 + adWarp).rgb;
+  vec3 adR = mix(adRock * vec3(0.82, 0.78, 0.73), adStrata * vec3(0.85, 0.79, 0.70), 0.35 + adMacro * 0.29);
   adR *= mix(0.79, 1.21, smoothstep(0.13, 0.8, adBands));
   float adExposure = adSlope + (adMacro - 0.46) * 0.25 + (adBands - 0.5) * 0.14;
   vec3 adC = mix(adG, adR, smoothstep(0.115, 0.35, adExposure));
@@ -162,12 +168,12 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   adC = mix(adC, vec3(0.54, 0.45, 0.31) * (0.76 + 0.24 * adN(adP * 0.7)), adDune);
   diffuseColor.rgb = adC;`); };
   const PATCH = 30, land = new THREE.Group();
-  for (let pj = 0; pj < nz - 1; pj += PATCH) for (let pi = 0; pi < nx - 1; pi += PATCH) { const w = Math.min(PATCH, nx - 1 - pi) + 1, d = Math.min(PATCH, nz - 1 - pj) + 1, pos = new Float32Array(w * d * 3), nor = new Float32Array(w * d * 3), idx = []; let flat = true;
-    for (let j = 0; j < d; j++) for (let i = 0; i < w; i++) { const gi = pi + i, gj = pj + j, k = (j * w + i) * 3, h = H[gj * nx + gi]; pos[k] = WORLD.x0 + gi * WORLD.cell; pos[k + 1] = h; pos[k + 2] = WORLD.z0 + gj * WORLD.cell; if (h > -0.39 || h < -0.41) flat = false;
+  for (let pj = 0; pj < nz - 1; pj += PATCH) for (let pi = 0; pi < nx - 1; pi += PATCH) { const w = Math.min(PATCH, nx - 1 - pi) + 1, d = Math.min(PATCH, nz - 1 - pj) + 1, pos = new Float32Array(w * d * 3), nor = new Float32Array(w * d * 3), shade = new Float32Array(w * d), idx = []; let flat = true;
+    for (let j = 0; j < d; j++) for (let i = 0; i < w; i++) { const gi = pi + i, gj = pj + j, k = (j * w + i) * 3, h = H[gj * nx + gi]; pos[k] = WORLD.x0 + gi * WORLD.cell; pos[k + 1] = h; pos[k + 2] = WORLD.z0 + gj * WORLD.cell; shade[j * w + i] = woodland[gj * nx + gi]; if (h > -0.39 || h < -0.41) flat = false;
       const hl = H[gj * nx + Math.max(0, gi - 1)], hr = H[gj * nx + Math.min(nx - 1, gi + 1)], hd = H[Math.max(0, gj - 1) * nx + gi], hu = H[Math.min(nz - 1, gj + 1) * nx + gi], ax = hl - hr, az = hd - hu, ay = 2 * WORLD.cell, il = 1 / Math.hypot(ax, ay, az); nor[k] = ax * il; nor[k + 1] = ay * il; nor[k + 2] = az * il; }
     if (flat) continue; // entirely under the city
     for (let j = 0; j < d - 1; j++) for (let i = 0; i < w - 1; i++) { const a = j * w + i, b = a + 1, c = a + w, e = c + 1; idx.push(a, c, b, b, c, e); }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setIndex(idx); g.computeBoundingSphere();
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('aWoodland', new THREE.BufferAttribute(shade, 1)); g.setIndex(idx); g.computeBoundingSphere();
     const m = new THREE.Mesh(g, landM); m.receiveShadow = true; land.add(m); }
   scene.add(land);
 
@@ -218,18 +224,8 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
       for (const e of [run[0], run[run.length - 1]]) { for (const sg of [-1, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(7, 11, 1.6), conc); b.position.set(e.x + e.lx * sg * (RAD + 3.3), e.y + 5.4, e.z + e.lz * sg * (RAD + 3.3)); b.rotation.y = Math.atan2(e.tx, e.tz); scene.add(b); } const top = new THREE.Mesh(new THREE.BoxGeometry(RAD * 2 + 13.6, 4.2, 1.6), conc); top.position.set(e.x, e.y + RAD + 1.6, e.z); top.rotation.y = Math.atan2(e.tx, e.tz); scene.add(top); } }
     const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.08, 2.4), lightM, Math.max(1, lights.length)); lights.forEach((q, k) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[3], 0); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.rotation.set(0, 0, 0); lm.count = lights.length; lm.frustumCulled = false; scene.add(lm); world.tunnels = runs.filter(r => r.length >= 6).length; }
 
-  // ---- Forest on the slopes ----
-  try { const kit = await loadGLB('/evermile/assets/models/forest-kit.glb'); kit.scene.updateMatrixWorld(true);
-    const kinds = ['pine-0', 'pine-1', 'pine-2', 'pine-3'].map(n => kit.scene.getObjectByName(n)).filter(Boolean), spots = kinds.map(() => []), want = Math.round(9000 * (Q.reach || 1));
-    for (let tries = 0, got = 0; got < want && tries < want * 14; tries++) { const x = WORLD.x0 + 40 + R() * (WORLD.x1 - WORLD.x0 - 80), z = WORLD.z0 + 40 + R() * (WORLD.z1 - WORLD.z0 - 80), h = hAt(x, z); if (h < 5 || h > 285) continue;
-      const sl = Math.abs(hAt(x + 6, z) - hAt(x - 6, z)) + Math.abs(hAt(x, z + 6) - hAt(x, z - 6)); if (sl > 9.5) continue; if (fbm(x / 145, z / 145, 4) < 0.47 || R() < sst(235, 325, h) * 0.85) continue; { const nr = nearRoad(x, z, 50); if (nr && nr.d < 15 + (nr.s.wide || 0)) continue; } if (nearPlace(x, z, 12)) continue;
-      const k = Math.floor(R() * kinds.length); spots[k].push([x, h - 0.3, z, 0.56 + R() * 0.9, R() * 6.28]); got++; }
-    kinds.forEach((node, k) => { const bb = new THREE.Box3().setFromObject(node), fix = new THREE.Matrix4().makeTranslation(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2), m4 = new THREE.Matrix4();
-      node.traverse(o => { if (!o.isMesh) return; const mat = o.material.clone(); mat.envMapIntensity = 0.3; if (mat.alphaTest) mat.alphaTest = Math.min(mat.alphaTest, 0.5); const im = new THREE.InstancedMesh(o.geometry, mat, spots[k].length), local = fix.clone().multiply(o.matrixWorld);
-        spots[k].forEach((q, n) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[4], 0); dummy.scale.setScalar(q[3]); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, local)); }); im.castShadow = (Q.reach || 1) >= 1; scene.add(im); splitChunks(im, 1500, city.chunks, 640); }); });
-    { const rock = kit.scene.getObjectByName('boulder-0'); if (rock) { const list = [], wantR = Math.round(700 * (Q.reach || 1)); for (let tries = 0; list.length < wantR && tries < wantR * 30; tries++) { const x = WORLD.x0 + 40 + R() * (WORLD.x1 - WORLD.x0 - 80), z = WORLD.z0 + 40 + R() * (WORLD.z1 - WORLD.z0 - 80), h = hAt(x, z); if (h < 6) continue; const sl = Math.abs(hAt(x + 6, z) - hAt(x - 6, z)) + Math.abs(hAt(x, z + 6) - hAt(x, z - 6)); if (sl < 3.5 || sl > 16) continue; const nr = nearRoad(x, z, 40); if (nr && nr.d < 12 || nearPlace(x, z, 6)) continue; list.push([x, h - 0.5, z, 0.25 + R() * 0.7, R() * 6.28]); }
-        const bb = new THREE.Box3().setFromObject(rock), fix = new THREE.Matrix4().makeTranslation(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2), m4 = new THREE.Matrix4(); rock.traverse(o => { if (!o.isMesh) return; const mat = o.material.clone(); mat.envMapIntensity = 0.3; const im = new THREE.InstancedMesh(o.geometry, mat, list.length), local = fix.clone().multiply(o.matrixWorld); list.forEach((q, n) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[4], 0); dummy.scale.setScalar(q[3]); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, local)); }); im.castShadow = (Q.reach || 1) >= 1; im.receiveShadow = true; scene.add(im); splitChunks(im, 700, city.chunks, 640); }); world.rocks = list.length; } }
-    dummy.scale.set(1, 1, 1); dummy.rotation.set(0, 0, 0); world.trees = spots.reduce((a, s) => a + s.length, 0); } catch (e) { console.warn('forest unavailable', e); }
+  try { await buildForest(scene, city, world, WORLD, nearPlace, canopyCover, Q.reach || 1); }
+  catch (error) { console.warn('Forest unavailable', error); }
 
   // ---- Roadside: tufts of grass along the verge, and reflective studs that pick out the road after dark ----
   { const gt = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const c = cv.getContext('2d'), r = rng(12); for (let i = 0; i < 90; i++) { const x = r() * 128, hgt = 18 + r() * 44, g = 48 + r() * 62; c.strokeStyle = `rgb(${g * 0.82 | 0},${g * 0.86 | 0},${g * 0.4 | 0})`; c.lineWidth = 1 + r() * 1.6; c.beginPath(); c.moveTo(x, 64); c.quadraticCurveTo(x + (r() - 0.5) * 10, 64 - hgt * 0.6, x + (r() - 0.5) * 22, 64 - hgt); c.stroke(); } return cv; })()); gt.colorSpace = THREE.SRGBColorSpace;
@@ -243,6 +239,6 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
 
   // Summit lay-by marker for the map and the beacon list.
   let top = samples[0]; for (const s of samples) if (s.y > top.y) top = s; world.summit = top;
-  world.stats = { samples: samples.length, grid: [nx, nz], summit: Math.round(top.y), tunnels: world.tunnels, bridge: samples.filter(s => s.bridge).length * STEP, roads: world.roads.map(r => r.name + ' ' + Math.round(r.length) + ' m'), trees: world.trees };
+  world.stats = { samples: samples.length, grid: [nx, nz], summit: Math.round(top.y), tunnels: world.tunnels, bridge: samples.filter(s => s.bridge).length * STEP, roads: world.roads.map(r => r.name + ' ' + Math.round(r.length) + ' m'), trees: world.trees, understory: world.understory, rocks: world.rocks };
   return world;
 }

@@ -36,10 +36,10 @@ export function createSound() {
     crash(k) { try { drive.crash(k); } catch (e) {} burst(3800, 1.5, 0.25 * k, 0.5, 0.04, 'highpass'); if (k > 0.5) for (let i = 0; i < 5; i++) burst(5000 + Math.random() * 3000, 9, 0.12 * k, 0.1, 0.1 + i * 0.07); },
     horn(v) { hornHeld = v; },
     thunder() { const names = Object.keys(shots); if (!names.length) return false; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = shots[names[Math.floor(Math.random() * names.length)]]; g.gain.value = 0.5 + Math.random() * 0.35; src.playbackRate.value = 0.9 + Math.random() * 0.2; src.connect(g).connect(master); src.start(); return true; },
-    // Called every frame. s: { playing, speed, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
+    // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
       set(master.gain, on ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
-      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: false, volume: 1.35 * live, vehicle: 'coupe', transmission: TRANSMISSION, reverse: s.speed < -0.5, grounded: true });
+      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: false, volume: 1.35 * live, vehicle: 'coupe', transmission: TRANSMISSION, reverse: s.reverse, grounded: true });
         drive.horn(hornHeld && s.playing, 1.6); drive.townHum(0.55 + 0.45 * e.day); drive.chatter(s.people && e.rain < 0.4, 'street'); } catch (err) {}
       const shore = clamp(1 - (s.x - s.beachX) / 190), open = s.cockpit ? 0.8 : 1;
       if (loops.rain) set(loops.rain.gain, 0.62 * e.rain * open, 0.6);

@@ -75,21 +75,20 @@ function makeSite(scene, city, world, site) {
     if (!batches.has(key)) batches.set(key, batch);
     batch.entries.push([u, y, v * mirror, w, h, d, c, turn * mirror]);
   };
-  function solid(u, v, w, d) {
-    const radius = Math.min(w, d) * 0.5, long = Math.max(w, d), count = Math.max(1, Math.ceil(long / radius));
-    for (let i = 0; i < count; i++) {
-      const offset = count === 1 ? 0 : (i / (count - 1) - 0.5) * (long - 2 * radius);
-      const [x, z] = sitePosition(site, u + (w >= d ? offset : 0), v + (w < d ? offset : 0));
-      city.colliders.push({ x, z, r: radius });
-    }
+  function solid(u, v, w, d, turn = 0) {
+    const [x, z] = sitePosition(site, u, v), cs = Math.cos(turn), sn = Math.sin(turn);
+    city.colliders.push({ x, z, w, d, ux: site.ux * cs - site.vx * sn, uz: site.uz * cs - site.vz * sn, kind: site.key });
   }
   function box(u, y, v, w, h, d, c, opts = {}) {
     add(cube, opts.mat || standard, u, y, v, w, h, d, c, opts.turn || 0);
-    if (opts.hard) solid(u, v, w, d);
+    if (opts.hard) solid(u, v, w, d, opts.turn);
   }
   function post(u, y, v, radius, height, c, hard = false) {
     add(cylinder, standard, u, y, v, radius, height, radius, c, 0);
-    if (hard) solid(u, v, 2 * radius, 2 * radius);
+    if (hard) {
+      const [x, z] = sitePosition(site, u, v);
+      city.colliders.push({ x, z, r: radius, kind: site.key });
+    }
   }
   function patch(u, v, w, d, offset, material, step = 12, c = 0xffffff) {
     const g = new THREE.PlaneGeometry(w, d, Math.ceil(w / step), Math.ceil(d / step));
@@ -127,7 +126,7 @@ function makeSite(scene, city, world, site) {
   asphalt.anisotropy = 8;
   const pavement = new THREE.MeshStandardMaterial({ map: asphalt, roughness: 0.91, envMapIntensity: 0.25 });
   site.paving.forEach(([u, v, w, d]) => patch(u, v, w, d, 0.075, pavement, site.key === 'petrol' ? 2.3 : 4));
-  const mark = (u, v, w, d, c = 0xd6d2b7) => patch(u, v, w, d, 0.123, paint, 3, c);
+  const mark = (u, v, w, d, c = 0xd6d2b7, offset = 0.123) => patch(u, v, w, d, offset, paint, 2, c);
 
   function sign(u, y, v, width, height, turn, draw, lit = false) {
     const map = signTexture(1024, 256, draw);
@@ -145,6 +144,13 @@ function makeSite(scene, city, world, site) {
     mesh.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     group.add(mesh);
     return mesh;
+  }
+  function light(u, y, v, c, distance, angle) {
+    const node = new THREE.SpotLight(c, 0, distance, angle, 0.65, 2);
+    node.position.set(u, y, v * mirror);
+    node.target.position.set(u, 0, v * mirror);
+    group.add(node, node.target);
+    return node;
   }
   function finish() {
     for (const { geometry, mat, entries } of batches.values()) {
@@ -168,7 +174,7 @@ function makeSite(scene, city, world, site) {
       paintDetails.forEach(g => g.dispose());
     }
   }
-  return { group, box, post, solid, mark, sign, install, finish, glow, glass, ground(u, v) {
+  return { group, box, post, solid, mark, patch, sign, install, light, finish, glow, glass, ground(u, v) {
     return world.ground(...sitePosition(site, u, v)) - site.y + 0.05;
   }, setTime(e) {
     pavement.roughness = THREE.MathUtils.lerp(0.91, 0.42, e.wet);
@@ -179,71 +185,154 @@ function makeSite(scene, city, world, site) {
 
 export async function buildFuelStation(scene, city, world, site) {
   const S = makeSite(scene, city, world, site);
-  const cream = 0xd7d6cc, navy = 0x18343a, amber = 0xc89543;
-  const branding = (ctx, w, h) => {
-    ctx.fillStyle = '#18343a'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#e7b562'; ctx.fillRect(0, h - 20, w, 20);
-    ctx.fillStyle = '#f6efdf'; ctx.font = '700 92px sans-serif';
-    ctx.textAlign = 'center'; ctx.fillText('VALLEY FUEL', w / 2, h * 0.62);
-  };
-  const [station, cover, pump] = await Promise.all(['shop', 'canopy', 'pump'].map(async id => {
+  const cream = 0xd0c7b6, navy = 0x193638, amber = 0xc8944a, concrete = 0x8a8580;
+  const assets = ['shop', 'canopy', 'pump', 'ice', 'bin'];
+  const [station, cover, pump, ice, bin] = await Promise.all(assets.map(async id => {
     try { return (await loadGLB('/evermile/assets/models/prop-' + id + '.glb')).scene; }
-    catch (e) { console.warn('Fuel station model unavailable:', id, e); return null; }
+    catch (e) { console.warn('Fuel station model unavailable:', id, e.message); return null; }
   }));
-  const slab = S.ground(0, 0);
-  S.box(0, slab + 0.09, -3, 19, 0.15, 11, 0x99998a);
-  for (const u of [-8.5, 8.5]) {
-    S.post(u, slab + 2.47, -3, 0.28, 4.8, cream, true);
-    S.box(u, slab + 0.31, -3, 0.65, 0.62, 1.25, navy);
+
+  const wordmark = (text, secondary) => (ctx, w, h) => {
+    ctx.fillStyle = '#193638'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#dfaa61'; ctx.fillRect(0, h - 16, w, 16);
+    ctx.fillStyle = '#f3eddf'; ctx.textAlign = 'center';
+    ctx.font = '700 96px sans-serif'; ctx.fillText(text, w / 2, secondary ? h * 0.51 : h * 0.65);
+    if (secondary) {
+      ctx.font = '600 33px sans-serif';
+      ctx.fillText(secondary, w / 2, h * 0.78);
+    }
+  };
+
+  const y = S.ground(0, -3), canopy = y + 4.68;
+  const concreteMaterial = new THREE.MeshStandardMaterial({ color: concrete, roughness: 0.81, envMapIntensity: 0.44 });
+  const floorTexture = signTexture(256, 256, (ctx, w, h) => {
+    ctx.fillStyle = '#a5a09a'; ctx.fillRect(0, 0, w, h);
+    const noise = ctx.getImageData(0, 0, w, h);
+    let seed = 721;
+    for (let i = 0; i < noise.data.length; i += 4) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      const n = (seed / 4294967296 - 0.5) * 26;
+      for (let k = 0; k < 3; k++) noise.data[i + k] += n;
+    }
+    ctx.putImageData(noise, 0, 0);
+    for (const [x, z] of [[56, 74], [204, 180], [180, 54]]) {
+      const g = ctx.createRadialGradient(x, z, 2, x, z, 34);
+      g.addColorStop(0, 'rgba(39,36,31,.27)'); g.addColorStop(1, 'rgba(39,36,31,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 34, z - 34, 68, 68);
+    }
+  });
+  floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+  concreteMaterial.map = floorTexture;
+  S.patch(0, -3, 20.1, 12.3, 0.142, concreteMaterial, 1.1);
+  S.patch(0, 8.9, 15.7, 2.6, 0.142, concreteMaterial, 1.1);
+  S.patch(0, -10, 21, 0.26, 0.085, new THREE.MeshStandardMaterial({ color: 0x272a2a, metalness: 0.53, roughness: 0.64 }), 3);
+  for (const u of [-7.5, -2.5, 2.5, 7.5]) S.mark(u, -3, 0.024, 12.25, 0x726e65, 0.175);
+  for (const v of [-6.01, 0.03, 3.08]) S.mark(0, v, 20.0, 0.024, 0x726e65, 0.175);
+
+  for (const u of [-8.3, 8.3]) for (const v of [-5.9, -0.07]) {
+    S.box(u, y + 2.39, v, 0.43, 4.7, 0.46, cream, { hard: true });
+    S.box(u, y + 0.33, v, 0.63, 0.58, 0.67, navy, { hard: true });
   }
-  if (cover) S.install(cover, 0, slab + 4.7, -3, Math.PI);
-  S.box(0, slab + 5.08, -3, 20.3, 0.64, 12.3, navy);
-  S.box(0, slab + 4.76, -9.18, 20.4, 0.11, 0.09, amber);
-  S.sign(0, slab + 5.09, -9.24, 9, 0.63, Math.PI, branding, true);
-  for (const u of [-6.3, 0, 6.3]) {
-    S.box(u, slab + 0.12, -3, 1.7, 0.23, 2.45, 0x9f9e91);
-    if (pump) S.install(pump, u, slab + 0.22, -3, Math.PI);
-    else S.box(u, slab + 1.1, -3, 0.76, 1.8, 0.53, navy);
-    S.solid(u, -3, 1.0, 1.7);
-    S.box(u, slab + 4.73, -5.5, 1.3, 0.055, 0.42, 0xfff6da, { mat: S.glow });
-    for (const v of [-4.4, -1.6]) S.post(u, slab + 0.36, v, 0.075, 0.72, amber);
-    S.mark(u - 1.5, -3, 0.09, 6, 0xc9a947);
-    S.mark(u + 1.5, -3, 0.09, 6, 0xc9a947);
+  if (cover) S.install(cover, 0, canopy - 0.08, -3, Math.PI);
+  S.box(0, canopy + 0.35, -3, 20.4, 0.66, 12.3, navy);
+  for (const v of [-9.17, 3.17]) {
+    S.box(0, canopy + 0.12, v, 20.43, 0.085, 0.08, amber);
+    S.sign(0, canopy + 0.40, v + Math.sign(v) * 0.045, 8.8, 0.51, v < 0 ? Math.PI : 0, wordmark('VALLEY FUEL'), true);
   }
-  const shopY = S.ground(0, 12);
+
+  const lights = [];
+  for (const [i, u] of [-6, 0, 6].entries()) {
+    S.box(u, y + 0.142, -3, 1.28, 0.22, 2.7, 0x99948c);
+    S.box(u, y + 0.24, -3, 1.22, 0.05, 2.65, navy);
+    if (pump) S.install(pump, u, y + 0.266, -3, Math.PI);
+    else S.box(u, y + 1.14, -3, 0.68, 1.75, 0.61, navy);
+    S.solid(u, -3, 1.15, 2.56);
+    for (const v of [-4.4, -1.6]) {
+      S.post(u, y + 0.52, v, 0.09, 0.98, amber, true);
+      S.post(u, y + 0.86, v, 0.096, 0.13, navy);
+    }
+    for (const v of [-6.55, 0.5]) S.box(u, canopy - 0.13, v, 1.32, 0.057, 0.42, 0xf2e7d4, { mat: S.glow });
+    lights.push([S.light(u, canopy - 0.17, -3, 0xfff6ea, 18, 1.05), 610]);
+    S.sign(u, canopy - 0.43, -7.6, 0.45, 0.37, Math.PI, wordmark(String(i + 1)), true);
+    for (const e of [-1, 1]) {
+      S.mark(u + e * 1.32, -3, 0.052, 5.8, 0xc0a46a, 0.175);
+      S.mark(u + e * 1.32, -7, 0.052, 1.3, 0xc0a46a, 0.175);
+    }
+  }
+
+  const shopV = 14.7, shopY = S.ground(0, shopV);
   if (station) {
-    // The converted model has its display glazing and public entrance on +Z.
-    station.traverse(o => {
-      if (o.isMesh && o.material.name === '6twelve.001') o.visible = false;
-    });
-    const market = S.install(station, 0, shopY, 14.8, Math.PI);
-    market.scale.set(1.33, 1.13, 1.0);
-    S.solid(0, 14.8, 11, 9.6);
+    station.traverse(o => { if (o.isMesh && o.material.name === '6twelve.001') o.visible = false; });
+    const market = S.install(station, 0, shopY, shopV, Math.PI);
+    market.scale.set(1.49, 1.12, 1.0);
+    S.solid(0, shopV, 13.85, 10.4);
   } else {
-    S.box(0, shopY + 1.8, 13, 9, 3.6, 6, cream, { hard: true });
-    S.box(0, shopY + 1.85, 9.96, 6.5, 2.65, 0.1, 0xffffff, { mat: S.glass });
+    S.box(0, shopY + 1.78, shopV, 13.85, 3.56, 10.4, cream, { hard: true });
+    S.box(0, shopY + 1.71, shopV - 5.21, 10.4, 2.38, 0.1, 0xffffff, { mat: S.glass });
   }
-  S.sign(0, shopY + 3.12, station ? 9.87 : 9.88, station ? 11.25 : 6.8, 0.79, Math.PI, (ctx, w, h) => {
-    ctx.fillStyle = '#18343a'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#f5efde'; ctx.textAlign = 'center'; ctx.font = '700 104px sans-serif';
-    ctx.fillText('MARKET', w / 2, h * 0.66);
-  }, true);
+  S.box(0, shopY + 3.24, 9.34, 14.05, 0.22, 1.81, navy);
+  S.box(0, shopY + 3.33, 8.4, 14.05, 0.35, 0.13, navy);
+  S.sign(0, shopY + 3.34, 8.32, 5.2, 0.54, Math.PI, wordmark('MARKET'), true);
+  S.box(0, shopY + 2.73, 8.9, 2.8, 0.075, 0.25, 0xffeed4, { mat: S.glow });
+  lights.push([S.light(0, shopY + 3.26, 8.0, 0xffdfa6, 11, 0.98), 275]);
+  for (const u of [-5.7, 5.7]) S.post(u, shopY + 0.46, 8.23, 0.09, 0.85, amber, true);
+
+  if (ice) {
+    S.install(ice, -7.1, S.ground(-7.1, 10.3), 10.3, Math.PI).scale.setScalar(0.72);
+    S.solid(-7.1, 10.3, 1.36, 0.61);
+  }
+  if (bin) {
+    S.install(bin, 12.5, S.ground(12.5, 16), 16, 0);
+    S.solid(12.5, 16, 2.15, 1.53);
+  }
+
+  // Painted parking bays sit outside the pump approaches, with wheel stops at the storefront.
+  for (const u of [-14.9, -11.6, -8.3, 8.3, 11.6, 14.9]) {
+    S.mark(u, 6.0, 0.095, 4.5);
+    S.mark(u, 6.0, 0.55, 0.085);
+  }
+  for (const u of [-13.25, -9.95, 9.95, 13.25]) S.box(u, S.ground(u, 8.19) + 0.06, 8.19, 1.45, 0.12, 0.18, 0x8a8069);
+  for (const u of [-16.7, 16.7]) {
+    S.box(u, S.ground(u, 1.3) + 0.032, 1.3, 0.21, 0.13, 22, concrete);
+    for (const v of [-8.5, 7.3, 11.2]) {
+      const ground = S.ground(u, v);
+      S.box(u, ground + 0.14, v, 0.86, 0.28, 1.65, 0x6c6250, { hard: true });
+      S.box(u, ground + 0.30, v, 0.64, 0.055, 1.4, 0x626745);
+    }
+  }
+  for (const e of [-1, 1]) S.mark(e * 5.1, -25, 0.10, 9.7);
+  for (const [u, v] of [[-2.65, -29.4], [2.65, -21]]) S.mark(u, v, 4.4, 0.19, 0xc9c6b6);
+  for (let j = 0; j < 4; j++) S.mark(0, -28 + j * 2.1, 0.085, 1.05, 0xc3ad73);
+
+  const entry = S.ground(6.8, -17.4);
+  S.post(6.8, entry + 2.9, -17.4, 0.09, 5.8, navy, true);
+  S.box(6.4, entry + 5.78, -17.4, 0.92, 0.1, 0.27, navy);
+  S.box(6.15, entry + 5.7, -17.4, 0.31, 0.05, 0.22, 0xfff6e6, { mat: S.glow });
+  lights.push([S.light(6.15, entry + 5.63, -17.4, 0xffe9c8, 18, 0.91), 525]);
   const sy = S.ground(14.5, -16);
-  S.box(14.5, sy + 2.8, -16, 0.2, 5.6, 0.35, navy, { hard: true });
-  for (const u of [-10, 10]) S.box(u, slab + 0.085, 8, 0.2, 0.16, 12, 0x929589);
+  S.box(14.5, sy + 2.8, -16, 0.28, 5.6, 0.38, navy, { hard: true });
   S.box(14.5, sy + 4.3, -16, 3.1, 2.65, 0.24, navy);
   const prices = (ctx, w, h) => {
-    ctx.fillStyle = '#18343a'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#eee0bd'; ctx.font = '700 52px sans-serif'; ctx.fillText('VALLEY FUEL', 40, 62);
-    ctx.fillStyle = '#121d23'; ctx.fillRect(36, 89, w - 72, h - 110);
-    ctx.fillStyle = '#edba78'; ctx.font = '700 53px monospace';
-    ctx.fillText('REGULAR        3.48', 56, 145);
-    ctx.fillText('DIESEL         3.81', 56, 207);
+    ctx.fillStyle = '#193638'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#eee0bd'; ctx.font = '700 49px sans-serif'; ctx.fillText('VALLEY FUEL', 46, 57);
+    ctx.fillStyle = '#142021'; ctx.fillRect(36, 77, w - 72, h - 96);
+    ['REGULAR', 'PREMIUM', 'DIESEL'].forEach((label, i) => {
+      ctx.fillStyle = '#e8e2d4'; ctx.font = '600 36px sans-serif'; ctx.fillText(label, 58, 123 + i * 48);
+      ctx.fillStyle = '#efbd79'; ctx.font = '700 43px monospace'; ctx.fillText(['3.48', '3.79', '3.81'][i], w - 260, 123 + i * 48);
+    });
   };
   S.sign(14.5, sy + 4.3, -16.13, 3.05, 2.6, Math.PI, prices, true);
   S.sign(14.5, sy + 4.3, -15.87, 3.05, 2.6, 0, prices, true);
   S.finish();
-  return S.setTime;
+
+  return env => {
+    S.setTime(env);
+    concreteMaterial.roughness = 0.81 - env.wet * 0.38;
+    for (const [light, power] of lights) {
+      light.visible = env.night > 0.06;
+      light.intensity = power * env.night;
+    }
+  };
 }
 
 function parkedPlane(scene, site, u, v, turn, accent) {
@@ -397,6 +486,7 @@ export function buildAirfield(scene, city, world, site) {
   }
   // The public road and runway remain open. Low access fencing separates parking from the apron.
   for (const begin of [-88, 9]) {
+    A.solid(begin + 35, -64.7, 70, 0.12);
     for (let u = begin; u < begin + 70; u += 3.5) {
       A.post(u, 0.8, -64.7, 0.045, 1.63, slate, true);
       A.box(u + 1.7, 1.57, -64.7, 3.4, 0.04, 0.043, slate);
