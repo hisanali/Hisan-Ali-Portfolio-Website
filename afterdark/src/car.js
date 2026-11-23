@@ -32,7 +32,12 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const steeringWheel = model.getObjectByName('steering_wheel');
   const restSteering = steeringWheel?.quaternion.clone();
   const steeringAxis = new THREE.Vector3(0, 0, 1);
-  const frontAngle = (steer, speed) => steer * (0.65 + 0.11 * (1 - THREE.MathUtils.smoothstep(Math.abs(speed), 5, 18))) / (1 + (speed / 25) ** 2);
+  // Steering geometry. Full lock is 33 degrees at the wheels, which gives a kerb-to-kerb turning circle of about 11 m.
+  // A keyboard is on or off, so above walking pace full lock asks for just under the cornering grip the tyres have at
+  // that speed (less in the wet, less while braking, much less in reverse) instead of a fixed angle the car cannot follow.
+  const LOCK = 0.576; let gripNow = 10.3;
+  const steerLimit = (speed, reverse) => Math.min(LOCK, Math.atan(wheelbase * (reverse ? Math.min(gripNow * 0.92, 4.4) : gripNow * 0.92) / Math.max(1, speed * speed)));
+  const frontAngle = (steer, speed) => steer * steerLimit(Math.abs(speed), speed < -0.3);
   const env = { envMap: envTexture, envMapIntensity: 1.7 };
   const paint = new THREE.MeshPhysicalMaterial({ color: 0xb8bcc4, metalness: 0.72, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, ...env, envMapIntensity: 2.4 });
   const M = {
@@ -131,8 +136,10 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     let vF = car.vel.dot(fwd), vL = car.vel.dot(left);
     const speed = Math.abs(vF);
     const wild = outside(car.pos.x, car.pos.z);
-    const steerRate = ctrl.steer === 0 || ctrl.steer * car.steer < 0 ? 18 : lerp(16, 7.5, clamp(speed / 41, 0, 1));
-    car.steer = lerp(car.steer, ctrl.steer, 1 - Math.exp(-steerRate * dt));
+    // The wheel is wound on at a steady rate that slows with speed, and runs back to centre faster than it winds on:
+    // a short tap is a small correction, a held key reaches full lock in a fraction of a second.
+    { const k = clamp(speed / 50, 0, 1), unwinding = ctrl.steer === 0 || ctrl.steer * car.steer < 0, rate = (unwinding ? lerp(9, 6, k) : lerp(7.5, 4, k)) * dt;
+      car.steer += clamp(ctrl.steer - car.steer, -rate, rate); }
     // A press that starts while moving forward remains a brake until the pedal is released.
     if (!ctrl.brake) brakeToStop = false;
     else if (vF > 0.12 || ctrl.stopOnly) brakeToStop = true;
@@ -141,7 +148,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     else if (serviceBrake || ctrl.throttle || vF > -0.08) car.reversing = false;
     const VMAX = T.vmax; let a = 0;
     if (serviceBrake) {
-      const decel = (11.3 - wetK * 2.45) * T.brake;
+      const decel = (10.5 - wetK * 2.7) * T.brake;
       a -= ctrl.brake * decel;
     } else if (ctrl.throttle > 0) {
       const engine = T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
@@ -149,7 +156,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && vF > 0
         ? THREE.MathUtils.smoothstep(Math.abs(car.steer), 0.52, 0.96) : 0;
-      const cornerSpeed = 9.8 - wetK * 1.4;
+      const cornerSpeed = (6.4 - wetK * 0.9) * Math.sqrt(T.grip);
       const cornerAccel = clamp((cornerSpeed - vF) * 1.72, -6.5, engine);
       a += ctrl.throttle * lerp(engine, cornerAccel, lock);
     } else if (ctrl.brake > 0) {
@@ -169,7 +176,10 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     vF = stopped ? 0 : nextSpeed;
     if (stopped) vL *= Math.exp(-dt * 17);
     const onDirt = car.onSand || car.rough;
-    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 11.3 - wetK * 1.6) * T.grip;
+    // Dry tarmac holds about 1.05 g, a soaked road about 0.78 g. Hard braking uses part of that, leaving less to turn with.
+    const braking = serviceBrake ? Math.min(1, ctrl.brake) : 0;
+    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 10.3 - wetK * 2.65) * T.grip * Math.sqrt(1 - 0.62 * braking * braking);
+    gripNow = grip;
     const yaw = vF * Math.tan(frontAngle(car.steer, vF)) / wheelbase;
     const cap = (ctrl.hand ? grip * 1.56 : grip) / Math.max(2.8, Math.abs(vF));
     const targetYaw = car.air ? car.yawRate * 0.98 : clamp(yaw, -cap, cap);
@@ -182,7 +192,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     left.set(fwd.z, 0, -fwd.x);
     car.heading += turn;
     // The tires track the steering on normal throttle, while the handbrake can still loosen the rear.
-    const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 2.1;
+    const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 3.2;
     vL *= Math.exp(-lateralDamping * dt);
     car.vel.copy(fwd).multiplyScalar(vF).addScaledVector(left, vL);
     const ox0 = car.pos.x, oz0 = car.pos.z;
