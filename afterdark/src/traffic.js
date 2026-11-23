@@ -2,9 +2,11 @@
 // plus parked cars along the kerbs. Every body style is drawn with instancing.
 import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SPAN, signal, rng } from './city.js';
+import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { loadGLB } from './car.js';
 
 const STYLES = ['sedan', 'hatch', 'suv', 'wagon', 'van', 'pickup'];
+const TRANSIT = ['bus', 'coach'];
 const TINTS = [0xdadde2, 0x15171b, 0x8c9198, 0x2a3140, 0x7a1418, 0x1f3d6b, 0xb9b3a4, 0x3c4a3f, 0xc8a24a, 0x505560];
 const dummy = new THREE.Object3D(), mat = new THREE.Matrix4(), col = new THREE.Color(), clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -29,7 +31,7 @@ function rearPlate(style, i, bounds) {
 
 export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const R = rng(seed), kits = [], headMaterials = [], tailMaterials = [];
-  for (const style of STYLES) {
+  for (const style of [...STYLES, ...TRANSIT]) {
     const g = await loadGLB(`/evermile/assets/models/road-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
     const parts = []; const lamp = n => { const o = g.scene.getObjectByName(n); return o ? o.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0.6, 0.65, n[0] === 'H' ? 2 : -2); };
     g.scene.traverse(o => { if (!o.isMesh) return; let m = o.material; const name = m.name || '';
@@ -39,6 +41,22 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       else if (/TailLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xff1a0c); m.emissiveIntensity = 0.37; tailMaterials.push(m); }
       else { m = m.clone(); m.envMapIntensity = 0.8; }
       parts.push({ geo: o.geometry, mat: m, local: o.matrixWorld.clone(), paint: /paint/i.test(name), wheel: /^Wheel_/i.test(o.name) }); });
+    // Batch the many identical seat materials once for each transit model.
+    if (TRANSIT.includes(style)) {
+      const batches = new Map();
+      for (const part of parts.filter(p => !p.wheel && !p.paint)) {
+        const key = part.mat.name;
+        if (!batches.has(key)) batches.set(key, []);
+        batches.get(key).push(part);
+      }
+      for (const batch of batches.values()) {
+        if (batch.length < 2) continue;
+        const merged = mergeGeometries(batch.map(p => p.geo.clone().applyMatrix4(p.local)));
+        if (!merged) continue;
+        for (const part of batch) parts.splice(parts.indexOf(part), 1);
+        parts.push({ ...batch[0], geo: merged, local: new THREE.Matrix4() });
+      }
+    }
     const box = new THREE.Box3().setFromObject(g.scene);
     parts.push(rearPlate(style, kits.length, box));
     kits.push({ style, parts, head: [lamp('HeadL'), lamp('HeadR')], tail: [lamp('TailL'), lamp('TailR')], len: box.max.z - box.min.z });
@@ -47,17 +65,21 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const parked = [];
   for (let r = 0; r < ROADS; r++) for (let s = 24; s < SPAN - 20; s += 6.4) { if (Math.abs(s - Math.round(s / P) * P) < 25) continue;
     for (const side of [-1, 1]) for (const ax of [0, 1]) { if (R() > 0.2) continue; const lat = r * P + side * (HALF - 1.25), j = (R() - 0.5) * 0.25;
-      parked.push({ x: ax ? lat + j : s, z: ax ? s : lat + j, h: ax ? (side < 0 ? 0 : Math.PI) : (side > 0 ? Math.PI / 2 : -Math.PI / 2), kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)] }); } }
+      parked.push({ x: ax ? lat + j : s, z: ax ? s : lat + j, h: ax ? (side < 0 ? 0 : Math.PI) : (side > 0 ? Math.PI / 2 : -Math.PI / 2), kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)] }); } }
   // ---- Moving cars ----
   const cars = [];
   for (let k = 0, tries = 0; k < count && tries < count * 40; tries++) { const ax = R() < 0.5 ? 0 : 1, dir = R() < 0.5 ? 1 : -1, road = Math.floor(R() * ROADS), seg = Math.floor(R() * (ROADS - 1)), lane = R() < 0.5 ? 0 : 1, s = seg * P + 24 + R() * (P - 48);
     if (cars.some(o => o.ax === ax && o.dir === dir && o.road === road && o.lane === lane && Math.abs(o.s - s) < 16)) continue;
-    cars.push({ id: k, ax, dir, road, lane, s, v: 8, vmax: 10.5 + R() * 5.5, kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false, wait: 0, go: 0 }); k++; }
+    cars.push({ id: k, ax, dir, road, lane, s, v: 8, vmax: 10.5 + R() * 5.5, kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false, wait: 0, go: 0 }); k++; }
   // Cars out on the coastal and mountain roads: they follow the road line, slow for bends and hills, and are
   // moved elsewhere on the road when they reach a city gate.
   const world = city.world, country = world ? Math.round(count * 0.45) : 0;
   const putOn = (c, avoid) => { for (let n = 0; n < 30; n++) { const rd = world.roads[Math.floor(R() * world.roads.length)], i = rd.from + 12 + R() * (rd.to - rd.from - 24), s = world.samples[Math.round(i)]; if (s.tunnel && n < 20) continue; if (avoid && Math.hypot(s.x - avoid.x, s.z - avoid.z) < 380 && n < 25) continue; if (cars.some(o => o.mode === 2 && o !== c && o.rd === rd && o.dirS === c.dirS && Math.abs(o.i - i) < 12)) continue; c.rd = rd; c.i = i; return; } };
-  for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
+  const cityCarCount = cars.length;
+  for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
+  // Assign a city bus and a regional coach to moving traffic, outside car-sized parking bays.
+  if (cityCarCount) cars[0].kit = STYLES.length;
+  if (country) cars[cityCarCount].kit = STYLES.length + 1;
   const placeOnRoad = c => { const i0 = Math.floor(c.i), a = world.samples[i0], b = world.samples[Math.min(c.rd.to, i0 + 1)], u = c.i - i0, sg = -c.dirS * 2.6; c.x = a.x + (b.x - a.x) * u + a.lx * sg; c.z = a.z + (b.z - a.z) * u + a.lz * sg; c.y = a.y + (b.y - a.y) * u + 0.03; c.h = Math.atan2(a.tx * c.dirS, a.tz * c.dirS); c.pitch = Math.atan2((b.y - a.y) * c.dirS, 3); };
   for (const c of cars) if (c.mode === 2) placeOnRoad(c);
   const laneOff = c => 1.9 + c.lane * 3.6;
@@ -120,8 +142,8 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       const test = (ox, oz, half, o) => { const rx = ox - c.x, rz = oz - c.z, ahead = rx * fx + rz * fz, side = Math.abs(rx * fz - rz * fx); if (ahead > -0.5 && ahead < look + half && side < 1.9) {
           if (o && ahead < 1.2 && o.id > c.id) return; // nose to nose or overlapping: the lower number moves off first
           if (o && c.go > 0 && Math.abs(Math.sin(o.h - c.h)) > 0.5) return; // breaking a junction stand-off
-          const tg = Math.max(0, (ahead - half - 4.4) * 1.1); if (tg < target) { target = tg; blocker = o || null; } } };
-      for (const o of cars) if (o !== c && Math.abs(o.x - c.x) + Math.abs(o.z - c.z) < 40) test(o.x, o.z, 2.2, o);
+          const tg = Math.max(0, (ahead - half - kits[c.kit].len * 0.5 - 2.2) * 1.1); if (tg < target) { target = tg; blocker = o || null; } } };
+      for (const o of cars) if (o !== c && Math.abs(o.x - c.x) + Math.abs(o.z - c.z) < 40) test(o.x, o.z, kits[o.kit].len * 0.5, o);
       if (player) test(player.pos.x, player.pos.z, 2.3, null);
       // Two cars waiting on each other at a junction: after a few seconds the lower number goes.
       if (c.go > 0) c.go -= dt; if (target === 0 && c.v < 0.1 && blocker && blocker.v < 0.1) { c.wait += dt; if (c.wait > 3.5 && blocker.id > c.id) { c.go = 2.5; c.wait = 0; } } else c.wait = 0;
@@ -131,7 +153,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         const k = c.dir > 0 ? Math.ceil((c.s + HALF - 1.2) / P) : Math.floor((c.s - HALF + 1.2) / P); // the junction ahead, held until just past its entry line
         if (k >= 0 && k <= ROADS - 1) {
           if (!c.plan || c.plan.k !== k) c.plan = planFor(c, k);
-          const stop = k * P - c.dir * 17.6, dist = c.dir * (stop - c.s);
+          const stop = k * P - c.dir * (15.4 + kits[c.kit].len * 0.5), dist = c.dir * (stop - c.s);
           const i = c.ax ? c.road : k, j = c.ax ? k : c.road, st = signal(i, j, c.ax ? 'z' : 'x', t);
           if (dist > -1 && (st === 'r' || (st === 'y' && dist > 9)) && dist < c.v * c.v / 7 + 8) target = Math.min(target, Math.sqrt(Math.max(0, 2 * 3.6 * (dist - 0.6))));
           if (c.plan.kind !== 's' && dist < 14) target = Math.min(target, 6.5);
@@ -172,9 +194,10 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   // Player against traffic and parked cars: push apart, return the closing speed of the worst contact.
   function collide(player) {
     let worst = 0; const px = player.pos.x, pz = player.pos.z, pfx = Math.sin(player.heading), pfz = Math.cos(player.heading);
-    const hitOne = (ox, oz, oh, o) => { if (Math.abs(ox - px) + Math.abs(oz - pz) > 9) return;
+    const hitOne = (ox, oz, oh, o) => { const half = o ? Math.max(1.2, kits[o.kit].len * 0.5 - 0.95) : 1.2;
+      if (Math.hypot(ox - px, oz - pz) > half + 4) return;
       const ofx = Math.sin(oh), ofz = Math.cos(oh);
-      for (const a of [-1.15, 1.15]) for (const b of [-1.2, 1.2]) { const ax = px + pfx * a, az = pz + pfz * a, bx = ox + ofx * b, bz = oz + ofz * b; let dx = ax - bx, dz = az - bz; const d = Math.hypot(dx, dz);
+      for (const a of [-1.15, 1.15]) { const b = clamp((px + pfx * a - ox) * ofx + (pz + pfz * a - oz) * ofz, -half, half); const ax = px + pfx * a, az = pz + pfz * a, bx = ox + ofx * b, bz = oz + ofz * b; let dx = ax - bx, dz = az - bz; const d = Math.hypot(dx, dz);
         if (d < 1.95 && d > 1e-3) { dx /= d; dz /= d; const pen = 1.95 - d; player.pos.x += dx * pen; player.pos.z += dz * pen; const ovx = o ? ofx * o.v : 0, ovz = o ? ofz * o.v : 0;
           const vn = (player.vel.x - ovx) * dx + (player.vel.z - ovz) * dz; if (vn < 0) { player.vel.x -= dx * vn * 1.25; player.vel.z -= dz * vn * 1.25; player.vel.multiplyScalar(0.9); worst = Math.max(worst, -vn); if (o) { o.push.x -= dx * Math.min(1.2, -vn * 0.12); o.push.y -= dz * Math.min(1.2, -vn * 0.12); o.v *= 0.4; o.stun = 1.4; } } } } };
     for (const c of cars) if (Math.abs((c.y || 0) - (player.groundY || 0)) < 2.5) hitOne(c.x + c.push.x, c.z + c.push.y, c.h, c);
