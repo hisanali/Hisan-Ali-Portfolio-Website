@@ -127,3 +127,10 @@ body[data-mode=photo] #photo-bar,body[data-mode=replay] #replay-bar{display:flex
 body[data-mode=photo] .top,body[data-mode=replay] .top,body[data-mode=photo] .credit,body[data-mode=replay] .credit,body[data-mode=photo] #perf{display:none}
 body[data-mode=photo] #scene{cursor:grab}
 .hud-top small,.hud-objective small{color:#e3e7f3;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.8)}
+
+.camera-picker{position:relative;display:inline-flex;align-items:center;padding:0 14px;border:1px solid #ffffff40;border-radius:24px;background:#101217cc;color:white;cursor:pointer}
+.camera-picker select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.camera-picker:focus-within{outline:2px solid white}
+body.cinema>*:not(#scene){visibility:hidden!important;pointer-events:none!important}
+body.cinema,body.cinema #scene{cursor:none}
+body.cinema::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;border-block:clamp(4vh,calc((100vh - 100vw / 2.39) / 2),16vh) solid black}
