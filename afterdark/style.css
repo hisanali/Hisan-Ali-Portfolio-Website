@@ -126,3 +126,4 @@ body.no-target .hud-objective{opacity:.25}
 body[data-mode=photo] #photo-bar,body[data-mode=replay] #replay-bar{display:flex}
 body[data-mode=photo] .top,body[data-mode=replay] .top,body[data-mode=photo] .credit,body[data-mode=replay] .credit,body[data-mode=photo] #perf{display:none}
 body[data-mode=photo] #scene{cursor:grab}
+.hud-top small,.hud-objective small{color:#e3e7f3;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.8)}
