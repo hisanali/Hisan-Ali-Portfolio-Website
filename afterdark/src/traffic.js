@@ -1,5 +1,6 @@
 // Traffic: cars that keep to their lanes, obey the signals, queue behind each other and turn at junctions,
 // plus parked cars along the kerbs. Every body style is drawn with instancing.
+import { vehicleShadowMaterial } from './vehicle-shadow.js';
 import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SPAN, signal, rng } from './city.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
@@ -71,7 +72,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     }
 
     parts.push(rearPlate(style, kits.length, box));
-    kits.push({ style, parts, head: [lamp('HeadL'), lamp('HeadR')], tail: [lamp('TailL'), lamp('TailR')], len: box.max.z - box.min.z });
+    kits.push({ style, parts, width: box.max.x - box.min.x, head: [lamp('HeadL'), lamp('HeadR')], tail: [lamp('TailL'), lamp('TailR')], len: box.max.z - box.min.z });
   }
   // ---- Parked cars ----
   const parked = [];
@@ -124,13 +125,12 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const poolG = new THREE.PlaneGeometry(7, 16); poolG.rotateX(-Math.PI / 2); poolG.translate(0, 0, 9.5);
   const pools = new THREE.InstancedMesh(poolG, new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(0.75, 0.7, 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), n); pools.frustumCulled = false; pools.renderOrder = 4; scene.add(pools);
   // A soft contact shadow under every car, moving or parked, so none of them float.
-  const blobTex = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), g = x.createRadialGradient(64, 64, 6, 64, 64, 64); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(0.55, 'rgba(0,0,0,.7)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return cv; })());
-  const blobG = new THREE.PlaneGeometry(2.9, 5.9); blobG.rotateX(-Math.PI / 2); blobG.translate(0, 0.028, 0);
-  const blobs = new THREE.InstancedMesh(blobG, new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
+  const blobG = new THREE.PlaneGeometry(1.6, 1.32); blobG.rotateX(-Math.PI / 2); blobG.translate(0, 0.028, 0);
+  const blobs = new THREE.InstancedMesh(blobG, vehicleShadowMaterial(), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
   function setTime(e) {
     pts.material.opacity = 0.06 + 0.94 * e.night;
     pools.visible = e.night > 0.05; pools.material.opacity = 0.4 * e.night;
-    blobs.material.opacity = 0.55 + 0.35 * e.night;
+    blobs.material.opacity = 0.97 - 0.12 * e.night;
     for (const mat of headMaterials) mat.emissiveIntensity = 0.2 + 2.55 * e.night;
     for (const mat of tailMaterials) mat.emissiveIntensity = 0.37 + 1.6 * e.night;
   }
@@ -197,13 +197,13 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
         const tb = c.braking || c.v < 0.5 ? 3.4 : 1.3; lc[shown * 12 + 6] = tb; lc[shown * 12 + 9] = tb;
         pools.setMatrixAt(shown, dummy.matrix);
-        mat.makeScale(1, 1, kit.len / 4.6).premultiply(dummy.matrix);
+        mat.makeScale(kit.width, 1, kit.len).premultiply(dummy.matrix);
         blobs.setMatrixAt(shown, mat);
         [kit.head[0], kit.head[1], kit.tail[0], kit.tail[1]].forEach((lpos, q) => { v3.copy(lpos).applyMatrix4(dummy.matrix); lp.set([v3.x, v3.y, v3.z], shown * 12 + q * 3); }); shown++; } else c.shownSlot = -1; });
     movingShown = shown; pools.count = shown; lg.setDrawRange(0, shown * 4); lg.attributes.color.needsUpdate = true; dummy.rotation.order = 'XYZ';
     kits.forEach((kit, ki) => { const g = groups[ki], list = parkedNear[ki] || []; list.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); for (const im of g) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(used[ki] + k, mat); if (im.userData.part.paint) im.setColorAt(used[ki] + k, col.set(p.tint)); } });
       for (const im of g) { im.count = used[ki] + list.length; if (im.instanceColor) im.instanceColor.needsUpdate = true; } });
-    nearParked.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); blobs.setMatrixAt(shown + k, dummy.matrix); }); blobs.count = shown + nearParked.length;
+    nearParked.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); const kit = kits[p.kit]; mat.makeScale(kit.width, 1, kit.len).premultiply(dummy.matrix); blobs.setMatrixAt(shown + k, mat); }); blobs.count = shown + nearParked.length;
     for (const g of groups) for (const im of g) im.instanceMatrix.needsUpdate = true;
     pools.instanceMatrix.needsUpdate = true; blobs.instanceMatrix.needsUpdate = true; lg.attributes.position.needsUpdate = true;
   }

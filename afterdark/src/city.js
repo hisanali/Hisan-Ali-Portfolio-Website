@@ -417,7 +417,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   scene.fog = new THREE.FogExp2(0xe6bd9c, 0.00065);
   const hemi = new THREE.HemisphereLight(0xb9cdf2, 0xa08468, 3.4); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc08c, 5.6), sunDir = new THREE.Vector3(-0.8, 0.3, 0.3).normalize(), lightDir = sunDir.clone(); sun.castShadow = renderer.shadowMap.enabled;
-  { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 150; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.bias = -0.0005; sm.normalBias = 0.9;
+  { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 150; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.bias = -0.000035; sm.normalBias = 0.045;
     scene.add(sun, sun.target); const step = (half * 2) / size * 8;
     city.updateSun = (p, height = 0) => {
       const x = Math.round(p.x / step) * step, y = Math.round(height / step) * step, z = Math.round(p.z / step) * step;
