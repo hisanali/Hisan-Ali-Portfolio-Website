@@ -250,7 +250,9 @@ export function buildStreet(scene, city, R3, Q) {
         if (!o.isMesh) return;
         o.frustumCulled = false; o.castShadow = SH; o.receiveShadow = true;
       });
-      const wrist = body.getObjectByName('Wrist.R'), arm = body.getObjectByName('UpperArm.R'), forearm = body.getObjectByName('LowerArm.R');
+      // The glTF loader removes dots from animation-target node names.
+      const bone = name => body.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
+      const wrist = bone('Wrist.R'), arm = bone('UpperArm.R'), forearm = bone('LowerArm.R');
       let brolly;
       if (R() < 0.64 && wrist && arm && forearm) {
         const mesh = new THREE.Mesh(umbrella, new THREE.MeshStandardMaterial({ color: [0x222429, 0x273d55, 0x593030][k % 3], roughness: 0.64, side: THREE.DoubleSide }));
