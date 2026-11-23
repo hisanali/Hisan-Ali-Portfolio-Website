@@ -15,9 +15,9 @@ const GLSL_HASH = 'float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q +=
 // off screen (or out of the sun's shadow box) are skipped, and chunks beyond maxDist are hidden outright.
 // The original mesh stays as an empty parent, so code that toggles it or shares its material keeps working.
 export const CHUNK = 320;
-export function splitChunks(mesh, maxDist, list) {
+export function splitChunks(mesh, maxDist, list, size = CHUNK) {
   const n = mesh.count, m4 = new THREE.Matrix4(), groups = new Map(), c = new THREE.Color();
-  for (let i = 0; i < n; i++) { mesh.getMatrixAt(i, m4); const e = m4.elements, key = Math.floor(e[12] / CHUNK) * 1000 + Math.floor(e[14] / CHUNK); (groups.get(key) || groups.set(key, []).get(key)).push(i); }
+  for (let i = 0; i < n; i++) { mesh.getMatrixAt(i, m4); const e = m4.elements, key = Math.floor(e[12] / size) * 1000 + Math.floor(e[14] / size); (groups.get(key) || groups.set(key, []).get(key)).push(i); }
   const inst = Object.entries(mesh.geometry.attributes).filter(([, a]) => a.isInstancedBufferAttribute);
   for (const idx of groups.values()) { let geo = mesh.geometry;
     if (inst.length) { geo = mesh.geometry.clone(); for (const [name, a] of inst) { const arr = new a.array.constructor(idx.length * a.itemSize); idx.forEach((src, k) => { for (let q = 0; q < a.itemSize; q++) arr[k * a.itemSize + q] = a.array[src * a.itemSize + q]; }); geo.setAttribute(name, new THREE.InstancedBufferAttribute(arr, a.itemSize)); } }
@@ -254,7 +254,7 @@ function buildingMaterial(timeU, litU) {
 }
 
 // The photo-textured building models: at night some of their windows light up.
-function kitMaterial(src, litU) {
+export function kitMaterial(src, litU) {
   const m = src.clone(); m.envMapIntensity = 0.55; m.roughness = Math.max(m.roughness, 0.7); m.metalness = 0;
   m.onBeforeCompile = sh => { sh.uniforms.uLitK = litU;
     sh.vertexShader = 'varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(instanceMatrix) * normal);');
@@ -387,7 +387,7 @@ export async function buildCity(scene, refl, quality, renderer) {
 
   // ---- Buildings ----
   const boxes = [], glows = [], signs = [], decals = [], beacons = [], screens = [], trim = [], ads = [];
-  const timeU = refl.uniforms.uTime, litU = refl.uniforms.uLitK;
+  const timeU = refl.uniforms.uTime, litU = city.litU = refl.uniforms.uLitK;
   // Photo-textured building models; each lot gets one standing on a row of shops. Only the intact models are used.
   const KIT_OK = new Set(['c7-06', 'c7-07', 'c7-08', 'c7-18', 'c7-19', 'c7-20', 'c7-21', 'c8-22', 'c8-25', 'c8-28', 'c8-29', 'c8-30', 'c8-31', 'ls-35']);
   const kit = [];
@@ -620,7 +620,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   for (const [mesh, dist] of [[bm, Infinity], [trimMesh, 430], [lampMesh, 430], [sigMesh, 380], [signMesh, 650], [adMesh, 900], [glowMesh, 760], [decalMesh, 330]]) splitChunks(mesh, dist, far);
   let cullTick = 0;
   const reach = quality.reach || 1; // lighter presets draw street detail less far
-  city.cull = (p, force) => { if ((cullTick++ & 7) && !force) return; for (const c of far) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) < c.max * reach + c.r;
+  city.cull = (p, force) => { const now = performance.now(); if (now - cullTick < 140 && !force) return; cullTick = now; for (const c of far) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) < c.max * reach + c.r;
     for (const k of kitLod) { const close = Math.hypot(k.x - p.x, k.z - p.z) < 330 * reach + k.r; k.near.visible = close; k.far.visible = !close; } };
   city.update = (t) => { updateSignals(t); city.sea.normal.offset.set(t * 0.004, t * 0.0026); city.sea.foam.position.x = city.beachX - 79 + Math.sin(t * 0.5) * 1.6; city.sea.foam.material.opacity = 0.35 + 0.2 * Math.sin(t * 0.5 + 1.0); beaconPts.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.4)); };
   city.dot = dot; city.pool = pool; city.stats = { kit: kit.reduce((n, k) => n + k.uses.length, 0), trim: trim.length, buildings: boxes.length, signs: signs.length, lamps: lampSpots.length, screens: screens.length };

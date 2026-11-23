@@ -5,6 +5,7 @@ import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
 import { buildWorld } from './world.js';
+import { buildPlaces } from './places.js';
 import { createSound } from './sound.js';
 
 const $ = s => document.querySelector(s), clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
@@ -15,7 +16,7 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const R = createRenderer($('#scene')), { scene, camera, renderer } = R;
 const S = { mode: 'boot', kind: store.get('kind', 'run'), time: 0, clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, cam: 0, sound: store.get('sound', 'on') === 'on', flash: 0 };
 const input = { left: 0, right: 0, up: 0, down: 0, hand: 0 };
-let city, street, world, player, traffic, audio = null;
+let city, street, world, places, player, traffic, audio = null;
 const inCity = (x, z) => x <= SPAN + HALF + 4 && z >= -(HALF + 4) && z <= SPAN + HALF + 4;
 
 // ---------- Rain and tyre spray ----------
@@ -143,6 +144,7 @@ function drawMap() { // a 1 km window around the car, north up
   mctx.strokeStyle = 'rgba(190,205,235,.34)'; mctx.lineWidth = 3; mctx.beginPath(); for (let i = 0; i < ROADS; i++) { mctx.moveTo(X(i * P), Y(0)); mctx.lineTo(X(i * P), Y(SPAN)); mctx.moveTo(X(0), Y(i * P)); mctx.lineTo(X(SPAN), Y(i * P)); } mctx.stroke();
   mctx.strokeStyle = 'rgba(255,214,150,.6)'; mctx.lineWidth = 3.5; mctx.beginPath(); for (const rd of world.roads) for (let i = rd.from; i <= rd.to; i += 6) { const s = world.samples[i]; if (i === rd.from) mctx.moveTo(X(s.x), Y(s.z)); else mctx.lineTo(X(s.x), Y(s.z)); } mctx.stroke();
   mctx.fillStyle = 'rgba(255,214,150,.75)'; for (const t of traffic.cars) mctx.fillRect(X(t.x) - 1.5, Y(t.z) - 1.5, 3, 3);
+  mctx.fillStyle = 'rgba(255,255,255,.9)'; for (const pm of places.markers) { const mx = X(pm.x), my = Y(pm.z); if (mx < 4 || my < 4 || mx > w - 4 || my > w - 4) continue; mctx.beginPath(); mctx.moveTo(mx, my - 5); mctx.lineTo(mx + 5, my); mctx.lineTo(mx, my + 5); mctx.lineTo(mx - 5, my); mctx.closePath(); mctx.fill(); }
   if (beacon.visible) { let bx = X(beacon.position.x) - c, by = Y(beacon.position.z) - c; const bl = Math.hypot(bx, by), lim = c - 10; if (bl > lim) { bx *= lim / bl; by *= lim / bl; } mctx.fillStyle = '#35ffe0'; mctx.beginPath(); mctx.arc(c + bx, c + by, 5 + Math.sin(S.time * 5) * 1.5, 0, 7); mctx.fill(); }
   mctx.save(); mctx.translate(c, c); mctx.rotate(-player.heading); mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.moveTo(0, -8); mctx.lineTo(5.5, 6); mctx.lineTo(0, 3); mctx.lineTo(-5.5, 6); mctx.closePath(); mctx.fill(); mctx.restore();
 }
@@ -203,7 +205,7 @@ function captureEnv() { // image-based lighting from the street itself, refreshe
 }
 function stepTime(dt, running) {
   if (timeMode === 'auto') { if (running) hour = (hour + dt * 24 / DAY_SECONDS) % 24; } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
-  env = city.setTime(hour); street.setTime(env); player.setTime(env); traffic.setTime(env);
+  env = city.setTime(hour); street.setTime(env); player.setTime(env); traffic.setTime(env); places.setTime(env);
   scene.environmentIntensity = 1.5 - 0.9 * env.night; rain.visible = env.rain > 0.03; rain.material.opacity = 0.17 * env.rain;
   R.refl.active = env.wet > 0.2; R.refl.uniforms.uReflOn.value = R.refl.on ? Math.min(1, Math.max(0, (env.wet - 0.2) / 0.4)) : 0;
   R.bloom.strength = 0.22 + 0.26 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
@@ -239,6 +241,8 @@ function govern(rawDt, playing) {
     if (gov.level === 1) toast('Graphics adjusted for a smoother drive'); }
 }
 
+const CITY = { name: 'Downtown' }, seen = new Set(['Downtown']); let lastPlace = CITY, arriveTick = 0;
+
 // ---------- Frame ----------
 const clock = new THREE.Clock(); const probe = new THREE.Vector3(); let crashCool = 0;
 function frame() {
@@ -247,7 +251,7 @@ function frame() {
   if (S.mode === 'boot') return;
   const playing = S.mode === 'play'; govern(rawDt, playing); stepPerf(rawDt, playing);
   if (S.mode !== 'pause') {
-    stepTime(dt, playing || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos);
+    stepTime(dt, playing || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
     traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (playing || S.mode === 'over') {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
@@ -264,6 +268,7 @@ function frame() {
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
         if (Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z) < 9) { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(240, S.left + clamp(S.lastBeaconDist / 20, 16, 55)); S.flash = 0.18; audio?.beacon(); toast(`Beacon +${gain}`); moveBeacon(); }
         if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
+        if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '')); if (!seen.has(here.name)) { seen.add(here.name); if (here !== CITY) S.score += 150; } } else if (!here) lastPlace = null; }
         drawHud();
       }
       // Water thrown up by the tyres on a wet road: droplets fanning out behind each wheel. On a dry road a slide lays smoke.
@@ -290,6 +295,8 @@ async function boot() {
   city = await buildCity(scene, R.refl, Q, renderer);
   setLoad('Raising the mountains'); await nextFrame();
   world = city.world = await buildWorld(scene, city, Q);
+  setLoad('Building the harbour and villages'); await nextFrame();
+  places = await buildPlaces(scene, city, world, Q);
   { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
     drops.pts = new THREE.Points(drops.geo, new THREE.PointsMaterial({ size: drops.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
     haze.pts = new THREE.Points(haze.geo, new THREE.PointsMaterial({ size: haze.size, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.35 }));
@@ -307,7 +314,7 @@ async function boot() {
   traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
   setPerf(perf.on); city.cull(player.pos, true);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
-  window.__afterdark = { S, player, traffic, city, street, world, R, start, input };
+  window.__afterdark = { S, player, traffic, city, street, world, places, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
   window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };

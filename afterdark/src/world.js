@@ -62,13 +62,25 @@ export async function buildWorld(scene, city, Q) {
     if (!best) return null; hit.s = best; hit.lat = (x - best.x) * best.lx + (z - best.z) * best.lz; hit.d = Math.sqrt(bd); return hit; }
   world.nearRoad = nearRoad; world.samples = samples;
 
+  // ---- Places: each is anchored to a point on a road, set to one side on ground levelled to the road ----
+  const PLACES = [['harbour', 'Harbour', 'coast', 0.1, 92, 78, 'low'], ['lighthouse', 'Lighthouse Point', 'coast', 0.31, 70, 20, 'low'], ['petrol', 'Valley Fuel', 'coast', 0.79, 34, 27, 'flat'], ['stadium', 'Eastside Stadium', 'mountain', 0.045, 128, 100, 'flat'], ['summit', 'Summit Lookout', 'mountain', -1, 34, 30, 'flat']];
+  const sampleAt = (road, frac) => { const rd = world.roads.find(r => r.name === road); return samples[Math.round(rd.from + (rd.to - rd.from) * frac)]; };
+  let topS = samples[0]; for (const s of samples) if (s.y > topS.y) topS = s;
+  world.places = PLACES.map(([key, name, road, frac, off, r, pick]) => { const s = frac < 0 ? topS : sampleAt(road, frac), nl = natural(s.x + s.lx * off, s.z + s.lz * off), nr = natural(s.x - s.lx * off, s.z - s.lz * off);
+    const side = pick === 'low' ? (nl < nr ? 1 : -1) : (Math.abs(nl - s.y) < Math.abs(nr - s.y) ? 1 : -1);
+    return { key, name, x: s.x + s.lx * side * off, z: s.z + s.lz * side * off, y: Math.max(s.y, 1.5), r, side, ux: s.tx, uz: s.tz, vx: s.lx * side, vz: s.lz * side, yaw: Math.atan2(s.tx, s.tz), blend: key === 'harbour' ? 9 : 46, road: s }; });
+  // Stretches lined with houses get a wider level verge.
+  const STRIPS = [['suburb', 'Eastfield', 'coast', 0.84, 0.955], ['village', 'Pinecrest', 'mountain', 0.655, 0.725]];
+  world.strips = STRIPS.map(([key, name, road, a, b]) => { const rd = world.roads.find(r => r.name === road), i0 = Math.round(rd.from + (rd.to - rd.from) * a), i1 = Math.round(rd.from + (rd.to - rd.from) * b); for (let i = i0; i <= i1; i++) samples[i].wide = 30 * sst(i0, i0 + 14, i) * sst(i1, i1 - 14, i); const m = samples[Math.round((i0 + i1) / 2)]; return { key, name, i0, i1, x: m.x, z: m.z, y: m.y, r: (i1 - i0) * STEP / 2 }; });
+
   // ---- Heightfield: natural land, graded flat along the roads (not under bridges or over tunnels) ----
   const cand = [];
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = WORLD.x0 + i * WORLD.cell, z = WORLD.z0 + j * WORLD.cell; let h = natural(x, z);
     { const rr = Math.ceil(100 / GC), cx = Math.floor(x / GC), cz = Math.floor(z / GC); let dmin = 999, dall = 999, covered = false; cand.length = 0;
-      for (let ix = cx - rr; ix <= cx + rr; ix++) for (let iz = cz - rr; iz <= cz + rr; iz++) { const cell = grid.get(ix * 8192 + iz); if (!cell) continue; for (const s of cell) { const d = Math.hypot(s.x - x, s.z - z); if (d > 100) continue; if (d < dall) { dall = d; covered = s.bridge || s.tunnel; } if (s.bridge || s.tunnel) continue; cand.push(d, s.y); if (d < dmin) dmin = d; } }
+      for (let ix = cx - rr; ix <= cx + rr; ix++) for (let iz = cz - rr; iz <= cz + rr; iz++) { const cell = grid.get(ix * 8192 + iz); if (!cell) continue; for (const s of cell) { const d = Math.hypot(s.x - x, s.z - z); if (d > 100) continue; if (d < dall) { dall = d; covered = s.bridge || s.tunnel; } if (s.bridge || s.tunnel) continue; const de = Math.max(0, d - (s.wide || 0)); cand.push(de, s.y); if (de < dmin) dmin = de; } }
       // the nearest stretch of road sets the level; where two stretches are about equally near, their levels are averaged
       if (cand.length && !covered) { let sw = 0, sy = 0; for (let q = 0; q < cand.length; q += 2) { const wgt = Math.exp(-(cand[q] - dmin) * 0.55); sw += wgt; sy += wgt * cand[q + 1]; } h = mix(h, sy / sw - 0.28, 1 - sst(19, 98, dmin)); } }
+    for (const pl of world.places) { const d = Math.hypot(pl.x - x, pl.z - z); if (d < pl.r + pl.blend) h = mix(h, pl.y - 0.05, 1 - sst(pl.r, pl.r + pl.blend, d)); }
     H[j * nx + i] = h; }
   const hAt = (x, z) => { const fx = clamp((x - WORLD.x0) / WORLD.cell, 0, nx - 1.001), fz = clamp((z - WORLD.z0) / WORLD.cell, 0, nz - 1.001), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, a = H[j * nx + i], b = H[j * nx + i + 1], c = H[(j + 1) * nx + i], d = H[(j + 1) * nx + i + 1];
     return u + v < 1 ? a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v); };
@@ -159,11 +171,11 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   try { const kit = await loadGLB('/evermile/assets/models/forest-kit.glb'); kit.scene.updateMatrixWorld(true);
     const kinds = ['pine-0', 'pine-1', 'pine-2', 'pine-3'].map(n => kit.scene.getObjectByName(n)).filter(Boolean), spots = kinds.map(() => []), want = Math.round(5200 * (Q.reach || 1));
     for (let tries = 0, got = 0; got < want && tries < want * 14; tries++) { const x = WORLD.x0 + 40 + R() * (WORLD.x1 - WORLD.x0 - 80), z = WORLD.z0 + 40 + R() * (WORLD.z1 - WORLD.z0 - 80), h = hAt(x, z); if (h < 5 || h > 285) continue;
-      const sl = Math.abs(hAt(x + 6, z) - hAt(x - 6, z)) + Math.abs(hAt(x, z + 6) - hAt(x, z - 6)); if (sl > 9.5) continue; if (fbm(x / 210, z / 210, 3) < 0.46) continue; if (nearRoad(x, z, 15)) continue;
+      const sl = Math.abs(hAt(x + 6, z) - hAt(x - 6, z)) + Math.abs(hAt(x, z + 6) - hAt(x, z - 6)); if (sl > 9.5) continue; if (fbm(x / 210, z / 210, 3) < 0.46) continue; { const nr = nearRoad(x, z, 50); if (nr && nr.d < 15 + (nr.s.wide || 0)) continue; } if (world.places.some(pl => Math.hypot(pl.x - x, pl.z - z) < pl.r + 12)) continue;
       const k = Math.floor(R() * kinds.length); spots[k].push([x, h - 0.3, z, 0.55 + R() * 0.5, R() * 6.28]); got++; }
     kinds.forEach((node, k) => { const bb = new THREE.Box3().setFromObject(node), fix = new THREE.Matrix4().makeTranslation(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2), m4 = new THREE.Matrix4();
       node.traverse(o => { if (!o.isMesh) return; const mat = o.material.clone(); mat.envMapIntensity = 0.3; if (mat.alphaTest) mat.alphaTest = Math.min(mat.alphaTest, 0.5); const im = new THREE.InstancedMesh(o.geometry, mat, spots[k].length), local = fix.clone().multiply(o.matrixWorld);
-        spots[k].forEach((q, n) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[4], 0); dummy.scale.setScalar(q[3]); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, local)); }); im.castShadow = (Q.reach || 1) >= 1; scene.add(im); splitChunks(im, 1500, city.chunks); }); });
+        spots[k].forEach((q, n) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[4], 0); dummy.scale.setScalar(q[3]); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, local)); }); im.castShadow = (Q.reach || 1) >= 1; scene.add(im); splitChunks(im, 1500, city.chunks, 640); }); });
     dummy.scale.set(1, 1, 1); dummy.rotation.set(0, 0, 0); world.trees = spots.reduce((a, s) => a + s.length, 0); } catch (e) { console.warn('forest unavailable', e); }
 
   // Summit lay-by marker for the map and the beacon list.
