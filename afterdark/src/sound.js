@@ -5,7 +5,7 @@ import { DriveAudio } from '/evermile/audio.js';
 const REC = '/eight-worlds/assets/audio/', LOOPS = { rain: REC + 'rain_heavy.mp3', waves: REC + 'waves.mp3', gulls: REC + 'gulls.mp3', birds: REC + 'birds.mp3', crickets: REC + 'crickets.mp3', wind: REC + 'wind.mp3' };
 const SHOTS = { thunder0: REC + 'thunder.mp3', thunder1: '/tideworn/assets/audio/thunder1.mp3', thunder2: '/tideworn/assets/audio/thunder2.mp3' };
 const TRANSMISSION = { ratio: [360, 255, 185, 144, 117, 98, 82], up: [2700, 4770], down: [1500, 2200], poweredUpshifts: true };
-const VOICE = { hatch: 'grcorolla', suv: 'landcruiser' };
+const VOICE = { bus: 'coach', hatch: 'grcorolla', suv: 'landcruiser' };
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 export function createSound() {

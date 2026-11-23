@@ -29,7 +29,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const axleSpacing = frontHub && rearHub
     ? Math.abs(frontHub.getWorldPosition(new THREE.Vector3()).z - rearHub.getWorldPosition(new THREE.Vector3()).z)
     : len * 0.61;
-  const wheelbase = clamp(axleSpacing, 2.38, 3.4);
+  const wheelbase = clamp(axleSpacing, 2.38, len * 0.8);
   const steeringWheel = model.getObjectByName('steering_wheel');
   const restSteering = steeringWheel?.quaternion.clone();
   const steeringAxis = new THREE.Vector3(0, 0, 1);
