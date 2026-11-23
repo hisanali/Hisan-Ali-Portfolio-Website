@@ -191,15 +191,15 @@ export class DriveAudio {
       src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
     }
   }
-  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true}) {
+  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission}) {
     this.lastVolume = volume; this.engineOn = engineOn;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
-    const box = GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;
+    const box = transmission || GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;
     let gear = Math.min(this.gear, ratios.length);
     const push = throttle * throttle, upAt = box.up[0] + push * box.up[1], downAt = box.down[0] + push * box.down[1], rpmIn = (g) => v * ratios[g - 1];
     if (!reverse && this.shiftDip <= 0) {
-      if (gear < ratios.length && rpmIn(gear) > upAt && rpmIn(gear + 1) > e.idle * 1.15) { gear++; this.shiftDip = .18; }
+      if ((!box.poweredUpshifts || (throttle > 0.07 && brake < 0.1)) && gear < ratios.length && rpmIn(gear) > upAt && rpmIn(gear + 1) > e.idle * 1.15) { gear++; this.shiftDip = .18; }
       else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < e.red * .92) { gear--; this.shiftDip = -.1; }
     }
     if (reverse || v < .5) gear = 1;

@@ -74,6 +74,7 @@ function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; cons
 // ---------- Input ----------
 const KEYS = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', ' ': 'hand' };
 addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) { input[KEYS[k]] = 1; if (S.mode === 'play') e.preventDefault(); }
+  if (e.repeat) return;
   if (k === 'c' && S.mode === 'play') nextCam();
   if (k === 'm') { if (S.mode === 'map') closeMap(); else openMap(); }
   if (k === 'o' && S.mode === 'play') photo(true);
@@ -134,7 +135,7 @@ function ensureAudio() { // must run inside the tap itself or iOS keeps the audi
 }
 for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, () => audio?.resume(), { passive: true });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); else if (S.mode === 'play') pause(true); });
-function respawn() { spray.clear(); const p = player.pos;
+function respawn() { snapCam = true; spray.clear(); const p = player.pos;
   if (!inCity(p.x, p.z)) { const r = world.nearRoad(p.x, p.z, 900); if (r) { player.place(r.s.x - r.s.lx * 2.5, r.s.z - r.s.lz * 2.5, Math.atan2(r.s.tx, r.s.tz)); toast('Back on the road'); return; } }
   const ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P), rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
@@ -312,25 +313,96 @@ const CAMW = HALF + 3.4;
 function keepInStreet(v) { if (!inCity(v.x, v.z)) { if (!player.tunnel) v.y = Math.max(v.y, world.terrain(v.x, v.z) + 0.9); return v; } const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
   if (v.x >= 0 && ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
   v.x = clamp(v.x, -(HALF + 95), SPAN + CAMW); v.z = clamp(v.z, -CAMW, SPAN + CAMW); if (Math.abs(v.x - city.viaduct) < 12 && v.y > 8) v.y = 8; return v; }
-let camYaw = 0, snapCam = true; const camPos = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
-function chase(dt, snap) {
-  const h = player.heading, sp = Math.abs(player.speed), inside = S.cam === 2 || S.cam === 3;
-  if (view.inCab !== (S.cam === 3)) { view.inCab = S.cam === 3; player.setInterior(view.inCab); }
-  if (!view.drag) { view.idle += dt; if (view.idle > 2.2 && sp > 2) { const k = Math.exp(-2.6 * dt); view.yaw *= k; view.pitch *= k; } }
-  let dy = h - camYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); camYaw += dy * Math.min(1, dt * (inside ? 30 : 4.2)); if (snap) camYaw = h;
-  if (inside) { const eye = player.spec.eye || 1.06, lx = S.cam === 3 ? 0.36 : 0, ly = S.cam === 3 ? eye : eye + 0.04, lz = S.cam === 3 ? -0.32 : 0.45, sn = Math.sin(h), cs = Math.cos(h);
-    camPos.set(player.pos.x + sn * lz + cs * lx, ly + player.groundY, player.pos.z + cs * lz - sn * lx); const a = h + view.yaw, cp = Math.cos(view.pitch * 0.7);
-    look.set(camPos.x + Math.sin(a) * cp * 30, camPos.y - 0.6 + Math.sin(view.pitch * 0.7) * -30 * 0 - view.pitch * 12, camPos.z + Math.cos(a) * cp * 30); }
-  else { const base = S.cam === 1 ? [10.5, 3.3, 0] : S.cam === 4 ? [4.3, 0.55, 0.62] : [6.3, 1.75, 0], dist = (base[0] + sp * 0.028) * view.zoom, a = camYaw + base[2] + view.yaw, pc = Math.cos(view.pitch), ps = Math.sin(view.pitch);
-    want.set(player.pos.x - Math.sin(a) * dist * pc, player.groundY + Math.max(0.35, base[1] + sp * 0.006 + dist * ps), player.pos.z - Math.cos(a) * dist * pc);
-    keepInStreet(want); if (snap || view.drag) camPos.copy(want); else camPos.lerp(want, 1 - Math.pow(0.0006, dt)); keepInStreet(camPos);
-    const ahead = S.cam === 4 ? 1.2 : 4.5 * Math.max(0, 1 - Math.abs(view.yaw) * 0.8); look.set(player.pos.x + Math.sin(h) * ahead, 0.95 + player.groundY, player.pos.z + Math.cos(h) * ahead); }
-  const sh = S.shake; S.shake = Math.max(0, sh - dt * 2.4);
-  camera.position.set(camPos.x + (Math.random() - 0.5) * sh * 0.5, Math.max(0.3 + player.groundY, camPos.y + (Math.random() - 0.5) * sh * 0.35), camPos.z + (Math.random() - 0.5) * sh * 0.5);
-  camera.lookAt(look); const near = inside ? 0.08 : 0.25; if (camera.near !== near) camera.near = near;
-  camera.fov = lerp(camera.fov, (S.cam === 3 ? 66 : 56) + clamp(sp * 0.24, 0, 20), Math.min(1, dt * 4)); camera.updateProjectionMatrix();
+let camYaw = 0, camHeight = 0, camArm = 1, snapCam = true;
+const camPos = new THREE.Vector3(), pivot = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
+const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+function cameraBlocked(x, y, z) {
+  if (!inCity(x, z)) return !player.tunnel && y < world.ground(x, z) + 0.32;
+  if (x < 0 || z < 0 || x >= SPAN || z >= SPAN) return false;
+  const buildings = city.cameraLots.get(Math.floor(x / P) * ROADS + Math.floor(z / P));
+  return buildings?.some(b => y < b.h + 0.38 && Math.abs(x - b.x) < b.w / 2 + 0.28 && Math.abs(z - b.z) < b.d / 2 + 0.28);
 }
-function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, player.groundY + 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, player.groundY + 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
+
+function cameraClearance(from, to) {
+  const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
+  const steps = Math.max(2, Math.ceil(from.distanceTo(to) / 0.42));
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    if (cameraBlocked(from.x + dx * t, from.y + dy * t, from.z + dz * t)) return (i - 1) / steps;
+  }
+  return 1;
+}
+
+function chase(dt, snap) {
+  const h = player.heading, speed = Math.abs(player.speed), cockpit = S.cam === 3, bonnet = S.cam === 2;
+  if (view.inCab !== cockpit) { view.inCab = cockpit; player.setInterior(cockpit); }
+  if (!view.drag) {
+    view.idle += dt;
+    if (view.idle > 1.55 && speed > 2) {
+      const recenter = Math.exp(-3.5 * dt);
+      view.yaw *= recenter;
+      view.pitch *= recenter;
+    }
+  }
+  const yawLead = clamp(player.yawRate * 0.08, -0.16, 0.16);
+  const turn = angleDiff(h + yawLead, camYaw);
+  if (snap) {
+    camYaw = h;
+    camHeight = player.groundY;
+    camArm = 1;
+  } else {
+    camYaw = h + clamp(angleDiff(camYaw + turn * (1 - Math.exp(-8.5 * dt)), h), -0.24, 0.24);
+    camHeight = lerp(camHeight, player.groundY, 1 - Math.exp(-(player.air ? 8 : 15) * dt));
+    camHeight = clamp(camHeight, player.groundY - 0.30, player.groundY + 0.36);
+  }
+  const sh = S.shake, t = S.time;
+  S.shake *= Math.exp(-9.5 * dt);
+  const recoil = sh * Math.sin(t * 37), bob = sh * Math.sin(t * 28 + 0.8);
+  if (cockpit || bonnet) {
+    const height = player.spec.eye || 1.06, coupe = !player.spec.file;
+    if (cockpit) {
+      camPos.set(0.35, height - (coupe ? 0.07 : 0.03), coupe ? -0.035 : -0.28);
+      player.tilt.localToWorld(camPos);
+    } else {
+      camPos.set(0, Math.max(0.88, height - 0.1), player.len * 0.34);
+      player.root.localToWorld(camPos);
+    }
+    const yaw = h + clamp(view.yaw, -0.86, 0.86) + recoil * 0.008;
+    const pitch = clamp(-0.018 - view.pitch * 0.53 + player.slopeF * 0.26 + bob * 0.008, -0.58, 0.26);
+    const forward = Math.cos(pitch) * 24;
+    look.set(camPos.x + Math.sin(yaw) * forward, camPos.y + Math.sin(pitch) * 24, camPos.z + Math.cos(yaw) * forward);
+  } else {
+    const [baseDistance, height, sideAngle] = S.cam === 1 ? [9.7, 3.0, 0] : S.cam === 4 ? [4.35, 0.69, 0.60] : [6.25, 1.86, 0];
+    const distance = (baseDistance + Math.min(1.20, speed * 0.024)) * view.zoom;
+    const a = camYaw + sideAngle + view.yaw, pitch = view.pitch;
+    const horizontal = distance * Math.cos(pitch);
+    pivot.set(player.pos.x, player.groundY + 0.91, player.pos.z);
+    want.set(player.pos.x - Math.sin(a) * horizontal, camHeight + Math.max(0.37, height + distance * Math.sin(pitch)) + bob * 0.07,
+      player.pos.z - Math.cos(a) * horizontal);
+    if (!inCity(want.x, want.z) && !player.tunnel) want.y = Math.max(want.y, world.ground(want.x, want.z) + 0.46);
+    const safe = cameraClearance(pivot, want);
+    camArm = safe < camArm || snap ? safe : lerp(camArm, safe, 1 - Math.exp(-5.1 * dt));
+    camPos.copy(pivot).lerp(want, camArm);
+    if (camPos.distanceTo(pivot) < player.len * 0.37) {
+      // When the road leaves no horizontal room, lift the view rather than putting it inside the car.
+      camPos.copy(pivot);
+      camPos.y += 1.18;
+    }
+    const ahead = (S.cam === 4 ? 1.8 : 3.65 + Math.min(2.2, speed * 0.038)) * Math.max(0.15, 1 - Math.abs(view.yaw) * 0.66);
+    const bearing = h + yawLead;
+    look.set(player.pos.x + Math.sin(bearing) * ahead + Math.cos(bearing) * recoil * 0.22,
+      camHeight + 0.68 + bob * 0.11 + Math.min(0.65, Math.max(-0.45, player.slopeF * ahead * 0.55)),
+      player.pos.z + Math.cos(bearing) * ahead - Math.sin(bearing) * recoil * 0.22);
+  }
+  camera.position.copy(camPos);
+  camera.lookAt(look);
+  camera.near = cockpit || bonnet ? 0.055 : 0.20;
+  const fov = (cockpit ? 58 : bonnet ? 60 : S.cam === 1 ? 54 : 56) + (cockpit ? 0 : Math.min(7.5, speed * 0.12));
+  camera.fov = snap ? fov : lerp(camera.fov, fov, 1 - Math.exp(-6 * dt));
+  camera.updateProjectionMatrix();
+}
+function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.near = 0.25; camera.position.set(player.pos.x + Math.sin(a) * r, player.groundY + 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, player.groundY + 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
 
 // ---------- Time of day ----------
 let dayCount = 0, rainyK = 1;
@@ -339,7 +411,7 @@ const DAY_SECONDS = 720; // one full day and night
 function captureEnv() { // image-based lighting from the street itself, refreshed as the light changes
   const rv = rain.visible; rain.visible = false; const hid = street ? street.hide.map(o => [o, o.visible]) : []; hid.forEach(([o]) => { o.visible = false; });
   city.sky.position.copy(player ? player.pos : new THREE.Vector3(city.spawn.x, 0, city.spawn.z)); city.sky.scale.setScalar(0.1); city.sky.updateMatrixWorld(true); pmrem ??= new THREE.PMREMGenerator(renderer); renderer.shadowMap.needsUpdate = true;
-  const p = player ? player.pos : city.spawn, rt = pmrem.fromScene(scene, 0.012, 0.5, 1900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(p.x, 3.2, p.z) });
+  const p = player ? player.pos : city.spawn, rt = pmrem.fromScene(scene, 0.012, 0.5, 1900, { size: QUALITY === 'low' ? 128 : 256, position: new THREE.Vector3(p.x, (player?.groundY || 0) + 3.2, p.z) });
   scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; city.sky.scale.setScalar(1); rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
 }
 function stepTime(dt, running) {
@@ -401,7 +473,7 @@ function frame() {
       if (S.mode === 'replay') traffic.update(dt, S.time, null, player.pos, true, true);
     } else traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (!replaying && (playing || S.mode === 'over')) {
-      const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
+      const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, stopOnly: !live, hand: live ? !!input.hand : false };
       player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
       crashCool -= dt;
@@ -439,7 +511,7 @@ function frame() {
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
   if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
-  probe.set(player.pos.x, 1.15, player.pos.z); R.render(probe);
+  probe.set(player.pos.x, player.groundY + 1.15, player.pos.z); R.render(probe);
   if (shot) { shot = false; renderer.domElement.toBlob(saveShot, 'image/jpeg', 0.93); }
 }
 
