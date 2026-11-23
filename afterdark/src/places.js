@@ -3,6 +3,7 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 import { rng, splitChunks, kitMaterial } from './city.js';
 import { loadGLB } from './car.js';
+import { buildAirfield, buildFuelStation } from './landmarks.js';
 
 export async function buildPlaces(scene, city, world, Q) {
   const R = rng(3131), dummy = new THREE.Object3D(), col = new THREE.Color(), out = { markers: [], update: () => {}, setTime: () => {} };
@@ -39,12 +40,10 @@ export async function buildPlaces(scene, city, world, Q) {
     for (const s of [0, Math.PI]) { const g = new THREE.ConeGeometry(11, 170, 20, 1, true); g.translate(0, -85, 0); g.rotateX(-Math.PI / 2 + 0.02); const m = new THREE.Mesh(g, bm); m.rotation.y = s; m.frustumCulled = false; lamp.add(m); }
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 3.6, 2.6) })); lamp.add(bulb); scene.add(lamp); lamp.userData.mat = bm; out.markers.push(pl); }
 
-  // ---- Fuel station ----
-  { const pl = place('petrol'), y = pl.y, yaw = pl.yaw; const [cx, cz] = at(pl, 0, -8); box(cx, y + 5.4, cz, 20, 0.6, 11, yaw, 0xf2f2f2, false); glow(cx, y + 5.05, cz, 18, 0.08, 9, yaw, 0xfff6e0, 1.3); glow(cx + pl.vx * -5.6, y + 5.4, cz + pl.vz * -5.6, 20, 0.62, 0.1, yaw, 0xe2231a, 1.6);
-    for (const u of [-7, 7]) for (const v of [-11.5, -4.5]) { const [x, z] = at(pl, u, v); cyl(x, y + 2.6, z, 0.22, 5.2, 0xd8d8d8, 0.22); }
-    for (const u of [-5, 0, 5]) { const [x, z] = at(pl, u, -8); box(x, y + 0.9, z, 0.7, 1.8, 0.5, yaw, 0xc8201a); glow(x, y + 1.55, z + 0, 0.5, 0.3, 0.52, yaw, 0xbfe6ff, 1.5); }
-    const [sx, sz] = at(pl, 0, 9); box(sx, y + 2.1, sz, 16, 4.2, 8, yaw, 0xe8e6e0); glow(sx - pl.vx * 4.05, y + 1.9, sz - pl.vz * 4.05, 12, 2.2, 0.1, yaw, 0xfff0c8, 1.2); box(sx, y + 4.5, sz, 16.6, 0.6, 8.6, yaw, 0xe2231a, false);
-    const [tx, tz] = at(pl, 16, -20); cyl(tx, y + 4.5, tz, 0.3, 9, 0x30343a, 0.3); glow(tx, y + 8.2, tz, 3.4, 2.4, 0.3, yaw, 0xfff0c8, 1.8); out.markers.push(pl); }
+  const fuel = place('petrol'), airfield = place('airport');
+  const fuelTime = await buildFuelStation(scene, city, world, fuel);
+  const airfieldTime = buildAirfield(scene, city, world, airfield);
+  out.markers.push(fuel, airfield);
 
   // ---- Stadium: a bowl of stands round a pitch, with floodlight masts ----
   { const pl = place('stadium'), y = pl.y, A = 74, B = 56, N = 30; for (let k = 0; k < N; k++) { const a = k / N * Math.PI * 2, ex = Math.cos(a) * A, ez = Math.sin(a) * B, [x, z] = at(pl, ex, ez), tang = Math.atan2(-Math.sin(a) * A * pl.ux + Math.cos(a) * B * pl.vx, -Math.sin(a) * A * pl.uz + Math.cos(a) * B * pl.vz);
@@ -61,9 +60,12 @@ export async function buildPlaces(scene, city, world, Q) {
   // ---- Houses: a suburb on the valley road and a village on the mountain ----
   try { const kit = await loadGLB('/evermile/assets/models/city-kit.glb?v=maps2'); kit.scene.updateMatrixWorld(true);
     const names = ['c7-00', 'c7-01', 'c7-02', 'c7-03', 'c7-04', 'c7-09', 'c7-11', 'c7-15'], kinds = names.map(n => kit.scene.getObjectByName(n)).filter(Boolean).map(node => { const bb = new THREE.Box3().setFromObject(node), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()), fix = new THREE.Matrix4().makeTranslation(-c.x, -bb.min.y, -c.z), parts = []; node.traverse(o => { if (o.isMesh) parts.push({ geo: o.geometry, mat: kitMaterial(o.material, city.litU), local: fix.clone().multiply(o.matrixWorld) }); }); return { w: sz.x, d: sz.z, h: sz.y, parts, uses: [] }; });
-    for (const st of world.strips) { for (let i = st.i0 + 10; i < st.i1 - 10; i += 8) { const s = world.samples[i]; if (s.bridge || s.tunnel) continue; for (const side of [-1, 1]) { if (R() < 0.18) continue; const k = kinds[Math.floor(R() * kinds.length)], off = 6 + 9 + k.d / 2 + R() * 3, x = s.x + s.lx * side * off, z = s.z + s.lz * side * off, yaw = Math.atan2(-s.lx * side, -s.lz * side);
+    for (const st of world.strips) { const old = st.key === 'oldtown'; for (let i = st.i0 + 10; i < st.i1 - 10; i += old ? 7 : 8) { const s = world.samples[i]; if (s.bridge || s.tunnel) continue; for (const side of [-1, 1]) { if (R() < (old ? 0.08 : 0.18)) continue; const k = kinds[Math.floor(R() * kinds.length)], off = 6 + (old ? 4.5 : 9) + k.d / 2 + R() * (old ? 1.5 : 3), x = s.x + s.lx * side * off, z = s.z + s.lz * side * off, yaw = Math.atan2(-s.lx * side, -s.lz * side);
           k.uses.push([x, world.terrain(x, z) - 0.15, z, yaw]); const r = Math.min(k.w, k.d) / 2; solid.push({ x, z, r: r * 1.05 }); if (R() < 0.5) { const lx = s.x + s.lx * side * 7.6, lz = s.z + s.lz * side * 7.6; cyl(lx, s.y + 3, lz, 0.09, 6, 0x24272c, 0.07); glow(lx, s.y + 6, lz, 0.9, 0.1, 0.4, yaw, 0xffd6a0, 4); } } }
       if (st.key === 'village') { const s = world.samples[Math.round((st.i0 + st.i1) / 2)], x = s.x + s.lx * 30, z = s.z + s.lz * 30, y = world.terrain(x, z), yaw = Math.atan2(s.tx, s.tz); box(x, y + 4.5, z, 9, 9, 16, yaw, 0xe9e4d8); box(x, y + 9.6, z, 9.6, 1.2, 16.6, yaw, 0x6b3a2c, false); const tx = x + s.tx * 9.5, tz = z + s.tz * 9.5; box(tx, y + 10, tz, 5, 20, 5, yaw, 0xe9e4d8); cyl(tx, y + 23.5, tz, 3.4, 7, 0x4a3a34, 0.1, false); glow(tx - s.lx * 2.55, y + 14, tz - s.lz * 2.55, 1.4, 2.2, 0.1, yaw + Math.PI / 2, 0xffd9a0, 1.2); }
+      if (old) { // a clock tower on a small square, lit at night
+        const s = world.samples[Math.round((st.i0 + st.i1) / 2)], x = s.x + s.lx * 24, z = s.z + s.lz * 24, y = world.terrain(x, z), yaw = Math.atan2(s.tx, s.tz); box(x, y + 0.2, z, 22, 0.4, 22, yaw, 0xb9b2a4, false); box(x, y + 13, z, 5.4, 26, 5.4, yaw, 0xd9cfbd); box(x, y + 26.6, z, 6.4, 1.2, 6.4, yaw, 0x7a4a36, false); cyl(x, y + 30, z, 2.6, 6, 0x5a3a2e, 0.1, false);
+        for (const q of [0, 1, 2, 3]) { const a = yaw + q * Math.PI / 2; glow(x + Math.sin(a) * 2.75, y + 21.5, z + Math.cos(a) * 2.75, 2.6, 2.6, 0.1, a, 0xfff0c8, 1.6); } solid.push({ x, z, r: 3.4 }); }
       out.markers.push(st); }
     for (const k of kinds) { if (!k.uses.length) continue; for (const part of k.parts) { const im = new THREE.InstancedMesh(part.geo, part.mat, k.uses.length), m4 = new THREE.Matrix4(); k.uses.forEach((u, n) => { dummy.position.set(u[0], u[1], u[2]); dummy.rotation.set(0, u[3], 0); dummy.scale.set(1.25, 1.25, 1.25); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, part.local)); }); im.castShadow = im.receiveShadow = true; scene.add(im); splitChunks(im, 900, city.chunks, 640); } }
     out.houses = kinds.reduce((a, k) => a + k.uses.length, 0); } catch (e) { console.warn('houses unavailable', e); }
@@ -79,7 +81,7 @@ export async function buildPlaces(scene, city, world, Q) {
   dummy.scale.set(1, 1, 1); dummy.rotation.set(0, 0, 0);
   // red aircraft-warning lights on tall structures
   const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(beams.flat(), 3)); const warn = new THREE.Points(bg, new THREE.PointsMaterial({ size: 7, map: city.dot, color: new THREE.Color(3, 0.15, 0.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); warn.frustumCulled = false; scene.add(warn);
-  out.setTime = e => { gM.color.setScalar(0.35 + 0.65 * e.night); if (lamp) { lamp.userData.mat.uniforms.uK.value = e.night; lamp.children[0].visible = lamp.children[1].visible = e.night > 0.05; } };
+  out.setTime = e => { fuelTime(e); airfieldTime(e); gM.color.setScalar(0.35 + 0.65 * e.night); if (lamp) { lamp.userData.mat.uniforms.uK.value = e.night; lamp.children[0].visible = lamp.children[1].visible = e.night > 0.05; } };
   out.update = t => { if (lamp) lamp.rotation.y = t * 0.55; warn.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.4)); };
   out.stats = { boxes: boxes.length, cylinders: cyls.length, lights: glows.length, houses: out.houses, places: out.markers.map(m => m.name) };
   return out;

@@ -74,7 +74,7 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) {
   if (k === 'c' && S.mode === 'play') nextCam();
   if (k === 'm') { if (S.mode === 'map') closeMap(); else openMap(); }
   if (k === 'o' && S.mode === 'play') photo(true);
-  if (k === 'escape') { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else if (S.mode === 'replay') replay(false); }
+  if (k === 'escape' && (S.mode === 'map' || S.mode === 'photo' || S.mode === 'replay')) { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else replay(false); return; }
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'enter' && S.mode === 'menu') start(); });
@@ -158,7 +158,7 @@ function stepActivity(dt) {
   if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
 }
 function start() {
-  if (S.mode === 'boot' || swapping) return; ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = 0;
+  if (S.mode === 'boot' || swapping) return; ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = REC.acc = 0;
   if (k === 'trial') { A.route = routes.find(r => r.id === routeSel) || routes[0]; player.place(A.route.start.x, A.route.start.z, A.route.start.h); } else player.place(city.spawn.x, city.spawn.z, 0);
   player.setPaint(paintSel);
   Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0, jobs: 0 });
@@ -209,13 +209,17 @@ function drawGarage() {
 
 // ---------- Full map (M): tap a road in Free Roam to set a waypoint ----------
 function drawBig() { bigmap?.draw({ px: player.pos.x, pz: player.pos.z, heading: player.heading, seen, t: S.time, target: beacon.visible ? beacon.position : null, targetName: A.label, route: S.kind === 'trial' ? A.route : null }); }
-function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road to set a waypoint' : A.label; drawBig(); }
+function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road or place to set a waypoint' : A.label; drawBig(); }
 function closeMap() { if (S.mode !== 'map') return; S.mode = 'play'; show(null); }
 $('#bigmap-canvas').addEventListener('click', e => { if (S.mode !== 'map') return; const r = e.currentTarget.getBoundingClientRect(), w = bigmap.toWorld(e.clientX - r.left, e.clientY - r.top); if (!w) return;
   if (S.kind !== 'free') { toast('Waypoints are for Free Roam'); return; } let t = null;
   if (inCity(w.x, w.z) && w.x >= -HALF) { const rx = clamp(Math.round(w.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(w.z / P), 0, ROADS - 1) * P; t = Math.abs(w.x - rx) < Math.abs(w.z - rz) ? { x: rx, z: clamp(w.z, 0, SPAN), y: 0 } : { x: clamp(w.x, 0, SPAN), z: rz, y: 0 }; }
-  else { const n = world.nearRoad(w.x, w.z, 340); if (n && !n.s.tunnel) t = { x: n.s.x, z: n.s.z, y: n.s.y }; }
-  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, 'Waypoint'); $('#map-note').textContent = 'Waypoint set · tap again to move it'; drawBig(); });
+  else {
+    const destination = world.places.find(p => p.arrival && (p.contains ? p.contains(w.x, w.z) : Math.hypot(w.x - p.x, w.z - p.z) < p.r));
+    if (destination) t = destination.arrival;
+    else { const n = world.nearRoad(w.x, w.z, 340); if (n && !n.s.tunnel) t = { x: n.s.x, z: n.s.z, y: n.s.y }; }
+  }
+  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, t.name || 'Waypoint'); $('#map-note').textContent = 'Waypoint set · tap again to move it'; drawBig(); });
 
 // ---------- Photo mode (O) ----------
 let shot = false;
@@ -234,16 +238,24 @@ function saveShot(blob) { if (!blob) { toast('Could not save the photo'); return
 const REC = { n: 0, i: 0, acc: 0, N: 600, F: 10, d: new Float32Array(6000) }, RP = { t: 0, end: 0, k: 0, camT: 0, side: 1, snap: null, cam: new THREE.Vector3() };
 const rget = (k, f) => REC.d[(k % REC.N) * REC.F + f];
 function record(dt) { REC.acc += dt; if (REC.acc < 1 / 30) return; REC.acc = 0; const o = (REC.i % REC.N) * REC.F, d = REC.d, p = player;
-  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock; REC.i++; REC.n = Math.min(REC.N, REC.n + 1); }
+  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock;
+  { const C = traffic.cars, n = C.length, T = REC.tr ||= new Float32Array(REC.N * n * 5); let q = (REC.i % REC.N) * n * 5; for (let k = 0; k < n; k++) { const c = C[k]; T[q++] = c.x + c.push.x; T[q++] = c.z + c.push.y; T[q++] = c.h; T[q++] = c.y || 0; T[q++] = (c.pitch || 0) + (c.braking ? 10 : 0); } } // the traffic is recorded too, so a replay shows what was really there
+  REC.i++; REC.n = Math.min(REC.N, REC.n + 1); }
 function replay(on) { const p = player;
   if (on) { if (S.mode !== 'pause' || REC.n < 30) return; RP.snap = { x: p.pos.x, z: p.pos.z, h: p.heading, gy: p.groundY, sf: p.slopeF, sl: p.slopeL, st: p.steer, sp: p.speed, br: p.braking };
+    RP.snap.traffic = traffic.cars.map(({ x, z, h, y, pitch, braking, spin }) => ({ x, z, h, y, pitch, braking, spin }));
     RP.k = REC.i - REC.n; RP.t = rget(RP.k, 9); RP.end = rget(REC.i - 1, 9); RP.camT = 0; view.inCab = false; p.setInterior(false); S.mode = 'replay'; show(null); }
-  else if (S.mode === 'replay') { const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.sync(0); S.mode = 'pause'; snapCam = true; show('pause'); }
+  else if (S.mode === 'replay') { const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.sync(0);
+    traffic.cars.forEach((car, i) => Object.assign(car, s.traffic[i]));
+    traffic.update(0, S.time, null, p.pos, true);
+    S.mode = 'pause'; snapCam = true; show('pause'); }
 }
 function stepReplay(dt) { const p = player; RP.t += dt; if (RP.t >= RP.end) { replay(false); return; }
   while (RP.k < REC.i - 2 && rget(RP.k + 1, 9) < RP.t) RP.k++;
   const k = RP.k, t0 = rget(k, 9), t1 = rget(k + 1, 9), u = clamp((RP.t - t0) / Math.max(1e-4, t1 - t0), 0, 1), L = f => lerp(rget(k, f), rget(k + 1, f), u); let dh = rget(k + 1, 2) - rget(k, 2); dh = Math.atan2(Math.sin(dh), Math.cos(dh));
   p.pos.x = L(0); p.pos.z = L(1); p.heading = rget(k, 2) + dh * u; p.groundY = L(3); p.slopeF = L(4); p.slopeL = L(5); p.steer = L(6); p.speed = L(7); p.braking = rget(k, 8) > 0.5; p.sync(dt);
+  if (REC.tr) { const C = traffic.cars, n = C.length, T = REC.tr, a = (k % REC.N) * n * 5, b = ((k + 1) % REC.N) * n * 5; for (let j = 0; j < n; j++) { const c = C[j], o = a + j * 5, o2 = b + j * 5, far = Math.abs(T[o2] - T[o]) + Math.abs(T[o2 + 1] - T[o + 1]) > 20, w = far ? 0 : u; let hh = T[o2 + 2] - T[o + 2]; hh = Math.atan2(Math.sin(hh), Math.cos(hh));
+      c.x = lerp(T[o], T[o2], w); c.z = lerp(T[o + 1], T[o2 + 1], w); c.h = T[o + 2] + hh * w; c.y = lerp(T[o + 3], T[o2 + 3], w); const pb = T[o + 4]; c.braking = pb > 5; c.pitch = pb > 5 ? pb - 10 : pb; c.spin = (c.spin || 0) + (far ? 0 : Math.hypot(T[o2] - T[o], T[o2 + 1] - T[o + 1]) / Math.max(1e-3, t1 - t0)) * dt / 0.33; } }
   RP.camT -= dt; let cd = Math.hypot(RP.cam.x - p.pos.x, RP.cam.z - p.pos.z);
   if (RP.camT <= 0 || cd > 90) { let q = k; const tA = RP.t + 1.7; while (q < REC.i - 1 && rget(q, 9) < tA) q++; const ax = rget(q, 0), az = rget(q, 1), ah = rget(q, 2), ay = rget(q, 3); RP.side = -RP.side;
     const town = inCity(ax, az), n = town ? null : world.nearRoad(ax, az, 30), tight = !!(n && (n.s.tunnel || n.s.bridge)), off = tight ? -2.4 : town ? -(5.6 + Math.random() * 1.6) : RP.side * (5.5 + Math.random() * 3); // in town the camera stands on the near pavement, clear of parked cars
@@ -328,7 +340,7 @@ function stepTime(dt, running) {
   env = city.setTime(hour, rainyK); world.setTime(env); street.setTime(env); player.setTime(env); traffic.setTime(env); places.setTime(env);
   scene.environmentIntensity = 1.5 - 0.9 * env.night; rain.visible = env.rain > 0.03; rain.material.opacity = 0.17 * env.rain;
   R.refl.active = env.wet > 0.2; R.refl.uniforms.uReflOn.value = R.refl.on ? Math.min(1, Math.max(0, (env.wet - 0.2) / 0.4)) : 0;
-  R.bloom.strength = 0.22 + 0.26 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
+  R.bloom.strength = 0.22 + 0.19 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
   let dh = Math.abs(hour - envHour); dh = Math.min(dh, 24 - dh); if (dh > (env.day > 0.05 && env.day < 0.95 ? 0.3 : 0.9)) captureEnv();
 }
 addEventListener('keydown', e => { if (e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
@@ -374,9 +386,11 @@ function frame() {
   if (S.mode === 'photo') photoCam(); else if (S.mode === 'map') { if ((hudTick++ & 7) === 0) drawBig(); }
   else if (S.mode !== 'pause') {
     stepTime(dt, playing || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
-    traffic.update(dt, S.time, playing || replaying ? player : null, player.pos);
-    if (replaying) stepReplay(dt);
-    else if (playing || S.mode === 'over') {
+    if (replaying) {
+      stepReplay(dt);
+      if (S.mode === 'replay') traffic.update(dt, S.time, null, player.pos, true, true);
+    } else traffic.update(dt, S.time, playing ? player : null, player.pos);
+    if (!replaying && (playing || S.mode === 'over')) {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
       player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
@@ -390,7 +404,7 @@ function frame() {
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
         record(dt); stepActivity(dt);
-        if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
+        if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (pm.contains ? pm.contains(player.pos.x, player.pos.z, 12) : Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
         if (S.mode === 'play') drawHud();
       }
       // Water thrown up by the tyres on a wet road: droplets fanning out behind each wheel. On a dry road a slide lays smoke.
@@ -399,12 +413,12 @@ function frame() {
             emit(drops, player.pos.x + sn * back + cs * side, gy + 0.08, player.pos.z + cs * back - sn * side, player.vel.x * (0.25 + Math.random() * 0.3) + cs * side * (1 + Math.random() * 2.5), 0.8 + Math.random() * (1.2 + sp2 * 0.09), player.vel.z * (0.25 + Math.random() * 0.3) - sn * side * (1 + Math.random() * 2.5), 0.35 + Math.random() * 0.3, 1.1 * b, 1.25 * b, 1.5 * b); } }
         else if ((player.slip > 4.5 && sp2 > 8) || (player.onSand && sp2 > 6)) { const sand = player.onSand, g = sand ? 0.34 : 0.3; for (const side of [-0.82, 0.82]) if (Math.random() < 0.6) emit(haze, player.pos.x - sn * 1.5 + cs * side, gy + 0.2, player.pos.z - cs * 1.5 - sn * side, (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2, g * (sand ? 1.25 : 1), g * (sand ? 1.05 : 1), g * (sand ? 0.75 : 1.02)); } }
       chase(dt, snapCam); snapCam = false;
-    } else orbit(S.time);
+    } else if (!replaying) orbit(S.time);
     stepParticles(drops, dt); stepParticles(haze, dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
-  city.sky.position.copy(camera.position); city.updateSun(player.pos); city.cull(camera.position);
+  city.sky.position.copy(camera.position); city.updateSun(player.pos, player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
   if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
@@ -418,7 +432,7 @@ async function boot() {
   city = await buildCity(scene, R.refl, Q, renderer);
   setLoad('Raising the mountains'); await nextFrame();
   world = city.world = await buildWorld(scene, city, Q);
-  setLoad('Building the harbour and villages'); await nextFrame();
+  setLoad('Building the coast and airfield'); await nextFrame();
   places = await buildPlaces(scene, city, world, Q);
   { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
     drops.pts = new THREE.Points(drops.geo, new THREE.PointsMaterial({ size: drops.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
