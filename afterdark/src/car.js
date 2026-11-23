@@ -152,7 +152,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const VMAX = T.vmax; let a = 0;
     if (serviceBrake) {
       const decel = (10.5 - wetK * 2.7) * T.brake;
-      a -= ctrl.brake * decel;
+      a -= Math.sign(vF) * ctrl.brake * decel;
     } else if (ctrl.throttle > 0) {
       const engine = T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
       // Ease the accelerator at full lock on city streets. Holding W through a turn
@@ -174,7 +174,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     car.slopeF += (sF - car.slopeF) * Math.min(1, dt * 9); car.slopeL += (sL - car.slopeL) * Math.min(1, dt * 9);
     if (car.air) a = -0.0009 * vF * Math.abs(vF);
     const nextSpeed = vF + a * dt;
-    const stopped = serviceBrake && !car.air && nextSpeed <= 0;
+    const stopped = serviceBrake && !car.air && (vF === 0 || vF * nextSpeed <= 0);
     car.accel = stopped ? Math.min(0, -vF / dt) : a;
     vF = stopped ? 0 : nextSpeed;
     if (stopped) vL *= Math.exp(-dt * 17);
@@ -185,7 +185,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     gripNow = grip;
     const yaw = vF * Math.tan(frontAngle(car.steer, vF)) / wheelbase;
     const cap = (ctrl.hand ? grip * 1.56 : grip) / Math.max(2.8, Math.abs(vF));
-    const targetYaw = car.air ? car.yawRate * 0.98 : clamp(yaw, -cap, cap);
+    const targetYaw = car.air ? car.yawRate * Math.exp(-1.2 * dt) : clamp(yaw, -cap, cap);
     const yawResponse = lerp(15, 8.5, clamp(speed / 39, 0, 1));
     car.yawRate = lerp(car.yawRate, targetYaw, 1 - Math.exp(-yawResponse * dt));
     const turn = car.yawRate * dt;
@@ -196,7 +196,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     car.heading += turn;
     // The tires track the steering on normal throttle, while the handbrake can still loosen the rear.
     const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 3.2;
-    vL *= Math.exp(-lateralDamping * dt);
+    const lateralCorrection = vL * (1 - Math.exp(-lateralDamping * dt));
+    vL -= clamp(lateralCorrection, -grip * dt, grip * dt);
     car.vel.copy(fwd).multiplyScalar(vF).addScaledVector(left, vL);
     const ox0 = car.pos.x, oz0 = car.pos.z;
     car.pos.addScaledVector(car.vel, dt);
@@ -285,7 +286,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       // A rise too sharp to drive up is a wall: stop against it rather than popping to the top.
       if (!car.air && outside(p.x, p.z) && gy - car.groundY > 0.55 + Math.hypot(p.x - ox0, p.z - oz0) * 1.6) { const mx = p.x - ox0, mz = p.z - oz0, ml = Math.hypot(mx, mz) || 1; hit = Math.max(hit, Math.hypot(car.vel.x, car.vel.z) * 0.6); p.x = ox0; p.z = oz0; const vn = (car.vel.x * mx + car.vel.z * mz) / ml; car.vel.x -= mx / ml * vn * 1.3; car.vel.z -= mz / ml * vn * 1.3; gy = groundAt(p.x, p.z, ginfo); }
       // Leaving the ground over a crest: fall under gravity until the wheels meet the road again.
-      if (car.air) { car.vy -= 9.81 * dt; car.groundY += car.vy * dt; if (car.groundY <= gy) { car.air = false; car.bump = Math.min(1, -car.vy * 0.18); if (car.vy < -7) hit = Math.max(hit, -car.vy * 0.6); car.groundY = gy; car.vy = 0; } }
+      if (car.air) { car.groundY += car.vy * dt - 0.5 * 9.81 * dt * dt; car.vy -= 9.81 * dt; if (car.groundY <= gy) { car.air = false; car.bump = Math.min(1, -car.vy * 0.18); if (car.vy < -7) hit = Math.max(hit, -car.vy * 0.6); car.groundY = gy; car.vy = 0; } }
       else { const fall = car.groundY + car.vy * dt - 4.9 * dt * dt; if (outside(p.x, p.z) && fall - gy > 0.3 && Math.hypot(car.vel.x, car.vel.z) > 9) { car.air = true; car.groundY = fall; car.vy -= 9.81 * dt; } else { const vy = (gy - car.groundY) / Math.max(dt, 1e-4); car.vy += (clamp(vy, -40, 40) - car.vy) * Math.min(1, dt * 30); car.groundY = gy; } }
       car.onSand = !outside(p.x, p.z) && p.x < PROM; }
     { const sn = Math.sin(car.heading), cs = Math.cos(car.heading); for (let ci = 0; ci < 4; ci++) { const lx = CORNERS[ci][0], lz = CORNERS[ci][1]; (prevC[ci] ||= [0, 0])[0] = p.x + cs * lx + sn * lz; prevC[ci][1] = p.z - sn * lx + cs * lz; } }

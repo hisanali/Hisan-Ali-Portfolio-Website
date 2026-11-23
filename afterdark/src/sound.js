@@ -5,6 +5,7 @@ import { DriveAudio } from '/evermile/audio.js';
 const REC = '/eight-worlds/assets/audio/', LOOPS = { rain: REC + 'rain_heavy.mp3', waves: REC + 'waves.mp3', gulls: REC + 'gulls.mp3', birds: REC + 'birds.mp3', crickets: REC + 'crickets.mp3', wind: REC + 'wind.mp3' };
 const SHOTS = { thunder0: REC + 'thunder.mp3', thunder1: '/tideworn/assets/audio/thunder1.mp3', thunder2: '/tideworn/assets/audio/thunder2.mp3' };
 const TRANSMISSION = { ratio: [360, 255, 185, 144, 117, 98, 82], up: [2700, 4770], down: [1500, 2200], poweredUpshifts: true };
+const VOICE = { hatch: 'grcorolla', suv: 'landcruiser' };
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 export function createSound() {
@@ -39,7 +40,7 @@ export function createSound() {
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
       set(master.gain, on ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
-      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: false, volume: 1.35 * live, vehicle: 'coupe', transmission: TRANSMISSION, reverse: s.reverse, grounded: true });
+      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, transmission: s.vehicle === 'coupe' ? TRANSMISSION : undefined, reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         drive.horn(hornHeld && s.playing, 1.6); drive.townHum(0.55 + 0.45 * e.day); drive.chatter(s.people && e.rain < 0.4, 'street'); } catch (err) {}
       const shore = clamp(1 - (s.x - s.beachX) / 190), open = s.cockpit ? 0.8 : 1;
       if (loops.rain) set(loops.rain.gain, 0.62 * e.rain * open, 0.6);

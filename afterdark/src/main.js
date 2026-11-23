@@ -438,12 +438,13 @@ function chase(dt, snap) {
     look.set(camPos.x + Math.sin(yaw) * forward, camPos.y + Math.sin(pitch) * 24, camPos.z + Math.cos(yaw) * forward);
   } else {
     const [baseDistance, height, sideAngle] = S.cam === 1 ? [9.7, 3.0, 0] : S.cam === 4 ? [4.35, 0.69, 0.60] : [6.25, 1.86, 0];
-    const distance = (baseDistance + Math.min(1.20, speed * 0.024)) * view.zoom;
+    const bodyExtra = Math.max(0, player.len - 4.4);
+    const distance = (baseDistance + bodyExtra * 0.55 + Math.min(1.20, speed * 0.024)) * view.zoom;
     const a = camYaw + sideAngle + view.yaw, pitch = view.pitch;
     pivot.set(player.pos.x, player.groundY + 0.91, player.pos.z);
     const wild = !inCity(player.pos.x, player.pos.z), margin = S.cam === 4 ? 0.5 : 0.62;
     const aim = up => { const p = Math.max(pitch, up), flat = distance * Math.cos(p);
-      want.set(player.pos.x - Math.sin(a) * flat, camHeight + Math.max(0.37, height + distance * Math.sin(p)) + bob * 0.07, player.pos.z - Math.cos(a) * flat);
+      want.set(player.pos.x - Math.sin(a) * flat, camHeight + Math.max(0.37, height + Math.max(0, player.spec.eye - 1.1) + distance * Math.sin(p)) + bob * 0.07, player.pos.z - Math.cos(a) * flat);
       return wild || !inCity(want.x, want.z) ? Math.max(0, cameraLift(pivot, want, margin) - want.y) : 0; };
     // 1. Over open ground, rise just enough to see over whatever lies between the camera and the car. Up at once, down gently.
     let lift = aim(camRaise);
@@ -589,7 +590,7 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(player.pos, player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying, speed: player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   player.updateWetness(dt, env.rain);
   probe.set(player.pos.x, player.groundY + 1.15, player.pos.z); R.render(probe);
