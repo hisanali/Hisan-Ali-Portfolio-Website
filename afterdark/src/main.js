@@ -100,7 +100,11 @@ function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; cons
 
 // ---------- Input ----------
 const KEYS = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', ' ': 'hand' };
-addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) { input[KEYS[k]] = 1; if (S.mode === 'play') e.preventDefault(); }
+addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (cinema.active) {
+    if (k === 'escape') { e.preventDefault(); leaveCinema(); return; }
+    if (cinema.tour || !KEYS[k]) return;
+  }
+  if (KEYS[k]) { input[KEYS[k]] = 1; if (S.mode === 'play') e.preventDefault(); }
   if (e.repeat) return;
   if (k === 'c' && S.mode === 'play') nextCam();
   if (k === 'm') { if (S.mode === 'map') closeMap(); else openMap(); }
@@ -110,7 +114,7 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) {
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'enter' && S.mode === 'menu') start(); });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYS[k]) input[KEYS[k]] = 0; if (k === 'h') audio?.horn(false); });
-addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h' && S.mode === 'play') audio?.horn(true); });
+addEventListener('keydown', e => { if (!cinema.active && e.key.toLowerCase() === 'h' && S.mode === 'play') audio?.horn(true); });
 addEventListener('blur', () => { for (const k in input) input[k] = 0; });
 document.querySelectorAll('#touch [data-k]').forEach(b => { const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = 1; b.classList.add('on'); }, off = e => { e.preventDefault(); input[k] = 0; b.classList.remove('on'); };
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); });
@@ -143,7 +147,7 @@ $('#to-menu').addEventListener('click', () => toMenu());
 $('#resume').addEventListener('click', () => pause(false));
 $('#quit').addEventListener('click', () => toMenu());
 $('#btn-pause').addEventListener('click', () => { if (S.mode === 'play') pause(true); });
-$('#btn-cam').addEventListener('click', () => nextCam());
+$('#btn-cam').addEventListener('change', e => { selectCamera(Number(e.target.value)); e.target.blur(); });
 $('#btn-map').addEventListener('click', () => openMap()); $('#map').addEventListener('click', () => openMap()); $('#map-close').addEventListener('click', () => closeMap()); $('#pause-map').addEventListener('click', () => openMap());
 $('#pause-photo').addEventListener('click', () => photo(true)); $('#pause-replay').addEventListener('click', () => replay(true)); $('#photo-back').addEventListener('click', () => photo(false)); $('#photo-save').addEventListener('click', () => { shot = true; }); $('#replay-stop').addEventListener('click', () => replay(false));
 $('#photo-in').addEventListener('click', () => { view.zoom = clamp(view.zoom * 0.85, 0.55, 2.6); }); $('#photo-out').addEventListener('click', () => { view.zoom = clamp(view.zoom * 1.18, 0.55, 2.6); });
@@ -154,7 +158,7 @@ document.body.classList.toggle('muted', !S.sound);
 $('#btn-full').addEventListener('click', () => { const d = document, el = d.documentElement; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen)?.call(d); else { const p = (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el); p?.catch?.(() => {}); } });
 if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('#btn-full').hidden = true;
 $('#scene').addEventListener('webglcontextlost', e => { e.preventDefault(); const el = $('#toast'); el.textContent = 'Graphics were reset. Tap to reload.'; el.classList.add('show'); el.style.pointerEvents = 'auto'; el.onclick = () => location.reload(); });
-const show = id => { for (const s of ['menu', 'pause', 'result', 'garage', 'bigmap']) $('#' + s).hidden = s !== id; document.body.dataset.mode = S.mode; };
+const show = id => { if (id && cinema.active) leaveCinema(); for (const s of ['menu', 'pause', 'result', 'garage', 'bigmap']) $('#' + s).hidden = s !== id; document.body.dataset.mode = S.mode; };
 
 function ensureAudio() { // must run inside the tap itself or iOS keeps the audio context suspended
   if (audio) { audio.resume(); return; }
@@ -333,11 +337,61 @@ function drawHud() {
 }
 
 // ---------- Camera: five views, drag to look around, wheel to zoom ----------
-const CAMS = ['Chase', 'Far chase', 'Bonnet', 'Cockpit', 'Low wheel'];
+const CAMS = ['Chase', 'Far chase', 'Bonnet', 'Cockpit', 'Low wheel', 'Cinematic view', 'Cinematic · city autodrive'];
+const cinema = { active: false, tour: null, prior: 0, elapsed: 0, shot: -1, heading: 0, beacon: false };
+CAMS.forEach((name, i) => $('#btn-cam').add(new Option(name, String(i))));
 const view = { yaw: 0, pitch: 0, zoom: 1, drag: false, idle: 9, x: 0, y: 0, id: -1 };
-function nextCam() { audio?.camera(); S.cam = (S.cam + 1) % CAMS.length; view.yaw = view.pitch = 0; snapCam = true; toast(CAMS[S.cam] + ' camera'); }
+function selectCamera(index) {
+  if (S.mode !== 'play') return;
+  if (index >= 5) {
+    cinema.prior = S.cam;
+    cinema.active = true;
+    cinema.elapsed = 0; cinema.shot = -1;
+    cinema.beacon = beacon.visible; beacon.visible = false;
+    if (index === 6) {
+      const kit = traffic.modelFiles.indexOf(player.spec.file || 'sports-coupe');
+      cinema.tour = traffic.cars.find(c => c.kit === kit && c.mode !== 2) || traffic.cars.find(c => c.mode !== 2);
+      S.mode = 'tour';
+    }
+    document.body.classList.add('cinema');
+    player.setInterior(false); view.inCab = false;
+    for (const key in input) input[key] = 0;
+  } else toast(CAMS[index] + ' camera');
+  S.cam = index; $('#btn-cam').value = String(index);
+  audio?.camera(); view.yaw = view.pitch = 0; snapCam = true;
+}
+function leaveCinema() {
+  if (S.mode === 'tour') S.mode = 'play';
+  cinema.active = false; cinema.tour = null;
+  S.cam = cinema.prior; $('#btn-cam').value = String(S.cam);
+  document.body.classList.remove('cinema'); beacon.visible = cinema.beacon;
+  snapCam = true; view.drag = false;
+}
+function nextCam() { selectCamera((S.cam + 1) % CAMS.length); }
+const shots = [[-8, 3.5, 2.1, 40], [7, -4, 1.35, 36], [-11, -5, 4.2, 43], [2, 6, 1.1, 40]];
+function cinemaCamera(dt) {
+  const car = cinema.tour, pos = car || player.pos, heading = car ? car.h : player.heading;
+  const y = car ? car.y || 0 : player.groundY;
+  cinema.elapsed += dt;
+  const shot = Math.floor(cinema.elapsed / 8) % shots.length, cut = shot !== cinema.shot;
+  cinema.shot = shot;
+  cinema.heading = cut ? heading : cinema.heading + angleDiff(heading, cinema.heading) * (1 - Math.exp(-3 * dt));
+  const [along, across, height, fov] = shots[shot], h = cinema.heading;
+  const scale = Math.max(1, player.len / 5), drift = Math.sin(cinema.elapsed % 8 * 0.32) * 0.75;
+  pivot.set(pos.x, y + player.spec.eye * 0.8, pos.z);
+  want.set(pos.x + ((along + drift) * Math.sin(h) + across * Math.cos(h)) * scale,
+    y + height * Math.sqrt(scale), pos.z + ((along + drift) * Math.cos(h) - across * Math.sin(h)) * scale);
+  want.y = Math.max(want.y, cameraFloor(want.x, want.z) + 0.55);
+  want.lerp(pivot, 1 - cameraClearance(pivot, want));
+  camera.position.copy(want); camera.lookAt(pivot);
+  camera.fov = fov; camera.updateProjectionMatrix();
+}
 { const cv = $('#scene');
-  cv.addEventListener('pointerdown', e => { if (S.mode === 'replay') { replay(false); return; } if (S.mode !== 'play' && S.mode !== 'photo') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
+  let lastCinemaTap = -Infinity;
+  cv.addEventListener('pointerdown', e => { if (cinema.active) {
+    if (e.pointerType === 'touch' && e.timeStamp - lastCinemaTap < 350) leaveCinema();
+    lastCinemaTap = e.timeStamp; return;
+  } if (S.mode === 'replay') { replay(false); return; } if (S.mode !== 'play' && S.mode !== 'photo') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
   cv.addEventListener('pointermove', e => { if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, S.mode === 'photo' ? -0.1 : -0.3, 1.1); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
   const end = e => { if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
@@ -502,7 +556,7 @@ function stepTime(dt, running) {
   R.bloom.strength = 0.22 + 0.19 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
   let dh = Math.abs(hour - envHour); dh = Math.min(dh, 24 - dh); if (dh > (env.day > 0.05 && env.day < 0.95 ? 0.3 : 0.9)) captureEnv();
 }
-addEventListener('keydown', e => { if (e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
+addEventListener('keydown', e => { if (!cinema.active && e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
 
 // ---------- Performance read-out (F) and a report you can copy ----------
 const perf = { on: store.get('fps', 'off') === 'on', t: 0, n: 0, worst: 0, fps: 0, low: 0, sum: 0, secs: 0, minFps: 999, el: $('#perf') };
@@ -515,7 +569,7 @@ function stepPerf(rawDt, playing) { perf.t += rawDt; perf.n++; perf.worst = Math
 function setPerf(on) { perf.on = on; store.set('fps', on ? 'on' : 'off'); perf.el.hidden = !on; $('#btn-fps').textContent = on ? 'Hide frame rate' : 'Show frame rate'; }
 $('#btn-fps').addEventListener('click', () => setPerf(!perf.on));
 $('#btn-report').addEventListener('click', async () => { const text = perfText(); try { await navigator.clipboard.writeText(text); $('#btn-report').textContent = 'Copied — paste it to me'; } catch (e) { $('#report-text').hidden = false; $('#report-text').value = text; $('#report-text').select(); } setTimeout(() => { $('#btn-report').textContent = 'Copy performance report'; }, 2500); });
-addEventListener('keydown', e => { if (e.key.toLowerCase() === 'f' && (S.mode === 'play' || S.mode === 'pause')) setPerf(!perf.on); });
+addEventListener('keydown', e => { if (!cinema.active && e.key.toLowerCase() === 'f' && (S.mode === 'play' || S.mode === 'pause')) setPerf(!perf.on); });
 
 // ---------- Keeps the frame rate up: if the device struggles, step the cost down without a reload ----------
 const gov = { level: 0, t: 0, frames: 0, warm: 6 };
@@ -541,15 +595,15 @@ function frame() {
   const rawDt = clock.getDelta(), dt = Math.min(0.05, rawDt); S.time += dt;
   if (S.mode === 'boot') return;
   const playing = S.mode === 'play'; govern(rawDt, playing); stepPerf(rawDt, playing);
-  const replaying = S.mode === 'replay';
+  const replaying = S.mode === 'replay', tour = cinema.tour, focus = tour || player.pos;
   if (S.mode === 'photo') photoCam(); else if (S.mode === 'map') { if ((hudTick++ & 7) === 0) drawBig(); }
   else if (S.mode !== 'pause') {
-    stepTime(dt, playing || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
+    stepTime(dt, playing || !!tour || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, focus); places.update(S.time);
     if (replaying) {
       stepReplay(dt);
       if (S.mode === 'replay') spray.emit(dt, player, env.wet, city.puddleAt);
       if (S.mode === 'replay') traffic.update(dt, S.time, null, player.pos, true, true);
-    } else traffic.update(dt, S.time, playing ? player : null, player.pos);
+    } else traffic.update(dt, S.time, playing ? player : null, focus);
     if (!replaying && (playing || S.mode === 'over')) {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, stopOnly: !live, hand: live ? !!input.hand : false };
       player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
@@ -581,20 +635,20 @@ function frame() {
             g * (dust ? 1.25 : 1), g * (dust ? 1.05 : 1), g * (dust ? 0.75 : 1.02));
         }
       }
-      chase(dt, snapCam); snapCam = false;
-    } else if (!replaying) orbit(S.time);
+      if (cinema.active) cinemaCamera(dt); else chase(dt, snapCam); snapCam = false;
+    } else if (tour) cinemaCamera(dt); else if (!replaying) orbit(S.time);
     rain.visible = env.rain > 0.03 && !world.tunnelPassage(camera.position.x, camera.position.y, camera.position.z);
     stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); stepRain(dt, camera.position, player.vel.x, player.vel.z);
-    placeLampLights(player.pos);
+    placeLampLights(focus);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
-  city.sky.position.copy(camera.position); city.updateSun(player.pos, player.groundY); city.cull(camera.position);
+  city.sky.position.copy(camera.position); city.updateSun(focus, tour ? tour.y || 0 : player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying, speed: player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   player.updateWetness(dt, env.rain);
-  probe.set(player.pos.x, player.groundY + 1.15, player.pos.z); R.render(probe);
+  probe.set(focus.x, (tour ? tour.y || 0 : player.groundY) + 1.15, focus.z); R.render(probe);
   if (shot) { shot = false; renderer.domElement.toBlob(saveShot, 'image/jpeg', 0.93); }
 }
 
