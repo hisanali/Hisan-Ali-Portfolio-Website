@@ -4,11 +4,11 @@ import { WORLD } from './world.js';
 
 // ---------- Cars and upgrades ----------
 export const CARS = [
-  { id: 'coupe', name: 'Vanta RS', kind: 'Rear-engined coupé', price: 0, vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, eye: 1.06 },
-  { id: 'hatch', file: 'car-gr-corolla', rig: true, name: 'Pico GT', kind: 'Hot hatch · nimble', price: 1500, vmax: 60, acc: 0.86, grip: 1.1, brake: 1.06, off: 1, eye: 1.13 },
-  { id: 'sedan', file: 'road-sedan', name: 'Meridian', kind: 'Saloon · steady', price: 3000, vmax: 68, acc: 0.9, grip: 1.02, brake: 1, off: 1, eye: 1.14 },
-  { id: 'pickup', file: 'road-pickup', name: 'Bronto', kind: 'Pickup · goes anywhere', price: 5000, vmax: 56, acc: 0.82, grip: 0.95, brake: 0.95, off: 0.35, eye: 1.42 },
-  { id: 'suv', file: 'car-land-cruiser', rig: true, name: 'Atlas X', kind: '4×4 · fast off the road', price: 8000, vmax: 66, acc: 0.92, grip: 0.98, brake: 1, off: 0.45, eye: 1.56 }
+  { id: 'coupe', name: 'Vanta RS', kind: 'Rear-engined coupé', vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, eye: 1.06 },
+  { id: 'hatch', file: 'car-gr-corolla', rig: true, name: 'Pico GT', kind: 'Hot hatch · nimble', vmax: 60, acc: 0.86, grip: 1.1, brake: 1.06, off: 1, eye: 1.13 },
+  { id: 'sedan', file: 'road-sedan', name: 'Meridian', kind: 'Saloon · steady', vmax: 68, acc: 0.9, grip: 1.02, brake: 1, off: 1, eye: 1.14 },
+  { id: 'pickup', file: 'road-pickup', name: 'Bronto', kind: 'Pickup · goes anywhere', vmax: 56, acc: 0.82, grip: 0.95, brake: 0.95, off: 0.35, eye: 1.42 },
+  { id: 'suv', file: 'car-land-cruiser', rig: true, name: 'Atlas X', kind: '4×4 · fast off the road', vmax: 66, acc: 0.92, grip: 0.98, brake: 1, off: 0.45, eye: 1.56 }
 ];
 export const UPGRADES = [['e', 'Engine'], ['t', 'Tyres'], ['b', 'Brakes']], UP_COST = [1200, 3000, 6500], UP_MAX = 3;
 export const carById = id => CARS.find(c => c.id === id) || CARS[0];
@@ -17,7 +17,7 @@ const KEY = 'afterdark:save';
 export function loadSave() {
   const d = { cash: 0, car: 'coupe', cars: ['coupe'], up: {}, times: {}, jobs: 0, earned: 0, seen: ['Downtown'] };
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') Object.assign(d, s); } catch (e) {}
-  if (!Array.isArray(d.cars) || !d.cars.includes('coupe')) d.cars = ['coupe']; d.cars = d.cars.filter(id => CARS.some(c => c.id === id));
+  d.cars = CARS.map(car => car.id);
   if (!d.cars.includes(d.car)) d.car = 'coupe'; d.cash = Math.max(0, Math.round(+d.cash || 0));
   for (const k of ['up', 'times']) if (!d[k] || typeof d[k] !== 'object') d[k] = {}; if (!Array.isArray(d.seen)) d.seen = ['Downtown'];
   return d;
