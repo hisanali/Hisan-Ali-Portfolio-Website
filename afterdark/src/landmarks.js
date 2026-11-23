@@ -8,14 +8,15 @@ const UP = new THREE.Vector3(0, 1, 0);
 export function planAirfield(samples) {
   const entrance = samples.filter(s => s.road === 'coast' && s.z < -1320 && !s.bridge && !s.tunnel)
     .reduce((best, s) => Math.abs(s.x - 930) < Math.abs(best.x - 930) ? s : best);
-  const runway = { u: 0, v: 36, length: 630, width: 23 };
+  const runway = { u: -100, v: 36, length: 600, width: 23 };
+  const pad = { west: -421, east: 221 };
   const site = {
     key: 'airport', name: 'Port Aurora Airfield', x: entrance.x, z: entrance.z + 236,
-    y: Math.max(3, entrance.y), ux: 1, uz: 0, vx: 0, vz: 1, r: 225, road: entrance, runway,
+    y: Math.max(3, entrance.y), ux: 1, uz: 0, vx: 0, vz: 1, r: 225, road: entrance, runway, pad,
     paving: [
       [runway.u, runway.v, runway.length, runway.width],
       [0, 0, 440, 8],        // Parallel taxiway
-      [-215, 18, 8, 36], [215, 18, 8, 36], [28, 18, 12, 36],
+      [-215, 18, 8, 36], [173, 18, 8, 36], [28, 18, 12, 36],
       [22, -26, 133, 50],    // Apron
       [0, -77, 96, 22],      // Public parking
       [0, -158, 11, 147]     // Access from the coast road
@@ -23,9 +24,9 @@ export function planAirfield(samples) {
   };
   site.arrival = { x: site.x, z: site.z - 78, y: site.y, name: site.name };
   site.contains = (x, z, margin = 0) => {
-    const u = Math.abs(x - site.x), v = z - site.z;
-    return (u < 332 + margin && v > -97 - margin && v < 81 + margin)
-      || (u < 16 + margin && v > -232 - margin && v <= -97);
+    const u = x - site.x, v = z - site.z;
+    return (u > pad.west - margin && u < pad.east + margin && v > -97 - margin && v < 81 + margin)
+      || (Math.abs(u) < 16 + margin && v > -232 - margin && v <= -97);
   };
   return site;
 }
@@ -291,16 +292,18 @@ function parkedPlane(scene, site, u, v, turn, accent) {
 export function buildAirfield(scene, city, world, site) {
   const A = makeSite(scene, city, world, site);
   const white = 0xd6d5c4, slate = 0x485456, light = 0xa9ad9f, ochre = 0xb19046;
-  for (let n = -255; n <= 255; n += 19) A.mark(n, 36, 10, 0.29, white);
+  const runway = site.runway, half = runway.length / 2;
+  const line = (u, v, w, d) => A.mark(runway.u + u, runway.v + v, w, d, white);
+  for (let n = -half + 58; n < half - 58; n += 19) line(n, 0, 10, 0.29);
   for (const e of [-1, 1]) {
-    A.mark(0, 36 + e * 10.45, 624, 0.20, white);
+    line(0, e * (runway.width / 2 - 1.05), runway.length - 6, 0.20);
     for (let i = 0; i < 4; i++) {
       const d = 1.4 + i * 2.17;
-      A.mark(e * 304.8, 36 - d, 12.5, 0.72, white);
-      A.mark(e * 304.8, 36 + d, 12.5, 0.72, white);
+      line(e * (half - 10.2), -d, 12.5, 0.72);
+      line(e * (half - 10.2), d, 12.5, 0.72);
     }
-    for (let u = -301; u < 309; u += 22) {
-      const v = site.runway.v + e * (site.runway.width / 2 + 0.4);
+    for (let u = runway.u - half + 12; u < runway.u + half; u += 22) {
+      const v = runway.v + e * (runway.width / 2 + 0.4);
       A.box(u, A.ground(u, v) + 0.085, v, 0.16, 0.19, 0.16, white, { mat: A.glow });
     }
   }
@@ -312,13 +315,13 @@ export function buildAirfield(scene, city, world, site) {
     const mat = new THREE.MeshStandardMaterial({ map, alphaTest: 0.45, roughness: 0.94, polygonOffset: true, polygonOffsetFactor: -2 });
     const g = new THREE.PlaneGeometry(7.5, 6).rotateX(-Math.PI / 2).rotateY(turn);
     const m = new THREE.Mesh(g, mat);
-    m.position.set(u, A.ground(u, 36) + 0.023, 36);
+    m.position.set(u, A.ground(u, runway.v) + 0.073, runway.v);
     A.group.add(m);
   };
-  runwayNumber('09', -286, -Math.PI / 2);
-  runwayNumber('27', 286, Math.PI / 2);
+  runwayNumber('09', runway.u - half + 29, -Math.PI / 2);
+  runwayNumber('27', runway.u + half - 29, Math.PI / 2);
   A.mark(0, 0, 440, 0.15, ochre);
-  for (const u of [-215, 28, 215]) {
+  for (const u of [-215, 28, 173]) {
     A.mark(u, 15, 0.15, 29, ochre);
     for (const delta of [-0.66, -0.31, 0.31, 0.66]) A.mark(u, 20 + delta, 6.7, 0.14, ochre);
   }

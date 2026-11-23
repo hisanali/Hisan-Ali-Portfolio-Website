@@ -93,9 +93,9 @@ export function createBigMap(canvas, world, places) {
         ctx.beginPath();
         ctx.moveTo(X(airfield.x), Y(airfield.road.z));
         ctx.lineTo(X(airfield.x), Y(airfield.arrival.z));
-        const { v, length } = airfield.runway;
-        ctx.moveTo(X(airfield.x - length / 2), Y(airfield.z + v));
-        ctx.lineTo(X(airfield.x + length / 2), Y(airfield.z + v));
+        const { u: runwayOffset, v, length } = airfield.runway;
+        ctx.moveTo(X(airfield.x + runwayOffset - length / 2), Y(airfield.z + v));
+        ctx.lineTo(X(airfield.x + runwayOffset + length / 2), Y(airfield.z + v));
         ctx.stroke();
       }
       if (st.route) { ctx.strokeStyle = '#35ffe0'; ctx.lineWidth = 1.5 * u; ctx.setLineDash([5 * u, 5 * u]); ctx.beginPath(); ctx.moveTo(X(st.route.start.x), Y(st.route.start.z)); for (const c of st.route.cps) ctx.lineTo(X(c.x), Y(c.z)); ctx.stroke(); ctx.setLineDash([]); }

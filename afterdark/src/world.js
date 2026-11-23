@@ -99,9 +99,10 @@ export async function buildWorld(scene, city, Q) {
       if (d < pl.r + pl.blend) h = mix(h, pl.y - 0.05, 1 - sst(pl.r, pl.r + pl.blend, d));
     }
     if (airfield.contains(x, z, 84)) {
-      const u = Math.abs(x - airfield.x), v = z - airfield.z;
-      const pad = (1 - sst(326, 415, u)) * sst(-137, -94, v) * (1 - sst(72, 157, v));
-      const access = (1 - sst(10, 70, u)) * sst(-236, -216, v) * (1 - sst(-110, -86, v));
+      const u = x - airfield.x, v = z - airfield.z, { west, east } = airfield.pad;
+      const width = sst(west - 82, west + 2, u) * (1 - sst(east - 2, east + 82, u));
+      const pad = width * sst(-137, -94, v) * (1 - sst(72, 157, v));
+      const access = (1 - sst(10, 70, Math.abs(u))) * sst(-236, -216, v) * (1 - sst(-110, -86, v));
       const grade = mix(airfield.road.y, airfield.y, sst(-230, -113, v));
       h = mix(h, grade - 0.05, Math.max(pad, access) * sst(32, 88, tunnelDistance));
     }
