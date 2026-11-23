@@ -8,7 +8,11 @@ export const CARS = [
   { id: 'hatch', file: 'car-gr-corolla', rig: true, name: 'Pico GT', kind: 'Hot hatch · nimble', vmax: 60, acc: 0.86, grip: 1.1, brake: 1.06, off: 1, eye: 1.13 },
   { id: 'sedan', file: 'road-sedan', name: 'Meridian', kind: 'Saloon · steady', vmax: 68, acc: 0.9, grip: 1.02, brake: 1, off: 1, eye: 1.14 },
   { id: 'pickup', file: 'road-pickup', name: 'Bronto', kind: 'Pickup · goes anywhere', vmax: 56, acc: 0.82, grip: 0.95, brake: 0.95, off: 0.35, eye: 1.42 },
-  { id: 'suv', file: 'car-land-cruiser', rig: true, name: 'Atlas X', kind: '4×4 · fast off the road', vmax: 66, acc: 0.92, grip: 0.98, brake: 1, off: 0.45, eye: 1.56 }
+  { id: 'suv', file: 'car-land-cruiser', rig: true, name: 'Atlas X', kind: '4×4 · fast off the road', vmax: 66, acc: 0.92, grip: 0.98, brake: 1, off: 0.45, eye: 1.56 },
+  { id: 'estate', file: 'road-wagon', name: 'Meridian Estate', kind: 'Touring wagon', vmax: 56, acc: 0.85, grip: 1.03, brake: 1, off: 0.85, eye: 1.19 },
+  { id: 'crossover', file: 'road-suv', name: 'Trailcrest', kind: 'Family SUV', vmax: 53, acc: 0.84, grip: 0.99, brake: 1, off: 0.65, eye: 1.45 },
+  { id: 'compact', file: 'road-hatch', name: 'Pico City', kind: 'City hatchback', vmax: 48, acc: 0.8, grip: 1.09, brake: 1.08, off: 1, eye: 1.12 },
+  { id: 'van', file: 'road-van', name: 'Courier', kind: 'Delivery van', vmax: 44, acc: 0.72, grip: 0.93, brake: 0.92, off: 0.8, eye: 1.55 }
 ];
 export const UPGRADES = [['e', 'Engine'], ['t', 'Tyres'], ['b', 'Brakes']], UP_COST = [1200, 3000, 6500], UP_MAX = 3;
 export const carById = id => CARS.find(c => c.id === id) || CARS[0];
