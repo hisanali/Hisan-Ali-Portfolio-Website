@@ -1,0 +1,4 @@
+.sh-guide .sh-ph { position:relative; width:150px; height:260px; border:3px solid var(--fe-ink); border-radius:24px; background:linear-gradient(160deg,var(--fe-border),transparent); overflow:hidden; }
+.sh-guide .sh-card { position:absolute; left:10px; right:10px; bottom:46px; padding:8px 10px; border-radius:10px; background:var(--fe-ink); color:var(--fe-bg,#fff); font-size:12px; font-weight:800; opacity:0; animation:sh-in 8s ease infinite; }
+.sh-guide .sh-btn { position:absolute; left:10px; right:10px; bottom:10px; padding:7px; border-radius:10px; background:var(--fe-accent); color:#fff; text-align:center; font-size:12px; font-weight:800; opacity:0; animation:sh-in 8s ease infinite; animation-delay:.8s; }
+@keyframes sh-in { 0%,15% { opacity:0; transform:translateY(10px); } 30%,90% { opacity:1; transform:none; } 100% { opacity:0; } }

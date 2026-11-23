@@ -1,0 +1,10 @@
+.ax-guide .ax-wrap { display:grid; gap:12px; max-width:340px; }
+.ax-guide .ax-r { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border:2px solid var(--fe-border); border-radius:12px; font-weight:700; color:var(--fe-ink); }
+.ax-guide .ax-r i { position:relative; width:44px; height:24px; border-radius:999px; background:var(--fe-border); animation:ax-on 9s ease infinite; }
+.ax-guide .ax-r i::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; animation:ax-knob 9s ease infinite; }
+.ax-guide .ax-r:nth-child(2) i, .ax-guide .ax-r:nth-child(2) i::after { animation-delay:.4s; }
+.ax-guide .ax-r.off i { animation-name:ax-off; } .ax-guide .ax-r.off i::after { animation-name:ax-knob-off; animation-delay:.8s; } .ax-guide .ax-r.off i { animation-delay:.8s; }
+@keyframes ax-on { 0%,10% { background:var(--fe-border); } 20%,92% { background:var(--fe-accent); } 100% { background:var(--fe-border); } }
+@keyframes ax-knob { 0%,10% { transform:none; } 20%,92% { transform:translateX(20px); } 100% { transform:none; } }
+@keyframes ax-off { 0%,10% { background:var(--fe-border); } 20%,50% { background:var(--fe-accent); } 60%,100% { background:var(--fe-border); } }
+@keyframes ax-knob-off { 0%,10% { transform:none; } 20%,50% { transform:translateX(20px); } 60%,100% { transform:none; } }

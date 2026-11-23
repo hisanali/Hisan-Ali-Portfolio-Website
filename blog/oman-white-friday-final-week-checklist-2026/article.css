@@ -1,0 +1,5 @@
+.fw-guide .fw-wrap { display:grid; grid-template-columns:repeat(5,minmax(0,64px)); gap:12px; }
+.fw-guide .fw-wrap i { display:grid; place-items:center; height:64px; border-radius:12px; background:var(--fe-border); font-style:normal; font-weight:800; color:var(--fe-ink); animation:fw-on 9s ease infinite; }
+.fw-guide .fw-wrap i:nth-child(2){animation-delay:.4s}.fw-guide .fw-wrap i:nth-child(3){animation-delay:.8s}.fw-guide .fw-wrap i:nth-child(4){animation-delay:1.2s}.fw-guide .fw-wrap i:nth-child(5){animation-delay:1.6s}
+.fw-guide .fw-wrap i.k { box-shadow:inset 0 0 0 3px var(--fe-accent); }
+@keyframes fw-on { 0%,8% { background:var(--fe-border); color:var(--fe-ink); } 20%,90% { background:var(--fe-accent); color:#fff; } 100% { background:var(--fe-border); } }
