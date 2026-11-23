@@ -57,6 +57,9 @@ export async function buildWorld(scene, city, Q) {
   }
   // widen tunnel flags slightly so portals sit in a proper cutting, and close 1-2 sample gaps
   for (let i = 2; i < samples.length - 2; i++) if (!samples[i].tunnel && samples[i - 2].tunnel && samples[i + 2].tunnel && samples[i].road === samples[i - 2].road) samples[i].tunnel = true;
+  // Rain does not reach the road inside a tunnel: tyres carry it a few car lengths past each portal, then the road is dry.
+  { let run = []; const close = () => { if (run.length >= 6) run.forEach((s, k) => { s.dry = sst(6, 42, Math.min(k, run.length - 1 - k) * STEP); }); run = []; };
+    for (const s of samples) { if (s.tunnel && run.length && run[run.length - 1].i !== s.i - 1) close(); if (s.tunnel) run.push(s); else close(); } close(); }
   const grid = new Map(), GC = 24, gk = (x, z) => Math.floor(x / GC) * 8192 + Math.floor(z / GC);
   for (const s of samples) (grid.get(gk(s.x, s.z)) || grid.set(gk(s.x, s.z), []).get(gk(s.x, s.z))).push(s);
   // Nearest road sample within reach metres, with signed lateral offset (+ = left of travel).
@@ -228,15 +231,17 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   const AL = n => { const t = L.load(`/evermile/assets/materials/asphalt_03_${n}_1k.jpg`); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (n === 'diff') t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16; return t; };
   const roadM = new THREE.MeshStandardMaterial({ map: AL('diff'), normalMap: AL('nor_gl'), roughnessMap: AL('rough'), roughness: 1, normalScale: new THREE.Vector2(0.5, 0.5), envMapIntensity: 0.3 });
   roadM.onBeforeCompile = sh => { sh.uniforms.uWet = city.wetUniform;
-    sh.fragmentShader = 'uniform float uWet;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+    sh.vertexShader = 'attribute float aDry; varying float vDry;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vDry = aDry;');
+    sh.fragmentShader = 'uniform float uWet; varying float vDry;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+  float adWet = uWet * (1.0 - vDry);
   float adX = vMapUv.x * 2.0, adY = vMapUv.y * 6.3;
   float adLine = (1.0 - smoothstep(0.012, 0.016, abs(adX - 1.0))) * step(fract(adY / 12.0), 0.5) + (1.0 - smoothstep(0.012, 0.016, abs(abs(adX - 1.0) - 0.9)));
   adLine *= smoothstep(0.1, 0.32, dot(diffuseColor.rgb, vec3(0.333)) + 0.12);
-  diffuseColor.rgb *= mix(0.92, 0.5, uWet); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.66), clamp(adLine, 0.0, 1.0) * 0.9);`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = max(0.34, mix(clamp(roughnessFactor * 0.9 + 0.12, 0.5, 0.95), 0.4, uWet));'); };
+  diffuseColor.rgb *= mix(0.92, 0.5, adWet); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.66), clamp(adLine, 0.0, 1.0) * 0.9);`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = max(0.34, mix(clamp(roughnessFactor * 0.9 + 0.12, 0.5, 0.95), 0.4, adWet));'); };
   const strips = [];
-  for (const rd of world.roads) { const pos = [], uv = [], idx = [], nor = []; let k = 0;
-    for (let i = rd.from; i <= rd.to; i++) { const s = samples[i]; pos.push(s.x + s.lx * HALFW, s.y + 0.03, s.z + s.lz * HALFW, s.x - s.lx * HALFW, s.y + 0.03, s.z - s.lz * HALFW); uv.push(0, s.s / 6.3, 0.5, s.s / 6.3); nor.push(0, 1, 0, 0, 1, 0); if (i < rd.to) { idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } k += 2; }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setIndex(idx); g.computeVertexNormals();
+  for (const rd of world.roads) { const pos = [], uv = [], idx = [], nor = [], dry = []; let k = 0;
+    for (let i = rd.from; i <= rd.to; i++) { const s = samples[i]; pos.push(s.x + s.lx * HALFW, s.y + 0.03, s.z + s.lz * HALFW, s.x - s.lx * HALFW, s.y + 0.03, s.z - s.lz * HALFW); uv.push(0, s.s / 6.3, 0.5, s.s / 6.3); nor.push(0, 1, 0, 0, 1, 0); dry.push(s.dry || 0, s.dry || 0); if (i < rd.to) { idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } k += 2; }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('aDry', new THREE.Float32BufferAttribute(dry, 1)); g.setIndex(idx); g.computeVertexNormals();
     const m = new THREE.Mesh(g, roadM); m.receiveShadow = true; m.frustumCulled = false; scene.add(m); strips.push(m); }
   roadM.map.repeat.set(2, 1); roadM.normalMap.repeat.set(2, 1); roadM.roughnessMap.repeat.set(2, 1);
 

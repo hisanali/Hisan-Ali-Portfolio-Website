@@ -92,7 +92,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const tailM = new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(1, 0.06, 0.03), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.1, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const tailPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), tailM); tailPool.rotation.x = -Math.PI / 2; tailPool.position.set(0, 0.035, -len / 2 - 2.2); tailPool.renderOrder = 4; root.add(tailPool);
 
-  const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, tyreContacts, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
+  const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, roadDry: 0, root, tilt, model, paint, len, wid, tyreContacts, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
   let brakeToStop = false;
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
   const hw = wid / 2 - 0.14, hl = len / 2 - 0.06, CORNERS = [[hw, hl], [-hw, hl], [hw, -hl], [-hw, -hl]], KERB = HALF + SW - 0.06, SEA = -(HALF + 13.2) - 71, PROM = -(HALF + 13.2), prevC = [null, null, null, null];
@@ -119,12 +119,15 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
   const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : 0.17 - Math.min(1, (PROM - x) / 92) ** 2 * 1.5; const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
   car.surfaceY = groundAt;
+  // How wet the road under the car is: the night's rain, less inside a tunnel where the road dries out.
+  Object.defineProperty(car, 'roadWet', { get: () => wetK * (1 - car.roadDry) });
   car.updateWetness = (dt, rain) => {
-    const water = updateWetPaint(dt, car.tunnel ? 0 : rain);
-    paint.clearcoatRoughness = lerp(0.03, 0.068, water);
-    car.bodyWetness = water;
+    const water = updateWetPaint(dt, car.tunnel ? 0 : rain, Math.abs(car.speed));
+    paint.clearcoatRoughness = lerp(0.03, 0.068, water.film);
+    car.paintWater = water;
+    car.bodyWetness = water.beads;
   };
-  car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
+  car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z, ginfo); car.roadDry = ginfo.road?.tunnel ? ginfo.road.dry || 0 : 0; car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = 2.4 - 1.65 * nightK; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
@@ -135,7 +138,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     fwd.set(Math.sin(car.heading), 0, Math.cos(car.heading)); left.set(fwd.z, 0, -fwd.x);
     let vF = car.vel.dot(fwd), vL = car.vel.dot(left);
     const speed = Math.abs(vF);
-    const wild = outside(car.pos.x, car.pos.z);
+    const wild = outside(car.pos.x, car.pos.z), wet = car.roadWet;
     // The wheel is wound on at a steady rate that slows with speed, and runs back to centre faster than it winds on:
     // a short tap is a small correction, a held key reaches full lock in a fraction of a second.
     { const k = clamp(speed / 50, 0, 1), unwinding = ctrl.steer === 0 || ctrl.steer * car.steer < 0, rate = (unwinding ? lerp(9, 6, k) : lerp(7.5, 4, k)) * dt;
@@ -148,7 +151,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     else if (serviceBrake || ctrl.throttle || vF > -0.08) car.reversing = false;
     const VMAX = T.vmax; let a = 0;
     if (serviceBrake) {
-      const decel = (10.5 - wetK * 2.7) * T.brake;
+      const decel = (10.5 - wet * 2.7) * T.brake;
       a -= ctrl.brake * decel;
     } else if (ctrl.throttle > 0) {
       const engine = T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
@@ -156,7 +159,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && vF > 0
         ? THREE.MathUtils.smoothstep(Math.abs(car.steer), 0.52, 0.96) : 0;
-      const cornerSpeed = (6.4 - wetK * 0.9) * Math.sqrt(T.grip);
+      const cornerSpeed = (6.4 - wet * 0.9) * Math.sqrt(T.grip);
       const cornerAccel = clamp((cornerSpeed - vF) * 1.72, -6.5, engine);
       a += ctrl.throttle * lerp(engine, cornerAccel, lock);
     } else if (ctrl.brake > 0) {
@@ -178,7 +181,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const onDirt = car.onSand || car.rough;
     // Dry tarmac holds about 1.05 g, a soaked road about 0.78 g. Hard braking uses part of that, leaving less to turn with.
     const braking = serviceBrake ? Math.min(1, ctrl.brake) : 0;
-    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 10.3 - wetK * 2.65) * T.grip * Math.sqrt(1 - 0.62 * braking * braking);
+    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 10.3 - wet * 2.65) * T.grip * Math.sqrt(1 - 0.62 * braking * braking);
     gripNow = grip;
     const yaw = vF * Math.tan(frontAngle(car.steer, vF)) / wheelbase;
     const cap = (ctrl.hand ? grip * 1.56 : grip) / Math.max(2.8, Math.abs(vF));
@@ -192,7 +195,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     left.set(fwd.z, 0, -fwd.x);
     car.heading += turn;
     // The tires track the steering on normal throttle, while the handbrake can still loosen the rear.
-    const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 3.2;
+    const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wet * 3.2;
     vL *= Math.exp(-lateralDamping * dt);
     car.vel.copy(fwd).multiplyScalar(vF).addScaledVector(left, vL);
     const ox0 = car.pos.x, oz0 = car.pos.z;
@@ -277,7 +280,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       if (rd) { const lim = 6 - hw - 0.15; for (const [flag, sg] of [['wallL', 1], ['wallR', -1]]) { const over = ginfo.lat * sg - lim; if (rd[flag] && over > 0 && over < 5) { p.x -= rd.lx * sg * over; p.z -= rd.lz * sg * over; const vn = (car.vel.x * rd.lx + car.vel.z * rd.lz) * sg; if (vn > 0) { hit = Math.max(hit, vn); car.vel.x -= rd.lx * sg * vn * 1.15; car.vel.z -= rd.lz * sg * vn * 1.15; }
             const al = Math.sin(car.heading) * rd.tx + Math.cos(car.heading) * rd.tz, want = Math.atan2(rd.tx * Math.sign(al || 1), rd.tz * Math.sign(al || 1)), df = Math.atan2(Math.sin(want - car.heading), Math.cos(want - car.heading)); car.heading += clamp(df, -2.2 * dt, 2.2 * dt); gy = groundAt(p.x, p.z, ginfo); } } }
       if (outside(p.x, p.z) && world.terrain(p.x, p.z) < -1.25 && !(ginfo.road && ginfo.road.bridge)) { p.x = ox0; p.z = oz0; car.vel.multiplyScalar(-0.25); gy = groundAt(p.x, p.z, ginfo); } // the sea
-      car.rough = outside(p.x, p.z) && !ginfo.paved && !(ginfo.road && Math.abs(ginfo.lat) < 7.5); car.tunnel = !!(ginfo.road?.tunnel && Math.abs(ginfo.lat) <= 7.5 && Math.abs(gy - ginfo.road.y) < 2);
+      car.rough = outside(p.x, p.z) && !ginfo.paved && !(ginfo.road && Math.abs(ginfo.lat) < 7.5); car.tunnel = !!(ginfo.road?.tunnel && Math.abs(ginfo.lat) <= 7.5 && Math.abs(gy - ginfo.road.y) < 2); car.roadDry += ((car.tunnel ? ginfo.road.dry || 0 : 0) - car.roadDry) * Math.min(1, dt * 8);
       const kerb = !outside(p.x, p.z) && gy > 0.08; if (kerb !== car.onKerb) { car.onKerb = kerb; car.bump = Math.min(1, Math.abs(car.speed) * 0.06); }
       // A rise too sharp to drive up is a wall: stop against it rather than popping to the top.
       if (!car.air && outside(p.x, p.z) && gy - car.groundY > 0.55 + Math.hypot(p.x - ox0, p.z - oz0) * 1.6) { const mx = p.x - ox0, mz = p.z - oz0, ml = Math.hypot(mx, mz) || 1; hit = Math.max(hit, Math.hypot(car.vel.x, car.vel.z) * 0.6); p.x = ox0; p.z = oz0; const vn = (car.vel.x * mx + car.vel.z * mz) / ml; car.vel.x -= mx / ml * vn * 1.3; car.vel.z -= mz / ml * vn * 1.3; gy = groundAt(p.x, p.z, ginfo); }
