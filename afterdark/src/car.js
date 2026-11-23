@@ -15,10 +15,10 @@ function beam(color, strength) {
     fragmentShader: 'uniform vec3 uColor; uniform float uStrength; varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(abs(dot(normalize(vN), normalize(vV))), 2.2); gl_FragColor = vec4(uColor * pow(vUv.y, 2.0) * f * uStrength, 1.0); }' });
 }
 
-export async function createPlayer(scene, envTexture, city) {
-  let nightK = 0;
-  const gltf = await loadGLB('/evermile/assets/sports-coupe.glb');
-  const model = gltf.scene; model.rotation.y = Math.PI; model.updateMatrixWorld(true);
+export async function createPlayer(scene, envTexture, city, spec = {}) {
+  let nightK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file;
+  const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=supplied7` : '/evermile/assets/sports-coupe.glb');
+  const model = gltf.scene; if (!kitCar) model.rotation.y = Math.PI; model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
   model.position.set(-c.x, -box.min.y, -c.z);
   const len = box.max.z - box.min.z, wid = box.max.x - box.min.x;
@@ -37,12 +37,13 @@ export async function createPlayer(scene, envTexture, city) {
     caliper: new THREE.MeshStandardMaterial({ color: 0xa30d12, metalness: 0.4, roughness: 0.4, ...env }),
     cabin: new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.8, ...env, envMapIntensity: 0.3 })
   };
-  model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
+  if (kitCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; o.material = /paint/i.test(mn) ? paint : /glass/i.test(mn) ? M.glass : /HeadLens/i.test(mn) ? M.lens : /TailLens/i.test(mn) ? M.tail : Object.assign(o.material.clone(), { envMap: envTexture, envMapIntensity: 0.8 }); });
+  else model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
     o.material = n === 'body' ? paint : /glass/i.test(n) ? M.glass : n === 'lights_red' ? M.tail : n === 'leds' ? M.led : n === 'lights' ? M.lens : /^rim_|^wheel$|^nuts$|^centre$/.test(n) ? M.rim : n === 'chrome' || n === 'metal' ? M.chrome : n === 'tire' ? M.tyre
       : n === 'brakes' || n === 'brake' ? (n === 'brakes' ? M.caliper : M.rim) : /carbon/.test(n) ? M.carbon : /grills|wipers|plastic|trim$/.test(n) ? M.dark : /Leather|Carpet|Interior/i.test(mn) || /interior|leather|carpet|steering/.test(n) ? M.cabin : M.dark; });
   model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const root = new THREE.Group(), tilt = new THREE.Group(); tilt.add(model); root.add(tilt); scene.add(root);
-  const wheels = ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr'].map(name => { const node = model.getObjectByName(name); return node && { node, base: node.quaternion.clone(), front: name[6] === 'f', up: Y.clone().applyQuaternion(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()) }; }).filter(Boolean);
+  const wheels = (kitCar ? ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR'] : ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']).map(name => { const node = model.getObjectByName(name); return node && { node, base: node.quaternion.clone(), front: name[6].toLowerCase() === 'f', up: Y.clone().applyQuaternion(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()) }; }).filter(Boolean);
   const wheelR = 0.358;
 
   // Contact shadow keeps the car planted on the road.
@@ -67,7 +68,7 @@ export async function createPlayer(scene, envTexture, city) {
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
   const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) info.road = null; if (x < -HALF) return x > PROM ? 0.17 : 0.17 - Math.min(1, (PROM - x) / 92) ** 2 * 1.5; const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
   car.place = (x, z, h) => { prevC.fill(null); car.slideT = 0; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.sync(0); };
-  car.setPaint = hex => paint.color.set(hex);
+  car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
     M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.55 + 0.45 * e.night; };
@@ -77,19 +78,19 @@ export async function createPlayer(scene, envTexture, city) {
     fwd.set(Math.sin(car.heading), 0, Math.cos(car.heading)); left.set(fwd.z, 0, -fwd.x);
     let vF = car.vel.dot(fwd), vL = car.vel.dot(left);
     car.steer += (ctrl.steer - car.steer) * Math.min(1, dt * (Math.abs(ctrl.steer) > Math.abs(car.steer) ? 5.5 : 9));
-    const VMAX = 82; let a = 0;
-    if (ctrl.throttle > 0) a += ctrl.throttle * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
-    if (ctrl.brake > 0) a += vF > 0.6 ? -ctrl.brake * (22 + Math.min(6, vF * 0.12)) : -ctrl.brake * 6 * Math.max(0, 1 + vF / 9);
+    const VMAX = T.vmax; let a = 0;
+    if (ctrl.throttle > 0) a += ctrl.throttle * T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
+    if (ctrl.brake > 0) a += vF > 0.6 ? -ctrl.brake * T.brake * (22 + Math.min(6, vF * 0.12)) : -ctrl.brake * 6 * Math.max(0, 1 + vF / 9);
     if (!ctrl.throttle && !ctrl.brake && Math.abs(vF) > 0.3) a -= Math.sign(vF) * Math.min(2.4, Math.abs(vF) / dt);
     if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, 9);
     a -= 0.00105 * vF * Math.abs(vF) + 0.035 * vF + (car.onSand ? 0.55 * vF : 0);
     const wild = outside(car.pos.x, car.pos.z); let sF = 0, sL = 0;
     if (wild) { const px = car.pos.x, pz = car.pos.z; sF = (groundAt(px + fwd.x * 1.6, pz + fwd.z * 1.6) - groundAt(px - fwd.x * 1.6, pz - fwd.z * 1.6)) / 3.2; sL = (groundAt(px + left.x * 0.9, pz + left.z * 0.9) - groundAt(px - left.x * 0.9, pz - left.z * 0.9)) / 1.8;
-      sF = clamp(sF, -1.5, 1.5); sL = clamp(sL, -1.5, 1.5); if (!car.air) { a -= 9.81 * sF / Math.sqrt(1 + sF * sF); if (Math.abs(sL) > 0.18) vL -= 9.81 * (sL - Math.sign(sL) * 0.18) * dt * 0.8; if (car.rough) a -= 0.32 * vF; } }
+      sF = clamp(sF, -1.5, 1.5); sL = clamp(sL, -1.5, 1.5); if (!car.air) { a -= 9.81 * sF / Math.sqrt(1 + sF * sF); if (Math.abs(sL) > 0.18) vL -= 9.81 * (sL - Math.sign(sL) * 0.18) * dt * 0.8; if (car.rough) a -= 0.32 * T.off * vF; } }
     car.slopeF += (sF - car.slopeF) * Math.min(1, dt * 9); car.slopeL += (sL - car.slopeL) * Math.min(1, dt * 9);
     if (car.air) a = -0.0009 * vF * Math.abs(vF);
     vF += a * dt; car.accel = a;
-    const grip = car.onSand || car.rough ? 6.5 : 10.2;
+    const grip = (car.onSand || car.rough ? (T.off < 1 ? 8.2 : 6.5) : 10.2) * T.grip;
     const lock = 0.56 / (1 + vF * vF / 420);
     let yaw = vF * Math.tan(car.steer * lock) / 2.65;
     const cap = (ctrl.hand ? grip * 1.9 : grip) / Math.max(5, Math.abs(vF)); yaw = clamp(yaw, -cap, cap);

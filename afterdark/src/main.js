@@ -7,9 +7,11 @@ import { buildStreet } from './street.js';
 import { buildWorld } from './world.js';
 import { buildPlaces } from './places.js';
 import { createSound } from './sound.js';
+import { CARS, UPGRADES, UP_COST, UP_MAX, MEDALS, carById, carSpec, upLevel, loadSave, commit, cr, clockText, buildRoutes, medalFor, jobSpots, nextJob, jobPay, createBigMap } from './career.js';
 
 const $ = s => document.querySelector(s), clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
 const store = { get: (k, d) => { try { return localStorage.getItem('afterdark:' + k) ?? d; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem('afterdark:' + k, v); } catch (e) {} } };
+const save = loadSave();
 const loadEl = $('#loading'), loadMsg = $('#load-msg'), setLoad = t => { loadMsg.textContent = t; };
 const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 
@@ -56,7 +58,7 @@ function moveBeacon() {
     if (far) { const s = world.samples[Math.floor(Math.random() * world.samples.length)]; if (s.tunnel) continue; x = s.x; z = s.z; y = s.y; }
     else { const ax = Math.random() < 0.5, r = Math.floor(Math.random() * ROADS) * P, s = (Math.floor(Math.random() * (ROADS - 1)) + 0.5) * P; x = ax ? r : s; z = ax ? s : r; }
     const d = Math.hypot(x - player.pos.x, z - player.pos.z); if (d > 230 && d < (far ? 1500 : 560)) { beacon.position.set(x, y, z); break; } }
-  S.lastBeaconDist = Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z); beacon.visible = true;
+  S.lastBeaconDist = Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z); beacon.visible = true; A.label = 'Beacon';
 }
 
 // ---------- Street-lamp light pool ----------
@@ -70,6 +72,9 @@ function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; cons
 const KEYS = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', ' ': 'hand' };
 addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) { input[KEYS[k]] = 1; if (S.mode === 'play') e.preventDefault(); }
   if (k === 'c' && S.mode === 'play') nextCam();
+  if (k === 'm') { if (S.mode === 'map') closeMap(); else openMap(); }
+  if (k === 'o' && S.mode === 'play') photo(true);
+  if (k === 'escape') { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else if (S.mode === 'replay') replay(false); }
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'enter' && S.mode === 'menu') start(); });
@@ -88,8 +93,14 @@ let toastT = 0; function toast(t) { const el = $('#toast'); el.textContent = t; 
 function seg(el, opts, cur, cb) { el.innerHTML = ''; opts.forEach(([v, label, sw]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (sw) { b.style.setProperty('--sw', sw); b.classList.add('swatch'); } b.setAttribute('aria-pressed', String(v === cur)); b.addEventListener('click', () => { el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', 'true'); cb(v); }); el.append(b); }); }
 const PAINTS = [['#b9bdc6', 'Silver', '#b9bdc6'], ['#16181d', 'Graphite', '#2a2d35'], ['#8f0f16', 'Crimson', '#b3151e'], ['#123c8f', 'Cobalt', '#1d55c4'], ['#d9a400', 'Solar', '#e9b500'], ['#e9ebee', 'Pearl', '#f2f3f5']];
 let paintSel = store.get('paint', '#b9bdc6');
-seg($('#seg-mode'), [['run', 'Night Run'], ['free', 'Free Roam']], S.kind, v => { S.kind = v; store.set('kind', v); $('#mode-note').textContent = v === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time.' : 'No clock. Cruise the city, chase beacons if you feel like it.'; });
-$('#mode-note').textContent = S.kind === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time.' : 'No clock. Cruise the city, chase beacons if you feel like it.';
+let routes = [], spots = [], bigmap = null, routeSel = store.get('route', 'coast'), jobSel = store.get('job', 'taxi'); if (!['free', 'run', 'trial', 'jobs'].includes(S.kind)) S.kind = 'free';
+function modeUI() { const k = S.kind; let note = k === 'run' ? 'Reach the light beacons before the clock runs out. Each one adds time, and the score pays out in cash.' : 'No clock. Drive anywhere, open the map and tap a road to set a waypoint. New places pay a finder’s fee.';
+  $('#field-sub').hidden = k !== 'trial' && k !== 'jobs';
+  if (k === 'trial') { $('#sub-label').textContent = 'Route'; seg($('#seg-sub'), routes.map(r => [r.id, r.name]), routeSel, v => { routeSel = v; store.set('route', v); modeUI(); }); const r = routes.find(r => r.id === routeSel) || routes[0]; note = r ? `${r.note} ${(r.len / 1000).toFixed(1)} km · gold ${clockText(r.gold)} · ${save.times[r.id] ? 'your best ' + clockText(save.times[r.id], true) : 'no time set yet'}.` : ''; }
+  if (k === 'jobs') { $('#sub-label').textContent = 'Work'; seg($('#seg-sub'), [['taxi', 'Taxi'], ['delivery', 'Delivery']], jobSel, v => { jobSel = v; store.set('job', v); modeUI(); }); note = jobSel === 'taxi' ? 'Pick riders up and get them there in time. Stop at the marker to let them in. A clean drive pays the full fare.' : 'Collect a parcel, stop to load it, then deliver against the clock. Every knock costs you.'; }
+  $('#mode-note').textContent = note; $('#menu-cash').textContent = cr(save.cash); }
+seg($('#seg-mode'), [['free', 'Free Roam'], ['run', 'Beacon Run'], ['trial', 'Time Trial'], ['jobs', 'Jobs']], S.kind, v => { S.kind = v; store.set('kind', v); modeUI(); });
+modeUI();
 seg($('#seg-paint'), PAINTS, paintSel, v => { paintSel = v; store.set('paint', v); player?.setPaint(v); });
 const TIMES = { auto: null, day: 12.5, sunset: 17.4, night: 23, fixed: 12 }; let timeMode = store.get('time', 'auto'); if (!(timeMode in TIMES)) timeMode = 'auto';
 seg($('#seg-tod'), [['auto', 'Live cycle'], ['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Rainy night']], timeMode, v => { timeMode = v; store.set('time', v); if (TIMES[v] != null) hour = TIMES[v]; });
@@ -102,13 +113,17 @@ $('#resume').addEventListener('click', () => pause(false));
 $('#quit').addEventListener('click', () => toMenu());
 $('#btn-pause').addEventListener('click', () => { if (S.mode === 'play') pause(true); });
 $('#btn-cam').addEventListener('click', () => nextCam());
+$('#btn-map').addEventListener('click', () => openMap()); $('#map').addEventListener('click', () => openMap()); $('#map-close').addEventListener('click', () => closeMap()); $('#pause-map').addEventListener('click', () => openMap());
+$('#pause-photo').addEventListener('click', () => photo(true)); $('#pause-replay').addEventListener('click', () => replay(true)); $('#photo-back').addEventListener('click', () => photo(false)); $('#photo-save').addEventListener('click', () => { shot = true; }); $('#replay-stop').addEventListener('click', () => replay(false));
+$('#photo-in').addEventListener('click', () => { view.zoom = clamp(view.zoom * 0.85, 0.55, 2.6); }); $('#photo-out').addEventListener('click', () => { view.zoom = clamp(view.zoom * 1.18, 0.55, 2.6); });
+$('#open-garage').addEventListener('click', () => { drawGarage(); show('garage'); }); $('#g-back').addEventListener('click', () => { modeUI(); show('menu'); });
 $('#btn-sound').addEventListener('click', () => { S.sound = !S.sound; store.set('sound', S.sound ? 'on' : 'off'); document.body.classList.toggle('muted', !S.sound); audio?.setOn(S.sound); });
 document.addEventListener('click', e => { if (e.target.closest('button')) audio?.click(); });
 document.body.classList.toggle('muted', !S.sound);
 $('#btn-full').addEventListener('click', () => { const d = document, el = d.documentElement; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen)?.call(d); else { const p = (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el); p?.catch?.(() => {}); } });
 if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('#btn-full').hidden = true;
 $('#scene').addEventListener('webglcontextlost', e => { e.preventDefault(); const el = $('#toast'); el.textContent = 'Graphics were reset. Tap to reload.'; el.classList.add('show'); el.style.pointerEvents = 'auto'; el.onclick = () => location.reload(); });
-const show = id => { for (const s of ['menu', 'pause', 'result']) $('#' + s).hidden = s !== id; document.body.dataset.mode = S.mode; };
+const show = id => { for (const s of ['menu', 'pause', 'result', 'garage', 'bigmap']) $('#' + s).hidden = s !== id; document.body.dataset.mode = S.mode; };
 
 function ensureAudio() { // must run inside the tap itself or iOS keeps the audio context suspended
   if (audio) { audio.resume(); return; }
@@ -120,24 +135,124 @@ function respawn() { const p = player.pos;
   if (!inCity(p.x, p.z)) { const r = world.nearRoad(p.x, p.z, 900); if (r) { player.place(r.s.x - r.s.lx * 2.5, r.s.z - r.s.lz * 2.5, Math.atan2(r.s.tx, r.s.tz)); toast('Back on the road'); return; } }
   const ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P), rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
-function start() {
-  if (S.mode === 'boot') return; ensureAudio();
-  player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
-  Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0 });
-  camYaw = 0; snapCam = true; view.yaw = view.pitch = 0; view.zoom = 1; moveBeacon(); show(null); toast(S.kind === 'run' ? 'Follow the arrow to the beacon' : 'The city is yours'); setTimeout(() => { if (S.mode === 'play') toast('Drag to look around · C changes camera'); }, 2600);
+// ---------- Things to do: time trials, taxi and delivery work, waypoints ----------
+const A = { route: null, i: 0, t: 0, go: false, job: null, stage: '', hits0: 0, wait: 0, nag: 0, way: false, label: 'Beacon' };
+function setTarget(p, label) { beacon.position.set(p.x, p.y || 0, p.z); beacon.visible = true; A.label = label; }
+function earn(n) { save.cash += n; save.earned += n; commit(save); }
+function offerJob() { const j = A.job = nextJob(spots, jobSel, player.pos.x, player.pos.z); A.stage = 'pickup'; setTarget(j.from, 'Pick-up · ' + j.from.name); toast(j.type === 'taxi' ? `${j.what} · ${j.from.name}` : `Collect ${j.what.toLowerCase()} · ${j.from.name}`); }
+function stepActivity(dt) {
+  const d = Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z), sp = Math.abs(player.speed);
+  if (S.kind === 'trial') { const r = A.route; if (!A.go && (input.up || sp > 1)) A.go = true; if (A.go) A.t += dt;
+    if (d < r.r) { A.i++; if (A.i >= r.cps.length) { finishTrial(); return; } S.flash = 0.12; audio?.beacon(); toast(`Checkpoint ${A.i}/${r.cps.length} · ${clockText(A.t, true)}`); setTarget(r.cps[A.i], `Checkpoint ${A.i + 1}/${r.cps.length}`); }
+    return; }
+  if (S.kind === 'jobs') { const j = A.job;
+    if (A.stage === 'wait') { A.wait -= dt; if (A.wait <= 0) offerJob(); return; }
+    if (A.stage === 'drop') { S.left -= dt; if (S.left <= 0) { toast(j.type === 'taxi' ? 'Too late · the rider walked' : 'Too late · order cancelled'); A.stage = 'wait'; A.wait = 2.2; beacon.visible = false; return; } }
+    if (d < 11) { A.nag -= dt; if (sp > 3.5) { if (A.nag <= 0) { toast('Stop at the marker'); A.nag = 2.5; } return; }
+      if (A.stage === 'pickup') { A.stage = 'drop'; S.left = j.limit; A.hits0 = S.hits; setTarget(j.to, 'Drop-off · ' + j.to.name); audio?.beacon(); toast(`${j.type === 'taxi' ? 'Rider aboard' : 'Loaded'} · ${j.to.name} · ${cr(j.pay)}`); }
+      else { const p = jobPay(j, S.left, S.hits - A.hits0); earn(p.total); save.jobs++; commit(save); S.jobs++; S.score += p.total; S.flash = 0.18; audio?.beacon(); toast(`Paid ${cr(p.total)}${p.care < 1 ? ' · the knocks cost you' : ''}`); A.stage = 'wait'; A.wait = 2.4; beacon.visible = false; } }
+    return; }
+  if (d < 9) {
+    if (A.way) { A.way = false; S.flash = 0.12; audio?.beacon(); toast('Waypoint reached'); moveBeacon(); }
+    else { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(240, S.left + clamp(S.lastBeaconDist / 20, 16, 55)); S.flash = 0.18; audio?.beacon(); toast(`Beacon +${gain}`); moveBeacon(); } }
+  if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
 }
-function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); }
-function toMenu() { S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); show('menu'); }
+function start() {
+  if (S.mode === 'boot' || swapping) return; ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = 0;
+  if (k === 'trial') { A.route = routes.find(r => r.id === routeSel) || routes[0]; player.place(A.route.start.x, A.route.start.z, A.route.start.h); } else player.place(city.spawn.x, city.spawn.z, 0);
+  player.setPaint(paintSel);
+  Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0, jobs: 0 });
+  camYaw = player.heading; snapCam = true; view.yaw = view.pitch = 0; view.zoom = 1; show(null); hudTick = 0;
+  if (k === 'trial') { setTarget(A.route.cps[0], `Checkpoint 1/${A.route.cps.length}`); toast(`${A.route.name} · the clock starts when you move`); }
+  else if (k === 'jobs') offerJob();
+  else { moveBeacon(); toast(k === 'run' ? 'Follow the arrow to the beacon' : 'The whole map is yours'); }
+  setTimeout(() => { if (S.mode === 'play' && S.clock < 6 && k !== 'trial') toast(coarse ? 'Drag to look around · tap the map to open it' : 'Drag to look around · C camera · M map · O photo'); }, 3200);
+}
+function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); if (on) { $('#pause-replay').disabled = REC.n < 30; commit(save); } }
+function toMenu() { S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); commit(save); modeUI(); show('menu'); }
 function finish() {
-  S.mode = 'over'; const best = +store.get('best', '0'), isBest = S.score > best; if (isBest) store.set('best', String(Math.round(S.score)));
+  S.mode = 'over'; const best = +store.get('best', '0'), isBest = S.score > best, pay = Math.round(S.score / 100) * 10; if (isBest) store.set('best', String(Math.round(S.score))); earn(pay);
   audio?.finish(isBest);
   $('#result-label').textContent = isBest ? 'New best run' : 'Run complete'; $('#result-score').textContent = Math.round(S.score).toLocaleString();
-  $('#result-stats').innerHTML = `<div><small>Beacons</small><b>${S.beacons}</b></div><div><small>Top speed</small><b>${Math.round(S.top * 3.6)} km/h</b></div><div><small>Contacts</small><b>${S.hits}</b></div>`;
+  $('#result-stats').innerHTML = `<div><small>Beacons</small><b>${S.beacons}</b></div><div><small>Top speed</small><b>${Math.round(S.top * 3.6)} km/h</b></div><div><small>Earned</small><b>${cr(pay)}</b></div>`;
+  show('result');
+}
+function finishTrial() {
+  const r = A.route, t = A.t, prev = save.times[r.id], m = medalFor(r, t), pm = prev ? medalFor(r, prev) : -1, isBest = !prev || t < prev; if (isBest) save.times[r.id] = +t.toFixed(2);
+  // A medal pays in full the first time it is reached, and a fifth of that on later runs.
+  const pay = m < 0 ? 0 : (pm < 0 || m < pm) ? MEDALS[m][2] : Math.round(MEDALS[m][2] * 0.2); earn(pay); S.mode = 'over'; beacon.visible = false; audio?.finish(isBest);
+  $('#result-label').textContent = (m >= 0 ? MEDALS[m][1] + ' medal' : 'Finished') + (isBest ? ' · new best' : ''); $('#result-score').textContent = clockText(t, true);
+  $('#result-stats').innerHTML = `<div><small>Best</small><b>${clockText(save.times[r.id], true)}</b></div><div><small>${m === 0 ? 'Gold' : m === 1 ? 'For gold' : m === 2 ? 'For silver' : 'For bronze'}</small><b>${clockText(m <= 1 ? r.gold : m === 2 ? r.silver : r.bronze)}</b></div><div><small>Earned</small><b>${cr(pay)}</b></div>`;
   show('result');
 }
 
+// ---------- Garage ----------
+let swapping = false;
+async function useCar(id) { // builds the new car off-scene, then swaps it in within one frame
+  if (swapping) return; swapping = true;
+  try { const old = player, p = await createPlayer(new THREE.Group(), R.cube.texture, city, carSpec(save, id)); scene.remove(old.root); scene.add(p.root); const i = R.cube.hide.indexOf(old.root); if (i >= 0) R.cube.hide[i] = p.root; else R.cube.hide.push(p.root);
+    p.place(city.spawn.x, city.spawn.z, 0); p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); }
+  catch (e) { console.warn('car', e); toast('That car would not load'); } finally { swapping = false; }
+}
+function drawGarage() {
+  $('#g-cash').textContent = cr(save.cash); const box = $('#g-cars'); box.innerHTML = '';
+  for (const c of CARS) { const own = save.cars.includes(c.id), cur = save.car === c.id, sp = carSpec(save, c.id), row = document.createElement('div'); row.className = 'g-car' + (cur ? ' cur' : '');
+    row.innerHTML = `<div class="g-head"><div><b>${c.name}</b><small>${c.kind} · about ${Math.round(sp.vmax * 3.6 / 10) * 10} km/h</small></div><button type="button" class="g-act">${cur ? 'Driving' : own ? 'Drive' : 'Buy · ' + cr(c.price)}</button></div><div class="g-bars">${[['Speed', sp.vmax / 100], ['Pull', sp.acc / 1.35], ['Grip', sp.grip / 1.35], ['Brakes', sp.brake / 1.45]].map(([n, v]) => `<span>${n}<i><u style="width:${Math.round(clamp(v, 0.05, 1) * 100)}%"></u></i></span>`).join('')}</div>`;
+    const act = row.querySelector('.g-act'); act.disabled = cur || swapping || (!own && save.cash < c.price);
+    act.addEventListener('click', async () => { if (swapping) return; if (!own) { if (save.cash < c.price) return; save.cash -= c.price; save.cars.push(c.id); commit(save); } act.textContent = 'Loading…'; act.disabled = true; await useCar(c.id); drawGarage(); });
+    if (cur) { const ups = document.createElement('div'); ups.className = 'g-ups';
+      for (const [k, name] of UPGRADES) { const lv = upLevel(save, c.id, k), cost = UP_COST[lv], b = document.createElement('button'); b.type = 'button'; b.textContent = lv >= UP_MAX ? `${name} · full` : `${name} ${lv}/${UP_MAX} · ${cr(cost)}`; b.disabled = lv >= UP_MAX || save.cash < cost;
+        b.addEventListener('click', () => { if (save.cash < cost) return; save.cash -= cost; (save.up[c.id] ||= {})[k] = lv + 1; commit(save); player.tune(carSpec(save, c.id)); drawGarage(); }); ups.append(b); }
+      row.append(ups); }
+    box.append(row); }
+}
+
+// ---------- Full map (M): tap a road in Free Roam to set a waypoint ----------
+function drawBig() { bigmap?.draw({ px: player.pos.x, pz: player.pos.z, heading: player.heading, seen, t: S.time, target: beacon.visible ? beacon.position : null, targetName: A.label, route: S.kind === 'trial' ? A.route : null }); }
+function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road to set a waypoint' : A.label; drawBig(); }
+function closeMap() { if (S.mode !== 'map') return; S.mode = 'play'; show(null); }
+$('#bigmap-canvas').addEventListener('click', e => { if (S.mode !== 'map') return; const r = e.currentTarget.getBoundingClientRect(), w = bigmap.toWorld(e.clientX - r.left, e.clientY - r.top); if (!w) return;
+  if (S.kind !== 'free') { toast('Waypoints are for Free Roam'); return; } let t = null;
+  if (inCity(w.x, w.z) && w.x >= -HALF) { const rx = clamp(Math.round(w.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(w.z / P), 0, ROADS - 1) * P; t = Math.abs(w.x - rx) < Math.abs(w.z - rz) ? { x: rx, z: clamp(w.z, 0, SPAN), y: 0 } : { x: clamp(w.x, 0, SPAN), z: rz, y: 0 }; }
+  else { const n = world.nearRoad(w.x, w.z, 340); if (n && !n.s.tunnel) t = { x: n.s.x, z: n.s.z, y: n.s.y }; }
+  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, 'Waypoint'); $('#map-note').textContent = 'Waypoint set · tap again to move it'; drawBig(); });
+
+// ---------- Photo mode (O) ----------
+let shot = false;
+function photo(on) {
+  if (on) { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'photo'; view.yaw = 2.5; view.pitch = 0.1; view.zoom = 1; view.inCab = false; player.setInterior(false); show(null); }
+  else if (S.mode === 'photo') { S.mode = 'pause'; view.yaw = view.pitch = 0; view.zoom = 1; snapCam = true; show('pause'); }
+}
+function photoCam() { const a = player.heading + view.yaw, dist = 6.2 * view.zoom, pc = Math.cos(view.pitch), gy = player.groundY;
+  camera.position.set(player.pos.x - Math.sin(a) * dist * pc, gy + Math.max(0.3, 0.85 + dist * Math.sin(view.pitch)), player.pos.z - Math.cos(a) * dist * pc); keepInStreet(camera.position); camera.position.y = Math.max(camera.position.y, gy + 0.3);
+  camera.lookAt(player.pos.x, gy + 0.7, player.pos.z); camera.near = 0.25; camera.fov = 40; camera.updateProjectionMatrix(); }
+function saveShot(blob) { if (!blob) { toast('Could not save the photo'); return; } const name = `afterdark-${Date.now()}.jpg`;
+  try { const file = new File([blob], name, { type: 'image/jpeg' }); if (coarse && navigator.canShare?.({ files: [file] })) { navigator.share({ files: [file] }).catch(() => {}); return; } } catch (e) {}
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('Photo saved'); }
+
+// ---------- Replay: the last twenty seconds from trackside cameras ----------
+const REC = { n: 0, i: 0, acc: 0, N: 600, F: 10, d: new Float32Array(6000) }, RP = { t: 0, end: 0, k: 0, camT: 0, side: 1, snap: null, cam: new THREE.Vector3() };
+const rget = (k, f) => REC.d[(k % REC.N) * REC.F + f];
+function record(dt) { REC.acc += dt; if (REC.acc < 1 / 30) return; REC.acc = 0; const o = (REC.i % REC.N) * REC.F, d = REC.d, p = player;
+  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock; REC.i++; REC.n = Math.min(REC.N, REC.n + 1); }
+function replay(on) { const p = player;
+  if (on) { if (S.mode !== 'pause' || REC.n < 30) return; RP.snap = { x: p.pos.x, z: p.pos.z, h: p.heading, gy: p.groundY, sf: p.slopeF, sl: p.slopeL, st: p.steer, sp: p.speed, br: p.braking };
+    RP.k = REC.i - REC.n; RP.t = rget(RP.k, 9); RP.end = rget(REC.i - 1, 9); RP.camT = 0; view.inCab = false; p.setInterior(false); S.mode = 'replay'; show(null); }
+  else if (S.mode === 'replay') { const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.sync(0); S.mode = 'pause'; snapCam = true; show('pause'); }
+}
+function stepReplay(dt) { const p = player; RP.t += dt; if (RP.t >= RP.end) { replay(false); return; }
+  while (RP.k < REC.i - 2 && rget(RP.k + 1, 9) < RP.t) RP.k++;
+  const k = RP.k, t0 = rget(k, 9), t1 = rget(k + 1, 9), u = clamp((RP.t - t0) / Math.max(1e-4, t1 - t0), 0, 1), L = f => lerp(rget(k, f), rget(k + 1, f), u); let dh = rget(k + 1, 2) - rget(k, 2); dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+  p.pos.x = L(0); p.pos.z = L(1); p.heading = rget(k, 2) + dh * u; p.groundY = L(3); p.slopeF = L(4); p.slopeL = L(5); p.steer = L(6); p.speed = L(7); p.braking = rget(k, 8) > 0.5; p.sync(dt);
+  RP.camT -= dt; let cd = Math.hypot(RP.cam.x - p.pos.x, RP.cam.z - p.pos.z);
+  if (RP.camT <= 0 || cd > 90) { let q = k; const tA = RP.t + 1.7; while (q < REC.i - 1 && rget(q, 9) < tA) q++; const ax = rget(q, 0), az = rget(q, 1), ah = rget(q, 2), ay = rget(q, 3); RP.side = -RP.side;
+    const town = inCity(ax, az), n = town ? null : world.nearRoad(ax, az, 30), tight = !!(n && (n.s.tunnel || n.s.bridge)), off = tight ? -2.4 : town ? -(5.6 + Math.random() * 1.6) : RP.side * (5.5 + Math.random() * 3); // in town the camera stands on the near pavement, clear of parked cars
+    RP.cam.set(ax + Math.cos(ah) * off, ay + (tight ? 1.0 : town ? 1.9 + Math.random() * 1.2 : 0.7 + Math.random() * 2.2), az - Math.sin(ah) * off); if (!tight) { keepInStreet(RP.cam); RP.cam.y = Math.max(RP.cam.y, ay + 0.5); } RP.camT = 3.6; cd = Math.hypot(RP.cam.x - p.pos.x, RP.cam.z - p.pos.z); }
+  camera.position.copy(RP.cam); camera.lookAt(p.pos.x, p.groundY + 0.7, p.pos.z); camera.near = 0.25; camera.fov = lerp(camera.fov, clamp(2 * Math.atan(5.5 / Math.max(3, cd)) * 57.3, 13, 58), Math.min(1, dt * 5)); camera.updateProjectionMatrix();
+}
+
 // ---------- HUD ----------
-const hud = { speed: $('#hud-speed'), gear: $('#hud-gear'), rev: $('#hud-rev'), time: $('#hud-time'), score: $('#hud-score'), dist: $('#hud-dist'), arrow: $('#hud-arrow'), timeBox: $('#hud-timebox') };
+const hud = { speed: $('#hud-speed'), gear: $('#hud-gear'), rev: $('#hud-rev'), time: $('#hud-time'), score: $('#hud-score'), dist: $('#hud-dist'), arrow: $('#hud-arrow'), timeBox: $('#hud-timebox'), obj: $('#hud-obj'), scoreLabel: $('#hud-score-label') };
 const map = $('#map'), mctx = map.getContext('2d');
 function drawMap() { // a 1 km window around the car, north up
   const w = map.width, c = w / 2, k = (c - 6) / 520, px = player.pos.x, pz = player.pos.z, X = x => c - (x - px) * k, Y = z => c - (z - pz) * k; mctx.clearRect(0, 0, w, w); mctx.lineCap = 'round'; mctx.lineJoin = 'round';
@@ -153,8 +268,10 @@ function drawHud() {
   if (hudTick++ % 3) return; const kmh = Math.abs(player.speed) * 3.6;
   hud.speed.textContent = Math.round(kmh); hud.gear.textContent = player.speed < -0.5 ? 'R' : kmh < 1 ? 'N' : (audio?.gear ?? Math.min(7, 1 + Math.floor(kmh / 42)));
   hud.rev.style.transform = `scaleX(${clamp(audio ? (audio.rpm - 800) / 7000 : (kmh % 42) / 42, 0.04, 1)})`;
-  hud.score.textContent = Math.round(S.score).toLocaleString();
-  hud.timeBox.hidden = S.kind !== 'run'; if (S.kind === 'run') { const t = Math.max(0, S.left); hud.time.textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`; hud.timeBox.classList.toggle('low', t < 15); }
+  const k = S.kind, down = k === 'run' || (k === 'jobs' && A.stage === 'drop'); hud.timeBox.hidden = !(down || k === 'trial');
+  if (down) { const t = Math.max(0, S.left); hud.time.textContent = clockText(t); hud.timeBox.classList.toggle('low', t < 15); } else if (k === 'trial') { hud.time.textContent = clockText(A.t, true); hud.timeBox.classList.remove('low'); }
+  hud.scoreLabel.textContent = k === 'trial' ? 'Gold' : k === 'jobs' ? 'Cash' : 'Score'; hud.score.textContent = k === 'trial' ? clockText(A.route.gold) : k === 'jobs' ? Math.round(save.cash).toLocaleString() : Math.round(S.score).toLocaleString();
+  if (hud.obj.textContent !== A.label) hud.obj.textContent = A.label; document.body.classList.toggle('no-target', !beacon.visible);
   const dx = beacon.position.x - player.pos.x, dz = beacon.position.z - player.pos.z; hud.dist.textContent = Math.round(Math.hypot(dx, dz)) + ' m';
   let rel = Math.atan2(dx, dz) - player.heading; hud.arrow.style.transform = `rotate(${-rel}rad)`;
   drawMap();
@@ -165,11 +282,11 @@ const CAMS = ['Chase', 'Far chase', 'Bonnet', 'Cockpit', 'Low wheel'];
 const view = { yaw: 0, pitch: 0, zoom: 1, drag: false, idle: 9, x: 0, y: 0, id: -1 };
 function nextCam() { audio?.camera(); S.cam = (S.cam + 1) % CAMS.length; view.yaw = view.pitch = 0; snapCam = true; toast(CAMS[S.cam] + ' camera'); }
 { const cv = $('#scene');
-  cv.addEventListener('pointerdown', e => { if (S.mode !== 'play') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
-  cv.addEventListener('pointermove', e => { if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, -0.3, 1.1); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
+  cv.addEventListener('pointerdown', e => { if (S.mode === 'replay') { replay(false); return; } if (S.mode !== 'play' && S.mode !== 'photo') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
+  cv.addEventListener('pointermove', e => { if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, S.mode === 'photo' ? -0.1 : -0.3, 1.1); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
   const end = e => { if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
-  cv.addEventListener('wheel', e => { if (S.mode !== 'play') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
+  cv.addEventListener('wheel', e => { if (S.mode !== 'play' && S.mode !== 'photo') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
 const CAMW = HALF + 3.4;
 function keepInStreet(v) { if (!inCity(v.x, v.z)) { if (!player.tunnel) v.y = Math.max(v.y, world.terrain(v.x, v.z) + 0.9); return v; } const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
   if (v.x >= 0 && ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
@@ -180,7 +297,7 @@ function chase(dt, snap) {
   if (view.inCab !== (S.cam === 3)) { view.inCab = S.cam === 3; player.setInterior(view.inCab); }
   if (!view.drag) { view.idle += dt; if (view.idle > 2.2 && sp > 2) { const k = Math.exp(-2.6 * dt); view.yaw *= k; view.pitch *= k; } }
   let dy = h - camYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); camYaw += dy * Math.min(1, dt * (inside ? 30 : 4.2)); if (snap) camYaw = h;
-  if (inside) { const lx = S.cam === 3 ? 0.36 : 0, ly = S.cam === 3 ? 1.06 : 1.1, lz = S.cam === 3 ? -0.32 : 0.45, sn = Math.sin(h), cs = Math.cos(h);
+  if (inside) { const eye = player.spec.eye || 1.06, lx = S.cam === 3 ? 0.36 : 0, ly = S.cam === 3 ? eye : eye + 0.04, lz = S.cam === 3 ? -0.32 : 0.45, sn = Math.sin(h), cs = Math.cos(h);
     camPos.set(player.pos.x + sn * lz + cs * lx, ly + player.groundY, player.pos.z + cs * lz - sn * lx); const a = h + view.yaw, cp = Math.cos(view.pitch * 0.7);
     look.set(camPos.x + Math.sin(a) * cp * 30, camPos.y - 0.6 + Math.sin(view.pitch * 0.7) * -30 * 0 - view.pitch * 12, camPos.z + Math.cos(a) * cp * 30); }
   else { const base = S.cam === 1 ? [10.5, 3.3, 0] : S.cam === 4 ? [4.3, 0.55, 0.62] : [6.3, 1.75, 0], dist = (base[0] + sp * 0.028) * view.zoom, a = camYaw + base[2] + view.yaw, pc = Math.cos(view.pitch), ps = Math.sin(view.pitch);
@@ -244,7 +361,7 @@ function govern(rawDt, playing) {
     if (gov.level === 1) toast('Graphics adjusted for a smoother drive'); }
 }
 
-const CITY = { name: 'Downtown' }, seen = new Set(['Downtown']); let lastPlace = CITY, arriveTick = 0;
+const CITY = { name: 'Downtown' }, seen = new Set(save.seen); let lastPlace = CITY, arriveTick = 0;
 
 // ---------- Frame ----------
 const clock = new THREE.Clock(); const probe = new THREE.Vector3(); let crashCool = 0;
@@ -253,10 +370,13 @@ function frame() {
   const rawDt = clock.getDelta(), dt = Math.min(0.05, rawDt); S.time += dt;
   if (S.mode === 'boot') return;
   const playing = S.mode === 'play'; govern(rawDt, playing); stepPerf(rawDt, playing);
-  if (S.mode !== 'pause') {
-    stepTime(dt, playing || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
-    traffic.update(dt, S.time, playing ? player : null, player.pos);
-    if (playing || S.mode === 'over') {
+  const replaying = S.mode === 'replay';
+  if (S.mode === 'photo') photoCam(); else if (S.mode === 'map') { if ((hudTick++ & 7) === 0) drawBig(); }
+  else if (S.mode !== 'pause') {
+    stepTime(dt, playing || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
+    traffic.update(dt, S.time, playing || replaying ? player : null, player.pos);
+    if (replaying) stepReplay(dt);
+    else if (playing || S.mode === 'over') {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
       player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
@@ -269,10 +389,9 @@ function frame() {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
-        if (Math.hypot(beacon.position.x - player.pos.x, beacon.position.z - player.pos.z) < 9) { S.combo++; S.beacons++; const gain = 250 + 50 * S.combo; S.score += gain; S.left = Math.min(240, S.left + clamp(S.lastBeaconDist / 20, 16, 55)); S.flash = 0.18; audio?.beacon(); toast(`Beacon +${gain}`); moveBeacon(); }
-        if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
-        if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '')); if (!seen.has(here.name)) { seen.add(here.name); if (here !== CITY) S.score += 150; } } else if (!here) lastPlace = null; }
-        drawHud();
+        record(dt); stepActivity(dt);
+        if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
+        if (S.mode === 'play') drawHud();
       }
       // Water thrown up by the tyres on a wet road: droplets fanning out behind each wheel. On a dry road a slide lays smoke.
       { const sp2 = Math.abs(player.speed), h = player.heading, sn = Math.sin(h), cs = Math.cos(h), gy = player.groundY;
@@ -288,9 +407,10 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(player.pos); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { playing, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   probe.set(player.pos.x, 1.15, player.pos.z); R.render(probe);
+  if (shot) { shot = false; renderer.domElement.toBlob(saveShot, 'image/jpeg', 0.93); }
 }
 
 async function boot() {
@@ -309,15 +429,16 @@ async function boot() {
   setLoad('Soaking the streets'); await nextFrame();
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
   env = city.setTime(hour, rainyK); captureEnv();
-  setLoad('Rolling out the coupé'); await nextFrame();
-  player = await createPlayer(scene, R.cube.texture, city); R.cube.hide.push(player.root);
+  setLoad('Rolling out the ' + carById(save.car).name); await nextFrame();
+  player = await createPlayer(scene, R.cube.texture, city, carSpec(save, save.car)); R.cube.hide.push(player.root);
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
   traffic = await createTraffic(scene, city, Q.traffic, Q.reach);
   traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
+  routes = buildRoutes(world, city); spots = jobSpots(world, places); bigmap = createBigMap($('#bigmap-canvas'), world, places); if (!routes.some(r => r.id === routeSel)) routeSel = routes[0].id; modeUI();
   setPerf(perf.on); city.cull(player.pos, true);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
-  window.__afterdark = { S, player, traffic, city, street, world, places, R, start, input };
+  window.__afterdark = { S, A, save, traffic, city, street, world, places, R, start, input, useCar, photo, replay, openMap, closeMap, REC }; Object.defineProperty(window.__afterdark, 'player', { get: () => player }); Object.defineProperty(window.__afterdark, 'routes', { get: () => routes });
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
   window.__afterdark.setTime = (mode, h, rain) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } if (rain != null) { dayCount = rain ? 0 : 1; rainyK = rain; if (mode === 'fixed') window.__afterdark.fixedRain = rain; } };
