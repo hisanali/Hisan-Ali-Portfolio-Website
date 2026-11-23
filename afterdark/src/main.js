@@ -7,6 +7,7 @@ import { buildStreet } from './street.js';
 import { buildWorld } from './world.js';
 import { buildPlaces } from './places.js';
 import { createSound } from './sound.js';
+import { createTyreSpray } from './spray.js';
 import { CARS, UPGRADES, UP_COST, UP_MAX, MEDALS, carById, carSpec, upLevel, loadSave, commit, cr, clockText, buildRoutes, medalFor, jobSpots, nextJob, jobPay, createBigMap } from './career.js';
 
 const $ = s => document.querySelector(s), clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
@@ -27,6 +28,9 @@ for (let i = 0; i < RAIN; i++) { const x = (Math.random() - 0.5) * RR * 2, y = M
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
 const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaab8d8, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending })); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
 R.refl.hide.push(rain); R.cube.hide.push(rain);
+const spray = createTyreSpray(Q.reach >= 1 ? 260 : 160);
+scene.add(spray.mesh);
+R.refl.hide.push(spray.mesh); R.cube.hide.push(spray.mesh);
 function stepRain(dt, cx, cz, vx, vz) {
   if (!rain.visible) return;
   const fall = 21 * dt, wx = 2.2 * dt - vx * dt * 0.0, wz = 0;
@@ -35,11 +39,10 @@ function stepRain(dt, cx, cz, vx, vz) {
     rainPos[o] = x; rainPos[o + 1] = y; rainPos[o + 2] = z; rainPos[o + 3] = x - 0.1 - vx * 0.012; rainPos[o + 4] = y - 0.95; rainPos[o + 5] = z - vz * 0.012; }
   rainGeo.attributes.position.needsUpdate = true;
 }
-// Two particle sets: small bright points with gravity (water thrown up by the tyres, sparks from a hit)
-// and soft grey puffs (tyre smoke on a dry slide, dust).
+// Collision sparks and soft dust or tyre smoke. Water mist uses its own transparent geometry.
 function particles(n, size, additive, grav, drag) { const o = { n, i: 0, grav, drag, pos: new Float32Array(n * 3), vel: new Float32Array(n * 3), life: new Float32Array(n), col: new Float32Array(n * 3), geo: new THREE.BufferGeometry(), size, additive, pts: null };
   o.pos.fill(-50); o.geo.setAttribute('position', new THREE.BufferAttribute(o.pos, 3)); o.geo.setAttribute('color', new THREE.BufferAttribute(o.col, 3)); return o; }
-const drops = particles(1800, 0.075, true, 13, 0.6), haze = particles(160, 2.2, false, -0.6, 1.8);
+const sparks = particles(150, 0.046, true, 13, 0.6), haze = particles(160, 2.2, false, -0.6, 1.8);
 function emit(o, x, y, z, vx, vy, vz, life, r, g, b) { const i = o.i++ % o.n, k = i * 3; o.pos[k] = x; o.pos[k + 1] = y; o.pos[k + 2] = z; o.vel[k] = vx; o.vel[k + 1] = vy; o.vel[k + 2] = vz; o.life[i] = life; o.col[k] = r; o.col[k + 1] = g; o.col[k + 2] = b; }
 function stepParticles(o, dt) { const f = Math.exp(-o.drag * dt), fade = Math.exp(-(o.additive ? 2.2 : 1.6) * dt); for (let i = 0; i < o.n; i++) { const k = i * 3; if (o.life[i] <= 0) { o.pos[k + 1] = -50; continue; } o.life[i] -= dt; o.vel[k + 1] -= o.grav * dt; o.vel[k] *= f; o.vel[k + 2] *= f; o.pos[k] += o.vel[k] * dt; o.pos[k + 1] += o.vel[k + 1] * dt; o.pos[k + 2] += o.vel[k + 2] * dt; if (o.additive && o.pos[k + 1] < 0.02) o.life[i] = 0; o.col[k] *= fade; o.col[k + 1] *= fade; o.col[k + 2] *= fade; }
   o.geo.attributes.position.needsUpdate = true; o.geo.attributes.color.needsUpdate = true; }
@@ -131,7 +134,7 @@ function ensureAudio() { // must run inside the tap itself or iOS keeps the audi
 }
 for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, () => audio?.resume(), { passive: true });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); else if (S.mode === 'play') pause(true); });
-function respawn() { const p = player.pos;
+function respawn() { spray.clear(); const p = player.pos;
   if (!inCity(p.x, p.z)) { const r = world.nearRoad(p.x, p.z, 900); if (r) { player.place(r.s.x - r.s.lx * 2.5, r.s.z - r.s.lz * 2.5, Math.atan2(r.s.tx, r.s.tz)); toast('Back on the road'); return; } }
   const ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P), rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
@@ -158,7 +161,7 @@ function stepActivity(dt) {
   if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
 }
 function start() {
-  if (S.mode === 'boot' || swapping) return; ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = REC.acc = 0;
+  if (S.mode === 'boot' || swapping) return; spray.clear(); ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = REC.acc = 0;
   if (k === 'trial') { A.route = routes.find(r => r.id === routeSel) || routes[0]; player.place(A.route.start.x, A.route.start.z, A.route.start.h); } else player.place(city.spawn.x, city.spawn.z, 0);
   player.setPaint(paintSel);
   Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0, jobs: 0 });
@@ -169,7 +172,7 @@ function start() {
   setTimeout(() => { if (S.mode === 'play' && S.clock < 6 && k !== 'trial') toast(coarse ? 'Drag to look around · tap the map to open it' : 'Drag to look around · C camera · M map · O photo'); }, 3200);
 }
 function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); if (on) { $('#pause-replay').disabled = REC.n < 30; commit(save); } }
-function toMenu() { S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); commit(save); modeUI(); show('menu'); }
+function toMenu() { spray.clear(); S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); commit(save); modeUI(); show('menu'); }
 function finish() {
   S.mode = 'over'; const best = +store.get('best', '0'), isBest = S.score > best, pay = Math.round(S.score / 100) * 10; if (isBest) store.set('best', String(Math.round(S.score))); earn(pay);
   audio?.finish(isBest);
@@ -235,17 +238,17 @@ function saveShot(blob) { if (!blob) { toast('Could not save the photo'); return
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('Photo saved'); }
 
 // ---------- Replay: the last twenty seconds from trackside cameras ----------
-const REC = { n: 0, i: 0, acc: 0, N: 600, F: 10, d: new Float32Array(6000) }, RP = { t: 0, end: 0, k: 0, camT: 0, side: 1, snap: null, cam: new THREE.Vector3() };
+const REC = { n: 0, i: 0, acc: 0, N: 600, F: 12, d: new Float32Array(600 * 12) }, RP = { t: 0, end: 0, k: 0, camT: 0, side: 1, snap: null, cam: new THREE.Vector3() };
 const rget = (k, f) => REC.d[(k % REC.N) * REC.F + f];
 function record(dt) { REC.acc += dt; if (REC.acc < 1 / 30) return; REC.acc = 0; const o = (REC.i % REC.N) * REC.F, d = REC.d, p = player;
-  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock;
+  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock; d[o + 10] = p.yawRate; d[o + 11] = p.accel;
   { const C = traffic.cars, n = C.length, T = REC.tr ||= new Float32Array(REC.N * n * 5); let q = (REC.i % REC.N) * n * 5; for (let k = 0; k < n; k++) { const c = C[k]; T[q++] = c.x + c.push.x; T[q++] = c.z + c.push.y; T[q++] = c.h; T[q++] = c.y || 0; T[q++] = (c.pitch || 0) + (c.braking ? 10 : 0); } } // the traffic is recorded too, so a replay shows what was really there
   REC.i++; REC.n = Math.min(REC.N, REC.n + 1); }
 function replay(on) { const p = player;
-  if (on) { if (S.mode !== 'pause' || REC.n < 30) return; RP.snap = { x: p.pos.x, z: p.pos.z, h: p.heading, gy: p.groundY, sf: p.slopeF, sl: p.slopeL, st: p.steer, sp: p.speed, br: p.braking };
+  if (on) { if (S.mode !== 'pause' || REC.n < 30) return; spray.clear(); RP.snap = { x: p.pos.x, z: p.pos.z, h: p.heading, gy: p.groundY, sf: p.slopeF, sl: p.slopeL, st: p.steer, sp: p.speed, br: p.braking, yaw: p.yawRate, accel: p.accel };
     RP.snap.traffic = traffic.cars.map(({ x, z, h, y, pitch, braking, spin }) => ({ x, z, h, y, pitch, braking, spin }));
     RP.k = REC.i - REC.n; RP.t = rget(RP.k, 9); RP.end = rget(REC.i - 1, 9); RP.camT = 0; view.inCab = false; p.setInterior(false); S.mode = 'replay'; show(null); }
-  else if (S.mode === 'replay') { const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.sync(0);
+  else if (S.mode === 'replay') { spray.clear(); const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.yawRate = s.yaw; p.accel = s.accel; p.sync(0);
     traffic.cars.forEach((car, i) => Object.assign(car, s.traffic[i]));
     traffic.update(0, S.time, null, p.pos, true);
     S.mode = 'pause'; snapCam = true; show('pause'); }
@@ -253,7 +256,7 @@ function replay(on) { const p = player;
 function stepReplay(dt) { const p = player; RP.t += dt; if (RP.t >= RP.end) { replay(false); return; }
   while (RP.k < REC.i - 2 && rget(RP.k + 1, 9) < RP.t) RP.k++;
   const k = RP.k, t0 = rget(k, 9), t1 = rget(k + 1, 9), u = clamp((RP.t - t0) / Math.max(1e-4, t1 - t0), 0, 1), L = f => lerp(rget(k, f), rget(k + 1, f), u); let dh = rget(k + 1, 2) - rget(k, 2); dh = Math.atan2(Math.sin(dh), Math.cos(dh));
-  p.pos.x = L(0); p.pos.z = L(1); p.heading = rget(k, 2) + dh * u; p.groundY = L(3); p.slopeF = L(4); p.slopeL = L(5); p.steer = L(6); p.speed = L(7); p.braking = rget(k, 8) > 0.5; p.sync(dt);
+  p.pos.x = L(0); p.pos.z = L(1); p.heading = rget(k, 2) + dh * u; p.groundY = L(3); p.slopeF = L(4); p.slopeL = L(5); p.steer = L(6); p.speed = L(7); p.braking = rget(k, 8) > 0.5; p.yawRate = L(10); p.accel = L(11); p.sync(dt);
   if (REC.tr) { const C = traffic.cars, n = C.length, T = REC.tr, a = (k % REC.N) * n * 5, b = ((k + 1) % REC.N) * n * 5; for (let j = 0; j < n; j++) { const c = C[j], o = a + j * 5, o2 = b + j * 5, far = Math.abs(T[o2] - T[o]) + Math.abs(T[o2 + 1] - T[o + 1]) > 20, w = far ? 0 : u; let hh = T[o2 + 2] - T[o + 2]; hh = Math.atan2(Math.sin(hh), Math.cos(hh));
       c.x = lerp(T[o], T[o2], w); c.z = lerp(T[o + 1], T[o2 + 1], w); c.h = T[o + 2] + hh * w; c.y = lerp(T[o + 3], T[o2 + 3], w); const pb = T[o + 4]; c.braking = pb > 5; c.pitch = pb > 5 ? pb - 10 : pb; c.spin = (c.spin || 0) + (far ? 0 : Math.hypot(T[o2] - T[o], T[o2 + 1] - T[o + 1]) / Math.max(1e-3, t1 - t0)) * dt / 0.33; } }
   RP.camT -= dt; let cd = Math.hypot(RP.cam.x - p.pos.x, RP.cam.z - p.pos.z);
@@ -266,14 +269,20 @@ function stepReplay(dt) { const p = player; RP.t += dt; if (RP.t >= RP.end) { re
 // ---------- HUD ----------
 const hud = { speed: $('#hud-speed'), gear: $('#hud-gear'), rev: $('#hud-rev'), time: $('#hud-time'), score: $('#hud-score'), dist: $('#hud-dist'), arrow: $('#hud-arrow'), timeBox: $('#hud-timebox'), obj: $('#hud-obj'), scoreLabel: $('#hud-score-label') };
 const map = $('#map'), mctx = map.getContext('2d');
-function drawMap() { // a 1 km window around the car, north up
-  const w = map.width, c = w / 2, k = (c - 6) / 520, px = player.pos.x, pz = player.pos.z, X = x => c - (x - px) * k, Y = z => c - (z - pz) * k; mctx.clearRect(0, 0, w, w); mctx.lineCap = 'round'; mctx.lineJoin = 'round';
+function drawMap() { // a 1 km window around the car, heading up
+  const w = map.width, c = w / 2, k = (c - 6) / 520, px = player.pos.x, pz = player.pos.z, X = x => c - (x - px) * k, Y = z => c - (z - pz) * k; mctx.clearRect(0, 0, w, w);
+  mctx.save();
+  mctx.translate(c, c);
+  mctx.rotate(player.heading);
+  mctx.translate(-c, -c);
+  mctx.lineCap = 'round'; mctx.lineJoin = 'round';
   mctx.strokeStyle = 'rgba(190,205,235,.34)'; mctx.lineWidth = 3; mctx.beginPath(); for (let i = 0; i < ROADS; i++) { mctx.moveTo(X(i * P), Y(0)); mctx.lineTo(X(i * P), Y(SPAN)); mctx.moveTo(X(0), Y(i * P)); mctx.lineTo(X(SPAN), Y(i * P)); } mctx.stroke();
   mctx.strokeStyle = 'rgba(255,214,150,.6)'; mctx.lineWidth = 3.5; mctx.beginPath(); for (const rd of world.roads) for (let i = rd.from; i <= rd.to; i += 6) { const s = world.samples[i]; if (i === rd.from) mctx.moveTo(X(s.x), Y(s.z)); else mctx.lineTo(X(s.x), Y(s.z)); } mctx.stroke();
   mctx.fillStyle = 'rgba(255,214,150,.75)'; for (const t of traffic.cars) mctx.fillRect(X(t.x) - 1.5, Y(t.z) - 1.5, 3, 3);
   mctx.fillStyle = 'rgba(255,255,255,.9)'; for (const pm of places.markers) { const mx = X(pm.x), my = Y(pm.z); if (mx < 4 || my < 4 || mx > w - 4 || my > w - 4) continue; mctx.beginPath(); mctx.moveTo(mx, my - 5); mctx.lineTo(mx + 5, my); mctx.lineTo(mx, my + 5); mctx.lineTo(mx - 5, my); mctx.closePath(); mctx.fill(); }
   if (beacon.visible) { let bx = X(beacon.position.x) - c, by = Y(beacon.position.z) - c; const bl = Math.hypot(bx, by), lim = c - 10; if (bl > lim) { bx *= lim / bl; by *= lim / bl; } mctx.fillStyle = '#35ffe0'; mctx.beginPath(); mctx.arc(c + bx, c + by, 5 + Math.sin(S.time * 5) * 1.5, 0, 7); mctx.fill(); }
-  mctx.save(); mctx.translate(c, c); mctx.rotate(-player.heading); mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.moveTo(0, -8); mctx.lineTo(5.5, 6); mctx.lineTo(0, 3); mctx.lineTo(-5.5, 6); mctx.closePath(); mctx.fill(); mctx.restore();
+  mctx.restore();
+  mctx.save(); mctx.translate(c, c); mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.moveTo(0, -8); mctx.lineTo(5.5, 6); mctx.lineTo(0, 3); mctx.lineTo(-5.5, 6); mctx.closePath(); mctx.fill(); mctx.restore();
 }
 let hudTick = 0;
 function drawHud() {
@@ -388,6 +397,7 @@ function frame() {
     stepTime(dt, playing || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
     if (replaying) {
       stepReplay(dt);
+      if (S.mode === 'replay') spray.emit(dt, player, env.wet);
       if (S.mode === 'replay') traffic.update(dt, S.time, null, player.pos, true, true);
     } else traffic.update(dt, S.time, playing ? player : null, player.pos);
     if (!replaying && (playing || S.mode === 'over')) {
@@ -397,7 +407,7 @@ function frame() {
       crashCool -= dt;
       if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
         const hx = player.pos.x + Math.sin(player.heading) * 1.9, hz = player.pos.z + Math.cos(player.heading) * 1.9, ns = Math.round(clamp(hit * 1.2, 6, 26));
-        for (let k = 0; k < ns; k++) emit(drops, hx + (Math.random() - 0.5), 0.35 + Math.random() * 0.5, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
+        for (let k = 0; k < ns; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
         for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
       if (live) {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
@@ -407,14 +417,20 @@ function frame() {
         if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (pm.contains ? pm.contains(player.pos.x, player.pos.z, 12) : Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
         if (S.mode === 'play') drawHud();
       }
-      // Water thrown up by the tyres on a wet road: droplets fanning out behind each wheel. On a dry road a slide lays smoke.
-      { const sp2 = Math.abs(player.speed), h = player.heading, sn = Math.sin(h), cs = Math.cos(h), gy = player.groundY;
-        if (env.wet > 0.45 && sp2 > 5 && !player.onSand) { const n = Math.min(26, Math.round(sp2 * 0.42 * env.wet + player.slip * 2)); for (let k = 0; k < n; k++) { const side = (k & 1 ? -0.82 : 0.82), back = k % 4 < 3 ? -1.45 : 1.25, b = 0.5 + Math.random() * 0.5;
-            emit(drops, player.pos.x + sn * back + cs * side, gy + 0.08, player.pos.z + cs * back - sn * side, player.vel.x * (0.25 + Math.random() * 0.3) + cs * side * (1 + Math.random() * 2.5), 0.8 + Math.random() * (1.2 + sp2 * 0.09), player.vel.z * (0.25 + Math.random() * 0.3) - sn * side * (1 + Math.random() * 2.5), 0.35 + Math.random() * 0.3, 1.1 * b, 1.25 * b, 1.5 * b); } }
-        else if ((player.slip > 4.5 && sp2 > 8) || (player.onSand && sp2 > 6)) { const sand = player.onSand, g = sand ? 0.34 : 0.3; for (const side of [-0.82, 0.82]) if (Math.random() < 0.6) emit(haze, player.pos.x - sn * 1.5 + cs * side, gy + 0.2, player.pos.z - cs * 1.5 - sn * side, (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2, g * (sand ? 1.25 : 1), g * (sand ? 1.05 : 1), g * (sand ? 0.75 : 1.02)); } }
+      spray.emit(dt, player, env.wet);
+      const speed = Math.abs(player.speed);
+      const smoke = env.wet < 0.30 && player.slip > 4.5 && speed > 8;
+      if (smoke || (player.onSand && speed > 6)) {
+        const sn = Math.sin(player.heading), cs = Math.cos(player.heading), g = player.onSand ? 0.34 : 0.3;
+        for (const side of [-0.82, 0.82]) if (Math.random() < 0.6) {
+          emit(haze, player.pos.x - sn * 1.5 + cs * side, player.groundY + 0.2, player.pos.z - cs * 1.5 - sn * side,
+            (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2,
+            g * (player.onSand ? 1.25 : 1), g * (player.onSand ? 1.05 : 1), g * (player.onSand ? 0.75 : 1.02));
+        }
+      }
       chase(dt, snapCam); snapCam = false;
     } else if (!replaying) orbit(S.time);
-    stepParticles(drops, dt); stepParticles(haze, dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
+    stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
@@ -435,9 +451,9 @@ async function boot() {
   setLoad('Building the coast and airfield'); await nextFrame();
   places = await buildPlaces(scene, city, world, Q);
   { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
-    drops.pts = new THREE.Points(drops.geo, new THREE.PointsMaterial({ size: drops.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
+    sparks.pts = new THREE.Points(sparks.geo, new THREE.PointsMaterial({ size: sparks.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
     haze.pts = new THREE.Points(haze.geo, new THREE.PointsMaterial({ size: haze.size, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.35 }));
-    for (const o of [drops, haze]) { o.pts.frustumCulled = false; scene.add(o.pts); R.refl.hide.push(o.pts); R.cube.hide.push(o.pts); } }
+    for (const o of [sparks, haze]) { o.pts.frustumCulled = false; scene.add(o.pts); R.refl.hide.push(o.pts); R.cube.hide.push(o.pts); } }
   setLoad('Planting the avenues'); await nextFrame();
   street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();

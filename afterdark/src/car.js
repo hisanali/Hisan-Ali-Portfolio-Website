@@ -16,12 +16,14 @@ function beam(color, strength) {
 }
 
 export async function createPlayer(scene, envTexture, city, spec = {}) {
-  let nightK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file, rigCar = !!spec.rig;
+  let nightK = 0, wetK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file, rigCar = !!spec.rig;
   const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=${rigCar ? '20260927a' : 'supplied7'}` : '/evermile/assets/sports-coupe.glb');
   const model = gltf.scene; if (!kitCar) model.rotation.y = Math.PI; model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
   model.position.set(-c.x, -box.min.y, -c.z);
   const len = box.max.z - box.min.z, wid = box.max.x - box.min.x;
+  const wheelbase = clamp(len * 0.61, 2.4, 3.25);
+  const frontAngle = (steer, speed) => steer * 0.65 / (1 + (speed / 25) ** 2);
   const env = { envMap: envTexture, envMapIntensity: 1.7 };
   const paint = new THREE.MeshPhysicalMaterial({ color: 0xb8bcc4, metalness: 0.72, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, ...env, envMapIntensity: 2.4 });
   const M = {
@@ -73,17 +75,19 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.others = []; // moving things to keep clear of (people), set each frame
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
   const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : 0.17 - Math.min(1, (PROM - x) / 92) ** 2 * 1.5; const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
-  car.place = (x, z, h) => { prevC.fill(null); car.slideT = 0; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.sync(0); };
+  car.place = (x, z, h) => { prevC.fill(null); car.slideT = 0; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
-  car.setTime = e => { nightK = e.night; paint.envMapIntensity = 2.4 - 1.65 * nightK; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
+  car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = 2.4 - 1.65 * nightK; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
     M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.55 + 0.45 * e.night; };
 
   // ctrl: steer (+1 = left), throttle, brake, hand. Returns the strength of any wall impact this step.
   car.drive = (dt, ctrl) => {
     fwd.set(Math.sin(car.heading), 0, Math.cos(car.heading)); left.set(fwd.z, 0, -fwd.x);
     let vF = car.vel.dot(fwd), vL = car.vel.dot(left);
-    car.steer += (ctrl.steer - car.steer) * Math.min(1, dt * (Math.abs(ctrl.steer) > Math.abs(car.steer) ? 5.5 : 9));
+    const speed = Math.abs(vF);
+    const steerRate = ctrl.steer === 0 || ctrl.steer * car.steer < 0 ? 15 : lerp(13, 7, clamp(speed / 41, 0, 1));
+    car.steer = lerp(car.steer, ctrl.steer, 1 - Math.exp(-steerRate * dt));
     const VMAX = T.vmax; let a = 0;
     if (ctrl.throttle > 0) a += ctrl.throttle * T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
     if (ctrl.brake > 0) a += vF > 0.6 ? -ctrl.brake * T.brake * (22 + Math.min(6, vF * 0.12)) : -ctrl.brake * 6 * Math.max(0, 1 + vF / 9);
@@ -96,15 +100,22 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     car.slopeF += (sF - car.slopeF) * Math.min(1, dt * 9); car.slopeL += (sL - car.slopeL) * Math.min(1, dt * 9);
     if (car.air) a = -0.0009 * vF * Math.abs(vF);
     vF += a * dt; car.accel = a;
-    const grip = (car.onSand || car.rough ? (T.off < 1 ? 8.2 : 6.5) : 10.2) * T.grip;
-    const lock = 0.56 / (1 + vF * vF / 420);
-    let yaw = vF * Math.tan(car.steer * lock) / 2.65;
-    const cap = (ctrl.hand ? grip * 1.9 : grip) / Math.max(5, Math.abs(vF)); yaw = clamp(yaw, -cap, cap);
-    if (car.air) yaw = car.yawRate * 0.98;
-    car.yawRate = lerp(car.yawRate, yaw, Math.min(1, dt * 7.5)); car.heading += car.yawRate * dt;
-    // Sideways speed is scrubbed off by the tyres; the handbrake, or full power at low speed, lets the tail slide.
-    const loose = ctrl.hand ? 1.2 : ctrl.throttle > 0.9 && Math.abs(car.steer) > 0.6 && vF < 26 ? 3.2 : 7.5;
-    vL *= Math.exp(-loose * dt);
+    const onDirt = car.onSand || car.rough;
+    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 11.3 - wetK * 1.6) * T.grip;
+    const yaw = vF * Math.tan(frontAngle(car.steer, vF)) / wheelbase;
+    const cap = (ctrl.hand ? grip * 1.56 : grip) / Math.max(2.8, Math.abs(vF));
+    const targetYaw = car.air ? car.yawRate * 0.98 : clamp(yaw, -cap, cap);
+    const yawResponse = lerp(15, 8.5, clamp(speed / 39, 0, 1));
+    car.yawRate = lerp(car.yawRate, targetYaw, 1 - Math.exp(-yawResponse * dt));
+    const turn = car.yawRate * dt;
+    const wheelTracking = car.air ? 0 : ctrl.hand ? 0.12 : lerp(0.83, 0.44, clamp(speed / 32, 0, 1));
+    const travel = car.heading + turn * wheelTracking;
+    fwd.set(Math.sin(travel), 0, Math.cos(travel));
+    left.set(fwd.z, 0, -fwd.x);
+    car.heading += turn;
+    // The tires track the steering on normal throttle, while the handbrake can still loosen the rear.
+    const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 2.1;
+    vL *= Math.exp(-lateralDamping * dt);
     car.vel.copy(fwd).multiplyScalar(vF).addScaledVector(left, vL);
     const ox0 = car.pos.x, oz0 = car.pos.z;
     car.pos.addScaledVector(car.vel, dt);
@@ -164,13 +175,15 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.sync = dt => {
     root.position.set(car.pos.x, car.groundY, car.pos.z); root.rotation.set(-Math.atan(car.slopeF), car.heading, Math.atan(car.slopeL), 'YXZ');
     car.bump = Math.max(0, car.bump - dt * 4);
-    const k = Math.min(1, dt * 7);
-    tilt.rotation.z = lerp(tilt.rotation.z, clamp(-car.yawRate * car.speed * 0.0042, -0.075, 0.075), k);
-    tilt.rotation.x = lerp(tilt.rotation.x, clamp(-car.accel * 0.0036, -0.045, 0.05), k);
-    tilt.position.y = Math.sin(car.bump * Math.PI) * 0.07;
+    const k = 1 - Math.exp(-dt * 8);
+    // Load moves to the outside wheels. Keep the body's movement small over the four contact patches.
+    tilt.rotation.z = lerp(tilt.rotation.z, clamp(car.yawRate * car.speed * 0.0025, -0.032, 0.032), k);
+    tilt.rotation.x = lerp(tilt.rotation.x, clamp(-car.accel * 0.0018, -0.020, 0.028), k);
+    tilt.position.y = Math.sin(car.bump * Math.PI) * 0.045;
+    const steerAngle = frontAngle(car.steer, car.speed);
     car.spin -= car.speed * dt / wheelR;
-    for (const w of wheels) { q1.setFromAxisAngle(w.up, w.front ? car.steer * 0.5 : 0); q2.setFromAxisAngle(X, kitCar ? -car.spin : car.spin); w.node.quaternion.copy(q1).multiply(w.base).multiply(q2); }
-    for (const r of rigs) { if (r.front) r.pivot.rotation.y = car.steer * 0.5; r.rotor.rotation.x = -car.spin % (Math.PI * 2); }
+    for (const w of wheels) { q1.setFromAxisAngle(w.up, w.front ? steerAngle : 0); q2.setFromAxisAngle(X, kitCar ? -car.spin : car.spin); w.node.quaternion.copy(q1).multiply(w.base).multiply(q2); }
+    for (const r of rigs) { if (r.front) r.pivot.rotation.y = steerAngle; r.rotor.rotation.x = -car.spin % (Math.PI * 2); }
     M.tail.emissiveIntensity = car.braking ? 5 + 4 * nightK : 0.5 + 1.1 * nightK; tailM.opacity = (car.braking ? 0.5 : 0.1) * nightK;
   };
   return car;
