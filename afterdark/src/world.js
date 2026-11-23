@@ -132,20 +132,30 @@ export async function buildWorld(scene, city, Q) {
     }
     if (!r) return terrain;
     const point = r.s;
-    let lateral = r.lat, closest = r.d * r.d, roadY = point.y;
-    // The nearest sample can be before or after the car. Project onto its adjacent segments
-    // so the height at their shared vertex is continuous in both directions.
-    for (let i = point.i - 1; i <= point.i; i++) {
+    let lateral = r.lat, roadY = point.y, found = false;
+    // The road surface is a strip of quads between the cross-sections at consecutive samples. Find the quad this point
+    // lies in and interpolate between its two cross-sections, exactly as the drawn surface does. Projecting onto the
+    // centre-line chords instead makes neighbouring segments overlap on the inside of a bend, and where the road is
+    // also climbing that overlap is a step in height: the jolt felt at hill entries, hairpins and crests.
+    for (let i = point.i - 3; i <= point.i + 2; i++) {
       const a = samples[i], b = samples[i + 1];
       if (!a || !b || a.road !== point.road || b.road !== point.road) continue;
-      const dx = b.x - a.x, dz = b.z - a.z, lengthSq = dx * dx + dz * dz;
-      const t = clamp(((x - a.x) * dx + (z - a.z) * dz) / lengthSq, 0, 1);
-      const rx = x - a.x - dx * t, rz = z - a.z - dz * t;
-      const d = rx * rx + rz * rz;
-      if (d <= closest + 1e-7) {
-        closest = d;
-        lateral = (rx * dz - rz * dx) / Math.sqrt(lengthSq);
-        roadY = mix(a.y, b.y, t);
+      const ua = (x - a.x) * a.tx + (z - a.z) * a.tz, ub = (x - b.x) * b.tx + (z - b.z) * b.tz;
+      if (ua < -1e-6 || ub > 1e-6) continue;
+      const t = ua - ub > 1e-9 ? ua / (ua - ub) : 0;
+      const la = (x - a.x) * a.lx + (z - a.z) * a.lz, lb = (x - b.x) * b.lx + (z - b.z) * b.lz, lat = mix(la, lb, t);
+      if (Math.abs(lat) > 24 || found && Math.abs(lat) >= Math.abs(lateral)) continue; // deep inside a hairpin two quads can claim the point: the nearer one wins
+      lateral = lat; roadY = mix(a.y, b.y, t); found = true;
+    }
+    if (!found) { // beyond either end of the road: fall back to the nearest point on the two segments at this sample
+      let closest = r.d * r.d;
+      for (let i = point.i - 1; i <= point.i; i++) {
+        const a = samples[i], b = samples[i + 1];
+        if (!a || !b || a.road !== point.road || b.road !== point.road) continue;
+        const dx = b.x - a.x, dz = b.z - a.z, lengthSq = dx * dx + dz * dz;
+        const t = clamp(((x - a.x) * dx + (z - a.z) * dz) / lengthSq, 0, 1);
+        const rx = x - a.x - dx * t, rz = z - a.z - dz * t, d = rx * rx + rz * rz;
+        if (d <= closest + 1e-7) { closest = d; lateral = (rx * dz - rz * dx) / Math.sqrt(lengthSq); roadY = mix(a.y, b.y, t); }
       }
     }
     if (info) { info.road = point; info.lat = lateral; }

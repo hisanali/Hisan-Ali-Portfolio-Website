@@ -365,15 +365,35 @@ function cameraBlocked(x, y, z) {
   return buildings?.some(b => y < b.h + 0.38 && Math.abs(x - b.x) < b.w / 2 + 0.28 && Math.abs(z - b.z) < b.d / 2 + 0.28);
 }
 
+// How far along the line from the car to the wanted camera position the view stays in open air (0 to 1).
+// The test point is as wide and as deep as the near plane, so the edges of the picture cannot cut into a wall or the
+// ground, and the first blocked step is refined so the answer changes smoothly rather than in half-metre steps.
 function cameraClearance(from, to) {
-  const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
+  const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, flat = Math.hypot(dx, dz) || 1, sx = -dz / flat * 0.4, sz = dx / flat * 0.4, ox = dx / flat * 0.32, oz = dz / flat * 0.32;
+  const hit = t => { const x = from.x + dx * t, y = from.y + dy * t, z = from.z + dz * t;
+    return cameraBlocked(x, y, z) || cameraBlocked(x + sx, y, z + sz) || cameraBlocked(x - sx, y, z - sz) || cameraBlocked(x + ox, y, z + oz) || cameraBlocked(x, y - 0.15, z); };
   const steps = Math.max(2, Math.ceil(from.distanceTo(to) / 0.42));
   for (let i = 1; i <= steps; i++) {
-    const t = i / steps;
-    if (cameraBlocked(from.x + dx * t, from.y + dy * t, from.z + dz * t)) return (i - 1) / steps;
+    if (!hit(i / steps)) continue;
+    let lo = (i - 1) / steps, hi = i / steps;
+    for (let k = 0; k < 5; k++) { const mid = (lo + hi) / 2; if (hit(mid)) hi = mid; else lo = mid; }
+    return lo;
   }
   return 1;
 }
+// Open country: the height the camera needs at `to` for the straight line from the car to clear the land between them.
+// Raising the view over a crest or a cutting keeps the car in sight; without it the only answer is to pull the camera in.
+function cameraFloor(x, z) { const floor = world.ground(x, z, cameraRoad); return cameraRoad.road && !cameraRoad.road.tunnel && Math.abs(cameraRoad.lat) < 5.8 ? floor : Math.max(floor, world.terrain(x, z)); }
+function cameraLift(from, to, margin) {
+  const dx = to.x - from.x, dz = to.z - from.z, len = Math.hypot(dx, dz);
+  if (len < 1.5 || world.tunnelPassage(from.x, from.y, from.z)) return to.y;
+  let need = to.y; const n = Math.ceil(len / 0.7);
+  for (let i = 1; i <= n; i++) { const f = i / n; if (f * len < 1.5) continue; const x = from.x + dx * f, z = from.z + dz * f;
+    if (inCity(x, z) || world.tunnelPassage(x, from.y + (need - from.y) * f, z)) continue;
+    need = Math.max(need, from.y + (cameraFloor(x, z) + margin - from.y) / f); }
+  return Math.min(need, from.y + len * 1.9);
+}
+let camLift = 0, camRaise = 0, camGoal = 0, camClear = 0;
 
 function chase(dt, snap) {
   const h = player.heading, speed = Math.abs(player.speed), cockpit = S.cam === 3, bonnet = S.cam === 2;
@@ -391,11 +411,14 @@ function chase(dt, snap) {
   if (snap) {
     camYaw = h;
     camHeight = player.groundY;
-    camArm = 1;
+    camArm = 1; camLift = camRaise = 0;
   } else {
     camYaw = h + clamp(angleDiff(camYaw + turn * (1 - Math.exp(-8.5 * dt)), h), -0.24, 0.24);
-    camHeight = lerp(camHeight, player.groundY, 1 - Math.exp(-(player.air ? 8 : 15) * dt));
-    camHeight = clamp(camHeight, player.groundY - 0.30, player.groundY + 0.36);
+    // Follow the road's height with its slope fed forward, so the camera neither lags up a hill nor hits a hard limit
+    // where one begins (that limit was the kink felt at hill entries and crests).
+    if (!player.air) camHeight += player.slopeF * player.speed * dt * 0.9;
+    camHeight = lerp(camHeight, player.groundY, 1 - Math.exp(-(player.air ? 8 : 10) * dt));
+    camHeight = clamp(camHeight, player.groundY - 0.7, player.groundY + 0.7);
   }
   const sh = S.shake, t = S.time;
   S.shake *= Math.exp(-9.5 * dt);
@@ -417,12 +440,24 @@ function chase(dt, snap) {
     const [baseDistance, height, sideAngle] = S.cam === 1 ? [9.7, 3.0, 0] : S.cam === 4 ? [4.35, 0.69, 0.60] : [6.25, 1.86, 0];
     const distance = (baseDistance + Math.min(1.20, speed * 0.024)) * view.zoom;
     const a = camYaw + sideAngle + view.yaw, pitch = view.pitch;
-    const horizontal = distance * Math.cos(pitch);
     pivot.set(player.pos.x, player.groundY + 0.91, player.pos.z);
-    want.set(player.pos.x - Math.sin(a) * horizontal, camHeight + Math.max(0.37, height + distance * Math.sin(pitch)) + bob * 0.07,
-      player.pos.z - Math.cos(a) * horizontal);
-    if (!inCity(want.x, want.z) && !player.tunnel) want.y = Math.max(want.y, world.ground(want.x, want.z) + 0.46);
-    const safe = cameraClearance(pivot, want);
+    const wild = !inCity(player.pos.x, player.pos.z), margin = S.cam === 4 ? 0.5 : 0.62;
+    const aim = up => { const p = Math.max(pitch, up), flat = distance * Math.cos(p);
+      want.set(player.pos.x - Math.sin(a) * flat, camHeight + Math.max(0.37, height + distance * Math.sin(p)) + bob * 0.07, player.pos.z - Math.cos(a) * flat);
+      return wild || !inCity(want.x, want.z) ? Math.max(0, cameraLift(pivot, want, margin) - want.y) : 0; };
+    // 1. Over open ground, rise just enough to see over whatever lies between the camera and the car. Up at once, down gently.
+    let lift = aim(camRaise);
+    camLift = lift > camLift || snap ? lift : lerp(camLift, lift, 1 - Math.exp(-2.6 * dt));
+    want.y += camLift;
+    let safe = cameraClearance(pivot, want);
+    // 2. Hemmed in by a wall, a building or a rock face: look down from higher up instead of pressing the lens against the car.
+    //    The higher view is held once chosen, and released only after the level view has stayed clear for a moment, so it cannot flap.
+    const tight = safe * distance < Math.max(2.7, distance * 0.48), wasRaised = camGoal > 0.02 || camRaise > 0.02;
+    if (snap) { camGoal = 0; camClear = 0; }
+    if (tight) { camClear = 0; let pick = 1.2; for (const up of [0.5, 0.85, 1.2]) { if (up <= camGoal + 0.02) continue; want.y += Math.max(aim(up), camLift); if (cameraClearance(pivot, want) * distance >= Math.max(2.7, distance * 0.6)) { pick = up; break; } } camGoal = Math.max(camGoal, pick); }
+    else if (wasRaised) { want.y += Math.max(aim(0), camLift); camClear = cameraClearance(pivot, want) > 0.9 ? camClear + dt : 0; if (camClear > 0.4) camGoal = 0; }
+    if (tight || wasRaised) { camRaise = snap ? camGoal : lerp(camRaise, camGoal, 1 - Math.exp(-(camGoal > camRaise ? 7 : 2.2) * dt)); if (Math.abs(camRaise - camGoal) < 0.004) camRaise = camGoal;
+      camLift = Math.max(camLift, aim(camRaise)); want.y += camLift; safe = cameraClearance(pivot, want); }
     camArm = safe < camArm || snap ? safe : lerp(camArm, safe, 1 - Math.exp(-5.1 * dt));
     camPos.copy(pivot).lerp(want, camArm);
     if (camPos.distanceTo(pivot) < player.len * 0.37) {
@@ -587,7 +622,7 @@ async function boot() {
   routes = buildRoutes(world, city); spots = jobSpots(world, places); bigmap = createBigMap($('#bigmap-canvas'), world, places); if (!routes.some(r => r.id === routeSel)) routeSel = routes[0].id; modeUI();
   setPerf(perf.on); city.cull(player.pos, true);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
-  window.__afterdark = { S, A, save, traffic, city, street, world, places, R, start, input, useCar, photo, replay, openMap, closeMap, REC }; Object.defineProperty(window.__afterdark, 'player', { get: () => player }); Object.defineProperty(window.__afterdark, 'routes', { get: () => routes });
+  window.__afterdark = { S, A, save, traffic, city, street, world, places, R, start, input, useCar, photo, replay, openMap, closeMap, REC }; Object.defineProperty(window.__afterdark, 'player', { get: () => player }); Object.defineProperty(window.__afterdark, 'routes', { get: () => routes }); window.__afterdark.camTest = { view, step: chase, blocked: cameraBlocked, arm: () => camArm }; // lets the camera audit drive the chase camera at a fixed frame rate
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
   window.__afterdark.setTime = (mode, h, rain) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } if (rain != null) { dayCount = rain ? 0 : 1; rainyK = rain; if (mode === 'fixed') window.__afterdark.fixedRain = rain; } };
