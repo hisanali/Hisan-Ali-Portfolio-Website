@@ -227,10 +227,10 @@ async function useCar(id) { // builds the new car off-scene, then swaps it in wi
 }
 function drawGarage() {
   $('#g-cash').textContent = cr(save.cash); const box = $('#g-cars'); box.innerHTML = '';
-  for (const c of CARS) { const own = save.cars.includes(c.id), cur = save.car === c.id, sp = carSpec(save, c.id), row = document.createElement('div'); row.className = 'g-car' + (cur ? ' cur' : '');
-    row.innerHTML = `<div class="g-head"><div><b>${c.name}</b><small>${c.kind} · about ${Math.round(sp.vmax * 3.6 / 10) * 10} km/h</small></div><button type="button" class="g-act">${cur ? 'Driving' : own ? 'Drive' : 'Buy · ' + cr(c.price)}</button></div><div class="g-bars">${[['Speed', sp.vmax / 100], ['Pull', sp.acc / 1.35], ['Grip', sp.grip / 1.35], ['Brakes', sp.brake / 1.45]].map(([n, v]) => `<span>${n}<i><u style="width:${Math.round(clamp(v, 0.05, 1) * 100)}%"></u></i></span>`).join('')}</div>`;
-    const act = row.querySelector('.g-act'); act.disabled = cur || swapping || (!own && save.cash < c.price);
-    act.addEventListener('click', async () => { if (swapping) return; if (!own) { if (save.cash < c.price) return; save.cash -= c.price; save.cars.push(c.id); commit(save); } act.textContent = 'Loading…'; act.disabled = true; await useCar(c.id); drawGarage(); });
+  for (const c of CARS) { const cur = save.car === c.id, sp = carSpec(save, c.id), row = document.createElement('div'); row.className = 'g-car' + (cur ? ' cur' : '');
+    row.innerHTML = `<div class="g-head"><div><b>${c.name}</b><small>${c.kind} · about ${Math.round(sp.vmax * 3.6 / 10) * 10} km/h</small></div><button type="button" class="g-act">${cur ? 'Driving' : 'Drive'}</button></div><div class="g-bars">${[['Speed', sp.vmax / 100], ['Pull', sp.acc / 1.35], ['Grip', sp.grip / 1.35], ['Brakes', sp.brake / 1.45]].map(([n, v]) => `<span>${n}<i><u style="width:${Math.round(clamp(v, 0.05, 1) * 100)}%"></u></i></span>`).join('')}</div>`;
+    const act = row.querySelector('.g-act'); act.disabled = cur || swapping;
+    act.addEventListener('click', async () => { if (swapping) return; act.textContent = 'Loading…'; act.disabled = true; await useCar(c.id); drawGarage(); });
     if (cur) { const ups = document.createElement('div'); ups.className = 'g-ups';
       for (const [k, name] of UPGRADES) { const lv = upLevel(save, c.id, k), cost = UP_COST[lv], b = document.createElement('button'); b.type = 'button'; b.textContent = lv >= UP_MAX ? `${name} · full` : `${name} ${lv}/${UP_MAX} · ${cr(cost)}`; b.disabled = lv >= UP_MAX || save.cash < cost;
         b.addEventListener('click', () => { if (save.cash < cost) return; save.cash -= cost; (save.up[c.id] ||= {})[k] = lv + 1; commit(save); player.tune(carSpec(save, c.id)); drawGarage(); }); ups.append(b); }
