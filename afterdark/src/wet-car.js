@@ -30,10 +30,10 @@ function waterBeads() {
 }
 
 export function wetCar(root, ...materials) {
-  const wet = { value: 0 }, body = { value: new THREE.Matrix4() }, map = { value: waterBeads() };
+  const film = { value: 0 }, beads = { value: 0 }, body = { value: new THREE.Matrix4() }, map = { value: waterBeads() };
   for (const material of materials) {
     material.onBeforeCompile = shader => {
-      Object.assign(shader.uniforms, { uSurfaceRain: wet, uCarBody: body, uWaterBeads: map });
+      Object.assign(shader.uniforms, { uWaterFilm: film, uBeadLevel: beads, uCarBody: body, uWaterBeads: map });
       shader.vertexShader = `uniform mat4 uCarBody;
 varying vec3 vWetBody, vWetNormal;
 ` + shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -41,7 +41,11 @@ varying vec3 vWetBody, vWetNormal;
   vWetBody = (wetLocal * vec4(transformed, 1.0)).xyz;
   vWetNormal = mat3(wetLocal) * normal;
 `);
-      shader.fragmentShader = `uniform float uSurfaceRain;
+      shader.fragmentShader = `uniform float uWaterFilm, uBeadLevel;
+// Beads grow out of the film as rain collects and shrink back as they dry: the shallow ones go first.
+float standingBead(float height, float level) {
+  return height * smoothstep(1.0 - level, 1.35 - level, height) * min(1.0, level * 4.0);
+}
 uniform sampler2D uWaterBeads;
 varying vec3 vWetBody, vWetNormal;
 vec3 waterNormal(vec3 n, vec3 p, vec2 slope) {
@@ -56,11 +60,13 @@ vec3 waterNormal(vec3 n, vec3 p, vec2 slope) {
   wetWeight /= max(0.01, wetWeight.x + wetWeight.y + wetWeight.z);
   vec3 wp = vWetBody * 2.75;
   float collected = smoothstep(-0.34, 0.68, wetAxis.y);
-  float topBeads = texture2D(uWaterBeads, wp.xz).r;
-  float sideBeads = texture2D(uWaterBeads, wp.zy * vec2(1.0, 0.66)).r * wetWeight.x
-                  + texture2D(uWaterBeads, wp.xy * vec2(1.0, 0.66)).r * wetWeight.z;
-  float bead = (topBeads * wetWeight.y * (0.18 + 0.82 * collected) + sideBeads * 0.68) * uSurfaceRain;
-  float film = uSurfaceRain * (0.48 + collected * 0.40);
+  // Water runs off the doors and wings sooner than it leaves the bonnet and roof.
+  float sideLevel = uBeadLevel * uBeadLevel;
+  float topBeads = standingBead(texture2D(uWaterBeads, wp.xz).r, uBeadLevel);
+  float sideBeads = standingBead(texture2D(uWaterBeads, wp.zy * vec2(1.0, 0.66)).r, sideLevel) * wetWeight.x
+                  + standingBead(texture2D(uWaterBeads, wp.xy * vec2(1.0, 0.66)).r, sideLevel) * wetWeight.z;
+  float bead = topBeads * wetWeight.y * (0.18 + 0.82 * collected) + sideBeads * 0.68;
+  float film = uWaterFilm * (0.48 + collected * 0.40);
   diffuseColor.rgb *= 1.0 - film * 0.14 - bead * 0.075;
   roughnessFactor = max(0.055, mix(roughnessFactor, roughnessFactor * 0.56 + 0.016, film) + bead * 0.06);
 `)
@@ -75,10 +81,16 @@ vec3 waterNormal(vec3 n, vec3 p, vec2 slope) {
 `);
     };
   }
-  return (dt, rain) => {
-    wet.value = THREE.MathUtils.lerp(wet.value, rain, -Math.expm1(-dt * (rain > wet.value ? 0.92 : 0.16)));
+  // Rain lays a film on the paint within a couple of seconds and beads collect over the next few. Out of the rain
+  // the film runs off first and the beads dry slowly: about a minute parked, much sooner with air moving over the car.
+  const state = { film: 0, beads: 0 };
+  return (dt, rain, speed = 0) => {
+    const toward = (now, rate, shed) => now + (rain > now ? (rain - now) * -Math.expm1(-dt * rate) : (rain - now) * -Math.expm1(-dt * shed));
+    state.film = toward(state.film, 0.85, 1 / 9 + speed / 70);
+    state.beads = toward(state.beads, 0.22, 1 / 40 + speed / 260);
+    film.value = state.film; beads.value = state.beads;
     root.updateWorldMatrix(true, false);
     body.value.copy(root.matrixWorld).invert();
-    return wet.value;
+    return state;
   };
 }

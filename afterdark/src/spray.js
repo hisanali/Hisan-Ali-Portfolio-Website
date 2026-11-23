@@ -87,33 +87,60 @@ export function createTyreSpray(capacity) {
     p.justBorn = true;
   }
 
+  // Depth of standing water under the wheels on each side this frame, for the tyre sound.
+  const water = { left: 0, right: 0 };
+  let carried = 0; // water the tyres still hold after the road under them turns dry
+
+  // Two things leave a wet tyre. On a wet road the tread lifts a thin mist that hangs low behind the rear wheels.
+  // In standing water the contact patch pushes a flat sheet out sideways and the tread throws a short jet straight
+  // back. Both stop the moment the tyre is out of the water, and neither rises above the sill.
   function emit(dt, car, wet, puddleAt) {
+    water.left = water.right = 0;
+    carried = wet > carried ? wet : Math.max(wet, carried - dt / 1.2);
     const speed = Math.abs(car.speed);
-    if (wet < 0.24 || speed < 3.5 || car.air || car.onSand || car.rough || car.tunnel || car.onKerb) {
+    if (carried < 0.24 || speed < 3.5 || car.air || car.onSand || car.rough || car.onKerb) {
       carry.fill(0);
       return;
     }
     const sin = Math.sin(car.heading), cos = Math.cos(car.heading), sign = Math.sign(car.speed);
     const sx = car.slopeF * sin + car.slopeL * cos, sz = car.slopeF * cos - car.slopeL * sin;
+    const mistSpeed = Math.min(1, Math.max(0, (speed - 7) / 26));
     for (const [index, wheel] of car.tyreContacts.entries()) {
       const side = Math.sign(wheel.x), rear = wheel.z * sign < 0;
       const tx = car.pos.x + wheel.x * cos + wheel.z * sin;
       const tz = car.pos.z - wheel.x * sin + wheel.z * cos;
       const ground = car.surfaceY(tx, tz);
       const depth = puddleAt(tx, tz) * wet;
-      const rate = Math.min(285, speed * (4.35 + depth * 10.7)) * wet * (rear ? 1 : 0.58);
+      if (side > 0) water.left = Math.max(water.left, depth); else water.right = Math.max(water.right, depth);
+      const mist = carried * mistSpeed * (rear ? 170 : 40);
+      const sheet = depth * Math.min(speed, 34) * (rear ? 8 : 14);
+      const rate = mist + sheet;
+      if (rate <= 0) { carry[index] = 0; continue; }
       const total = carry[index] + rate * dt;
       const count = Math.floor(total);
       for (let i = 0; i < count; i++) {
         const rewind = (total - i - 1) / rate;
-        const track = (random() - 0.5) * 0.16;
+        let fore, lateral, up, scale = depth + 1.2, edge = 0;
+        if (random() * rate >= sheet) {
+          fore = car.speed * (0.03 + random() * 0.15);
+          lateral = side * (random() - 0.35) * 0.45;
+          up = 0.5 + random() * 1.1;
+          scale = 0;
+        } else if (rear && random() < 0.45) {
+          fore = car.speed * (0.04 + random() * 0.14);
+          lateral = side * (random() - 0.3) * 0.5;
+          up = 0.7 + random() * (0.7 + depth * 0.5);
+        } else {
+          fore = car.speed * (0.22 + random() * 0.30);
+          lateral = side * Math.min(4.6, 1.1 + speed * (0.07 + random() * 0.07)) * (0.55 + random() * 0.45);
+          up = 0.75 + random() * (0.85 + depth * 0.9);
+          edge = side * 0.11;
+        }
+        const track = (random() - 0.5) * 0.16 + edge;
         const along = -sign * (0.13 + speed * rewind);
         const x = tx + along * sin + track * cos, z = tz + along * cos - track * sin;
-        const fore = car.speed * (0.11 + random() * 0.27);
-        const sideSpeed = side * (0.42 + random() * (1.35 + depth * 3.25) + speed * 0.016);
-        const up = Math.min(3.70, 0.36 + Math.min(1.05, speed * 0.05) + random() * (0.91 + depth * 1.82));
-        spawn(x, ground + sx * (x - tx) + sz * (z - tz), z, fore, sideSpeed, up,
-          sin, cos, sx, sz, rewind, depth, rear && sign > 0 ? 0.45 : 0);
+        spawn(x, ground + sx * (x - tx) + sz * (z - tz), z, fore, lateral, up,
+          sin, cos, sx, sz, rewind, scale, rear && sign > 0 ? 0.45 : 0);
       }
       carry[index] = total - count;
     }
@@ -147,9 +174,10 @@ export function createTyreSpray(capacity) {
   function clear() {
     for (const p of particles) p.time = -1;
     carry.fill(0);
+    carried = water.left = water.right = 0;
     geometry.instanceCount = 0;
     mesh.visible = false;
   }
 
-  return { mesh, emit, update, clear };
+  return { mesh, emit, update, clear, water };
 }
