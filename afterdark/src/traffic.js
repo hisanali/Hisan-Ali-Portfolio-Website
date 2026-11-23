@@ -4,11 +4,13 @@ import { vehicleShadowMaterial } from './vehicle-shadow.js';
 import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SPAN, signal, rng } from './city.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
+import { CARS } from './career.js';
 import { loadGLB } from './car.js';
 
 const STYLES = ['sedan', 'hatch', 'suv', 'wagon', 'van', 'pickup'];
 const TRANSIT = ['bus', 'coach'];
-const PASSENGER = ['gr-corolla', 'land-cruiser'];
+const trafficFiles = [...new Set([...STYLES, ...TRANSIT].map(style => 'road-' + style)
+  .concat(CARS.map(car => car.file || 'sports-coupe')))];
 const TINTS = [0xdadde2, 0x15171b, 0x8c9198, 0x2a3140, 0x7a1418, 0x1f3d6b, 0xb9b3a4, 0x3c4a3f, 0xc8a24a, 0x505560];
 const dummy = new THREE.Object3D(), mat = new THREE.Matrix4(), col = new THREE.Color(), clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -32,15 +34,20 @@ function rearPlate(style, i, bounds) {
 }
 
 export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
-  count += 2; // Two additional passenger cars alongside the existing fleet.
+  count += 5; // Extra city slots keep the expanded garage represented alongside everyday traffic.
   const R = rng(seed), kits = [], headMaterials = [], tailMaterials = [];
-  for (const style of [...STYLES, ...TRANSIT, ...PASSENGER]) {
-    const prefix = PASSENGER.includes(style) ? 'car' : 'road';
-    const g = await loadGLB(`/evermile/assets/models/${prefix}-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
+  for (const file of trafficFiles) {
+    const coupe = file === 'sports-coupe';
+    const style = file.replace(/^(road|car)-/, '');
+    const url = coupe ? '/evermile/assets/sports-coupe.glb' : '/evermile/assets/models/' + file + '.glb?v=supplied7';
+    const g = await loadGLB(url);
+    if (coupe) g.scene.rotation.y = Math.PI;
+    g.scene.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(g.scene, true);
     const parts = []; const lamp = n => { const o = g.scene.getObjectByName(n); return o ? o.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3((n.endsWith('L') ? 1 : -1) * (box.max.x - 0.3), box.max.y * 0.48, n[0] === 'H' ? box.max.z - 0.1 : box.min.z + 0.1); };
     g.scene.traverse(o => { if (!o.isMesh) return; let m = o.material; const name = m.name || '';
-      if (/paint/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: m.map, metalness: 0.51, roughness: 0.28, clearcoat: 0.84, clearcoatRoughness: 0.11, envMapIntensity: 1.5 });
+      const painted = /paint/i.test(name) || (coupe && o.name === 'body');
+      if (painted) m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: m.map, metalness: 0.51, roughness: 0.28, clearcoat: 0.84, clearcoatRoughness: 0.11, envMapIntensity: 1.5 });
       else if (/glass/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0x152024, metalness: 0.46, roughness: 0.16, clearcoat: 0.8, envMapIntensity: 1.5 });
       else if (/HeadLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xfff2da); m.emissiveIntensity = 0.20; headMaterials.push(m); }
       else if (/TailLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xff1a0c); m.emissiveIntensity = 0.37; tailMaterials.push(m); }
@@ -53,7 +60,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         geo = geo.clone().applyMatrix4(local).translate(-centre.x, -centre.y, -centre.z);
         local = new THREE.Matrix4().makeTranslation(centre.x, centre.y, centre.z);
       }
-      parts.push({ geo, mat: m, local, paint: /paint/i.test(name), wheel: Boolean(hub) }); });
+      parts.push({ geo, mat: m, local, paint: painted, wheel: Boolean(hub) }); });
     // Batch the many identical seat materials once for each transit model.
     if (TRANSIT.includes(style)) {
       const batches = new Map();
@@ -90,11 +97,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const putOn = (c, avoid) => { for (let n = 0; n < 30; n++) { const rd = world.roads[Math.floor(R() * world.roads.length)], i = rd.from + 12 + R() * (rd.to - rd.from - 24), s = world.samples[Math.round(i)]; if (s.tunnel && n < 20) continue; if (avoid && Math.hypot(s.x - avoid.x, s.z - avoid.z) < 380 && n < 25) continue; if (cars.some(o => o.mode === 2 && o !== c && o.rd === rd && o.dirS === c.dirS && Math.abs(o.i - i) < 12)) continue; c.rd = rd; c.i = i; return; } };
   const cityCarCount = cars.length;
   for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
-  // Assign a city bus and a regional coach to moving traffic, outside car-sized parking bays.
-  if (cityCarCount) cars[0].kit = STYLES.length;
-  if (country) cars[cityCarCount].kit = STYLES.length + 1;
-  const passengerStart = STYLES.length + TRANSIT.length;
-  for (let i = 0; i < PASSENGER.length && i + 1 < cityCarCount; i++) cars[i + 1].kit = passengerStart + i;
+  // Allocate one moving city slot per model before filling the remaining slots with ordinary traffic.
+  for (let i = 0; i < Math.min(kits.length, cityCarCount); i++) cars[i].kit = i;
+  if (country) cars[cityCarCount].kit = trafficFiles.indexOf('road-coach');
   const placeOnRoad = c => { const i0 = Math.floor(c.i), a = world.samples[i0], b = world.samples[Math.min(c.rd.to, i0 + 1)], u = c.i - i0, sg = -c.dirS * 2.6; c.x = a.x + (b.x - a.x) * u + a.lx * sg; c.z = a.z + (b.z - a.z) * u + a.lz * sg; c.y = a.y + (b.y - a.y) * u + 0.03; c.h = Math.atan2(a.tx * c.dirS, a.tz * c.dirS); c.pitch = Math.atan2((b.y - a.y) * c.dirS, 3); };
   for (const c of cars) if (c.mode === 2) placeOnRoad(c);
   const laneOff = c => 1.9 + c.lane * 3.6;
@@ -222,5 +227,5 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   }
   // Close pass at speed without contact.
   function nearMiss(player) { let got = 0; if (Math.abs(player.speed) < 17) return 0; for (const c of cars) { const d = Math.hypot(c.x - player.pos.x, c.z - player.pos.z); if (d < 3.6) { if (!c.near2) { c.near2 = true; got++; } } else if (d > 9) c.near2 = false; } return got; }
-  return { cars, parked, update, collide, nearMiss, setTime };
+  return { modelFiles: trafficFiles, cars, parked, update, collide, nearMiss, setTime };
 }

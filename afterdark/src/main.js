@@ -426,7 +426,8 @@ function chase(dt, snap) {
   if (cockpit || bonnet) {
     const height = player.spec.eye || 1.06, coupe = !player.spec.file;
     if (cockpit) {
-      camPos.set(0.35, height - (coupe ? 0.07 : 0.03), coupe ? -0.035 : -0.28);
+      const forwardCab = player.spec.file === 'road-bus' || player.spec.file === 'road-coach';
+      camPos.set(forwardCab ? 0.65 : 0.35, height - (coupe ? 0.07 : 0.03), forwardCab ? player.len * 0.40 : coupe ? -0.035 : -0.28);
       player.tilt.localToWorld(camPos);
     } else {
       camPos.set(0, Math.max(0.88, height - 0.1), player.len * 0.34);
