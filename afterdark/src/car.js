@@ -1,4 +1,5 @@
 // The player's coupé: model set-up with physically based paint, lights, and the driving model.
+import { vehicleShadowMaterial } from './vehicle-shadow.js';
 import * as THREE from '/evermile/vendor/three.module.js';
 import { wetCar } from './wet-car.js';
 import { GLTFLoader } from '/evermile/vendor/loaders/GLTFLoader.js';
@@ -83,8 +84,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   }
 
   // Contact shadow keeps the car planted on the road.
-  const shTex = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'); const g = x.createRadialGradient(64, 64, 8, 64, 64, 64); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(0.55, 'rgba(0,0,0,.7)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return cv; })());
-  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.5, len * 1.28), new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.6, len * 1.32), vehicleShadowMaterial()); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
 
   // Headlights: two real spot lights, volumetric cones and the pool they throw on the wet road.
   const front = len / 2 - 0.25, lights = [], cones = [];
@@ -131,7 +131,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = lerp(daylightReflection, 0.75, nightK); for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
-    M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.55 + 0.45 * e.night; };
+    M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.97 - 0.12 * e.night; };
 
   // ctrl: steer (+1 = left), throttle, brake, hand. Returns the strength of any wall impact this step.
   car.drive = (dt, ctrl) => {
@@ -294,6 +294,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     car.sync(dt); return hit;
   };
   car.sync = dt => {
+    shadow.visible = !car.air;
     root.position.set(car.pos.x, car.groundY, car.pos.z); root.rotation.set(-Math.atan(car.slopeF), car.heading, Math.atan(car.slopeL), 'YXZ');
     car.bump = Math.max(0, car.bump - dt * 4);
     const k = 1 - Math.exp(-dt * 8);
