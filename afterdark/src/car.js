@@ -18,7 +18,7 @@ function beam(color, strength) {
 
 export async function createPlayer(scene, envTexture, city, spec = {}) {
   let nightK = 0, wetK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file, rigCar = !!spec.rig;
-  const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=${rigCar ? '20260927a' : 'supplied7'}` : '/evermile/assets/sports-coupe.glb');
+  const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=${rigCar ? '20261123b' : 'supplied7'}` : '/evermile/assets/sports-coupe.glb');
   const model = gltf.scene; if (!kitCar) model.rotation.y = Math.PI; model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
   model.position.set(-c.x, -box.min.y, -c.z);
@@ -38,8 +38,11 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const LOCK = 0.576; let gripNow = 10.3;
   const steerLimit = (speed, reverse) => Math.min(LOCK, Math.atan(wheelbase * (reverse ? Math.min(gripNow * 0.92, 4.4) : gripNow * 0.92) / Math.max(1, speed * speed)));
   const frontAngle = (steer, speed) => steer * steerLimit(Math.abs(speed), speed < -0.3);
+  const satinFinish = spec.file === 'car-escalade' || spec.file === 'car-gr-corolla';
+  const dryCoatRoughness = satinFinish ? 0.18 : 0.03;
+  const daylightReflection = satinFinish ? 1.1 : 2.4;
   const env = { envMap: envTexture, envMapIntensity: 1.7 };
-  const paint = new THREE.MeshPhysicalMaterial({ color: 0xb8bcc4, metalness: 0.72, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, ...env, envMapIntensity: 2.4 });
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xb8bcc4, metalness: satinFinish ? 0.48 : 0.72, roughness: satinFinish ? 0.36 : 0.3, clearcoat: 1, clearcoatRoughness: dryCoatRoughness, ...env, envMapIntensity: daylightReflection });
   const M = {
     chrome: new THREE.MeshStandardMaterial({ color: 0xcfd4d8, metalness: 1, roughness: 0.12, ...env }),
     rim: new THREE.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 1, roughness: 0.22, ...env }),
@@ -121,13 +124,13 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.surfaceY = groundAt;
   car.updateWetness = (dt, rain) => {
     const water = updateWetPaint(dt, car.tunnel ? 0 : rain);
-    paint.clearcoatRoughness = lerp(0.03, 0.068, water);
+    paint.clearcoatRoughness = lerp(dryCoatRoughness, 0.068, water);
     car.bodyWetness = water;
   };
   car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
-  car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = 2.4 - 1.65 * nightK; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
+  car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = lerp(daylightReflection, 0.75, nightK); for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
     M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.55 + 0.45 * e.night; };
 
   // ctrl: steer (+1 = left), throttle, brake, hand. Returns the strength of any wall impact this step.
