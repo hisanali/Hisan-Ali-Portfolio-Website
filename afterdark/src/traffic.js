@@ -83,9 +83,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     else if (!straight) kind = ok(rDir) ? 'r' : 'l';
     return { k, kind, dir: kind === 'r' ? rDir : lDir };
   }
-  function update(dt, t, player, focus) {
+  function update(dt, t, player, focus, drawOnly) {
     if (focus && (parkTick++ % 40) === 0) refreshParked(focus.x, focus.z);
-    for (const c of cars) {
+    for (const c of drawOnly ? [] : cars) {
       const fx = Math.sin(c.h), fz = Math.cos(c.h); let target = c.vmax; c.near = false;
       if (c.stun > 0) { c.stun -= dt; target = 0; }
       // Anything ahead in my path?

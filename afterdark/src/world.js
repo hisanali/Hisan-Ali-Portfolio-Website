@@ -30,6 +30,8 @@ function natural(x, z) {
 
 const COAST = [[0, -16], [-2, -150], [40, -330], [150, -520], [215, -700], [228, -805], [236, -1010], [300, -1180], [470, -1320], [720, -1385], [960, -1372], [1190, -1260], [1370, -1030], [1425, -720], [1385, -400], [1270, -130], [1150, 110], [1095, 340], [1035, 462], [SPAN + 14, 480]];
 const MOUNT = [[SPAN + 14, 720], [1080, 735], [1280, 815], [1470, 770], [1600, 870], [1530, 1000], [1660, 1090], [1860, 1010], [2020, 1130], [1950, 1280], [2130, 1380], [2360, 1290], [2420, 1440], [2260, 1590], [2020, 1660], [1780, 1610], [1520, 1690], [1240, 1600], [960, 1480], [740, 1300], [600, 1110], [480, SPAN + 14]];
+// A winding lane through the old town in the hills north of the grid: no straight lines anywhere.
+const OLD = [[240, SPAN + 14], [246, 1045], [305, 1125], [262, 1205], [160, 1228], [112, 1318], [192, 1398], [128, 1482], [44, 1424], [34, 1304], [66, 1186], [14, 1082], [0, SPAN + 14]];
 
 export async function buildWorld(scene, city, Q) {
   const world = { roads: [], hide: [] }, R = rng(909);
@@ -37,11 +39,11 @@ export async function buildWorld(scene, city, Q) {
 
   // ---- Roads: sample each spline, give it a smooth drivable profile, and note bridge and tunnel stretches ----
   const samples = [], STEP = 3, HALFW = 6;
-  for (const [name, ctrl, tunnels] of [['coast', COAST, true], ['mountain', MOUNT, false]]) {
+  for (const [name, ctrl, tunnels] of [['coast', COAST, true], ['mountain', MOUNT, false], ['old', OLD, false]]) {
     const curve = new THREE.CatmullRomCurve3(ctrl.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal'), n = Math.round(curve.getLength() / STEP), pts = curve.getSpacedPoints(n);
     const nat = pts.map(p => natural(p.x, p.z)), y = new Float32Array(n + 1);
     for (let i = 0; i <= n; i++) { let s = 0, c = 0; for (let k = -16; k <= 16; k++) { const j = clamp(i + k, 0, n); s += nat[j] < -0.5 ? 13 : Math.max(nat[j], 1.2); c++; } y[i] = s / c; }
-    y[0] = 0.02; y[n] = 0.02; const grade = name === 'coast' ? 0.07 : 0.115;
+    y[0] = 0.02; y[n] = 0.02; const grade = name === 'coast' ? 0.07 : name === 'old' ? 0.085 : 0.115;
     // The ends meet the city streets at their level; the grade limit is applied outward from both pinned ends.
     const lvl = 8; for (let i = 0; i <= lvl; i++) { y[i] = 0.02; y[n - i] = 0.02; }
     for (let pass = 0; pass < 4; pass++) { for (let i = lvl + 1; i < n - lvl; i++) y[i] = clamp(y[i], y[i - 1] - grade * STEP, y[i - 1] + grade * STEP); for (let i = n - lvl - 1; i > lvl; i--) y[i] = clamp(y[i], y[i + 1] - grade * STEP, y[i + 1] + grade * STEP); }
@@ -70,7 +72,7 @@ export async function buildWorld(scene, city, Q) {
     const side = pick === 'low' ? (nl < nr ? 1 : -1) : (Math.abs(nl - s.y) < Math.abs(nr - s.y) ? 1 : -1);
     return { key, name, x: s.x + s.lx * side * off, z: s.z + s.lz * side * off, y: Math.max(s.y, 1.5), r, side, ux: s.tx, uz: s.tz, vx: s.lx * side, vz: s.lz * side, yaw: Math.atan2(s.tx, s.tz), blend: key === 'harbour' ? 9 : 46, road: s }; });
   // Stretches lined with houses get a wider level verge.
-  const STRIPS = [['suburb', 'Eastfield', 'coast', 0.84, 0.955], ['village', 'Pinecrest', 'mountain', 0.655, 0.725]];
+  const STRIPS = [['suburb', 'Eastfield', 'coast', 0.84, 0.955], ['village', 'Pinecrest', 'mountain', 0.655, 0.725], ['oldtown', 'Old Town', 'old', 0.14, 0.86]];
   world.strips = STRIPS.map(([key, name, road, a, b]) => { const rd = world.roads.find(r => r.name === road), i0 = Math.round(rd.from + (rd.to - rd.from) * a), i1 = Math.round(rd.from + (rd.to - rd.from) * b); for (let i = i0; i <= i1; i++) samples[i].wide = 30 * sst(i0, i0 + 14, i) * sst(i1, i1 - 14, i); const m = samples[Math.round((i0 + i1) / 2)]; return { key, name, i0, i1, x: m.x, z: m.z, y: m.y, r: (i1 - i0) * STEP / 2 }; });
 
   // ---- Heightfield: natural land, graded flat along the roads (not under bridges or over tunnels) ----

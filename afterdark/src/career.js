@@ -5,10 +5,10 @@ import { WORLD } from './world.js';
 // ---------- Cars and upgrades ----------
 export const CARS = [
   { id: 'coupe', name: 'Vanta RS', kind: 'Rear-engined coupé', price: 0, vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, eye: 1.06 },
-  { id: 'hatch', file: 'road-hatch', name: 'Pico GT', kind: 'Hot hatch · nimble', price: 1500, vmax: 60, acc: 0.86, grip: 1.1, brake: 1.06, off: 1, eye: 1.16 },
+  { id: 'hatch', file: 'car-gr-corolla', rig: true, name: 'Pico GT', kind: 'Hot hatch · nimble', price: 1500, vmax: 60, acc: 0.86, grip: 1.1, brake: 1.06, off: 1, eye: 1.13 },
   { id: 'sedan', file: 'road-sedan', name: 'Meridian', kind: 'Saloon · steady', price: 3000, vmax: 68, acc: 0.9, grip: 1.02, brake: 1, off: 1, eye: 1.14 },
   { id: 'pickup', file: 'road-pickup', name: 'Bronto', kind: 'Pickup · goes anywhere', price: 5000, vmax: 56, acc: 0.82, grip: 0.95, brake: 0.95, off: 0.35, eye: 1.42 },
-  { id: 'suv', file: 'road-suv', name: 'Atlas X', kind: '4×4 · fast off the road', price: 8000, vmax: 66, acc: 0.92, grip: 0.98, brake: 1, off: 0.45, eye: 1.4 }
+  { id: 'suv', file: 'car-land-cruiser', rig: true, name: 'Atlas X', kind: '4×4 · fast off the road', price: 8000, vmax: 66, acc: 0.92, grip: 0.98, brake: 1, off: 0.45, eye: 1.56 }
 ];
 export const UPGRADES = [['e', 'Engine'], ['t', 'Tyres'], ['b', 'Brakes']], UP_COST = [1200, 3000, 6500], UP_MAX = 3;
 export const carById = id => CARS.find(c => c.id === id) || CARS[0];
@@ -26,7 +26,7 @@ export const commit = save => { try { localStorage.setItem(KEY, JSON.stringify(s
 export const upLevel = (save, id, k) => Math.min(UP_MAX, Math.max(0, (save.up[id] && +save.up[id][k]) || 0));
 // The handling numbers a car actually drives with: its base figures plus what has been fitted.
 export function carSpec(save, id) { const c = carById(id), e = upLevel(save, id, 'e'), t = upLevel(save, id, 't'), b = upLevel(save, id, 'b');
-  return { file: c.file, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
+  return { file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
 export const cr = n => Math.round(n).toLocaleString() + ' cr';
 export const clockText = (t, tenths) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${tenths ? '.' + Math.floor(t * 10 % 10) : ''}`;
 
@@ -39,6 +39,7 @@ export function buildRoutes(world, city) {
     cps.push({ x: S[b].x, z: S[b].z, y: S[b].y }); const s0 = S[a], len = (b - a) * 3;
     routes.push({ id, name, note, len, r: 12, cps, start: { x: s0.x - s0.lx * 2.5, z: s0.z - s0.lz * 2.5, h: Math.atan2(s0.tx, s0.tz) }, gold: len / pace, silver: len / (pace * 0.85), bronze: len / (pace * 0.66) }); };
   along('coast', 'coast', 'Coast Road', 'Out past the harbour and the lighthouse, through the tunnel and home by Eastfield.', 41);
+  along('old', 'old', 'Old Town Loop', 'A tight, twisting lane through the hill town north of the grid. Nothing straight, nowhere to rest.', 24);
   along('mountain', 'mountain', 'Mountain Pass', 'Up from the stadium to the summit lookout and back down through Pinecrest.', 30);
   { const J = [[3, 6], [6, 6], [6, 1], [1, 1], [1, 4], [3, 4]], cps = J.map(([i, j]) => ({ x: i * P, z: j * P, y: 0 })); let len = 3 * P - 40, q = [3, 6]; for (const j of J.slice(1)) { len += (Math.abs(j[0] - q[0]) + Math.abs(j[1] - q[1])) * P; q = j; }
     routes.push({ id: 'city', name: 'Downtown Sprint', note: 'Six corners through the grid with the traffic running. Lights are yours to judge.', len, r: 13, cps, start: { x: city.spawn.x, z: city.spawn.z, h: 0 }, gold: len / 27, silver: len / 22, bronze: len / 16 }); }
@@ -52,7 +53,7 @@ export function jobSpots(world, places) {
   const out = [];
   for (let i = 0; i < ROADS; i++) for (let j = 0; j < ROADS - 1; j++) { if ((i * 3 + j) % 2) continue; out.push({ x: i * P, z: (j + 0.5) * P, y: 0, name: DISTRICT(i, j), city: true }); out.push({ x: (j + 0.5) * P, z: i * P, y: 0, name: DISTRICT(j, i), city: true }); }
   for (const pm of places.markers) { let s = pm.road; if (!s) { const r = world.nearRoad(pm.x, pm.z, 700); s = r && r.s; } if (s && !s.tunnel) out.push({ x: s.x, z: s.z, y: s.y, name: pm.name, city: false }); }
-  for (const rd of world.roads) for (const f of [0.22, 0.45, 0.6]) { const s = world.samples[Math.round(rd.from + (rd.to - rd.from) * f)]; if (s && !s.tunnel && !s.bridge) out.push({ x: s.x, z: s.z, y: s.y, name: rd.name === 'coast' ? 'Coast road lay-by' : 'Mountain road lay-by', city: false }); }
+  for (const rd of world.roads) for (const f of [0.22, 0.45, 0.6]) { const s = world.samples[Math.round(rd.from + (rd.to - rd.from) * f)]; if (s && !s.tunnel && !s.bridge) out.push({ x: s.x, z: s.z, y: s.y, name: rd.name === 'coast' ? 'Coast road lay-by' : rd.name === 'old' ? 'Old Town lane' : 'Mountain road lay-by', city: false }); }
   return out;
 }
 const RIDERS = ['A night-shift nurse', 'Two tourists', 'A chef with a knife roll', 'A band with one guitar', 'A man in a hurry', 'A student with a cello', 'A photographer', 'Someone late for a ferry', 'A couple after the match', 'A lighthouse keeper'];

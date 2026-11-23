@@ -16,8 +16,8 @@ function beam(color, strength) {
 }
 
 export async function createPlayer(scene, envTexture, city, spec = {}) {
-  let nightK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file;
-  const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=supplied7` : '/evermile/assets/sports-coupe.glb');
+  let nightK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file, rigCar = !!spec.rig;
+  const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=${rigCar ? '20260927a' : 'supplied7'}` : '/evermile/assets/sports-coupe.glb');
   const model = gltf.scene; if (!kitCar) model.rotation.y = Math.PI; model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
   model.position.set(-c.x, -box.min.y, -c.z);
@@ -37,14 +37,20 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     caliper: new THREE.MeshStandardMaterial({ color: 0xa30d12, metalness: 0.4, roughness: 0.4, ...env }),
     cabin: new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.8, ...env, envMapIntensity: 0.3 })
   };
-  if (kitCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; o.material = /paint/i.test(mn) ? paint : /glass/i.test(mn) ? M.glass : /HeadLens/i.test(mn) ? M.lens : /TailLens/i.test(mn) ? M.tail : Object.assign(o.material.clone(), { envMap: envTexture, envMapIntensity: 0.8 }); });
+  // Detailed imported cars keep their own textured trim, cabin and lamps; only the paint, glass and tail lenses are ours.
+  if (rigCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; if (mn === 'BodyPaint') o.material = paint; else if (/^TailLens/.test(mn)) o.material = M.tail; else if (mn === 'EXT_Glass') o.material = M.glass; else { o.material.envMap = envTexture; o.material.envMapIntensity = 0.9; } });
+  else if (kitCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; o.material = /paint/i.test(mn) ? paint : /glass/i.test(mn) ? M.glass : /HeadLens/i.test(mn) ? M.lens : /TailLens/i.test(mn) ? M.tail : Object.assign(o.material.clone(), { envMap: envTexture, envMapIntensity: 0.8 }); });
   else model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
     o.material = n === 'body' ? paint : /glass/i.test(n) ? M.glass : n === 'lights_red' ? M.tail : n === 'leds' ? M.led : n === 'lights' ? M.lens : /^rim_|^wheel$|^nuts$|^centre$/.test(n) ? M.rim : n === 'chrome' || n === 'metal' ? M.chrome : n === 'tire' ? M.tyre
       : n === 'brakes' || n === 'brake' ? (n === 'brakes' ? M.caliper : M.rim) : /carbon/.test(n) ? M.carbon : /grills|wipers|plastic|trim$/.test(n) ? M.dark : /Leather|Carpet|Interior/i.test(mn) || /interior|leather|carpet|steering/.test(n) ? M.cabin : M.dark; });
   model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const root = new THREE.Group(), tilt = new THREE.Group(); tilt.add(model); root.add(tilt); scene.add(root);
   const wheels = (kitCar ? ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR'] : ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']).map(name => { const node = model.getObjectByName(name); return node && { node, base: node.quaternion.clone(), front: name[6].toLowerCase() === 'f', up: Y.clone().applyQuaternion(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()) }; }).filter(Boolean);
-  const wheelR = 0.358;
+  let wheelR = kitCar ? 0.34 : 0.358; const rigs = [];
+  if (rigCar) { wheels.length = 0; const found = [], calipers = []; model.traverse(o => { if (/^Wheel_[FR][LR]$/.test(o.name)) found.push(o); if (/^Caliper_[FR][LR]$/.test(o.name)) calipers.push(o); }); model.updateWorldMatrix(true, true);
+    for (const w of found) { const b = new THREE.Box3(), tyres = []; w.traverse(o => { if (o.isMesh && /tire|tyre/i.test(o.name)) tyres.push(o); }); for (const t of tyres.length ? tyres : [w]) b.union(new THREE.Box3().setFromObject(t));
+      const pivot = new THREE.Group(), rotor = new THREE.Group(); pivot.position.copy(model.worldToLocal(b.getCenter(new THREE.Vector3()))); model.add(pivot); pivot.updateWorldMatrix(true, false); pivot.add(rotor); rotor.attach(w); for (const k of calipers) if (k.name.slice(-2) === w.name.slice(-2)) pivot.attach(k);
+      const sz = b.getSize(new THREE.Vector3()); wheelR = Math.max(sz.y, sz.z) / 2 || 0.36; rigs.push({ pivot, rotor, front: w.name[6] === 'F' }); } }
 
   // Contact shadow keeps the car planted on the road.
   const shTex = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'); const g = x.createRadialGradient(64, 64, 8, 64, 64, 64); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(0.55, 'rgba(0,0,0,.7)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return cv; })());
@@ -163,7 +169,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     tilt.rotation.x = lerp(tilt.rotation.x, clamp(-car.accel * 0.0036, -0.045, 0.05), k);
     tilt.position.y = Math.sin(car.bump * Math.PI) * 0.07;
     car.spin -= car.speed * dt / wheelR;
-    for (const w of wheels) { q1.setFromAxisAngle(w.up, w.front ? car.steer * 0.5 : 0); q2.setFromAxisAngle(X, car.spin); w.node.quaternion.copy(q1).multiply(w.base).multiply(q2); }
+    for (const w of wheels) { q1.setFromAxisAngle(w.up, w.front ? car.steer * 0.5 : 0); q2.setFromAxisAngle(X, kitCar ? -car.spin : car.spin); w.node.quaternion.copy(q1).multiply(w.base).multiply(q2); }
+    for (const r of rigs) { if (r.front) r.pivot.rotation.y = car.steer * 0.5; r.rotor.rotation.x = -car.spin % (Math.PI * 2); }
     M.tail.emissiveIntensity = car.braking ? 5 + 4 * nightK : 0.5 + 1.1 * nightK; tailM.opacity = (car.braking ? 0.5 : 0.1) * nightK;
   };
   return car;
