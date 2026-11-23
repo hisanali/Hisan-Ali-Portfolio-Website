@@ -109,9 +109,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     else if (!straight) kind = ok(rDir) ? 'r' : 'l';
     return { k, kind, dir: kind === 'r' ? rDir : lDir };
   }
-  function update(dt, t, player, focus) {
+  function update(dt, t, player, focus, drawOnly = false, recorded = false) {
     if (focus && (parkTick++ % 40) === 0) refreshParked(focus.x, focus.z);
-    for (const c of cars) {
+    for (const c of drawOnly ? [] : cars) {
       const fx = Math.sin(c.h), fz = Math.cos(c.h); let target = c.vmax; c.near = false;
       if (c.stun > 0) { c.stun -= dt; target = 0; }
       // Anything ahead in my path?
@@ -156,7 +156,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     // Write instance transforms and lamp positions. Only cars near the focus are drawn; each body style packs its
     // visible moving cars into the first slots, with the nearby parked cars after them.
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
-    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + c.push.x, c.y || 0, c.z + c.push.y); dummy.rotation.set(-(c.pitch || 0), c.h, 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
+    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + (recorded ? 0 : c.push.x), c.y || 0, c.z + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h, 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
       if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
         const tb = c.braking || c.v < 0.5 ? 3.4 : 1.3; lc[shown * 12 + 6] = tb; lc[shown * 12 + 9] = tb;

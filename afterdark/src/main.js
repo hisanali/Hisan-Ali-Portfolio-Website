@@ -74,7 +74,7 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (KEYS[k]) {
   if (k === 'c' && S.mode === 'play') nextCam();
   if (k === 'm') { if (S.mode === 'map') closeMap(); else openMap(); }
   if (k === 'o' && S.mode === 'play') photo(true);
-  if (k === 'escape') { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else if (S.mode === 'replay') replay(false); }
+  if (k === 'escape' && (S.mode === 'map' || S.mode === 'photo' || S.mode === 'replay')) { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else replay(false); return; }
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'enter' && S.mode === 'menu') start(); });
@@ -158,7 +158,7 @@ function stepActivity(dt) {
   if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
 }
 function start() {
-  if (S.mode === 'boot' || swapping) return; ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = 0;
+  if (S.mode === 'boot' || swapping) return; ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = REC.acc = 0;
   if (k === 'trial') { A.route = routes.find(r => r.id === routeSel) || routes[0]; player.place(A.route.start.x, A.route.start.z, A.route.start.h); } else player.place(city.spawn.x, city.spawn.z, 0);
   player.setPaint(paintSel);
   Object.assign(S, { mode: 'play', clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, beacons: 0, jobs: 0 });
@@ -238,16 +238,24 @@ function saveShot(blob) { if (!blob) { toast('Could not save the photo'); return
 const REC = { n: 0, i: 0, acc: 0, N: 600, F: 10, d: new Float32Array(6000) }, RP = { t: 0, end: 0, k: 0, camT: 0, side: 1, snap: null, cam: new THREE.Vector3() };
 const rget = (k, f) => REC.d[(k % REC.N) * REC.F + f];
 function record(dt) { REC.acc += dt; if (REC.acc < 1 / 30) return; REC.acc = 0; const o = (REC.i % REC.N) * REC.F, d = REC.d, p = player;
-  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock; REC.i++; REC.n = Math.min(REC.N, REC.n + 1); }
+  d[o] = p.pos.x; d[o + 1] = p.pos.z; d[o + 2] = p.heading; d[o + 3] = p.groundY; d[o + 4] = p.slopeF; d[o + 5] = p.slopeL; d[o + 6] = p.steer; d[o + 7] = p.speed; d[o + 8] = p.braking ? 1 : 0; d[o + 9] = S.clock;
+  { const C = traffic.cars, n = C.length, T = REC.tr ||= new Float32Array(REC.N * n * 5); let q = (REC.i % REC.N) * n * 5; for (let k = 0; k < n; k++) { const c = C[k]; T[q++] = c.x + c.push.x; T[q++] = c.z + c.push.y; T[q++] = c.h; T[q++] = c.y || 0; T[q++] = (c.pitch || 0) + (c.braking ? 10 : 0); } } // the traffic is recorded too, so a replay shows what was really there
+  REC.i++; REC.n = Math.min(REC.N, REC.n + 1); }
 function replay(on) { const p = player;
   if (on) { if (S.mode !== 'pause' || REC.n < 30) return; RP.snap = { x: p.pos.x, z: p.pos.z, h: p.heading, gy: p.groundY, sf: p.slopeF, sl: p.slopeL, st: p.steer, sp: p.speed, br: p.braking };
+    RP.snap.traffic = traffic.cars.map(({ x, z, h, y, pitch, braking, spin }) => ({ x, z, h, y, pitch, braking, spin }));
     RP.k = REC.i - REC.n; RP.t = rget(RP.k, 9); RP.end = rget(REC.i - 1, 9); RP.camT = 0; view.inCab = false; p.setInterior(false); S.mode = 'replay'; show(null); }
-  else if (S.mode === 'replay') { const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.sync(0); S.mode = 'pause'; snapCam = true; show('pause'); }
+  else if (S.mode === 'replay') { const s = RP.snap; p.pos.x = s.x; p.pos.z = s.z; p.heading = s.h; p.groundY = s.gy; p.slopeF = s.sf; p.slopeL = s.sl; p.steer = s.st; p.speed = s.sp; p.braking = s.br; p.sync(0);
+    traffic.cars.forEach((car, i) => Object.assign(car, s.traffic[i]));
+    traffic.update(0, S.time, null, p.pos, true);
+    S.mode = 'pause'; snapCam = true; show('pause'); }
 }
 function stepReplay(dt) { const p = player; RP.t += dt; if (RP.t >= RP.end) { replay(false); return; }
   while (RP.k < REC.i - 2 && rget(RP.k + 1, 9) < RP.t) RP.k++;
   const k = RP.k, t0 = rget(k, 9), t1 = rget(k + 1, 9), u = clamp((RP.t - t0) / Math.max(1e-4, t1 - t0), 0, 1), L = f => lerp(rget(k, f), rget(k + 1, f), u); let dh = rget(k + 1, 2) - rget(k, 2); dh = Math.atan2(Math.sin(dh), Math.cos(dh));
   p.pos.x = L(0); p.pos.z = L(1); p.heading = rget(k, 2) + dh * u; p.groundY = L(3); p.slopeF = L(4); p.slopeL = L(5); p.steer = L(6); p.speed = L(7); p.braking = rget(k, 8) > 0.5; p.sync(dt);
+  if (REC.tr) { const C = traffic.cars, n = C.length, T = REC.tr, a = (k % REC.N) * n * 5, b = ((k + 1) % REC.N) * n * 5; for (let j = 0; j < n; j++) { const c = C[j], o = a + j * 5, o2 = b + j * 5, far = Math.abs(T[o2] - T[o]) + Math.abs(T[o2 + 1] - T[o + 1]) > 20, w = far ? 0 : u; let hh = T[o2 + 2] - T[o + 2]; hh = Math.atan2(Math.sin(hh), Math.cos(hh));
+      c.x = lerp(T[o], T[o2], w); c.z = lerp(T[o + 1], T[o2 + 1], w); c.h = T[o + 2] + hh * w; c.y = lerp(T[o + 3], T[o2 + 3], w); const pb = T[o + 4]; c.braking = pb > 5; c.pitch = pb > 5 ? pb - 10 : pb; c.spin = (c.spin || 0) + (far ? 0 : Math.hypot(T[o2] - T[o], T[o2 + 1] - T[o + 1]) / Math.max(1e-3, t1 - t0)) * dt / 0.33; } }
   RP.camT -= dt; let cd = Math.hypot(RP.cam.x - p.pos.x, RP.cam.z - p.pos.z);
   if (RP.camT <= 0 || cd > 90) { let q = k; const tA = RP.t + 1.7; while (q < REC.i - 1 && rget(q, 9) < tA) q++; const ax = rget(q, 0), az = rget(q, 1), ah = rget(q, 2), ay = rget(q, 3); RP.side = -RP.side;
     const town = inCity(ax, az), n = town ? null : world.nearRoad(ax, az, 30), tight = !!(n && (n.s.tunnel || n.s.bridge)), off = tight ? -2.4 : town ? -(5.6 + Math.random() * 1.6) : RP.side * (5.5 + Math.random() * 3); // in town the camera stands on the near pavement, clear of parked cars
@@ -378,9 +386,11 @@ function frame() {
   if (S.mode === 'photo') photoCam(); else if (S.mode === 'map') { if ((hudTick++ & 7) === 0) drawBig(); }
   else if (S.mode !== 'pause') {
     stepTime(dt, playing || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, player.pos); places.update(S.time);
-    traffic.update(dt, S.time, playing || replaying ? player : null, player.pos);
-    if (replaying) stepReplay(dt);
-    else if (playing || S.mode === 'over') {
+    if (replaying) {
+      stepReplay(dt);
+      if (S.mode === 'replay') traffic.update(dt, S.time, null, player.pos, true, true);
+    } else traffic.update(dt, S.time, playing ? player : null, player.pos);
+    if (!replaying && (playing || S.mode === 'over')) {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, hand: live ? !!input.hand : false };
       player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
@@ -403,7 +413,7 @@ function frame() {
             emit(drops, player.pos.x + sn * back + cs * side, gy + 0.08, player.pos.z + cs * back - sn * side, player.vel.x * (0.25 + Math.random() * 0.3) + cs * side * (1 + Math.random() * 2.5), 0.8 + Math.random() * (1.2 + sp2 * 0.09), player.vel.z * (0.25 + Math.random() * 0.3) - sn * side * (1 + Math.random() * 2.5), 0.35 + Math.random() * 0.3, 1.1 * b, 1.25 * b, 1.5 * b); } }
         else if ((player.slip > 4.5 && sp2 > 8) || (player.onSand && sp2 > 6)) { const sand = player.onSand, g = sand ? 0.34 : 0.3; for (const side of [-0.82, 0.82]) if (Math.random() < 0.6) emit(haze, player.pos.x - sn * 1.5 + cs * side, gy + 0.2, player.pos.z - cs * 1.5 - sn * side, (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2, g * (sand ? 1.25 : 1), g * (sand ? 1.05 : 1), g * (sand ? 0.75 : 1.02)); } }
       chase(dt, snapCam); snapCam = false;
-    } else orbit(S.time);
+    } else if (!replaying) orbit(S.time);
     stepParticles(drops, dt); stepParticles(haze, dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
     placeLampLights(player.pos);
   }
