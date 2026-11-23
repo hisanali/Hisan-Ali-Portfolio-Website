@@ -21,7 +21,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const model = gltf.scene; if (!kitCar) model.rotation.y = Math.PI; model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
   model.position.set(-c.x, -box.min.y, -c.z);
-  const len = box.max.z - box.min.z, wid = box.max.x - box.min.x;
+  const len = box.max.z - box.min.z, wid = box.max.x - box.min.x, height = box.max.y - box.min.y;
   const frontHub = model.getObjectByName(kitCar ? 'Wheel_FL' : 'wheel_fl');
   const rearHub = model.getObjectByName(kitCar ? 'Wheel_RL' : 'wheel_rl');
   const axleSpacing = frontHub && rearHub
@@ -75,16 +75,33 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const tailM = new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(1, 0.06, 0.03), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.1, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const tailPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), tailM); tailPool.rotation.x = -Math.PI / 2; tailPool.position.set(0, 0.035, -len / 2 - 2.2); tailPool.renderOrder = 4; root.add(tailPool);
 
-  const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, bump: 0, impact: 0, cubeHide: [root] };
+  const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
   let brakeToStop = false;
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
   const hw = wid / 2 - 0.14, hl = len / 2 - 0.06, CORNERS = [[hw, hl], [-hw, hl], [hw, -hl], [-hw, -hl]], KERB = HALF + SW - 0.06, SEA = -(HALF + 13.2) - 71, PROM = -(HALF + 13.2), prevC = [null, null, null, null];
-  // Poles, trees and other uprights, bucketed on a 16 m grid.
-  const grid = new Map(); for (const o of city.colliders) { const k = Math.floor(o.x / 16) * 4096 + Math.floor(o.z / 16); (grid.get(k) || grid.set(k, []).get(k)).push(o); }
+  const grid = new Map(), boxGrid = new Map();
+  const gridKey = (x, z) => x * 4096 + z;
+  const addToCell = (map, x, z, shape) => {
+    const key = gridKey(x, z);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(shape);
+  };
+  for (const shape of city.colliders) {
+    if (shape.r != null) {
+      addToCell(grid, Math.floor(shape.x / 16), Math.floor(shape.z / 16), shape);
+    } else {
+      const reach = Math.hypot(hw, hl);
+      const dx = (shape.w * Math.abs(shape.ux) + shape.d * Math.abs(shape.uz)) / 2 + reach;
+      const dz = (shape.w * Math.abs(shape.uz) + shape.d * Math.abs(shape.ux)) / 2 + reach;
+      for (let ix = Math.floor((shape.x - dx) / 16); ix <= Math.floor((shape.x + dx) / 16); ix++) {
+        for (let iz = Math.floor((shape.z - dz) / 16); iz <= Math.floor((shape.z + dz) / 16); iz++) addToCell(boxGrid, ix, iz, shape);
+      }
+    }
+  }
   car.others = []; // moving things to keep clear of (people), set each frame
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
   const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : 0.17 - Math.min(1, (PROM - x) / 92) ** 2 * 1.5; const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
-  car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
+  car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = 2.4 - 1.65 * nightK; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
@@ -101,6 +118,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     if (!ctrl.brake) brakeToStop = false;
     else if (vF > 0.12 || ctrl.stopOnly) brakeToStop = true;
     const serviceBrake = ctrl.brake > 0 && brakeToStop;
+    if (!serviceBrake && ctrl.brake > 0 && !ctrl.throttle) car.reversing = true;
+    else if (serviceBrake || ctrl.throttle || vF > -0.08) car.reversing = false;
     const VMAX = T.vmax; let a = 0;
     if (serviceBrake) {
       const decel = (11.3 - wetK * 2.45) * T.brake;
@@ -173,14 +192,40 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       }
     }
     { const sn = Math.sin(car.heading), cs = Math.cos(car.heading), gx = Math.floor(p.x / 16), gz = Math.floor(p.z / 16);
-      const pushOff = (o, soft) => { const rx = o.x - p.x, rz = o.z - p.z, lx = cs * rx - sn * rz, lz = sn * rx + cs * rz, qx = clamp(lx, -hw, hw), qz = clamp(lz, -hl, hl); let ex = lx - qx, ez = lz - qz, d = Math.hypot(ex, ez); if (d >= o.r) return;
+      const separate = (nx, nz, depth, soft) => {
+        p.x += nx * depth;
+        p.z += nz * depth;
+        const vn = car.vel.x * nx + car.vel.z * nz;
+        if (vn < 0) {
+          if (!soft) hit = Math.max(hit, -vn);
+          car.vel.x -= nx * vn * 1.1;
+          car.vel.z -= nz * vn * 1.1;
+          if (-vn > 6) car.vel.multiplyScalar(0.8);
+        }
+      };
+      // Four separating axes for the car and the actual rectangular footprint of the obstacle.
+      const pushOffBox = o => {
+        let least = Infinity, nx = 0, nz = 0;
+        for (const [x, z] of [[cs, -sn], [sn, cs], [o.ux, o.uz], [-o.uz, o.ux]]) {
+          const center = (p.x - o.x) * x + (p.z - o.z) * z;
+          const carSize = hw * Math.abs(cs * x - sn * z) + hl * Math.abs(sn * x + cs * z);
+          const propSize = o.w / 2 * Math.abs(o.ux * x + o.uz * z) + o.d / 2 * Math.abs(-o.uz * x + o.ux * z);
+          const depth = carSize + propSize - Math.abs(center);
+          if (depth <= 0) return;
+          if (depth < least) { least = depth; const side = center < 0 ? -1 : 1; nx = x * side; nz = z * side; }
+        }
+        separate(nx, nz, least, false);
+      };
+      const boxes = boxGrid.get(gridKey(gx, gz));
+      if (boxes) for (const shape of boxes) pushOffBox(shape);
+      const pushOff = (o, soft) => { if (o.top != null && (car.groundY > o.top || car.groundY + height < o.bottom)) return; const rx = o.x - p.x, rz = o.z - p.z, lx = cs * rx - sn * rz, lz = sn * rx + cs * rz, qx = clamp(lx, -hw, hw), qz = clamp(lz, -hl, hl); let ex = lx - qx, ez = lz - qz, d = Math.hypot(ex, ez); if (d >= o.r) return;
         if (d < 1e-4) { const mx = hw - Math.abs(lx), mz = hl - Math.abs(lz); if (mx < mz) { ex = Math.sign(lx) || 1; ez = 0; d = -mx; } else { ex = 0; ez = Math.sign(lz) || 1; d = -mz; } } else { ex /= d; ez /= d; }
-        const pen = o.r - d, nx = -(cs * ex + sn * ez), nz = -(-sn * ex + cs * ez); p.x += nx * pen; p.z += nz * pen; const vn = car.vel.x * nx + car.vel.z * nz; if (vn < 0) { if (!soft) hit = Math.max(hit, -vn); car.vel.x -= nx * vn * 1.1; car.vel.z -= nz * vn * 1.1; if (-vn > 6) car.vel.multiplyScalar(0.8); }
+        const pen = o.r - d, nx = -(cs * ex + sn * ez), nz = -(-sn * ex + cs * ez); separate(nx, nz, pen, soft);
         // Ease the car away from a pole when the contact or steering gives it a direction.
-        if (Math.abs(ez) > 0.5 && (Math.abs(lx) > 0.23 || Math.abs(ctrl.steer) > 0.1) && (ctrl.throttle > 0 || ctrl.brake > 0)) { let side = Math.abs(lx) > 0.08 ? -Math.sign(lx) : (ctrl.steer || car.pinDir);
+        if (!o.kind && Math.abs(ez) > 0.5 && (Math.abs(lx) > 0.23 || Math.abs(ctrl.steer) > 0.1) && (ctrl.throttle > 0 || ctrl.brake > 0)) { let side = Math.abs(lx) > 0.08 ? -Math.sign(lx) : (ctrl.steer || car.pinDir);
           if (car.onKerb && p.x >= 0) { const rx0 = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz0 = clamp(Math.round(p.z / P), 0, ROADS - 1) * P, tx0 = Math.abs(p.x - rx0) < Math.abs(p.z - rz0) ? Math.sign(rx0 - p.x) : 0, tz0 = tx0 ? 0 : Math.sign(rz0 - p.z), toRoad = cs * tx0 - sn * tz0; if (Math.abs(toRoad) > 0.3) side = Math.sign(toRoad); } // on a pavement, always work back towards the road
           const k = Math.min(0.12, 0.04 + pen); car.pinDir = side; p.x += cs * side * k; p.z -= sn * side * k; car.heading += side * (ez > 0 ? 1 : -1) * 1.4 * dt; } };
-      for (let ix = gx - 1; ix <= gx + 1; ix++) for (let iz = gz - 1; iz <= gz + 1; iz++) { const cell = grid.get(ix * 4096 + iz); if (cell) for (const o of cell) pushOff(o, false); }
+      for (let ix = gx - 1; ix <= gx + 1; ix++) for (let iz = gz - 1; iz <= gz + 1; iz++) { const cell = grid.get(gridKey(ix, iz)); if (cell) for (const o of cell) pushOff(o, false); }
       for (const o of car.others) pushOff(o, true); }
     { let gy = groundAt(p.x, p.z, ginfo); const rd = ginfo.road;
       if (rd) { const lim = 6 - hw - 0.15; for (const [flag, sg] of [['wallL', 1], ['wallR', -1]]) { const over = ginfo.lat * sg - lim; if (rd[flag] && over > 0 && over < 5) { p.x -= rd.lx * sg * over; p.z -= rd.lz * sg * over; const vn = (car.vel.x * rd.lx + car.vel.z * rd.lz) * sg; if (vn > 0) { hit = Math.max(hit, vn); car.vel.x -= rd.lx * sg * vn * 1.15; car.vel.z -= rd.lz * sg * vn * 1.15; }

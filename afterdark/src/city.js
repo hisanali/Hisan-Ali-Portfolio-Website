@@ -4,6 +4,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
 import { loadGLB } from './car.js';
+import { buildSea, wetSand } from './water.js';
 
 export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
 export function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -588,15 +589,16 @@ export async function buildCity(scene, refl, quality, renderer) {
     const sandT = canvasTex(512, 512, (c, w) => { c.fillStyle = '#cbb488'; c.fillRect(0, 0, w, w); const r = rng(8), img = c.getImageData(0, 0, w, w); for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 34; img.data[i] += n; img.data[i + 1] += n * 0.95; img.data[i + 2] += n * 0.8; } c.putImageData(img, 0, 0); c.globalAlpha = 0.12; for (let i = 0; i < 90; i++) { c.fillStyle = r() < 0.5 ? '#8f7a55' : '#e6d4ab'; c.beginPath(); c.ellipse(r() * w, r() * w, 20 + r() * 60, 3 + r() * 6, r() * 0.4, 0, 7); c.fill(); } });
     sandT.wrapS = sandT.wrapT = THREE.RepeatWrapping; sandT.repeat.set(10, 110);
     const sg = new THREE.PlaneGeometry(92, len, 6, 1); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { const t = (46 - sp.getX(i)) / 92; sp.setY(i, 0.17 - t * t * 1.5); } sg.computeVertexNormals();
-    const sand = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ map: sandT, roughness: 0.95, envMapIntensity: 0.4 })); sand.position.set(px - 46, 0, mid); sand.receiveShadow = SH; scene.add(sand);
-    const wn = canvasTex(256, 256, (c, w) => { const img = c.createImageData(w, w), hgt = new Float32Array(w * w); const wv = Array.from({ length: 12 }, (_, i) => ({ kx: Math.round(Math.sin(i * 3.1) * 8), ky: Math.round(Math.cos(i * 2.3) * 8) || 1, a: 0.3 + (i % 5) * 0.14, p: i * 1.7 }));
-      for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { let v = 0; for (const q of wv) v += q.a * Math.sin((q.kx * x + q.ky * y) / w * Math.PI * 2 + q.p); hgt[y * w + x] = v; }
-      for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { const dx = hgt[y * w + (x + 1) % w] - hgt[y * w + (x - 1 + w) % w], dy = hgt[((y + 1) % w) * w + x] - hgt[((y - 1 + w) % w) * w + x], l = Math.hypot(dx * 0.4, dy * 0.4, 1), i = (y * w + x) * 4; img.data[i] = (-dx * 0.4 / l * 0.5 + 0.5) * 255; img.data[i + 1] = (-dy * 0.4 / l * 0.5 + 0.5) * 255; img.data[i + 2] = (1 / l * 0.5 + 0.5) * 255; img.data[i + 3] = 255; } c.putImageData(img, 0, 0); }, false);
-    wn.wrapS = wn.wrapT = THREE.RepeatWrapping; wn.repeat.set(820, 820);
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000), new THREE.MeshStandardMaterial({ color: 0x0d3a48, roughness: 0.13, metalness: 0.0, normalMap: wn, normalScale: new THREE.Vector2(0.55, 0.55), envMapIntensity: 1.5 })); sea.rotation.x = -Math.PI / 2; sea.position.set(mid, -0.62, mid); scene.add(sea);
-    const foam = new THREE.Mesh(new THREE.PlaneGeometry(9, len), new THREE.MeshBasicMaterial({ color: 0xfff2e2, transparent: true, opacity: 0.5, depthWrite: false, alphaMap: canvasTex(64, 64, (c) => { const g = c.createLinearGradient(0, 0, 64, 0); g.addColorStop(0, '#000'); g.addColorStop(0.45, '#fff'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }, false) })); foam.rotation.x = -Math.PI / 2; foam.position.set(px - 79, -0.55, mid); scene.add(foam);
-    city.sea = { normal: wn, foam }; city.beachX = px;
-    hooks.push((e, mix, C) => { C(0x0d3a48, 0x04090f, e.night, sea.material.color); sea.material.envMapIntensity = mix(1.5, 0.3, e.night); sea.material.normalScale.setScalar(mix(0.55, 0.25, e.night)); C(0xfff2e2, 0x3a4250, e.night, foam.material.color); }); }
+    const sandMaterial = new THREE.MeshStandardMaterial({ map: sandT, roughness: 0.95, envMapIntensity: 0.4 });
+    wetSand(sandMaterial);
+    const sand = new THREE.Mesh(sg, sandMaterial);
+    sand.position.set(px - 46, 0, mid);
+    sand.receiveShadow = SH;
+    scene.add(sand);
+    city.sea = buildSea(scene, px, mid, len);
+    city.beachX = px;
+    hooks.push(city.sea.setTime);
+  }
   bm.frustumCulled = false; scene.add(bm);
 
   // ---- Street lamps ----
@@ -701,7 +703,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   const reach = quality.reach || 1; // lighter presets draw street detail less far
   city.cull = (p, force) => { const now = performance.now(); if (now - cullTick < 140 && !force) return; cullTick = now; for (const c of far) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) < c.max * reach + c.r;
     for (const k of kitLod) { const close = Math.hypot(k.x - p.x, k.z - p.z) < 330 * reach + k.r; k.near.visible = close; k.far.visible = !close; } };
-  city.update = (t) => { updateSignals(t); city.sea.normal.offset.set(t * 0.004, t * 0.0026); city.sea.foam.position.x = city.beachX - 79 + Math.sin(t * 0.5) * 1.6; city.sea.foam.material.opacity = 0.35 + 0.2 * Math.sin(t * 0.5 + 1.0); beaconPts.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.4)); };
+  city.update = (t) => { updateSignals(t); city.sea.update(t); beaconPts.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.4)); };
   city.dot = dot; city.pool = pool; city.stats = { kit: kit.reduce((n, k) => n + k.uses.length, 0), trim: trim.length, buildings: boxes.length, signs: signs.length, lamps: lampSpots.length, screens: screens.length };
   return city;
 }

@@ -24,19 +24,45 @@ const inCity = (x, z) => x <= SPAN + HALF + 4 && z >= -(HALF + 4) && z <= SPAN +
 
 // ---------- Rain and tyre spray ----------
 const RAIN = Q.rain, RR = 34, rainPos = new Float32Array(RAIN * 6), rainGeo = new THREE.BufferGeometry();
-for (let i = 0; i < RAIN; i++) { const x = (Math.random() - 0.5) * RR * 2, y = Math.random() * 26, z = (Math.random() - 0.5) * RR * 2; rainPos.set([x, y, z, x, y - 0.9, z], i * 6); }
+const rainLengths = Float32Array.from({ length: RAIN }, () => 0.33 + Math.random() * 0.55);
+const rainColors = new Float32Array(RAIN * 6);
+for (let i = 0; i < RAIN; i++) {
+  const x = (Math.random() - 0.5) * RR * 2, y = Math.random() * 26, z = (Math.random() - 0.5) * RR * 2;
+  rainPos.set([x, y, z, x, y - rainLengths[i], z], i * 6);
+  const brightness = 0.28 + Math.random() * 0.62;
+  rainColors.set([brightness, brightness, brightness, 0.12, 0.14, 0.17], i * 6);
+}
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
-const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaab8d8, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending })); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
+rainGeo.setAttribute('color', new THREE.BufferAttribute(rainColors, 3));
+const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xb8c5db, vertexColors: true, transparent: true, opacity: 0.17, depthWrite: false, blending: THREE.AdditiveBlending }));
+rain.name = 'Local rainfall';
+rain.frustumCulled = false;
+rain.visible = false;
+scene.add(rain);
 R.refl.hide.push(rain); R.cube.hide.push(rain);
 const spray = createTyreSpray(Q.reach >= 1 ? 260 : 160);
 scene.add(spray.mesh);
 R.refl.hide.push(spray.mesh); R.cube.hide.push(spray.mesh);
-function stepRain(dt, cx, cz, vx, vz) {
+function stepRain(dt, position, vx, vz) {
   if (!rain.visible) return;
-  const fall = 21 * dt, wx = 2.2 * dt - vx * dt * 0.0, wz = 0;
-  for (let i = 0; i < RAIN; i++) { const o = i * 6; let x = rainPos[o] + wx, y = rainPos[o + 1] - fall, z = rainPos[o + 2] + wz;
-    if (y < 0 || Math.abs(x - cx) > RR || Math.abs(z - cz) > RR) { y = y < 0 ? 20 + Math.random() * 8 : y; x = cx + (Math.random() - 0.5) * RR * 2; z = cz + (Math.random() - 0.5) * RR * 2; }
-    rainPos[o] = x; rainPos[o + 1] = y; rainPos[o + 2] = z; rainPos[o + 3] = x - 0.1 - vx * 0.012; rainPos[o + 4] = y - 0.95; rainPos[o + 5] = z - vz * 0.012; }
+  const { x: cx, y: cy, z: cz } = position;
+  const floor = cy - 11, ceiling = cy + 18, fall = 21 * dt, wind = 2.2 * dt;
+  for (let i = 0; i < RAIN; i++) {
+    const o = i * 6;
+    let x = rainPos[o] + wind, y = rainPos[o + 1] - fall, z = rainPos[o + 2];
+    if (Math.abs(x - cx) > RR || Math.abs(z - cz) > RR || y > ceiling || y < floor - 8) {
+      x = cx + (Math.random() - 0.5) * RR * 2;
+      z = cz + (Math.random() - 0.5) * RR * 2;
+      y = floor + Math.random() * (ceiling - floor);
+    } else if (y < floor) {
+      y = ceiling - Math.random() * 3.8;
+    }
+    const streak = rainLengths[i];
+    rainPos[o] = x; rainPos[o + 1] = y; rainPos[o + 2] = z;
+    rainPos[o + 3] = x - (0.13 + vx * 0.009) * streak;
+    rainPos[o + 4] = y - streak;
+    rainPos[o + 5] = z - vz * 0.009 * streak;
+  }
   rainGeo.attributes.position.needsUpdate = true;
 }
 // Collision sparks and soft dust or tyre smoke. Water mist uses its own transparent geometry.
@@ -288,7 +314,7 @@ function drawMap() { // a 1 km window around the car, heading up
 let hudTick = 0;
 function drawHud() {
   if (hudTick++ % 3) return; const kmh = Math.abs(player.speed) * 3.6;
-  hud.speed.textContent = Math.round(kmh); hud.gear.textContent = player.speed < -0.5 ? 'R' : kmh < 1 ? 'N' : (audio?.gear ?? Math.min(7, 1 + Math.floor(kmh / 42)));
+  hud.speed.textContent = Math.round(kmh); hud.gear.textContent = player.reversing ? 'R' : kmh < 1 ? 'N' : (audio?.gear ?? Math.min(7, 1 + Math.floor(kmh / 42)));
   hud.rev.style.transform = `scaleX(${clamp(audio ? (audio.rpm - 800) / 7000 : (kmh % 42) / 42, 0.04, 1)})`;
   const k = S.kind, down = k === 'run' || (k === 'jobs' && A.stage === 'drop'); hud.timeBox.hidden = !(down || k === 'trial');
   if (down) { const t = Math.max(0, S.left); hud.time.textContent = clockText(t); hud.timeBox.classList.toggle('low', t < 15); } else if (k === 'trial') { hud.time.textContent = clockText(A.t, true); hud.timeBox.classList.remove('low'); }
@@ -479,8 +505,8 @@ function frame() {
       crashCool -= dt;
       if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
         const hx = player.pos.x + Math.sin(player.heading) * 1.9, hz = player.pos.z + Math.cos(player.heading) * 1.9, ns = Math.round(clamp(hit * 1.2, 6, 26));
-        for (let k = 0; k < ns; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
-        for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
+        for (let k = 0; k < ns && !player.rough; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
+        for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, player.groundY + 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
       if (live) {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
@@ -491,25 +517,28 @@ function frame() {
       }
       spray.emit(dt, player, env.wet);
       const speed = Math.abs(player.speed);
-      const smoke = env.wet < 0.30 && player.slip > 4.5 && speed > 8;
-      if (smoke || (player.onSand && speed > 6)) {
-        const sn = Math.sin(player.heading), cs = Math.cos(player.heading), g = player.onSand ? 0.34 : 0.3;
-        for (const side of [-0.82, 0.82]) if (Math.random() < 0.6) {
+      const dry = env.wet < 0.3;
+      const dust = dry && (player.rough || player.onSand) && speed > 6;
+      const smoke = dry && player.slip > 4.5 && speed > 8;
+      if (!player.air && (dust || smoke)) {
+        const sn = Math.sin(player.heading), cs = Math.cos(player.heading), g = dust ? 0.32 : 0.3;
+        const chance = Math.min(0.7, dt * (dust ? 9 + speed * 0.48 : 26));
+        for (const side of [-0.82, 0.82]) if (Math.random() < chance) {
           emit(haze, player.pos.x - sn * 1.5 + cs * side, player.groundY + 0.2, player.pos.z - cs * 1.5 - sn * side,
             (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2,
-            g * (player.onSand ? 1.25 : 1), g * (player.onSand ? 1.05 : 1), g * (player.onSand ? 0.75 : 1.02));
+            g * (dust ? 1.25 : 1), g * (dust ? 1.05 : 1), g * (dust ? 0.75 : 1.02));
         }
       }
       chase(dt, snapCam); snapCam = false;
     } else if (!replaying) orbit(S.time);
-    stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); stepRain(dt, camera.position.x, camera.position.z, player.vel.x, player.vel.z);
+    stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); stepRain(dt, camera.position, player.vel.x, player.vel.z);
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
   city.sky.position.copy(camera.position); city.updateSun(player.pos, player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   probe.set(player.pos.x, player.groundY + 1.15, player.pos.z); R.render(probe);
   if (shot) { shot = false; renderer.domElement.toBlob(saveShot, 'image/jpeg', 0.93); }

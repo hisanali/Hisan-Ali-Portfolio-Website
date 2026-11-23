@@ -128,13 +128,13 @@ export function buildStreet(scene, city, R3, Q) {
     const pf = new THREE.InstancedMesh(frondG, new THREE.MeshStandardMaterial({ map: fr, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.55, envMapIntensity: 0.6 }), palmSpots.length), pt = new THREE.InstancedMesh(trunkPG, barkMaterial, palmSpots.length);
     sway(pf.material, 0.19);
     pf.customDepthMaterial = sway(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: fr, alphaTest: 0.35, side: THREE.DoubleSide }), 0.19);
-    palmSpots.forEach((t2, k) => { city.colliders.push({ x: t2.x, z: t2.z, r: 0.3 }); dummy.position.set(t2.x, 0.17, t2.z); dummy.rotation.set(0, t2.rot, 0); dummy.scale.set(t2.sc, t2.sc * (0.77 + (k % 7) * 0.066), t2.sc); dummy.updateMatrix(); pf.setMatrixAt(k, dummy.matrix); pf.setColorAt(k, col.setHSL(0.18 + (k % 7) * 0.009, 0.13, 0.59 + (k % 5) * 0.075)); pt.setMatrixAt(k, dummy.matrix); });
+    palmSpots.forEach((t2, k) => { city.colliders.push({ x: t2.x, z: t2.z, r: 0.26 * t2.sc, kind: 'palm trunk' }); dummy.position.set(t2.x, 0.17, t2.z); dummy.rotation.set(0, t2.rot, 0); dummy.scale.set(t2.sc, t2.sc * (0.77 + (k % 7) * 0.066), t2.sc); dummy.updateMatrix(); pf.setMatrixAt(k, dummy.matrix); pf.setColorAt(k, col.setHSL(0.18 + (k % 7) * 0.009, 0.13, 0.59 + (k % 5) * 0.075)); pt.setMatrixAt(k, dummy.matrix); });
     for (const m of [pf, pt]) { m.frustumCulled = false; m.castShadow = (Q.reach || 1) >= 1 || m === pf; m.receiveShadow = SH; scene.add(m); later.push([m, 510]); } }
   dummy.scale.set(1, 1, 1);
   const crownM = new THREE.MeshStandardMaterial({ map: leaf, color: 0xffffff, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, metalness: 0, envMapIntensity: 0.45 });
   const crowns = new THREE.InstancedMesh(crownG, crownM, spots.length), trunks = new THREE.InstancedMesh(trunkG, barkMaterial, spots.length);
   const fairy = [], grates = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.03, 1.5), new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: 0.5, metalness: 0.7 }), spots.length);
-  spots.forEach((t, k) => { city.colliders.push({ x: t.x, z: t.z, r: 0.26 }); dummy.position.set(t.x, 0.17, t.z); dummy.rotation.set(0, t.rot, 0); dummy.scale.set(t.sc, t.sc, t.sc); dummy.updateMatrix(); crowns.setMatrixAt(k, dummy.matrix); trunks.setMatrixAt(k, dummy.matrix);
+  spots.forEach((t, k) => { city.colliders.push({ x: t.x, z: t.z, r: 0.25 * t.sc, kind: 'street trunk' }); dummy.position.set(t.x, 0.17, t.z); dummy.rotation.set(0, t.rot, 0); dummy.scale.set(t.sc, t.sc, t.sc); dummy.updateMatrix(); crowns.setMatrixAt(k, dummy.matrix); trunks.setMatrixAt(k, dummy.matrix);
     crowns.setColorAt(k, col.setRGB(0.61 + R() * 0.34, 0.63 + R() * 0.24, 0.51 + R() * 0.36)); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1, 1); dummy.position.y = 0.18; dummy.updateMatrix(); grates.setMatrixAt(k, dummy.matrix);
     if (t.lit) for (let i = 0; i < 46; i++) { const a = R() * 6.28, rr = (0.6 + R() * 1.9) * t.sc, y = (4.2 + R() * 3.4) * t.sc; fairy.push(t.x + Math.cos(a) * rr, 0.17 + y, t.z + Math.sin(a) * rr); } });
   sway(crownM, 0.14);
