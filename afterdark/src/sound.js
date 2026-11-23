@@ -56,7 +56,7 @@ export function createSound() {
       // Other drivers sound their horns when stuck behind you.
       honkCool -= dt; if (honkCool <= 0 && s.playing && sp < 1.5) { const stuck = near.find(n => n[0] < 200 && Math.abs(n[3]) < 0.3); if (stuck) { try { drive.hornBurst(Math.sqrt(stuck[0])); } catch (err) {} honkCool = 5 + Math.random() * 6; } else honkCool = 1.5; }
       // The train overhead: a low rumble with wheel clatter as it goes by.
-      const td = Math.hypot(s.trainX - s.x, clamp(s.z, s.trainZ - 90, s.trainZ) - s.z), tk = clamp(1 - td / 150) ** 2; set(rumble.g.gain, 0.9 * tk, 0.3); set(clack.g.gain, 0.12 * tk * (0.5 + 0.5 * Math.sin(ctx.currentTime * 24)), 0.02);
+      const td = Math.hypot(s.trainX - s.x, clamp(s.z, s.trainZ - 46, s.trainZ + 46) - s.z), tk = clamp(1 - td / 150) ** 2; set(rumble.g.gain, 0.9 * tk, 0.3); set(clack.g.gain, 0.12 * tk * (0.5 + 0.5 * Math.sin(ctx.currentTime * 24)), 0.02);
       // Standing water at speed.
       splashCool -= dt; if (e.wet > 0.6 && sp > 24 && splashCool <= 0 && Math.random() < dt * 0.5) { try { drive.splash(clamp(sp / 60)); } catch (err) {} splashCool = 2.5; }
       // Thunder in the rain.
