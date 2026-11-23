@@ -24,7 +24,7 @@ const VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionM
 // Removes NaN/Inf pixels and caps runaway highlights before bloom spreads them.
 const Clean = { uniforms: { tDiffuse: { value: null } }, vertexShader: VERT, fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
   void main(){ vec4 c = texture2D(tDiffuse, vUv); if (!(c.r >= 0.0 && c.r < 1e20) || !(c.g >= 0.0 && c.g < 1e20) || !(c.b >= 0.0 && c.b < 1e20)) c.rgb = vec3(0.0); gl_FragColor = vec4(min(c.rgb, vec3(9.0)), 1.0); }` };
-// Lens and film: speed blur toward the vanishing point, chromatic fringing, vignette, grain and a cool/warm grade.
+// Lens and film: light speed blur at the edges, vignette, grain and a cool/warm grade.
 const Film = {
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uSpeed: { value: 0 }, uCenter: { value: new THREE.Vector2(0.5, 0.5) }, uFlash: { value: 0 } },
   vertexShader: VERT,
@@ -32,11 +32,13 @@ const Film = {
   float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
   void main(){
     vec2 d = vUv - uCenter; float r2 = dot(d, d);
-    float blur = uSpeed * smoothstep(0.02, 0.45, r2) * 0.06;
-    vec3 col = vec3(0.0); float j = h(vUv * 913.0 + uTime) - 0.5;
-    for (int i = 0; i < 6; i++) { float t = (float(i) + j) / 6.0; vec2 uv = vUv - d * blur * t; float ca = (0.0002 + 0.0012 * uSpeed) * r2 * 2.0;
-      col += vec3(texture2D(tDiffuse, uv + d * ca).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - d * ca).b); }
-    col /= 6.0;
+    float blur = smoothstep(0.12, 0.92, uSpeed) * smoothstep(0.15, 0.48, r2) * 0.025;
+    vec3 col = texture2D(tDiffuse, vUv).rgb;
+    if (blur > 0.001) {
+      vec2 trail = d * blur;
+      col = col * 0.62 + texture2D(tDiffuse, vUv - trail * 0.45).rgb * 0.25
+                       + texture2D(tDiffuse, vUv - trail).rgb * 0.13;
+    }
     float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
     col = mix(vec3(l), col, 1.03);
     col = mix(col * vec3(0.94, 1.0, 1.08), col * vec3(1.06, 1.0, 0.95), smoothstep(0.15, 0.75, l));

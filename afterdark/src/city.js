@@ -522,6 +522,14 @@ export async function buildCity(scene, refl, quality, renderer) {
       }
     }
   }
+  // The chase camera tests the same podium and tower footprints the street renders.
+  const cameraLots = city.cameraLots = new Map();
+  for (const b of boxes) {
+    const key = Math.floor(b.x / P) * ROADS + Math.floor(b.z / P);
+    if (!cameraLots.has(key)) cameraLots.set(key, []);
+    cameraLots.get(key).push(b);
+  }
+
   // (The land beyond the grid is built in world.js.)
 
 
