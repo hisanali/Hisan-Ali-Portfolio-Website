@@ -19,7 +19,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       else if (/HeadLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xfff2da); m.emissiveIntensity = 3; m.emissiveMap = null; }
       else if (/TailLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xff1a0c); m.emissiveIntensity = 2.2; m.emissiveMap = null; }
       else { m = m.clone(); m.envMapIntensity = 0.8; }
-      parts.push({ geo: o.geometry, mat: m, local: o.matrixWorld.clone(), paint: /paint/i.test(name) }); });
+      parts.push({ geo: o.geometry, mat: m, local: o.matrixWorld.clone(), paint: /paint/i.test(name), wheel: /^Wheel_/i.test(o.name) }); });
     const box = new THREE.Box3().setFromObject(g.scene);
     kits.push({ style, parts, head: [lamp('HeadL'), lamp('HeadR')], tail: [lamp('TailL'), lamp('TailR')], len: box.max.z - box.min.z });
   }
@@ -33,11 +33,18 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   for (let k = 0, tries = 0; k < count && tries < count * 40; tries++) { const ax = R() < 0.5 ? 0 : 1, dir = R() < 0.5 ? 1 : -1, road = Math.floor(R() * ROADS), seg = Math.floor(R() * (ROADS - 1)), lane = R() < 0.5 ? 0 : 1, s = seg * P + 24 + R() * (P - 48);
     if (cars.some(o => o.ax === ax && o.dir === dir && o.road === road && o.lane === lane && Math.abs(o.s - s) < 16)) continue;
     cars.push({ id: k, ax, dir, road, lane, s, v: 8, vmax: 10.5 + R() * 5.5, kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false, wait: 0, go: 0 }); k++; }
+  // Cars out on the coastal and mountain roads: they follow the road line, slow for bends and hills, and are
+  // moved elsewhere on the road when they reach a city gate.
+  const world = city.world, country = world ? Math.round(count * 0.45) : 0;
+  const putOn = (c, avoid) => { for (let n = 0; n < 30; n++) { const rd = world.roads[Math.floor(R() * world.roads.length)], i = rd.from + 12 + R() * (rd.to - rd.from - 24), s = world.samples[Math.round(i)]; if (s.tunnel && n < 20) continue; if (avoid && Math.hypot(s.x - avoid.x, s.z - avoid.z) < 380 && n < 25) continue; if (cars.some(o => o.mode === 2 && o !== c && o.rd === rd && o.dirS === c.dirS && Math.abs(o.i - i) < 12)) continue; c.rd = rd; c.i = i; return; } };
+  for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: Math.floor(R() * kits.length), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
+  const placeOnRoad = c => { const i0 = Math.floor(c.i), a = world.samples[i0], b = world.samples[Math.min(c.rd.to, i0 + 1)], u = c.i - i0, sg = -c.dirS * 2.6; c.x = a.x + (b.x - a.x) * u + a.lx * sg; c.z = a.z + (b.z - a.z) * u + a.lz * sg; c.y = a.y + (b.y - a.y) * u + 0.03; c.h = Math.atan2(a.tx * c.dirS, a.tz * c.dirS); c.pitch = Math.atan2((b.y - a.y) * c.dirS, 3); };
+  for (const c of cars) if (c.mode === 2) placeOnRoad(c);
   const laneOff = c => 1.9 + c.lane * 3.6;
   const headingOf = (ax, dir) => ax ? (dir > 0 ? 0 : Math.PI) : (dir > 0 ? Math.PI / 2 : -Math.PI / 2);
   const posOf = (ax, dir, road, off, s, out) => { if (ax) { out.x = road * P - dir * off; out.z = s; } else { out.x = s; out.z = road * P + dir * off; } return out; };
   function place(c) { posOf(c.ax, c.dir, c.road, laneOff(c), c.s, c); c.h = headingOf(c.ax, c.dir); }
-  cars.forEach(place);
+  cars.forEach(c => { if (c.mode !== 2) place(c); });
 
   // ---- Instanced meshes: moving cars take the first slots, nearby parked cars fill the rest ----
   const PARK_MAX = 12, DRAW_R = 270 * Math.max(0.6, reach); // cars further than this from the player are simulated but not drawn
@@ -66,7 +73,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const blobs = new THREE.InstancedMesh(blobG, new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
   function setTime(e) { pts.material.opacity = 0.35 + 0.65 * e.night; pools.visible = e.night > 0.05; pools.material.opacity = 0.4 * e.night; blobs.material.opacity = 0.55 + 0.35 * e.night; }
 
-  const tmp = { x: 0, z: 0 }, v3 = new THREE.Vector3();
+  const tmp = { x: 0, z: 0 }, v3 = new THREE.Vector3(), spinM = new THREE.Matrix4();
   function planFor(c, k) { // choose what to do at junction k (index along the car's travel axis)
     const straight = k + c.dir >= 0 && k + c.dir <= ROADS - 1;
     const rDir = c.ax ? -c.dir : c.dir, lDir = c.ax ? c.dir : -c.dir;
@@ -93,6 +100,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       // Two cars waiting on each other at a junction: after a few seconds the lower number goes.
       if (c.go > 0) c.go -= dt; if (target === 0 && c.v < 0.1 && blocker && blocker.v < 0.1) { c.wait += dt; if (c.wait > 3.5 && blocker.id > c.id) { c.go = 2.5; c.wait = 0; } } else c.wait = 0;
       if (c.mode === 1) target = Math.min(target, 6.2);
+      if (c.mode === 2) { const j = Math.round(c.i), a = world.samples[j], b = world.samples[Math.max(c.rd.from, Math.min(c.rd.to, j + c.dirS * 9))], ang = Math.acos(Math.max(-1, Math.min(1, a.tx * b.tx + a.tz * b.tz))); if (ang > 0.02) target = Math.min(target, Math.max(7, Math.sqrt(6.5 * 27 / ang))); }
       if (c.mode === 0) {
         const k = c.dir > 0 ? Math.ceil((c.s + HALF - 1.2) / P) : Math.floor((c.s - HALF + 1.2) / P); // the junction ahead, held until just past its entry line
         if (k >= 0 && k <= ROADS - 1) {
@@ -110,7 +118,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         } else if (c.dir * (c.s - (c.dir > 0 ? SPAN : 0)) > 0) { c.dir = -c.dir; }
       }
       c.v += clamp(target - c.v, -(target === 0 && c.v > 6 ? 16 : 9) * dt, 2.6 * dt); if (c.v < 0.05 && target === 0) c.v = 0;
-      if (c.mode === 0) { c.s += c.dir * c.v * dt; place(c); }
+      c.braking = target < c.v - 0.4; c.spin = (c.spin || 0) + c.v * dt / 0.33;
+      if (c.mode === 2) { c.i += c.dirS * c.v * dt / 3; if (c.i >= c.rd.to - 5 || c.i <= c.rd.from + 5) { c.dirS = R() < 0.5 ? 1 : -1; putOn(c, focus); c.v = c.vmax * 0.8; } placeOnRoad(c); }
+      else if (c.mode === 0) { c.s += c.dir * c.v * dt; place(c); }
       else { const tr = c.turn; tr.u = Math.min(1, tr.u + Math.max(c.v, 1.2) * dt / tr.len); const u = tr.u, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), d = u * u;
         c.x = a * tr.p0.x + b * tr.p1.x + d * tr.p2.x; c.z = a * tr.p0.z + b * tr.p1.z + d * tr.p2.z;
         const tx = 2 * (1 - u) * (tr.p1.x - tr.p0.x) + 2 * u * (tr.p2.x - tr.p1.x), tz = 2 * (1 - u) * (tr.p1.z - tr.p0.z) + 2 * u * (tr.p2.z - tr.p1.z); c.h = Math.atan2(tx, tz);
@@ -120,12 +130,13 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     // Write instance transforms and lamp positions. Only cars near the focus are drawn; each body style packs its
     // visible moving cars into the first slots, with the nearby parked cars after them.
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
-    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + c.push.x, 0, c.z + c.push.y); dummy.rotation.set(0, c.h, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix();
+    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + c.push.x, c.y || 0, c.z + c.push.y); dummy.rotation.set(-(c.pitch || 0), c.h, 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
-      if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(slot, mat); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
+      if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
+        const tb = c.braking || c.v < 0.5 ? 3.4 : 1.3; lc[shown * 12 + 6] = tb; lc[shown * 12 + 9] = tb;
         pools.setMatrixAt(shown, dummy.matrix); blobs.setMatrixAt(shown, dummy.matrix);
         [kit.head[0], kit.head[1], kit.tail[0], kit.tail[1]].forEach((lpos, q) => { v3.copy(lpos).applyMatrix4(dummy.matrix); lp.set([v3.x, v3.y, v3.z], shown * 12 + q * 3); }); shown++; } else c.shownSlot = -1; });
-    movingShown = shown; pools.count = shown; lg.setDrawRange(0, shown * 4);
+    movingShown = shown; pools.count = shown; lg.setDrawRange(0, shown * 4); lg.attributes.color.needsUpdate = true; dummy.rotation.order = 'XYZ';
     kits.forEach((kit, ki) => { const g = groups[ki], list = parkedNear[ki] || []; list.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); for (const im of g) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(used[ki] + k, mat); if (im.userData.part.paint) im.setColorAt(used[ki] + k, col.set(p.tint)); } });
       for (const im of g) { im.count = used[ki] + list.length; if (im.instanceColor) im.instanceColor.needsUpdate = true; } });
     nearParked.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); blobs.setMatrixAt(shown + k, dummy.matrix); }); blobs.count = shown + nearParked.length;
@@ -140,7 +151,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       for (const a of [-1.15, 1.15]) for (const b of [-1.2, 1.2]) { const ax = px + pfx * a, az = pz + pfz * a, bx = ox + ofx * b, bz = oz + ofz * b; let dx = ax - bx, dz = az - bz; const d = Math.hypot(dx, dz);
         if (d < 1.95 && d > 1e-3) { dx /= d; dz /= d; const pen = 1.95 - d; player.pos.x += dx * pen; player.pos.z += dz * pen; const ovx = o ? ofx * o.v : 0, ovz = o ? ofz * o.v : 0;
           const vn = (player.vel.x - ovx) * dx + (player.vel.z - ovz) * dz; if (vn < 0) { player.vel.x -= dx * vn * 1.25; player.vel.z -= dz * vn * 1.25; player.vel.multiplyScalar(0.9); worst = Math.max(worst, -vn); if (o) { o.push.x -= dx * Math.min(1.2, -vn * 0.12); o.push.y -= dz * Math.min(1.2, -vn * 0.12); o.v *= 0.4; o.stun = 1.4; } } } } };
-    for (const c of cars) hitOne(c.x + c.push.x, c.z + c.push.y, c.h, c);
+    for (const c of cars) if (Math.abs((c.y || 0) - (player.groundY || 0)) < 2.5) hitOne(c.x + c.push.x, c.z + c.push.y, c.h, c);
     for (const p of nearParked) hitOne(p.x, p.z, p.h, null);
     return worst;
   }

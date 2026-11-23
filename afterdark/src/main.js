@@ -195,6 +195,7 @@ function chase(dt, snap) {
 function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.position.set(player.pos.x + Math.sin(a) * r, player.groundY + 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, player.groundY + 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
 
 // ---------- Time of day ----------
+let dayCount = 0, rainyK = 1;
 let hour = 17.2, env = null, envHour = -99, pmrem = null, envRT = null;
 const DAY_SECONDS = 720; // one full day and night
 function captureEnv() { // image-based lighting from the street itself, refreshed as the light changes
@@ -204,8 +205,10 @@ function captureEnv() { // image-based lighting from the street itself, refreshe
   scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; city.sky.scale.setScalar(1); rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
 }
 function stepTime(dt, running) {
-  if (timeMode === 'auto') { if (running) hour = (hour + dt * 24 / DAY_SECONDS) % 24; } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
-  env = city.setTime(hour); street.setTime(env); player.setTime(env); traffic.setTime(env); places.setTime(env);
+  if (timeMode === 'auto') { if (running) { const h0 = hour; hour = (hour + dt * 24 / DAY_SECONDS) % 24; if (h0 < 12 && hour >= 12) dayCount++; } } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
+  // Nights alternate: rain on the first, clear and starlit on the next. The fixed Rainy night setting always rains.
+  const wantRain = timeMode === 'night' ? 1 : timeMode === 'auto' ? (dayCount % 2 === 0 ? 1 : 0) : (window.__afterdark?.fixedRain || 0); rainyK += (wantRain - rainyK) * Math.min(1, dt * 0.6);
+  env = city.setTime(hour, rainyK); world.setTime(env); street.setTime(env); player.setTime(env); traffic.setTime(env); places.setTime(env);
   scene.environmentIntensity = 1.5 - 0.9 * env.night; rain.visible = env.rain > 0.03; rain.material.opacity = 0.17 * env.rain;
   R.refl.active = env.wet > 0.2; R.refl.uniforms.uReflOn.value = R.refl.on ? Math.min(1, Math.max(0, (env.wet - 0.2) / 0.4)) : 0;
   R.bloom.strength = 0.22 + 0.26 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
@@ -305,7 +308,7 @@ async function boot() {
   street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
-  env = city.setTime(hour); captureEnv();
+  env = city.setTime(hour, rainyK); captureEnv();
   setLoad('Rolling out the coupé'); await nextFrame();
   player = await createPlayer(scene, R.cube.texture, city); R.cube.hide.push(player.root);
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
@@ -317,7 +320,7 @@ async function boot() {
   window.__afterdark = { S, player, traffic, city, street, world, places, R, start, input };
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
-  window.__afterdark.setTime = (mode, h) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } };
+  window.__afterdark.setTime = (mode, h, rain) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } if (rain != null) { dayCount = rain ? 0 : 1; rainyK = rain; if (mode === 'fixed') window.__afterdark.fixedRain = rain; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });
 frame();

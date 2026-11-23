@@ -196,7 +196,7 @@ function buildingMaterial(timeU, litU) {
   // Curtain wall: dark spandrel glass between aluminium mullions.
   float adMull = 1.0 - smoothstep(0.0, 0.01, min(adFr.x, 1.0 - adFr.x) - 0.022);
   vec3 adCurt = mix(mix(vec3(0.05, 0.07, 0.095), vec3(0.09, 0.08, 0.07), step(0.6, adS3)), vec3(0.22, 0.23, 0.25), adMull);
-  vec3 adFacade = adGlassT * adCurt + adBrickT * adBrick + adConcT * adConc;
+  vec3 adFacade = (adGlassT * adCurt + adBrickT * adBrick + adConcT * adConc) * mix(0.5, 1.0, smoothstep(0.0, 2.6, adV));
   float adFascia = adGround * step(1.0 - adTop, adFr.y);
   adFacade = mix(adFacade, mix(vec3(0.02, 0.022, 0.028), vec3(0.09, 0.05, 0.04), step(0.5, fract(adSi * 0.37))) * adGrime, max(adFascia, adGround * (1.0 - adGlassT) * 0.6));
   diffuseColor.rgb = mix(mix(vec3(0.035, 0.036, 0.04) * adGrime, adFacade, adWall), vec3(0.3, 0.36, 0.45), adWin);
@@ -338,22 +338,41 @@ export async function buildCity(scene, refl, quality, renderer) {
       vec3 c = mix(glow * (0.55 + 0.6 * cl), vec3(0.012, 0.015, 0.028) + glow * 0.16 * cl, smoothstep(0.0, 0.55, h));
       gl_FragColor = vec4(c, uA); }` }));
   dome.renderOrder = -5; skyG.add(dome);
+  // Stars and a moon for clear nights, and a layer of drifting cloud lit by the sun.
+  const sp = []; { const r = rng(404); while (sp.length < 1500 * 3) { const u = r(), a = r() * Math.PI * 2, y = 0.03 + u * 0.97, q = Math.sqrt(1 - y * y); sp.push(Math.cos(a) * q * 7000, y * 7000, Math.sin(a) * q * 7000); } }
+  const sg0 = new THREE.BufferGeometry(); sg0.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+  const stars = new THREE.Points(sg0, new THREE.PointsMaterial({ size: 1.7, sizeAttenuation: false, color: 0xdfe8ff, transparent: true, opacity: 0, depthWrite: false, fog: false })); stars.renderOrder = -6; stars.frustumCulled = false; skyG.add(stars);
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(190, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 1.5, 1.6), transparent: true, opacity: 0, depthWrite: false, fog: false })); moon.renderOrder = -6; skyG.add(moon);
+  const cloudU = { uTime: refl.uniforms.uTime, uCover: { value: 0.42 }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uLit: { value: new THREE.Color(2, 2, 2) }, uShade: { value: new THREE.Color(1, 1, 1) } };
+  const clouds = new THREE.Mesh(new THREE.SphereGeometry(6800, 48, 20), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: cloudU,
+    vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform float uTime, uCover; uniform vec3 uSun, uLit, uShade; varying vec3 vD;\n${GLSL_HASH} float adF(vec2 p){ return adN(p) * 0.5 + adN(p * 2.1 + 3.7) * 0.27 + adN(p * 4.3 + 9.1) * 0.15 + adN(p * 8.9 + 1.3) * 0.08; }
+      void main(){ vec3 d = normalize(vD); if (d.y < 0.0) discard; vec2 p = d.xz / (d.y + 0.17) * 1.35 + uTime * vec2(0.0055, 0.0028);
+        float n = adF(p) * 0.72 + adF(p * 0.37 + 5.0) * 0.28, e0 = 1.0 - uCover, a = smoothstep(e0, e0 + 0.22, n), dens = smoothstep(e0, e0 + 0.55, n);
+        vec3 c = mix(uLit, uShade, dens) + uLit * pow(max(dot(d, uSun), 0.0), 8.0) * 0.5 * (1.0 - dens);
+        gl_FragColor = vec4(c, a * smoothstep(0.0, 0.1, d.y)); }` }));
+  clouds.renderOrder = -4; clouds.frustumCulled = false; skyG.add(clouds);
   scene.fog = new THREE.FogExp2(0xe6bd9c, 0.00065);
   const hemi = new THREE.HemisphereLight(0xb9cdf2, 0xa08468, 3.4); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffc08c, 5.6), sunDir = new THREE.Vector3(-0.8, 0.3, 0.3).normalize(); sun.castShadow = renderer.shadowMap.enabled;
+  const sun = new THREE.DirectionalLight(0xffc08c, 5.6), sunDir = new THREE.Vector3(-0.8, 0.3, 0.3).normalize(), lightDir = sunDir.clone(); sun.castShadow = renderer.shadowMap.enabled;
   { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 150; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.bias = -0.0005; sm.normalBias = 0.9;
     scene.add(sun, sun.target); const step = (half * 2) / size * 8;
-    city.updateSun = p => { const x = Math.round(p.x / step) * step, z = Math.round(p.z / step) * step; sun.target.position.set(x, 0, z); sun.position.set(x + sunDir.x * 1200, Math.max(60, sunDir.y * 1200), z + sunDir.z * 1200); }; }
+    city.updateSun = p => { const x = Math.round(p.x / step) * step, z = Math.round(p.z / step) * step; sun.target.position.set(x, 0, z); sun.position.set(x + lightDir.x * 1200, Math.max(60, lightDir.y * 1200), z + lightDir.z * 1200); }; }
   const C = (a, b, t, out) => out.set(a).lerp(col.set(b), t), mix = (a, b, t) => a + (b - a) * t, sst = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   // hour: 0-24. Returns the factors everything else keys off.
-  city.setTime = hour => {
+  city.setTime = (hour, rainy = 1) => {
     const h = (hour - 6) / 12 * Math.PI, sn = Math.sin(h), el = (sn > 0 ? sn * 58 : sn * 35), er = THREE.MathUtils.degToRad(el), ce = Math.cos(er);
     sunDir.set(Math.cos(h) * ce, Math.sin(er), 0.38 * ce).normalize(); su.sunPosition.value.copy(sunDir);
-    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), e = { hour, el, night, day, high, wet: night, rain: sst(0.75, 1, night) };
-    C(0xffa060, 0xfff4e6, high, sun.color); sun.intensity = 5.6 * day * (0.8 + 0.2 * high); sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
-    C(0xb9cdf2, 0x33325a, night, hemi.color); C(0xa08468, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(3.4, 3.9, high), 0.42, night);
-    C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(0x0e0b18), night); scene.fog.density = mix(mix(0.00034, 0.00024, high), 0.0017, night);
-    su.rayleigh.value = mix(2.2, 1.1, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night; dome.visible = night > 0.01;
+    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: night * rainy, rain: sst(0.75, 1, night) * rainy };
+    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
+    lightDir.copy(sunDir); if (night > 0.5) lightDir.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize(); // after dark the same light stands in for the moon sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
+    C(0xb9cdf2, 0x33325a, night, hemi.color); C(0xa08468, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(3.4, 3.9, high), mix(0.95, 0.42, rainy), night);
+    C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(rainy > 0.5 ? 0x0e0b18 : 0x070b16), night); scene.fog.density = mix(mix(0.00034, 0.00024, high), mix(0.00045, 0.0017, rainy), night) + dawn * 0.0006 * (1 - night);
+    su.rayleigh.value = mix(2.2, 1.1, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night * mix(0.3, 1, rainy); dome.visible = night > 0.01;
+    stars.material.opacity = night * (1 - rainy) * 0.9; stars.visible = stars.material.opacity > 0.02; moon.material.opacity = night * (1 - rainy); moon.visible = moon.material.opacity > 0.02;
+    if (moon.visible) { moon.position.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize().multiplyScalar(6600); moon.lookAt(skyG.position); }
+    cloudU.uSun.value.copy(sunDir); cloudU.uCover.value = mix(0.4, 0.93, Math.max(e.wet, rainy * sst(0.3, 0.9, night)));
+    { const sunset = (1 - high) * day, k = 1 - night; cloudU.uLit.value.setRGB(mix(0.07, mix(2.1, 2.5, sunset), k), mix(0.07, mix(2.1, 1.5, sunset), k), mix(0.1, mix(2.15, 1.05, sunset), k)); cloudU.uShade.value.setRGB(mix(0.03, mix(1.15, 0.75, sunset), k), mix(0.03, mix(1.2, 0.62, sunset), k), mix(0.05, mix(1.32, 0.7, sunset), k)); if (rainy > 0.5 && night > 0.5) { cloudU.uLit.value.setRGB(0.1, 0.07, 0.12); cloudU.uShade.value.setRGB(0.05, 0.04, 0.07); } }
     refl.uniforms.uWet.value = mix(0.06, 1, e.wet); refl.uniforms.uLitK.value = mix(0.04, 1, night);
     for (const f of hooks) f(e, mix, C); return e;
   };
@@ -374,7 +393,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   slabMat.onBeforeCompile = sh => { Object.assign(sh.uniforms, refl.uniforms);
     sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;');
     sh.fragmentShader = `uniform sampler2D uRefl; uniform mat4 uReflVP; uniform float uReflOn, uWet; varying vec3 vWPos;\n${GLSL_HASH}` + sh.fragmentShader
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  vec2 adL = abs(fract(vWPos.xz / 120.0) - 0.5) * 120.0; float adEdge = 50.0 - max(adL.x, adL.y); float adKerb = step(adEdge, 0.34) * step(0.16, vWPos.y); float adRunS = adL.x > adL.y ? vWPos.z : vWPos.x;\n  float adPd = smoothstep(0.5, 0.72, adN(vWPos.xz * 0.11 + 3.0)) * (1.0 - adKerb) * uWet; roughnessFactor = mix(mix(mix(0.85, 0.42, uWet), 0.55, adKerb), 0.05, adPd); float adRR = roughnessFactor; roughnessFactor = max(roughnessFactor, 0.34); diffuseColor.rgb *= mix(mix(1.0, 0.62, uWet), 0.36, adPd);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.13, 0.135) * mix(2.6, 1.0, uWet) * (0.8 + 0.3 * adH(vec2(floor(adRunS / 0.9), 2.0))) * (1.0 - 0.6 * step(fract(adRunS / 0.9), 0.03)), adKerb);\n  float adAlongS = adL.x > adL.y ? adL.y : adL.x; float adTact = step(adEdge, 0.95) * step(0.34, adEdge) * step(46.0, adAlongS) * step(adAlongS, 49.4) * step(0.16, vWPos.y);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.38, 0.07) * (0.7 + 0.5 * step(0.5, fract(vWPos.x * 5.0)) * step(0.5, fract(vWPos.z * 5.0))), adTact);')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  vec2 adL = abs(fract(vWPos.xz / 120.0) - 0.5) * 120.0; float adEdge = 50.0 - max(adL.x, adL.y); float adKerb = step(adEdge, 0.34) * step(0.16, vWPos.y); float adRunS = adL.x > adL.y ? vWPos.z : vWPos.x;\n  float adPd = smoothstep(0.5, 0.72, adN(vWPos.xz * 0.11 + 3.0)) * (1.0 - adKerb) * uWet; roughnessFactor = mix(mix(mix(0.85, 0.42, uWet), 0.55, adKerb), 0.05, adPd); float adRR = roughnessFactor; roughnessFactor = max(roughnessFactor, 0.34); diffuseColor.rgb *= mix(mix(1.0, 0.62, uWet), 0.36, adPd);\n  diffuseColor.rgb *= mix(1.0, 0.6, smoothstep(2.3, 4.0, adEdge));\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.13, 0.135) * mix(2.6, 1.0, uWet) * (0.8 + 0.3 * adH(vec2(floor(adRunS / 0.9), 2.0))) * (1.0 - 0.6 * step(fract(adRunS / 0.9), 0.03)), adKerb);\n  float adAlongS = adL.x > adL.y ? adL.y : adL.x; float adTact = step(adEdge, 0.95) * step(0.34, adEdge) * step(46.0, adAlongS) * step(adAlongS, 49.4) * step(0.16, vWPos.y);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.38, 0.07) * (0.7 + 0.5 * step(0.5, fract(vWPos.x * 5.0)) * step(0.5, fract(vWPos.z * 5.0))), adTact);')
       .replace('#include <opaque_fragment>', `{ vec4 adRc = uReflVP * vec4(vWPos.x, 0.0, vWPos.z, 1.0); vec2 adUv = adRc.xy / adRc.w * 0.5 + 0.5; float adNdv = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0);
         float adF = (0.03 + 0.97 * pow(1.0 - adNdv, 4.2));
         float adB = adRR * 9.5, adSp = adRR * 0.1 + 0.0015;

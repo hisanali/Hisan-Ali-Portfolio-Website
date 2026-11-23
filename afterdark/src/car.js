@@ -69,7 +69,7 @@ export async function createPlayer(scene, envTexture, city) {
   car.place = (x, z, h) => { prevC.fill(null); car.slideT = 0; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.sync(0); };
   car.setPaint = hex => paint.color.set(hex);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
-  car.setTime = e => { nightK = e.night; for (const s of lights) s.intensity = 170 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
+  car.setTime = e => { nightK = e.night; for (const s of lights) s.intensity = 360 * e.night; for (const k of cones) k.visible = e.night > 0.3; pool.visible = e.night > 0.05; poolM.opacity = 0.55 * e.night; tailPool.visible = e.night > 0.05;
     M.lens.emissiveIntensity = 1.6 + 5.4 * e.night; M.led.emissiveIntensity = 2.5 + 3.5 * e.night; shadow.material.opacity = 0.55 + 0.45 * e.night; };
 
   // ctrl: steer (+1 = left), throttle, brake, hand. Returns the strength of any wall impact this step.
