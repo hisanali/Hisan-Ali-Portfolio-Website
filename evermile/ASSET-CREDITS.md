@@ -211,3 +211,7 @@ The broken ship hull, kelp and bubbles are authored for Evermile. No paid asset 
 ## You
 
 The on-foot player can wear any of the Quaternius civilian outfits (CC0, listed above) or the Mixamo **Vanguard/Soldier** (textured, with idle, walk and run clips) distributed with the Three.js examples; Mixamo assets are royalty-free for use in games. The Quaternius civilians carry their own run clips, which the player uses when running.
+
+### Afterdark Cadillac Escalade
+
+[2021 Cadillac Escalade Premium Luxury](https://sketchfab.com/3d-models/2021-cadillac-escalade-premium-luxury-3a63c01d768840aaacbd22cfc5885583) by Es-star kings (KINGSLEY_king), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The Afterdark version scales and grounds the model, simplifies its geometry, groups its wheels for steering and rotation, and adapts the body paint.
