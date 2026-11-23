@@ -31,7 +31,7 @@ export const commit = save => { try { localStorage.setItem(KEY, JSON.stringify(s
 export const upLevel = (save, id, k) => Math.min(UP_MAX, Math.max(0, (save.up[id] && +save.up[id][k]) || 0));
 // The handling numbers a car actually drives with: its base figures plus what has been fitted.
 export function carSpec(save, id) { const c = carById(id), e = upLevel(save, id, 'e'), t = upLevel(save, id, 't'), b = upLevel(save, id, 'b');
-  return { file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
+  return { voice: c.id, file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
 export const cr = n => Math.round(n).toLocaleString() + ' cr';
 export const clockText = (t, tenths) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${tenths ? '.' + Math.floor(t * 10 % 10) : ''}`;
 

@@ -11,6 +11,13 @@ const GEARS = {
   bike: {ratio: [680, 500, 400, 340, 300, 265], up: [5200, 5600], down: [2800, 2400]},
 };
 const ENGINE = {
+  sedan: {idle: 720, red: 6100, firing: 2, falloff: 1.24, sub: 0.26, drive: 1.7, reson: [145, 520], bright: 0.78, pops: false, level: 0.056},
+  pickup: {idle: 660, red: 5500, firing: 4, falloff: 1.04, sub: 0.44, drive: 2.5, reson: [105, 435], bright: 0.7, pops: false, level: 0.056},
+  estate: {idle: 755, red: 5900, firing: 2, falloff: 1.18, sub: 0.28, drive: 1.8, reson: [138, 485], bright: 0.76, pops: false, level: 0.056},
+  crossover: {idle: 720, red: 6200, firing: 3, falloff: 1.21, sub: 0.32, drive: 1.9, reson: [132, 535], bright: 0.82, pops: false, level: 0.056},
+  compact: {idle: 850, red: 6400, firing: 2, falloff: 1.3, sub: 0.18, drive: 1.5, reson: [190, 770], bright: 0.98, pops: false, level: 0.056},
+  van: {idle: 740, red: 4500, firing: 2, falloff: 0.98, sub: 0.32, drive: 2.25, reson: [115, 410], bright: 0.62, pops: false, level: 0.056},
+  escalade: {idle: 620, red: 5900, firing: 4, falloff: 1.12, sub: 0.49, drive: 2.2, reson: [98, 410], bright: 0.73, pops: false, level: 0.056},
   mercedes: {idle: 780, red: 6200, firing: 2, falloff: 1.15, sub: .3, drive: 1.6, reson: [125,510], bright: .7, pops: false, level: .05},
   grcorolla: {idle: 900, red: 7000, firing: 1.5, falloff: 1.1, sub: .34, drive: 2.4, reson: [170, 700], bright: 1.15, pops: true, level: .058},
   landcruiser: {idle: 650, red: 5600, firing: 3, falloff: .95, sub: .4, drive: 2.6, reson: [120, 480], bright: .75, pops: false, level: .06},
@@ -191,7 +198,7 @@ export class DriveAudio {
       src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
     }
   }
-  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission}) {
+  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission, tyreSlip}) {
     this.lastVolume = volume; this.engineOn = engineOn;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
@@ -199,7 +206,7 @@ export class DriveAudio {
     let gear = Math.min(this.gear, ratios.length);
     const push = throttle * throttle, upAt = box.up[0] + push * box.up[1], downAt = box.down[0] + push * box.down[1], rpmIn = (g) => v * ratios[g - 1];
     if (!reverse && this.shiftDip <= 0) {
-      if ((!box.poweredUpshifts || (throttle > 0.07 && brake < 0.1)) && gear < ratios.length && rpmIn(gear) > upAt && rpmIn(gear + 1) > e.idle * 1.15) { gear++; this.shiftDip = .18; }
+      if ((!box.poweredUpshifts || (throttle > 0.07 && brake < 0.1)) && gear < ratios.length && rpmIn(gear) > Math.min(upAt, e.red * .95) && rpmIn(gear + 1) > e.idle * 1.15) { gear++; this.shiftDip = .18; }
       else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < e.red * .92) { gear--; this.shiftDip = -.1; }
     }
     if (reverse || v < .5) gear = 1;
@@ -237,8 +244,9 @@ export class DriveAudio {
     this.brakeHiss.g.gain.setTargetAtTime(braking ? volume * .03 * brake * Math.min(1, v / 18) : 0, t, .05);
     if (!braking || v > 6) this.stopSqueal = braking ? this.stopSqueal : Math.random() < .7;
     this.brakeToneGain.gain.setTargetAtTime(braking && this.stopSqueal && v < 4.5 ? volume * .012 * Math.min(1, (4.5 - v) / 2) : 0, t, .04);
-    const slip = grounded ? Math.max(Math.abs(steer) * v > 7.5 ? (Math.abs(steer) * v - 7.5) / 6 : 0, brake > .6 && v > 9 ? (brake - .6) * 2.5 : 0) : 0;
-    this.slip = offroad ? 0 : Math.min(1, slip);
+    const inferredSlip = Math.max((Math.abs(steer) * v - 7.5) / 6, brake > .6 && v > 9 ? (brake - .6) * 2.5 : 0);
+    const measuredSlip = Math.max((tyreSlip - .55) / 4, braking && brake > .8 ? Math.min(.3, v / 70) : 0);
+    this.slip = grounded && !offroad ? Math.max(0, Math.min(1, tyreSlip == null ? inferredSlip : measuredSlip)) : 0;
     this.squealGain.gain.setTargetAtTime(volume * .035 * this.slip, t, .05);
     return reverse ? 'R' : `D${gear}`;
   }

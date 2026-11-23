@@ -19,8 +19,8 @@ export function vehicleShadowMaterial() {
       ctx.fillRect(-1, -1, 2, 2);
       ctx.restore();
     };
-    patch(64, 128, 64, 128, 0.97, 0.63);
-    for (const x of [30, 98]) for (const y of [67, 189]) patch(x, y, 18, 24, 0.94, 0.22);
+    patch(64, 128, 47, 100, 0.52, 0.32);
+    for (const x of [30, 98]) for (const y of [67, 189]) patch(x, y, 11, 16, 0.72, 0.18);
     texture = new THREE.CanvasTexture(canvas);
   }
   return new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false,
