@@ -60,14 +60,50 @@ export async function buildPlaces(scene, city, world, Q) {
   // ---- Houses: a suburb on the valley road and a village on the mountain ----
   try { const kit = await loadGLB('/evermile/assets/models/city-kit.glb?v=maps2'); kit.scene.updateMatrixWorld(true);
     const names = ['c7-00', 'c7-01', 'c7-02', 'c7-03', 'c7-04', 'c7-09', 'c7-11', 'c7-15'], kinds = names.map(n => kit.scene.getObjectByName(n)).filter(Boolean).map(node => { const bb = new THREE.Box3().setFromObject(node), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()), fix = new THREE.Matrix4().makeTranslation(-c.x, -bb.min.y, -c.z), parts = []; node.traverse(o => { if (o.isMesh) parts.push({ geo: o.geometry, mat: kitMaterial(o.material, city.litU), local: fix.clone().multiply(o.matrixWorld) }); }); return { w: sz.x, d: sz.z, h: sz.y, parts, uses: [] }; });
-    for (const st of world.strips) { const old = st.key === 'oldtown'; for (let i = st.i0 + 10; i < st.i1 - 10; i += old ? 7 : 8) { const s = world.samples[i]; if (s.bridge || s.tunnel) continue; for (const side of [-1, 1]) { if (R() < (old ? 0.08 : 0.18)) continue; const k = kinds[Math.floor(R() * kinds.length)], off = 6 + (old ? 4.5 : 9) + k.d / 2 + R() * (old ? 1.5 : 3), x = s.x + s.lx * side * off, z = s.z + s.lz * side * off, yaw = Math.atan2(-s.lx * side, -s.lz * side);
-          k.uses.push([x, world.terrain(x, z) - 0.15, z, yaw]); const r = Math.min(k.w, k.d) / 2; solid.push({ x, z, r: r * 1.05 }); if (R() < 0.5) { const lx = s.x + s.lx * side * 7.6, lz = s.z + s.lz * side * 7.6; cyl(lx, s.y + 3, lz, 0.09, 6, 0x24272c, 0.07); glow(lx, s.y + 6, lz, 0.9, 0.1, 0.4, yaw, 0xffd6a0, 4); } } }
+    const scale = 1.25, façades = [];
+    for (const st of world.strips) {
+      const old = st.key === 'oldtown';
+      for (let i = st.i0 + 10; i < st.i1 - 10; i += old ? 7 : 8) {
+        const s = world.samples[i];
+        if (s.bridge || s.tunnel) continue;
+        for (const side of [-1, 1]) {
+          if (R() < (old ? 0.08 : 0.18)) continue;
+          const k = kinds[Math.floor(R() * kinds.length)], w = k.w * scale, d = k.d * scale;
+          const off = 6 + (old ? 4.8 : 9) + d / 2 + R() * (old ? 1.5 : 3);
+          const x = s.x + s.lx * side * off, z = s.z + s.lz * side * off;
+          const yaw = Math.atan2(-s.lx * side, -s.lz * side), ux = Math.cos(yaw), uz = -Math.sin(yaw);
+          let clear = true, low = Infinity, high = -Infinity;
+          for (const along of [-w / 2, 0, w / 2]) for (const depth of [-d / 2, 0, d / 2]) {
+            const bx = x + ux * along - uz * depth, bz = z + uz * along + ux * depth;
+            if (world.nearRoad(bx, bz, 7.2)) clear = false;
+            const y = world.terrain(bx, bz);
+            low = Math.min(low, y); high = Math.max(high, y);
+          }
+          const lamp = R() < 0.5;
+          if (!clear || high - low > 4.2) continue;
+          const y = high - 0.06, top = y + k.h * scale;
+          if (y - low > 0.17) box(x, (y + low) / 2 - 0.14, z, w - 0.06, y - low + 0.28, d - 0.06, yaw, 0x6b6961, false);
+          k.uses.push([x, y, z, yaw]);
+          const footprint = { x, z, w, d, ux, uz, bottom: low - 0.3, top, kind: 'roadside building' };
+          solid.push(footprint); façades.push(footprint);
+          if (lamp) {
+            const lx = s.x + s.lx * side * 7.8, lz = s.z + s.lz * side * 7.8, ground = world.terrain(lx, lz);
+            cyl(lx, ground + 3, lz, 0.09, 6, 0x24272c, 0.07);
+            glow(lx, ground + 6, lz, 0.9, 0.1, 0.4, yaw, 0xffd6a0, 4);
+          }
+        }
+      }
       if (st.key === 'village') { const s = world.samples[Math.round((st.i0 + st.i1) / 2)], x = s.x + s.lx * 30, z = s.z + s.lz * 30, y = world.terrain(x, z), yaw = Math.atan2(s.tx, s.tz); box(x, y + 4.5, z, 9, 9, 16, yaw, 0xe9e4d8); box(x, y + 9.6, z, 9.6, 1.2, 16.6, yaw, 0x6b3a2c, false); const tx = x + s.tx * 9.5, tz = z + s.tz * 9.5; box(tx, y + 10, tz, 5, 20, 5, yaw, 0xe9e4d8); cyl(tx, y + 23.5, tz, 3.4, 7, 0x4a3a34, 0.1, false); glow(tx - s.lx * 2.55, y + 14, tz - s.lz * 2.55, 1.4, 2.2, 0.1, yaw + Math.PI / 2, 0xffd9a0, 1.2); }
       if (old) { // a clock tower on a small square, lit at night
         const s = world.samples[Math.round((st.i0 + st.i1) / 2)], x = s.x + s.lx * 24, z = s.z + s.lz * 24, y = world.terrain(x, z), yaw = Math.atan2(s.tx, s.tz); box(x, y + 0.2, z, 22, 0.4, 22, yaw, 0xb9b2a4, false); box(x, y + 13, z, 5.4, 26, 5.4, yaw, 0xd9cfbd); box(x, y + 26.6, z, 6.4, 1.2, 6.4, yaw, 0x7a4a36, false); cyl(x, y + 30, z, 2.6, 6, 0x5a3a2e, 0.1, false);
         for (const q of [0, 1, 2, 3]) { const a = yaw + q * Math.PI / 2; glow(x + Math.sin(a) * 2.75, y + 21.5, z + Math.cos(a) * 2.75, 2.6, 2.6, 0.1, a, 0xfff0c8, 1.6); } solid.push({ x, z, r: 3.4 }); }
       out.markers.push(st); }
-    for (const k of kinds) { if (!k.uses.length) continue; for (const part of k.parts) { const im = new THREE.InstancedMesh(part.geo, part.mat, k.uses.length), m4 = new THREE.Matrix4(); k.uses.forEach((u, n) => { dummy.position.set(u[0], u[1], u[2]); dummy.rotation.set(0, u[3], 0); dummy.scale.set(1.25, 1.25, 1.25); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, part.local)); }); im.castShadow = im.receiveShadow = true; scene.add(im); splitChunks(im, 900, city.chunks, 640); } }
+    world.cameraWall = (x, y, z) => façades.some(b => {
+      if (y > b.top + 0.25 || y < b.bottom - 0.25 || Math.abs(x - b.x) > 40 || Math.abs(z - b.z) > 40) return false;
+      const dx = x - b.x, dz = z - b.z;
+      return Math.abs(dx * b.ux + dz * b.uz) < b.w / 2 + 0.27 && Math.abs(dz * b.ux - dx * b.uz) < b.d / 2 + 0.27;
+    });
+    for (const k of kinds) { if (!k.uses.length) continue; for (const part of k.parts) { const im = new THREE.InstancedMesh(part.geo, part.mat, k.uses.length), m4 = new THREE.Matrix4(); k.uses.forEach((u, n) => { dummy.position.set(u[0], u[1], u[2]); dummy.rotation.set(0, u[3], 0); dummy.scale.setScalar(scale); dummy.updateMatrix(); im.setMatrixAt(n, m4.multiplyMatrices(dummy.matrix, part.local)); }); im.castShadow = im.receiveShadow = true; scene.add(im); splitChunks(im, 900, city.chunks, 640); } }
     out.houses = kinds.reduce((a, k) => a + k.uses.length, 0); } catch (e) { console.warn('houses unavailable', e); }
   dummy.scale.set(1, 1, 1);
 

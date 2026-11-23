@@ -175,14 +175,47 @@ export function buildStreet(scene, city, R3, Q) {
     for (let i = 0; i < 120; i++) { const v = (i + Math.floor(t * 20)) % 6 < 3 ? 1 : 0.15; wc.setHSL((i / 120 + t * 0.07) % 1, 1, 0.6); ca.setXYZ(192 + i, wc.r * v * 3 * gain, wc.g * v * 3 * gain, wc.b * v * 3 * gain); }
     ca.needsUpdate = true; }
 
-  // ---- The train on the elevated line ----
-  const train = new THREE.Group(); const CARS = 5, CL = 17.5;
-  { const body = new THREE.MeshStandardMaterial({ color: 0x8e949c, roughness: 0.32, metalness: 0.85 }), win = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.3, 1.7) }), stripe = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.2, 1.6, 1.9) });
-    for (let k = 0; k < CARS; k++) { const z = -k * (CL + 0.7); const b = new THREE.Mesh(new THREE.BoxGeometry(2.9, 3.1, CL), body); b.position.set(0, 12.75, z); train.add(b);
-      for (const e of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.95, CL - 2.2), win); w.position.set(e * 1.47, 13.2, z); train.add(w); const st = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, CL - 0.4), stripe); st.position.set(e * 1.47, 12.1, z); train.add(st); } }
-    const head = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.3, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 4.6, 3.8) })); head.position.set(0, 11.9, CL / 2 + 0.03); train.add(head);
-    train.traverse(o => { if (o.isMesh) o.castShadow = SH; }); train.position.set(city.viaduct, 0, -400); scene.add(train); }
-  let trainZ = -300, trainDir = 1;
+  // ---- The train reverses from a standstill at the supported terminals ----
+  const train = new THREE.Group(), rail = city.railway, CARS = 5, CL = 17.5, gap = 0.7;
+  train.name = 'Elevated shuttle';
+  const halfLength = ((CARS - 1) * (CL + gap) + CL) * 0.5;
+  const southStop = rail.south + halfLength + 4.5, northStop = rail.north - halfLength - 4.5;
+  const body = new THREE.MeshStandardMaterial({ color: 0x8e949c, roughness: 0.32, metalness: 0.85 });
+  const windows = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.3, 1.7) });
+  const stripe = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.2, 1.6, 1.9) });
+  const underframe = new THREE.MeshStandardMaterial({ color: 0x353a3d, roughness: 0.82 });
+  const pieces = new Map();
+  function railCarPiece(w, h, d, material, px, y, z) {
+    if (!pieces.has(material)) pieces.set(material, []);
+    pieces.get(material).push([w, h, d, px, y, z]);
+  }
+  for (let k = 0; k < CARS; k++) {
+    const z = ((CARS - 1) / 2 - k) * (CL + gap);
+    railCarPiece(2.9, 2.77, CL, body, 0, 1.97, z);
+    for (const end of [-1, 1]) railCarPiece(2.1, 0.47, 2.2, underframe, 0, 0.42, z + end * 5.2);
+    for (const side of [-1, 1]) {
+      railCarPiece(0.035, 0.145, CL - 0.4, stripe, side * 1.46, 1.27, z);
+      for (let i = -3; i <= 3; i++) railCarPiece(0.035, 0.92, 1.68, windows, side * 1.46, 2.32, z + i * 2.27);
+    }
+  }
+  const ends = [-1, 1].map(side => {
+    const material = new THREE.MeshBasicMaterial();
+    railCarPiece(1.5, 0.24, 0.055, material, 0, 1.08, side * (halfLength + 0.03));
+    return { side, material };
+  });
+  const shell = new THREE.BoxGeometry(1, 1, 1);
+  for (const [material, parts] of pieces) {
+    const mesh = new THREE.InstancedMesh(shell, material, parts.length);
+    parts.forEach(([w, h, d, x, y, z], index) => {
+      dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.set(w, h, d);
+      dummy.updateMatrix(); mesh.setMatrixAt(index, dummy.matrix);
+    });
+    mesh.castShadow = !material.isMeshBasicMaterial;
+    train.add(mesh);
+  }
+  let trainZ = southStop, trainDir = 1, trainSpeed = 0, dwell = 3;
+  train.position.set(city.viaduct, rail.deck, trainZ);
+  scene.add(train);
 
   // ---- Steam from the road ----
   const smoke = tex(128, (c, s) => { const r = rng(3); for (let i = 0; i < 26; i++) { const x = 30 + r() * 68, y = 30 + r() * 68, rad = 18 + r() * 26, g = c.createRadialGradient(x, y, 0, x, y, rad); g.addColorStop(0, 'rgba(255,255,255,.2)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, s, s); } });
@@ -204,8 +237,8 @@ export function buildStreet(scene, city, R3, Q) {
       } catch (e) { console.warn('Person unavailable:', name, e); return null; }
     }))).filter(Boolean);
     if (!kits.length) return;
-    const canopy = new THREE.SphereGeometry(0.64, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.31, 1).translate(0, 1.97, 0);
-    const handle = new THREE.CylinderGeometry(0.012, 0.012, 0.83, 5).translate(0, 1.55, 0);
+    const canopy = new THREE.SphereGeometry(0.57, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.29, 1).translate(0, 0.67, 0);
+    const handle = new THREE.CylinderGeometry(0.012, 0.012, 0.69, 5).translate(0, 0.325, 0);
     const umbrella = mergeGeometries([canopy, handle]);
     for (let k = 0; k < NP; k++) {
       const kit = kits[k % kits.length], root = new THREE.Group(), body = SkeletonUtils.clone(kit.scene);
@@ -217,10 +250,15 @@ export function buildStreet(scene, city, R3, Q) {
         if (!o.isMesh) return;
         o.frustumCulled = false; o.castShadow = SH; o.receiveShadow = true;
       });
-      if (R() < 0.64) {
-        const br = new THREE.Mesh(umbrella, new THREE.MeshStandardMaterial({ color: [0x222429, 0x273d55, 0x593030][k % 3], roughness: 0.64, side: THREE.DoubleSide }));
-        br.position.set(0.22, h - 1.7, 0.12); br.rotation.z = 0.09;
-        br.visible = env.rain > 0.2; br.castShadow = true; root.add(br); brollies.push(br);
+      // The glTF loader removes dots from animation-target node names.
+      const bone = name => body.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
+      const wrist = bone('Wrist.R'), arm = bone('UpperArm.R'), forearm = bone('LowerArm.R');
+      let brolly;
+      if (R() < 0.64 && wrist && arm && forearm) {
+        const mesh = new THREE.Mesh(umbrella, new THREE.MeshStandardMaterial({ color: [0x222429, 0x273d55, 0x593030][k % 3], roughness: 0.64, side: THREE.DoubleSide }));
+        mesh.name = 'Held umbrella';
+        mesh.visible = env.rain > 0.2; mesh.castShadow = true; root.add(mesh); brollies.push(mesh);
+        brolly = { mesh, wrist, arm, forearm, height: h, armChain: [forearm, arm] };
       }
       const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.325, 16).rotateX(-Math.PI / 2),
         new THREE.MeshBasicMaterial({ color: 0x0c1011, map: city.dot, transparent: true, opacity: 0.28, depthWrite: false }));
@@ -231,7 +269,7 @@ export function buildStreet(scene, city, R3, Q) {
       if (walk) walk.time = R() * kit.walk.duration;
       idle?.setEffectiveWeight(0);
       root.visible = false; scene.add(root);
-      walkers.push({ root, mixer, walk, idle, blend: 1, pause: 0, live: false, ax: 0, fixed: 0, s: 0, dir: 1, v: 0.94 + R() * 0.63 });
+      walkers.push({ root, mixer, walk, idle, brolly, blend: 1, pause: 0, live: false, ax: 0, fixed: 0, s: 0, dir: 1, v: 0.94 + R() * 0.63 });
     }
     street.people = walkers;
   }
@@ -247,16 +285,51 @@ export function buildStreet(scene, city, R3, Q) {
     w.live = false; w.root.visible = false;
   }
 
+  const grip = new THREE.Vector3(), joint = new THREE.Vector3(), wristPoint = new THREE.Vector3();
+  const from = new THREE.Vector3(), to = new THREE.Vector3(), bend = new THREE.Quaternion(), parent = new THREE.Quaternion();
+  function holdUmbrella(walker) {
+    const u = walker.brolly, root = walker.root;
+    if (!u?.mesh.visible) return;
+    u.arm.getWorldPosition(joint);
+    root.worldToLocal(joint);
+    grip.set(joint.x * 1.20, u.height * 0.79, 0.29);
+    root.localToWorld(grip);
+    for (let i = 0; i < 4; i++) for (const bone of u.armChain) {
+      bone.getWorldPosition(joint);
+      u.wrist.getWorldPosition(wristPoint);
+      bone.parent.getWorldQuaternion(parent).invert();
+      from.copy(wristPoint).sub(joint).normalize().applyQuaternion(parent);
+      to.copy(grip).sub(joint).normalize().applyQuaternion(parent);
+      bend.setFromUnitVectors(from, to);
+      bone.quaternion.premultiply(bend);
+    }
+    u.wrist.getWorldPosition(wristPoint);
+    u.mesh.position.copy(root.worldToLocal(wristPoint));
+    u.mesh.rotation.z = -Math.sign(u.mesh.position.x) * 0.09;
+  }
   street.update = (dt, t, focus) => {
     wind.value = t;
-    // Train shuttles end to end with a pause out of sight.
-    trainZ += trainDir * 24 * dt; if (trainZ > SPAN + 520) { trainDir = -1; } else if (trainZ < -520) { trainDir = 1; }
-    train.position.z = trainZ; train.rotation.y = trainDir > 0 ? 0 : Math.PI;
+    if (dwell > 0) dwell -= dt;
+    else {
+      const stop = trainDir > 0 ? northStop : southStop;
+      const remaining = Math.abs(stop - trainZ);
+      const target = Math.min(24, Math.sqrt(2 * 2.2 * remaining));
+      trainSpeed += THREE.MathUtils.clamp(target - trainSpeed, -3.1 * dt, 2.2 * dt);
+      const step = trainSpeed * dt;
+      if (step >= remaining || remaining < 0.035) {
+        trainZ = stop; trainSpeed = 0; trainDir *= -1; dwell = 4.5;
+      } else trainZ += trainDir * step;
+      train.position.z = trainZ;
+    }
+    for (const { side, material } of ends) {
+      if (side === trainDir) material.color.setRGB(2.8, 2.52, 2.16);
+      else material.color.setRGB(1.55, 0.07, 0.035);
+    }
     fairyPts.material.opacity = (0.85 + 0.15 * Math.sin(t * 3)) * (0.3 + 0.7 * env.night); stepWheel(t);
     festPts[0].material.opacity = (0.55 + 0.45 * Math.sin(t * 2.2)) * (0.25 + 0.75 * env.night); festPts[1].material.opacity = (0.55 - 0.45 * Math.sin(t * 2.2)) * (0.25 + 0.75 * env.night);
     if ((ventTick++ % 50) === 0) { nearVents = vents.map(v => [(v.x - focus.x) ** 2 + (v.z - focus.z) ** 2, v]).filter(a => a[0] < 150 * 150).sort((a, b) => a[0] - b[0]).slice(0, 6).map(a => a[1]); }
     puffs.forEach((p, k) => { const u = p.userData; u.t += dt; if (u.t > 5 || !u.vent) { u.t = u.t % 5; u.vent = nearVents.length ? nearVents[k % nearVents.length] : null; u.dx = (Math.random() - 0.5) * 0.5; u.dz = (Math.random() - 0.5) * 0.5; }
-      if (!u.vent || env.night < 0.5) { p.visible = false; return; } const q = u.t / 5; p.visible = true; p.position.set(u.vent.x + u.dx * u.t * 2 + q * q * 2.5, 0.3 + q * 7.5, u.vent.z + u.dz * u.t * 2); const sc = 1.2 + q * 6; p.scale.set(sc, sc, 1); p.material.opacity = Math.sin(Math.min(1, q * 4) * Math.PI / 2) * (1 - q) * 0.4; p.material.rotation = k + q * 0.6; });
+      if (!u.vent || env.night < 0.5 || env.rain > 0.26) { p.visible = false; return; } const q = u.t / 5; p.visible = true; p.position.set(u.vent.x + u.dx * u.t * 2 + q * q * 2.5, 0.3 + q * 7.5, u.vent.z + u.dz * u.t * 2); const sc = 0.65 + q * 2.6; p.scale.set(sc, sc, 1); p.material.opacity = Math.sin(Math.min(1, q * 4) * Math.PI / 2) * (1 - q) * 0.16; p.material.rotation = k + q * 0.6; });
     for (const w of walkers) {
       if (!w.live || Math.hypot((w.ax ? w.fixed : w.s) - focus.x, (w.ax ? w.s : w.fixed) - focus.z) > 150) {
         respawn(w, focus.x, focus.z, !w.seen); w.seen = true;
@@ -279,9 +352,10 @@ export function buildStreet(scene, city, R3, Q) {
       w.walk?.setEffectiveWeight(w.blend).setEffectiveTimeScale(w.v / 1.28);
       w.idle?.setEffectiveWeight(1 - w.blend);
       w.mixer.update(dt);
+      holdUmbrella(w);
     }
   };
-  street.setTime = e => { env = e; for (const b of brollies) b.visible = e.rain > 0.2; };
+  street.setTime = e => { env = e; rail.setTime(e); for (const b of brollies) b.visible = e.rain > 0.2; };
   street.trainZ = () => trainZ; street.loadPeople = loadPeople;
   later.push([crowns, 520], [trunks, 380], [grates, 150]); for (const [m, d] of later) splitChunks(m, d, city.chunks); street.hide = [...puffs]; street.stats = { trees: spots.length + palmSpots.length, vents: vents.length };
   return street;

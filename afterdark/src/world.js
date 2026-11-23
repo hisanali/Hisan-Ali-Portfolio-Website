@@ -4,6 +4,7 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SW, SPAN, rng, splitChunks } from './city.js';
 import { buildForest } from './forest.js';
+import { roadClearance } from './road-clearance.js';
 import { planAirfield, sitePaved, sitePosition } from './landmarks.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), mix = (a, b, t) => a + (b - a) * t;
@@ -35,7 +36,7 @@ const MOUNT = [[SPAN + 14, 720], [1080, 735], [1280, 815], [1470, 770], [1600, 8
 const OLD = [[240, SPAN + 14], [246, 1045], [305, 1125], [262, 1205], [160, 1228], [112, 1318], [192, 1398], [128, 1482], [44, 1424], [34, 1304], [66, 1186], [14, 1082], [0, SPAN + 14]];
 
 export async function buildWorld(scene, city, Q) {
-  const world = { roads: [], hide: [] }, R = rng(909);
+  const world = { roads: [], hide: [], bounds: WORLD }, R = rng(909);
   const nx = Math.round((WORLD.x1 - WORLD.x0) / WORLD.cell) + 1, nz = Math.round((WORLD.z1 - WORLD.z0) / WORLD.cell) + 1, H = new Float32Array(nx * nz);
 
   // ---- Roads: sample each spline, give it a smooth drivable profile, and note bridge and tunnel stretches ----
@@ -122,10 +123,44 @@ export async function buildWorld(scene, city, Q) {
   for (const s of samples) { if (s.bridge || s.tunnel) { s.wallL = s.wallR = true; continue; } s.wallL = hAt(s.x + s.lx * 30, s.z + s.lz * 30) < s.y - 5.5; s.wallR = hAt(s.x - s.lx * 30, s.z - s.lz * 30) < s.y - 5.5; }
   for (let pass = 0; pass < 2; pass++) for (let i = 1; i < samples.length - 1; i++) for (const k of ['wallL', 'wallR']) if (samples[i - 1][k] && samples[i + 1][k]) samples[i][k] = true;
   // Ground height for the car and camera: road surface on the carriageway, land elsewhere.
-  world.ground = (x, z, info) => { const r = nearRoad(x, z, 22), t = hAt(x, z); if (info) { info.road = null; info.lat = 0; info.paved = pavedPlaces.some(site => sitePaved(site, x, z)); }
-    if (!r) return t; const a = Math.abs(r.lat); if (info) { info.road = r.s; info.lat = r.lat; }
-    const nb = samples[r.s.i + 1] && samples[r.s.i + 1].road === r.s.road ? samples[r.s.i + 1] : r.s, al = clamp(((x - r.s.x) * r.s.tx + (z - r.s.z) * r.s.tz) / STEP, 0, 1), ry = mix(r.s.y, nb.y, al) + 0.03;
-    if (r.s.bridge || r.s.tunnel) return a < HALFW + 1.5 ? ry : t; return a <= HALFW ? ry : mix(ry, t, sst(HALFW, HALFW + 9, a)); };
+  world.ground = (x, z, info) => {
+    const r = nearRoad(x, z, 22), terrain = hAt(x, z);
+    if (info) {
+      info.road = null;
+      info.lat = 0;
+      info.paved = pavedPlaces.some(site => sitePaved(site, x, z));
+    }
+    if (!r) return terrain;
+    const point = r.s;
+    let lateral = r.lat, closest = r.d * r.d, roadY = point.y;
+    // The nearest sample can be before or after the car. Project onto its adjacent segments
+    // so the height at their shared vertex is continuous in both directions.
+    for (let i = point.i - 1; i <= point.i; i++) {
+      const a = samples[i], b = samples[i + 1];
+      if (!a || !b || a.road !== point.road || b.road !== point.road) continue;
+      const dx = b.x - a.x, dz = b.z - a.z, lengthSq = dx * dx + dz * dz;
+      const t = clamp(((x - a.x) * dx + (z - a.z) * dz) / lengthSq, 0, 1);
+      const rx = x - a.x - dx * t, rz = z - a.z - dz * t;
+      const d = rx * rx + rz * rz;
+      if (d <= closest + 1e-7) {
+        closest = d;
+        lateral = (rx * dz - rz * dx) / Math.sqrt(lengthSq);
+        roadY = mix(a.y, b.y, t);
+      }
+    }
+    if (info) { info.road = point; info.lat = lateral; }
+    const across = Math.abs(lateral), y = roadY + 0.03;
+    if (point.bridge || point.tunnel) return across < HALFW + 1.5 ? y : terrain;
+    return across <= HALFW ? y : mix(y, terrain, sst(HALFW, HALFW + 9, across));
+  };
+
+  world.tunnelPassage = (x, y, z) => {
+    const r = nearRoad(x, z, 16);
+    if (!r || !r.s.tunnel || Math.abs(r.lat) > 6.65) return false;
+    const across = r.lat, floor = world.ground(x, z);
+    const roof = floor + 6.42 * Math.sqrt(Math.max(0, 1 - (across / 7.17) ** 2));
+    return y > floor + 0.18 && y < roof - 0.25;
+  };
 
   // ---- Terrain mesh in patches, textured by slope and height ----
   const L = new THREE.TextureLoader(), tex = n => { const t = L.load(`/evermile/assets/materials/${n}_diff_1k.jpg`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; };
@@ -139,11 +174,13 @@ export async function buildWorld(scene, city, Q) {
   };
   const rock = loadTerrainTex('rock-face.jpg'), strata = loadTerrainTex('rocky-terrain.jpg');
   const landM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0, envMapIntensity: 0.35 });
-  landM.onBeforeCompile = sh => { sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata };
+  const clearance = roadClearance(samples);
+  landM.onBeforeCompile = sh => { Object.assign(sh.uniforms, clearance.uniforms); sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata };
     sh.vertexShader = 'attribute float aWoodland; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal; vWoodland = aWoodland;');
-    sh.fragmentShader = `uniform sampler2D uGrass, uRock, uStrata; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
+    sh.fragmentShader = clearance.glsl + `uniform sampler2D uGrass, uRock, uStrata; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
 float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(adH(i), adH(i + vec2(1, 0)), f.x), mix(adH(i + vec2(0, 1)), adH(i + vec2(1, 1)), f.x), f.y); }\n` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  clearRoad(vWPos);
   vec2 adP = vWPos.xz;
   vec3 adNn = normalize(vWN);
   float adSlope = 1.0 - adNn.y;
@@ -214,12 +251,24 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
         for (let k = 0; k < bs.length - 1; k++) { lp.push(...top(k), ...top(k + 1)); if (k % 4 === 0) { const s = bs[k]; lp.push(...top(k), s.x + s.lx * sg * 7.2, s.y + 0.9, s.z + s.lz * sg * 7.2); } } }
       const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3)); const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x2a2d31 })); lines.frustumCulled = false; scene.add(lines); world.bridge = { x: a.x, z: a.z }; } }
   // Tunnel: an arched lining with roof lights, and a concrete portal at each end.
-  { const tm = new THREE.MeshStandardMaterial({ color: 0x77736c, roughness: 0.8, side: THREE.DoubleSide, emissive: 0xffb060, emissiveIntensity: 0.16 }), lightM = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 1.2) }), lights = [], runs = []; let cur = null;
+  { const tm = new THREE.MeshStandardMaterial({ color: 0x777978, roughness: 0.84, side: THREE.DoubleSide, emissive: 0xa49e8d, emissiveIntensity: 0.065 }), lightM = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 1.2) }), lights = [], runs = []; let cur = null;
     samples.forEach(s => { if (s.tunnel) { if (!cur || cur[cur.length - 1].i !== s.i - 1) { cur = []; runs.push(cur); } cur.push(s); } });
-    const ARC = 9, RAD = HALFW + 1.2;
-    for (const run of runs) { if (run.length < 6) { run.forEach(s => { s.tunnel = false; }); continue; } const tp = [], ti = [];
-      run.forEach((s, k) => { for (let a = 0; a <= ARC; a++) { const th = a / ARC * Math.PI, ox = Math.cos(th) * RAD, oy = Math.sin(th) * (RAD - 0.6); tp.push(s.x + s.lx * ox, s.y + oy, s.z + s.lz * ox); } if (k) { const o = (k - 1) * (ARC + 1); for (let a = 0; a < ARC; a++) ti.push(o + a, o + a + ARC + 1, o + a + 1, o + a + 1, o + a + ARC + 1, o + a + ARC + 2); } if (k % 5 === 2) lights.push([s.x, s.y + RAD - 0.75, s.z, Math.atan2(s.tx, s.tz)]); });
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(tp, 3)); g.setIndex(ti); g.computeVertexNormals(); const m = new THREE.Mesh(g, tm); m.frustumCulled = false; scene.add(m);
+    const ARC = 18, RAD = HALFW + 1.2;
+    tm.onBeforeCompile = shader => {
+      shader.vertexShader = 'varying vec2 vTunnel;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvTunnel = uv;');
+      shader.fragmentShader = 'varying vec2 vTunnel;\n' + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  float seam = smoothstep(0.018, 0.08, abs(fract(vTunnel.x / 6.0 + 0.5) - 0.5) * 6.0);
+  float base = smoothstep(0.035, 0.083, min(vTunnel.y, 1.0 - vTunnel.y));
+  float grain = 0.91 + 0.09 * sin(vTunnel.x * 4.9 + sin(vTunnel.y * 180.0)) * sin(vTunnel.y * 129.0 + vTunnel.x * 0.4);
+  diffuseColor.rgb *= mix(0.65, 1.0, seam) * mix(0.38, 1.0, base) * grain;
+`).replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+  float lit = 1.0 - smoothstep(1.4, 7.3, abs(fract(vTunnel.x / 15.0 + 0.1) - 0.5) * 15.0);
+  totalEmissiveRadiance += vec3(0.058, 0.052, 0.041) * lit * smoothstep(0.07, 0.49, min(vTunnel.y, 1.0 - vTunnel.y));
+`);
+    };
+    for (const run of runs) { if (run.length < 6) { run.forEach(s => { s.tunnel = false; }); continue; } const tp = [], ti = [], tuv = [];
+      run.forEach((s, k) => { for (let a = 0; a <= ARC; a++) { const th = a / ARC * Math.PI, ox = Math.cos(th) * RAD, oy = Math.sin(th) * (RAD - 0.6); tp.push(s.x + s.lx * ox, s.y + oy, s.z + s.lz * ox); tuv.push(k * STEP, a / ARC); } if (k) { const o = (k - 1) * (ARC + 1); for (let a = 0; a < ARC; a++) ti.push(o + a, o + a + ARC + 1, o + a + 1, o + a + 1, o + a + ARC + 1, o + a + ARC + 2); } if (k % 5 === 2) lights.push([s.x, s.y + RAD - 0.75, s.z, Math.atan2(s.tx, s.tz)]); });
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(tp, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(tuv, 2)); g.setIndex(ti); g.computeVertexNormals(); const m = new THREE.Mesh(g, tm); m.frustumCulled = false; scene.add(m);
       { const fp = [], fi = []; run.forEach((s, k) => { fp.push(s.x + s.lx * (RAD + 0.4), s.y - 0.02, s.z + s.lz * (RAD + 0.4), s.x - s.lx * (RAD + 0.4), s.y - 0.02, s.z - s.lz * (RAD + 0.4)); if (k) { const o = (k - 1) * 2; fi.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); } }); const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); fg.setIndex(fi); fg.computeVertexNormals(); const fm = new THREE.Mesh(fg, new THREE.MeshStandardMaterial({ color: 0x2c2b2a, roughness: 0.9, side: THREE.DoubleSide })); fm.frustumCulled = false; scene.add(fm); }
       for (const e of [run[0], run[run.length - 1]]) { for (const sg of [-1, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(7, 11, 1.6), conc); b.position.set(e.x + e.lx * sg * (RAD + 3.3), e.y + 5.4, e.z + e.lz * sg * (RAD + 3.3)); b.rotation.y = Math.atan2(e.tx, e.tz); scene.add(b); } const top = new THREE.Mesh(new THREE.BoxGeometry(RAD * 2 + 13.6, 4.2, 1.6), conc); top.position.set(e.x, e.y + RAD + 1.6, e.z); top.rotation.y = Math.atan2(e.tx, e.tz); scene.add(top); } }
     const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.08, 2.4), lightM, Math.max(1, lights.length)); lights.forEach((q, k) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[3], 0); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.rotation.set(0, 0, 0); lm.count = lights.length; lm.frustumCulled = false; scene.add(lm); world.tunnels = runs.filter(r => r.length >= 6).length; }
