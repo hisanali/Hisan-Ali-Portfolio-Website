@@ -7,6 +7,7 @@ import { loadGLB } from './car.js';
 
 const STYLES = ['sedan', 'hatch', 'suv', 'wagon', 'van', 'pickup'];
 const TRANSIT = ['bus', 'coach'];
+const PASSENGER = ['gr-corolla', 'land-cruiser'];
 const TINTS = [0xdadde2, 0x15171b, 0x8c9198, 0x2a3140, 0x7a1418, 0x1f3d6b, 0xb9b3a4, 0x3c4a3f, 0xc8a24a, 0x505560];
 const dummy = new THREE.Object3D(), mat = new THREE.Matrix4(), col = new THREE.Color(), clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -30,17 +31,28 @@ function rearPlate(style, i, bounds) {
 }
 
 export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
+  count += 2; // Two additional passenger cars alongside the existing fleet.
   const R = rng(seed), kits = [], headMaterials = [], tailMaterials = [];
-  for (const style of [...STYLES, ...TRANSIT]) {
-    const g = await loadGLB(`/evermile/assets/models/road-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
-    const parts = []; const lamp = n => { const o = g.scene.getObjectByName(n); return o ? o.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0.6, 0.65, n[0] === 'H' ? 2 : -2); };
+  for (const style of [...STYLES, ...TRANSIT, ...PASSENGER]) {
+    const prefix = PASSENGER.includes(style) ? 'car' : 'road';
+    const g = await loadGLB(`/evermile/assets/models/${prefix}-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(g.scene, true);
+    const parts = []; const lamp = n => { const o = g.scene.getObjectByName(n); return o ? o.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3((n.endsWith('L') ? 1 : -1) * (box.max.x - 0.3), box.max.y * 0.48, n[0] === 'H' ? box.max.z - 0.1 : box.min.z + 0.1); };
     g.scene.traverse(o => { if (!o.isMesh) return; let m = o.material; const name = m.name || '';
       if (/paint/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: m.map, metalness: 0.51, roughness: 0.28, clearcoat: 0.84, clearcoatRoughness: 0.11, envMapIntensity: 1.5 });
       else if (/glass/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0x152024, metalness: 0.46, roughness: 0.16, clearcoat: 0.8, envMapIntensity: 1.5 });
       else if (/HeadLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xfff2da); m.emissiveIntensity = 0.20; headMaterials.push(m); }
       else if (/TailLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xff1a0c); m.emissiveIntensity = 0.37; tailMaterials.push(m); }
       else { m = m.clone(); m.envMapIntensity = 0.8; }
-      parts.push({ geo: o.geometry, mat: m, local: o.matrixWorld.clone(), paint: /paint/i.test(name), wheel: /^Wheel_/i.test(o.name) }); });
+      let hub = o;
+      while (hub && !/^Wheel_[FR][LR]$/i.test(hub.name)) hub = hub.parent;
+      let geo = o.geometry, local = o.matrixWorld.clone();
+      if (hub) {
+        const centre = new THREE.Box3().setFromObject(hub, true).getCenter(new THREE.Vector3());
+        geo = geo.clone().applyMatrix4(local).translate(-centre.x, -centre.y, -centre.z);
+        local = new THREE.Matrix4().makeTranslation(centre.x, centre.y, centre.z);
+      }
+      parts.push({ geo, mat: m, local, paint: /paint/i.test(name), wheel: Boolean(hub) }); });
     // Batch the many identical seat materials once for each transit model.
     if (TRANSIT.includes(style)) {
       const batches = new Map();
@@ -57,7 +69,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         parts.push({ ...batch[0], geo: merged, local: new THREE.Matrix4() });
       }
     }
-    const box = new THREE.Box3().setFromObject(g.scene);
+
     parts.push(rearPlate(style, kits.length, box));
     kits.push({ style, parts, head: [lamp('HeadL'), lamp('HeadR')], tail: [lamp('TailL'), lamp('TailR')], len: box.max.z - box.min.z });
   }
@@ -80,6 +92,8 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   // Assign a city bus and a regional coach to moving traffic, outside car-sized parking bays.
   if (cityCarCount) cars[0].kit = STYLES.length;
   if (country) cars[cityCarCount].kit = STYLES.length + 1;
+  const passengerStart = STYLES.length + TRANSIT.length;
+  for (let i = 0; i < PASSENGER.length && i + 1 < cityCarCount; i++) cars[i + 1].kit = passengerStart + i;
   const placeOnRoad = c => { const i0 = Math.floor(c.i), a = world.samples[i0], b = world.samples[Math.min(c.rd.to, i0 + 1)], u = c.i - i0, sg = -c.dirS * 2.6; c.x = a.x + (b.x - a.x) * u + a.lx * sg; c.z = a.z + (b.z - a.z) * u + a.lz * sg; c.y = a.y + (b.y - a.y) * u + 0.03; c.h = Math.atan2(a.tx * c.dirS, a.tz * c.dirS); c.pitch = Math.atan2((b.y - a.y) * c.dirS, 3); };
   for (const c of cars) if (c.mode === 2) placeOnRoad(c);
   const laneOff = c => 1.9 + c.lane * 3.6;
@@ -182,7 +196,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
       if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
         const tb = c.braking || c.v < 0.5 ? 3.4 : 1.3; lc[shown * 12 + 6] = tb; lc[shown * 12 + 9] = tb;
-        pools.setMatrixAt(shown, dummy.matrix); blobs.setMatrixAt(shown, dummy.matrix);
+        pools.setMatrixAt(shown, dummy.matrix);
+        mat.makeScale(1, 1, kit.len / 4.6).premultiply(dummy.matrix);
+        blobs.setMatrixAt(shown, mat);
         [kit.head[0], kit.head[1], kit.tail[0], kit.tail[1]].forEach((lpos, q) => { v3.copy(lpos).applyMatrix4(dummy.matrix); lp.set([v3.x, v3.y, v3.z], shown * 12 + q * 3); }); shown++; } else c.shownSlot = -1; });
     movingShown = shown; pools.count = shown; lg.setDrawRange(0, shown * 4); lg.attributes.color.needsUpdate = true; dummy.rotation.order = 'XYZ';
     kits.forEach((kit, ki) => { const g = groups[ki], list = parkedNear[ki] || []; list.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); for (const im of g) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); im.setMatrixAt(used[ki] + k, mat); if (im.userData.part.paint) im.setColorAt(used[ki] + k, col.set(p.tint)); } });
