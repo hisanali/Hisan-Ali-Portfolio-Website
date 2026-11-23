@@ -36,6 +36,7 @@ const tris = (doc) => doc.getRoot().listMeshes().reduce((s, m) => s + m.listPrim
 const centre = (b) => b.min.map((v, i) => (v + b.max[i]) / 2);
 
 for (const car of CARS) {
+  if (process.argv[2] && car.out !== process.argv[2]) continue;
   const doc = await io.read(path.join(SRC, car.src)), root = doc.getRoot(), scene = root.listScenes()[0], before = tris(doc);
 
   // One root node carries the turn, the scale and the centring.
@@ -82,6 +83,8 @@ for (const car of CARS) {
   await doc.transform(dedup(), prune(), weld());
   for (const mesh of root.listMeshes()) for (const prim of mesh.listPrimitives()) {
     const n = (prim.getIndices() ? prim.getIndices().getCount() : prim.getAttribute('POSITION').getCount()) / 3;
+    // Keep the Corolla's authored panel curvature and window borders intact.
+    if (car.out === 'car-gr-corolla.glb' && ['BodyPaint', 'EXT_Glass'].includes(prim.getMaterial()?.getName())) continue;
     if (n < 4000) continue;
     const ratio = n > 30000 ? .24 : n > 12000 ? .42 : .62;
     simplifyPrimitive(prim, {simplifier: MeshoptSimplifier, ratio, error: .0012, lockBorder: false});
