@@ -8,19 +8,39 @@ const STYLES = ['sedan', 'hatch', 'suv', 'wagon', 'van', 'pickup'];
 const TINTS = [0xdadde2, 0x15171b, 0x8c9198, 0x2a3140, 0x7a1418, 0x1f3d6b, 0xb9b3a4, 0x3c4a3f, 0xc8a24a, 0x505560];
 const dummy = new THREE.Object3D(), mat = new THREE.Matrix4(), col = new THREE.Color(), clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
+function rearPlate(style, i, bounds) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 48;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#2a2d2e'; ctx.fillRect(0, 0, 128, 48);
+  ctx.fillStyle = '#d8d8cd'; ctx.fillRect(3, 3, 122, 42);
+  ctx.fillStyle = '#536763'; ctx.fillRect(3, 3, 122, 13);
+  ctx.fillStyle = '#f0ead7'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('AURORA COAST', 64, 13);
+  ctx.fillStyle = '#292d2e'; ctx.font = 'bold 24px monospace';
+  ctx.fillText(style.slice(0, 2).toUpperCase() + ' ' + (284 + 109 * i), 64, 37);
+  const map = new THREE.CanvasTexture(canvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  const geo = new THREE.PlaneGeometry(0.39, 0.145).rotateY(Math.PI);
+  const height = style === 'pickup' || style === 'van' ? 0.58 : 0.53;
+  const local = new THREE.Matrix4().makeTranslation(0, height, bounds.min.z - 0.013);
+  return { geo, local, mat: new THREE.MeshStandardMaterial({ map, roughness: 0.5 }), paint: false, wheel: false, castShadow: false };
+}
+
 export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
-  const R = rng(seed), kits = [];
+  const R = rng(seed), kits = [], headMaterials = [], tailMaterials = [];
   for (const style of STYLES) {
     const g = await loadGLB(`/evermile/assets/models/road-${style}.glb?v=supplied7`); g.scene.updateMatrixWorld(true);
     const parts = []; const lamp = n => { const o = g.scene.getObjectByName(n); return o ? o.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0.6, 0.65, n[0] === 'H' ? 2 : -2); };
     g.scene.traverse(o => { if (!o.isMesh) return; let m = o.material; const name = m.name || '';
-      if (/paint/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.6, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.5 });
-      else if (/glass/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0x06080b, metalness: 0.7, roughness: 0.05, envMapIntensity: 1.8 });
-      else if (/HeadLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xfff2da); m.emissiveIntensity = 3; m.emissiveMap = null; }
-      else if (/TailLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xff1a0c); m.emissiveIntensity = 2.2; m.emissiveMap = null; }
+      if (/paint/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: m.map, metalness: 0.51, roughness: 0.28, clearcoat: 0.84, clearcoatRoughness: 0.11, envMapIntensity: 1.5 });
+      else if (/glass/i.test(name)) m = new THREE.MeshPhysicalMaterial({ color: 0x152024, metalness: 0.46, roughness: 0.16, clearcoat: 0.8, envMapIntensity: 1.5 });
+      else if (/HeadLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xfff2da); m.emissiveIntensity = 0.20; headMaterials.push(m); }
+      else if (/TailLens/i.test(name)) { m = m.clone(); m.emissive = new THREE.Color(0xff1a0c); m.emissiveIntensity = 0.37; tailMaterials.push(m); }
       else { m = m.clone(); m.envMapIntensity = 0.8; }
       parts.push({ geo: o.geometry, mat: m, local: o.matrixWorld.clone(), paint: /paint/i.test(name), wheel: /^Wheel_/i.test(o.name) }); });
     const box = new THREE.Box3().setFromObject(g.scene);
+    parts.push(rearPlate(style, kits.length, box));
     kits.push({ style, parts, head: [lamp('HeadL'), lamp('HeadR')], tail: [lamp('TailL'), lamp('TailR')], len: box.max.z - box.min.z });
   }
   // ---- Parked cars ----
@@ -49,7 +69,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   // ---- Instanced meshes: moving cars take the first slots, nearby parked cars fill the rest ----
   const PARK_MAX = 12, DRAW_R = 270 * Math.max(0.6, reach); // cars further than this from the player are simulated but not drawn
   const groups = kits.map((kit, ki) => { const nM = cars.filter(c => c.kit === ki).length;
-    return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = 0; im.castShadow = true; im.receiveShadow = true; scene.add(im); return im; }); });
+    return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = 0; im.castShadow = part.castShadow !== false; im.receiveShadow = true; scene.add(im); return im; }); });
   kits.forEach((kit, ki) => { let m = 0; for (const c of cars) { if (c.kit !== ki) continue; c.slot = m++; }
     for (const im of groups[ki]) if (im.userData.part.paint) { for (let k = 0; k < im.instanceMatrix.count; k++) im.setColorAt(k, col.set(0xffffff)); for (const c of cars) if (c.kit === ki) im.setColorAt(c.slot, col.set(c.tint)); im.instanceColor.needsUpdate = true; } });
   const byKit = kits.map((_, ki) => parked.filter(p => p.kit === ki)); let parkTick = 0; const nearParked = [];
@@ -71,7 +91,13 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const blobTex = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), g = x.createRadialGradient(64, 64, 6, 64, 64, 64); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(0.55, 'rgba(0,0,0,.7)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return cv; })());
   const blobG = new THREE.PlaneGeometry(2.9, 5.9); blobG.rotateX(-Math.PI / 2); blobG.translate(0, 0.028, 0);
   const blobs = new THREE.InstancedMesh(blobG, new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
-  function setTime(e) { pts.material.opacity = 0.35 + 0.65 * e.night; pools.visible = e.night > 0.05; pools.material.opacity = 0.4 * e.night; blobs.material.opacity = 0.55 + 0.35 * e.night; }
+  function setTime(e) {
+    pts.material.opacity = 0.06 + 0.94 * e.night;
+    pools.visible = e.night > 0.05; pools.material.opacity = 0.4 * e.night;
+    blobs.material.opacity = 0.55 + 0.35 * e.night;
+    for (const mat of headMaterials) mat.emissiveIntensity = 0.2 + 2.55 * e.night;
+    for (const mat of tailMaterials) mat.emissiveIntensity = 0.37 + 1.6 * e.night;
+  }
 
   const tmp = { x: 0, z: 0 }, v3 = new THREE.Vector3(), spinM = new THREE.Matrix4();
   function planFor(c, k) { // choose what to do at junction k (index along the car's travel axis)

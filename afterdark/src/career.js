@@ -51,7 +51,7 @@ const DISTRICT = (i, j) => i <= 1 ? 'Seafront' : j <= 1 ? 'Southside' : j >= 6 ?
 export function jobSpots(world, places) {
   const out = [];
   for (let i = 0; i < ROADS; i++) for (let j = 0; j < ROADS - 1; j++) { if ((i * 3 + j) % 2) continue; out.push({ x: i * P, z: (j + 0.5) * P, y: 0, name: DISTRICT(i, j), city: true }); out.push({ x: (j + 0.5) * P, z: i * P, y: 0, name: DISTRICT(j, i), city: true }); }
-  for (const pm of places.markers) { let s = pm.road; if (!s) { const r = world.nearRoad(pm.x, pm.z, 700); s = r && r.s; } if (s && !s.tunnel) out.push({ x: s.x, z: s.z, y: s.y, name: pm.name, city: false }); }
+  for (const pm of places.markers) { if (pm.arrival) { out.push({ ...pm.arrival, city: false }); continue; } let s = pm.road; if (!s) { const r = world.nearRoad(pm.x, pm.z, 700); s = r && r.s; } if (s && !s.tunnel) out.push({ x: s.x, z: s.z, y: s.y, name: pm.name, city: false }); }
   for (const rd of world.roads) for (const f of [0.22, 0.45, 0.6]) { const s = world.samples[Math.round(rd.from + (rd.to - rd.from) * f)]; if (s && !s.tunnel && !s.bridge) out.push({ x: s.x, z: s.z, y: s.y, name: rd.name === 'coast' ? 'Coast road lay-by' : 'Mountain road lay-by', city: false }); }
   return out;
 }
@@ -87,6 +87,17 @@ export function createBigMap(canvas, world, places) {
       ctx.fillStyle = 'rgba(26,30,44,.86)'; ctx.fillRect(X(SPAN + HALF + 4), Y(SPAN + HALF + 4), (SPAN + 2 * HALF + 8) * k, (SPAN + 2 * HALF + 8) * k);
       ctx.strokeStyle = 'rgba(205,216,240,.75)'; ctx.lineWidth = Math.max(1, 1.6 * u); ctx.beginPath(); for (let i = 0; i < ROADS; i++) { ctx.moveTo(X(i * P), Y(0)); ctx.lineTo(X(i * P), Y(SPAN)); ctx.moveTo(X(0), Y(i * P)); ctx.lineTo(X(SPAN), Y(i * P)); } ctx.stroke();
       for (const [col, lw] of [['rgba(10,12,18,.8)', 5.2], ['#ffd896', 2.6]]) { ctx.strokeStyle = col; ctx.lineWidth = lw * u; ctx.beginPath(); for (const rd of world.roads) for (let i = rd.from; i <= rd.to; i += 4) { const s = world.samples[i]; if (i === rd.from) ctx.moveTo(X(s.x), Y(s.z)); else ctx.lineTo(X(s.x), Y(s.z)); } ctx.stroke(); }
+      const airfield = world.places.find(p => p.key === 'airport');
+      if (airfield) {
+        ctx.strokeStyle = '#adb7bf'; ctx.lineWidth = Math.max(1, 1.7 * u);
+        ctx.beginPath();
+        ctx.moveTo(X(airfield.x), Y(airfield.road.z));
+        ctx.lineTo(X(airfield.x), Y(airfield.arrival.z));
+        const { v, length } = airfield.runway;
+        ctx.moveTo(X(airfield.x - length / 2), Y(airfield.z + v));
+        ctx.lineTo(X(airfield.x + length / 2), Y(airfield.z + v));
+        ctx.stroke();
+      }
       if (st.route) { ctx.strokeStyle = '#35ffe0'; ctx.lineWidth = 1.5 * u; ctx.setLineDash([5 * u, 5 * u]); ctx.beginPath(); ctx.moveTo(X(st.route.start.x), Y(st.route.start.z)); for (const c of st.route.cps) ctx.lineTo(X(c.x), Y(c.z)); ctx.stroke(); ctx.setLineDash([]); }
       ctx.font = `700 ${Math.round(12.5 * u)}px system-ui,-apple-system,Segoe UI,sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
       const label = (t, x, y, seen) => { ctx.lineWidth = 3.4 * u; ctx.strokeStyle = 'rgba(6,8,14,.85)'; ctx.strokeText(t, x, y); ctx.fillStyle = seen ? '#fff' : 'rgba(255,255,255,.62)'; ctx.fillText(t, x, y); };

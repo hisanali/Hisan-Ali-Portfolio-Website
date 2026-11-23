@@ -169,14 +169,15 @@ function buildingMaterial(timeU, litU) {
   vec3 adNw = normalize(vWN); float adWall = step(abs(adNw.y), 0.5);
   vec3 adTw = normalize(vec3(-adNw.z, 0.0, adNw.x) + vec3(1e-5, 0.0, 0.0));
   float adSi = vInfo.x, vSeed = adSi / 4096.0;
+  float adCoastal = step(2.5, vInfo.y);
   float adGlassT = step(vInfo.y, 0.5), adBrickT = step(0.5, vInfo.y) * step(vInfo.y, 1.5), adConcT = step(1.5, vInfo.y);
   float adU = dot(vWPos, adTw) + mod(adSi, 37.0), adV = vWPos.y;
   float adS2 = fract(vSeed * 13.7), adS3 = fract(vSeed * 29.3);
   float adGround = step(adV, 5.3);
   float adCw = mix(vInfo.z, 6.0, adGround), adCh = mix(vInfo.w, 5.2, adGround);
   vec2 adUV = vec2(adU / adCw, (adV - 0.1) / adCh); vec2 adCell = floor(adUV), adFr = fract(adUV);
-  float adFx = mix(adGlassT * 0.035 + adBrickT * (0.18 + 0.07 * adS3) + adConcT * 0.02, 0.03, adGround);
-  float adFy = mix(adGlassT * 0.25 + adBrickT * 0.27 + adConcT * 0.36, 0.09, adGround);
+  float adFx = mix(adGlassT * 0.035 + adBrickT * (0.18 + 0.07 * adS3) + mix(adConcT * 0.02, 0.12, adCoastal), 0.058, adGround);
+  float adFy = mix(adGlassT * 0.25 + adBrickT * 0.27 + adConcT * 0.36, mix(0.1, 0.21, step(0.5, adS2)), adGround);
   float adTop = mix(adGlassT * 0.03 + adBrickT * 0.13 + adConcT * 0.07, 0.24, adGround);
   float adWin = smoothstep(adFx, adFx + 0.012, adFr.x) * smoothstep(adFx, adFx + 0.012, 1.0 - adFr.x) * smoothstep(adFy, adFy + 0.012, adFr.y) * smoothstep(adTop, adTop + 0.012, 1.0 - adFr.y) * adWall;
   adWin *= mix(1.0, smoothstep(0.012, 0.02, abs(fract(adFr.x * 3.0 + 0.5) - 0.5)), adGround);
@@ -193,6 +194,11 @@ function buildingMaterial(timeU, litU) {
   // Concrete: cast panels with joints and rain streaks under the ribbon windows.
   float adJoint = 1.0 - 0.55 * max(1.0 - smoothstep(0.0, 0.012, abs(adFr.x - 0.5) - 0.488), 1.0 - smoothstep(0.0, 0.02, adFr.y));
   vec3 adConc = mix(vec3(0.1, 0.1, 0.098), vec3(0.17, 0.165, 0.155), adS2) * adGrime * adStreak * adJoint;
+  adConc *= mix(vec3(1.22, 1.17, 1.05), vec3(0.94, 1.03, 1.09), adS3);
+  vec3 adPlaster = mix(vec3(0.47, 0.40, 0.31), vec3(0.28, 0.38, 0.38), step(0.62, adS2)) * adGrime;
+  adPlaster *= 0.83 + 0.23 * adN(vec2(adU, adV) * 3.1);
+  adPlaster *= mix(0.69, 1.0, smoothstep(0.0, 0.12, adFr.y));
+  adConc = mix(adConc, adPlaster, adCoastal);
   // Curtain wall: dark spandrel glass between aluminium mullions.
   float adMull = 1.0 - smoothstep(0.0, 0.01, min(adFr.x, 1.0 - adFr.x) - 0.022);
   vec3 adCurt = mix(mix(vec3(0.05, 0.07, 0.095), vec3(0.09, 0.08, 0.07), step(0.6, adS3)), vec3(0.22, 0.23, 0.25), adMull);
@@ -245,8 +251,16 @@ function buildingMaterial(timeU, litU) {
   float adShut = adGround * adWin * (1.0 - adLit);
   float adWallR = mix(0.5, 0.9, adN(vec2(adU * 0.5, adV * 0.5) + adSi)) * adStreak;
   float adWallRough = adGlassT * mix(0.16, 0.4, adMull) + adBrickT * (adWallR + 0.1) + adConcT * adWallR;
-  float adWallMetal = adGlassT * mix(0.75, 1.0, adMull);`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(mix(0.85, adWallRough, adWall), mix(0.08, 0.6, adShut), adWin);')
+  float adWallMetal = adGlassT * mix(0.75, 1.0, adMull);
+  // The display sits back from the glass. Darken the sill and the upper corners of the room.
+  vec2 adEdge = min(adFr, 1.0 - adFr);
+  float adRecess = mix(0.44, 1.0, smoothstep(0.045, 0.25, min(adEdge.x, adEdge.y)));
+  float adFresnel = pow(1.0 - clamp(-dot(adVd, adNw), 0.0, 1.0), 3.0);
+  float adShopGlass = adGround * adWin * adLit;
+  vec3 adDisplay = mix(vec3(dot(adEmit, vec3(0.22, 0.7, 0.08))), adEmit, 0.44);
+  adEmit = mix(adEmit, adDisplay * adRecess * mix(0.3, 0.93, uLitK) * (1.0 - adFresnel * 0.58), adShopGlass);
+  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.018, 0.028, 0.035), vec3(0.07, 0.09, 0.11), adFresnel), adShopGlass);`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(mix(0.85, adWallRough, adWall), mix(mix(0.08, 0.22, adShopGlass), 0.6, adShut), adWin);')
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = mix(adWallMetal * adWall * (1.0 - adGround), mix(0.85, 0.5, adShut), adWin);')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += adEmit;');
   };
@@ -261,9 +275,11 @@ export function kitMaterial(src, litU) {
     sh.fragmentShader = `uniform float uLitK; varying vec3 vWPos; varying vec3 vWN;\n${GLSL_HASH}` + sh.fragmentShader
       .replace('#include <map_fragment>', `#include <map_fragment>
   float adLum = dot(diffuseColor.rgb, vec3(0.333)); vec3 adNw = normalize(vWN); vec3 adTw = normalize(vec3(-adNw.z, 0.0, adNw.x) + vec3(1e-5, 0.0, 0.0));
-  vec2 adCell = floor(vec2(dot(vWPos, adTw) / 3.3, vWPos.y / 2.95));
-  float adOn = step(adH(adCell), 0.36 * uLitK) * step(abs(adNw.y), 0.5) * step(6.0, vWPos.y);
-  vec3 adKitEmit = mix(vec3(1.0, 0.7, 0.38), vec3(0.75, 0.86, 1.0), step(0.78, adH(adCell + 7.0))) * smoothstep(0.36, 0.14, adLum) * adOn * 1.7;`)
+  vec2 adWindow = vec2(dot(vWPos, adTw) / 3.3, vWPos.y / 2.95);
+  vec2 adCell = floor(adWindow), adEdge = abs(fract(adWindow) - 0.5);
+  float adMask = (1.0 - smoothstep(0.23, 0.43, adEdge.x)) * (1.0 - smoothstep(0.24, 0.43, adEdge.y));
+  float adOn = step(adH(adCell), 0.27 * uLitK) * adMask * step(abs(adNw.y), 0.5) * step(6.0, vWPos.y);
+  vec3 adKitEmit = mix(vec3(1.0, 0.7, 0.38), vec3(0.75, 0.86, 1.0), step(0.78, adH(adCell + 7.0))) * (1.0 - smoothstep(0.12, 0.28, adLum)) * adOn * 1.1;`)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += adKitEmit;'); };
   return m;
 }
@@ -329,7 +345,7 @@ export async function buildCity(scene, refl, quality, renderer) {
 
   // ---- Sky and light: one sun that crosses the sky, setting over the sea, with an overcast neon night between ----
   const skyG = new THREE.Group(); scene.add(skyG); city.sky = skyG;
-  const sky = new Sky(); sky.scale.setScalar(16000); const su = sky.material.uniforms; su.turbidity.value = 5.5; su.rayleigh.value = 2.2; su.mieCoefficient.value = 0.008; su.mieDirectionalG.value = 0.86; skyG.add(sky);
+  const sky = new Sky(); sky.scale.setScalar(16000); const su = sky.material.uniforms; su.turbidity.value = 3.2; su.rayleigh.value = 2.2; su.mieCoefficient.value = 0.004; su.mieDirectionalG.value = 0.86; skyG.add(sky);
   const dome = new THREE.Mesh(new THREE.SphereGeometry(7500, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: { uA: { value: 0 } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `uniform float uA; varying vec3 vD;\n${GLSL_HASH} void main(){ float h = max(vD.y, 0.0); vec2 p = vD.xz / (h + 0.18);
@@ -343,21 +359,42 @@ export async function buildCity(scene, refl, quality, renderer) {
   const sg0 = new THREE.BufferGeometry(); sg0.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
   const stars = new THREE.Points(sg0, new THREE.PointsMaterial({ size: 1.7, sizeAttenuation: false, color: 0xdfe8ff, transparent: true, opacity: 0, depthWrite: false, fog: false })); stars.renderOrder = -6; stars.frustumCulled = false; skyG.add(stars);
   const moon = new THREE.Mesh(new THREE.CircleGeometry(190, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 1.5, 1.6), transparent: true, opacity: 0, depthWrite: false, fog: false })); moon.renderOrder = -6; skyG.add(moon);
-  const cloudU = { uTime: refl.uniforms.uTime, uCover: { value: 0.42 }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uLit: { value: new THREE.Color(2, 2, 2) }, uShade: { value: new THREE.Color(1, 1, 1) } };
+  let sunsetLoaded = false;
+  const sunsetSky = new THREE.TextureLoader().load('/afterdark/assets/qwantani-sunset.jpg', () => { sunsetLoaded = true; });
+  sunsetSky.colorSpace = THREE.SRGBColorSpace;
+  sunsetSky.wrapS = THREE.RepeatWrapping;
+  const cloudU = { uTime: refl.uniforms.uTime, uPhoto: { value: sunsetSky }, uPhotoK: { value: 0 }, uCover: { value: 0.48 }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uLit: { value: new THREE.Color(2, 2, 2) }, uShade: { value: new THREE.Color(1, 1, 1) } };
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(6800, 48, 20), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: cloudU,
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform float uTime, uCover; uniform vec3 uSun, uLit, uShade; varying vec3 vD;\n${GLSL_HASH} float adF(vec2 p){ return adN(p) * 0.5 + adN(p * 2.1 + 3.7) * 0.27 + adN(p * 4.3 + 9.1) * 0.15 + adN(p * 8.9 + 1.3) * 0.08; }
+    fragmentShader: `uniform float uTime, uCover, uPhotoK; uniform sampler2D uPhoto; uniform vec3 uSun, uLit, uShade; varying vec3 vD;\n${GLSL_HASH} float adF(vec2 p){ return adN(p) * 0.5 + adN(p * 2.1 + 3.7) * 0.27 + adN(p * 4.3 + 9.1) * 0.15 + adN(p * 8.9 + 1.3) * 0.08; }
       void main(){ vec3 d = normalize(vD); if (d.y < 0.0) discard; vec2 p = d.xz / (d.y + 0.17) * 1.35 + uTime * vec2(0.0055, 0.0028);
-        float n = adF(p) * 0.72 + adF(p * 0.37 + 5.0) * 0.28, e0 = 1.0 - uCover, a = smoothstep(e0, e0 + 0.22, n), dens = smoothstep(e0, e0 + 0.55, n);
-        vec3 c = mix(uLit, uShade, dens) + uLit * pow(max(dot(d, uSun), 0.0), 8.0) * 0.5 * (1.0 - dens);
-        gl_FragColor = vec4(c, a * smoothstep(0.0, 0.1, d.y)); }` }));
+        float n = adF(p * vec2(0.72, 1.25)) * 0.78 + adF(p * 0.36 + 5.0) * 0.22;
+        float edge = mix(0.61, 0.19, uCover);
+        float alpha = smoothstep(edge, edge + 0.2, n);
+        float density = smoothstep(edge + 0.02, edge + 0.35, n);
+        vec3 color = mix(uLit, uShade, density);
+        color += uLit * pow(max(dot(d, uSun), 0.0), 12.0) * 0.29 * (1.0 - density);
+        float photo = uPhotoK * smoothstep(0.0, 0.035, d.y);
+        if (photo > 0.01) {
+          float bearing = atan(d.z, d.x) - atan(uSun.z, uSun.x);
+          float elevation = asin(clamp(d.y, 0.0, 1.0));
+          vec2 uv = vec2(fract(0.603 + bearing / 6.283185), 0.5 + elevation / 3.141593);
+          vec3 photographed = texture2D(uPhoto, uv).rgb * 2.1;
+          color = mix(color, photographed, photo);
+          alpha = mix(alpha, 1.0, photo);
+        }
+        gl_FragColor = vec4(color, alpha * smoothstep(0.0, 0.13, d.y)); }` }));
   clouds.renderOrder = -4; clouds.frustumCulled = false; skyG.add(clouds);
   scene.fog = new THREE.FogExp2(0xe6bd9c, 0.00065);
   const hemi = new THREE.HemisphereLight(0xb9cdf2, 0xa08468, 3.4); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc08c, 5.6), sunDir = new THREE.Vector3(-0.8, 0.3, 0.3).normalize(), lightDir = sunDir.clone(); sun.castShadow = renderer.shadowMap.enabled;
   { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 150; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.bias = -0.0005; sm.normalBias = 0.9;
     scene.add(sun, sun.target); const step = (half * 2) / size * 8;
-    city.updateSun = p => { const x = Math.round(p.x / step) * step, z = Math.round(p.z / step) * step; sun.target.position.set(x, 0, z); sun.position.set(x + lightDir.x * 1200, Math.max(60, lightDir.y * 1200), z + lightDir.z * 1200); }; }
+    city.updateSun = (p, height = 0) => {
+      const x = Math.round(p.x / step) * step, y = Math.round(height / step) * step, z = Math.round(p.z / step) * step;
+      sun.target.position.set(x, y, z);
+      sun.position.set(x + lightDir.x * 1200, y + Math.max(60, lightDir.y * 1200), z + lightDir.z * 1200);
+    }; }
   const C = (a, b, t, out) => out.set(a).lerp(col.set(b), t), mix = (a, b, t) => a + (b - a) * t, sst = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   // hour: 0-24. Returns the factors everything else keys off.
   city.setTime = (hour, rainy = 1) => {
@@ -365,14 +402,16 @@ export async function buildCity(scene, refl, quality, renderer) {
     sunDir.set(Math.cos(h) * ce, Math.sin(er), 0.38 * ce).normalize(); su.sunPosition.value.copy(sunDir);
     const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: night * rainy, rain: sst(0.75, 1, night) * rainy };
     C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
-    lightDir.copy(sunDir); if (night > 0.5) lightDir.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize(); // after dark the same light stands in for the moon sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
-    C(0xb9cdf2, 0x33325a, night, hemi.color); C(0xa08468, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(3.4, 3.9, high), mix(0.95, 0.42, rainy), night);
-    C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(rainy > 0.5 ? 0x0e0b18 : 0x070b16), night); scene.fog.density = mix(mix(0.00034, 0.00024, high), mix(0.00045, 0.0017, rainy), night) + dawn * 0.0006 * (1 - night);
-    su.rayleigh.value = mix(2.2, 1.1, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night * mix(0.3, 1, rainy); dome.visible = night > 0.01;
+    lightDir.copy(sunDir); if (night > 0.5) lightDir.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize(); // The same light represents the moon at night.
+    sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
+    C(0xb9cdf2, 0x33325a, night, hemi.color); C(0x8d806e, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(2.7, 3.3, high), mix(0.95, 0.42, rainy), night);
+    C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(rainy > 0.5 ? 0x0e0b18 : 0x070b16), night); scene.fog.density = mix(mix(0.00054, 0.00034, high), mix(0.00045, 0.0017, rainy), night) + dawn * 0.0006 * (1 - night);
+    su.rayleigh.value = mix(2.65, 1.45, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night * mix(0.3, 1, rainy); dome.visible = night > 0.01;
     stars.material.opacity = night * (1 - rainy) * 0.9; stars.visible = stars.material.opacity > 0.02; moon.material.opacity = night * (1 - rainy); moon.visible = moon.material.opacity > 0.02;
     if (moon.visible) { moon.position.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize().multiplyScalar(6600); moon.lookAt(skyG.position); }
-    cloudU.uSun.value.copy(sunDir); cloudU.uCover.value = mix(0.4, 0.93, Math.max(e.wet, rainy * sst(0.3, 0.9, night)));
-    { const sunset = (1 - high) * day, k = 1 - night; cloudU.uLit.value.setRGB(mix(0.07, mix(2.1, 2.5, sunset), k), mix(0.07, mix(2.1, 1.5, sunset), k), mix(0.1, mix(2.15, 1.05, sunset), k)); cloudU.uShade.value.setRGB(mix(0.03, mix(1.15, 0.75, sunset), k), mix(0.03, mix(1.2, 0.62, sunset), k), mix(0.05, mix(1.32, 0.7, sunset), k)); if (rainy > 0.5 && night > 0.5) { cloudU.uLit.value.setRGB(0.1, 0.07, 0.12); cloudU.uShade.value.setRGB(0.05, 0.04, 0.07); } }
+    cloudU.uPhotoK.value = sunsetLoaded ? day * (1 - high * 0.9) * 0.82 : 0;
+    cloudU.uSun.value.copy(sunDir); cloudU.uCover.value = mix(0.32, 0.88, Math.max(e.wet, rainy * sst(0.3, 0.9, night)));
+    { const sunset = (1 - high) * day, k = 1 - night; cloudU.uLit.value.setRGB(mix(0.07, mix(1.55, 1.6, sunset), k), mix(0.07, mix(1.62, 1.0, sunset), k), mix(0.1, mix(1.75, 0.74, sunset), k)); cloudU.uShade.value.setRGB(mix(0.03, mix(1.15, 0.75, sunset), k), mix(0.03, mix(1.2, 0.62, sunset), k), mix(0.05, mix(1.32, 0.7, sunset), k)); if (rainy > 0.5 && night > 0.5) { cloudU.uLit.value.setRGB(0.1, 0.07, 0.12); cloudU.uShade.value.setRGB(0.05, 0.04, 0.07); } }
     refl.uniforms.uWet.value = mix(0.06, 1, e.wet); refl.uniforms.uLitK.value = mix(0.04, 1, night);
     for (const f of hooks) f(e, mix, C); return e;
   };
@@ -429,15 +468,18 @@ export async function buildCity(scene, refl, quality, renderer) {
       const lx = b.cx - lotSpan / 2 + (a + 0.5) * lot, lz = b.cz - lotSpan / 2 + (c + 0.5) * lot;
       const gap = 0.4 + R() * 2.2, w = lot - gap, d = lot - gap;
       const tall = R(); let h = 14 + tall * tall * (46 + 230 * central * central) + R() * 14; if (R() < 0.2) h = 10 + R() * 9; if (outer) h = Math.min(h, 22 + R() * 60);
-      const kp = kit.length && R() < (central > 0.72 ? 0.5 : 0.84) ? kit[Math.floor(R() * kit.length)] : null;
+      const seafront = b.i < 2 && (a + c + b.j) % 3 !== 0;
+      const kitRoll = R();
+      const kp = kit.length && kitRoll < (seafront ? 0.32 : central > 0.72 ? 0.5 : 0.84) ? kit[Math.floor(R() * kit.length)] : null;
+      if (seafront && !kp) h = Math.min(h, 29 + kitRoll * 21);
       const podium = kp ? 5.45 : h > 34 ? 8 + R() * 12 : h, sr = R();
-      const lowStyle = sr < 0.5 ? 1 : sr < 0.82 ? 2 : 0, base = addBox(lx, lz, w, podium, d, kp ? (sr < 0.6 ? 1 : 2) : lowStyle);
+      const lowStyle = sr < 0.5 ? 1 : sr < 0.82 ? 2 : 0, base = addBox(lx, lz, w, podium, d, seafront ? 3 : kp ? (sr < 0.6 ? 1 : 2) : lowStyle);
       let top = base, topY = podium;
       if (kp) { const turn = (kp.w > kp.d) !== (w > d) ? 1 : (R() < 0.5 ? 0 : 2), pw = turn === 1 ? kp.d : kp.w, pd = turn === 1 ? kp.w : kp.d;
         const fit = Math.min(1.25, Math.max(0.85, Math.min((w - 2.2) / pw, (d - 2.2) / pd))), wx = fit, wz = fit, sy = fit * (0.97 + R() * 0.12);
         kp.uses.push({ x: lx, y: podium + 0.1, z: lz, rot: turn * Math.PI / 2, sx: turn === 1 ? wz : wx, sy, sz: turn === 1 ? wx : wz }); topY = podium + kp.h * sy; }
       else if (h > 34) { const tw = w * (0.55 + R() * 0.35), td = d * (0.55 + R() * 0.35), ts = h > 90 ? (R() < 0.78 ? 0 : 2) : R() < 0.4 ? 0 : R() < 0.6 ? 2 : 1;
-        top = addBox(lx + (R() - 0.5) * (w - tw), lz + (R() - 0.5) * (d - td), tw, h, td, ts); topY = h;
+        top = addBox(lx + (R() - 0.5) * (w - tw), lz + (R() - 0.5) * (d - td), tw, h, td, seafront ? 3 : ts); topY = h;
         if (h > 110 && R() < 0.6) { top = addBox(top.x, top.z, top.w * 0.6, h + 14 + R() * 30, top.d * 0.6, ts); topY = top.h; } }
       const signTop = kp ? Math.min(topY, 30) : podium;
       const street = []; if (a === 0) street.push([-1, 0]); if (a === n - 1) street.push([1, 0]); if (c === 0) street.push([0, -1]); if (c === n - 1) street.push([0, 1]);
@@ -447,10 +489,20 @@ export async function buildCity(scene, refl, quality, renderer) {
         onFace(base, nx, nz, 0, 0.12, podium - 0.12, L + 0.75, 0.55, 0.5, STONE);
         onFace(base, nx, nz, 0, 0.1, 5.42, L + 0.3, 0.2, 0.36, STONE);
         if (base.style === 2) for (let j = Math.ceil(5.6 / base.ch); 0.1 + j * base.ch < podium - 0.9 && j < 9; j++) onFace(base, nx, nz, 0, 0.22, 0.1 + j * base.ch, L + 0.2, 0.14, 0.5, STONE); }
-      if (base.style === 1) for (const [nx, nz] of street) for (const cell of cellsOn(base, nx, nz, base.cw)) { if (cell.k % 2) continue;
-        for (let j = Math.ceil(5.4 / base.ch); (j + 1) * base.ch + 0.1 < podium - 0.6 && j < 9; j++) { const y0 = 0.1 + j * base.ch; onFace(base, nx, nz, cell.t, 0.55, y0 + 0.08, base.cw * 0.84, 0.12, 1.1, STONE); onFace(base, nx, nz, cell.t, 1.08, y0 + 0.62, base.cw * 0.84, 0.95, 0.045, METAL); } }
+      if (base.style === 1 || base.style === 3) for (const [nx, nz] of street) for (const cell of cellsOn(base, nx, nz, base.cw)) { if (cell.k % 2) continue;
+        for (let j = Math.ceil(5.4 / base.ch); (j + 1) * base.ch + 0.1 < podium - 0.6 && j < 9; j++) { const y0 = 0.1 + j * base.ch; onFace(base, nx, nz, cell.t, 0.55, y0 + 0.08, base.cw * 0.84, 0.12, 1.1, STONE); onFace(base, nx, nz, cell.t, 1.08, y0 + 0.62, base.cw * 0.84, 0.95, 0.045, seafront ? 0x678888 : METAL); } }
       // Awnings over some shop fronts.
-      for (const [nx, nz] of street) for (const cell of cellsOn(base, nx, nz, 6)) if (R() < 0.34) onFace(base, nx, nz, cell.t, 0.78, 3.98, 5.3, 0.07, 1.6, AWN[Math.floor(R() * AWN.length)], 0.3);
+      for (const [nx, nz] of street) for (const cell of cellsOn(base, nx, nz, 6)) if (R() < 0.34) onFace(base, nx, nz, cell.t, 0.78, 3.98, 5.3, 0.13, 1.75, AWN[Math.floor(R() * AWN.length)], 0.3);
+      // Door frames, sills and fabric valances cast real shadows across the ground floor.
+      for (const [nx, nz] of street) for (const cell of cellsOn(base, nx, nz, 6)) {
+        const tone = (cell.k + base.seed) % 5 === 0 ? 0xb4a69a : 0x353c40;
+        for (const e of [-2.58, 2.58]) onFace(base, nx, nz, cell.t + e, 0.07, 2.35, 0.15, 3.72, 0.16, tone);
+        onFace(base, nx, nz, cell.t, 0.1, 0.57, 5.24, 0.16, 0.26, tone);
+        if ((cell.k + base.seed) % 4 === 0) {
+          onFace(base, nx, nz, cell.t + 1.48, 0.13, 1.26, 0.05, 0.28, 0.08, 0x9a8c7c);
+          onFace(base, nx, nz, cell.t, 0.07, 3.94, 5.32, 0.14, 0.16, tone);
+        }
+      }
       // Tower corners, roof plant and masts.
       if (top !== base && top.style === 0) for (const sx of [-1, 1]) for (const sz of [-1, 1]) trim.push({ x: top.x + sx * (top.w / 2 + 0.06), y: (podium + topY) / 2, z: top.z + sz * (top.d / 2 + 0.06), sx: 0.34, sy: topY - podium, sz: 0.34, yaw: 0, tilt: 0, c: ALU });
       if (top !== base) for (const [nx, nz] of FACES) onFace(top, nx, nz, 0, 0.08, topY - 0.3, faceLen(top, nx) + 0.5, 0.9, 0.4, top.style === 0 ? ALU : STONE);

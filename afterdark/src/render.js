@@ -34,15 +34,15 @@ const Film = {
     vec2 d = vUv - uCenter; float r2 = dot(d, d);
     float blur = uSpeed * smoothstep(0.02, 0.45, r2) * 0.06;
     vec3 col = vec3(0.0); float j = h(vUv * 913.0 + uTime) - 0.5;
-    for (int i = 0; i < 6; i++) { float t = (float(i) + j) / 6.0; vec2 uv = vUv - d * blur * t; float ca = (0.0006 + 0.002 * uSpeed) * r2 * 2.0;
+    for (int i = 0; i < 6; i++) { float t = (float(i) + j) / 6.0; vec2 uv = vUv - d * blur * t; float ca = (0.0002 + 0.0012 * uSpeed) * r2 * 2.0;
       col += vec3(texture2D(tDiffuse, uv + d * ca).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - d * ca).b); }
     col /= 6.0;
     float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
-    col = mix(vec3(l), col, 1.08);
+    col = mix(vec3(l), col, 1.03);
     col = mix(col * vec3(0.94, 1.0, 1.08), col * vec3(1.06, 1.0, 0.95), smoothstep(0.15, 0.75, l));
     col = (col - 0.5) * 1.06 + 0.5;
-    col *= 1.0 - 0.55 * smoothstep(0.2, 1.0, r2 * 2.4);
-    col += (h(vUv * 1400.0 + uTime * 3.1) - 0.5) * 0.03;
+    col *= 1.0 - 0.28 * smoothstep(0.2, 1.0, r2 * 2.4);
+    col += (h(vUv * 1400.0 + uTime * 3.1) - 0.5) * 0.009;
     col += uFlash * vec3(1.0, 0.85, 0.7);
     gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0); }`
 };

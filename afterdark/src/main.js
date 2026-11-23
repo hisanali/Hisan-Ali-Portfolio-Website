@@ -209,13 +209,17 @@ function drawGarage() {
 
 // ---------- Full map (M): tap a road in Free Roam to set a waypoint ----------
 function drawBig() { bigmap?.draw({ px: player.pos.x, pz: player.pos.z, heading: player.heading, seen, t: S.time, target: beacon.visible ? beacon.position : null, targetName: A.label, route: S.kind === 'trial' ? A.route : null }); }
-function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road to set a waypoint' : A.label; drawBig(); }
+function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road or place to set a waypoint' : A.label; drawBig(); }
 function closeMap() { if (S.mode !== 'map') return; S.mode = 'play'; show(null); }
 $('#bigmap-canvas').addEventListener('click', e => { if (S.mode !== 'map') return; const r = e.currentTarget.getBoundingClientRect(), w = bigmap.toWorld(e.clientX - r.left, e.clientY - r.top); if (!w) return;
   if (S.kind !== 'free') { toast('Waypoints are for Free Roam'); return; } let t = null;
   if (inCity(w.x, w.z) && w.x >= -HALF) { const rx = clamp(Math.round(w.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(w.z / P), 0, ROADS - 1) * P; t = Math.abs(w.x - rx) < Math.abs(w.z - rz) ? { x: rx, z: clamp(w.z, 0, SPAN), y: 0 } : { x: clamp(w.x, 0, SPAN), z: rz, y: 0 }; }
-  else { const n = world.nearRoad(w.x, w.z, 340); if (n && !n.s.tunnel) t = { x: n.s.x, z: n.s.z, y: n.s.y }; }
-  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, 'Waypoint'); $('#map-note').textContent = 'Waypoint set · tap again to move it'; drawBig(); });
+  else {
+    const destination = world.places.find(p => p.arrival && (p.contains ? p.contains(w.x, w.z) : Math.hypot(w.x - p.x, w.z - p.z) < p.r));
+    if (destination) t = destination.arrival;
+    else { const n = world.nearRoad(w.x, w.z, 340); if (n && !n.s.tunnel) t = { x: n.s.x, z: n.s.z, y: n.s.y }; }
+  }
+  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, t.name || 'Waypoint'); $('#map-note').textContent = 'Waypoint set · tap again to move it'; drawBig(); });
 
 // ---------- Photo mode (O) ----------
 let shot = false;
@@ -328,7 +332,7 @@ function stepTime(dt, running) {
   env = city.setTime(hour, rainyK); world.setTime(env); street.setTime(env); player.setTime(env); traffic.setTime(env); places.setTime(env);
   scene.environmentIntensity = 1.5 - 0.9 * env.night; rain.visible = env.rain > 0.03; rain.material.opacity = 0.17 * env.rain;
   R.refl.active = env.wet > 0.2; R.refl.uniforms.uReflOn.value = R.refl.on ? Math.min(1, Math.max(0, (env.wet - 0.2) / 0.4)) : 0;
-  R.bloom.strength = 0.22 + 0.26 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
+  R.bloom.strength = 0.22 + 0.19 * env.night; R.bloom.threshold = 1.05 - 0.05 * env.night;
   let dh = Math.abs(hour - envHour); dh = Math.min(dh, 24 - dh); if (dh > (env.day > 0.05 && env.day < 0.95 ? 0.3 : 0.9)) captureEnv();
 }
 addEventListener('keydown', e => { if (e.key.toLowerCase() === 't' && S.mode === 'play') { hour = (hour + 2) % 24; toast(`Time ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`); } });
@@ -404,7 +408,7 @@ function frame() {
     placeLampLights(player.pos);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
-  city.sky.position.copy(camera.position); city.updateSun(player.pos); city.cull(camera.position);
+  city.sky.position.copy(camera.position); city.updateSun(player.pos, player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
   if (audio) { const ev = audio.update(dt, { playing: playing || replaying, speed: player.speed, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: player.pos.x, z: player.pos.z, heading: player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
@@ -418,7 +422,7 @@ async function boot() {
   city = await buildCity(scene, R.refl, Q, renderer);
   setLoad('Raising the mountains'); await nextFrame();
   world = city.world = await buildWorld(scene, city, Q);
-  setLoad('Building the harbour and villages'); await nextFrame();
+  setLoad('Building the coast and airfield'); await nextFrame();
   places = await buildPlaces(scene, city, world, Q);
   { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
     drops.pts = new THREE.Points(drops.geo, new THREE.PointsMaterial({ size: drops.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));

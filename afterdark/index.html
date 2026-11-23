@@ -6,24 +6,23 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Afterdark — Free-Roam City Driving Game | Hisan Ali</title>
-  <meta name="description" content="An open-world driving game in your browser: a coastal city, a coast road and a mountain pass, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to buy and upgrade, photo mode and replays.">
+  <meta name="description" content="An open-world driving game in your browser: a coastal city, a coast road, mountain pass and regional airfield, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to buy and upgrade, photo mode and replays.">
   <link rel="canonical" href="https://hisanali.com/afterdark/">
   <meta name="theme-color" content="#06060b">
   <meta name="robots" content="index, follow">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://hisanali.com/afterdark/">
   <meta property="og:title" content="Afterdark — Free-Roam City Driving Game">
-  <meta property="og:description" content="An open-world driving game in your browser: a coastal city, a coast road and a mountain pass, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to buy and upgrade, photo mode and replays.">
+  <meta property="og:description" content="An open-world driving game in your browser: a coastal city, a coast road, mountain pass and regional airfield, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to buy and upgrade, photo mode and replays.">
   <meta property="og:image" content="https://hisanali.com/games/thumbs/afterdark.webp">
   <meta property="og:site_name" content="Hisan Ali - Digital Marketing Expert">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.png">
   <link rel="modulepreload" href="/evermile/vendor/three.module.js">
   <link rel="stylesheet" href="style.css?v=10">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Afterdark","url":"https://hisanali.com/afterdark/","description":"An open-world driving game in your browser: a coastal city, a coast road and a mountain pass, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to buy and upgrade, photo mode and replays.","genre":["Driving","Open world"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/about/"},"image":"https://hisanali.com/games/thumbs/afterdark.webp"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Afterdark","url":"https://hisanali.com/afterdark/","description":"An open-world driving game in your browser: a coastal city, a coast road, mountain pass and regional airfield, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to buy and upgrade, photo mode and replays.","genre":["Driving","Open world"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/about/"},"image":"https://hisanali.com/games/thumbs/afterdark.webp"}</script>
 </head>
-<body data-mode="boot"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
-<canvas id="scene" aria-label="Afterdark driving game"></canvas>
+<body data-mode="boot"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) --><canvas id="scene" aria-label="Afterdark driving game"></canvas>
 <div id="loading"><div class="ld-mark">AFTERDARK</div><div class="ld-bar"><i></i></div><p id="load-msg">Starting the engine</p></div>
 
 <header class="top">
@@ -54,7 +53,7 @@
   <div class="card">
     <p class="eyebrow">Open-world driving</p>
     <h1>AFTER<em>DARK</em></h1>
-    <p class="lede">A coastal city that runs from daylight through sunset into a rainy neon night, a coast road, a mountain pass, and a garage to fill. Race the clock, take fares, or just drive.</p>
+    <p class="lede">A coastal city that runs from daylight through sunset into a rainy neon night, a coast road, a mountain pass, a regional airfield, and a garage to fill. Race the clock, take fares, or just drive.</p>
     <div class="field"><span>Mode</span><div class="seg" id="seg-mode"></div></div>
     <div class="field" id="field-sub" hidden><span id="sub-label">Route</span><div class="seg" id="seg-sub"></div></div>
     <p class="note" id="mode-note"></p>
@@ -72,7 +71,7 @@
 <section class="panel" id="bigmap" hidden aria-label="Map"><div class="map-head"><b id="map-note">Map</b><button class="secondary" id="map-close" type="button">Close</button></div><canvas id="bigmap-canvas"></canvas></section>
 <div class="bar" id="photo-bar"><button type="button" id="photo-out" aria-label="Zoom out">−</button><button type="button" id="photo-in" aria-label="Zoom in">+</button><button type="button" id="photo-save" class="main">Save photo</button><button type="button" id="photo-back">Back</button></div>
 <div class="bar" id="replay-bar"><span>Replay</span><button type="button" id="replay-stop">Stop</button></div>
-<p class="credit">Sports coupé model by vicent091036 via three.js. Traffic: Generic Passenger Car Pack by Comrade1280 (CC BY 4.0). Asphalt: Poly Haven (CC0). Buildings and people: see Evermile asset credits. Ambient recordings via the Moodist project.</p>
-<script type="module" src="src/main.js?v=12"></script>
+<p class="credit">Sports coupé model by vicent091036 via three.js. Traffic: Generic Passenger Car Pack by Comrade1280 (CC BY 4.0). Asphalt, <a href="https://polyhaven.com/a/rocky_terrain">Rocky Terrain</a>, <a href="https://polyhaven.com/a/rock_face">Rock Face</a> and <a href="https://polyhaven.com/a/qwantani_sunset_puresky">Qwantani Sunset</a>: Poly Haven (CC0). Fuel station by <a href="https://elbolilloduro.itch.io/gas-station">Elbolilloduro</a>. Buildings, people and vehicles: <a href="https://github.com/hisanali/Hisan-Ali-Portfolio-Website/blob/main/evermile/ASSET-CREDITS.md">Evermile asset credits</a>. Ambient recordings via the Moodist project.</p>
+<script type="module" src="src/main.js?v=13"></script>
 </body>
 </html>

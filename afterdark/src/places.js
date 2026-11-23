@@ -3,6 +3,7 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 import { rng, splitChunks, kitMaterial } from './city.js';
 import { loadGLB } from './car.js';
+import { buildAirfield, buildFuelStation } from './landmarks.js';
 
 export async function buildPlaces(scene, city, world, Q) {
   const R = rng(3131), dummy = new THREE.Object3D(), col = new THREE.Color(), out = { markers: [], update: () => {}, setTime: () => {} };
@@ -39,12 +40,10 @@ export async function buildPlaces(scene, city, world, Q) {
     for (const s of [0, Math.PI]) { const g = new THREE.ConeGeometry(11, 170, 20, 1, true); g.translate(0, -85, 0); g.rotateX(-Math.PI / 2 + 0.02); const m = new THREE.Mesh(g, bm); m.rotation.y = s; m.frustumCulled = false; lamp.add(m); }
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 3.6, 2.6) })); lamp.add(bulb); scene.add(lamp); lamp.userData.mat = bm; out.markers.push(pl); }
 
-  // ---- Fuel station ----
-  { const pl = place('petrol'), y = pl.y, yaw = pl.yaw; const [cx, cz] = at(pl, 0, -8); box(cx, y + 5.4, cz, 20, 0.6, 11, yaw, 0xf2f2f2, false); glow(cx, y + 5.05, cz, 18, 0.08, 9, yaw, 0xfff6e0, 1.3); glow(cx + pl.vx * -5.6, y + 5.4, cz + pl.vz * -5.6, 20, 0.62, 0.1, yaw, 0xe2231a, 1.6);
-    for (const u of [-7, 7]) for (const v of [-11.5, -4.5]) { const [x, z] = at(pl, u, v); cyl(x, y + 2.6, z, 0.22, 5.2, 0xd8d8d8, 0.22); }
-    for (const u of [-5, 0, 5]) { const [x, z] = at(pl, u, -8); box(x, y + 0.9, z, 0.7, 1.8, 0.5, yaw, 0xc8201a); glow(x, y + 1.55, z + 0, 0.5, 0.3, 0.52, yaw, 0xbfe6ff, 1.5); }
-    const [sx, sz] = at(pl, 0, 9); box(sx, y + 2.1, sz, 16, 4.2, 8, yaw, 0xe8e6e0); glow(sx - pl.vx * 4.05, y + 1.9, sz - pl.vz * 4.05, 12, 2.2, 0.1, yaw, 0xfff0c8, 1.2); box(sx, y + 4.5, sz, 16.6, 0.6, 8.6, yaw, 0xe2231a, false);
-    const [tx, tz] = at(pl, 16, -20); cyl(tx, y + 4.5, tz, 0.3, 9, 0x30343a, 0.3); glow(tx, y + 8.2, tz, 3.4, 2.4, 0.3, yaw, 0xfff0c8, 1.8); out.markers.push(pl); }
+  const fuel = place('petrol'), airfield = place('airport');
+  const fuelTime = await buildFuelStation(scene, city, world, fuel);
+  const airfieldTime = buildAirfield(scene, city, world, airfield);
+  out.markers.push(fuel, airfield);
 
   // ---- Stadium: a bowl of stands round a pitch, with floodlight masts ----
   { const pl = place('stadium'), y = pl.y, A = 74, B = 56, N = 30; for (let k = 0; k < N; k++) { const a = k / N * Math.PI * 2, ex = Math.cos(a) * A, ez = Math.sin(a) * B, [x, z] = at(pl, ex, ez), tang = Math.atan2(-Math.sin(a) * A * pl.ux + Math.cos(a) * B * pl.vx, -Math.sin(a) * A * pl.uz + Math.cos(a) * B * pl.vz);
@@ -79,7 +78,7 @@ export async function buildPlaces(scene, city, world, Q) {
   dummy.scale.set(1, 1, 1); dummy.rotation.set(0, 0, 0);
   // red aircraft-warning lights on tall structures
   const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(beams.flat(), 3)); const warn = new THREE.Points(bg, new THREE.PointsMaterial({ size: 7, map: city.dot, color: new THREE.Color(3, 0.15, 0.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); warn.frustumCulled = false; scene.add(warn);
-  out.setTime = e => { gM.color.setScalar(0.35 + 0.65 * e.night); if (lamp) { lamp.userData.mat.uniforms.uK.value = e.night; lamp.children[0].visible = lamp.children[1].visible = e.night > 0.05; } };
+  out.setTime = e => { fuelTime(e); airfieldTime(e); gM.color.setScalar(0.35 + 0.65 * e.night); if (lamp) { lamp.userData.mat.uniforms.uK.value = e.night; lamp.children[0].visible = lamp.children[1].visible = e.night > 0.05; } };
   out.update = t => { if (lamp) lamp.rotation.y = t * 0.55; warn.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.4)); };
   out.stats = { boxes: boxes.length, cylinders: cyls.length, lights: glows.length, houses: out.houses, places: out.markers.map(m => m.name) };
   return out;
