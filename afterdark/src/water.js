@@ -4,6 +4,12 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 
 export const SEA_LEVEL = -0.62;
+// Two tides per twelve-minute game day. Keep high water below the promenade.
+const tidePeriod = 360;
+export function beachHeight(distance, z) {
+  const width = 92 + 5 * Math.sin(z * .027) + 3 * Math.sin(z * .074);
+  return .17 - 1.5 * Math.min(1, Math.max(0, distance / width)) ** 2;
+}
 const NW = 20, NV = 12, G = 9.81, DEPTH = 64;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -26,8 +32,8 @@ const WAVES = `uniform vec4 oWA[${NW}]; uniform vec4 oWB[${NW}]; uniform float o
 uniform sampler2D oDepth; uniform vec4 oDepthB; uniform vec3 oBeach;
 vec2 oDepthAt(vec2 p) { vec2 t = (p - oDepthB.xy) * oDepthB.zw; vec2 d = vec2(1.0); if (all(greaterThanEqual(t, vec2(0.0))) && all(lessThanEqual(t, vec2(1.0)))) d = texture2D(oDepth, t).rg;
   d.x *= ${DEPTH.toFixed(1)};
-  if (p.y > oBeach.y && p.y < oBeach.z && p.x > oBeach.x - 124.0) { float b = clamp((oBeach.x - p.x) / 92.0, 0.0, 1.0); d.x = min(d.x, max(0.0, 1.5 * b * b - 0.79)); }
-  return d; }
+  if (p.y > oBeach.y && p.y < oBeach.z && p.x > oBeach.x - 124.0) { float b = clamp((oBeach.x - p.x) / (92.0 + 5.0*sin(p.y*.027) + 3.0*sin(p.y*.074)), 0.0, 1.0); d.x = min(d.x, 1.5 * b * b - 0.79); }
+  d.x = max(0.0, d.x + oLevel + 0.62); return d; }
 float oAmp(vec2 d) { return smoothstep(0.3, 16.0, d.x) * mix(0.22, 1.0, d.y); }
 `;
 
@@ -73,7 +79,7 @@ float oNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
   vec3 ft = texture2D(oFoam, oRest * 0.055).rgb, ft2 = texture2D(oFoam, oRest * 0.19 + 0.37).rgb; float lace = ft.r * 0.7 + ft2.r * 0.5;
   float cap = smoothstep(0.62 - wind * 0.22, 0.98, oCrest + (ft.g - 0.5) * 0.22) * oAmp(d);
   float n = oNoise(oRest * 0.25 + oTime * 0.1), bandS = sin(depth * 1.9 - oTime * 1.15 + n * 4.0) * 0.5 + 0.5;
-  float shore = smoothstep(2.8, 0.0, depth) * (0.35 + 0.65 * bandS) * 0.75 + smoothstep(0.35, 0.0, depth);
+  float shore = (1.0 - smoothstep(0.0, 2.8, depth)) * (0.35 + 0.65 * bandS) * 0.75 + (1.0 - smoothstep(0.0, 0.35, depth)) * lace * 0.45;
   // the town beach keeps its breaking lines
   float warp = (oNoise(oRest * vec2(0.15, 0.085) + vec2(-oTime * 0.14, 0.0)) - 0.5) * 3.4 + sin(oRest.y * 0.31 + oTime * 0.59) * 0.39;
   float pulse = cos(clamp(depth, 0.0, 3.0) * 43.5 + oTime * (1.45 + 0.5 * oWeather) + warp), surf = 1.0 - smoothstep(0.06, 1.1, depth);
@@ -114,12 +120,12 @@ float oNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
   for (let j = 0; j < RINGS; j++) for (let i = 0; i < SEG; i++) { const a = j * (SEG + 1) + i, b = a + 1, c = a + SEG + 1, d = c + 1; idx.push(a, b, c, b, d, c); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(pos.length).fill(0).map((v, i) => i % 3 === 1 ? 1 : 0), 3)); g.setIndex(idx);
   const sea = new THREE.Mesh(g, material); sea.name = 'Ocean'; sea.frustumCulled = false; sea.receiveShadow = true;
-  sea.onBeforeRender = (renderer, sc, camera) => { const s = 8; U.oCenter.value.set(Math.round(camera.position.x / s) * s, Math.round(camera.position.z / s) * s); };
+  sea.onBeforeRender = (renderer, sc, camera) => { U.oCenter.value.set(camera.position.x, camera.position.z); };
   scene.add(sea);
   let sun = null, depthCPU = null;
   const tmp = new THREE.Vector3();
   const api = {
-    mesh: sea, level: SEA_LEVEL, waves,
+    mesh: sea, level: SEA_LEVEL, waterLevel: U.oLevel, waves,
     // Bathymetry over the whole map: depth below the sea and how open the water is (fjords are sheltered).
     setTerrain(bounds, heightAt, sheltered) {
       const cell = 16, w = Math.ceil((bounds.x1 - bounds.x0) / cell) + 1, h = Math.ceil((bounds.z1 - bounds.z0) / cell) + 1, data = new Uint8Array(w * h * 2);
@@ -131,10 +137,10 @@ float oNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
     // Water depth and openness at a point (CPU twin of the shader lookup).
     depthAt(x, z) { if (!depthCPU) return [DEPTH, 1]; const { data, w, h, cell, bounds } = depthCPU, i = Math.round((x - bounds.x0) / cell), j = Math.round((z - bounds.z0) / cell); if (i < 0 || j < 0 || i >= w || j >= h) return [DEPTH, 1]; const k = (j * w + i) * 2; return [data[k] / 255 * DEPTH, data[k + 1] / 255]; },
     // Surface height and slope at a point for floating things (large waves only, as in the vertex shader).
-    heightAt(x, z, out = {}) { const [dep, open] = api.depthAt(x, z), ak = smooth(0.3, 16, dep) * (0.22 + 0.78 * open) * (1 + 0.35 * U.oWeather.value), t = U.oTime.value; let y = SEA_LEVEL, gx = 0, gz = 0;
+    heightAt(x, z, out = {}) { const [dep, open] = api.depthAt(x, z), ak = smooth(0.3, 16, dep) * (0.22 + 0.78 * open) * (1 + 0.35 * U.oWeather.value), t = U.oTime.value; let y = U.oLevel.value, gx = 0, gz = 0;
       for (let i = 0; i < NV; i++) { const W = waves[i], ph = W.k * (W.dx * x + W.dz * z) - W.omega * t + W.phase, a = W.amp * ak; y += a * Math.cos(ph); gx -= a * W.k * W.dx * Math.sin(ph); gz -= a * W.k * W.dz * Math.sin(ph); }
       out.y = y; out.gx = gx; out.gz = gz; return out; },
-    update(t) { U.oTime.value = t; sun ||= scene.children.find(o => o.isDirectionalLight); if (sun) { tmp.copy(sun.position).sub(sun.target.position).normalize(); U.oSunDir.value.copy(tmp); U.oSunCol.value.copy(sun.color).multiplyScalar(sun.intensity / 5.6); } },
+    update(t) { U.oTime.value = t; U.oLevel.value = SEA_LEVEL - .075 + .30 * Math.sin(t * 2 * Math.PI / tidePeriod); sun ||= scene.children.find(o => o.isDirectionalLight); if (sun) { tmp.copy(sun.position).sub(sun.target.position).normalize(); U.oSunDir.value.copy(tmp); U.oSunCol.value.copy(sun.color).multiplyScalar(sun.intensity / 5.6); } },
     setTime(env) {
       U.oNight.value = env.night; U.oWeather.value = env.rain;
       const w = 0.3 + env.rain * 0.55; if (Math.abs(w - wind) > 0.01) { wind = w; setAmps(wind); }
@@ -145,12 +151,13 @@ float oNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
 }
 
 /** Match the darker saturated sand to the lowest part of the beach profile. */
-export function wetSand(material) {
+export function wetSand(material, level) {
   material.onBeforeCompile = shader => {
-    shader.vertexShader = 'varying vec2 beachPos;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nbeachPos = position.xz;');
-    shader.fragmentShader = 'varying vec2 beachPos;\n' + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-  float breakLine = -13.8 + sin(beachPos.y * 0.31) * 0.8 + sin(beachPos.y * 0.071) * 1.2;
-  float soaked = 1.0 - smoothstep(-3.5, 6.8, beachPos.x - breakLine);
+    shader.uniforms.uTide = level;
+    shader.vertexShader = 'varying vec3 beachPos;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nbeachPos = position;');
+    shader.fragmentShader = 'uniform float uTide; varying vec3 beachPos;\n' + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  float edge = beachPos.y - uTide + .035*sin(beachPos.z*.43);
+  float soaked = 1.0 - smoothstep(-.04, .34, edge);
   diffuseColor.rgb *= mix(vec3(1.0), vec3(0.53, 0.57, 0.61), soaked);
 `).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.93, 0.70, soaked);');
   };

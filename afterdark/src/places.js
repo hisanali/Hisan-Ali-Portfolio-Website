@@ -26,8 +26,7 @@ export async function buildPlaces(scene, city, world, Q) {
     for (let k = 0; k < 3; k++) { const [x, z] = at(pl, 52 - k * 2, -58 + k * 17); cyl(x, y + 5.5, z, 7.5, 11, 0xe7e9ea); }
     for (const k of [0, 1]) { const [x, z] = at(pl, -64 + k * 8, -56); cyl(x, y + 20, z, 1.5, 40, 0x9a8f88, 1.0); beams.push([x, y + 40.5, z]); }
     // pier and boats
-    const [px, pz] = at(pl, -8, pl.r + 44); box(px, y - 0.25, pz, 7, 0.5, 96, yaw, 0x6b5642, false); for (let k = 0; k < 9; k++) for (const e of [-3, 3]) { const [qx, qz] = at(pl, -8 + e, pl.r + 2 + k * 11); cyl(qx, y - 3, qz, 0.28, 6, 0x3d3127, 0.28, false); }
-    for (let k = 0; k < 8; k++) { const side = k % 2 ? 1 : -1, [bx, bz] = at(pl, -8 + side * 9, pl.r + 14 + Math.floor(k / 2) * 21), L = 9 + R() * 5; box(bx, -0.1, bz, 3.2, 1.3, L, yaw, [0xf2f2f0, 0x1f3a5f, 0xf2f2f0, 0x7a1f24][k % 4], false); box(bx, 1.1, bz - pl.vz * 0 + 0, 2.3, 1.3, L * 0.38, yaw, 0xfafafa, false); cyl(bx, 4.2, bz, 0.07, 7, 0xd8d8d8, 0.05, false); }
+    // the pier and the boats moored along it are photo-scanned models streamed in by props.js
     for (let k = 0; k < 6; k++) { const [x, z] = at(pl, -60 + k * 24, -4); cyl(x, y + 4.5, z, 0.12, 9, 0x24272c, 0.09); glow(x, y + 9, z, 1.2, 0.12, 0.5, yaw, 0xffd6a0, 4); }
     // working detail: roller doors, roof ribs and downpipes on the sheds; bracing, cabs and ladders on the cranes;
     // banded tanks

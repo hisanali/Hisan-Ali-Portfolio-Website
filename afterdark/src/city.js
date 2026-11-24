@@ -4,7 +4,8 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
 import { loadGLB } from './car.js';
-import { buildSea, wetSand } from './water.js';
+import { buildSea, wetSand, beachHeight } from './water.js';
+import { Q as QUALITY_PRESET } from './render.js';
 
 export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
 export function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -16,8 +17,32 @@ const GLSL_HASH = 'float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q +=
 // off screen (or out of the sun's shadow box) are skipped, and chunks beyond maxDist are hidden outright.
 // The original mesh stays as an empty parent, so code that toggles it or shares its material keeps working.
 export const CHUNK = 320;
+// Distance fade: a chunk is only hidden once it is beyond its draw distance, so its material dissolves away (a fine
+// screen-space dither) over the last stretch before that. Nothing pops in or out as the car moves.
+function fadeWithDistance(material, far) {
+  if (!material || Array.isArray(material)) return;
+  const u = material.userData; far *= QUALITY_PRESET.reach || 1;
+  if (u.fade) { u.fade.value.x = Math.min(u.fade.value.x, far); u.fade.value.y = Math.max(40, u.fade.value.x * 0.22); return; }
+  u.fade = { value: new THREE.Vector2(far, Math.max(40, far * 0.22)) };
+  const prev = material.onBeforeCompile, prevKey = material.customProgramCacheKey?.bind(material);
+  material.onBeforeCompile = (sh, r) => {
+    prev?.call(material, sh, r);
+    sh.uniforms.fdFar = u.fade;
+    sh.vertexShader = 'varying vec3 fdW;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+  { vec4 fdP = vec4(transformed, 1.0);
+  #ifdef USE_INSTANCING
+    fdP = instanceMatrix * fdP;
+  #endif
+    fdW = (modelMatrix * fdP).xyz; }`);
+    sh.fragmentShader = 'uniform vec2 fdFar; varying vec3 fdW;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+  { float fdK = smoothstep(fdFar.x - fdFar.y, fdFar.x, distance(fdW, cameraPosition));
+    if (fdK > 0.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < fdK) discard; }`);
+  };
+  material.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|fade';
+}
 export function splitChunks(mesh, maxDist, list, size = CHUNK) {
   const n = mesh.count, m4 = new THREE.Matrix4(), groups = new Map(), c = new THREE.Color();
+  if (list && isFinite(maxDist)) fadeWithDistance(mesh.material, maxDist);
   for (let i = 0; i < n; i++) { mesh.getMatrixAt(i, m4); const e = m4.elements, key = Math.floor(e[12] / size) * 1000 + Math.floor(e[14] / size); (groups.get(key) || groups.set(key, []).get(key)).push(i); }
   const inst = Object.entries(mesh.geometry.attributes).filter(([, a]) => a.isInstancedBufferAttribute);
   for (const idx of groups.values()) { let geo = mesh.geometry;
@@ -417,7 +442,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   scene.fog = new THREE.FogExp2(0xe6bd9c, 0.00065);
   const hemi = new THREE.HemisphereLight(0xb9cdf2, 0xa08468, 3.4); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc08c, 5.6), sunDir = new THREE.Vector3(-0.8, 0.3, 0.3).normalize(), lightDir = sunDir.clone(); sun.castShadow = renderer.shadowMap.enabled;
-  { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 150; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.camera.updateProjectionMatrix(); sm.bias = -0.000035; sm.normalBias = 0.045;
+  { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 90; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.camera.updateProjectionMatrix(); sm.bias = -0.000035; sm.normalBias = 0.022;
     scene.add(sun, sun.target); const step = (half * 2) / size * 8;
     city.updateSun = (p, height = 0) => {
       const x = Math.round(p.x / step) * step, y = Math.round(height / step) * step, z = Math.round(p.z / step) * step;
@@ -429,8 +454,8 @@ export async function buildCity(scene, refl, quality, renderer) {
   city.setTime = (hour, rainy = 1) => {
     const h = (hour - 6) / 12 * Math.PI, sn = Math.sin(h), el = (sn > 0 ? sn * 58 : sn * 35), er = THREE.MathUtils.degToRad(el), ce = Math.cos(er);
     sunDir.set(Math.cos(h) * ce, Math.sin(er), 0.38 * ce).normalize(); su.sunPosition.value.copy(sunDir);
-    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: night * rainy, rain: sst(0.75, 1, night) * rainy };
-    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
+    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: rainy, rain: rainy };
+    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (1 - 0.58 * rainy) * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
     lightDir.copy(sunDir); if (night > 0.5) lightDir.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize(); // The same light represents the moon at night.
     sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
     C(0xb9cdf2, 0x33325a, night, hemi.color); C(0x8d806e, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(2.7, 3.3, high), mix(0.95, 0.42, rainy), night);
@@ -609,14 +634,14 @@ export async function buildCity(scene, refl, quality, renderer) {
   { const px = -(HALF + 13.2), len = ext + 200;
     const sandT = canvasTex(512, 512, (c, w) => { c.fillStyle = '#cbb488'; c.fillRect(0, 0, w, w); const r = rng(8), img = c.getImageData(0, 0, w, w); for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 34; img.data[i] += n; img.data[i + 1] += n * 0.95; img.data[i + 2] += n * 0.8; } c.putImageData(img, 0, 0); c.globalAlpha = 0.12; for (let i = 0; i < 90; i++) { c.fillStyle = r() < 0.5 ? '#8f7a55' : '#e6d4ab'; c.beginPath(); c.ellipse(r() * w, r() * w, 20 + r() * 60, 3 + r() * 6, r() * 0.4, 0, 7); c.fill(); } });
     sandT.wrapS = sandT.wrapT = THREE.RepeatWrapping; sandT.repeat.set(10, 110);
-    const sg = new THREE.PlaneGeometry(92, len, 6, 1); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { const t = (46 - sp.getX(i)) / 92; sp.setY(i, 0.17 - t * t * 1.5); } sg.computeVertexNormals();
+    const sg = new THREE.PlaneGeometry(92, len, 24, Math.ceil(len / 5)); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { sp.setY(i, beachHeight(46 - sp.getX(i), mid + sp.getZ(i))); } sg.computeVertexNormals();
     const sandMaterial = new THREE.MeshStandardMaterial({ map: sandT, roughness: 0.95, envMapIntensity: 0.4 });
-    wetSand(sandMaterial);
+    city.sea = buildSea(scene, px, mid, len);
+    wetSand(sandMaterial, city.sea.waterLevel);
     const sand = new THREE.Mesh(sg, sandMaterial);
     sand.position.set(px - 46, 0, mid);
     sand.receiveShadow = SH;
     scene.add(sand);
-    city.sea = buildSea(scene, px, mid, len);
     city.beachX = px;
     hooks.push(city.sea.setTime);
   }

@@ -61,10 +61,10 @@ export async function buildFrontier(scene, city, world, Q) {
     const cs = Math.cos(yaw), sn = Math.sin(yaw), P = (ox, oz) => [x + cs * ox + sn * oz, z - sn * ox + cs * oz];
     box(x, y - 0.15, z, w + 0.35, 0.9, d + 0.35, yaw, 0x8a857c, 'stone', false); // plinth
     const nw = Math.max(1, Math.floor(d / 3.2));
-    for (const side of [-1, 1]) for (let k = 0; k < nw; k++) { const along = (k + 0.5) * d / nw - d / 2, ox = side * (w / 2 + 0.03), [lx, lz] = P(ox, along), [fx, fz] = P(side * (w / 2 + 0.06), along);
-      box(fx, y + h * 0.55, fz, 0.08, 1.35, 1.25, yaw, 0xf2efe8, 'paint', false); // white frame and sill
+    for (const side of [-1, 1]) for (let k = 0; k < nw; k++) { const along = (k + 0.5) * d / nw - d / 2, ox = side * (w / 2 + 0.03), [lx, lz] = P(ox, along), [fx, fz] = P(side * (w / 2 + 0.04), along);
+      box(fx, y + h * 0.55, fz, 0.04, 1.35, 1.25, yaw, 0xf2efe8, 'paint', false); // white frame (pane sits in front of it) and sill
       box(fx + cs * side * 0.05, y + h * 0.55 - 0.72, fz - sn * side * 0.05, 0.16, 0.1, 1.4, yaw, 0xf2efe8, 'paint', false);
-      if (R() < lit) glow(lx + cs * side * 0.04, y + h * 0.55, lz - sn * side * 0.04, 0.06, 1.1, 1.0, yaw, 0xffc884); else box(lx + cs * side * 0.04, y + h * 0.55, lz - sn * side * 0.04, 0.06, 1.1, 1.0, yaw, 0x1d2328, 'metal', false); }
+      const gx = lx + cs * side * 0.085, gz = lz - sn * side * 0.085; if (R() < lit) glow(gx, y + h * 0.55, gz, 0.02, 1.1, 1.0, yaw, 0xffc884); else box(gx, y + h * 0.55, gz, 0.02, 1.1, 1.0, yaw, 0x1d2328, 'metal', false); }
     { const [dx, dz] = P(0, d / 2 + 0.05); box(dx, y + 1.05, dz, 1.1, 2.1, 0.12, yaw, 0x5a3b28, 'wood', false); const [lx, lz] = P(0.95, d / 2 + 0.25); glow(lx, y + 2.3, lz, 0.18, 0.25, 0.18, yaw, 0xffd9a0); }
     if (R() < 0.7) { const [cx, cz] = P(w * 0.22, -d * 0.25); box(cx, y + h + Math.min(w, d) * 0.45, cz, 0.7, Math.min(w, d) * 0.6 + 1, 0.7, yaw, 0x6d6157, 'stone', false); }
   }
@@ -90,7 +90,7 @@ export async function buildFrontier(scene, city, world, Q) {
   const temple = place('temple');
   if (temple) { const pl = temple, y = pl.y, yaw = pl.yaw, moss = new THREE.Color(1.1, 1.28, 0.92), sand = new THREE.Color(1.62, 1.48, 1.2);
     for (let k = 0; k < 5; k++) { const s = 62 - 12 * k, [x, z] = at(pl, 0, 0); box(x, y + 2.5 + 5 * k - 0.2, z, s, 5.4, s, yaw, k % 2 ? sand : moss, 'stone'); }
-    for (let j = 0; j < 25; j++) { const [x, z] = at(pl, 0, -33 + (j + 0.5) * 1.1); box(x, y + (j + 1) / 2, z, 10, j + 1, 1.15, yaw, sand, 'stone', j < 3); }
+    for (let j = 0; j < 25; j++) { const [x, z] = at(pl, 0, -33 + (j + 0.5) * 1.1); box(x, y + (j + 1) / 2 + 0.035, z, 10, j + 1, 1.15, yaw, sand, 'stone', j < 3); }
     { const [x, z] = at(pl, 0, 0); box(x, y + 27.5, z, 8, 5, 8, yaw, sand, 'stone', false); box(x, y + 30.4, z, 10.5, 0.9, 10.5, yaw, sand, 'stone', false); const [dx, dz] = at(pl, 0, -4.05); glow(dx, y + 26.7, dz, 2.2, 3, 0.1, yaw, new THREE.Color(2.4, 1.1, 0.35)); }
     for (const u of [-6.5, 6.5]) { const [x, z] = at(pl, u, -36); cyl(x, y + 1.2, z, 0.14, 2.4, 0x3a2c20); glow(x, y + 2.6, z, 0.5, 0.7, 0.5, 0, new THREE.Color(3, 1.3, 0.3)); }
     for (let v = -108; v <= -46; v += 9) for (const u of [-10, 10]) { const [x, z] = at(pl, u, v), broken = R() < 0.35, h = broken ? 2 + R() * 4.5 : 8.5; cyl(x, y + h / 2, z, 0.85, h, broken ? moss : sand, 'stone');
@@ -109,14 +109,22 @@ export async function buildFrontier(scene, city, world, Q) {
     const rim = place('crater'); if (rim) { const [x, z] = at(rim, 14, 22), y = terrain(x, z); box(x, y + 1.5, z, 6, 3, 4, rim.yaw, 0x8f8a84, 'rock'); box(x, y + 3.2, z, 6.8, 0.4, 4.8, rim.yaw, 0x3a3a3a); glow(x, y + 1.8, z, 6.1, 0.8, 0.05, rim.yaw, 0xffc884); } }
 
   // ---- Mirror Lake: still water, a log cabin on the bluff and a jetty ----
-  { const g = new THREE.CircleGeometry(1, 72); g.rotateX(-Math.PI / 2); g.scale(LAKE.rx * 1.16, 1, LAKE.rz * 1.16);
+  { const g = new THREE.PlaneGeometry(LAKE.rx * 2.32, LAKE.rz * 2.32, 96, 84); g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position, colors = [];
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      const depth = LAKE.level - terrain(LAKE.x + x, LAKE.z + z);
+      const opacity = Math.hypot(x / LAKE.rx, z / LAKE.rz) > 1.14 ? 0 : THREE.MathUtils.smoothstep(depth, -.12, 2.8);
+      colors.push(1, 1, 1, opacity);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4));
     const nrm = load('waternormals.jpg', false); nrm.repeat.set(26, 26);
-    const wm = new THREE.MeshPhysicalMaterial({ color: 0x0b2427, roughness: 0.03, metalness: 0, ior: 1.333, normalMap: nrm, normalScale: new THREE.Vector2(0.12, 0.12), envMapIntensity: 1.1 });
+    const wm = new THREE.MeshPhysicalMaterial({ color: 0x0b2427, transparent: true, vertexColors: true, depthWrite: false, roughness: 0.03, metalness: 0, ior: 1.333, normalMap: nrm, normalScale: new THREE.Vector2(0.12, 0.12), envMapIntensity: 1.1 });
     const water = new THREE.Mesh(g, wm); water.position.set(LAKE.x, LAKE.level, LAKE.z); water.receiveShadow = true; scene.add(water); world.lake = { ...LAKE, mesh: water };
     updates.push(t => { nrm.offset.set(t * 0.003, t * 0.0021); });
     const cab = place('cabin'); if (cab) { const yaw = cab.yaw, y = cab.y; house(cab.x, cab.z, y, 7, 9.5, 3.4, yaw, 0xffffff, 0x3b2f27, 'wood', 0.9); box(cab.x + Math.cos(yaw) * 2.6, y + 5.4, cab.z - Math.sin(yaw) * 2.6, 1.1, 2.6, 1.1, yaw, 0x6d6157, 'rock');
       let dx = LAKE.x - cab.x, dz = LAKE.z - cab.z; const dl = Math.hypot(dx, dz); dx /= dl; dz /= dl; let sx = cab.x, sz = cab.z; for (let k = 0; k < 120 && terrain(sx, sz) > LAKE.level - 0.2; k++) { sx += dx * 2; sz += dz * 2; }
-      const jy = LAKE.level + 0.55, jyaw = Math.atan2(dx, dz); for (let k = -2; k < 15; k++) { const px = sx + dx * k * 2.4, pz = sz + dz * k * 2.4; box(px, jy, pz, 2.6, 0.22, 2.3, jyaw, 0xffffff, 'wood', false); if (k % 2 === 0) for (const s of [-1, 1]) cyl(px + dz * s * 1.2, jy - 1.4, pz - dx * s * 1.2, 0.14, 3, 0x4a3a2c, 'paint', false); }
+      const jyaw = Math.atan2(dx, dz); cab.jetty = { x: sx, z: sz, dx, dz, level: LAKE.level }; // the wooden pier itself streams in with the props (props.js)
       const bx = sx + dx * 30 + dz * 3.4, bz = sz + dz * 30 - dx * 3.4; box(bx, LAKE.level + 0.2, bz, 1.4, 0.5, 4.2, jyaw, 0x8b2f24, 'paint', false); box(bx, LAKE.level + 0.42, bz, 1.0, 0.1, 3.4, jyaw, 0x6b5642, 'wood', false); } }
 
   // ---- Dune Outpost: fuel under a canopy, a diner with a neon sign, a water tower and a wind turbine ----
@@ -156,9 +164,9 @@ export async function buildFrontier(scene, city, world, Q) {
       if (ok) { const cy = terrain(cx, cz); house(cx, cz, cy, 8, 15, 6, 0.2, 0xf4f1ea, 0x26292c, 'paint', 0.5); box(cx + Math.sin(0.2) * 8.5, cy + 7, cz + Math.cos(0.2) * 8.5, 3.4, 14, 3.4, 0.2, 0xf4f1ea); put('cone', 'paint', cx + Math.sin(0.2) * 8.5, cy + 17, cz + Math.cos(0.2) * 8.5, 2.5, 6, 2.5, 0.2, 0x26292c); } }
     // the quay sits on the nearest shore toward the fjord head
     let dx = 700 - pl.x, dz = 3470 - pl.z; const dl = Math.hypot(dx, dz); dx /= dl; dz /= dl; let sx = pl.x, sz = pl.z; for (let k = 0; k < 150 && terrain(sx, sz) > 0.4; k++) { sx += dx * 2; sz += dz * 2; }
-    const qyaw = Math.atan2(dx, dz) + Math.PI / 2; box(sx, 0.9, sz, 46, 1.2, 7, qyaw, 0xffffff, 'wood', false); for (let k = -4; k <= 4; k++) cyl(sx + Math.sin(qyaw) * k * 5.5 + dx * 3.2, -1.4, sz + Math.cos(qyaw) * k * 5.5 + dz * 3.2, 0.25, 4.4, 0x3d3127, 'paint', false);
+    const qyaw = Math.atan2(dx, dz) + Math.PI / 2; pl.quay = { x: sx, z: sz, dx, dz }; // piers stream in with the props (props.js)
     const hullM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }), cabM = new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.5 });
-    for (let k = 0; k < 4; k++) { const g = new THREE.Group(), L = 8 + R() * 4, hm = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.4, L), hullM.clone()); hm.material.color.setHex([0x1f3a5f, 0x8e2b23, 0xf2f2f0, 0x2e6f5a][k]); hm.position.y = 0.2; const bow = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.6, 4), hm.material); bow.rotation.x = Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, 0.2, L / 2 + 1.2); bow.scale.set(1, 1, 0.5);
+    for (let k = 0; k < 0; k++) { const g = new THREE.Group(), L = 8 + R() * 4, /* real ships from props.js moor here instead */ hm = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.4, L), hullM.clone()); hm.material.color.setHex([0x1f3a5f, 0x8e2b23, 0xf2f2f0, 0x2e6f5a][k]); hm.position.y = 0.2; const bow = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.6, 4), hm.material); bow.rotation.x = Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, 0.2, L / 2 + 1.2); bow.scale.set(1, 1, 0.5);
       const cab = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.6, L * 0.3), cabM); cab.position.set(0, 1.5, -L * 0.15); const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 5), cabM); mast.position.set(0, 3.2, L * 0.1); g.add(hm, bow, cab, mast); g.traverse(o => { if (o.isMesh) o.castShadow = true; });
       const bx = sx + Math.sin(qyaw) * (k - 1.5) * 11 + dx * (9 + (k % 2) * 2), bz = sz + Math.cos(qyaw) * (k - 1.5) * 11 + dz * (9 + (k % 2) * 2); g.userData = { x: bx, z: bz, yaw: qyaw + (R() - 0.5) * 0.3 }; scene.add(g); boats.push(g); } }
 

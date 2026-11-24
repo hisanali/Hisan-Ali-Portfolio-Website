@@ -299,6 +299,10 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   adC = mix(adC, adGrav, adSh * 0.9);
   adC *= mix(1.0, 0.84, (1.0 - smoothstep(8.5, 13.0, adRd)) * (1.0 - adSh));
   ${regional ? REGION_GLSL : ''}
+  float nearLake = 1.0 - smoothstep(1.1, 1.22, length((adP - vec2(${LAKE.x.toFixed(1)}, ${LAKE.z.toFixed(1)})) / vec2(${LAKE.rx.toFixed(1)}, ${LAKE.rz.toFixed(1)})));
+  float bankHeight = vWPos.y - mix(-0.62, ${LAKE.level.toFixed(1)}, nearLake);
+  float bank = (1.0 - smoothstep(.15, 1.65, bankHeight + .65 * (adN(adP * .21) - .5))) * (1.0 - smoothstep(.25,.55,adSlope));
+  adC = mix(adC, mix(adGrav * vec3(.58,.49,.39), adR * .64, adMeadow), bank * smoothstep(8.0,12.0,adRd));
   diffuseColor.rgb = adC;`).replace('#include <emissivemap_fragment>', regional ? '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(3.2, 0.75, 0.12) * adLava;' : '#include <emissivemap_fragment>').replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   { // tufted grass and forest litter relief, strongest close up and on gentle ground
     float k = (1.0 - smoothstep(0.3, 0.55, adSlope)) * (1.0 - smoothstep(25.0, 140.0, length(cameraPosition - vWPos)));
@@ -328,7 +332,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
       const m = new THREE.Mesh(g, outerM); m.receiveShadow = true; outer.add(m); }
     // A skirt hangs from the valley's edge so the finer and coarser grids never show a crack between them.
     const sp = [], sn = [], sw = [], sz = [], si = []; const edge = [[WORLD.x0, WORLD.z0, 1, 0, WORLD.x1 - WORLD.x0], [WORLD.x1, WORLD.z0, 0, 1, WORLD.z1 - WORLD.z0], [WORLD.x1, WORLD.z1, -1, 0, WORLD.x1 - WORLD.x0], [WORLD.x0, WORLD.z1, 0, -1, WORLD.z1 - WORLD.z0]];
-    for (const [x0, z0, dx, dz, len] of edge) for (let t = 0; t <= len; t += WORLD.cell) { const x = x0 + dx * t, z = z0 + dz * t, y = hIn(x, z), b = sp.length / 3; sp.push(x, y + 0.02, z, x, y - 6, z); sn.push(0, 1, 0, 0, 1, 0); sw.push(woodland[0] * 0, 0); sz.push(...zones(x, z), ...zones(x, z)); if (t > 0) si.push(b - 2, b, b - 1, b - 1, b, b + 1); }
+    for (const [x0, z0, dx, dz, len] of edge) for (let t = 0; t <= len; t += WORLD.cell) { const x = x0 + dx * t, z = z0 + dz * t, y = hIn(x, z), b = sp.length / 3; sp.push(x, y - 0.08, z, x, y - 6, z); sn.push(0, 1, 0, 0, 1, 0); sw.push(woodland[0] * 0, 0); sz.push(...zones(x, z), ...zones(x, z)); if (t > 0) si.push(b - 2, b, b - 1, b - 1, b, b + 1); }
     const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setAttribute('normal', new THREE.Float32BufferAttribute(sn, 3)); sg.setAttribute('aWoodland', new THREE.Float32BufferAttribute(sw, 1)); sg.setAttribute('aZone', new THREE.Float32BufferAttribute(sz, 4)); sg.setIndex(si);
     const skirt = new THREE.Mesh(sg, outerM); skirt.frustumCulled = false; outer.add(skirt);
     scene.add(outer); world.outerLand = outer; }
@@ -395,7 +399,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   try { await buildForest(scene, city, world, WORLD, nearPlace, canopyCover, Q.reach || 1, { samples: samples.filter(s => ORIGINAL.has(s.road)) }); }
   catch (error) { console.warn('Forest unavailable', error); }
   // Frontier woods: dense around the lake, lighter in the jungle and on the fjord sides, none in the dunes.
-  try { await buildForest(scene, city, world, EXT, nearPlace, outerCover, Q.reach || 1, { samples: samples.filter(s => s.frontier), skip: (x, z) => outside(x, z) < 20, seed: 7311,
+  try { await buildForest(scene, city, world, EXT, nearPlace, outerCover, Q.reach || 1, { samples: samples.filter(s => s.frontier), skip: (x, z) => outside(x, z) < 20 || ((x - LAKE.x) / LAKE.rx) ** 2 + ((z - LAKE.z) / LAKE.rz) ** 2 < 1.6 && hAt(x, z) < LAKE.level + 1.5, seed: 7311,
     groves: [['lakeside', 0.42, 1], ['lakeside', 0.55, -1], ['lakeside', 0.3, 1], ['temple', 0.45, 1], ['temple', 0.62, -1], ['north', 0.45, -1], ['fjord', 0.35, -1], ['alpine', 0.78, 1]],
     count: Math.round(6500 * Math.min(1, Q.reach || 1)), tries: 140000, rocks: 1100, rockTries: 3000 }); }
   catch (error) { console.warn('Frontier forest unavailable', error); }
