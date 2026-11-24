@@ -428,6 +428,12 @@ function leaveCinema() {
 }
 function nextCam() { selectCamera((S.cam + 1) % CAMS.length); }
 const flyby = new THREE.Vector3(), forwardShot = new THREE.Vector3();
+const vipShots = [
+  // Duration, subject, longitudinal offset, lateral offset, height, lens.
+  [3.6,1,14,4,1.4,39], [5.2,5,-17,5,11,49], [3.8,4,3,6,1.1,39],
+  [5.4,6,11,-4,2.4,34], [4.2,7,12,6,1.3,43], [4.8,11,-12,4,3.1,38]
+];
+const vipAnchor = new THREE.Vector3();
 const shots = [[-8, 3.5, 2.1, 40], [7, -4, 1.35, 36], [-11, -5, 4.2, 43], [2, 6, 1.1, 40], [10, 2, 1.0, 34], [-4, -8, 6.8, 43], [-5, 2.4, .8, 49], [1, -10, 3, 32]];
 function cinemaCamera(dt) {
   const car = cinema.tour, pos = car || player.pos, heading = car ? car.h : player.heading;
@@ -436,27 +442,43 @@ function cinemaCamera(dt) {
   if (S.cam === 7) {
     const fleet = traffic.vip.cars;
     // Lead lights, convoy overview, door livery, principal, and departing tail.
-    const sequence = [[1,17,5,4,44],[6,-23,5,22,53],[4,4,6,1.4,40],[6,8,-4,1.6,36],[9,-10,5,4,43],[11,-13,-4,2,40]];
-    const [index,along,side,height,fov] = sequence[Math.floor(cinema.elapsed / 5) % sequence.length];
-    const subject=fleet[index], h=subject.h;
-    const block = Math.floor(cinema.elapsed / 5);
-    if (cinema.boardBlock !== block || cinema.elapsed < dt * 2) {
-      cinema.boardBlock = block;
-      cinema.board = block % 3 === 1 ? city.convoyBoards.reduce((best, b) => {
-        const d = Math.hypot(b.x-subject.x,b.z-subject.z);
-        return d < 48 && (!best || d < Math.hypot(best.x-subject.x,best.z-subject.z)) ? b : best;
-      }, null) : null;
+    const cycle = 27, pass = Math.floor(cinema.elapsed/cycle);
+    let phase = cinema.elapsed % cycle, shotIndex=0;
+    while (shotIndex<vipShots.length-1 && phase>=vipShots[shotIndex][0]) phase-=vipShots[shotIndex++][0];
+    const [duration,index,along,side,height,fov]=vipShots[shotIndex];
+    const block=pass*vipShots.length+shotIndex;
+    const cut=cinema.boardBlock!==block || cinema.elapsed<=dt;
+    if (cut) {
+      cinema.boardBlock=block;
+      cinema.subject=shotIndex===4 ? fleet.reduce((a,b)=>Math.abs(b.wheelAngle)>Math.abs(a.wheelAngle)?b:a,fleet[index]) : fleet[index];
+      const subject=cinema.subject;
+      cinema.heading=subject.h;
+      vipAnchor.set(subject.x+Math.sin(subject.h)*along+Math.cos(subject.h)*side,height,
+        subject.z+Math.cos(subject.h)*along-Math.sin(subject.h)*side);
+      cinema.board = shotIndex===1 ? city.convoyBoards.reduce((best,b)=>{
+        const d=Math.hypot(b.x-subject.x,b.z-subject.z);
+        return d<36 && (!best || d<Math.hypot(best.x-subject.x,best.z-subject.z)) ? b : best;
+      },null):null;
     }
+    const subject=cinema.subject;
+    cinema.heading+=angleDiff(subject.h,cinema.heading)*(1-Math.exp(-3.4*dt));
+    const h=cinema.heading;
     const board = cinema.board;
-    if (board && Math.hypot(board.x-subject.x,board.z-subject.z) < 36) {
-      pivot.set((board.x+subject.x)*.5,board.y*.45,(board.z+subject.z)*.5);
-      want.set(subject.x+board.nx*10+Math.sin(h)*7,4,subject.z+board.nz*10+Math.cos(h)*7);
-      camera.position.copy(want); camera.lookAt(pivot); camera.fov=58; camera.updateProjectionMatrix(); return;
+    let lens=fov;
+    if(board) {
+      const weight=.45*clamp(1-Math.max(0,Math.hypot(board.x-subject.x,board.z-subject.z)-18)/22,0,1);
+      pivot.set(lerp(subject.x,board.x,weight),lerp(1.2,board.y,weight),lerp(subject.z,board.z,weight));
+      want.set(subject.x+board.nx*11+Math.sin(h)*7,4,subject.z+board.nz*11+Math.cos(h)*7);
+      lens=55;
+    } else {
+      const travel=along+(phase/duration-.5)*3.4;
+      pivot.set(subject.x+Math.sin(h)*1.1,1.05,subject.z+Math.cos(h)*1.1);
+      want.set(subject.x+travel*Math.sin(h)+side*Math.cos(h),height,subject.z+travel*Math.cos(h)-side*Math.sin(h));
+      if(shotIndex===4) want.lerp(vipAnchor,.8).sub(pivot).clampLength(0,24).add(pivot);
     }
-    pivot.set(subject.x,1.05,subject.z);
-    want.set(subject.x+along*Math.sin(h)+side*Math.cos(h),height,subject.z+along*Math.cos(h)-side*Math.sin(h));
     want.lerp(pivot,1-cameraClearance(pivot,want));
-    camera.position.copy(want); camera.lookAt(pivot); camera.fov=fov; camera.updateProjectionMatrix(); return;
+    if(cut) camera.position.copy(want); else camera.position.lerp(want,1-Math.exp(-11*dt));
+    camera.lookAt(pivot); camera.fov=lens; camera.updateProjectionMatrix(); return;
   }
   const shop = city.hisanShop;
   if (car && cinema.elapsed < 4.5 && Math.hypot(car.x - shop.x, car.z - shop.z) < 24) {

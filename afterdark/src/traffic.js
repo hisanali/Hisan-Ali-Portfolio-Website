@@ -181,6 +181,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const blobG = new THREE.PlaneGeometry(1.6, 1.32); blobG.rotateX(-Math.PI / 2); blobG.translate(0, 0.028, 0);
   const blobs = new THREE.InstancedMesh(blobG, vehicleShadowMaterial(), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
   function setTime(e) {
+    vip.wet = e.wet;
     const beam = Math.max(e.night, .55 * e.rain);
     pools.visible = beam > .05; pools.material.opacity = .23 * beam;
     blobs.material.opacity = 0.97 - 0.12 * e.night;
@@ -200,7 +201,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     return { k, kind, dir: kind === 'r' ? rDir : lDir };
   }
   function update(dt, t, player, focus, drawOnly = false, recorded = false) {
-    if (vip.root.visible) vip.step(dt);
+    if (vip.root.visible) vip.step(dt,vip.wet);
     if (focus && (parkTick++ % 40) === 0) refreshParked(focus.x, focus.z);
     for (const c of drawOnly ? [] : cars) {
       const fx = Math.sin(c.h), fz = Math.cos(c.h); const featured = c === focus;

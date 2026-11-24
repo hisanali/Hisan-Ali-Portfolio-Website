@@ -88,11 +88,12 @@ export function createSound() {
   const vipChords = [[50,57,66,69],[55,62,66,71],[47,54,62,66],[45,52,61,64]];
   const siren = ctx.createOscillator(), sirenLevel = ctx.createGain();
   siren.type = 'triangle'; sirenLevel.gain.value = 0;
-  siren.connect(sirenLevel).connect(comp); siren.start();
+  const distant = ctx.createBiquadFilter(); distant.type = 'lowpass'; distant.frequency.value = 760;
+  siren.connect(distant).connect(sirenLevel).connect(comp); siren.start();
   function soundtrack(active, vip, sirenDistance) {
-    set(sirenLevel.gain, active && vip ? .06 / (1 + sirenDistance / 24) : 0, .18);
-    if (active && vip) set(siren.frequency, 700 + 210 * Math.sin(ctx.currentTime * 2.4), .035);
-    set(score.gain, active ? .38 : 0, .16);
+    set(sirenLevel.gain, active && vip ? .007 / (1 + sirenDistance / 18) : 0, .18);
+    if (active && vip) set(siren.frequency, 610 + 135 * Math.sin(ctx.currentTime * 1.5), .035);
+    set(score.gain, active ? (vip ? .68 : .38) : 0, .16);
     const now = ctx.currentTime;
     if (!active) { nextBeat = 0; beat = 0; return; }
     if (nextBeat < now) nextBeat = now + .015;

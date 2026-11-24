@@ -2,6 +2,7 @@
 // distance-based path so the rear escorts take the same corner as the lead.
 import * as THREE from '/evermile/vendor/three.module.js';
 import { fitEscaladeWrap } from './escalade-wrap.js';
+import { createSkidMarks } from './skid-marks.js';
 import { P } from './city.js';
 
 let material;
@@ -46,7 +47,9 @@ export function createMotorcade(scene, kits) {
     return { role, kit:kits.findIndex(k => k.style === (role === 'van' ? 'vip-van' : style)), tint: role === 'principal' ? 0x101115 : role === 'police' ? 0x273546 : 0xfafaf6,
       push:new THREE.Vector2(), x:0,z:0,h:0,slide:0,spin:0,v:0, index:i };
   });
-  let distance = 175, speed = 5, age = 0, built = false;
+  let age = 0, built = false, rubber;
+  const clamp = THREE.MathUtils.clamp;
+  const wrapAngle = angle => Math.atan2(Math.sin(angle),Math.cos(angle));
   const sample = d => route.getPoint(THREE.MathUtils.euclideanModulo(d,length)/length);
   function dress() {
     const templates = new Map();
@@ -69,22 +72,61 @@ export function createMotorcade(scene, kits) {
       }
     }
   }
-  function step(dt) {
+  function step(dt,wet = 0) {
     age += dt;
-    const cornerAhead = cars.some((_,i) => {
-      const d=distance-i*9, a=sample(d), b=sample(d+10), e=sample(d+20);
-      return b.clone().sub(a).normalize().dot(e.sub(b).normalize()) < .93;
-    });
-    const target=cornerAhead?9:18+7*Math.sin(age*.14);
-    const accel=THREE.MathUtils.clamp(target-speed,-4,3);
-    speed+=accel*dt; distance+=speed*dt;
-    for(const c of cars){
-      const d=distance-c.index*9,p=sample(d),q=sample(d+1);
-      c.x=p.x;c.z=p.y;c.h=Math.atan2(q.x-p.x,q.y-p.y);c.v=speed;c.spin+=speed*dt/.34;
-      c.throttle=accel<-.2?0:.25+Math.max(accel,0)*.19;c.braking=accel<-.5;c.bodyPitch=-accel*.008;
-      c.rig.position.set(c.x,0,c.z);c.rig.rotation.set(c.bodyPitch,c.h,0,'YXZ');
+    for (const c of cars) {
+      const kit = kits[c.kit], front = cars[c.index-1];
+      const van = c.role === 'van', athletic = c.role === 'escort' || c.role === 'police';
+      const tangent = d => { const a=sample(d-1), b=sample(d+1); return Math.atan2(b.x-a.x,b.y-a.y); };
+      const heading = tangent(c.distance);
+      const look = 7 + c.v * .75;
+      const bend = Math.abs(wrapAngle(tangent(c.distance+look)-heading));
+      let target = 20 + 4*Math.sin(age*.16) + 2*Math.sin(age*.29);
+      if (front) {
+        const gap = front.distance - c.distance;
+        const bumperGap = gap - (kit.len+kits[front.kit].len)*.5;
+        const desired = (kit.len+kits[front.kit].len)*.5 + 3 + c.v*(.46+.035*(c.index%4));
+        target = Math.min(target+3, front.v + (gap-desired)*.55);
+        const safeSpeed=Math.sqrt(front.v**2 + 8*Math.max(0,bumperGap-2));
+        target=Math.min(target,safeSpeed);
+      }
+      const cornerSpeed = van ? 8.2 : athletic ? 11.8 : 9.4;
+      target = Math.min(target, cornerSpeed + 15*Math.exp(-bend*4));
+      const demand = clamp((target-c.v)*1.4,van?-4.9:-6.4,van?2.6:3.7);
+      c.accel += (demand-c.accel)*(1-Math.exp(-dt*(2.4+.19*(c.index%4))));
+      c.v = Math.max(0,c.v+c.accel*dt);
+      if (front && dt > 0) {
+        const available = front.distance-c.distance-(kit.len+kits[front.kit].len)*.5-1.7;
+        c.v = Math.min(c.v, Math.max(0,available/dt));
+      }
+      c.distance += c.v*dt;
+      const p=sample(c.distance), h=tangent(c.distance);
+      const curvature=wrapAngle(tangent(c.distance+1.5)-tangent(c.distance-1.5))/3;
+      const lateral=c.v*c.v*curvature;
+      const slipTarget=athletic ? Math.sign(lateral)*clamp((Math.abs(lateral)-7)*.035,0,.26) : 0;
+      c.slide+=(slipTarget-c.slide)*(1-Math.exp(-dt*5));
+      const lateralOffset=.19*Math.sin(c.distance*.026+c.index*1.7)-c.slide*2;
+      c.x=p.x+Math.cos(h)*lateralOffset; c.z=p.y-Math.sin(h)*lateralOffset; c.h=h;
+      c.wheelAngle=clamp(Math.atan(kit.len*.61*curvature)-c.slide*.65,-.59,.59);
+      c.lean=clamp(lateral*.005,-.055,.055);
+      c.bodyPitch=-c.accel*.009; c.braking=c.accel<-.85;
+      c.spin+=c.v*dt/.34; c.throttle=c.braking?0:clamp(.19+c.accel*.20,.04,.95);
+      c.rig.position.set(c.x,0,c.z);c.rig.rotation.set(c.bodyPitch,h+c.slide,c.lean,'YXZ');
+      const tyre=c.tyres;
+      Object.assign(tyre,{speed:c.v,heading:h+c.slide,braking:c.braking,accel:c.accel,slip:Math.abs(c.v*Math.sin(c.slide))});
+      rubber.update(tyre,false,wet,c.trail);
       if(c.role==='police') c.rig.children.forEach((lamp,i)=>lamp.material.color.setScalar(1).setHex(i?0x227aff:0xff1938).multiplyScalar((Math.floor(age*4+c.index)%2)===i?3:.22));
     }
   }
-  return {cars,root,step,get age(){return age;},start(){if(!built){dress();built=true;}distance=175;speed=5;age=0;root.visible=true;step(0);return cars[6];},stop(){root.visible=false;}};
+  function start() {
+    if (!built) { dress(); rubber=createSkidMarks(root); built=true; }
+    rubber.clear(); age=0;
+    for(const c of cars) {
+      const kit=kits[c.kit];
+      Object.assign(c,{distance:344-c.index*10.8,v:7-.22*c.index,accel:0,slide:0,spin:0,trail:[]});
+      c.tyres={pos:c,wid:kit.width,surfaceY:()=>0,tyreContacts:[-1,1].map(side=>({x:side*kit.width*.37,z:-kit.len*.31}))};
+    }
+    root.visible=true; step(0); return cars[6];
+  }
+  return {cars,root,step,get age(){return age;},start,stop(){root.visible=false;}};
 }
