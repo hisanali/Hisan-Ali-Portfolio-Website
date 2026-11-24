@@ -106,7 +106,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     if (!map.has(key)) map.set(key, []);
     map.get(key).push(shape);
   };
-  for (const shape of city.colliders) {
+  const indexShape = shape => {
     if (shape.r != null) {
       addToCell(grid, Math.floor(shape.x / 16), Math.floor(shape.z / 16), shape);
     } else {
@@ -117,7 +117,9 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
         for (let iz = Math.floor((shape.z - dz) / 16); iz <= Math.floor((shape.z + dz) / 16); iz++) addToCell(boxGrid, ix, iz, shape);
       }
     }
-  }
+  };
+  for (const shape of city.colliders) indexShape(shape);
+  car.addCollider = indexShape; // for scenery that streams in after the car exists
   car.others = []; // moving things to keep clear of (people), set each frame
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
   const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : 0.17 - Math.min(1, (PROM - x) / 92) ** 2 * 1.5; const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };

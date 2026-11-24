@@ -395,7 +395,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   try { await buildForest(scene, city, world, WORLD, nearPlace, canopyCover, Q.reach || 1, { samples: samples.filter(s => ORIGINAL.has(s.road)) }); }
   catch (error) { console.warn('Forest unavailable', error); }
   // Frontier woods: dense around the lake, lighter in the jungle and on the fjord sides, none in the dunes.
-  try { await buildForest(scene, city, world, EXT, nearPlace, outerCover, Q.reach || 1, { samples: samples.filter(s => s.frontier), skip: (x, z) => outside(x, z) < 20, seed: 7311,
+  try { await buildForest(scene, city, world, EXT, nearPlace, outerCover, Q.reach || 1, { samples: samples.filter(s => s.frontier), skip: (x, z) => outside(x, z) < 20 || ((x - LAKE.x) / LAKE.rx) ** 2 + ((z - LAKE.z) / LAKE.rz) ** 2 < 1.6 && hAt(x, z) < LAKE.level + 1.5, seed: 7311,
     groves: [['lakeside', 0.42, 1], ['lakeside', 0.55, -1], ['lakeside', 0.3, 1], ['temple', 0.45, 1], ['temple', 0.62, -1], ['north', 0.45, -1], ['fjord', 0.35, -1], ['alpine', 0.78, 1]],
     count: Math.round(6500 * Math.min(1, Q.reach || 1)), tries: 140000, rocks: 1100, rockTries: 3000 }); }
   catch (error) { console.warn('Frontier forest unavailable', error); }

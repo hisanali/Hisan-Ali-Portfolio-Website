@@ -8,6 +8,7 @@ import { buildWorld } from './world.js';
 import { buildPlaces } from './places.js';
 import { buildFrontier } from './frontier.js';
 import { createGrass } from './grass.js';
+import { buildProps } from './props.js';
 import { createSound } from './sound.js';
 import { createTyreSpray } from './spray.js';
 import { buildRailway } from './railway.js';
@@ -695,6 +696,8 @@ async function boot() {
   routes = buildRoutes(world, city); spots = jobSpots(world, places); bigmap = createBigMap($('#bigmap-canvas'), world, places); if (!routes.some(r => r.id === routeSel)) routeSel = routes[0].id; modeUI();
   setPerf(perf.on); city.cull(player.pos, true);
   S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900);
+  // Poly Haven props stream in once the menu is up, so the game never waits on them.
+  buildProps(scene, city, world, Q, shape => player?.addCollider?.(shape)).then(p => { const pu = places.update, ps = places.setTime; places.update = t => { pu(t); p.update(t); }; places.setTime = e => { ps(e); p.setTime(e); }; places.props = p; if (env) p.setTime(env); renderer.shadowMap.needsUpdate = true; }).catch(e => console.warn('props unavailable', e));
   window.__afterdark = { S, A, save, traffic, city, street, world, places, R, start, input, useCar, photo, replay, openMap, closeMap, REC }; Object.defineProperty(window.__afterdark, 'player', { get: () => player }); Object.defineProperty(window.__afterdark, 'routes', { get: () => routes }); window.__afterdark.camTest = { view, step: chase, blocked: cameraBlocked, arm: () => camArm }; // lets the camera audit drive the chase camera at a fixed frame rate
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
