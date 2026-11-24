@@ -88,16 +88,27 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     parts.push(rearPlate(style, kits.length, box));
     kits.push({ style, parts, width: box.max.x - box.min.x, len: box.max.z - box.min.z });
   }
+  // Draw from shuffled decks so short runs of spawns include the whole roster.
+  function fleetDeck(pool) {
+    let remaining = [];
+    return () => {
+      if (!remaining.length) remaining = pool.slice();
+      return remaining.splice(Math.floor(R() * remaining.length), 1)[0];
+    };
+  }
+  const fleet = kits.map((_, i) => i);
+  const parkedKit = fleetDeck(fleet.filter(i => kits[i].len <= 6.2 && !TRANSIT.includes(kits[i].style)));
+  const cityKit = fleetDeck(fleet), countryKit = fleetDeck(fleet);
   // ---- Parked cars ----
   const parked = [];
   for (let r = 0; r < ROADS; r++) for (let s = 24; s < SPAN - 20; s += 6.4) { if (Math.abs(s - Math.round(s / P) * P) < 25) continue;
     for (const side of [-1, 1]) for (const ax of [0, 1]) { if (R() > 0.2) continue; const lat = r * P + side * (HALF - 1.25), j = (R() - 0.5) * 0.25;
-      parked.push({ x: ax ? lat + j : s, z: ax ? s : lat + j, h: ax ? (side < 0 ? 0 : Math.PI) : (side > 0 ? Math.PI / 2 : -Math.PI / 2), kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)] }); } }
+      parked.push({ x: ax ? lat + j : s, z: ax ? s : lat + j, h: ax ? (side < 0 ? 0 : Math.PI) : (side > 0 ? Math.PI / 2 : -Math.PI / 2), kit: parkedKit(), tint: TINTS[Math.floor(R() * TINTS.length)] }); } }
   // ---- Moving cars ----
   const cars = [];
   for (let k = 0, tries = 0; k < count && tries < count * 40; tries++) { const ax = R() < 0.5 ? 0 : 1, dir = R() < 0.5 ? 1 : -1, road = Math.floor(R() * ROADS), seg = Math.floor(R() * (ROADS - 1)), lane = R() < 0.5 ? 0 : 1, s = seg * P + 24 + R() * (P - 48);
     if (cars.some(o => o.ax === ax && o.dir === dir && o.road === road && o.lane === lane && Math.abs(o.s - s) < 16)) continue;
-    cars.push({ id: k, ax, dir, road, lane, s, v: 8, vmax: 10.5 + R() * 5.5, kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false, wait: 0, go: 0 }); k++; }
+    cars.push({ id: k, ax, dir, road, lane, s, v: 8, vmax: 10.5 + R() * 5.5, kit: -1, tint: TINTS[Math.floor(R() * TINTS.length)], mode: 0, turn: null, plan: null, x: 0, z: 0, h: 0, push: new THREE.Vector2(), stun: 0, near: false, wait: 0, go: 0 }); k++; }
   // Cars out on the coastal and mountain roads: they follow the road line, slow for bends and hills, and are
   // moved elsewhere on the road when they reach a city gate.
   const world = city.world, country = world ? Math.round(count * 0.45) : 0;
@@ -105,10 +116,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const valley = world ? world.roads.filter(r => !r.frontier) : [], frontier = world ? world.roads.filter(r => r.frontier) : [], pickRoad = () => { const pool = frontier.length && R() < 0.5 ? frontier : valley; return pool[Math.floor(R() * pool.length)]; };
   const putOn = (c, avoid) => { for (let n = 0; n < 30; n++) { const rd = pickRoad(), i = rd.from + 12 + R() * (rd.to - rd.from - 24), s = world.samples[Math.round(i)]; if (s.tunnel && n < 20) continue; if (avoid && Math.hypot(s.x - avoid.x, s.z - avoid.z) < 380 && n < 25) continue; if (cars.some(o => o.mode === 2 && o !== c && o.rd === rd && o.dirS === c.dirS && Math.abs(o.i - i) < 12)) continue; c.rd = rd; c.i = i; return; } };
   const cityCarCount = cars.length;
-  for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
-  // Allocate one moving city slot per model before filling the remaining slots with ordinary traffic.
-  for (let i = 0; i < Math.min(kits.length, cityCarCount); i++) cars[i].kit = i;
-  if (country) cars[cityCarCount].kit = trafficFiles.indexOf('road-coach');
+  for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: countryKit(), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
   const placeOnRoad = c => { const i0 = Math.floor(c.i), a = world.samples[i0], b = world.samples[Math.min(c.rd.to, i0 + 1)], u = c.i - i0, sg = -c.dirS * 2.6; c.x = a.x + (b.x - a.x) * u + a.lx * sg; c.z = a.z + (b.z - a.z) * u + a.lz * sg; c.y = a.y + (b.y - a.y) * u + 0.03; c.h = Math.atan2(a.tx * c.dirS, a.tz * c.dirS); c.pitch = Math.atan2((b.y - a.y) * c.dirS, 3); };
   for (const c of cars) if (c.mode === 2) placeOnRoad(c);
   const laneOff = c => 1.9 + c.lane * 3.6;
@@ -116,6 +124,11 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const posOf = (ax, dir, road, off, s, out) => { if (ax) { out.x = road * P - dir * off; out.z = s; } else { out.x = s; out.z = road * P + dir * off; } return out; };
   function place(c) { posOf(c.ax, c.dir, c.road, laneOff(c), c.s, c); c.h = headingOf(c.ax, c.dir); }
   cars.forEach(c => { if (c.mode !== 2) place(c); });
+
+  // Deal each full set outwards from the starting neighbourhood, then across town.
+  const distanceFromStart = c => Math.abs(c.x - city.spawn.x) + Math.abs(c.z - city.spawn.z);
+  cars.slice(0, cityCarCount).sort((a, b) => distanceFromStart(a) - distanceFromStart(b))
+    .forEach(c => { c.kit = cityKit(); });
 
   // ---- Instanced meshes: moving cars take the first slots, nearby parked cars fill the rest ----
   const PARK_MAX = 12, DRAW_R = 270 * Math.max(0.6, reach); // cars further than this from the player are simulated but not drawn
