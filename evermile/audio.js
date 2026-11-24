@@ -22,6 +22,7 @@ const ENGINE = {
   grcorolla: {idle: 900, red: 7000, firing: 1.5, falloff: 1.1, sub: .34, drive: 2.4, reson: [170, 700], bright: 1.15, pops: true, level: .058},
   landcruiser: {idle: 650, red: 5600, firing: 3, falloff: .95, sub: .4, drive: 2.6, reson: [120, 480], bright: .75, pops: false, level: .06},
   coupe: {idle: 850, red: 7800, firing: 4, falloff: 1.05, sub: .42, drive: 2.2, reson: [150, 620], bright: 1, pops: true, level: .062},
+  bus: {idle: 590, red: 2350, firing: 3, falloff: 1.04, sub: .34, drive: 3.1, reson: [80, 335], bright: .48, pops: false, level: .066, clatter: true},
   coach: {idle: 650, red: 2600, firing: 3, falloff: .8, sub: .25, drive: 3.4, reson: [95, 420], bright: .55, pops: false, level: .07, clatter: true},
   bike: {idle: 1300, red: 11500, firing: 2, falloff: .82, sub: .18, drive: 1.8, reson: [210, 900], bright: 1.3, pops: true, level: .05},
 };

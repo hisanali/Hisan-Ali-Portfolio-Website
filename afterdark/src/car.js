@@ -1,3 +1,4 @@
+import { headlampRange, lampColor } from './low-beams.js';
 import { beachHeight } from './water.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
 // The player's coupé: model set-up with physically based paint, lights, and the driving model.
@@ -109,7 +110,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.6, len * 1.32), vehicleShadowMaterial(tyreContacts, wid, len)); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
 
   const lights = headBounds.map((bounds, side) => {
-    const light = new THREE.SpotLight(escalade ? 0xf2f7ff : 0xfff1da, 0, 85, .38, .55, 1.7);
+    const light = new THREE.SpotLight(lampColor((spec.file || 'sports-coupe').replace(/^(road|car)-/, '')), 0, headlampRange, .38, .55, 1.7);
     if (bounds.isEmpty()) light.position.set((side ? 1 : -1) * wid * .36, height * .43, len * .47);
     else bounds.getCenter(light.position);
     const p = light.position;

@@ -271,7 +271,12 @@ function drawGarage() {
   $('#g-cash').textContent = cr(save.cash); const box = $('#g-cars'); box.innerHTML = '';
   for (const c of CARS) { const cur = save.car === c.id, sp = carSpec(save, c.id), row = document.createElement('div'); row.className = 'g-car' + (cur ? ' cur' : '');
     row.innerHTML = `<div class="g-head"><div><b>${c.name}</b><small>${c.kind} · about ${Math.round(sp.vmax * 3.6 / 10) * 10} km/h</small></div><button type="button" class="g-act">${cur ? 'Driving' : 'Drive'}</button></div><div class="g-bars">${[['Speed', sp.vmax / 100], ['Pull', sp.acc / 1.35], ['Grip', sp.grip / 1.35], ['Brakes', sp.brake / 1.45]].map(([n, v]) => `<span>${n}<i><u style="width:${Math.round(clamp(v, 0.05, 1) * 100)}%"></u></i></span>`).join('')}</div>`;
-    const act = row.querySelector('.g-act'); act.disabled = cur || swapping;
+    const listen = document.createElement('button');
+    listen.className = 'g-act'; listen.type = 'button'; listen.textContent = 'Rev';
+    listen.setAttribute('aria-label', 'Rev ' + c.name);
+    listen.addEventListener('click', () => { ensureAudio(); audio?.preview(c.id); });
+    row.querySelector('.g-head').insertBefore(listen, row.querySelector('.g-act'));
+    const act = row.querySelector('.g-act:last-child'); act.disabled = cur || swapping;
     act.addEventListener('click', async () => { if (swapping) return; act.textContent = 'Loading…'; act.disabled = true; await useCar(c.id); drawGarage(); });
     if (cur) { const ups = document.createElement('div'); ups.className = 'g-ups';
       for (const [k, name] of UPGRADES) { const lv = upLevel(save, c.id, k), cost = UP_COST[lv], b = document.createElement('button'); b.type = 'button'; b.textContent = lv >= UP_MAX ? `${name} · full` : `${name} ${lv}/${UP_MAX} · ${cr(cost)}`; b.disabled = lv >= UP_MAX || save.cash < cost;
@@ -686,7 +691,7 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(focus, tour ? tour.y || 0 : player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { puddleDepth: (playing || replaying) ? spray.depth : 0, hour, urban: inCity(focus.x, focus.z) && focus.x >= -HALF, sheltered: !tour && player.tunnel, vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { garage: !$('#garage').hidden, puddleDepth: (playing || replaying) ? spray.depth : 0, hour, urban: inCity(focus.x, focus.z) && focus.x >= -HALF, sheltered: !tour && player.tunnel, vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   player.updateWetness(dt, env.rain);
   probe.set(focus.x, (tour ? tour.y || 0 : player.groundY) + 1.15, focus.z); R.render(probe);
