@@ -87,7 +87,9 @@ export function createTyreSpray(capacity) {
     p.justBorn = true;
   }
 
+  let contactDepth = 0;
   function emit(dt, car, wet, puddleAt) {
+    contactDepth = 0;
     const speed = Math.abs(car.speed);
     if (wet < 0.24 || speed < 3.5 || car.air || car.onSand || car.rough || car.tunnel || car.onKerb) {
       carry.fill(0);
@@ -101,7 +103,9 @@ export function createTyreSpray(capacity) {
       const tz = car.pos.z - wheel.x * sin + wheel.z * cos;
       const ground = car.surfaceY(tx, tz);
       const depth = puddleAt(tx, tz) * wet;
-      const rate = Math.min(285, speed * (4.35 + depth * 10.7)) * wet * (rear ? 1 : 0.58);
+      if (depth < 0.32) { carry[index] = 0; continue; }
+      contactDepth = Math.max(contactDepth, depth);
+      const rate = Math.min(180, speed * (depth - 0.30) * 9) * (rear ? 1 : 0.58);
       const total = carry[index] + rate * dt;
       const count = Math.floor(total);
       for (let i = 0; i < count; i++) {
@@ -145,11 +149,12 @@ export function createTyreSpray(capacity) {
   }
 
   function clear() {
+    contactDepth = 0;
     for (const p of particles) p.time = -1;
     carry.fill(0);
     geometry.instanceCount = 0;
     mesh.visible = false;
   }
 
-  return { mesh, emit, update, clear };
+  return { mesh, emit, update, clear, get depth() { return contactDepth; } };
 }
