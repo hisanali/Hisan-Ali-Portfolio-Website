@@ -71,7 +71,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         geo = geo.clone().applyMatrix4(local).translate(-centre.x, -centre.y, -centre.z);
         local = new THREE.Matrix4().makeTranslation(centre.x, centre.y, centre.z);
       }
-      parts.push({ geo, mat: m, local, wrapGlass: name === 'EXT_Glass', bodyPanel: name === 'BodyPaint', paint: painted, tail: role === 'tail' || role === 'stop', stopOnly: role === 'stop', wheel: Boolean(hub), frontWheel: !!hub && /^Wheel_F/i.test(hub.name) }); });
+      parts.push({ geo, mat: m, local, wrapGlass: name === 'EXT_Glass' || (style === 'van' && /glass/i.test(name)), bodyPanel: name === 'BodyPaint', paint: painted, tail: role === 'tail' || role === 'stop', stopOnly: role === 'stop', wheel: Boolean(hub), frontWheel: !!hub && /^Wheel_F/i.test(hub.name) }); });
     // Batch the many identical seat materials once for each transit model.
     if (TRANSIT.includes(style)) {
       const batches = new Map();
@@ -155,7 +155,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     const paint = p.mat.clone(); paint.map = null;
     return { ...p, mat:paint };
   }) });
-  const vip = createMotorcade(scene, kits);
+  const vip = createMotorcade(scene, kits, cars, parked);
   const groups = kits.map((kit, ki) => { const nM = cars.filter(c => c.kit === ki).length + vip.cars.filter(c => c.kit === ki).length;
     return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = 0; im.castShadow = part.castShadow !== false; im.receiveShadow = true; scene.add(im); return im; }); });
   kits.forEach((kit, ki) => { let m = 0; for (const c of cars) { if (c.kit !== ki) continue; c.slot = m++; }
@@ -204,6 +204,8 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     if (vip.root.visible) vip.step(dt,vip.wet);
     if (focus && (parkTick++ % 40) === 0) refreshParked(focus.x, focus.z);
     for (const c of drawOnly ? [] : cars) {
+      const nearbyConvoy=vip.root.visible && vip.cars.some(v=>Math.abs(v.x-c.x)+Math.abs(v.z-c.z)<35);
+      const before=nearbyConvoy ? {...c,turn:c.turn && {...c.turn}} : null;
       const fx = Math.sin(c.h), fz = Math.cos(c.h); const featured = c === focus;
       let target = featured ? 19 + 4 * Math.sin(t * .17) : c.vmax; c.near = false;
       const yielding = vip.root.visible && c.mode !== 2 && vip.cars.some(v => {
@@ -264,6 +266,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
           c.z -= Math.sin(c.h) * outward;
         }
         if (u >= 1) { Object.assign(c, tr.next); c.mode = 0; c.turn = null; c.plan = null; place(c); } }
+      if(before && vip.blocksTraffic(c)) {
+        Object.assign(c,before,{v:0,braking:true});
+      }
       const response = 1 - Math.exp(-5 * dt);
       const accel = (c.v - lastSpeed) / Math.max(.001, dt);
       const yawRate = Math.atan2(Math.sin(c.h - lastHeading), Math.cos(c.h - lastHeading)) / Math.max(.001, dt);

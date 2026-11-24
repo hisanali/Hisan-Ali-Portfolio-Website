@@ -1,14 +1,16 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 
-let finish;
+const finishes = new Map();
 // Project onto the actual panel triangles. Cutouts, handles, lamps and wheel
 // arches retain their original geometry, including during suspension travel.
-export function fitEscaladeWrap(group, kit, panels) {
+export function fitEscaladeWrap(group, kit, panels, artwork = 'escalade-wrap') {
+  let finish = finishes.get(artwork);
   if (!finish) {
-    const map = new THREE.TextureLoader().load('./assets/escalade-wrap.webp');
+    const map = new THREE.TextureLoader().load('./assets/'+artwork+'.webp');
     map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
     finish = new THREE.MeshStandardMaterial({map,alphaTest:.16,roughness:.34,metalness:.24,
       polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
+    finishes.set(artwork,finish);
   }
   const positions=[], normals=[], uvs=[];
   const vertices=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
