@@ -71,8 +71,8 @@
   ]
 }
   </script>
-<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><script id="lang-init">(()=>{const r=document.documentElement;try{const q=location.search.match(/[?&]lang=(ar|en)\b/);const n=r.lang==='ar';if(n)r.dataset.nativeLang='ar';const l=n?'ar':q?q[1]:localStorage.getItem('site-language');if(l==='ar'){r.classList.add('lang-ar','i18n-loading');r.lang='ar';r.dir='rtl';setTimeout(()=>r.classList.remove('i18n-loading'),2500)}}catch(e){}})();</script><link rel="stylesheet" href="/site-shell.css?v=20261010-1"><link rel="stylesheet" href="/site-header.css?v=20261010-1"><link rel="stylesheet" href="/site-i18n.css?v=20261107-2">  <link rel="stylesheet" href="/tactile.css?v=4">
-</head>
+  <link rel="stylesheet" href="/tactile.css?v=4">
+<script id="theme-init">(()=>{const root=document.documentElement;try{const savedTheme=localStorage.getItem('preferred-theme');const dark=savedTheme?savedTheme==='dark':true;const path=location.pathname.replace(/\/+$/,'');const eligible=path.startsWith('/blog/')&&path!=='/blog';const reading=eligible&&(localStorage.getItem('preferred-reading-mode')==='true'||localStorage.getItem('preferred-palette')==='desert');root.classList.toggle('theme-dark',dark);root.classList.toggle('reading-mode',reading);root.dataset.palette=reading?'desert':'forest';root.style.colorScheme=dark?'dark':'light'}catch(e){root.classList.add('theme-dark');root.classList.remove('reading-mode');root.dataset.palette='forest';root.style.colorScheme='dark'}})();</script><script id="lang-init">(()=>{const r=document.documentElement;try{const q=location.search.match(/[?&]lang=(ar|en)\b/);const n=r.lang==='ar';if(n)r.dataset.nativeLang='ar';const l=n?'ar':q?q[1]:localStorage.getItem('site-language');if(l==='ar'){r.classList.add('lang-ar','i18n-loading');r.lang='ar';r.dir='rtl';setTimeout(()=>r.classList.remove('i18n-loading'),2500)}}catch(e){}})();</script><link rel="stylesheet" href="/site-shell.css?v=20261010-1"><link rel="stylesheet" href="/site-header.css?v=20261010-1"><link rel="stylesheet" href="/site-i18n.css?v=20261107-2"></head>
 <body class="page-home-redesign"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) -->
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="scroll-progress" aria-hidden="true"><span data-scroll-progress></span></div>
@@ -185,7 +185,7 @@
           <a class="hd-lab" href="/growth-diagnostic/" style="--c:#dfff63"><span class="hd-lab-img"><img src="/hd-thumb-diagnostic.webp" alt="" width="560" height="350" loading="lazy" decoding="async"><span class="hd-ico"><svg class="hd-i"><use href="#hd-pulse"/></svg></span></span><span class="hd-lab-body"><b>Growth Diagnostic</b><small>3-min marketing check-up</small></span></a>
           <a class="hd-lab" href="/tools/" style="--c:#9dd4ff"><span class="hd-lab-img"><img src="/hd-thumb-tools.webp" alt="" width="560" height="350" loading="lazy" decoding="async"><span class="hd-ico"><svg class="hd-i"><use href="#hd-tools"/></svg></span></span><span class="hd-lab-body"><b>Browser Tools</b><small>Private, free utilities</small></span></a>
           <a class="hd-lab" href="/games/" style="--c:#f5b9e2"><span class="hd-lab-img"><img src="/hd-thumb-games.webp" alt="" width="560" height="350" loading="lazy" decoding="async"><span class="hd-ico"><svg class="hd-i"><use href="#hd-game"/></svg></span></span><span class="hd-lab-body"><b>Game Center</b><small>13 quick browser games</small></span></a>
-          <a class="hd-lab" href="/evermile/" target="_blank" rel="noopener noreferrer" style="--c:#ffb48c"><span class="hd-lab-img"><img src="/hd-thumb-evermile.webp" alt="" width="560" height="350" loading="lazy" decoding="async"><span class="hd-ico"><svg class="hd-i"><use href="#hd-car"/></svg></span></span><span class="hd-lab-body"><b>Evermile <svg class="hd-i hd-out" aria-hidden="true"><use href="#hd-out"/></svg></b><small>Scenic 3D drive · new tab</small></span></a>
+          <a class="hd-lab" href="/afterdark/" style="--c:#ffb48c"><span class="hd-lab-img"><img src="/hd-thumb-afterdark.webp" alt="" width="560" height="350" loading="lazy" decoding="async"><span class="hd-ico"><svg class="hd-i"><use href="#hd-car"/></svg></span></span><span class="hd-lab-body"><b>Afterdark</b><small>Open-world 3D drive</small></span></a>
         </div>
         <div class="hd-popular">
           <p class="hd-group-title">Popular</p>
@@ -598,14 +598,14 @@
         </div>
 
         <div class="made-grid">
-          <a class="made-card made-evermile reveal" href="/evermile/">
-            <img src="/games/thumbs/evermile.webp" alt="A red convertible on a coastal road at sunset in Evermile" width="1200" height="900" loading="lazy">
+          <a class="made-card made-evermile reveal" href="/afterdark/">
+            <img src="/games/thumbs/afterdark.webp" alt="A white sports car crossing a suspension bridge on the coast road in Afterdark" width="1000" height="750" loading="lazy">
             <span class="made-shade" aria-hidden="true"></span>
             <div class="made-copy">
               <span class="made-type">Open-world driving game</span>
-              <h3>Evermile</h3>
-              <p>Take the scenic route through coast roads, tunnels, and towns in a 3D world built for the browser, with traffic and radio.</p>
-              <span class="made-cta">Start driving <b aria-hidden="true">↗︎</b></span>
+              <h3>Afterdark</h3>
+              <p>Drive a coastal city, a coast road and a mountain pass by day or on a rainy neon night. Race time trials, take jobs and build a garage.</p>
+              <span class="made-cta">Start driving <b aria-hidden="true">→</b></span>
             </div>
           </a>
 
@@ -800,7 +800,7 @@
     </nav>
     <nav class="ua-footer-group" aria-label="Useful tools">
       <h2>Lab</h2>
-      <a href="/growth-diagnostic/">Growth Diagnostic</a><a href="/tools/">Browser tools</a><a href="/games/">Game Center</a><a href="/evermile/" target="_blank" rel="noopener noreferrer" aria-label="Evermile (opens in a new tab)">Evermile <span class="ua-icon-arrow" aria-hidden="true"></span></a><a href="/tools/painting-drawing/">Painting Studio</a><a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/utm-builder/">UTM Builder</a>
+      <a href="/growth-diagnostic/">Growth Diagnostic</a><a href="/tools/">Browser tools</a><a href="/games/">Game Center</a><a href="/afterdark/">Afterdark</a><a href="/tools/painting-drawing/">Painting Studio</a><a href="/tools/pdf-merger/">PDF Merger</a><a href="/tools/utm-builder/">UTM Builder</a>
     </nav>
     <div class="ua-footer-group ua-footer-social">
       <h2>Connect</h2>
