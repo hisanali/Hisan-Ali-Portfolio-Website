@@ -109,9 +109,17 @@ export async function buildFrontier(scene, city, world, Q) {
     const rim = place('crater'); if (rim) { const [x, z] = at(rim, 14, 22), y = terrain(x, z); box(x, y + 1.5, z, 6, 3, 4, rim.yaw, 0x8f8a84, 'rock'); box(x, y + 3.2, z, 6.8, 0.4, 4.8, rim.yaw, 0x3a3a3a); glow(x, y + 1.8, z, 6.1, 0.8, 0.05, rim.yaw, 0xffc884); } }
 
   // ---- Mirror Lake: still water, a log cabin on the bluff and a jetty ----
-  { const g = new THREE.CircleGeometry(1, 72); g.rotateX(-Math.PI / 2); g.scale(LAKE.rx * 1.16, 1, LAKE.rz * 1.16);
+  { const g = new THREE.PlaneGeometry(LAKE.rx * 2.32, LAKE.rz * 2.32, 96, 84); g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position, colors = [];
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      const depth = LAKE.level - terrain(LAKE.x + x, LAKE.z + z);
+      const opacity = Math.hypot(x / LAKE.rx, z / LAKE.rz) > 1.14 ? 0 : THREE.MathUtils.smoothstep(depth, -.12, 2.8);
+      colors.push(1, 1, 1, opacity);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4));
     const nrm = load('waternormals.jpg', false); nrm.repeat.set(26, 26);
-    const wm = new THREE.MeshPhysicalMaterial({ color: 0x0b2427, roughness: 0.03, metalness: 0, ior: 1.333, normalMap: nrm, normalScale: new THREE.Vector2(0.12, 0.12), envMapIntensity: 1.1 });
+    const wm = new THREE.MeshPhysicalMaterial({ color: 0x0b2427, transparent: true, vertexColors: true, depthWrite: false, roughness: 0.03, metalness: 0, ior: 1.333, normalMap: nrm, normalScale: new THREE.Vector2(0.12, 0.12), envMapIntensity: 1.1 });
     const water = new THREE.Mesh(g, wm); water.position.set(LAKE.x, LAKE.level, LAKE.z); water.receiveShadow = true; scene.add(water); world.lake = { ...LAKE, mesh: water };
     updates.push(t => { nrm.offset.set(t * 0.003, t * 0.0021); });
     const cab = place('cabin'); if (cab) { const yaw = cab.yaw, y = cab.y; house(cab.x, cab.z, y, 7, 9.5, 3.4, yaw, 0xffffff, 0x3b2f27, 'wood', 0.9); box(cab.x + Math.cos(yaw) * 2.6, y + 5.4, cab.z - Math.sin(yaw) * 2.6, 1.1, 2.6, 1.1, yaw, 0x6d6157, 'rock');
