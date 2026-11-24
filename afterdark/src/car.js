@@ -101,7 +101,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   }
 
   // Contact shadow keeps the car planted on the road.
-  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.6, len * 1.32), vehicleShadowMaterial()); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.6, len * 1.32), vehicleShadowMaterial(tyreContacts, wid, len)); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
 
   const lights = headBounds.map((bounds, side) => {
     const light = new THREE.SpotLight(0xfff1da, 0, 85, .38, .55, 1.7);
