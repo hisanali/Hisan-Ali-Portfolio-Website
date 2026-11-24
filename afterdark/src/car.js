@@ -72,6 +72,9 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       const pivot = new THREE.Group(), rotor = new THREE.Group(); pivot.position.copy(model.worldToLocal(b.getCenter(new THREE.Vector3()))); model.add(pivot); pivot.updateWorldMatrix(true, false); pivot.add(rotor); rotor.attach(w); for (const k of calipers) if (k.name.slice(-2) === w.name.slice(-2)) pivot.attach(k);
       const sz = b.getSize(new THREE.Vector3()); wheelR = Math.max(sz.y, sz.z) / 2 || 0.36; rigs.push({ pivot, rotor, front: w.name[6] === 'F' }); } }
 
+  // Suspension moves the Escalade body around the grounded wheel assemblies.
+  const luxurySuspension = spec.file === 'car-escalade' && rigs.length === 4;
+  if (luxurySuspension) for (const rig of rigs) root.attach(rig.pivot);
   const updateWetPaint = wetCar(tilt, paint, M.glass);
   const hubs = rigs.length ? rigs.map(r => r.pivot) : wheels.map(w => w.node);
   const tyreContacts = hubs.map(hub => {
@@ -304,7 +307,9 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const k = 1 - Math.exp(-dt * 8);
     // Load moves to the outside wheels. Keep the body's movement small over the four contact patches.
     tilt.rotation.z = lerp(tilt.rotation.z, clamp(car.yawRate * car.speed * 0.0025, -0.032, 0.032), k);
-    tilt.rotation.x = lerp(tilt.rotation.x, clamp(-car.accel * 0.0018, -0.020, 0.028), k);
+    tilt.rotation.x = lerp(tilt.rotation.x, luxurySuspension
+      ? clamp((car.air ? 0 : -car.accel) * .0055, -.052, .046)
+      : clamp(-car.accel * 0.0018, -0.020, 0.028), k);
     tilt.position.y = Math.sin(car.bump * Math.PI) * 0.045;
     const steerAngle = frontAngle(car.steer, car.speed);
     if (steeringWheel) {
