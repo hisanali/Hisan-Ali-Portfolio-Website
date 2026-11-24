@@ -62,7 +62,7 @@ export function createSound() {
   recordedFilter.type = 'lowpass';
   recordedFilter.connect(recordedGain).connect(master);
   let recordedEngine;
-  load('/afterdark/assets/audio/escalade-load.wav').then(buffer => {
+  load('/afterdark/assets/audio/escalade-drive.wav').then(buffer => {
     recordedEngine = ctx.createBufferSource();
     recordedEngine.buffer = buffer;
     recordedEngine.loop = true;
@@ -107,10 +107,10 @@ export function createSound() {
         set(exhaustFilter.frequency, (cutoff * (.5 + load) + drive.rpm * .1) * (s.cockpit ? .55 : 1), .085);
         const recorded = recordedEngine && s.vehicle === 'escalade';
         if (recorded) {
-          set(recordedEngine.playbackRate, clamp(drive.rpm / 2600, .55, 1.85), .035);
+          set(recordedEngine.playbackRate, clamp((drive.rpm / 2600) ** .72, .65, 1.60), .035);
           set(recordedFilter.frequency, (650 + load * 2600) * (s.cockpit ? .52 : 1), .08);
         }
-        set(recordedGain.gain, recorded && s.playing ? .31 * load * clamp((drive.rpm - 900) / 1400) : 0, .035);
+        set(recordedGain.gain, recorded && s.playing ? .22 * load * clamp((drive.rpm - 900) / 1400) : 0, .035);
         set(exhaustGain.gain, s.playing ? level * (recorded ? .55 : 1) * (.12 + .88 * load) : 0, .065);
         drive.horn(hornHeld && s.playing, 1.6); drive.townHum(s.urban && !s.sheltered ? 0.55 + 0.45 * e.day : 0); drive.chatter(s.urban && !s.sheltered && s.people && e.rain < 0.4, 'street'); } catch (err) {}
       // Frontier ambience: any open water nearby, the crater, the waterfalls, the high pass, the lake at night, the dunes.
