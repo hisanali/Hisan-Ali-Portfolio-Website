@@ -103,7 +103,9 @@ function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; cons
 
 // ---------- Input ----------
 const KEYS = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', ' ': 'hand' };
-addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (cinema.active) {
+addEventListener('keydown', e => { const k = e.key.toLowerCase();
+  if (!$('#garage').hidden) { if (k === 'escape') closeGarage(); return; }
+  if (cinema.active) {
     if (k === 'escape') { e.preventDefault(); leaveCinema(); return; }
     if (cinema.tour || !KEYS[k]) return;
   }
@@ -141,7 +143,16 @@ seg($('#seg-mode'), [['free', 'Free Roam'], ['run', 'Beacon Run'], ['trial', 'Ti
 modeUI();
 seg($('#seg-paint'), PAINTS, paintSel, v => { paintSel = v; store.set('paint', v); player?.setPaint(v); });
 const TIMES = { auto: null, day: 12.5, sunset: 17.4, night: 23, fixed: 12 }; let timeMode = store.get('time', 'auto'); if (!(timeMode in TIMES)) timeMode = 'auto';
-seg($('#seg-tod'), [['auto', 'Live cycle'], ['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Rainy night']], timeMode, v => { timeMode = v; store.set('time', v); if (TIMES[v] != null) hour = TIMES[v]; });
+const timeOptions = [['auto', 'Live cycle'], ['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Rainy night']];
+function drawTimeOptions() {
+  for (const id of ['#seg-tod', '#pause-tod']) seg($(id), timeOptions, timeMode, v => {
+    timeMode = v; store.set('time', v);
+    if (TIMES[v] != null) hour = TIMES[v];
+    if (S.mode === 'pause') { if (v !== 'auto') rainyK = v === 'night' ? 1 : 0; stepTime(0, false); }
+    drawTimeOptions();
+  });
+}
+drawTimeOptions();
 seg($('#seg-gfx'), [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], QUALITY, v => { if (v === QUALITY) return; store.set('gfx', v); const u = new URL(location.href); u.searchParams.delete('gfx'); location.href = u.href; });
 $('#best').textContent = store.get('best', '0');
 $('#play').addEventListener('click', () => start());
@@ -154,7 +165,13 @@ $('#btn-cam').addEventListener('change', e => { selectCamera(Number(e.target.val
 $('#btn-map').addEventListener('click', () => openMap()); $('#map').addEventListener('click', () => openMap()); $('#map-close').addEventListener('click', () => closeMap()); $('#pause-map').addEventListener('click', () => openMap());
 $('#pause-photo').addEventListener('click', () => photo(true)); $('#pause-replay').addEventListener('click', () => replay(true)); $('#photo-back').addEventListener('click', () => photo(false)); $('#photo-save').addEventListener('click', () => { shot = true; }); $('#replay-stop').addEventListener('click', () => replay(false));
 $('#photo-in').addEventListener('click', () => { view.zoom = clamp(view.zoom * 0.85, 0.55, 2.6); }); $('#photo-out').addEventListener('click', () => { view.zoom = clamp(view.zoom * 1.18, 0.55, 2.6); });
-$('#open-garage').addEventListener('click', () => { drawGarage(); show('garage'); }); $('#g-back').addEventListener('click', () => { modeUI(); show('menu'); });
+$('#open-garage').addEventListener('click', () => { drawGarage(); show('garage'); }); $('#pause-garage').addEventListener('click', () => { drawGarage(); show('garage'); });
+function closeGarage() {
+  if (swapping) return;
+  if (S.mode === 'pause') show('pause');
+  else { modeUI(); show('menu'); }
+}
+$('#g-back').addEventListener('click', closeGarage);
 $('#btn-sound').addEventListener('click', () => { S.sound = !S.sound; store.set('sound', S.sound ? 'on' : 'off'); document.body.classList.toggle('muted', !S.sound); audio?.setOn(S.sound); });
 document.addEventListener('click', e => { if (e.target.closest('button')) audio?.click(); });
 document.body.classList.toggle('muted', !S.sound);
@@ -229,7 +246,12 @@ let swapping = false;
 async function useCar(id) { // builds the new car off-scene, then swaps it in within one frame
   if (swapping) return; swapping = true;
   try { const old = player, p = await createPlayer(new THREE.Group(), R.cube.texture, city, carSpec(save, id)); scene.remove(old.root); scene.add(p.root); const i = R.cube.hide.indexOf(old.root); if (i >= 0) R.cube.hide[i] = p.root; else R.cube.hide.push(p.root);
-    p.place(city.spawn.x, city.spawn.z, 0); p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); }
+    if (S.mode === 'pause') {
+      p.place(old.pos.x, old.pos.z, old.heading);
+      for (const key of ['groundY', 'slopeF', 'slopeL', 'air', 'vy', 'speed', 'steer', 'yawRate', 'reversing']) p[key] = old[key];
+      p.pos.copy(old.pos); p.vel.copy(old.vel); p.sync(0); snapCam = true;
+    } else p.place(city.spawn.x, city.spawn.z, 0);
+    p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); }
   catch (e) { console.warn('car', e); toast('That car would not load'); } finally { swapping = false; }
 }
 function drawGarage() {
