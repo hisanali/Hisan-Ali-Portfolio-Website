@@ -246,8 +246,20 @@ function drawGarage() {
 
 // ---------- Full map (M): tap a road in Free Roam to set a waypoint ----------
 function drawBig() { bigmap?.draw({ px: player.pos.x, pz: player.pos.z, heading: player.heading, seen, t: S.time, target: beacon.visible ? beacon.position : null, targetName: A.label, route: S.kind === 'trial' ? A.route : null }); }
-function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road or place to set a waypoint' : A.label; drawBig(); }
+function openMap() { if (S.mode !== 'play' && S.mode !== 'pause') return; S.mode = 'map'; show('bigmap'); bigmap?.center(player.pos.x, player.pos.z, 2.6); $('#map-note').textContent = S.kind === 'free' ? 'Tap a road or place to set a waypoint' : A.label; drawBig(); }
 function closeMap() { if (S.mode !== 'map') return; S.mode = 'play'; show(null); }
+// Map handling: drag to pan, wheel or pinch to zoom, buttons to zoom and re-centre; a drag never counts as a tap.
+{ const cv = $('#bigmap-canvas'), pts = new Map(); let moved = 0, pinch = 0;
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch = 0; cv.classList.add('drag'); });
+  cv.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p || !bigmap) return; const dx = e.clientX - p[0], dy = e.clientY - p[1];
+    if (pts.size === 1) { moved += Math.abs(dx) + Math.abs(dy); bigmap.pan(dx, dy); }
+    else if (pts.size === 2) { const [a, b] = [...pts.values()], d0 = Math.hypot(a[0] - b[0], a[1] - b[1]); p[0] = e.clientX; p[1] = e.clientY; const [c, d] = [...pts.values()], d1 = Math.hypot(c[0] - d[0], c[1] - d[1]), r = cv.getBoundingClientRect(); if (d0 > 0) bigmap.zoomAt(d1 / d0, (c[0] + d[0]) / 2 - r.left, (c[1] + d[1]) / 2 - r.top); moved += 99; pinch = 1; }
+    p[0] = e.clientX; p[1] = e.clientY; drawBig(); });
+  const up = e => { pts.delete(e.pointerId); if (!pts.size) cv.classList.remove('drag'); }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', e => { if (!bigmap) return; e.preventDefault(); const r = cv.getBoundingClientRect(); bigmap.zoomAt(Math.exp(-e.deltaY * 0.0016), e.clientX - r.left, e.clientY - r.top); drawBig(); }, { passive: false });
+  const zoomBy = f => { const r = cv.getBoundingClientRect(); bigmap?.zoomAt(f, r.width / 2, r.height / 2); drawBig(); };
+  $('#map-in').addEventListener('click', () => zoomBy(1.5)); $('#map-out').addEventListener('click', () => zoomBy(1 / 1.5)); $('#map-me').addEventListener('click', () => { bigmap?.center(player.pos.x, player.pos.z); drawBig(); });
+  cv.addEventListener('click', e => { if (moved > 6 || pinch) e.stopImmediatePropagation(); }, true); }
 $('#bigmap-canvas').addEventListener('click', e => { if (S.mode !== 'map') return; const r = e.currentTarget.getBoundingClientRect(), w = bigmap.toWorld(e.clientX - r.left, e.clientY - r.top); if (!w) return;
   if (S.kind !== 'free') { toast('Waypoints are for Free Roam'); return; } let t = null;
   if (inCity(w.x, w.z) && w.x >= -HALF) { const rx = clamp(Math.round(w.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(w.z / P), 0, ROADS - 1) * P; t = Math.abs(w.x - rx) < Math.abs(w.z - rz) ? { x: rx, z: clamp(w.z, 0, SPAN), y: 0 } : { x: clamp(w.x, 0, SPAN), z: rz, y: 0 }; }

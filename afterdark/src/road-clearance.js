@@ -47,6 +47,13 @@ export function roadClearance(samples, cell = 2, range = 290) {
     glsl: `
 uniform sampler2D uRoadCut;
 uniform vec4 uRoadCutBounds;
+// Distance from p to the nearest road centre line (14 or more where there is no road nearby).
+float roadDist(vec3 p) {
+  vec2 uv = (p.xz - uRoadCutBounds.xy) * uRoadCutBounds.zw;
+  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return 99.0;
+  vec4 road = texture2D(uRoadCut, uv);
+  return road.a > 0.6 ? 99.0 : road.r * ${reach.toFixed(1)};
+}
 void clearRoad(vec3 p) {
   vec2 uv = (p.xz - uRoadCutBounds.xy) * uRoadCutBounds.zw;
   if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return;

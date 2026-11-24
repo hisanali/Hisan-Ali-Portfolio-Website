@@ -29,6 +29,19 @@ export async function buildPlaces(scene, city, world, Q) {
     const [px, pz] = at(pl, -8, pl.r + 44); box(px, y - 0.25, pz, 7, 0.5, 96, yaw, 0x6b5642, false); for (let k = 0; k < 9; k++) for (const e of [-3, 3]) { const [qx, qz] = at(pl, -8 + e, pl.r + 2 + k * 11); cyl(qx, y - 3, qz, 0.28, 6, 0x3d3127, 0.28, false); }
     for (let k = 0; k < 8; k++) { const side = k % 2 ? 1 : -1, [bx, bz] = at(pl, -8 + side * 9, pl.r + 14 + Math.floor(k / 2) * 21), L = 9 + R() * 5; box(bx, -0.1, bz, 3.2, 1.3, L, yaw, [0xf2f2f0, 0x1f3a5f, 0xf2f2f0, 0x7a1f24][k % 4], false); box(bx, 1.1, bz - pl.vz * 0 + 0, 2.3, 1.3, L * 0.38, yaw, 0xfafafa, false); cyl(bx, 4.2, bz, 0.07, 7, 0xd8d8d8, 0.05, false); }
     for (let k = 0; k < 6; k++) { const [x, z] = at(pl, -60 + k * 24, -4); cyl(x, y + 4.5, z, 0.12, 9, 0x24272c, 0.09); glow(x, y + 9, z, 1.2, 0.12, 0.5, yaw, 0xffd6a0, 4); }
+    // working detail: roller doors, roof ribs and downpipes on the sheds; bracing, cabs and ladders on the cranes;
+    // banded tanks
+    const L = (cx, cz, yw, lx, lz) => [cx + lx * Math.cos(yw) + lz * Math.sin(yw), cz - lx * Math.sin(yw) + lz * Math.cos(yw)];
+    for (let k = 0; k < 3; k++) { const [x, z] = at(pl, -46 + k * 46, -30);
+      for (const fz of [-10.06, 10.06]) for (const fx of [-13, 0, 13]) { const [dx, dz] = L(x, z, yaw, fx, fz); box(dx, y + 3.3, dz, 6.4, 6.6, 0.16, yaw, 0x50565c, false); const [hx, hz] = L(x, z, yaw, fx, fz * 1.004); box(hx, y + 6.75, hz, 6.9, 0.3, 0.3, yaw, 0x2d3237, false); }
+      for (let r = -18; r <= 18; r += 3) { const [rx, rz] = L(x, z, yaw, r, 0); box(rx, y + 11.3, rz, 0.18, 0.22, 21.2, yaw, 0x2f343a, false); }
+      for (const [fx, fz] of [[-20.1, -10.1], [20.1, -10.1], [-20.1, 10.1], [20.1, 10.1]]) { const [gx, gz] = L(x, z, yaw, fx, fz); cyl(gx, y + 5.3, gz, 0.09, 10.6, 0x3a3f45, 0.09, false); } }
+    const yawU = Math.atan2(-pl.uz, pl.ux), yawV = Math.atan2(-pl.vz, pl.vx);
+    for (const u of [-34, 26]) { for (const dv of [-7, 7]) for (const hgt of [9, 19]) { const [bx, bz] = at(pl, u, 52 + dv); box(bx, y + hgt, bz, 18, 0.7, 0.7, yawU, 0xd9a321, false); }
+      for (const du of [-9, 9]) for (const hgt of [9, 19]) { const [bx, bz] = at(pl, u + du, 52); box(bx, y + hgt, bz, 14, 0.7, 0.7, yawV, 0xd9a321, false); }
+      const [cx, cz] = at(pl, u + 6, 60); box(cx, y + 28.4, cz, 3.2, 2.6, 3.2, yaw, 0xe9e4d8, false); glow(cx, y + 28.6, cz, 3.3, 0.9, 3.3, yaw, 0x9fd6ff, 0.8);
+      const [lx, lz] = at(pl, u - 9.9, 45); box(lx, y + 15, lz, 0.5, 30, 0.08, yaw, 0x3a3f45, false); }
+    for (let k = 0; k < 3; k++) { const [x, z] = at(pl, 52 - k * 2, -58 + k * 17); for (const h of [2.5, 5.5, 8.5]) cyl(x, y + h, z, 7.62, 0.28, 0xbfc3c6, 7.62, false); cyl(x, y + 11.6, z, 7.5, 1.2, 0xd4d7d9, 5.2, false); const [sx, sz] = at(pl, 52 - k * 2 + 7.6, -58 + k * 17); box(sx, y + 5.5, sz, 0.12, 11, 0.6, yaw, 0x3a3f45, false); }
     out.markers.push(pl); }
 
   // ---- Lighthouse on the point ----

@@ -58,8 +58,15 @@ export async function buildFrontier(scene, city, world, Q) {
   // A house with a pitched roof and lit windows; returns its footprint.
   function house(x, z, y, w, d, h, yaw, wall, roofC, mat = 'paint', lit = 0.7) {
     box(x, y + h / 2 - 0.4, z, w, h + 0.8, d, yaw, wall, mat); roof(x, y + h, z, w + 0.9, Math.min(w, d) * 0.55, d + 0.9, yaw, roofC);
-    const cs = Math.cos(yaw), sn = Math.sin(yaw);
-    for (const side of [-1, 1]) for (let k = 0; k < Math.max(1, Math.floor(d / 3.2)); k++) { if (R() > lit) continue; const along = (k + 0.5) * d / Math.max(1, Math.floor(d / 3.2)) - d / 2, ox = side * (w / 2 + 0.03), lx = x + cs * ox + sn * along, lz = z - sn * ox + cs * along; glow(lx, y + h * 0.55, lz, 0.06, 1.1, 1.0, yaw, 0xffc884); }
+    const cs = Math.cos(yaw), sn = Math.sin(yaw), P = (ox, oz) => [x + cs * ox + sn * oz, z - sn * ox + cs * oz];
+    box(x, y - 0.15, z, w + 0.35, 0.9, d + 0.35, yaw, 0x8a857c, 'stone', false); // plinth
+    const nw = Math.max(1, Math.floor(d / 3.2));
+    for (const side of [-1, 1]) for (let k = 0; k < nw; k++) { const along = (k + 0.5) * d / nw - d / 2, ox = side * (w / 2 + 0.03), [lx, lz] = P(ox, along), [fx, fz] = P(side * (w / 2 + 0.06), along);
+      box(fx, y + h * 0.55, fz, 0.08, 1.35, 1.25, yaw, 0xf2efe8, 'paint', false); // white frame and sill
+      box(fx + cs * side * 0.05, y + h * 0.55 - 0.72, fz - sn * side * 0.05, 0.16, 0.1, 1.4, yaw, 0xf2efe8, 'paint', false);
+      if (R() < lit) glow(lx + cs * side * 0.04, y + h * 0.55, lz - sn * side * 0.04, 0.06, 1.1, 1.0, yaw, 0xffc884); else box(lx + cs * side * 0.04, y + h * 0.55, lz - sn * side * 0.04, 0.06, 1.1, 1.0, yaw, 0x1d2328, 'metal', false); }
+    { const [dx, dz] = P(0, d / 2 + 0.05); box(dx, y + 1.05, dz, 1.1, 2.1, 0.12, yaw, 0x5a3b28, 'wood', false); const [lx, lz] = P(0.95, d / 2 + 0.25); glow(lx, y + 2.3, lz, 0.18, 0.25, 0.18, yaw, 0xffd9a0); }
+    if (R() < 0.7) { const [cx, cz] = P(w * 0.22, -d * 0.25); box(cx, y + h + Math.min(w, d) * 0.45, cz, 0.7, Math.min(w, d) * 0.6 + 1, 0.7, yaw, 0x6d6157, 'stone', false); }
   }
 
   // ---- Cape Lighthouse ----
@@ -160,7 +167,7 @@ export async function buildFrontier(scene, city, world, Q) {
     fallT.wrapS = fallT.wrapT = THREE.RepeatWrapping; fallT.repeat.set(1, 6); const fm = new THREE.MeshBasicMaterial({ map: fallT, transparent: true, depthWrite: false, side: THREE.DoubleSide, color: 0xe8f0f2 });
     const FJ = [[-4200, 3600], [-2500, 3560], [-1200, 3470], [0, 3520], [700, 3470]], cz = x => { for (let i = 0; i < FJ.length - 1; i++) if (x >= FJ[i][0] && x <= FJ[i + 1][0]) return FJ[i][1] + (FJ[i + 1][1] - FJ[i][1]) * (x - FJ[i][0]) / (FJ[i + 1][0] - FJ[i][0]); return 3500; };
     for (const fx of [-2050, -1150, -350, 380]) { let z = cz(fx) + 120; while (terrain(fx, z) < 4 && z < cz(fx) + 600) z += 4; const foot = z - 6; let top = z; while (terrain(fx, top) < 230 && top < z + 600) top += 6; if (terrain(fx, top) < 120) continue;
-      const pos = [], uv = [], idx = []; let n = 0; for (let zz = top; zz >= foot; zz -= 3) { const y = Math.max(terrain(fx, zz) + 0.8, -0.5); pos.push(fx - 4 - (zz - foot) * 0.01, y, zz, fx + 4 + (zz - foot) * 0.01, y, zz); uv.push(0, (top - zz) / 40, 1, (top - zz) / 40); if (n) idx.push((n - 1) * 2, n * 2, (n - 1) * 2 + 1, (n - 1) * 2 + 1, n * 2, n * 2 + 1); n++; }
+      const pos = [], uv = [], idx = []; let n = 0; for (let zz = top; zz >= foot; zz -= 3) { const y = Math.max(terrain(fx, zz) + 0.8, -0.5); const wob = Math.sin(zz * 0.05) * 3 + Math.sin(zz * 0.13) * 1.2, half = 6 + (zz - foot) * 0.012; pos.push(fx + wob - half, y, zz, fx + wob + half, y, zz); uv.push(0, (top - zz) / 40, 1, (top - zz) / 40); if (n) idx.push((n - 1) * 2, n * 2, (n - 1) * 2 + 1, (n - 1) * 2 + 1, n * 2, n * 2 + 1); n++; }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); const m = new THREE.Mesh(g, fm); m.frustumCulled = false; scene.add(m);
       const mist = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(TEX + 'smoke.png'), color: 0xf2f6f8, transparent: true, opacity: 0.45, depthWrite: false })); mist.position.set(fx, 4, foot - 4); mist.scale.set(26, 18, 1); scene.add(mist);
       (world.waterfalls ||= []).push({ x: fx, z: foot, top: terrain(fx, top) }); }
@@ -170,6 +177,32 @@ export async function buildFrontier(scene, city, world, Q) {
   const mouth = place('mouth');
   if (mouth) { const pl = mouth, y = pl.y, yaw = pl.yaw, [x, z] = at(pl, 26, 0); box(x, y + 0.25, z, 12, 0.5, 9, yaw, 0xffffff, 'wood', false); for (const [u, v] of [[6, 0], [-6, 0]]) { const [rx, rz] = at(pl, 26 + u * 0, v + u); box(rx, y + 1.1, rz, 0.12, 1.1, 0.12, yaw, 0x3a2c20, 'paint', false); }
     const [bx, bz] = at(pl, 34, 8), by = terrain(bx, bz); cyl(bx, by + 5, bz, 1.1, 10, 0xf2f0ea); cyl(bx, by + 10.4, bz, 1.3, 0.5, 0x2a2c2e, 'metal', false); glow(bx, by + 11.3, bz, 0.9, 1.2, 0.9, 0, new THREE.Color(0.3, 3, 0.8)); }
+
+  // ---- Broadleaf woods (Eight Worlds oak, ash and aspen) around Mirror Lake and in the jungle ----
+  try { const n = Math.round(300 * Math.max(0, Math.min(1, ((Q.reach || 1) - 0.5) * 2))); if (n > 0) await broadleaf(n); } catch (e) { console.warn('broadleaf trees unavailable', e); }
+  async function broadleaf(total) {
+    const load = async name => { const buf = await (await fetch('/eight-worlds/assets/models/' + name + '.bin')).arrayBuffer(), hl = new Uint32Array(buf, 0, 1)[0], head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl))); let o = 4 + hl;
+      const f32 = k => { const a = new Float32Array(buf, o, k); o += k * 4; return a; }, u32 = k => { const a = new Uint32Array(buf, o, k); o += k * 4; return a; };
+      const mk = (nv, ni) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(f32(nv * 3), 3)); g.setAttribute('normal', new THREE.BufferAttribute(f32(nv * 3), 3)); g.setAttribute('uv', new THREE.BufferAttribute(f32(nv * 2), 2)); g.setIndex(new THREE.BufferAttribute(u32(ni), 1)); return g; };
+      return { ...head, branches: mk(head.bv, head.bi), leaves: mk(head.lv, head.li) }; };
+    const kinds = await Promise.all(['oak_a', 'ash_a', 'aspen_a'].map(load)), sites = kinds.map(() => []);
+    const zones = [{ x: 3700, z: 150, r: 1500, share: 0.6, mix: [0.3, 0.3, 0.4] }, { x: 1250, z: -3000, r: 1300, share: 0.4, mix: [0.55, 0.45, 0] }];
+    for (const zn of zones) { let placed = 0; for (let k = 0; k < 6000 && placed < total * zn.share; k++) { const a = R() * TAU, r = Math.sqrt(R()) * zn.r, x = zn.x + Math.cos(a) * r, z = zn.z + Math.sin(a) * r, y = terrain(x, z);
+        const road = world.nearRoad(x, z, 60); if (!road || road.d < 13 || y < LAKE.level + 1 && Math.hypot((x - LAKE.x) / LAKE.rx, (z - LAKE.z) / LAKE.rz) < 1.3 || y < 3) continue;
+        if (Math.abs(terrain(x + 3, z) - terrain(x - 3, z)) > 2.4 || world.places.some(p => Math.hypot(p.x - x, p.z - z) < (p.r || 30) + 12)) continue;
+        if (sites.some(l => l.some(t => Math.abs(t.x - x) < 9 && Math.abs(t.z - z) < 9))) continue;
+        let pick = R(), kk = 0; while (kk < 2 && pick > zn.mix[kk]) { pick -= zn.mix[kk]; kk++; }
+        const sc = 0.15 + R() * 0.08; sites[kk].push({ x, y: y - 0.3, z, s: sc, a: R() * TAU }); solid.push({ x, z, r: 0.55 * sc / 0.2, bottom: y - 0.5, top: y + 14, kind: 'broadleaf trunk' }); placed++; } }
+    const barkM = {}, leafM = {};
+    kinds.forEach((t, k) => { if (!sites[k].length) return;
+      barkM[t.bark] ||= new THREE.MeshStandardMaterial({ map: load2(`bark_${t.bark}_d.jpg`), normalMap: load2(`bark_${t.bark}_n.jpg`, false), roughness: 0.92 });
+      leafM[t.leaf] ||= new THREE.MeshStandardMaterial({ map: load2(`leaf_${t.leaf}.png`), alphaTest: 0.42, side: THREE.DoubleSide, roughness: 0.85, envMapIntensity: 0.4 });
+      for (const [g, m] of [[t.branches, barkM[t.bark]], [t.leaves, leafM[t.leaf]]]) { const im = new THREE.InstancedMesh(g, m, sites[k].length);
+        sites[k].forEach((q, i) => { dummy.position.set(q.x, q.y, q.z); dummy.rotation.set(0, q.a, 0); dummy.scale.setScalar(q.s); dummy.updateMatrix(); im.setMatrixAt(i, dummy.matrix); im.setColorAt(i, col.setHSL(0.22 + R() * 0.06, 0.3, 0.8 + R() * 0.2)); });
+        im.castShadow = true; im.receiveShadow = true; scene.add(im); splitChunks(im, 620, city.chunks, 300); } });
+    out.broadleaf = sites.reduce((a, l) => a + l.length, 0);
+  }
+  function load2(n, srgb = true) { const t = loader.load(TEX + n); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
 
   // ---- instancing ----
   for (const [key, list] of parts) { const [geo, mat] = key.split('|'), mesh = new THREE.InstancedMesh(GEO[geo], MAT[mat], list.length);

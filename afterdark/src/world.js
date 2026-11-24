@@ -21,12 +21,9 @@ const REGION_GLSL = `
   adC = mix(adC, mix(adBas, adR * 0.45, 0.25), adZ.z * (0.35 + 0.65 * smoothstep(0.1, 0.6, adZ.z)));
   { vec2 vq = vWPos.xz - uVolc.xy; float vr = length(vq), va = atan(vq.y, vq.x);
     float seam = adN(vec2(va * 7.0 + adN(vec2(vr * 0.004, va * 3.0)) * 2.4, vr * 0.0055));
-    adLava = smoothstep(0.93, 0.985, 1.0 - abs(2.0 * seam - 1.0)) * (1.0 - smoothstep(420.0, 1150.0, vr)) * smoothstep(345.0, 420.0, vr) * adZ.z * 0.7;
+    adLava = smoothstep(0.95, 0.99, 1.0 - abs(2.0 * seam - 1.0)) * (1.0 - smoothstep(380.0, 520.0, vr)) * smoothstep(338.0, 360.0, vr) * adZ.z * 0.55 * smoothstep(12.0, 20.0, roadDist(vWPos));
     adLava += (1.0 - smoothstep(120.0, 175.0, vr)) * adZ.z * 0.6;
     adC = mix(adC, vec3(0.06, 0.03, 0.02), adLava); }
-  // steep frontier faces: weathered cliff rock rather than banded strata
-  vec3 adCliff = (texture2D(uCliff, vWPos.zy / vec2(16.0, 11.0)).rgb * adBlend.x + texture2D(uCliff, adP / 16.0).rgb * adBlend.y + texture2D(uCliff, vWPos.xy / vec2(16.0, 11.0)).rgb * adBlend.z) * vec3(0.86, 0.84, 0.82);
-  adC = mix(adC, mix(adCliff, adR, 0.3), smoothstep(0.3, 0.6, adExposure) * (1.0 - adZ.x) * (1.0 - adZ.z * 0.7));
   float adSnowLine = 455.0 + (adMacro - 0.5) * 120.0 + (adBands - 0.5) * 60.0;
   float adSnowK = adZ.y * smoothstep(adSnowLine, adSnowLine + 70.0, vWPos.y) * (1.0 - smoothstep(0.28, 0.5, adSlope + (adN(adP * 0.045) - 0.5) * 0.22));
   vec3 adSnowC = texture2D(uSnow, adP / 9.0).rgb * vec3(0.9, 0.93, 0.98) * (0.86 + 0.14 * adN(adP * 0.02));
@@ -253,16 +250,16 @@ export async function buildWorld(scene, city, Q) {
   const EW = n => { const t = L.load('/eight-worlds/assets/tex/' + n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; };
   let regionTex = null;
   const EWn = n => { const t = L.load('/eight-worlds/assets/tex/' + n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
-  const groundTex = { uGrass2: { value: EW('grass_d.jpg') }, uForestG: { value: EW('forest_d.jpg') }, uGrassN: { value: EWn('grass_n.jpg') }, uForestN: { value: EWn('forest_n.jpg') } };
+  const groundTex = { uCliff: { value: EW('cliff_d.jpg') }, uGravel: { value: EW('gravel_d.jpg') }, uGrass2: { value: EW('grass_d.jpg') }, uForestG: { value: EW('forest_d.jpg') }, uGrassN: { value: EWn('grass_n.jpg') }, uForestN: { value: EWn('forest_n.jpg') } };
   const innerBox = s => s.x > WORLD.x0 - 40 && s.x < WORLD.x1 + 40 && s.z > WORLD.z0 - 40 && s.z < WORLD.z1 + 40;
   const deepInside = s => s.x > WORLD.x0 + 40 && s.x < WORLD.x1 - 40 && s.z > WORLD.z0 + 40 && s.z < WORLD.z1 - 40;
   // Regional materials add sand, snowfields, volcanic rock with glowing lava seams, and jungle moss (Eight Worlds textures).
   function landMaterial(clearance, regional) {
   const landM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0, envMapIntensity: 0.35 });
-  if (regional) regionTex ||= { uDune: { value: EW('dune_d.jpg') }, uSnow: { value: EW('snow_d.jpg') }, uBasalt: { value: EW('basalt_d.jpg') }, uMoss: { value: EW('moss_d.jpg') }, uCliff: { value: EW('cliff_d.jpg') }, uVolc: { value: new THREE.Vector3(VOLCANO.x, VOLCANO.z, 0) } };
+  if (regional) regionTex ||= { uDune: { value: EW('dune_d.jpg') }, uSnow: { value: EW('snow_d.jpg') }, uBasalt: { value: EW('basalt_d.jpg') }, uMoss: { value: EW('moss_d.jpg') }, uVolc: { value: new THREE.Vector3(VOLCANO.x, VOLCANO.z, 0) } };
   landM.onBeforeCompile = sh => { Object.assign(sh.uniforms, clearance.uniforms); sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata }; Object.assign(sh.uniforms, groundTex); if (regional) Object.assign(sh.uniforms, regionTex);
     sh.vertexShader = (regional ? 'attribute vec4 aZone; varying vec4 vZone;\n' : '') + 'attribute float aWoodland; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal; vWoodland = aWoodland;' + (regional ? ' vZone = aZone;' : ''));
-    sh.fragmentShader = clearance.glsl + (regional ? 'uniform sampler2D uDune, uSnow, uBasalt, uMoss, uCliff; uniform vec3 uVolc; varying vec4 vZone; float adLava = 0.0;\n' : '') + NO_TILE_GLSL + `uniform sampler2D uGrass, uRock, uStrata, uGrass2, uForestG, uGrassN, uForestN; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
+    sh.fragmentShader = clearance.glsl + (regional ? 'uniform sampler2D uDune, uSnow, uBasalt, uMoss; uniform vec3 uVolc; varying vec4 vZone; float adLava = 0.0;\n' : '') + NO_TILE_GLSL + `uniform sampler2D uGrass, uRock, uStrata, uGrass2, uForestG, uGrassN, uForestN, uGravel, uCliff; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
 float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(adH(i), adH(i + vec2(1, 0)), f.x), mix(adH(i + vec2(0, 1)), adH(i + vec2(1, 1)), f.x), f.y); }\n` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
   clearRoad(vWPos);
@@ -274,8 +271,9 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   vec3 adAerial = texture2D(uStrata, adP / 88.0).rgb;
   // Ground: two grass stocks and a forest floor, each read without a visible repeat, mixed by slow noise.
   float adMeadow = smoothstep(0.32, 0.68, adN(adP * 0.017) * 0.65 + adN(adP * 0.083) * 0.35);
-  vec3 adGround = mix(noTile(uGrass, adP / 7.0).rgb * 1.22, noTile(uGrass2, adP / 4.6 + 17.0).rgb * vec3(1.55, 1.62, 2.2), adMeadow * 0.75);
+  vec3 adGround = mix(noTile(uGrass, adP / 7.0).rgb * 1.22, noTile(uGrass2, adP / 4.6 + 17.0).rgb * vec3(1.25, 1.72, 2.0), adMeadow * 0.7);
   adGround *= mix(0.86, 1.1, adN(adP * 0.31)) * mix(0.93, 1.05, adN(adP * 1.7));
+  adGround = mix(adGround, adGround * vec3(0.78, 1.04, 0.7), smoothstep(0.35, 0.8, adN(adP * 0.0075 + 3.0)) * 0.7);
   vec3 adG = mix(adGround, adAerial, 0.2) * mix(vec3(0.58, 0.72, 0.48), vec3(1.1, 1.1, 0.9), smoothstep(0.19, 0.77, adMacro));
   float adWood = clamp(vWoodland * 1.15, 0.0, 1.0);
   adG = mix(adG, noTile(uForestG, adP / 3.8 + 5.0).rgb * vec3(0.5, 0.56, 0.4) * mix(0.8, 1.1, adMacro), adWood * 0.85);
@@ -286,12 +284,20 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
               + texture2D(uRock, vWPos.xy / vec2(9.0, 5.0)).rgb * adBlend.z;
   vec2 adWarp = vec2(adN(adP * 0.028), adN(adP * 0.023 + 41.0)) * 0.24;
   vec3 adStrata = texture2D(uStrata, vec2(adP.x + adP.y * 0.51, vWPos.y * 1.59 + adP.y * 0.34) / 82.0 + adWarp).rgb;
-  vec3 adR = mix(adRock * vec3(0.82, 0.78, 0.73), adStrata * vec3(0.85, 0.79, 0.70), 0.35 + adMacro * 0.29);
-  adR *= mix(0.79, 1.21, smoothstep(0.13, 0.8, adBands));
+  vec3 adR = mix(adRock * vec3(0.8, 0.78, 0.75), adStrata * vec3(0.8, 0.77, 0.72), 0.16 + adMacro * 0.14);
+  adR *= mix(0.9, 1.1, smoothstep(0.13, 0.8, adBands));
   float adExposure = adSlope + (adMacro - 0.46) * 0.25 + (adBands - 0.5) * 0.14;
-  vec3 adC = mix(adG, adR, smoothstep(0.115, 0.35, adExposure));
+  // grass holds on all but steep ground; bare rock shows as weathered cliff, not banded strata
+  vec3 adC = mix(adG, mix(adG * 0.72 + adR * 0.28, adR, smoothstep(0.36, 0.52, adExposure)), smoothstep(0.24, 0.4, adExposure));
+  vec3 adCliff = (noTile(uCliff, vWPos.zy / vec2(15.0, 11.0)).rgb * adBlend.x + noTile(uCliff, adP / 15.0).rgb * adBlend.y + noTile(uCliff, vWPos.xy / vec2(15.0, 11.0)).rgb * adBlend.z) * vec3(0.84, 0.83, 0.82) * mix(0.85, 1.12, adMacro);
+  adC = mix(adC, mix(adCliff, adR, 0.25), smoothstep(0.42, 0.68, adExposure));
   float adDune = (1.0 - smoothstep(0.05, 1.2, vWPos.y)) * (1.0 - smoothstep(0.3, 0.5, adSlope));
   adC = mix(adC, vec3(0.54, 0.45, 0.31) * (0.76 + 0.24 * adN(adP * 0.7)), adDune);
+  // a gravel shoulder beside the asphalt, then a worn, darker verge
+  float adRd = roadDist(vWPos), adSh = 1.0 - smoothstep(6.4, 8.6 + adN(adP * 0.4) * 0.8, adRd);
+  vec3 adGrav = noTile(uGravel, adP / 2.6).rgb * vec3(0.92, 0.9, 0.85);
+  adC = mix(adC, adGrav, adSh * 0.9);
+  adC *= mix(1.0, 0.84, (1.0 - smoothstep(8.5, 13.0, adRd)) * (1.0 - adSh));
   ${regional ? REGION_GLSL : ''}
   diffuseColor.rgb = adC;`).replace('#include <emissivemap_fragment>', regional ? '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(3.2, 0.75, 0.12) * adLava;' : '#include <emissivemap_fragment>').replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   { // tufted grass and forest litter relief, strongest close up and on gentle ground
@@ -399,6 +405,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     const q1 = new THREE.PlaneGeometry(1.6, 0.8); q1.translate(0, 0.4, 0); const q2 = q1.clone(); q2.rotateY(Math.PI / 2); const pos = [...q1.attributes.position.array, ...q2.attributes.position.array], uv = [...q1.attributes.uv.array, ...q2.attributes.uv.array], idx = [...q1.index.array, ...Array.from(q2.index.array, v => v + 4)], tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); tg.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(24).fill(0).map((v, i) => i % 3 === 1 ? 1 : 0), 3)); tg.setIndex(idx);
     const list = []; for (const s of samples) { if (s.bridge || s.tunnel || s.i % 2) continue; for (const sg of [-1, 1]) for (let n = 0; n < 3; n++) { const lat = HALFW + 1.2 + R() * (9 + (s.wide || 0) * 0.3), x = s.x + s.lx * sg * lat + (R() - 0.5) * 3, z = s.z + s.lz * sg * lat + (R() - 0.5) * 3; if (nearPlace(x, z, 0)) continue; if (s.frontier) { const zz = zones(x, z); if (zz[0] > 0.35 || zz[2] > 0.55 || s.y > 360) continue; }
       list.push([x, hAt(x, z) - 0.045, z, 0.25 + R() * 0.45, R() * Math.PI]); } }
+    list.length = 0; // the near-field grass (grass.js) now grows the verges
     const tm = new THREE.InstancedMesh(tg, new THREE.MeshStandardMaterial({ map: gt, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, envMapIntensity: 0.3 }), list.length); list.forEach((q, n) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[4], 0); dummy.scale.setScalar(q[3]); dummy.updateMatrix(); tm.setMatrixAt(n, dummy.matrix); }); dummy.scale.set(1, 1, 1); dummy.rotation.set(0, 0, 0); tm.receiveShadow = true; scene.add(tm); splitChunks(tm, 190, city.chunks); world.tufts = list.length;
     const sp = [], sc = []; for (const s of samples) { if (s.i % 4 || s.tunnel) continue; for (const sg of [-1, 1]) { sp.push(s.x + s.lx * sg * (HALFW - 0.25), s.y + 0.12, s.z + s.lz * sg * (HALFW - 0.25)); if (sg > 0) sc.push(2.6, 0.35, 0.2); else sc.push(2.4, 2.4, 2.2); } }
     const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3)); const studs = new THREE.Points(rg, new THREE.PointsMaterial({ size: 0.34, map: city.dot, vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); studs.frustumCulled = false; scene.add(studs);

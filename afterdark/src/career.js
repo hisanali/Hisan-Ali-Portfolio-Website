@@ -86,9 +86,11 @@ export function jobPay(job, left, hits) { const care = Math.max(0.3, 1 - hits * 
 
 // ---------- Full map ----------
 export function createBigMap(canvas, world, places) {
-  const W = EXT, wx = W.x1 - W.x0, wz = W.z1 - W.z0, ctx = canvas.getContext('2d'); let base = null, fit = null;
+  const W = EXT, wx = W.x1 - W.x0, wz = W.z1 - W.z0, ctx = canvas.getContext('2d'); let base = null, fit = null, size = { w: 1, h: 1 };
+  // The view: zoom 1 shows the whole map; the centre is a world point. Opening the map zooms in on the car.
+  const view = { zoom: 2.4, cx: (W.x0 + W.x1) / 2, cz: (W.z0 + W.z1) / 2 }, clampView = () => { view.zoom = Math.min(8, Math.max(1, view.zoom)); const hx = wx / 2 * (1 - 1 / view.zoom), hz = wz / 2 * (1 - 1 / view.zoom), mx = (W.x0 + W.x1) / 2, mz = (W.z0 + W.z1) / 2; view.cx = Math.min(mx + hx + 400, Math.max(mx - hx - 400, view.cx)); view.cz = Math.min(mz + hz + 400, Math.max(mz - hz - 400, view.cz)); };
   function paint() { // shaded relief, drawn once
-    const bw = 560, bh = Math.round(bw * wz / wx), cv = document.createElement('canvas'); cv.width = bw; cv.height = bh; const c = cv.getContext('2d'), img = c.createImageData(bw, bh), D = img.data; let top = 60; for (let i = 0; i < 4000; i++) top = Math.min(520, Math.max(top, world.terrain(W.x0 + wx * ((i * 0.6180339) % 1), W.z0 + wz * ((i * 0.7548776) % 1))));
+    const bw = 900, bh = Math.round(bw * wz / wx), cv = document.createElement('canvas'); cv.width = bw; cv.height = bh; const c = cv.getContext('2d'), img = c.createImageData(bw, bh), D = img.data; let top = 60; for (let i = 0; i < 4000; i++) top = Math.min(520, Math.max(top, world.terrain(W.x0 + wx * ((i * 0.6180339) % 1), W.z0 + wz * ((i * 0.7548776) % 1))));
     for (let py = 0; py < bh; py++) for (let px = 0; px < bw; px++) { const x = W.x1 - (px + 0.5) / bw * wx, z = W.z1 - (py + 0.5) / bh * wz, h = world.terrain(x, z), hl = world.terrain(x + 14, z + 14), sh = Math.max(-1, Math.min(1, (h - hl) * 0.09)); let r, g, b;
       if (h < -0.5) { const k = Math.min(1, (-h - 0.5) / 14); r = 22 - 10 * k; g = 52 - 22 * k; b = 78 - 26 * k; }
       else if (h < 1.6) { r = 138; g = 126; b = 96; }
@@ -97,10 +99,14 @@ export function createBigMap(canvas, world, places) {
       const lk = world.lake; if (lk && ((x - lk.x) / lk.rx) ** 2 + ((z - lk.z) / lk.rz) ** 2 < 1.4 && h < lk.level) { r = 30; g = 66; b = 92; }
       const l = 1 + sh * 0.5, o = (py * bw + px) * 4; D[o] = r * l; D[o + 1] = g * l; D[o + 2] = b * l; D[o + 3] = 255; }
     c.putImageData(img, 0, 0); base = cv; }
-  const api = { toWorld(cx, cy) { if (!fit) return null; const x = W.x1 - (cx - fit.ox) / fit.k, z = W.z1 - (cy - fit.oy) / fit.k; return x < W.x0 || x > W.x1 || z < W.z0 || z > W.z1 ? null : { x, z }; },
+  const api = { view,
+    center(x, z, zoom) { view.cx = x; view.cz = z; if (zoom) view.zoom = zoom; clampView(); },
+    pan(dx, dy) { if (!fit) return; view.cx += dx / fit.k; view.cz += dy / fit.k; clampView(); },
+    zoomAt(f, sx, sy) { if (!fit) return; const before = api.toWorld(sx, sy, true); view.zoom *= f; clampView(); const k = Math.min(size.w / wx, size.h / wz) * view.zoom; if (before) { view.cx = before.x + (sx - size.w / 2) / k; view.cz = before.z + (sy - size.h / 2) / k; clampView(); } },
+    toWorld(cx, cy, loose) { if (!fit) return null; const x = W.x1 - (cx - fit.ox) / fit.k, z = W.z1 - (cy - fit.oy) / fit.k; return !loose && (x < W.x0 || x > W.x1 || z < W.z0 || z > W.z1) ? null : { x, z }; },
     draw(st) { if (!base) paint(); const r = canvas.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1), cw = Math.max(200, Math.round(r.width * dpr)), ch = Math.max(200, Math.round(r.height * dpr)); if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
-      const k = Math.min(cw / wx, ch / wz), ox = (cw - wx * k) / 2, oy = (ch - wz * k) / 2, X = x => ox + (W.x1 - x) * k, Y = z => oy + (W.z1 - z) * k, u = cw / 900; fit = { k: k / dpr, ox: ox / dpr, oy: oy / dpr };
-      ctx.clearRect(0, 0, cw, ch); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(base, ox, oy, wx * k, wz * k); ctx.lineCap = ctx.lineJoin = 'round';
+      clampView(); size = { w: cw / dpr, h: ch / dpr }; const k = Math.min(cw / wx, ch / wz) * view.zoom, X = x => cw / 2 + (view.cx - x) * k, Y = z => ch / 2 + (view.cz - z) * k, ox = X(W.x1), oy = Y(W.z1), u = Math.min(cw, 1400) / 900; fit = { k: k / dpr, ox: ox / dpr, oy: oy / dpr };
+      ctx.clearRect(0, 0, cw, ch); ctx.fillStyle = 'rgba(12,20,34,.82)'; ctx.fillRect(0, 0, cw, ch); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(base, ox, oy, wx * k, wz * k); ctx.lineCap = ctx.lineJoin = 'round';
       ctx.fillStyle = 'rgba(26,30,44,.86)'; ctx.fillRect(X(SPAN + HALF + 4), Y(SPAN + HALF + 4), (SPAN + 2 * HALF + 8) * k, (SPAN + 2 * HALF + 8) * k);
       ctx.strokeStyle = 'rgba(205,216,240,.75)'; ctx.lineWidth = Math.max(1, 1.6 * u); ctx.beginPath(); for (let i = 0; i < ROADS; i++) { ctx.moveTo(X(i * P), Y(0)); ctx.lineTo(X(i * P), Y(SPAN)); ctx.moveTo(X(0), Y(i * P)); ctx.lineTo(X(SPAN), Y(i * P)); } ctx.stroke();
       for (const [col, lw] of [['rgba(10,12,18,.8)', 5.2], ['#ffd896', 2.6]]) { ctx.strokeStyle = col; ctx.lineWidth = lw * u; ctx.beginPath(); for (const rd of world.roads) for (let i = rd.from; i <= rd.to; i += 4) { const s = world.samples[i]; if (i === rd.from) ctx.moveTo(X(s.x), Y(s.z)); else ctx.lineTo(X(s.x), Y(s.z)); } ctx.stroke(); }
