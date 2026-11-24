@@ -6,7 +6,12 @@ const REC = '/eight-worlds/assets/audio/', LOOPS = { rain: REC + 'rain_heavy.mp3
 const SHOTS = { thunder0: REC + 'thunder.mp3', thunder1: '/tideworn/assets/audio/thunder1.mp3', thunder2: '/tideworn/assets/audio/thunder2.mp3' };
 const TRANSMISSION = { ratio: [360, 255, 185, 144, 117, 98, 82], up: [2700, 4770], down: [1500, 2200], poweredUpshifts: true };
 const GEARBOX = {
-  escalade: { ratio: [580, 370, 267, 220, 185, 154, 130, 111, 94, 82], up: [1850, 3650], down: [950, 1450] },
+  escalade: {
+    ratio: [580, 370, 267, 220, 185, 154, 130, 111, 94, 82],
+    up: [1850, 3650], down: [950, 1450],
+    // Fifth is close to sixth. Use a shorter hold and a lower RPM target for that handoff.
+    upByGear: { 5: [1850, 2850] }, holdByGear: { 5: .55 },
+  },
   bus: { ratio: [510, 300, 192, 137, 106, 86], up: [1450, 750], down: [800, 470] }
 };
 const VOICE = { bus: 'coach', hatch: 'grcorolla', suv: 'landcruiser' };

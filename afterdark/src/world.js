@@ -2,7 +2,7 @@
 // The coastal highway leaves the south-west corner, crosses a bay on a bridge, tunnels a ridge and returns to the
 // east gate. The mountain road leaves the east side, climbs by hairpins to a summit lay-by and drops to the north gate.
 import * as THREE from '/evermile/vendor/three.module.js';
-import { P, ROADS, HALF, SW, SPAN, rng, splitChunks } from './city.js';
+import { P, ROADS, HALF, SW, SPAN, CITY_PAVEMENT, rng, splitChunks } from './city.js';
 import { buildForest } from './forest.js';
 import { roadClearance } from './road-clearance.js';
 import { NO_TILE_GLSL } from './weathering.js';
@@ -161,6 +161,13 @@ export async function buildWorld(scene, city, Q) {
       h = mix(h, grade - 0.05, Math.max(pad, access) * sst(32, 88, tunnelDistance));
     }
     if (h > roadbed) h = mix(roadbed, h, sst(12, 26, roadDistance));
+    // The country grading also reaches into the city. Keep every corner of a terrain
+    // quad that can cross the asphalt below it, then blend back to the graded verge.
+    const { west, east, south, north } = CITY_PAVEMENT;
+    const distanceFromPavement = Math.max(west - x, x - east, south - z, z - north);
+    if (h > -0.12 && distanceFromPavement < 3 * WORLD.cell) {
+      h = mix(-0.12, h, sst(WORLD.cell, 3 * WORLD.cell, distanceFromPavement));
+    }
     return [h, sst(0.34, 0.66, cover(x, z)) * sst(4, 12, h) * (1 - sst(218, 285, h)) * sst(16, 38, roadDistance)];
   }
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = WORLD.x0 + i * WORLD.cell, z = WORLD.z0 + j * WORLD.cell, [h, wd] = gradeCell(x, z, natural(x, z), canopyCover); H[j * nx + i] = h; woodland[j * nx + i] = wd; }

@@ -8,6 +8,10 @@ import { buildSea, wetSand, beachHeight } from './water.js';
 import { Q as QUALITY_PRESET } from './render.js';
 
 export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
+export const CITY_PAVEMENT = {
+  west: -(HALF + 13.5), east: SPAN + HALF + SW + 1,
+  south: -(HALF + SW + 1), north: SPAN + HALF + SW + 1,
+};
 export function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const NEON = [0x19e3ff, 0xff2bd6, 0xffa329, 0x8a5cff, 0xff3048, 0x38ffb0, 0xfff1d0, 0x2f7bff];
 const dummy = new THREE.Object3D(), col = new THREE.Color(), mtmp = new THREE.Matrix4();
@@ -471,10 +475,11 @@ export async function buildCity(scene, refl, quality, renderer) {
   };
 
   // ---- Road surface ----
-  const WEST = -(HALF + 13.5), EAST = SPAN + HALF + SW + 1, roadW = EAST - WEST, roadL = SPAN + (HALF + SW + 1) * 2; city.wetUniform = refl.uniforms.uWet;
+  const { west: WEST, east: EAST, south: SOUTH, north: NORTH } = CITY_PAVEMENT;
+  const roadW = EAST - WEST, roadL = NORTH - SOUTH; city.wetUniform = refl.uniforms.uWet;
   const puddles = roadPuddles();
   city.puddleAt = (x, z) => x >= WEST && x <= EAST && z >= -HALF - SW && z <= SPAN + HALF + SW ? puddles.sample(x, z) : 0;
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, roadL), roadMaterial(refl, roadW / 6.3, roadL / 6.3, puddles)); road.rotation.x = -Math.PI / 2; road.position.set(WEST + roadW / 2, 0, SPAN / 2); road.receiveShadow = SH; scene.add(road);
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, roadL), roadMaterial(refl, roadW / 6.3, roadL / 6.3, puddles)); road.rotation.x = -Math.PI / 2; road.position.set(WEST + roadW / 2, 0, SOUTH + roadL / 2); road.receiveShadow = SH; scene.add(road);
   refl.hide.push(road);
 
   // ---- Pavement slabs ----
