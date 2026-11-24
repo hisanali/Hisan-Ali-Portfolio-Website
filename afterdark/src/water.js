@@ -114,7 +114,7 @@ float oNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
   for (let j = 0; j < RINGS; j++) for (let i = 0; i < SEG; i++) { const a = j * (SEG + 1) + i, b = a + 1, c = a + SEG + 1, d = c + 1; idx.push(a, b, c, b, d, c); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(pos.length).fill(0).map((v, i) => i % 3 === 1 ? 1 : 0), 3)); g.setIndex(idx);
   const sea = new THREE.Mesh(g, material); sea.name = 'Ocean'; sea.frustumCulled = false; sea.receiveShadow = true;
-  sea.onBeforeRender = (renderer, sc, camera) => { const s = 8; U.oCenter.value.set(Math.round(camera.position.x / s) * s, Math.round(camera.position.z / s) * s); };
+  sea.onBeforeRender = (renderer, sc, camera) => { U.oCenter.value.set(camera.position.x, camera.position.z); };
   scene.add(sea);
   let sun = null, depthCPU = null;
   const tmp = new THREE.Vector3();

@@ -87,6 +87,7 @@ export async function buildProps(scene, city, world, Q, onCollider = () => {}) {
   // ---- Wooden piers at Fjordheim and Mirror Lake ----
   try { const pier = await loadGLB(DIR + 'modular_wooden_pier.glb');
     const pierAt = (spot, level) => { const g = pier.scene.clone(true), yaw = Math.atan2(-spot.dx, -spot.dz); g.position.set(spot.x - spot.dx * 6, level + 0.35, spot.z - spot.dz * 6); /* the main deck sits about 0.7 m above the model's base */ g.rotation.y = yaw; g.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.material.envMapIntensity = 0.5; } }); scene.add(g); return g; };
+    { const hb = place('harbour'); if (hb) for (let k = 0; k < 6; k++) { const v = hb.r - 2 + k * 15, x = hb.x + hb.ux * -8 + hb.vx * v, z = hb.z + hb.uz * -8 + hb.vz * v; pierAt({ x: x + hb.vx * 9, z: z + hb.vz * 9, dx: hb.vx, dz: hb.vz }, sea.level); } }
     if (village?.quay) { pierAt(village.quay, sea.level); const q = village.quay; pierAt({ x: q.x + q.dz * 9, z: q.z - q.dx * 9, dx: q.dx, dz: q.dz }, sea.level); }
     const cab = place('cabin'); if (cab?.jetty) pierAt(cab.jetty, LAKE.level + 0.2);
   } catch (e) { console.warn('pier unavailable', e); }
@@ -97,12 +98,13 @@ export async function buildProps(scene, city, world, Q, onCollider = () => {}) {
     const deep = (x, z) => sea.depthAt(x, z)[0] > 7;
     const anchor = (scn, x0, z0, yaw) => { let x = x0, z = z0; for (let k = 0; k < 40 && !deep(x, z); k++) { x -= 25; } const g = scn.clone(true); scene.add(g); out.ships.push({ g, x, z, yaw, ph: R() * 10 }); };
     const L = prep(large), M = prep(medium), Pn = prep(pinnace), hb = place('harbour');
-    if (hb) anchor(L, hb.x - 240, hb.z - 120, 0.4);
+    if (hb) { anchor(L, hb.x - 240, hb.z - 120, 0.4); const along = Math.atan2(-hb.vz, hb.vx), moor = (scn, u, v) => { const g = scn.clone(true); scene.add(g); out.ships.push({ g, x: hb.x + hb.ux * u + hb.vx * v, z: hb.z + hb.uz * u + hb.vz * v, yaw: along, ph: R() * 10, moored: true }); };
+      moor(M, 4, hb.r + 48); moor(Pn, -21, hb.r + 66); }
     anchor(M, 150, 3470, Math.PI * 0.55); if (village?.quay) { const q = village.quay; anchor(Pn, q.x + q.dx * 70, q.z + q.dz * 70, Math.atan2(q.dz, q.dx) + Math.PI / 2); } anchor(L, -1700, 3540, Math.PI * 0.5); anchor(M, -900, -2200, -0.9);
   } catch (e) { console.warn('ships unavailable', e); }
 
   const w = {};
-  out.update = t => { for (const sh of out.ships) { sea.heightAt(sh.x, sh.z, w); const swing = Math.sin(t * 0.05 + sh.ph) * 0.25; sh.g.position.set(sh.x, w.y + 0.1, sh.z); sh.g.rotation.set(Math.atan(w.gz) * 0.8, sh.yaw + swing, -Math.atan(w.gx) * 0.8, 'YXZ'); } };
+  out.update = t => { for (const sh of out.ships) { sea.heightAt(sh.x, sh.z, w); const swing = sh.moored ? Math.sin(t * 0.07 + sh.ph) * 0.015 : Math.sin(t * 0.05 + sh.ph) * 0.25; sh.g.position.set(sh.x, w.y + 0.1, sh.z); sh.g.rotation.set(Math.atan(w.gz) * 0.8, sh.yaw + swing, -Math.atan(w.gx) * 0.8, 'YXZ'); } };
   out.setTime = e => { for (const m of glass) m.emissiveIntensity = 2.6 * e.night; };
   return out;
 }

@@ -5,6 +5,7 @@ import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
 import { loadGLB } from './car.js';
 import { buildSea, wetSand } from './water.js';
+import { Q as QUALITY_PRESET } from './render.js';
 
 export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
 export function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -16,8 +17,32 @@ const GLSL_HASH = 'float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q +=
 // off screen (or out of the sun's shadow box) are skipped, and chunks beyond maxDist are hidden outright.
 // The original mesh stays as an empty parent, so code that toggles it or shares its material keeps working.
 export const CHUNK = 320;
+// Distance fade: a chunk is only hidden once it is beyond its draw distance, so its material dissolves away (a fine
+// screen-space dither) over the last stretch before that. Nothing pops in or out as the car moves.
+function fadeWithDistance(material, far) {
+  if (!material || Array.isArray(material)) return;
+  const u = material.userData; far *= QUALITY_PRESET.reach || 1;
+  if (u.fade) { u.fade.value.x = Math.min(u.fade.value.x, far); u.fade.value.y = Math.max(40, u.fade.value.x * 0.22); return; }
+  u.fade = { value: new THREE.Vector2(far, Math.max(40, far * 0.22)) };
+  const prev = material.onBeforeCompile, prevKey = material.customProgramCacheKey?.bind(material);
+  material.onBeforeCompile = (sh, r) => {
+    prev?.call(material, sh, r);
+    sh.uniforms.fdFar = u.fade;
+    sh.vertexShader = 'varying vec3 fdW;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+  { vec4 fdP = vec4(transformed, 1.0);
+  #ifdef USE_INSTANCING
+    fdP = instanceMatrix * fdP;
+  #endif
+    fdW = (modelMatrix * fdP).xyz; }`);
+    sh.fragmentShader = 'uniform vec2 fdFar; varying vec3 fdW;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+  { float fdK = smoothstep(fdFar.x - fdFar.y, fdFar.x, distance(fdW, cameraPosition));
+    if (fdK > 0.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < fdK) discard; }`);
+  };
+  material.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|fade';
+}
 export function splitChunks(mesh, maxDist, list, size = CHUNK) {
   const n = mesh.count, m4 = new THREE.Matrix4(), groups = new Map(), c = new THREE.Color();
+  if (list && isFinite(maxDist)) fadeWithDistance(mesh.material, maxDist);
   for (let i = 0; i < n; i++) { mesh.getMatrixAt(i, m4); const e = m4.elements, key = Math.floor(e[12] / size) * 1000 + Math.floor(e[14] / size); (groups.get(key) || groups.set(key, []).get(key)).push(i); }
   const inst = Object.entries(mesh.geometry.attributes).filter(([, a]) => a.isInstancedBufferAttribute);
   for (const idx of groups.values()) { let geo = mesh.geometry;

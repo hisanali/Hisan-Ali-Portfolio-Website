@@ -61,10 +61,10 @@ export async function buildFrontier(scene, city, world, Q) {
     const cs = Math.cos(yaw), sn = Math.sin(yaw), P = (ox, oz) => [x + cs * ox + sn * oz, z - sn * ox + cs * oz];
     box(x, y - 0.15, z, w + 0.35, 0.9, d + 0.35, yaw, 0x8a857c, 'stone', false); // plinth
     const nw = Math.max(1, Math.floor(d / 3.2));
-    for (const side of [-1, 1]) for (let k = 0; k < nw; k++) { const along = (k + 0.5) * d / nw - d / 2, ox = side * (w / 2 + 0.03), [lx, lz] = P(ox, along), [fx, fz] = P(side * (w / 2 + 0.06), along);
-      box(fx, y + h * 0.55, fz, 0.08, 1.35, 1.25, yaw, 0xf2efe8, 'paint', false); // white frame and sill
+    for (const side of [-1, 1]) for (let k = 0; k < nw; k++) { const along = (k + 0.5) * d / nw - d / 2, ox = side * (w / 2 + 0.03), [lx, lz] = P(ox, along), [fx, fz] = P(side * (w / 2 + 0.04), along);
+      box(fx, y + h * 0.55, fz, 0.04, 1.35, 1.25, yaw, 0xf2efe8, 'paint', false); // white frame (pane sits in front of it) and sill
       box(fx + cs * side * 0.05, y + h * 0.55 - 0.72, fz - sn * side * 0.05, 0.16, 0.1, 1.4, yaw, 0xf2efe8, 'paint', false);
-      if (R() < lit) glow(lx + cs * side * 0.04, y + h * 0.55, lz - sn * side * 0.04, 0.06, 1.1, 1.0, yaw, 0xffc884); else box(lx + cs * side * 0.04, y + h * 0.55, lz - sn * side * 0.04, 0.06, 1.1, 1.0, yaw, 0x1d2328, 'metal', false); }
+      const gx = lx + cs * side * 0.085, gz = lz - sn * side * 0.085; if (R() < lit) glow(gx, y + h * 0.55, gz, 0.02, 1.1, 1.0, yaw, 0xffc884); else box(gx, y + h * 0.55, gz, 0.02, 1.1, 1.0, yaw, 0x1d2328, 'metal', false); }
     { const [dx, dz] = P(0, d / 2 + 0.05); box(dx, y + 1.05, dz, 1.1, 2.1, 0.12, yaw, 0x5a3b28, 'wood', false); const [lx, lz] = P(0.95, d / 2 + 0.25); glow(lx, y + 2.3, lz, 0.18, 0.25, 0.18, yaw, 0xffd9a0); }
     if (R() < 0.7) { const [cx, cz] = P(w * 0.22, -d * 0.25); box(cx, y + h + Math.min(w, d) * 0.45, cz, 0.7, Math.min(w, d) * 0.6 + 1, 0.7, yaw, 0x6d6157, 'stone', false); }
   }
@@ -90,7 +90,7 @@ export async function buildFrontier(scene, city, world, Q) {
   const temple = place('temple');
   if (temple) { const pl = temple, y = pl.y, yaw = pl.yaw, moss = new THREE.Color(1.1, 1.28, 0.92), sand = new THREE.Color(1.62, 1.48, 1.2);
     for (let k = 0; k < 5; k++) { const s = 62 - 12 * k, [x, z] = at(pl, 0, 0); box(x, y + 2.5 + 5 * k - 0.2, z, s, 5.4, s, yaw, k % 2 ? sand : moss, 'stone'); }
-    for (let j = 0; j < 25; j++) { const [x, z] = at(pl, 0, -33 + (j + 0.5) * 1.1); box(x, y + (j + 1) / 2, z, 10, j + 1, 1.15, yaw, sand, 'stone', j < 3); }
+    for (let j = 0; j < 25; j++) { const [x, z] = at(pl, 0, -33 + (j + 0.5) * 1.1); box(x, y + (j + 1) / 2 + 0.035, z, 10, j + 1, 1.15, yaw, sand, 'stone', j < 3); }
     { const [x, z] = at(pl, 0, 0); box(x, y + 27.5, z, 8, 5, 8, yaw, sand, 'stone', false); box(x, y + 30.4, z, 10.5, 0.9, 10.5, yaw, sand, 'stone', false); const [dx, dz] = at(pl, 0, -4.05); glow(dx, y + 26.7, dz, 2.2, 3, 0.1, yaw, new THREE.Color(2.4, 1.1, 0.35)); }
     for (const u of [-6.5, 6.5]) { const [x, z] = at(pl, u, -36); cyl(x, y + 1.2, z, 0.14, 2.4, 0x3a2c20); glow(x, y + 2.6, z, 0.5, 0.7, 0.5, 0, new THREE.Color(3, 1.3, 0.3)); }
     for (let v = -108; v <= -46; v += 9) for (const u of [-10, 10]) { const [x, z] = at(pl, u, v), broken = R() < 0.35, h = broken ? 2 + R() * 4.5 : 8.5; cyl(x, y + h / 2, z, 0.85, h, broken ? moss : sand, 'stone');
