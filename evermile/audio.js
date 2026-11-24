@@ -219,11 +219,13 @@ export class DriveAudio {
       const [base, load] = box.upByGear?.[g] || box.up;
       return Math.min(base + push * load, e.red * .95);
     };
+    const luxuryShift = vehicle === 'escalade' && shiftHold > 0;
+    const shiftDuration = luxuryShift ? .32 : .18;
     if (!reverse && this.shiftDip <= 0 && !this.gearHold && (!shiftHold || grounded !== false)) {
       const powered = (!shiftHold && !box.poweredUpshifts) || (throttle > .07 && brake < .1);
       if (powered && gear < ratios.length && rpmIn(gear) > upshiftAt(gear) && rpmIn(gear + 1) > e.idle * 1.15) {
         gear++;
-        this.shiftDip = .18;
+        this.shiftDip = shiftDuration;
         this.gearHold = box.holdByGear?.[gear] ?? shiftHold;
       } else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < (shiftHold ? upshiftAt(gear - 1) * .88 : e.red * .92)) {
         gear--;
@@ -238,14 +240,17 @@ export class DriveAudio {
     let target = Math.min(e.red, Math.max(e.idle, wheelRpm, v < 4 ? free * (1 - v / 4) + wheelRpm * (v / 4) : 0));
     if (this.shiftDip > 0) { this.shiftDip = Math.max(0, this.shiftDip - dt); }
     else if (this.shiftDip < 0) { target *= 1.06; this.shiftDip = Math.min(0, this.shiftDip + dt); }
+    // Torque eases off and returns continuously as the automatic engages its next ratio.
+    const shiftPulse = Math.sin(Math.PI * Math.max(0, this.shiftDip) / shiftDuration);
+    this.shiftLoadGain = luxuryShift ? 1 - .30 * shiftPulse : this.shiftDip > 0 ? .35 : 1;
     const wobble = v < .3 ? Math.sin(t * 7.3) * 18 : 0;
-    this.rpm += (target + wobble - this.rpm) * Math.min(1, dt * (this.shiftDip ? 14 : 8));
+    this.rpm += (target + wobble - this.rpm) * Math.min(1, dt * (luxuryShift && this.shiftDip > 0 ? 7 : this.shiftDip ? 14 : 8));
     const firing = this.rpm / 60 * e.firing, load = Math.max(throttle, .12), rev = this.rpm / e.red;
     for (const voice of this.voices) voice.o.frequency.setTargetAtTime(firing * voice.ratio, t, .02);
     this.drive.gain.setTargetAtTime(1 + load * e.drive * .5, t, .05);
     this.rough.gain.setTargetAtTime(.12 + (1 - load) * .12, t, .1);
     this.engineLp.frequency.setTargetAtTime(420 + load * 3200 * e.bright + this.rpm * .22, t, .05);
-    const cut = this.shiftDip > 0 ? .5 : 1;
+    const cut = luxuryShift ? this.shiftLoadGain : this.shiftDip > 0 ? .5 : 1;
     this.engineGain.gain.setTargetAtTime(volume * e.level * (.45 + load * .55) * (.8 + rev * .3) * cut * (engineOn ? 1 : 0), t, engineOn ? .04 : .25);
     this.intake.g.gain.setTargetAtTime(volume * .025 * throttle * rev * e.bright, t, .06);
     this.intake.f.frequency.setTargetAtTime(700 + rev * 1400, t, .1);
@@ -257,7 +262,7 @@ export class DriveAudio {
       if (this.popClock <= 0) { this.pop(volume); this.popClock = .05 + Math.random() * (rev > .7 ? .25 : .6); }
     } else this.popClock = .2;
     this.whine.frequency.setTargetAtTime(v * 26 + 40, t, .1);
-    this.whineGain.gain.setTargetAtTime(volume * (reverse ? .012 : .0035) * Math.min(1, v / 8), t, .1);
+    this.whineGain.gain.setTargetAtTime(volume * (reverse ? .012 : luxuryShift ? .0008 : .0035) * Math.min(1, v / 8), t, .1);
     this.road.g.gain.setTargetAtTime(volume * .16 * Math.min(1, v / 30) * (grounded ? 1 : .2), t, .15);
     this.road.f.frequency.setTargetAtTime(160 + v * 6, t, .2);
     this.gravel.g.gain.setTargetAtTime(offroad && grounded ? volume * .12 * Math.min(1, v / 12) : 0, t, .1);

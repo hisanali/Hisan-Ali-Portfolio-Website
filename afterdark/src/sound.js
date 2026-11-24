@@ -79,7 +79,7 @@ export function createSound() {
     thunder() { const names = Object.keys(shots); if (!names.length) return false; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = shots[names[Math.floor(Math.random() * names.length)]]; g.gain.value = 0.5 + Math.random() * 0.35; src.playbackRate.value = 0.9 + Math.random() * 0.2; src.connect(g).connect(master); src.start(); return true; },
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
-      set(master.gain, on ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
+      set(master.gain, on && s.playing ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
       try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, shiftHold: s.vehicle === 'escalade' ? 1.25 : 1.05, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         const [cylinders, cutoff, level] = EXHAUST[s.vehicle] || EXHAUST.sedan;
         if (exhaustCar !== s.vehicle) {
@@ -89,20 +89,23 @@ export function createSound() {
           if (!waves.has(key)) waves.set(key, exhaustWave(ctx, cylinders, split));
           exhaust.setPeriodicWave(waves.get(key));
         }
-        const load = s.throttle * (drive.shiftDip > 0 ? .35 : 1);
+        const load = s.throttle * drive.shiftLoadGain;
         set(exhaust.frequency, drive.rpm / 120, .025);
         set(exhaustFilter.frequency, (cutoff * (.5 + load) + drive.rpm * .1) * (s.cockpit ? .55 : 1), .085);
         set(exhaustGain.gain, s.playing ? level * (.12 + .88 * load) : 0, .065);
-        drive.horn(hornHeld && s.playing, 1.6); drive.townHum(0.55 + 0.45 * e.day); drive.chatter(s.people && e.rain < 0.4, 'street'); } catch (err) {}
+        drive.horn(hornHeld && s.playing, 1.6); drive.townHum(s.urban && !s.sheltered ? 0.55 + 0.45 * e.day : 0); drive.chatter(s.urban && !s.sheltered && s.people && e.rain < 0.4, 'street'); } catch (err) {}
       // Frontier ambience: any open water nearby, the crater, the waterfalls, the high pass, the lake at night, the dunes.
-      const a = s.amb || {}, shore = Math.max(clamp(1 - (s.x - s.beachX) / 190), a.sea || 0), open = s.cockpit ? 0.8 : 1;
+      const a = s.amb || {}, shore = Math.max(clamp(1 - Math.abs(s.x - s.beachX) / 190), a.sea || 0), open = s.cockpit ? 0.8 : 1;
+      const habitat = !s.urban && !s.sheltered && !shore && e.rain < .15 && (a.desert || 0) < .2 && (a.alpine || 0) < .2 && (a.fire || 0) < .1;
+      const birdHours = (s.hour >= 5 && s.hour < 10.5) || (s.hour >= 16 && s.hour < 19);
+      const birdPhrase = clamp((Math.sin(ctx.currentTime * .13 + Math.sin(ctx.currentTime * .037)) - .4) * 4);
       if (loops.fire) set(loops.fire.gain, 0.5 * (a.fire || 0), 1); if (loops.boil) set(loops.boil.gain, 0.4 * (a.fire || 0) ** 2, 1); if (loops.falls) set(loops.falls.gain, 0.6 * (a.falls || 0), 1);
       if (loops.winter) set(loops.winter.gain, 0.38 * (a.alpine || 0), 1.5); if (loops.frogs) set(loops.frogs.gain, 0.3 * (a.lake || 0) * e.night * (1 - e.rain), 1.5);
       if (loops.rain) set(loops.rain.gain, 0.62 * e.rain * open, 0.6);
       if (loops.waves) set(loops.waves.gain, 0.5 * shore * shore, 0.5);
-      if (loops.gulls) set(loops.gulls.gain, 0.3 * shore * e.day * (1 - e.rain), 0.8);
-      if (loops.birds) set(loops.birds.gain, 0.2 * e.day * (1 - shore * 0.6) * (1 - (a.desert || 0)) * (1 - 0.7 * (a.alpine || 0)) * (1 - (a.fire || 0)), 1.5);
-      if (loops.crickets) set(loops.crickets.gain, 0.14 * e.night * (1 - e.rain), 1.5);
+      if (loops.gulls) set(loops.gulls.gain, (s.sheltered ? 0 : birdPhrase) * 0.3 * shore * e.day * (1 - e.rain), 0.8);
+      if (loops.birds) set(loops.birds.gain, habitat && birdHours ? .16 * e.day * birdPhrase : 0, 1.5);
+      if (loops.crickets) set(loops.crickets.gain, habitat ? .12 * e.night : 0, 1.5);
       if (loops.wind) set(loops.wind.gain, 0.42 * clamp(sp / 62) ** 1.6 * live + 0.05 * shore + 0.2 * (a.desert || 0) + 0.12 * (a.alpine || 0), 0.25);
       set(patter.g.gain, 0.05 * e.rain * (s.cockpit ? 1.6 : 0.6), 0.5);
       // Passing traffic: louder and brighter the closer and faster the closing speed, panned to its side.
@@ -110,7 +113,7 @@ export function createSound() {
       passers.forEach((p, k) => { const n = near[k]; if (!n) { set(p.g.gain, 0, 0.2); return; } const d = Math.sqrt(n[0]), rel = Math.abs(n[3]) + sp, side = (n[1] * Math.cos(s.heading) - n[2] * Math.sin(s.heading)) / (d + 1);
         set(p.g.gain, 0.34 * clamp(rel / 40) / (1 + d * d * 0.012), 0.08); set(p.f.frequency, 260 + rel * 22, 0.1); if (p.pan) set(p.pan.pan, clamp(-side, -1, 1), 0.1); });
       // Other drivers sound their horns when stuck behind you.
-      honkCool -= dt; if (honkCool <= 0 && s.playing && sp < 1.5) { const stuck = near.find(n => n[0] < 200 && Math.abs(n[3]) < 0.3); if (stuck) { try { drive.hornBurst(Math.sqrt(stuck[0])); } catch (err) {} honkCool = 5 + Math.random() * 6; } else honkCool = 1.5; }
+      honkCool -= dt; if (honkCool <= 0 && s.playing && sp < 1.5) { const stuck = near.find(n => n[0] < 144 && Math.abs(n[3]) < .3 && n[1] * Math.sin(s.heading) + n[2] * Math.cos(s.heading) < -3 && Math.abs(n[1] * Math.cos(s.heading) - n[2] * Math.sin(s.heading)) < 2); if (stuck) { try { drive.hornBurst(Math.sqrt(stuck[0])); } catch (err) {} honkCool = 5 + Math.random() * 6; } else honkCool = 1.5; }
       // The train overhead: a low rumble with wheel clatter as it goes by.
       const td = Math.hypot(s.trainX - s.x, clamp(s.z, s.trainZ - 46, s.trainZ + 46) - s.z), tk = clamp(1 - td / 150) ** 2; set(rumble.g.gain, 0.9 * tk, 0.3); set(clack.g.gain, 0.12 * tk * (0.5 + 0.5 * Math.sin(ctx.currentTime * 24)), 0.02);
       // Standing water at speed.
