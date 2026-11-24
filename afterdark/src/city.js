@@ -454,8 +454,8 @@ export async function buildCity(scene, refl, quality, renderer) {
   city.setTime = (hour, rainy = 1) => {
     const h = (hour - 6) / 12 * Math.PI, sn = Math.sin(h), el = (sn > 0 ? sn * 58 : sn * 35), er = THREE.MathUtils.degToRad(el), ce = Math.cos(er);
     sunDir.set(Math.cos(h) * ce, Math.sin(er), 0.38 * ce).normalize(); su.sunPosition.value.copy(sunDir);
-    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: night * rainy, rain: sst(0.75, 1, night) * rainy };
-    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
+    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: rainy, rain: rainy };
+    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (1 - 0.58 * rainy) * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
     lightDir.copy(sunDir); if (night > 0.5) lightDir.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize(); // The same light represents the moon at night.
     sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
     C(0xb9cdf2, 0x33325a, night, hemi.color); C(0x8d806e, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(2.7, 3.3, high), mix(0.95, 0.42, rainy), night);

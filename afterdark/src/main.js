@@ -142,17 +142,26 @@ function modeUI() { const k = S.kind; let note = k === 'run' ? 'Reach the light 
 seg($('#seg-mode'), [['free', 'Free Roam'], ['run', 'Beacon Run'], ['trial', 'Time Trial'], ['jobs', 'Jobs']], S.kind, v => { S.kind = v; store.set('kind', v); modeUI(); });
 modeUI();
 seg($('#seg-paint'), PAINTS, paintSel, v => { paintSel = v; store.set('paint', v); player?.setPaint(v); });
-const TIMES = { auto: null, day: 12.5, sunset: 17.4, night: 23, fixed: 12 }; let timeMode = store.get('time', 'auto'); if (!(timeMode in TIMES)) timeMode = 'auto';
-const timeOptions = [['auto', 'Live cycle'], ['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Rainy night']];
+const TIMES = { auto: null, morning: 8, day: 12.5, sunset: 17.4, night: 23, fixed: 12 }; let timeMode = store.get('time', 'auto'); if (!(timeMode in TIMES)) timeMode = 'auto';
+const timeOptions = [['auto', 'Live cycle'], ['morning', 'Morning'], ['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Night']];
 function drawTimeOptions() {
   for (const id of ['#seg-tod', '#pause-tod']) seg($(id), timeOptions, timeMode, v => {
     timeMode = v; store.set('time', v);
     if (TIMES[v] != null) hour = TIMES[v];
-    if (S.mode === 'pause') { if (v !== 'auto') rainyK = v === 'night' ? 1 : 0; stepTime(0, false); }
+    if (S.mode === 'pause') { stepTime(0, false); }
     drawTimeOptions();
   });
 }
 drawTimeOptions();
+let weather = store.get('weather', 'auto');
+for (const id of ['#seg-weather', '#pause-weather']) {
+  seg($(id), [['auto','Changing'], ['clear','Clear'], ['rain','Rain']], weather, v => {
+    weather = v; store.set('weather', v);
+    if (v !== 'auto') rainyK = v === 'rain' ? 1 : 0;
+    document.querySelectorAll('#seg-weather button, #pause-weather button').forEach(b => b.setAttribute('aria-pressed', String(b.textContent === ({auto:'Changing',clear:'Clear',rain:'Rain'})[v])));
+    if (player && env) stepTime(0, false);
+  });
+}
 seg($('#seg-gfx'), [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], QUALITY, v => { if (v === QUALITY) return; store.set('gfx', v); const u = new URL(location.href); u.searchParams.delete('gfx'); location.href = u.href; });
 $('#best').textContent = store.get('best', '0');
 $('#play').addEventListener('click', () => start());
@@ -574,7 +583,8 @@ function chase(dt, snap) {
 function orbit(t) { const a = t * 0.11 + 2.5, r = 7.4 + Math.sin(t * 0.21) * 1.6; camera.near = 0.25; camera.position.set(player.pos.x + Math.sin(a) * r, player.groundY + 0.95 + (Math.sin(t * 0.17) * 0.5 + 0.5) * 1.3, player.pos.z + Math.cos(a) * r); keepInStreet(camera.position); camera.lookAt(player.pos.x, player.groundY + 0.75, player.pos.z); camera.fov = 42; camera.updateProjectionMatrix(); }
 
 // ---------- Time of day ----------
-let dayCount = 0, rainyK = 1;
+let shower = Math.random() < .22, weatherTimer = 45 + Math.random() * 90;
+let rainyK = weather === 'rain' || (weather === 'auto' && shower) ? 1 : 0;
 let hour = 17.2, env = null, envHour = -99, pmrem = null, envRT = null;
 const DAY_SECONDS = 720; // one full day and night
 function captureEnv() { // image-based lighting from the street itself, refreshed as the light changes
@@ -584,9 +594,11 @@ function captureEnv() { // image-based lighting from the street itself, refreshe
   scene.environment = rt.texture; envRT?.dispose(); envRT = rt; envHour = hour; city.sky.scale.setScalar(1); rain.visible = rv; hid.forEach(([o, v]) => { o.visible = v; });
 }
 function stepTime(dt, running) {
-  if (timeMode === 'auto') { if (running) { const h0 = hour; hour = (hour + dt * 24 / DAY_SECONDS) % 24; if (h0 < 12 && hour >= 12) dayCount++; } } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
-  // Nights alternate: rain on the first, clear and starlit on the next. The fixed Rainy night setting always rains.
-  const wantRain = timeMode === 'night' ? 1 : timeMode === 'auto' ? (dayCount % 2 === 0 ? 1 : 0) : (window.__afterdark?.fixedRain || 0); rainyK += (wantRain - rainyK) * Math.min(1, dt * 0.6);
+  if (timeMode === 'auto') { if (running) { hour = (hour + dt * 24 / DAY_SECONDS) % 24; } } else hour += (TIMES[timeMode] - hour) * Math.min(1, dt * 1.5);
+  if (running && weather === 'auto' && (weatherTimer -= dt) <= 0) {
+    shower = !shower; weatherTimer = shower ? 25 + Math.random() * 50 : 75 + Math.random() * 150;
+  }
+  const wantRain = timeMode === 'fixed' && window.__afterdark?.fixedRain != null ? window.__afterdark.fixedRain : weather === 'auto' ? Number(shower) : Number(weather === 'rain'); rainyK += (wantRain - rainyK) * Math.min(1, dt * 0.6);
   env = city.setTime(hour, rainyK); world.setTime(env); street.setTime(env); player.setTime(env); traffic.setTime(env); places.setTime(env);
   scene.environmentIntensity = 1.5 - 0.9 * env.night; rain.visible = env.rain > 0.03; rain.material.opacity = 0.17 * env.rain;
   R.refl.active = env.wet > 0.2; R.refl.uniforms.uReflOn.value = R.refl.on ? Math.min(1, Math.max(0, (env.wet - 0.2) / 0.4)) : 0;
@@ -659,19 +671,6 @@ function frame() {
         if (S.mode === 'play') drawHud();
       }
       spray.emit(dt, player, env.wet, city.puddleAt);
-      const speed = Math.abs(player.speed);
-      const dry = env.wet < 0.3;
-      const dust = dry && (player.rough || player.onSand) && speed > 6;
-      const smoke = dry && player.slip > 4.5 && speed > 8;
-      if (!player.air && (dust || smoke)) {
-        const sn = Math.sin(player.heading), cs = Math.cos(player.heading), g = dust ? 0.32 : 0.3;
-        const chance = Math.min(0.7, dt * (dust ? 9 + speed * 0.48 : 26));
-        for (const side of [-0.82, 0.82]) if (Math.random() < chance) {
-          emit(haze, player.pos.x - sn * 1.5 + cs * side, player.groundY + 0.2, player.pos.z - cs * 1.5 - sn * side,
-            (Math.random() - 0.5) * 1.5, 0.5 + Math.random(), (Math.random() - 0.5) * 1.5, 1.2,
-            g * (dust ? 1.25 : 1), g * (dust ? 1.05 : 1), g * (dust ? 0.75 : 1.02));
-        }
-      }
       if (cinema.active) cinemaCamera(dt); else chase(dt, snapCam); snapCam = false;
     } else if (tour) cinemaCamera(dt); else if (!replaying) orbit(S.time);
     rain.visible = env.rain > 0.03 && !world.tunnelPassage(camera.position.x, camera.position.y, camera.position.z);
@@ -682,7 +681,7 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(focus, tour ? tour.y || 0 : player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { puddleDepth: (playing || replaying) ? spray.depth : 0, vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   player.updateWetness(dt, env.rain);
   probe.set(focus.x, (tour ? tour.y || 0 : player.groundY) + 1.15, focus.z); R.render(probe);
@@ -727,7 +726,7 @@ async function boot() {
   window.__afterdark = { S, A, save, traffic, city, street, world, places, R, start, input, useCar, photo, replay, openMap, closeMap, REC }; Object.defineProperty(window.__afterdark, 'player', { get: () => player }); Object.defineProperty(window.__afterdark, 'routes', { get: () => routes }); window.__afterdark.camTest = { view, step: chase, blocked: cameraBlocked, arm: () => camArm }; // lets the camera audit drive the chase camera at a fixed frame rate
   street.loadPeople().catch(e => console.warn('people', e));
   Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
-  window.__afterdark.setTime = (mode, h, rain) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } if (rain != null) { dayCount = rain ? 0 : 1; rainyK = rain; if (mode === 'fixed') window.__afterdark.fixedRain = rain; } };
+  window.__afterdark.setTime = (mode, h, rain) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } if (rain != null) { shower = !!rain; rainyK = rain; if (mode === 'fixed') window.__afterdark.fixedRain = rain; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });
 frame();
