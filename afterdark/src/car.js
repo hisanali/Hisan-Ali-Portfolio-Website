@@ -1,4 +1,4 @@
-import { applyLivery } from './vip.js';
+import { fitEscaladeWrap } from './escalade-wrap.js';
 import { headlampRange, lampColor } from './low-beams.js';
 import { beachHeight } from './water.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
@@ -99,8 +99,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   if (spec.branded) {
     root.updateMatrixWorld(true);
     const panels = [];
-    model.traverse(o => { if (o.isMesh && o.material === paint) panels.push(o); });
-    applyLivery(tilt,{len,width:wid,height},panels);
+    model.traverse(o => { if (o.isMesh && (o.material === paint || o.material === M.glass)) { o.userData.wrapGlass = o.material === M.glass; panels.push(o); } });
+    fitEscaladeWrap(tilt,{len,width:wid,height},panels);
   }
   const updateWetPaint = wetCar(tilt, paint, M.glass);
   const hubs = rigs.length ? rigs.map(r => r.pivot) : wheels.map(w => w.node);
