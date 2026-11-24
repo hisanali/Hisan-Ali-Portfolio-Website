@@ -1,0 +1,10 @@
+.sp-guide .sp-wrap { display:grid; justify-items:center; gap:22px; }
+.sp-guide .sp-card { position:relative; display:flex; align-items:baseline; gap:14px; padding:18px 26px; border-radius:16px; border:2px solid var(--fe-border); }
+.sp-guide .sp-card s { opacity:.6; font-weight:700; }
+.sp-guide .sp-card b { font-size:28px; }
+.sp-guide .sp-tag { position:absolute; top:-12px; right:-12px; padding:4px 10px; border-radius:999px; background:var(--fe-accent); color:#fff; font-size:12px; font-weight:800; animation:sp-tag 8s ease infinite; }
+.sp-guide .sp-bar { position:relative; width:min(320px,80vw); height:12px; border-radius:999px; background:var(--fe-border); }
+.sp-guide .sp-bar i { position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:var(--fe-accent); animation:sp-bar 8s linear infinite; }
+.sp-guide .sp-bar em { position:absolute; right:0; top:18px; font-style:normal; font-size:12px; font-weight:800; }
+@keyframes sp-bar { 0% { width:0; } 80%,100% { width:100%; } }
+@keyframes sp-tag { 0%,70% { opacity:1; } 82%,100% { opacity:.15; } }
