@@ -198,18 +198,37 @@ export class DriveAudio {
       src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
     }
   }
-  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission, tyreSlip}) {
+  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission, shiftHold = 0, tyreSlip}) {
     this.lastVolume = volume; this.engineOn = engineOn;
+    const changedVehicle = this.voiced !== vehicle;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
     const box = transmission || GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;
     let gear = Math.min(this.gear, ratios.length);
-    const push = throttle * throttle, upAt = box.up[0] + push * box.up[1], downAt = box.down[0] + push * box.down[1], rpmIn = (g) => v * ratios[g - 1];
-    if (!reverse && this.shiftDip <= 0) {
-      if ((!box.poweredUpshifts || (throttle > 0.07 && brake < 0.1)) && gear < ratios.length && rpmIn(gear) > Math.min(upAt, e.red * .95) && rpmIn(gear + 1) > e.idle * 1.15) { gear++; this.shiftDip = .18; }
-      else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < e.red * .92) { gear--; this.shiftDip = -.1; }
+    if (shiftHold && changedVehicle) {
+      gear = 1;
+      this.shiftDip = 0;
+      this.gearHold = 0;
+      this.shiftLoad = throttle;
     }
-    if (reverse || v < .5) gear = 1;
+    this.gearHold = Math.max(0, (this.gearHold || 0) - dt);
+    const loadTarget = throttle > (this.shiftLoad || 0) ? .18 : .85;
+    this.shiftLoad = shiftHold ? (this.shiftLoad || 0) + (throttle - (this.shiftLoad || 0)) * (1 - Math.exp(-dt / loadTarget)) : throttle;
+    const push = this.shiftLoad ** 2, upAt = box.up[0] + push * box.up[1], downAt = box.down[0] + push * box.down[1], rpmIn = (g) => v * ratios[g - 1];
+    const shiftPoint = Math.min(upAt, e.red * .95);
+    if (!reverse && this.shiftDip <= 0 && !this.gearHold && (!shiftHold || grounded !== false)) {
+      const powered = (!shiftHold && !box.poweredUpshifts) || (throttle > .07 && brake < .1);
+      if (powered && gear < ratios.length && rpmIn(gear) > shiftPoint && rpmIn(gear + 1) > e.idle * 1.15) {
+        gear++;
+        this.shiftDip = .18;
+        this.gearHold = shiftHold;
+      } else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < (shiftHold ? shiftPoint * .88 : e.red * .92)) {
+        gear--;
+        this.shiftDip = -.1;
+        this.gearHold = shiftHold * .65;
+      }
+    }
+    if (reverse || v < .5) { gear = 1; this.gearHold = 0; }
     this.gear = gear;
     // Below the clutch take-up speed the engine idles or revs freely; above it the rpm is set by the wheels.
     const wheelRpm = reverse ? v * ratios[0] : rpmIn(gear), free = e.idle + throttle * (e.red - e.idle) * .32;

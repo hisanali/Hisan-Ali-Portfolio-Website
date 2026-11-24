@@ -75,7 +75,7 @@ export function createSound() {
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
       set(master.gain, on ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
-      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
+      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, shiftHold: s.vehicle === 'escalade' ? 1.25 : 1.05, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         const [cylinders, cutoff, level] = EXHAUST[s.vehicle] || EXHAUST.sedan;
         if (exhaustCar !== s.vehicle) {
           exhaustCar = s.vehicle;
