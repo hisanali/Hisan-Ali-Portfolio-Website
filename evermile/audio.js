@@ -224,6 +224,7 @@ export class DriveAudio {
     if (!reverse && this.shiftDip <= 0 && !this.gearHold && (!shiftHold || grounded !== false)) {
       const powered = (!shiftHold && !box.poweredUpshifts) || (throttle > .07 && brake < .1);
       if (powered && gear < ratios.length && rpmIn(gear) > upshiftAt(gear) && rpmIn(gear + 1) > e.idle * 1.15) {
+        if (luxuryShift) this.shiftEntryRpm = this.rpm;
         gear++;
         this.shiftDip = shiftDuration;
         this.gearHold = box.holdByGear?.[gear] ?? shiftHold;
@@ -241,10 +242,15 @@ export class DriveAudio {
     if (this.shiftDip > 0) { this.shiftDip = Math.max(0, this.shiftDip - dt); }
     else if (this.shiftDip < 0) { target *= 1.06; this.shiftDip = Math.min(0, this.shiftDip + dt); }
     // Torque eases off and returns continuously as the automatic engages its next ratio.
+    if (luxuryShift && this.shiftDip > 0) {
+      const progress = 1 - this.shiftDip / shiftDuration;
+      const transfer = Math.min(1, Math.max(0, (progress - .10) / .62));
+      target = this.shiftEntryRpm + (target - this.shiftEntryRpm) * transfer * transfer * (3 - 2 * transfer);
+    }
     const shiftPulse = Math.sin(Math.PI * Math.max(0, this.shiftDip) / shiftDuration);
-    this.shiftLoadGain = luxuryShift ? 1 - .30 * shiftPulse : this.shiftDip > 0 ? .35 : 1;
+    this.shiftLoadGain = luxuryShift ? 1 - .72 * shiftPulse : this.shiftDip > 0 ? .35 : 1;
     const wobble = v < .3 ? Math.sin(t * 7.3) * 18 : 0;
-    this.rpm += (target + wobble - this.rpm) * Math.min(1, dt * (luxuryShift && this.shiftDip > 0 ? 7 : this.shiftDip ? 14 : 8));
+    this.rpm += (target + wobble - this.rpm) * Math.min(1, dt * (luxuryShift && this.shiftDip > 0 ? 24 : this.shiftDip ? 14 : 8));
     const firing = this.rpm / 60 * e.firing, load = Math.max(throttle, .12), rev = this.rpm / e.red;
     for (const voice of this.voices) voice.o.frequency.setTargetAtTime(firing * voice.ratio, t, .02);
     this.drive.gain.setTargetAtTime(1 + load * e.drive * .5, t, .05);

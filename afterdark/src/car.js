@@ -33,7 +33,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   // A keyboard is on or off, so above walking pace full lock asks for just under the cornering grip the tyres have at
   // that speed (less in the wet, less while braking, much less in reverse) instead of a fixed angle the car cannot follow.
   const escalade = spec.file === 'car-escalade';
-  const LOCK = escalade ? 0.68 : 0.576; let gripNow = 10.3;
+  const LOCK = escalade ? 0.76 : 0.576; let gripNow = 10.3;
   const steerLimit = (speed, reverse) => Math.min(LOCK, Math.atan(wheelbase * (reverse ? Math.min(gripNow * 0.92, 4.4) : gripNow * 0.92) / Math.max(1, speed * speed)));
   const frontAngle = (steer, speed) => steer * steerLimit(Math.abs(speed), speed < -0.3);
   const satinFinish = spec.file === 'car-escalade' || spec.file === 'car-gr-corolla';
@@ -184,8 +184,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && vF > 0
         ? THREE.MathUtils.smoothstep(Math.abs(car.steer), 0.52, 0.96) : 0;
-      const cornerSpeed = (6.4 - wetK * 0.9) * Math.sqrt(T.grip);
-      const cornerAccel = clamp((cornerSpeed - vF) * 1.72, -6.5, engine);
+      const cornerSpeed = ((escalade ? 5.6 : 6.4) - wetK * 0.9) * Math.sqrt(T.grip);
+      const cornerAccel = clamp((cornerSpeed - vF) * (escalade ? 2.5 : 1.72), escalade ? -9 : -6.5, engine);
       a += ctrl.throttle * lerp(engine, cornerAccel, lock);
     } else if (ctrl.brake > 0) {
       a -= ctrl.brake * 5.6 * Math.max(0, 1 + vF / 6.5);
@@ -206,7 +206,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const onDirt = car.onSand || car.rough;
     // Dry tarmac holds about 1.05 g, a soaked road about 0.78 g. Hard braking uses part of that, leaving less to turn with.
     const braking = serviceBrake ? Math.min(1, ctrl.brake) : 0;
-    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 10.3 - wetK * 2.65) * T.grip * Math.sqrt(1 - 0.62 * braking * braking);
+    const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 10.3 - wetK * 2.65) * T.grip * Math.sqrt(1 - (escalade ? 0.43 : 0.62) * braking * braking);
     gripNow = grip;
     const yaw = vF * Math.tan(frontAngle(car.steer, vF)) / wheelbase;
     const cap = (ctrl.hand ? grip * 1.56 : grip) / Math.max(2.8, Math.abs(vF));
