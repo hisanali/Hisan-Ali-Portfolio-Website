@@ -730,6 +730,32 @@ export async function buildCity(scene, refl, quality, renderer) {
   for (let i = ads.length - 1; i >= 0; i--) {
     if (i % 4 !== 0) screens.push({ ...ads.splice(i, 1)[0], framed: true });
   }
+  // Use mounted facade screens facing each leg of the VIP circuit.
+  city.convoyBoards = screens.filter(s => {
+    if (s.shop || s.w < 5 || s.y > 21) return false;
+    const across = s.nx ? s.x : s.z, along = s.nx ? s.z : s.x;
+    const roads = s.nx ? [3*P-2,6*P+2] : [2*P-2,6*P+2];
+    const inside = along > (s.nx ? 2 : 3)*P && along < 6*P;
+    return inside && roads.some(road => {
+      const offset=(road-across)*(s.nx || s.nz);
+      return offset > 6 && offset < 27;
+    });
+  });
+  // Freestanding panels face the motorcade from the outer sidewalk on each avenue.
+  for (const [ax, road, normal, from, to] of [[1,3,1,2,6],[1,6,-1,2,6],[0,2,1,3,6],[0,6,-1,3,6]]) {
+    for (let block=from; block<to; block++) {
+      const cross = road*P - normal*(HALF+2.3), along=(block+.52)*P;
+      const x=ax?cross:along, z=ax?along:cross, nx=ax?normal:0, nz=ax?0:normal;
+      const panel={x:x+nx*.18,y:6.2,z:z+nz*.18,nx,nz,w:7.6,h:3.8,convoy:true,framed:true};
+      screens.push(panel); city.convoyBoards.push(panel);
+      late.push({x,y:6.2,z,sx:ax ? .32 : 7.9,sy:4.08,sz:ax?7.9:.32});
+      for (const side of [-2.7,2.7]) {
+        const px=x+nz*side,pz=z+nx*side;
+        late.push({x:px,y:2.14,z:pz,sx:.24,sy:4.28,sz:.24}); solid.push({x:px,z:pz,r:.17});
+      }
+    }
+  }
+  for (const board of city.convoyBoards) board.convoy = true;
   const adG = new THREE.PlaneGeometry(1, 1), adUv = new Float32Array(ads.length * 4);
   const adM = new THREE.MeshStandardMaterial({ map: adTex, emissiveMap: adTex, emissive: 0xffffff, emissiveIntensity: 0.05, roughness: 0.55, metalness: 0, envMapIntensity: 0.4 });
   adM.onBeforeCompile = sh => { sh.vertexShader = 'attribute vec4 aUv;\n' + sh.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\nvMapUv = aUv.xy + uv * aUv.zw; vEmissiveMapUv = vMapUv;'); };
@@ -764,7 +790,7 @@ export async function buildCity(scene, refl, quality, renderer) {
         c *= 0.94 + 0.06 * sin(vUv.y * 60.0 - uTime * 9.0);
         gl_FragColor = vec4(c * uGain, 1.0); }` });
   const screenMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), screenM, Math.max(1, screens.length));
-  screenMesh.geometry.setAttribute('featured', new THREE.InstancedBufferAttribute(Float32Array.from(screens, s => s.shop ? 3 : s.flagship ? 2 : Number(!!s.featured)), 1));
+  screenMesh.geometry.setAttribute('featured', new THREE.InstancedBufferAttribute(Float32Array.from(screens, s => s.shop ? 3 : s.flagship || s.convoy ? 2 : Number(!!s.featured)), 1));
   screens.forEach((s2, k) => { dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); screenMesh.setMatrixAt(k, dummy.matrix); decals.push([s2.x + s2.nx * 12, 0.03, s2.z + s2.nz * 12, 40, 0x8fa8ff, 0.16]);
     if (s2.flagship) {
       // Support the elevated marquee independently of the varying facade setbacks.

@@ -1,6 +1,7 @@
 // The film follows one continuous city circuit. Every vehicle samples the same
 // distance-based path so the rear escorts take the same corner as the lead.
 import * as THREE from '/evermile/vendor/three.module.js';
+import { fitEscaladeWrap } from './escalade-wrap.js';
 import { P } from './city.js';
 
 let material;
@@ -61,10 +62,10 @@ export function createMotorcade(scene, kits) {
       } else if (c.role !== 'principal') {
         // Fit the door graphic to the painted sheet metal, including its curvature.
         if (templates.has(c.kit)) { c.rig.add(templates.get(c.kit).clone()); continue; }
-        const paint = kit.parts.filter(p => p.paint).map(p => {
-          const m = new THREE.Mesh(p.geo,p.mat); m.matrixWorld.copy(p.local); return m;
+        const paint = kit.parts.filter(p => c.role === 'escort' ? p.bodyPanel || p.wrapGlass : p.paint).map(p => {
+          const m = new THREE.Mesh(p.geo,p.mat); m.matrixWorld.copy(p.local); m.userData.wrapGlass = p.wrapGlass; return m;
         });
-        const decals = new THREE.Group(); applyLivery(decals,kit,paint); c.rig.add(decals); templates.set(c.kit,decals);
+        const decals = new THREE.Group(); if (c.role === 'escort') fitEscaladeWrap(decals,kit,paint); else applyLivery(decals,kit,paint); c.rig.add(decals); templates.set(c.kit,decals);
       }
     }
   }

@@ -439,6 +439,20 @@ function cinemaCamera(dt) {
     const sequence = [[1,17,5,4,44],[6,-23,5,22,53],[4,4,6,1.4,40],[6,8,-4,1.6,36],[9,-10,5,4,43],[11,-13,-4,2,40]];
     const [index,along,side,height,fov] = sequence[Math.floor(cinema.elapsed / 5) % sequence.length];
     const subject=fleet[index], h=subject.h;
+    const block = Math.floor(cinema.elapsed / 5);
+    if (cinema.boardBlock !== block || cinema.elapsed < dt * 2) {
+      cinema.boardBlock = block;
+      cinema.board = block % 3 === 1 ? city.convoyBoards.reduce((best, b) => {
+        const d = Math.hypot(b.x-subject.x,b.z-subject.z);
+        return d < 48 && (!best || d < Math.hypot(best.x-subject.x,best.z-subject.z)) ? b : best;
+      }, null) : null;
+    }
+    const board = cinema.board;
+    if (board && Math.hypot(board.x-subject.x,board.z-subject.z) < 36) {
+      pivot.set((board.x+subject.x)*.5,board.y*.45,(board.z+subject.z)*.5);
+      want.set(subject.x+board.nx*10+Math.sin(h)*7,4,subject.z+board.nz*10+Math.cos(h)*7);
+      camera.position.copy(want); camera.lookAt(pivot); camera.fov=58; camera.updateProjectionMatrix(); return;
+    }
     pivot.set(subject.x,1.05,subject.z);
     want.set(subject.x+along*Math.sin(h)+side*Math.cos(h),height,subject.z+along*Math.cos(h)-side*Math.sin(h));
     want.lerp(pivot,1-cameraClearance(pivot,want));

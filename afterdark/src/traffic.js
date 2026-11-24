@@ -71,7 +71,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         geo = geo.clone().applyMatrix4(local).translate(-centre.x, -centre.y, -centre.z);
         local = new THREE.Matrix4().makeTranslation(centre.x, centre.y, centre.z);
       }
-      parts.push({ geo, mat: m, local, paint: painted, tail: role === 'tail' || role === 'stop', stopOnly: role === 'stop', wheel: Boolean(hub), frontWheel: !!hub && /^Wheel_F/i.test(hub.name) }); });
+      parts.push({ geo, mat: m, local, wrapGlass: name === 'EXT_Glass', bodyPanel: name === 'BodyPaint', paint: painted, tail: role === 'tail' || role === 'stop', stopOnly: role === 'stop', wheel: Boolean(hub), frontWheel: !!hub && /^Wheel_F/i.test(hub.name) }); });
     // Batch the many identical seat materials once for each transit model.
     if (TRANSIT.includes(style)) {
       const batches = new Map();
