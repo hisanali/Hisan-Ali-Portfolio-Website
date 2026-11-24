@@ -80,6 +80,34 @@ export function createSound() {
   const set = (param, v, tc = 0.15) => param.setTargetAtTime(v, ctx.currentTime, tc);
   const tone = (freq, at, len, gain, type = 'sine', slideTo = 0) => { const t = ctx.currentTime + at, o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(freq, t); if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + len); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + len); o.connect(g).connect(master); o.start(t); o.stop(t + len + 0.05); };
   const burst = (freq, q, gain, len, at = 0, type = 'bandpass', slideTo = 0) => { const t = ctx.currentTime + at, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = noise; f.type = type; f.frequency.setValueAtTime(freq, t); if (slideTo) f.frequency.exponentialRampToValueAtTime(slideTo, t + len); f.Q.value = q; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + len * 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + len); src.connect(f).connect(g).connect(master); src.start(t, Math.random()); src.stop(t + len + 0.05); };
+  const score = ctx.createGain();
+  score.gain.value = 0;
+  score.connect(comp);
+  const chords = [[50,57,65,69], [46,53,62,65], [53,60,64,69], [48,55,62,67]];
+  let beat = 0, nextBeat = 0;
+  function soundtrack(active) {
+    set(score.gain, active ? .38 : 0, .16);
+    const now = ctx.currentTime;
+    if (!active) { nextBeat = 0; beat = 0; return; }
+    if (nextBeat < now) nextBeat = now + .015;
+    while (nextBeat < now + .12) {
+      const chord = chords[Math.floor(beat / 8) % chords.length];
+      const bass = beat % 8 === 0;
+      const notes = bass ? [chord[0] - 12, chord[1], chord[2]] : [chord[[0,2,1,3,1,2,3,1][beat % 8]] + 12];
+      for (const midi of notes) {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        const end = nextBeat + (bass ? 2.65 : 1.05);
+        osc.type = bass ? 'sine' : 'triangle';
+        osc.frequency.value = 440 * 2 ** ((midi - 69) / 12);
+        gain.gain.setValueAtTime(.0001, nextBeat);
+        gain.gain.exponentialRampToValueAtTime(bass ? .10 : .045, nextBeat + (bass ? .30 : .04));
+        gain.gain.exponentialRampToValueAtTime(.0001, end);
+        osc.connect(gain).connect(score); osc.start(nextBeat); osc.stop(end);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+      }
+      beat++; nextBeat += .39;
+    }
+  }
   const api = {
     ctx, drive, master, loops, shots, get gear() { return drive.gear; }, get rpm() { return drive.rpm; },
     preview(id) { previewCar = id; previewStart = ctx.currentTime; },
@@ -95,14 +123,15 @@ export function createSound() {
     thunder() { const names = Object.keys(shots); if (!names.length) return false; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = shots[names[Math.floor(Math.random() * names.length)]]; g.gain.value = 0.5 + Math.random() * 0.35; src.playbackRate.value = 0.9 + Math.random() * 0.2; src.connect(g).connect(master); src.start(); return true; },
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
-      set(master.gain, on && s.playing ? 1 : 0, 0.1);
+      soundtrack(on && s.playing && s.cinematic);
+      set(master.gain, on && s.playing ? (s.cinematic ? .32 : 1) : 0, 0.1);
       const elapsed = ctx.currentTime - previewStart;
       if (!s.garage || elapsed > 2.4) previewCar = null;
       if (previewCar) {
         const throttle = clamp(elapsed * 3) * clamp((1.65 - elapsed) * 2.5);
         s = { ...s, vehicle: previewCar, playing: true, speed: 0, throttle, brake: 0, slip: 0, steer: 0, people: false, urban: false, cockpit: false };
       }
-      set(engineBus.gain, on && s.playing ? 1 : 0, .06); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
+      set(engineBus.gain, on && s.playing ? (s.cinematic ? .72 : 1) : 0, .06); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
       try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, shiftHold: s.vehicle === 'escalade' ? 1.5 : 1.05, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         const [cylinders, cutoff, level] = EXHAUST[s.vehicle] || EXHAUST.sedan;
         if (exhaustCar !== s.vehicle) {
@@ -138,7 +167,7 @@ export function createSound() {
       if (loops.wind) set(loops.wind.gain, 0.42 * clamp(sp / 62) ** 1.6 * live + 0.05 * shore + 0.2 * (a.desert || 0) + 0.12 * (a.alpine || 0), 0.25);
       set(patter.g.gain, 0.05 * e.rain * (s.cockpit ? 1.6 : 0.6), 0.5);
       // Passing traffic: louder and brighter the closer and faster the closing speed, panned to its side.
-      const near = []; for (const c of s.cars) { const dx = c.x - s.x, dz = c.z - s.z, d2 = dx * dx + dz * dz; if (d2 < 2500) near.push([d2, dx, dz, c.v]); } near.sort((a, b) => a[0] - b[0]);
+      const near = []; for (const c of s.cars) { if (c === s.featuredCar) continue; const dx = c.x - s.x, dz = c.z - s.z, d2 = dx * dx + dz * dz; if (d2 < 2500) near.push([d2, dx, dz, c.v]); } near.sort((a, b) => a[0] - b[0]);
       passers.forEach((p, k) => { const n = near[k]; if (!n) { set(p.g.gain, 0, 0.2); return; } const d = Math.sqrt(n[0]), rel = Math.abs(n[3]) + sp, side = (n[1] * Math.cos(s.heading) - n[2] * Math.sin(s.heading)) / (d + 1);
         set(p.g.gain, 0.34 * clamp(rel / 40) / (1 + d * d * 0.012), 0.08); set(p.f.frequency, 260 + rel * 22, 0.1); if (p.pan) set(p.pan.pan, clamp(-side, -1, 1), 0.1); });
       // Other drivers sound their horns when stuck behind you.

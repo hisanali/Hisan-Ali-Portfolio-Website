@@ -169,19 +169,20 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   }
 
   const tmp = { x: 0, z: 0 }, spinM = new THREE.Matrix4();
-  function planFor(c, k) { // choose what to do at junction k (index along the car's travel axis)
+  function planFor(c, k, featured) { // choose what to do at junction k (index along the car's travel axis)
     const straight = k + c.dir >= 0 && k + c.dir <= ROADS - 1;
     const rDir = c.ax ? -c.dir : c.dir, lDir = c.ax ? c.dir : -c.dir;
     const ok = d => c.road + d >= 0 && c.road + d <= ROADS - 1;
     let kind = 's'; const r = R();
-    if (c.lane === 1 && ok(rDir) && (r < 0.34 || !straight)) kind = 'r'; else if (c.lane === 0 && ok(lDir) && !straight) kind = 'l';
+    if (c.lane === 1 && ok(rDir) && (r < 0.34 || !straight)) kind = 'r'; else if (c.lane === 0 && ok(lDir) && (!straight || (featured && r < .55))) kind = 'l';
     else if (!straight) kind = ok(rDir) ? 'r' : 'l';
     return { k, kind, dir: kind === 'r' ? rDir : lDir };
   }
   function update(dt, t, player, focus, drawOnly = false, recorded = false) {
     if (focus && (parkTick++ % 40) === 0) refreshParked(focus.x, focus.z);
     for (const c of drawOnly ? [] : cars) {
-      const fx = Math.sin(c.h), fz = Math.cos(c.h); let target = c.vmax; c.near = false;
+      const fx = Math.sin(c.h), fz = Math.cos(c.h); const featured = c === focus;
+      let target = featured ? 19 + 4 * Math.sin(t * .17) : c.vmax; c.near = false;
       if (c.stun > 0) { c.stun -= dt; target = 0; }
       // Anything ahead in my path?
       const look = 7 + c.v * 1.3;
@@ -194,16 +195,17 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       if (player) test(player.pos.x, player.pos.z, 2.3, null);
       // Two cars waiting on each other at a junction: after a few seconds the lower number goes.
       if (c.go > 0) c.go -= dt; if (target === 0 && c.v < 0.1 && blocker && blocker.v < 0.1) { c.wait += dt; if (c.wait > 3.5 && blocker.id > c.id) { c.go = 2.5; c.wait = 0; } } else c.wait = 0;
-      if (c.mode === 1) target = Math.min(target, 6.2);
+      const cornerSpeed = featured ? 9 : 6.2;
+      if (c.mode === 1) target = Math.min(target, cornerSpeed);
       if (c.mode === 2) { const j = Math.round(c.i), a = world.samples[j], b = world.samples[Math.max(c.rd.from, Math.min(c.rd.to, j + c.dirS * 9))], ang = Math.acos(Math.max(-1, Math.min(1, a.tx * b.tx + a.tz * b.tz))); if (ang > 0.02) target = Math.min(target, Math.max(7, Math.sqrt(6.5 * 27 / ang))); }
       if (c.mode === 0) {
         const k = c.dir > 0 ? Math.ceil((c.s + HALF - 1.2) / P) : Math.floor((c.s - HALF + 1.2) / P); // the junction ahead, held until just past its entry line
         if (k >= 0 && k <= ROADS - 1) {
-          if (!c.plan || c.plan.k !== k) c.plan = planFor(c, k);
+          if (!c.plan || c.plan.k !== k) c.plan = planFor(c, k, featured);
           const stop = k * P - c.dir * (15.4 + kits[c.kit].len * 0.5), dist = c.dir * (stop - c.s);
           const i = c.ax ? c.road : k, j = c.ax ? k : c.road, st = signal(i, j, c.ax ? 'z' : 'x', t);
           if (dist > -1 && (st === 'r' || (st === 'y' && dist > 9)) && dist < c.v * c.v / 7 + 8) target = Math.min(target, Math.sqrt(Math.max(0, 2 * 3.6 * (dist - 0.6))));
-          if (c.plan.kind !== 's' && dist < 14) target = Math.min(target, 6.5);
+          if (c.plan.kind !== 's' && dist < 14) target = Math.min(target, featured ? cornerSpeed : 6.5);
           const entry = k * P - c.dir * HALF;
           if (c.dir * (c.s - entry) >= 0 && c.plan.kind !== 's') {
             const nAx = c.ax ? 0 : 1, nDir = c.plan.dir, nRoad = k, nLane = c.plan.kind === 'r' ? 1 : 0, off = 1.9 + nLane * 3.6, nS = c.road * P + nDir * HALF;
@@ -212,20 +214,26 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
           }
         } else if (c.dir * (c.s - (c.dir > 0 ? SPAN : 0)) > 0) { c.dir = -c.dir; }
       }
-      c.v += clamp(target - c.v, -(target === 0 && c.v > 6 ? 16 : 9) * dt, 2.6 * dt); if (c.v < 0.05 && target === 0) c.v = 0;
+      if (featured) c.throttle = target <= .1 || target < c.v - .2 ? 0 : clamp(.22 + (target - c.v) * .16, .16, .82);
+      c.slide = 0;
+      c.v += clamp(target - c.v, -(target === 0 && c.v > 6 ? 16 : 9) * dt, (featured ? 4 : 2.6) * dt); if (c.v < 0.05 && target === 0) c.v = 0;
       c.braking = target < c.v - 0.4; c.spin = (c.spin || 0) + c.v * dt / 0.33;
       if (c.mode === 2) { c.i += c.dirS * c.v * dt / 3; if (c.i >= c.rd.to - 5 || c.i <= c.rd.from + 5) { c.dirS = R() < 0.5 ? 1 : -1; putOn(c, focus); c.v = c.vmax * 0.8; } placeOnRoad(c); }
       else if (c.mode === 0) { c.s += c.dir * c.v * dt; place(c); }
       else { const tr = c.turn; tr.u = Math.min(1, tr.u + Math.max(c.v, 1.2) * dt / tr.len); const u = tr.u, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), d = u * u;
         c.x = a * tr.p0.x + b * tr.p1.x + d * tr.p2.x; c.z = a * tr.p0.z + b * tr.p1.z + d * tr.p2.z;
         const tx = 2 * (1 - u) * (tr.p1.x - tr.p0.x) + 2 * u * (tr.p2.x - tr.p1.x), tz = 2 * (1 - u) * (tr.p1.z - tr.p0.z) + 2 * u * (tr.p2.z - tr.p1.z); c.h = Math.atan2(tx, tz);
+        if (featured) {
+          const cross = (tr.p1.z - tr.p0.z) * (tr.p2.x - tr.p1.x) - (tr.p1.x - tr.p0.x) * (tr.p2.z - tr.p1.z);
+          c.slide = Math.sign(cross) * Math.sin(Math.PI * u) ** 2 * clamp((c.v - 5) * .065, 0, .27);
+        }
         if (u >= 1) { Object.assign(c, tr.next); c.mode = 0; c.turn = null; c.plan = null; place(c); } }
       c.push.multiplyScalar(Math.exp(-2.2 * dt));
     }
     // Write instance transforms and lamp positions. Only cars near the focus are drawn; each body style packs its
     // visible moving cars into the first slots, with the nearby parked cars after them.
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
-    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + (recorded ? 0 : c.push.x), c.y || 0, c.z + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h, 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
+    cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + (recorded ? 0 : c.push.x), c.y || 0, c.z + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h + (c.slide || 0), 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
       if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.tail) im.setColorAt(slot, col.setScalar(c.braking || c.v < .5 ? 3.8 : im.userData.part.stopOnly ? 0 : .52)); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
         for (let side = 0; side < 2; side++) {
