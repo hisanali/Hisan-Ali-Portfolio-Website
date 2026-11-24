@@ -1,3 +1,4 @@
+import { createSkidMarks } from './skid-marks.js';
 // Afterdark: free-roam night driving. Boot, input, game state, camera, HUD and the frame loop.
 import { THREE, createRenderer, Q, QUALITY } from './render.js';
 import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
@@ -44,6 +45,7 @@ rain.frustumCulled = false;
 rain.visible = false;
 scene.add(rain);
 R.refl.hide.push(rain); R.cube.hide.push(rain);
+const skidMarks = createSkidMarks(scene);
 const spray = createTyreSpray(Q.reach >= 1 ? 820 : 560);
 scene.add(spray.mesh);
 R.refl.hide.push(spray.mesh); R.cube.hide.push(spray.mesh);
@@ -222,6 +224,7 @@ function stepActivity(dt) {
   if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
 }
 function start() {
+  skidMarks.clear();
   if (S.mode === 'boot' || swapping) return; spray.clear(); ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = REC.acc = 0;
   if (k === 'trial') { A.route = routes.find(r => r.id === routeSel) || routes[0]; player.place(A.route.start.x, A.route.start.z, A.route.start.h); } else player.place(city.spawn.x, city.spawn.z, 0);
   player.setPaint(paintSel);
@@ -670,6 +673,7 @@ function frame() {
         if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (pm.contains ? pm.contains(player.pos.x, player.pos.z, 12) : Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
         if (S.mode === 'play') drawHud();
       }
+      if (playing) skidMarks.update(player, ctrl.hand, env.wet); else skidMarks.breakTrail();
       spray.emit(dt, player, env.wet, city.puddleAt);
       if (cinema.active) cinemaCamera(dt); else chase(dt, snapCam); snapCam = false;
     } else if (tour) cinemaCamera(dt); else if (!replaying) orbit(S.time);
