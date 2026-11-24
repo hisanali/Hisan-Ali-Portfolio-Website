@@ -4,6 +4,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { rng, splitChunks, kitMaterial } from './city.js';
 import { loadGLB } from './car.js';
 import { buildAirfield, buildFuelStation } from './landmarks.js';
+import { weather } from './weathering.js';
 
 export async function buildPlaces(scene, city, world, Q) {
   const R = rng(3131), dummy = new THREE.Object3D(), col = new THREE.Color(), out = { markers: [], update: () => {}, setTime: () => {} };
@@ -108,7 +109,7 @@ export async function buildPlaces(scene, city, world, Q) {
   dummy.scale.set(1, 1, 1);
 
   // ---- Instancing ----
-  const bM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, metalness: 0.1, envMapIntensity: 0.6 });
+  const bM = weather(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, metalness: 0.1, envMapIntensity: 0.6 }), { containers: true });
   const bI = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), bM, boxes.length); boxes.forEach((b, k) => { dummy.position.set(b[0], b[1], b[2]); dummy.rotation.set(0, b[6], 0); dummy.scale.set(b[3], b[4], b[5]); dummy.updateMatrix(); bI.setMatrixAt(k, dummy.matrix); bI.setColorAt(k, col.set(b[7])); }); bI.castShadow = bI.receiveShadow = true; scene.add(bI); splitChunks(bI, 1400, city.chunks, 640);
   // cylinders differ in taper, so each distinct taper gets its own geometry
   const byT = new Map(); for (const c of cyls) { const key = (c[6] / c[3]).toFixed(2); (byT.get(key) || byT.set(key, []).get(key)).push(c); }

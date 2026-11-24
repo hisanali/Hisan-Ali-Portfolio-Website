@@ -217,7 +217,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     for (let pass = 0; pass < 2; pass++) { const sn = Math.sin(car.heading), cs = Math.cos(car.heading); let bx = 0, bz = 0, bm = 0;
       for (let ci = 0; ci < 4; ci++) { const lx = CORNERS[ci][0], lz = CORNERS[ci][1], ox0 = cs * lx + sn * lz, oz0 = -sn * lx + cs * lz, x = p.x + ox0, z = p.z + oz0;
         const rx = clamp(Math.round(x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(z / P), 0, ROADS - 1) * P, dx = x - rx, dz = z - rz, ox = Math.abs(dx) - KERB, oz = Math.abs(dz) - KERB; let px = 0, pz = 0;
-        if (outside(x, z)) { /* open country: no kerbs */ }
+        if (outside(x, z)) { // open country: no kerbs, but the shore of the sea, the fjord and the lake is a wall
+          const q = prevC[ci]; if (q && world.isWater?.(x, z) && !world.isWater(q[0], q[1])) { px = q[0] - x; pz = q[1] - z; } }
         else if (x < 0) { if (x < SEA) px = SEA - x; } // the seafront is open down to the water
         else if (ox > 0 && oz > 0) { // which face did this corner come through? Decide from where it was a moment ago, so block corners are not snagged.
           const q = prevC[ci]; let useX = ox <= oz;

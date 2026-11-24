@@ -6,6 +6,8 @@ import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
 import { buildWorld } from './world.js';
 import { buildPlaces } from './places.js';
+import { buildFrontier } from './frontier.js';
+import { createGrass } from './grass.js';
 import { createSound } from './sound.js';
 import { createTyreSpray } from './spray.js';
 import { buildRailway } from './railway.js';
@@ -645,7 +647,7 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(focus, tour ? tour.y || 0 : player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { vehicle: player.spec.voice, grounded: !player.air, offroad: player.onSand || player.rough, playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: replaying ? player.speed < -0.5 : player.reversing, throttle: playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: playing ? input.down : 0, hand: playing && !!input.hand, steer: player.steer, slip: player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
   player.updateWetness(dt, env.rain);
   probe.set(focus.x, (tour ? tour.y || 0 : player.groundY) + 1.15, focus.z); R.render(probe);
@@ -660,6 +662,9 @@ async function boot() {
   city.railway = buildRailway(scene, city, world);
   setLoad('Building the coast and airfield'); await nextFrame();
   places = await buildPlaces(scene, city, world, Q);
+  setLoad('Lighting the cape and the crater'); await nextFrame();
+  try { const frontier = await buildFrontier(scene, city, world, Q), grass = createGrass(scene, world, camera, Q.reach || 1), pu = places.update, ps = places.setTime; R.refl.hide.push(grass.mesh); R.cube.hide.push(grass.mesh); places.markers.push(...frontier.markers); places.update = t => { pu(t); frontier.update(t); grass.update(t); }; places.setTime = e => { ps(e); frontier.setTime(e); grass.setTime(e); }; places.frontier = frontier; }
+  catch (e) { console.warn('frontier scenery unavailable', e); }
   { const sharp = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return cv; })());
     sparks.pts = new THREE.Points(sparks.geo, new THREE.PointsMaterial({ size: sparks.size, map: sharp, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 }));
     haze.pts = new THREE.Points(haze.geo, new THREE.PointsMaterial({ size: haze.size, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.35 }));

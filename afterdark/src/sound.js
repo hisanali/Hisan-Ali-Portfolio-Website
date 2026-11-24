@@ -2,7 +2,7 @@
 // engine, tyres and horn, plus effects for traffic, the train, beacons and the interface.
 import { DriveAudio } from '/evermile/audio.js';
 
-const REC = '/eight-worlds/assets/audio/', LOOPS = { rain: REC + 'rain_heavy.mp3', waves: REC + 'waves.mp3', gulls: REC + 'gulls.mp3', birds: REC + 'birds.mp3', crickets: REC + 'crickets.mp3', wind: REC + 'wind.mp3' };
+const REC = '/eight-worlds/assets/audio/', LOOPS = { rain: REC + 'rain_heavy.mp3', waves: REC + 'waves.mp3', gulls: REC + 'gulls.mp3', birds: REC + 'birds.mp3', crickets: REC + 'crickets.mp3', wind: REC + 'wind.mp3', fire: REC + 'fire.mp3', boil: REC + 'boil.mp3', falls: REC + 'waterfall.mp3', winter: REC + 'winter.mp3', frogs: REC + 'frogs.mp3' };
 const SHOTS = { thunder0: REC + 'thunder.mp3', thunder1: '/tideworn/assets/audio/thunder1.mp3', thunder2: '/tideworn/assets/audio/thunder2.mp3' };
 const TRANSMISSION = { ratio: [360, 255, 185, 144, 117, 98, 82], up: [2700, 4770], down: [1500, 2200], poweredUpshifts: true };
 const VOICE = { bus: 'coach', hatch: 'grcorolla', suv: 'landcruiser' };
@@ -42,13 +42,16 @@ export function createSound() {
       set(master.gain, on ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
       try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, transmission: s.vehicle === 'coupe' ? TRANSMISSION : undefined, reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         drive.horn(hornHeld && s.playing, 1.6); drive.townHum(0.55 + 0.45 * e.day); drive.chatter(s.people && e.rain < 0.4, 'street'); } catch (err) {}
-      const shore = clamp(1 - (s.x - s.beachX) / 190), open = s.cockpit ? 0.8 : 1;
+      // Frontier ambience: any open water nearby, the crater, the waterfalls, the high pass, the lake at night, the dunes.
+      const a = s.amb || {}, shore = Math.max(clamp(1 - (s.x - s.beachX) / 190), a.sea || 0), open = s.cockpit ? 0.8 : 1;
+      if (loops.fire) set(loops.fire.gain, 0.5 * (a.fire || 0), 1); if (loops.boil) set(loops.boil.gain, 0.4 * (a.fire || 0) ** 2, 1); if (loops.falls) set(loops.falls.gain, 0.6 * (a.falls || 0), 1);
+      if (loops.winter) set(loops.winter.gain, 0.38 * (a.alpine || 0), 1.5); if (loops.frogs) set(loops.frogs.gain, 0.3 * (a.lake || 0) * e.night * (1 - e.rain), 1.5);
       if (loops.rain) set(loops.rain.gain, 0.62 * e.rain * open, 0.6);
       if (loops.waves) set(loops.waves.gain, 0.5 * shore * shore, 0.5);
       if (loops.gulls) set(loops.gulls.gain, 0.3 * shore * e.day * (1 - e.rain), 0.8);
-      if (loops.birds) set(loops.birds.gain, 0.2 * e.day * (1 - shore * 0.6), 1.5);
+      if (loops.birds) set(loops.birds.gain, 0.2 * e.day * (1 - shore * 0.6) * (1 - (a.desert || 0)) * (1 - 0.7 * (a.alpine || 0)) * (1 - (a.fire || 0)), 1.5);
       if (loops.crickets) set(loops.crickets.gain, 0.14 * e.night * (1 - e.rain), 1.5);
-      if (loops.wind) set(loops.wind.gain, 0.42 * clamp(sp / 62) ** 1.6 * live + 0.05 * shore, 0.25);
+      if (loops.wind) set(loops.wind.gain, 0.42 * clamp(sp / 62) ** 1.6 * live + 0.05 * shore + 0.2 * (a.desert || 0) + 0.12 * (a.alpine || 0), 0.25);
       set(patter.g.gain, 0.05 * e.rain * (s.cockpit ? 1.6 : 0.6), 0.5);
       // Passing traffic: louder and brighter the closer and faster the closing speed, panned to its side.
       const near = []; for (const c of s.cars) { const dx = c.x - s.x, dz = c.z - s.z, d2 = dx * dx + dz * dz; if (d2 < 2500) near.push([d2, dx, dz, c.v]); } near.sort((a, b) => a[0] - b[0]);

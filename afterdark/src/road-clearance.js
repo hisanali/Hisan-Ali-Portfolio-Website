@@ -1,10 +1,11 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 
-const cell = 2, reach = 14, range = 290, base = -12;
+const reach = 14, base = -12;
 
 // Record a continuous distance and elevation for the nearest road segment. The landscape
 // can then clear the deck and tunnel even where its large triangles span a whole road.
-export function roadClearance(samples) {
+// cell: texel size in metres; range: the height span stored above `base`.
+export function roadClearance(samples, cell = 2, range = 290) {
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
   for (const s of samples) {
     x0 = Math.min(x0, s.x - reach); z0 = Math.min(z0, s.z - reach);
@@ -17,7 +18,7 @@ export function roadClearance(samples) {
   for (let i = 0; i < pixels.length; i += 4) pixels[i] = 255;
   for (let i = 0; i < samples.length - 1; i++) {
     const a = samples[i], b = samples[i + 1];
-    if (a.road !== b.road || a.bridge && b.bridge) continue;
+    if (a.road !== b.road || b.i !== a.i + 1 || a.bridge && b.bridge) continue;
     const dx = b.x - a.x, dz = b.z - a.z, span = dx * dx + dz * dz;
     const west = Math.max(0, Math.floor((Math.min(a.x, b.x) - reach - x0) / cell));
     const east = Math.min(width - 1, Math.ceil((Math.max(a.x, b.x) + reach - x0) / cell));

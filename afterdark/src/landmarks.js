@@ -1,4 +1,5 @@
 import * as THREE from '/evermile/vendor/three.module.js';
+import { weather } from './weathering.js';
 import { loadGLB } from './car.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 
@@ -62,7 +63,7 @@ function makeSite(scene, city, world, site) {
   city.chunks.push({ mesh: group, x: site.x, z: site.z, r: site.key === 'airport' ? 400 : 50, max: site.key === 'airport' ? 1750 : 650 });
 
   const batches = new Map(), emitters = [], paintDetails = [];
-  const standard = new THREE.MeshStandardMaterial({ roughness: 0.73, metalness: 0.08, envMapIntensity: 0.55 });
+  const standard = weather(new THREE.MeshStandardMaterial({ roughness: 0.73, metalness: 0.08, envMapIntensity: 0.55 }), { streaks: 0.7, seams: 0.6 });
   const paint = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.91, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
   const glow = new THREE.MeshStandardMaterial({ color: 0xb8beaf, emissive: 0xfff2d2, emissiveIntensity: 0.15, roughness: 0.38 });
   const glass = new THREE.MeshPhysicalMaterial({ color: 0x24363e, metalness: 0.44, roughness: 0.19, clearcoat: 0.75, envMapIntensity: 1.9 });
@@ -204,7 +205,7 @@ export async function buildFuelStation(scene, city, world, site) {
   };
 
   const y = S.ground(0, -3), canopy = y + 4.68;
-  const concreteMaterial = new THREE.MeshStandardMaterial({ color: concrete, roughness: 0.81, envMapIntensity: 0.44 });
+  const concreteMaterial = weather(new THREE.MeshStandardMaterial({ color: concrete, roughness: 0.81, envMapIntensity: 0.44 }), { seams: 0 });
   const floorTexture = signTexture(256, 256, (ctx, w, h) => {
     ctx.fillStyle = '#a5a09a'; ctx.fillRect(0, 0, w, h);
     const noise = ctx.getImageData(0, 0, w, h);

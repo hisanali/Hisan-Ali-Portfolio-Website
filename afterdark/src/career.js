@@ -1,6 +1,6 @@
 // Afterdark career: saved progress, the garage, time-trial routes, taxi and delivery jobs, and the full map.
 import { P, ROADS, SPAN, HALF } from './city.js';
-import { WORLD } from './world.js';
+import { WORLD, EXT } from './world.js';
 
 // ---------- Cars and upgrades ----------
 export const CARS = [
@@ -49,6 +49,12 @@ export function buildRoutes(world, city) {
   along('coast', 'coast', 'Coast Road', 'Out past the harbour and the lighthouse, through the tunnel and home by Eastfield.', 41);
   along('old', 'old', 'Old Town Loop', 'A tight, twisting lane through the hill town north of the grid. Nothing straight, nowhere to rest.', 24);
   along('mountain', 'mountain', 'Mountain Pass', 'Up from the stadium to the summit lookout and back down through Pinecrest.', 30);
+  along('temple', 'temple', 'Jungle Run', 'South from the coast road, past the Temple of the Sun to the foot of the volcano.', 33);
+  along('crater', 'crater', 'Crater Climb', 'Hairpins up the volcano to the rim above the lava lake.', 26);
+  along('lakeside', 'lakeside', 'Mirror Lake Forest', 'Through deep forest and along the lake shore toward the dunes.', 34);
+  along('dunes', 'dunes', 'Dune Highway', 'Fast, open sweepers through the dune sea and past the mesas.', 40);
+  along('alpine', 'alpine', 'Alpine Pass', 'Over the snowline at the Alpine Lodge and down to the fjord.', 31);
+  along('fjord', 'fjord', 'Fjord Road', 'Along the water under the waterfalls to the open ocean.', 33);
   { const J = [[3, 6], [6, 6], [6, 1], [1, 1], [1, 4], [3, 4]], cps = J.map(([i, j]) => ({ x: i * P, z: j * P, y: 0 })); let len = 3 * P - 40, q = [3, 6]; for (const j of J.slice(1)) { len += (Math.abs(j[0] - q[0]) + Math.abs(j[1] - q[1])) * P; q = j; }
     routes.push({ id: 'city', name: 'Downtown Sprint', note: 'Six corners through the grid with the traffic running. Lights are yours to judge.', len, r: 13, cps, start: { x: city.spawn.x, z: city.spawn.z, h: 0 }, gold: len / 27, silver: len / 22, bronze: len / 16 }); }
   return routes;
@@ -61,7 +67,7 @@ export function jobSpots(world, places) {
   const out = [];
   for (let i = 0; i < ROADS; i++) for (let j = 0; j < ROADS - 1; j++) { if ((i * 3 + j) % 2) continue; out.push({ x: i * P, z: (j + 0.5) * P, y: 0, name: DISTRICT(i, j), city: true }); out.push({ x: (j + 0.5) * P, z: i * P, y: 0, name: DISTRICT(j, i), city: true }); }
   for (const pm of places.markers) { if (pm.arrival) { out.push({ ...pm.arrival, city: false }); continue; } let s = pm.road; if (!s) { const r = world.nearRoad(pm.x, pm.z, 700); s = r && r.s; } if (s && !s.tunnel) out.push({ x: s.x, z: s.z, y: s.y, name: pm.name, city: false }); }
-  for (const rd of world.roads) for (const f of [0.22, 0.45, 0.6]) { const s = world.samples[Math.round(rd.from + (rd.to - rd.from) * f)]; if (s && !s.tunnel && !s.bridge) out.push({ x: s.x, z: s.z, y: s.y, name: rd.name === 'coast' ? 'Coast road lay-by' : rd.name === 'old' ? 'Old Town lane' : 'Mountain road lay-by', city: false }); }
+  for (const rd of world.roads) for (const f of [0.22, 0.45, 0.6]) { const s = world.samples[Math.round(rd.from + (rd.to - rd.from) * f)]; if (s && !s.tunnel && !s.bridge) out.push({ x: s.x, z: s.z, y: s.y, name: rd.name === 'coast' ? 'Coast road lay-by' : rd.name === 'old' ? 'Old Town lane' : rd.name === 'mountain' ? 'Mountain road lay-by' : (rd.label || rd.name) + ' lay-by', city: false }); }
   return out;
 }
 const RIDERS = ['A night-shift nurse', 'Two tourists', 'A chef with a knife roll', 'A band with one guitar', 'A man in a hurry', 'A student with a cello', 'A photographer', 'Someone late for a ferry', 'A couple after the match', 'A lighthouse keeper'];
@@ -80,13 +86,15 @@ export function jobPay(job, left, hits) { const care = Math.max(0.3, 1 - hits * 
 
 // ---------- Full map ----------
 export function createBigMap(canvas, world, places) {
-  const W = WORLD, wx = W.x1 - W.x0, wz = W.z1 - W.z0, ctx = canvas.getContext('2d'); let base = null, fit = null;
+  const W = EXT, wx = W.x1 - W.x0, wz = W.z1 - W.z0, ctx = canvas.getContext('2d'); let base = null, fit = null;
   function paint() { // shaded relief, drawn once
-    const bw = 300, bh = Math.round(bw * wz / wx), cv = document.createElement('canvas'); cv.width = bw; cv.height = bh; const c = cv.getContext('2d'), img = c.createImageData(bw, bh), D = img.data; let top = 60; for (let i = 0; i < 4000; i++) top = Math.max(top, world.terrain(W.x0 + wx * ((i * 0.6180339) % 1), W.z0 + wz * ((i * 0.7548776) % 1)));
+    const bw = 560, bh = Math.round(bw * wz / wx), cv = document.createElement('canvas'); cv.width = bw; cv.height = bh; const c = cv.getContext('2d'), img = c.createImageData(bw, bh), D = img.data; let top = 60; for (let i = 0; i < 4000; i++) top = Math.min(520, Math.max(top, world.terrain(W.x0 + wx * ((i * 0.6180339) % 1), W.z0 + wz * ((i * 0.7548776) % 1))));
     for (let py = 0; py < bh; py++) for (let px = 0; px < bw; px++) { const x = W.x1 - (px + 0.5) / bw * wx, z = W.z1 - (py + 0.5) / bh * wz, h = world.terrain(x, z), hl = world.terrain(x + 14, z + 14), sh = Math.max(-1, Math.min(1, (h - hl) * 0.09)); let r, g, b;
       if (h < -0.5) { const k = Math.min(1, (-h - 0.5) / 14); r = 22 - 10 * k; g = 52 - 22 * k; b = 78 - 26 * k; }
       else if (h < 1.6) { r = 138; g = 126; b = 96; }
       else { const k = Math.min(1, h / top); r = 40 + 92 * k; g = 68 + 40 * k; b = 46 + 50 * k; if (k > 0.8) { const s = Math.min(1, (k - 0.8) / 0.18); r += (214 - r) * s; g += (218 - g) * s; b += (224 - b) * s; } }
+      if (h >= 1.6 && world.zones) { const [sa, , vo] = world.zones(x, z); r += (214 - r) * sa * 0.8; g += (182 - g) * sa * 0.8; b += (122 - b) * sa * 0.8; r += (52 - r) * vo * 0.7; g += (46 - g) * vo * 0.7; b += (46 - b) * vo * 0.7; }
+      const lk = world.lake; if (lk && ((x - lk.x) / lk.rx) ** 2 + ((z - lk.z) / lk.rz) ** 2 < 1.4 && h < lk.level) { r = 30; g = 66; b = 92; }
       const l = 1 + sh * 0.5, o = (py * bw + px) * 4; D[o] = r * l; D[o + 1] = g * l; D[o + 2] = b * l; D[o + 3] = 255; }
     c.putImageData(img, 0, 0); base = cv; }
   const api = { toWorld(cx, cy) { if (!fit) return null; const x = W.x1 - (cx - fit.ox) / fit.k, z = W.z1 - (cy - fit.oy) / fit.k; return x < W.x0 || x > W.x1 || z < W.z0 || z > W.z1 ? null : { x, z }; },

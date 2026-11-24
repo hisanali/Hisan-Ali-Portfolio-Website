@@ -5,7 +5,33 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SW, SPAN, rng, splitChunks } from './city.js';
 import { buildForest } from './forest.js';
 import { roadClearance } from './road-clearance.js';
+import { NO_TILE_GLSL } from './weathering.js';
 import { planAirfield, sitePaved, sitePosition } from './landmarks.js';
+import { INNER, EXT, FRONTIER_ROADS, FRONTIER_PLACES, VOLCANO, LAKE, blendLand, zones, lushness, outside, inFjord } from './frontier-land.js';
+
+// Frontier ground: dune sand, snow above the treeline, basalt with lava seams around the volcano, moss in the jungle.
+const REGION_GLSL = `
+  vec4 adZ = clamp(vZone, 0.0, 1.0);
+  float adFlat = 1.0 - smoothstep(0.32, 0.62, adExposure);
+  vec3 adSand = texture2D(uDune, adP / 6.5).rgb * vec3(1.04, 0.86, 0.64) * (0.86 + 0.28 * adMacro);
+  adC = mix(adC, mix(adSand, adR * vec3(1.18, 0.86, 0.62), smoothstep(0.42, 0.75, adExposure)), adZ.x);
+  vec3 adMoss = texture2D(uMoss, adP / 5.0).rgb * vec3(0.78, 0.98, 0.62);
+  adC = mix(adC, adMoss, adZ.w * adFlat * 0.72);
+  vec3 adBas = texture2D(uBasalt, adP / 8.0).rgb * vec3(0.62, 0.58, 0.56) * (0.8 + 0.4 * adMacro);
+  adC = mix(adC, mix(adBas, adR * 0.45, 0.25), adZ.z * (0.35 + 0.65 * smoothstep(0.1, 0.6, adZ.z)));
+  { vec2 vq = vWPos.xz - uVolc.xy; float vr = length(vq), va = atan(vq.y, vq.x);
+    float seam = adN(vec2(va * 7.0 + adN(vec2(vr * 0.004, va * 3.0)) * 2.4, vr * 0.0055));
+    adLava = smoothstep(0.93, 0.985, 1.0 - abs(2.0 * seam - 1.0)) * (1.0 - smoothstep(420.0, 1150.0, vr)) * smoothstep(345.0, 420.0, vr) * adZ.z * 0.7;
+    adLava += (1.0 - smoothstep(120.0, 175.0, vr)) * adZ.z * 0.6;
+    adC = mix(adC, vec3(0.06, 0.03, 0.02), adLava); }
+  // steep frontier faces: weathered cliff rock rather than banded strata
+  vec3 adCliff = (texture2D(uCliff, vWPos.zy / vec2(16.0, 11.0)).rgb * adBlend.x + texture2D(uCliff, adP / 16.0).rgb * adBlend.y + texture2D(uCliff, vWPos.xy / vec2(16.0, 11.0)).rgb * adBlend.z) * vec3(0.86, 0.84, 0.82);
+  adC = mix(adC, mix(adCliff, adR, 0.3), smoothstep(0.3, 0.6, adExposure) * (1.0 - adZ.x) * (1.0 - adZ.z * 0.7));
+  float adSnowLine = 455.0 + (adMacro - 0.5) * 120.0 + (adBands - 0.5) * 60.0;
+  float adSnowK = adZ.y * smoothstep(adSnowLine, adSnowLine + 70.0, vWPos.y) * (1.0 - smoothstep(0.28, 0.5, adSlope + (adN(adP * 0.045) - 0.5) * 0.22));
+  vec3 adSnowC = texture2D(uSnow, adP / 9.0).rgb * vec3(0.9, 0.93, 0.98) * (0.86 + 0.14 * adN(adP * 0.02));
+  adC = mix(adC, adSnowC, adSnowK);
+`;
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), mix = (a, b, t) => a + (b - a) * t;
 const sst = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -13,7 +39,8 @@ const hash = (x, y) => { let n = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 
 const vnoise = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf); return mix(mix(hash(xi, yi), hash(xi + 1, yi), u), mix(hash(xi, yi + 1), hash(xi + 1, yi + 1), u), v); };
 const fbm = (x, y, o = 5) => { let a = 0.5, s = 0, n = 0; for (let i = 0; i < o; i++) { s += a * vnoise(x, y); n += a; x = x * 2.03 + 17.1; y = y * 2.03 + 9.7; a *= 0.5; } return s / n; };
 
-export const WORLD = { x0: -708, x1: 2892, z0: -1812, z1: 2028, cell: 12 };
+export const WORLD = { x0: INNER.x0, x1: INNER.x1, z0: INNER.z0, z1: INNER.z1, cell: 12 };
+export { EXT };
 const PROM = -(HALF + 13.2), EDGE = HALF + SW;
 const shoreX = z => PROM + 150 * sst(-160, -520, z) + 620 * Math.exp(-(((z + 905) / 125) ** 2)) + 60 * Math.sin(z / 310) * sst(1120, 1400, z) - 120 * sst(1300, 1900, z);
 // Height of the untouched land.
@@ -34,26 +61,38 @@ const COAST = [[0, -16], [-2, -150], [40, -330], [150, -520], [215, -700], [228,
 const MOUNT = [[SPAN + 14, 720], [1080, 735], [1280, 815], [1470, 770], [1600, 870], [1530, 1000], [1660, 1090], [1860, 1010], [2020, 1130], [1950, 1280], [2130, 1380], [2360, 1290], [2420, 1440], [2260, 1590], [2020, 1660], [1780, 1610], [1520, 1690], [1240, 1600], [960, 1480], [740, 1300], [600, 1110], [480, SPAN + 14]];
 // A winding lane through the old town in the hills north of the grid: no straight lines anywhere.
 const OLD = [[240, SPAN + 14], [246, 1045], [305, 1125], [262, 1205], [160, 1228], [112, 1318], [192, 1398], [128, 1482], [44, 1424], [34, 1304], [66, 1186], [14, 1082], [0, SPAN + 14]];
+const landAt = (x, z) => blendLand(natural, x, z);
+const ORIGINAL = new Set(['coast', 'mountain', 'old']);
 
 export async function buildWorld(scene, city, Q) {
-  const world = { roads: [], hide: [], bounds: WORLD }, R = rng(909);
+  const world = { roads: [], hide: [], bounds: EXT, inner: WORLD }, R = rng(909);
   const nx = Math.round((WORLD.x1 - WORLD.x0) / WORLD.cell) + 1, nz = Math.round((WORLD.z1 - WORLD.z0) / WORLD.cell) + 1, H = new Float32Array(nx * nz);
 
   // ---- Roads: sample each spline, give it a smooth drivable profile, and note bridge and tunnel stretches ----
-  const samples = [], STEP = 3, HALFW = 6;
-  for (const [name, ctrl, tunnels] of [['coast', COAST, true], ['mountain', MOUNT, false], ['old', OLD, false]]) {
+  const samples = [], STEP = 3, HALFW = 6, junctions = [];
+  const roadOf = name => world.roads.find(r => r.name === name);
+  const nearestOn = (name, x, z) => { const rd = roadOf(name); let best = null, bd = Infinity; for (let i = rd.from; i <= rd.to; i++) { const q = samples[i], d = (q.x - x) ** 2 + (q.z - z) ** 2; if (d < bd) { bd = d; best = q; } } return best; };
+  // The three valley roads run from city gate to city gate. Frontier roads branch from a road (at a point or at its end)
+  // and either end at another road or stop at a destination.
+  const SPECS = [['coast', COAST, { tunnels: true, grade: 0.07, city: true, label: 'Coast Road' }], ['mountain', MOUNT, { grade: 0.115, city: true, label: 'Mountain Road' }], ['old', OLD, { grade: 0.085, city: true, label: 'Old Town Lane' }], ...FRONTIER_ROADS.map(r => [r.name, null, r])];
+  for (const [name, ctrlIn, o] of SPECS) {
+    let ctrl = ctrlIn, ja = null, jb = null;
+    if (!ctrl) { ja = o.from.end ? samples[roadOf(o.from.road).to] : nearestOn(o.from.road, ...o.from.at); jb = o.to ? nearestOn(o.to.road, ...o.to.at) : null;
+      ctrl = [[ja.x, ja.z], ...o.pts.map(p => [p[0], p[1]]), ...(jb ? [[jb.x, jb.z]] : [])]; junctions.push(ja); if (jb) junctions.push(jb); }
     const curve = new THREE.CatmullRomCurve3(ctrl.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal'), n = Math.round(curve.getLength() / STEP), pts = curve.getSpacedPoints(n);
-    const nat = pts.map(p => natural(p.x, p.z)), y = new Float32Array(n + 1);
+    const nat = pts.map(p => o.city ? natural(p.x, p.z) : landAt(p.x, p.z)), y = new Float32Array(n + 1);
     for (let i = 0; i <= n; i++) { let s = 0, c = 0; for (let k = -16; k <= 16; k++) { const j = clamp(i + k, 0, n); s += nat[j] < -0.5 ? 13 : Math.max(nat[j], 1.2); c++; } y[i] = s / c; }
-    y[0] = 0.02; y[n] = 0.02; const grade = name === 'coast' ? 0.07 : name === 'old' ? 0.085 : 0.115;
-    // The ends meet the city streets at their level; the grade limit is applied outward from both pinned ends.
-    const lvl = 8; for (let i = 0; i <= lvl; i++) { y[i] = 0.02; y[n - i] = 0.02; }
-    for (let pass = 0; pass < 4; pass++) { for (let i = lvl + 1; i < n - lvl; i++) y[i] = clamp(y[i], y[i - 1] - grade * STEP, y[i - 1] + grade * STEP); for (let i = n - lvl - 1; i > lvl; i--) y[i] = clamp(y[i], y[i + 1] - grade * STEP, y[i + 1] + grade * STEP); }
-    for (let pass = 0; pass < 4; pass++) for (let i = lvl + 1; i < n - lvl; i++) y[i] = (y[i - 1] + y[i] * 2 + y[i + 1]) / 4;
+    const grade = o.grade, lvl = 8;
+    // The ends meet the city streets (or the road they join) at its level; the grade limit is applied outward from pinned ends.
+    if (o.city) { for (let i = 0; i <= lvl; i++) { y[i] = 0.02; y[n - i] = 0.02; } }
+    else { for (let i = 0; i <= lvl; i++) { y[i] = nearestOn(o.from.road, pts[i].x, pts[i].z).y; if (jb) y[n - i] = nearestOn(o.to.road, pts[n - i].x, pts[n - i].z).y; } } // a junction follows the slope of the road it joins
+    const e = o.city || jb ? n - lvl : n + 1;
+    for (let pass = 0; pass < 4; pass++) { for (let i = lvl + 1; i < e; i++) y[i] = clamp(y[i], y[i - 1] - grade * STEP, y[i - 1] + grade * STEP); for (let i = Math.min(e, n) - 1; i > lvl; i--) y[i] = clamp(y[i], y[i + 1] - grade * STEP, y[i + 1] + grade * STEP); }
+    for (let pass = 0; pass < 4; pass++) for (let i = lvl + 1; i < Math.min(e, n); i++) y[i] = (y[i - 1] + y[i] * 2 + y[i + 1]) / 4;
     const start = samples.length;
     for (let i = 0; i <= n; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n, i + 1)], tl = Math.hypot(b.x - a.x, b.z - a.z) || 1, tx = (b.x - a.x) / tl, tz = (b.z - a.z) / tl;
-      samples.push({ x: pts[i].x, z: pts[i].z, y: y[i], tx, tz, lx: tz, lz: -tx, road: name, i: samples.length, bridge: nat[i] < -0.5 && y[i] > 3, tunnel: tunnels && nat[i] - y[i] > 14, wallL: false, wallR: false, s: i * STEP }); }
-    world.roads.push({ name, from: start, to: samples.length - 1, length: n * STEP });
+      samples.push({ x: pts[i].x, z: pts[i].z, y: y[i], tx, tz, lx: tz, lz: -tx, road: name, i: samples.length, bridge: !!o.city && nat[i] < -0.5 && y[i] > 3, tunnel: !!o.tunnels && nat[i] - y[i] > 14, wallL: false, wallR: false, s: i * STEP, join: !o.city && (i <= 6 || !!jb && i >= n - 6), frontier: !o.city }); }
+    world.roads.push({ name, label: o.label, frontier: !o.city, from: start, to: samples.length - 1, length: n * STEP });
   }
   // widen tunnel flags slightly so portals sit in a proper cutting, and close 1-2 sample gaps
   for (let i = 2; i < samples.length - 2; i++) if (!samples[i].tunnel && samples[i - 2].tunnel && samples[i + 2].tunnel && samples[i].road === samples[i - 2].road) samples[i].tunnel = true;
@@ -61,18 +100,25 @@ export async function buildWorld(scene, city, Q) {
   for (const s of samples) (grid.get(gk(s.x, s.z)) || grid.set(gk(s.x, s.z), []).get(gk(s.x, s.z))).push(s);
   // Nearest road sample within reach metres, with signed lateral offset (+ = left of travel).
   const hit = { s: null, lat: 0, d: 0 };
-  function nearRoad(x, z, reach) { const r = Math.ceil(reach / GC), cx = Math.floor(x / GC), cz = Math.floor(z / GC); let best = null, bd = reach * reach;
-    for (let ix = cx - r; ix <= cx + r; ix++) for (let iz = cz - r; iz <= cz + r; iz++) { const cell = grid.get(ix * 8192 + iz); if (!cell) continue; for (const s of cell) { const d = (s.x - x) ** 2 + (s.z - z) ** 2; if (d < bd) { bd = d; best = s; } } }
+  function nearRoad(x, z, reach, skipJoin = false) { const r = Math.ceil(reach / GC), cx = Math.floor(x / GC), cz = Math.floor(z / GC); let best = null, bd = reach * reach;
+    for (let ix = cx - r; ix <= cx + r; ix++) for (let iz = cz - r; iz <= cz + r; iz++) { const cell = grid.get(ix * 8192 + iz); if (!cell) continue; for (const s of cell) { if (skipJoin && s.join) continue; const d = (s.x - x) ** 2 + (s.z - z) ** 2; if (d < bd) { bd = d; best = s; } } }
     if (!best) return null; hit.s = best; hit.lat = (x - best.x) * best.lx + (z - best.z) * best.lz; hit.d = Math.sqrt(bd); return hit; }
   world.nearRoad = nearRoad; world.samples = samples;
 
   // ---- Places: each is anchored to a point on a road, set to one side on ground levelled to the road ----
   const PLACES = [['harbour', 'Harbour', 'coast', 0.1, 92, 78, 'low'], ['lighthouse', 'Lighthouse Point', 'coast', 0.31, 70, 20, 'low'], ['petrol', 'Valley Fuel', 'coast', 0.79, 36, 30, 'flat'], ['stadium', 'Eastside Stadium', 'mountain', 0.045, 128, 100, 'flat'], ['summit', 'Summit Lookout', 'mountain', -1, 34, 30, 'flat']];
   const sampleAt = (road, frac) => { const rd = world.roads.find(r => r.name === road); return samples[Math.round(rd.from + (rd.to - rd.from) * frac)]; };
-  let topS = samples[0]; for (const s of samples) if (s.y > topS.y) topS = s;
+  let topS = samples[roadOf('mountain').from]; for (const s of samples) if (s.road === 'mountain' && s.y > topS.y) topS = s;
   world.places = PLACES.map(([key, name, road, frac, off, r, pick]) => { const s = frac < 0 ? topS : sampleAt(road, frac), nl = natural(s.x + s.lx * off, s.z + s.lz * off), nr = natural(s.x - s.lx * off, s.z - s.lz * off);
     const side = pick === 'low' ? (nl < nr ? 1 : -1) : (Math.abs(nl - s.y) < Math.abs(nr - s.y) ? 1 : -1);
     return { key, name, x: s.x + s.lx * side * off, z: s.z + s.lz * side * off, y: Math.max(s.y, 1.5), r, side, ux: s.tx, uz: s.tz, vx: s.lx * side, vz: s.lz * side, yaw: Math.atan2(s.tx, s.tz), blend: key === 'harbour' ? 9 : 46, road: s }; });
+  // Frontier places sit on ground levelled to their road, beside it or at its end.
+  for (const [key, name, road, near, off, r, note] of FRONTIER_PLACES) {
+    const rd = roadOf(road), s = near === 'end' ? samples[rd.to] : nearestOn(road, near[0], near[1]);
+    let side = 1;
+    if (off) { const nl = landAt(s.x + s.lx * off, s.z + s.lz * off), nr = landAt(s.x - s.lx * off, s.z - s.lz * off); side = key === 'cabin' ? (nl < nr ? 1 : -1) : (Math.abs(nl - s.y) < Math.abs(nr - s.y) ? 1 : -1); }
+    world.places.push({ key, name, note, frontier: true, x: s.x + s.lx * side * off, z: s.z + s.lz * side * off, y: Math.max(s.y, 1.5), r, side, ux: s.tx, uz: s.tz, vx: s.lx * side, vz: s.lz * side, yaw: Math.atan2(s.tx, s.tz), blend: 40, road: s });
+  }
   const fuel = world.places.find(p => p.key === 'petrol');
   fuel.paving = [[0, 0, 35, 40], [0, -25.4, 11.0, 10.8]];
   const [fx, fz] = sitePosition(fuel, 0, -15);
@@ -91,9 +137,15 @@ export async function buildWorld(scene, city, Q) {
   const canopyCover = (x, z) => fbm(x / 103, z / 103, 4) * 0.62 + fbm(x / 290 + 17, z / 290, 3) * 0.38;
   const cand = [];
   const woodland = new Float32Array(nx * nz);
-  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = WORLD.x0 + i * WORLD.cell, z = WORLD.z0 + j * WORLD.cell; let h = natural(x, z);
+  // Cells within reach of any road sample (24 m cells over the whole map), so open country skips the road search.
+  const MW = Math.ceil((EXT.x1 - EXT.x0) / GC) + 2, MH = Math.ceil((EXT.z1 - EXT.z0) / GC) + 2, roadMask = new Uint8Array(MW * MH), mx0 = Math.floor(EXT.x0 / GC), mz0 = Math.floor(EXT.z0 / GC);
+  for (const s of samples) { const cx = Math.floor(s.x / GC) - mx0, cz = Math.floor(s.z / GC) - mz0; for (let a = -6; a <= 6; a++) for (let b = -6; b <= 6; b++) { const u = cx + a, v = cz + b; if (u >= 0 && v >= 0 && u < MW && v < MH) roadMask[v * MW + u] = 1; } }
+  const nearAnyRoad = (x, z) => { const u = Math.floor(x / GC) - mx0, v = Math.floor(z / GC) - mz0; return u >= 0 && v >= 0 && u < MW && v < MH && roadMask[v * MW + u] === 1; };
+  const outerCover = (x, z) => canopyCover(x, z) * lushness(x, z);
+  // Final ground height at a grid point: natural land, graded to the roads, places and airfield.
+  function gradeCell(x, z, h, cover) {
     let roadDistance = Infinity, tunnelDistance = Infinity;
-    { const rr = Math.ceil(100 / GC), cx = Math.floor(x / GC), cz = Math.floor(z / GC); let dmin = 999, dall = 999, covered = false; cand.length = 0;
+    if (nearAnyRoad(x, z)) { const rr = Math.ceil(100 / GC), cx = Math.floor(x / GC), cz = Math.floor(z / GC); let dmin = 999, dall = 999, covered = false; cand.length = 0;
       for (let ix = cx - rr; ix <= cx + rr; ix++) for (let iz = cz - rr; iz <= cz + rr; iz++) { const cell = grid.get(ix * 8192 + iz); if (!cell) continue; for (const s of cell) { const d = Math.hypot(s.x - x, s.z - z); if (d > 100) continue; if (d < dall) { dall = d; covered = s.bridge || s.tunnel; } if (s.tunnel) tunnelDistance = Math.min(tunnelDistance, d); if (s.bridge || s.tunnel) continue; const de = Math.max(0, d - (s.wide || 0)); cand.push(de, s.y); if (de < dmin) dmin = de; } }
       if (!covered) roadDistance = dall;
       // the nearest stretch of road sets the level; where two stretches are about equally near, their levels are averaged
@@ -112,19 +164,34 @@ export async function buildWorld(scene, city, Q) {
       h = mix(h, grade - 0.05, Math.max(pad, access) * sst(32, 88, tunnelDistance));
     }
     if (h > roadbed) h = mix(roadbed, h, sst(12, 26, roadDistance));
-    H[j * nx + i] = h;
-    woodland[j * nx + i] = sst(0.34, 0.66, canopyCover(x, z)) * sst(4, 12, h) * (1 - sst(218, 285, h)) * sst(16, 38, roadDistance); }
-  const hAt = (x, z) => { const fx = clamp((x - WORLD.x0) / WORLD.cell, 0, nx - 1.001), fz = clamp((z - WORLD.z0) / WORLD.cell, 0, nz - 1.001), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, a = H[j * nx + i], b = H[j * nx + i + 1], c = H[(j + 1) * nx + i], d = H[(j + 1) * nx + i + 1];
+    return [h, sst(0.34, 0.66, cover(x, z)) * sst(4, 12, h) * (1 - sst(218, 285, h)) * sst(16, 38, roadDistance)];
+  }
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = WORLD.x0 + i * WORLD.cell, z = WORLD.z0 + j * WORLD.cell, [h, wd] = gradeCell(x, z, natural(x, z), canopyCover); H[j * nx + i] = h; woodland[j * nx + i] = wd; }
+  // The frontier: a coarser grid whose lines meet the valley grid exactly along its edge.
+  const EC = EXT.cell, onx = Math.round((EXT.x1 - EXT.x0) / EC) + 1, onz = Math.round((EXT.z1 - EXT.z0) / EC) + 1, HO = new Float32Array(onx * onz), woodO = new Float32Array(onx * onz), zoneO = new Float32Array(onx * onz * 4);
+  for (let j = 0; j < onz; j++) for (let i = 0; i < onx; i++) { const x = EXT.x0 + i * EC, z = EXT.z0 + j * EC, k = j * onx + i;
+    if (x >= WORLD.x0 && x <= WORLD.x1 && z >= WORLD.z0 && z <= WORLD.z1) { const q = Math.round((z - WORLD.z0) / WORLD.cell) * nx + Math.round((x - WORLD.x0) / WORLD.cell); HO[k] = H[q]; woodO[k] = woodland[q]; }
+    else { const [h, wd] = gradeCell(x, z, landAt(x, z), outerCover); HO[k] = h; woodO[k] = wd; }
+    const zz = zones(x, z); zoneO.set(zz, k * 4); }
+  const interp = (G, gx, gz, B, cell) => (x, z) => { const fx = clamp((x - B.x0) / cell, 0, gx - 1.001), fz = clamp((z - B.z0) / cell, 0, gz - 1.001), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, a = G[j * gx + i], b = G[j * gx + i + 1], c = G[(j + 1) * gx + i], d = G[(j + 1) * gx + i + 1];
     return u + v < 1 ? a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v); };
-  world.terrain = hAt;
-  city.sea.setTerrain(WORLD, nx, nz, H);
+  const hIn = interp(H, nx, nz, WORLD, WORLD.cell), hOut = interp(HO, onx, onz, EXT, EC);
+  const hAt = (x, z) => x >= WORLD.x0 && x <= WORLD.x1 && z >= WORLD.z0 && z <= WORLD.z1 ? hIn(x, z) : hOut(x, z);
+  world.terrain = hAt; world.zones = zones; world.lushness = lushness;
+  // Open water deep enough to stop a car: the sea and fjord, and Mirror Lake.
+  world.isWater = (x, z) => { const g = world.ground(x, z); if (g < -0.95) return true; const l = ((x - LAKE.x) / LAKE.rx) ** 2 + ((z - LAKE.z) / LAKE.rz) ** 2; return l < 1.5 && g < LAKE.level - 0.35; };
+  city.sea.setTerrain(EXT, hAt, inFjord);
   for (const site of pavedPlaces) site.arrival.y = hAt(site.arrival.x, site.arrival.z);
   // Drop-side barriers: wherever the land falls away beside the road.
   for (const s of samples) { if (s.bridge || s.tunnel) { s.wallL = s.wallR = true; continue; } s.wallL = hAt(s.x + s.lx * 30, s.z + s.lz * 30) < s.y - 5.5; s.wallR = hAt(s.x - s.lx * 30, s.z - s.lz * 30) < s.y - 5.5; }
   for (let pass = 0; pass < 2; pass++) for (let i = 1; i < samples.length - 1; i++) for (const k of ['wallL', 'wallR']) if (samples[i - 1][k] && samples[i + 1][k]) samples[i][k] = true;
+  // Junctions stay open: no barrier across the mouth of a joining road.
+  for (const s of samples) if (s.join || junctions.some(j => Math.abs(j.x - s.x) < 26 && Math.abs(j.z - s.z) < 26)) s.wallL = s.wallR = false;
   // Ground height for the car and camera: road surface on the carriageway, land elsewhere.
   world.ground = (x, z, info) => {
-    const r = nearRoad(x, z, 22), terrain = hAt(x, z);
+    let r = nearRoad(x, z, 22); const terrain = hAt(x, z);
+    // At a junction the road being joined carries its own surface; the joining road takes over past its kerb.
+    if (r && r.s.join) { const own = { s: r.s, lat: r.lat, d: r.d }, main = nearRoad(x, z, 16, true); if (!(main && Math.abs(main.lat) <= HALFW + 0.4)) r = Object.assign(hit, own); }
     if (info) {
       info.road = null;
       info.lat = 0;
@@ -183,11 +250,19 @@ export async function buildWorld(scene, city, Q) {
     return texture;
   };
   const rock = loadTerrainTex('rock-face.jpg'), strata = loadTerrainTex('rocky-terrain.jpg');
+  const EW = n => { const t = L.load('/eight-worlds/assets/tex/' + n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; };
+  let regionTex = null;
+  const EWn = n => { const t = L.load('/eight-worlds/assets/tex/' + n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+  const groundTex = { uGrass2: { value: EW('grass_d.jpg') }, uForestG: { value: EW('forest_d.jpg') }, uGrassN: { value: EWn('grass_n.jpg') }, uForestN: { value: EWn('forest_n.jpg') } };
+  const innerBox = s => s.x > WORLD.x0 - 40 && s.x < WORLD.x1 + 40 && s.z > WORLD.z0 - 40 && s.z < WORLD.z1 + 40;
+  const deepInside = s => s.x > WORLD.x0 + 40 && s.x < WORLD.x1 - 40 && s.z > WORLD.z0 + 40 && s.z < WORLD.z1 - 40;
+  // Regional materials add sand, snowfields, volcanic rock with glowing lava seams, and jungle moss (Eight Worlds textures).
+  function landMaterial(clearance, regional) {
   const landM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0, envMapIntensity: 0.35 });
-  const clearance = roadClearance(samples);
-  landM.onBeforeCompile = sh => { Object.assign(sh.uniforms, clearance.uniforms); sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata };
-    sh.vertexShader = 'attribute float aWoodland; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal; vWoodland = aWoodland;');
-    sh.fragmentShader = clearance.glsl + `uniform sampler2D uGrass, uRock, uStrata; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
+  if (regional) regionTex ||= { uDune: { value: EW('dune_d.jpg') }, uSnow: { value: EW('snow_d.jpg') }, uBasalt: { value: EW('basalt_d.jpg') }, uMoss: { value: EW('moss_d.jpg') }, uCliff: { value: EW('cliff_d.jpg') }, uVolc: { value: new THREE.Vector3(VOLCANO.x, VOLCANO.z, 0) } };
+  landM.onBeforeCompile = sh => { Object.assign(sh.uniforms, clearance.uniforms); sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata }; Object.assign(sh.uniforms, groundTex); if (regional) Object.assign(sh.uniforms, regionTex);
+    sh.vertexShader = (regional ? 'attribute vec4 aZone; varying vec4 vZone;\n' : '') + 'attribute float aWoodland; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal; vWoodland = aWoodland;' + (regional ? ' vZone = aZone;' : ''));
+    sh.fragmentShader = clearance.glsl + (regional ? 'uniform sampler2D uDune, uSnow, uBasalt, uMoss, uCliff; uniform vec3 uVolc; varying vec4 vZone; float adLava = 0.0;\n' : '') + NO_TILE_GLSL + `uniform sampler2D uGrass, uRock, uStrata, uGrass2, uForestG, uGrassN, uForestN; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
 float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(adH(i), adH(i + vec2(1, 0)), f.x), mix(adH(i + vec2(0, 1)), adH(i + vec2(1, 1)), f.x), f.y); }\n` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
   clearRoad(vWPos);
@@ -197,13 +272,17 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   float adMacro = adN(adP * 0.0037) * 0.66 + adN(adP * 0.012) * 0.34;
   float adBands = adN(vec2((vWPos.x + vWPos.z * 0.48) * 0.013, (vWPos.y + vWPos.x * 0.16) * 0.063));
   vec3 adAerial = texture2D(uStrata, adP / 88.0).rgb;
-  vec3 adGround = texture2D(uGrass, adP / 7.0).rgb;
-  vec3 adG = mix(adGround * 1.22, adAerial, 0.27) * mix(vec3(0.54, 0.7, 0.46), vec3(1.12, 1.12, 0.88), smoothstep(0.19, 0.77, adMacro));
-  adG = mix(adG, adG * vec3(0.52, 0.69, 0.48), vWoodland * 0.75);
+  // Ground: two grass stocks and a forest floor, each read without a visible repeat, mixed by slow noise.
+  float adMeadow = smoothstep(0.32, 0.68, adN(adP * 0.017) * 0.65 + adN(adP * 0.083) * 0.35);
+  vec3 adGround = mix(noTile(uGrass, adP / 7.0).rgb * 1.22, noTile(uGrass2, adP / 4.6 + 17.0).rgb * vec3(1.55, 1.62, 2.2), adMeadow * 0.75);
+  adGround *= mix(0.86, 1.1, adN(adP * 0.31)) * mix(0.93, 1.05, adN(adP * 1.7));
+  vec3 adG = mix(adGround, adAerial, 0.2) * mix(vec3(0.58, 0.72, 0.48), vec3(1.1, 1.1, 0.9), smoothstep(0.19, 0.77, adMacro));
+  float adWood = clamp(vWoodland * 1.15, 0.0, 1.0);
+  adG = mix(adG, noTile(uForestG, adP / 3.8 + 5.0).rgb * vec3(0.5, 0.56, 0.4) * mix(0.8, 1.1, adMacro), adWood * 0.85);
   vec3 adBlend = pow(abs(adNn), vec3(3.0));
   adBlend /= adBlend.x + adBlend.y + adBlend.z;
   vec3 adRock = texture2D(uRock, vWPos.zy / vec2(9.0, 5.0)).rgb * adBlend.x
-              + texture2D(uRock, adP / 9.0).rgb * adBlend.y
+              + noTile(uRock, adP / 9.0).rgb * adBlend.y
               + texture2D(uRock, vWPos.xy / vec2(9.0, 5.0)).rgb * adBlend.z;
   vec2 adWarp = vec2(adN(adP * 0.028), adN(adP * 0.023 + 41.0)) * 0.24;
   vec3 adStrata = texture2D(uStrata, vec2(adP.x + adP.y * 0.51, vWPos.y * 1.59 + adP.y * 0.34) / 82.0 + adWarp).rgb;
@@ -213,7 +292,16 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   vec3 adC = mix(adG, adR, smoothstep(0.115, 0.35, adExposure));
   float adDune = (1.0 - smoothstep(0.05, 1.2, vWPos.y)) * (1.0 - smoothstep(0.3, 0.5, adSlope));
   adC = mix(adC, vec3(0.54, 0.45, 0.31) * (0.76 + 0.24 * adN(adP * 0.7)), adDune);
-  diffuseColor.rgb = adC;`); };
+  ${regional ? REGION_GLSL : ''}
+  diffuseColor.rgb = adC;`).replace('#include <emissivemap_fragment>', regional ? '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(3.2, 0.75, 0.12) * adLava;' : '#include <emissivemap_fragment>').replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  { // tufted grass and forest litter relief, strongest close up and on gentle ground
+    float k = (1.0 - smoothstep(0.3, 0.55, adSlope)) * (1.0 - smoothstep(25.0, 140.0, length(cameraPosition - vWPos)));
+    vec3 g = noTile(uGrassN, adP / 4.6 + 17.0).xyz * 2.0 - 1.0, f = noTile(uForestN, adP / 3.8 + 5.0).xyz * 2.0 - 1.0, d = mix(g, f, adWood);
+    normal = normalize(normal + (viewMatrix * vec4(d.x, 0.0, -d.y, 0.0)).xyz * 0.55 * k); }`); };
+  landM.customProgramCacheKey = () => regional ? 'afterdark-land-region' : 'afterdark-land';
+  return landM;
+  }
+  const landM = landMaterial(roadClearance(samples.filter(innerBox)), false);
   const PATCH = 30, land = new THREE.Group();
   for (let pj = 0; pj < nz - 1; pj += PATCH) for (let pi = 0; pi < nx - 1; pi += PATCH) { const w = Math.min(PATCH, nx - 1 - pi) + 1, d = Math.min(PATCH, nz - 1 - pj) + 1, pos = new Float32Array(w * d * 3), nor = new Float32Array(w * d * 3), shade = new Float32Array(w * d), idx = []; let flat = true;
     for (let j = 0; j < d; j++) for (let i = 0; i < w; i++) { const gi = pi + i, gj = pj + j, k = (j * w + i) * 3, h = H[gj * nx + gi]; pos[k] = WORLD.x0 + gi * WORLD.cell; pos[k + 1] = h; pos[k + 2] = WORLD.z0 + gj * WORLD.cell; shade[j * w + i] = woodland[gj * nx + gi]; if (h > -0.39 || h < -0.41) flat = false;
@@ -223,6 +311,21 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('aWoodland', new THREE.BufferAttribute(shade, 1)); g.setIndex(idx); g.computeBoundingSphere();
     const m = new THREE.Mesh(g, landM); m.receiveShadow = true; land.add(m); }
   scene.add(land);
+  { const outerM = landMaterial(roadClearance(samples.filter(s => !deepInside(s)), 6, 620), true), OP = 32, outer = new THREE.Group();
+    const inside = (gi, gj) => { const x = EXT.x0 + gi * EC, z = EXT.z0 + gj * EC; return x >= WORLD.x0 && x <= WORLD.x1 && z >= WORLD.z0 && z <= WORLD.z1; };
+    for (let pj = 0; pj < onz - 1; pj += OP) for (let pi = 0; pi < onx - 1; pi += OP) { const w = Math.min(OP, onx - 1 - pi) + 1, d = Math.min(OP, onz - 1 - pj) + 1, pos = new Float32Array(w * d * 3), nor = new Float32Array(w * d * 3), shade = new Float32Array(w * d), zone = new Float32Array(w * d * 4), idx = [];
+      for (let j = 0; j < d; j++) for (let i = 0; i < w; i++) { const gi = pi + i, gj = pj + j, k = (j * w + i) * 3, q = gj * onx + gi; pos[k] = EXT.x0 + gi * EC; pos[k + 1] = HO[q]; pos[k + 2] = EXT.z0 + gj * EC; shade[j * w + i] = woodO[q]; zone.set(zoneO.subarray(q * 4, q * 4 + 4), (j * w + i) * 4);
+        const hl = HO[gj * onx + Math.max(0, gi - 1)], hr = HO[gj * onx + Math.min(onx - 1, gi + 1)], hd = HO[Math.max(0, gj - 1) * onx + gi], hu = HO[Math.min(onz - 1, gj + 1) * onx + gi], ax = hl - hr, az = hd - hu, ay = 2 * EC, il = 1 / Math.hypot(ax, ay, az); nor[k] = ax * il; nor[k + 1] = ay * il; nor[k + 2] = az * il; }
+      for (let j = 0; j < d - 1; j++) for (let i = 0; i < w - 1; i++) { if (inside(pi + i, pj + j) && inside(pi + i + 1, pj + j + 1)) continue; const a = j * w + i, b = a + 1, c = a + w, e = c + 1; idx.push(a, c, b, b, c, e); }
+      if (!idx.length) continue;
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('aWoodland', new THREE.BufferAttribute(shade, 1)); g.setAttribute('aZone', new THREE.BufferAttribute(zone, 4)); g.setIndex(idx); g.computeBoundingSphere();
+      const m = new THREE.Mesh(g, outerM); m.receiveShadow = true; outer.add(m); }
+    // A skirt hangs from the valley's edge so the finer and coarser grids never show a crack between them.
+    const sp = [], sn = [], sw = [], sz = [], si = []; const edge = [[WORLD.x0, WORLD.z0, 1, 0, WORLD.x1 - WORLD.x0], [WORLD.x1, WORLD.z0, 0, 1, WORLD.z1 - WORLD.z0], [WORLD.x1, WORLD.z1, -1, 0, WORLD.x1 - WORLD.x0], [WORLD.x0, WORLD.z1, 0, -1, WORLD.z1 - WORLD.z0]];
+    for (const [x0, z0, dx, dz, len] of edge) for (let t = 0; t <= len; t += WORLD.cell) { const x = x0 + dx * t, z = z0 + dz * t, y = hIn(x, z), b = sp.length / 3; sp.push(x, y + 0.02, z, x, y - 6, z); sn.push(0, 1, 0, 0, 1, 0); sw.push(woodland[0] * 0, 0); sz.push(...zones(x, z), ...zones(x, z)); if (t > 0) si.push(b - 2, b, b - 1, b - 1, b, b + 1); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setAttribute('normal', new THREE.Float32BufferAttribute(sn, 3)); sg.setAttribute('aWoodland', new THREE.Float32BufferAttribute(sw, 1)); sg.setAttribute('aZone', new THREE.Float32BufferAttribute(sz, 4)); sg.setIndex(si);
+    const skirt = new THREE.Mesh(sg, outerM); skirt.frustumCulled = false; outer.add(skirt);
+    scene.add(outer); world.outerLand = outer; }
 
   // ---- Road ribbons with painted lines ----
   const AL = n => { const t = L.load(`/evermile/assets/materials/asphalt_03_${n}_1k.jpg`); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (n === 'diff') t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16; return t; };
@@ -235,7 +338,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   diffuseColor.rgb *= mix(0.92, 0.5, uWet); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.66), clamp(adLine, 0.0, 1.0) * 0.9);`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = max(0.34, mix(clamp(roughnessFactor * 0.9 + 0.12, 0.5, 0.95), 0.4, uWet));'); };
   const strips = [];
   for (const rd of world.roads) { const pos = [], uv = [], idx = [], nor = []; let k = 0;
-    for (let i = rd.from; i <= rd.to; i++) { const s = samples[i]; pos.push(s.x + s.lx * HALFW, s.y + 0.03, s.z + s.lz * HALFW, s.x - s.lx * HALFW, s.y + 0.03, s.z - s.lz * HALFW); uv.push(0, s.s / 6.3, 0.5, s.s / 6.3); nor.push(0, 1, 0, 0, 1, 0); if (i < rd.to) { idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } k += 2; }
+    for (let i = rd.from; i <= rd.to; i++) { const s = samples[i]; const ry = s.y + (s.join ? 0.012 : 0.03); pos.push(s.x + s.lx * HALFW, ry, s.z + s.lz * HALFW, s.x - s.lx * HALFW, ry, s.z - s.lz * HALFW); uv.push(0, s.s / 6.3, 0.5, s.s / 6.3); nor.push(0, 1, 0, 0, 1, 0); if (i < rd.to) { idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } k += 2; }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setIndex(idx); g.computeVertexNormals();
     const m = new THREE.Mesh(g, roadM); m.receiveShadow = true; m.frustumCulled = false; scene.add(m); strips.push(m); }
   roadM.map.repeat.set(2, 1); roadM.normalMap.repeat.set(2, 1); roadM.roughnessMap.repeat.set(2, 1);
@@ -283,13 +386,18 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
       for (const e of [run[0], run[run.length - 1]]) { for (const sg of [-1, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(7, 11, 1.6), conc); b.position.set(e.x + e.lx * sg * (RAD + 3.3), e.y + 5.4, e.z + e.lz * sg * (RAD + 3.3)); b.rotation.y = Math.atan2(e.tx, e.tz); scene.add(b); } const top = new THREE.Mesh(new THREE.BoxGeometry(RAD * 2 + 13.6, 4.2, 1.6), conc); top.position.set(e.x, e.y + RAD + 1.6, e.z); top.rotation.y = Math.atan2(e.tx, e.tz); scene.add(top); } }
     const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.08, 2.4), lightM, Math.max(1, lights.length)); lights.forEach((q, k) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[3], 0); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.rotation.set(0, 0, 0); lm.count = lights.length; lm.frustumCulled = false; scene.add(lm); world.tunnels = runs.filter(r => r.length >= 6).length; }
 
-  try { await buildForest(scene, city, world, WORLD, nearPlace, canopyCover, Q.reach || 1); }
+  try { await buildForest(scene, city, world, WORLD, nearPlace, canopyCover, Q.reach || 1, { samples: samples.filter(s => ORIGINAL.has(s.road)) }); }
   catch (error) { console.warn('Forest unavailable', error); }
+  // Frontier woods: dense around the lake, lighter in the jungle and on the fjord sides, none in the dunes.
+  try { await buildForest(scene, city, world, EXT, nearPlace, outerCover, Q.reach || 1, { samples: samples.filter(s => s.frontier), skip: (x, z) => outside(x, z) < 20, seed: 7311,
+    groves: [['lakeside', 0.42, 1], ['lakeside', 0.55, -1], ['lakeside', 0.3, 1], ['temple', 0.45, 1], ['temple', 0.62, -1], ['north', 0.45, -1], ['fjord', 0.35, -1], ['alpine', 0.78, 1]],
+    count: Math.round(6500 * Math.min(1, Q.reach || 1)), tries: 140000, rocks: 1100, rockTries: 3000 }); }
+  catch (error) { console.warn('Frontier forest unavailable', error); }
 
   // ---- Roadside: tufts of grass along the verge, and reflective studs that pick out the road after dark ----
   { const gt = new THREE.CanvasTexture((() => { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const c = cv.getContext('2d'), r = rng(12); for (let i = 0; i < 90; i++) { const x = r() * 128, hgt = 18 + r() * 44, g = 48 + r() * 62; c.strokeStyle = `rgb(${g * 0.82 | 0},${g * 0.86 | 0},${g * 0.4 | 0})`; c.lineWidth = 1 + r() * 1.6; c.beginPath(); c.moveTo(x, 64); c.quadraticCurveTo(x + (r() - 0.5) * 10, 64 - hgt * 0.6, x + (r() - 0.5) * 22, 64 - hgt); c.stroke(); } return cv; })()); gt.colorSpace = THREE.SRGBColorSpace;
     const q1 = new THREE.PlaneGeometry(1.6, 0.8); q1.translate(0, 0.4, 0); const q2 = q1.clone(); q2.rotateY(Math.PI / 2); const pos = [...q1.attributes.position.array, ...q2.attributes.position.array], uv = [...q1.attributes.uv.array, ...q2.attributes.uv.array], idx = [...q1.index.array, ...Array.from(q2.index.array, v => v + 4)], tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); tg.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(24).fill(0).map((v, i) => i % 3 === 1 ? 1 : 0), 3)); tg.setIndex(idx);
-    const list = []; for (const s of samples) { if (s.bridge || s.tunnel || s.i % 2) continue; for (const sg of [-1, 1]) for (let n = 0; n < 3; n++) { const lat = HALFW + 1.2 + R() * (9 + (s.wide || 0) * 0.3), x = s.x + s.lx * sg * lat + (R() - 0.5) * 3, z = s.z + s.lz * sg * lat + (R() - 0.5) * 3; if (nearPlace(x, z, 0)) continue;
+    const list = []; for (const s of samples) { if (s.bridge || s.tunnel || s.i % 2) continue; for (const sg of [-1, 1]) for (let n = 0; n < 3; n++) { const lat = HALFW + 1.2 + R() * (9 + (s.wide || 0) * 0.3), x = s.x + s.lx * sg * lat + (R() - 0.5) * 3, z = s.z + s.lz * sg * lat + (R() - 0.5) * 3; if (nearPlace(x, z, 0)) continue; if (s.frontier) { const zz = zones(x, z); if (zz[0] > 0.35 || zz[2] > 0.55 || s.y > 360) continue; }
       list.push([x, hAt(x, z) - 0.045, z, 0.25 + R() * 0.45, R() * Math.PI]); } }
     const tm = new THREE.InstancedMesh(tg, new THREE.MeshStandardMaterial({ map: gt, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, envMapIntensity: 0.3 }), list.length); list.forEach((q, n) => { dummy.position.set(q[0], q[1], q[2]); dummy.rotation.set(0, q[4], 0); dummy.scale.setScalar(q[3]); dummy.updateMatrix(); tm.setMatrixAt(n, dummy.matrix); }); dummy.scale.set(1, 1, 1); dummy.rotation.set(0, 0, 0); tm.receiveShadow = true; scene.add(tm); splitChunks(tm, 190, city.chunks); world.tufts = list.length;
     const sp = [], sc = []; for (const s of samples) { if (s.i % 4 || s.tunnel) continue; for (const sg of [-1, 1]) { sp.push(s.x + s.lx * sg * (HALFW - 0.25), s.y + 0.12, s.z + s.lz * sg * (HALFW - 0.25)); if (sg > 0) sc.push(2.6, 0.35, 0.2); else sc.push(2.4, 2.4, 2.2); } }
@@ -297,7 +405,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     world.setTime = e => { studs.material.opacity = e.night; studs.visible = e.night > 0.05; }; }
 
   // Summit lay-by marker for the map and the beacon list.
-  let top = samples[0]; for (const s of samples) if (s.y > top.y) top = s; world.summit = top;
-  world.stats = { samples: samples.length, grid: [nx, nz], summit: Math.round(top.y), tunnels: world.tunnels, bridge: samples.filter(s => s.bridge).length * STEP, roads: world.roads.map(r => r.name + ' ' + Math.round(r.length) + ' m'), trees: world.trees, understory: world.understory, rocks: world.rocks };
+  let top = samples[roadOf('mountain').from]; for (const s of samples) if (s.road === 'mountain' && s.y > top.y) top = s; world.summit = top;
+  world.stats = { samples: samples.length, grid: [nx, nz], summit: Math.round(top.y), tunnels: world.tunnels, frontierCells: onx * onz, frontierPlaces: world.places.filter(p => p.frontier).length, bridge: samples.filter(s => s.bridge).length * STEP, roads: world.roads.map(r => r.name + ' ' + Math.round(r.length) + ' m'), trees: world.trees, understory: world.understory, rocks: world.rocks };
   return world;
 }

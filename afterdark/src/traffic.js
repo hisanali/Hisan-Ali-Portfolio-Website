@@ -94,7 +94,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   // Cars out on the coastal and mountain roads: they follow the road line, slow for bends and hills, and are
   // moved elsewhere on the road when they reach a city gate.
   const world = city.world, country = world ? Math.round(count * 0.45) : 0;
-  const putOn = (c, avoid) => { for (let n = 0; n < 30; n++) { const rd = world.roads[Math.floor(R() * world.roads.length)], i = rd.from + 12 + R() * (rd.to - rd.from - 24), s = world.samples[Math.round(i)]; if (s.tunnel && n < 20) continue; if (avoid && Math.hypot(s.x - avoid.x, s.z - avoid.z) < 380 && n < 25) continue; if (cars.some(o => o.mode === 2 && o !== c && o.rd === rd && o.dirS === c.dirS && Math.abs(o.i - i) < 12)) continue; c.rd = rd; c.i = i; return; } };
+  // Half the country traffic keeps to the valley roads; the rest is spread over the frontier.
+  const valley = world ? world.roads.filter(r => !r.frontier) : [], frontier = world ? world.roads.filter(r => r.frontier) : [], pickRoad = () => { const pool = frontier.length && R() < 0.5 ? frontier : valley; return pool[Math.floor(R() * pool.length)]; };
+  const putOn = (c, avoid) => { for (let n = 0; n < 30; n++) { const rd = pickRoad(), i = rd.from + 12 + R() * (rd.to - rd.from - 24), s = world.samples[Math.round(i)]; if (s.tunnel && n < 20) continue; if (avoid && Math.hypot(s.x - avoid.x, s.z - avoid.z) < 380 && n < 25) continue; if (cars.some(o => o.mode === 2 && o !== c && o.rd === rd && o.dirS === c.dirS && Math.abs(o.i - i) < 12)) continue; c.rd = rd; c.i = i; return; } };
   const cityCarCount = cars.length;
   for (let k = 0; k < country; k++) { const c = { id: cars.length, mode: 2, dirS: R() < 0.5 ? 1 : -1, rd: null, i: 0, v: 14, vmax: 15 + R() * 8, kit: Math.floor(R() * STYLES.length), tint: TINTS[Math.floor(R() * TINTS.length)], x: 0, z: 0, h: 0, y: 0, pitch: 0, push: new THREE.Vector2(), stun: 0, wait: 0, go: 0, spin: 0 }; putOn(c, null); cars.push(c); }
   // Allocate one moving city slot per model before filling the remaining slots with ordinary traffic.
