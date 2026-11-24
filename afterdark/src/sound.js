@@ -14,7 +14,7 @@ const GEARBOX = {
   },
   bus: { ratio: [510, 300, 192, 137, 106, 86], up: [1450, 750], down: [800, 470] }
 };
-const VOICE = { bus: 'coach', hatch: 'grcorolla', suv: 'landcruiser' };
+const VOICE = { hatch: 'grcorolla', suv: 'landcruiser' };
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 // A repeating two-revolution combustion cycle. On the cross-plane V8s the
@@ -46,11 +46,13 @@ export function createSound() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)(); ctx.resume?.();
   const master = ctx.createGain(); master.gain.value = 0;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2; master.connect(comp).connect(ctx.destination);
-  const drive = new DriveAudio(ctx, master);
+  const engineBus = ctx.createGain(); engineBus.gain.value = 0; engineBus.connect(comp);
+  const drive = new DriveAudio(ctx, engineBus);
+  let previewCar, previewStart;
   const exhaust = ctx.createOscillator(), exhaustFilter = ctx.createBiquadFilter(), exhaustGain = ctx.createGain();
   exhaustGain.gain.value = 0;
   exhaustFilter.Q.value = .72;
-  exhaust.connect(exhaustFilter).connect(exhaustGain).connect(master);
+  exhaust.connect(exhaustFilter).connect(exhaustGain).connect(engineBus);
   exhaust.start();
   const waves = new Map();
   let exhaustCar;
@@ -60,7 +62,7 @@ export function createSound() {
   const recordedGain = ctx.createGain(), recordedFilter = ctx.createBiquadFilter();
   recordedGain.gain.value = 0;
   recordedFilter.type = 'lowpass';
-  recordedFilter.connect(recordedGain).connect(master);
+  recordedFilter.connect(recordedGain).connect(engineBus);
   let recordedEngine;
   load('/afterdark/assets/audio/escalade-drive.wav').then(buffer => {
     recordedEngine = ctx.createBufferSource();
@@ -80,6 +82,7 @@ export function createSound() {
   const burst = (freq, q, gain, len, at = 0, type = 'bandpass', slideTo = 0) => { const t = ctx.currentTime + at, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = noise; f.type = type; f.frequency.setValueAtTime(freq, t); if (slideTo) f.frequency.exponentialRampToValueAtTime(slideTo, t + len); f.Q.value = q; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + len * 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + len); src.connect(f).connect(g).connect(master); src.start(t, Math.random()); src.stop(t + len + 0.05); };
   const api = {
     ctx, drive, master, loops, shots, get gear() { return drive.gear; }, get rpm() { return drive.rpm; },
+    preview(id) { previewCar = id; previewStart = ctx.currentTime; },
     resume() { if (ctx.state !== 'running') ctx.resume?.(); }, setOn(v) { on = v; },
     click() { tone(1500, 0, 0.05, 0.05, 'triangle'); },
     start() { try { drive.lastVolume = 1; drive.starter(0.9); } catch (e) {} },
@@ -92,7 +95,14 @@ export function createSound() {
     thunder() { const names = Object.keys(shots); if (!names.length) return false; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = shots[names[Math.floor(Math.random() * names.length)]]; g.gain.value = 0.5 + Math.random() * 0.35; src.playbackRate.value = 0.9 + Math.random() * 0.2; src.connect(g).connect(master); src.start(); return true; },
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
-      set(master.gain, on && s.playing ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
+      set(master.gain, on && s.playing ? 1 : 0, 0.1);
+      const elapsed = ctx.currentTime - previewStart;
+      if (!s.garage || elapsed > 2.4) previewCar = null;
+      if (previewCar) {
+        const throttle = clamp(elapsed * 3) * clamp((1.65 - elapsed) * 2.5);
+        s = { ...s, vehicle: previewCar, playing: true, speed: 0, throttle, brake: 0, slip: 0, steer: 0, people: false, urban: false, cockpit: false };
+      }
+      set(engineBus.gain, on && s.playing ? 1 : 0, .06); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
       try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, shiftHold: s.vehicle === 'escalade' ? 1.5 : 1.05, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         const [cylinders, cutoff, level] = EXHAUST[s.vehicle] || EXHAUST.sedan;
         if (exhaustCar !== s.vehicle) {

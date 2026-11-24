@@ -1,3 +1,4 @@
+import { beamTexture, lampColor } from './low-beams.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
 // Traffic: cars that keep to their lanes, obey the signals, queue behind each other and turn at junctions,
 // plus parked cars along the kerbs. Every body style is drawn with instancing.
@@ -151,10 +152,10 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const vertices = poolG.attributes.position;
   for (let i = 0; i < vertices.count; i++) {
     const distance = vertices.getZ(i) + .5;
-    vertices.setXYZ(i, vertices.getX(i) * (.45 + distance * 5), .035, distance * 16);
+    vertices.setXYZ(i, vertices.getX(i) * 12, .035, distance * 27);
   }
   const beamOffset = new THREE.Matrix4();
-  const pools = new THREE.InstancedMesh(poolG, new THREE.MeshBasicMaterial({ map: city.pool, color: new THREE.Color(0.75, 0.7, 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), n * 2); pools.frustumCulled = false; pools.renderOrder = 4; scene.add(pools);
+  const pools = new THREE.InstancedMesh(poolG, new THREE.MeshBasicMaterial({ map: beamTexture(), color: 0xffffff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), n * 2); pools.frustumCulled = false; pools.renderOrder = 4; scene.add(pools);
   // A soft contact shadow under every car, moving or parked, so none of them float.
   const blobG = new THREE.PlaneGeometry(1.6, 1.32); blobG.rotateX(-Math.PI / 2); blobG.translate(0, 0.028, 0);
   const blobs = new THREE.InstancedMesh(blobG, vehicleShadowMaterial(), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
@@ -229,6 +230,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.tail) im.setColorAt(slot, col.setScalar(c.braking || c.v < .5 ? 3.8 : im.userData.part.stopOnly ? 0 : .52)); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
         for (let side = 0; side < 2; side++) {
           beamOffset.makeTranslation((side ? 1 : -1) * kit.width * .36, 0, kit.len * .47);
+          pools.setColorAt(shown * 2 + side, col.setHex(lampColor(kit.style)));
           pools.setMatrixAt(shown * 2 + side, mat.multiplyMatrices(dummy.matrix, beamOffset));
         }
         mat.makeScale(kit.width, 1, kit.len).premultiply(dummy.matrix);
@@ -239,7 +241,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       for (const im of g) { im.count = used[ki] + list.length; if (im.instanceColor) im.instanceColor.needsUpdate = true; } });
     nearParked.forEach((p, k) => { dummy.position.set(p.x, 0, p.z); dummy.rotation.set(0, p.h, 0); dummy.updateMatrix(); const kit = kits[p.kit]; mat.makeScale(kit.width, 1, kit.len).premultiply(dummy.matrix); blobs.setMatrixAt(shown + k, mat); }); blobs.count = shown + nearParked.length;
     for (const g of groups) for (const im of g) im.instanceMatrix.needsUpdate = true;
-    pools.instanceMatrix.needsUpdate = true; blobs.instanceMatrix.needsUpdate = true;
+    pools.instanceMatrix.needsUpdate = true; if (pools.instanceColor) pools.instanceColor.needsUpdate = true; blobs.instanceMatrix.needsUpdate = true;
   }
   // Player against traffic and parked cars: push apart, return the closing speed of the worst contact.
   function collide(player) {
