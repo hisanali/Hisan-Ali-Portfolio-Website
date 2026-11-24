@@ -70,7 +70,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         geo = geo.clone().applyMatrix4(local).translate(-centre.x, -centre.y, -centre.z);
         local = new THREE.Matrix4().makeTranslation(centre.x, centre.y, centre.z);
       }
-      parts.push({ geo, mat: m, local, paint: painted, tail: role === 'tail' || role === 'stop', stopOnly: role === 'stop', wheel: Boolean(hub) }); });
+      parts.push({ geo, mat: m, local, paint: painted, tail: role === 'tail' || role === 'stop', stopOnly: role === 'stop', wheel: Boolean(hub), frontWheel: !!hub && /^Wheel_F/i.test(hub.name) }); });
     // Batch the many identical seat materials once for each transit model.
     if (TRANSIT.includes(style)) {
       const batches = new Map();
@@ -168,7 +168,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     for (const mat of tailMaterials) mat.emissiveIntensity = .4 + .6 * beam;
   }
 
-  const tmp = { x: 0, z: 0 }, spinM = new THREE.Matrix4();
+  const tmp = { x: 0, z: 0 }, spinM = new THREE.Matrix4(), chassis = new THREE.Matrix4(), lean = new THREE.Matrix4(), steerWheel = new THREE.Matrix4();
   function planFor(c, k, featured) { // choose what to do at junction k (index along the car's travel axis)
     const straight = k + c.dir >= 0 && k + c.dir <= ROADS - 1;
     const rDir = c.ax ? -c.dir : c.dir, lDir = c.ax ? c.dir : -c.dir;
@@ -215,19 +215,32 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
         } else if (c.dir * (c.s - (c.dir > 0 ? SPAN : 0)) > 0) { c.dir = -c.dir; }
       }
       if (featured) c.throttle = target <= .1 || target < c.v - .2 ? 0 : clamp(.22 + (target - c.v) * .16, .16, .82);
+      const lastSpeed = c.v, lastHeading = c.h;
       c.slide = 0;
       c.v += clamp(target - c.v, -(target === 0 && c.v > 6 ? 16 : 9) * dt, (featured ? 4 : 2.6) * dt); if (c.v < 0.05 && target === 0) c.v = 0;
       c.braking = target < c.v - 0.4; c.spin = (c.spin || 0) + c.v * dt / 0.33;
       if (c.mode === 2) { c.i += c.dirS * c.v * dt / 3; if (c.i >= c.rd.to - 5 || c.i <= c.rd.from + 5) { c.dirS = R() < 0.5 ? 1 : -1; putOn(c, focus); c.v = c.vmax * 0.8; } placeOnRoad(c); }
       else if (c.mode === 0) { c.s += c.dir * c.v * dt; place(c); }
-      else { const tr = c.turn; tr.u = Math.min(1, tr.u + Math.max(c.v, 1.2) * dt / tr.len); const u = tr.u, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), d = u * u;
+      else { const tr = c.turn; const tangentLength = featured ? 2 * Math.hypot(
+        (1 - tr.u) * (tr.p1.x - tr.p0.x) + tr.u * (tr.p2.x - tr.p1.x),
+        (1 - tr.u) * (tr.p1.z - tr.p0.z) + tr.u * (tr.p2.z - tr.p1.z)) : tr.len;
+        tr.u = Math.min(1, tr.u + (featured ? c.v : Math.max(c.v, 1.2)) * dt / Math.max(1, tangentLength)); const u = tr.u, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), d = u * u;
         c.x = a * tr.p0.x + b * tr.p1.x + d * tr.p2.x; c.z = a * tr.p0.z + b * tr.p1.z + d * tr.p2.z;
         const tx = 2 * (1 - u) * (tr.p1.x - tr.p0.x) + 2 * u * (tr.p2.x - tr.p1.x), tz = 2 * (1 - u) * (tr.p1.z - tr.p0.z) + 2 * u * (tr.p2.z - tr.p1.z); c.h = Math.atan2(tx, tz);
         if (featured) {
           const cross = (tr.p1.z - tr.p0.z) * (tr.p2.x - tr.p1.x) - (tr.p1.x - tr.p0.x) * (tr.p2.z - tr.p1.z);
-          c.slide = Math.sign(cross) * Math.sin(Math.PI * u) ** 2 * clamp((c.v - 5) * .065, 0, .27);
+          c.slide = Math.sign(cross) * Math.sin(Math.PI * u) ** 2 * clamp((c.v - 5) * .115, 0, .46);
+          const outward = -c.slide * 2.2;
+          c.x += Math.cos(c.h) * outward;
+          c.z -= Math.sin(c.h) * outward;
         }
         if (u >= 1) { Object.assign(c, tr.next); c.mode = 0; c.turn = null; c.plan = null; place(c); } }
+      const response = 1 - Math.exp(-5 * dt);
+      const accel = (c.v - lastSpeed) / Math.max(.001, dt);
+      const yawRate = Math.atan2(Math.sin(c.h - lastHeading), Math.cos(c.h - lastHeading)) / Math.max(.001, dt);
+      c.bodyPitch = (c.bodyPitch || 0) + ((featured ? clamp(-accel * .010, -.055, .07) : 0) - (c.bodyPitch || 0)) * response;
+      c.lean = (c.lean || 0) + ((featured ? clamp(yawRate * c.v * .006, -.055, .055) : 0) - (c.lean || 0)) * response;
+      c.wheelAngle = featured ? clamp(Math.atan2(yawRate * 2.85, Math.max(c.v, 1)) - c.slide, -.55, .55) : 0;
       c.push.multiplyScalar(Math.exp(-2.2 * dt));
     }
     // Write instance transforms and lamp positions. Only cars near the focus are drawn; each body style packs its
@@ -235,7 +248,12 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
     cars.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x + (recorded ? 0 : c.push.x), c.y || 0, c.z + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h + (c.slide || 0), 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
-      if (nearMe) { const slot = used[c.kit]++; for (const im of groups[c.kit]) { mat.multiplyMatrices(dummy.matrix, im.userData.part.local); if (im.userData.part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.tail) im.setColorAt(slot, col.setScalar(c.braking || c.v < .5 ? 3.8 : im.userData.part.stopOnly ? 0 : .52)); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
+      if (nearMe) { const slot = used[c.kit]++; chassis.copy(dummy.matrix).multiply(lean.makeRotationX(c.bodyPitch || 0)).multiply(lean.makeRotationZ(c.lean || 0));
+        steerWheel.makeRotationY(c.wheelAngle || 0);
+        for (const im of groups[c.kit]) { const part = im.userData.part;
+          mat.multiplyMatrices(part.wheel ? dummy.matrix : chassis, part.local);
+          if (part.frontWheel) mat.multiply(steerWheel);
+          if (part.wheel) mat.multiply(spinM); im.setMatrixAt(slot, mat); if (im.userData.part.tail) im.setColorAt(slot, col.setScalar(c.braking || c.v < .5 ? 3.8 : im.userData.part.stopOnly ? 0 : .52)); if (im.userData.part.paint && c.shownSlot !== slot) im.setColorAt(slot, col.set(c.tint)); } c.shownSlot = slot;
         for (let side = 0; side < 2; side++) {
           beamOffset.makeTranslation((side ? 1 : -1) * kit.width * .36, 0, kit.len * .47);
           pools.setColorAt(shown * 2 + side, col.setHex(lampColor(kit.style)));

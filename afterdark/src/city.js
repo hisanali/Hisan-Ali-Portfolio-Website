@@ -688,6 +688,23 @@ export async function buildCity(scene, refl, quality, renderer) {
   const beaconPts = new THREE.Points(bg, new THREE.PointsMaterial({ size: 7, map: dot, color: new THREE.Color(3, 0.15, 0.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(beaconPts);
 
   // ---- Neon signs (one atlas, one draw call) ----
+  const storefronts = signs.filter(s => s.kind === 0);
+  const distanceToSpawn = s => Math.hypot(s.x - city.spawn.x, s.z - city.spawn.z);
+  const shop = storefronts.reduce((a, b) => distanceToSpawn(a) < distanceToSpawn(b) ? a : b);
+  city.hisanShop = shop;
+  signs.splice(signs.indexOf(shop), 1);
+  screens.push({ ...shop, w: 6.4, h: 1.35, shop: true });
+  screens.push({ ...shop, x: shop.x + shop.nx * .65, z: shop.z + shop.nz * .65, y: 9.5, w: 8, h: 4, flagship: true });
+  // Small digital displays above individual storefronts also carry the local rotation.
+  for (let i = 1; i < storefronts.length; i += 5) {
+    const s = storefronts[i];
+    if (s !== shop) screens.push({ ...s, y: 6.9, w: 3.2, h: 1.6 });
+  }
+  const shopName = canvasTex(768, 162, ctx => {
+    ctx.fillStyle = '#0a2629'; ctx.fillRect(0, 0, 768, 162);
+    ctx.font = 'bold 110px Arial'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#b9ffdf'; ctx.fillText('HISAN', 384, 122);
+  });
   const atlas = signAtlas();
   const signG = new THREE.PlaneGeometry(1, 1), aUv = new Float32Array(signs.length * 4), aSeed = new Float32Array(signs.length);
   const signM = new THREE.MeshBasicMaterial({ map: atlas.tex, side: THREE.DoubleSide, color: new THREE.Color().setScalar(1.15) });
@@ -707,8 +724,12 @@ export async function buildCity(scene, refl, quality, renderer) {
   const adTex = adAtlas();
   const late = [], boardPosts = [];
   { const px = city.beachX; for (let z = 60; z < SPAN; z += P) { const x = px - 7; boardPosts.push([x, z]);
-      const featured = (boardPosts.length - 1) % 3 === 0;
-      for (const sgn of [-1, 1]) (featured ? screens : ads).push({ featured, x, y: 10.2, z: z + sgn * 0.16, nx: 0, nz: sgn, w: 13, h: 6.5 }); } }
+      const featured = true;
+      for (const sgn of [-1, 1]) screens.push({ featured, x, y: 10.2, z: z + sgn * 0.16, nx: 0, nz: sgn, w: 13, h: 6.5 }); } }
+  // Keep a handful of printed posters among the larger digital placements.
+  for (let i = ads.length - 1; i >= 0; i--) {
+    if (i % 4 !== 0) screens.push({ ...ads.splice(i, 1)[0], framed: true });
+  }
   const adG = new THREE.PlaneGeometry(1, 1), adUv = new Float32Array(ads.length * 4);
   const adM = new THREE.MeshStandardMaterial({ map: adTex, emissiveMap: adTex, emissive: 0xffffff, emissiveIntensity: 0.05, roughness: 0.55, metalness: 0, envMapIntensity: 0.4 });
   adM.onBeforeCompile = sh => { sh.vertexShader = 'attribute vec4 aUv;\n' + sh.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\nvMapUv = aUv.xy + uv * aUv.zw; vEmissiveMapUv = vMapUv;'); };
@@ -716,30 +737,36 @@ export async function buildCity(scene, refl, quality, renderer) {
   ads.forEach((s2, k) => { const cell = Math.floor(R() * 32); adUv.set([(cell % 4) / 4, 1 - (Math.floor(cell / 4) + 1) / 8, 0.25, 0.125], k * 4); dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); adMesh.setMatrixAt(k, dummy.matrix); });
   adG.setAttribute('aUv', new THREE.InstancedBufferAttribute(adUv, 4)); adMesh.count = ads.length; adMesh.frustumCulled = false; adMesh.receiveShadow = SH; scene.add(adMesh);
   hooks.push((e, mix) => { adM.emissiveIntensity = mix(0.04, 0.85, e.night); });
-  const portraitAd = new THREE.TextureLoader().load('./assets/hisan-led.webp');
+  const portraitAd = new THREE.TextureLoader().load('./assets/hisan-campaign.webp');
   portraitAd.colorSpace = THREE.SRGBColorSpace;
-  const ledU = { uPortrait: { value: portraitAd }, uTime: timeU, uAds: { value: adTex }, uGain: { value: 1.2 } };
+  const ledU = { uShopName: { value: shopName }, uPortrait: { value: portraitAd }, uTime: timeU, uAds: { value: adTex }, uGain: { value: 1.2 } };
   const screenM = new THREE.ShaderMaterial({ uniforms: ledU, fog: false,
     vertexShader: 'attribute float featured; varying float vFeatured; varying vec2 vUv; varying float vId; void main(){ vFeatured = featured; vUv = uv; vId = fract(instanceMatrix[3].x * 0.137 + instanceMatrix[3].z * 0.071); gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform float uTime, uGain; uniform sampler2D uAds, uPortrait; varying float vFeatured; varying vec2 vUv; varying float vId;
+    fragmentShader: `uniform float uTime, uGain; uniform sampler2D uAds, uPortrait, uShopName; varying float vFeatured; varying vec2 vUv; varying float vId;
       vec3 ad(float k, vec2 uv){ k = mod(k, 32.0); return texture2D(uAds, (vec2(mod(k, 4.0), 7.0 - floor(k / 4.0)) + uv) / vec2(4.0, 8.0)).rgb; }
       void main(){ float t = uTime / 5.5 + vId * 32.0, k = floor(t), f = fract(t);
         float wipe = smoothstep(0.9, 1.0, f); vec2 uv = clamp(vUv, 0.003, 0.997);
         vec3 c = mix(ad(k, uv), ad(k + 1.0, uv), step(uv.x, wipe * 1.02));
         c += vec3(1.0) * (1.0 - smoothstep(0.0, 0.02, abs(uv.x - wipe * 1.02))) * step(0.001, wipe) * 0.6;
-        if (vFeatured > 0.5) {
-          c = texture2D(uPortrait, uv).rgb;
+        float slot = floor(uTime / 6.0 + vId * 12.0);
+        if (mod(slot, 5.0) < 3.0 || vFeatured > 1.5) {
+          c = texture2D(uPortrait, vec2(uv.x, (2.0 - mod(slot, 3.0) + uv.y) / 3.0)).rgb;
           float phase = fract(uTime / 7.0 + vId);
           float underline = 1.0 - smoothstep(0.003, 0.008, abs(uv.y - 0.815));
           c += vec3(0.18, 0.56, 0.43) * underline * step(0.05, uv.x) * (1.0 - smoothstep(phase * 0.55, phase * 0.55 + 0.01, uv.x));
+        }
+        if (vFeatured > 2.5) {
+          float t = mod(uTime, 4.1);
+          float dip = exp(-80.0 * abs(t - 1.4)) + 0.6 * exp(-65.0 * abs(t - 1.63));
+          c = texture2D(uShopName, uv).rgb * (1.0 - 0.40 * dip);
         }
         vec2 px = fract(vUv * vec2(220.0, 110.0)) - 0.5; c *= 0.72 + 0.4 * (1.0 - smoothstep(0.2, 0.5, length(px)));
         c *= 0.94 + 0.06 * sin(vUv.y * 60.0 - uTime * 9.0);
         gl_FragColor = vec4(c * uGain, 1.0); }` });
   const screenMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), screenM, Math.max(1, screens.length));
-  screenMesh.geometry.setAttribute('featured', new THREE.InstancedBufferAttribute(Float32Array.from(screens, s => Number(!!s.featured)), 1));
+  screenMesh.geometry.setAttribute('featured', new THREE.InstancedBufferAttribute(Float32Array.from(screens, s => s.shop ? 3 : s.flagship ? 2 : Number(!!s.featured)), 1));
   screens.forEach((s2, k) => { dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); screenMesh.setMatrixAt(k, dummy.matrix); decals.push([s2.x + s2.nx * 12, 0.03, s2.z + s2.nz * 12, 40, 0x8fa8ff, 0.16]);
-    if (!s2.featured) late.push({ x: s2.x - s2.nx * 0.12, y: s2.y, z: s2.z - s2.nz * 0.12, sx: s2.nx ? 0.2 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 0.2 : s2.w + 0.6 }); });
+    if (!s2.featured && !s2.framed) late.push({ x: s2.x - s2.nx * 0.12, y: s2.y, z: s2.z - s2.nz * 0.12, sx: s2.nx ? 0.2 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 0.2 : s2.w + 0.6 }); });
   for (const [x, z] of boardPosts) { solid.push({ x, z, r: 0.45 }); late.push({ x, y: 3.51, z, sx: 0.53, sy: 7.02, sz: 0.53 }); late.push({ x, y: 10.2, z, sx: 13.32, sy: 6.79, sz: 0.28 }); }
   { const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.5, metalness: 0.5 }), Math.max(1, late.length)); late.forEach((t, k) => { dummy.position.set(t.x, t.y, t.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(t.sx, t.sy, t.sz); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.scale.set(1, 1, 1); lm.count = late.length; lm.frustumCulled = false; lm.castShadow = SH; scene.add(lm); }
   screenMesh.count = screens.length; screenMesh.frustumCulled = false; scene.add(screenMesh);

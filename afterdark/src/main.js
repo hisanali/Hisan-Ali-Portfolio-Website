@@ -429,6 +429,15 @@ function cinemaCamera(dt) {
   const car = cinema.tour, pos = car || player.pos, heading = car ? car.h : player.heading;
   const y = car ? car.y || 0 : player.groundY;
   cinema.elapsed += dt;
+  const intro = cinema.elapsed % 75;
+  if (car && intro < 4.5) {
+    const shop = city.hisanShop, side = -10 + intro * .65;
+    pivot.set(shop.x, 6.9, shop.z);
+    camera.position.set(shop.x + shop.nx * 23 + shop.nz * side, 2.3 + intro * .18,
+      shop.z + shop.nz * 23 - shop.nx * side);
+    camera.lookAt(pivot); camera.fov = 34; camera.updateProjectionMatrix();
+    cinema.shot = -1; return;
+  }
   const shot = Math.floor(cinema.elapsed / 8) % shots.length, cut = shot !== cinema.shot;
   cinema.shot = shot;
   cinema.heading = cut ? heading : cinema.heading + angleDiff(heading, cinema.heading) * (1 - Math.exp(-3 * dt));
