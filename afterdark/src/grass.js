@@ -4,7 +4,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { rng } from './city.js';
 
 export function createGrass(scene, world, camera, quality = 1) {
-  const R = rng(5150), CELL = quality >= 1 ? 0.95 : 1.4, RAD = quality >= 1 ? 52 : 36, N = Math.ceil(RAD * 2 / CELL), count = N * N;
+  const R = rng(5150), CELL = quality >= 1 ? 2.1 : 3.1, RAD = quality >= 1 ? 116 : 84, N = Math.ceil(RAD * 2 / CELL), count = N * N;
   // a clump: three crossed cards of painted blades
   const tex = new THREE.CanvasTexture((() => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d');
     // a tuft: blades rooted near the middle, tallest there, leaning outward, a few dry seed heads
@@ -25,11 +25,11 @@ export function createGrass(scene, world, camera, quality = 1) {
     float sway = sin(gTime * 1.7 + base.x * 0.21 + base.z * 0.17) * 0.6 + sin(gTime * 3.1 + base.x * 0.7) * 0.25;
     transformed.x += sway * tip * tip * (0.08 + 0.18 * gWind); transformed.z += sway * tip * tip * 0.06; }`);
     // fade the far ring out so the edge of the field never shows
-    sh.fragmentShader = sh.fragmentShader.replace('#include <alphatest_fragment>', 'diffuseColor.a *= 1.0 - smoothstep(' + (RAD * 0.62).toFixed(1) + ', ' + (RAD * 0.96).toFixed(1) + ', length(vViewPosition));\n#include <alphatest_fragment>')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <alphatest_fragment>', 'diffuseColor.a *= 1.0 - smoothstep(' + (RAD * 0.72).toFixed(1) + ', ' + (RAD * 0.90).toFixed(1) + ', length(vViewPosition));\n#include <alphatest_fragment>')
       .replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\n  normal = normalize(mix(normal, (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz, 0.7));');
   };
   mat.customProgramCacheKey = () => 'afterdark-grass';
-  const mesh = new THREE.InstancedMesh(geo, mat, count); mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.count = 0; scene.add(mesh);
+  const mesh = new THREE.InstancedMesh(geo, mat, count); mesh.name = 'Roadside grass'; mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.count = 0; scene.add(mesh);
   // fixed per-cell jitter, scale and tint, so a cell always grows the same clump
   const jit = new Float32Array(count * 4); for (let i = 0; i < count; i++) { jit[i * 4] = R(); jit[i * 4 + 1] = R(); jit[i * 4 + 2] = R(); jit[i * 4 + 3] = R(); }
   const dummy = new THREE.Object3D(), col = new THREE.Color(), info = { road: null, lat: 0, paved: false };
@@ -48,13 +48,13 @@ export function createGrass(scene, world, camera, quality = 1) {
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const gi = ox + i, gj = oz + j, h = ((gi * 73856093) ^ (gj * 19349663)) >>> 0, k = (h % count) * 4;
       const x = (gi + jit[k]) * CELL, z = (gj + jit[k + 1]) * CELL; if ((x - px) ** 2 + (z - pz) ** 2 > RAD * RAD) continue;
       const key = gi * 100003 + gj; let y = cache.get(key); if (y === undefined) { y = fits(x, z); if (y >= 0 && jit[k + 2] > 0.35 + 0.65 * (world.lushness ? Math.min(1, world.lushness(x, z)) : 1)) y = -1; if (cache.size > 90000) cache.clear(); cache.set(key, y); } if (y < 0) continue;
-      const s = 0.6 + jit[k + 3] * 1.1; dummy.position.set(x, y - 0.04, z); dummy.rotation.set(0, jit[k + 2] * 6.283, 0); dummy.scale.set(s, s * (0.7 + jit[k] * 0.7), s); dummy.updateMatrix(); mesh.setMatrixAt(n, dummy.matrix);
+      const s = 0.6 + jit[k + 3] * 1.1; dummy.position.set(x, y - 0.04, z); dummy.rotation.set(0, jit[k + 2] * 6.283, 0); dummy.scale.set(s * 1.65, s * (0.7 + jit[k] * 0.7), s * 1.65); dummy.updateMatrix(); mesh.setMatrixAt(n, dummy.matrix);
       mesh.setColorAt(n, col.setRGB(0.86 + jit[k + 1] * 0.28, 0.84 + jit[k + 3] * 0.2, 0.68 + jit[k] * 0.18)); n++; }
     mesh.count = n; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }
   return {
     mesh,
-    update(t) { U.gTime.value = t; const p = camera.position; if (Math.hypot(p.x - cx, p.z - cz) > RAD * 0.18) { cx = p.x; cz = p.z; rebuild(cx, cz); } },
+    update(t) { U.gTime.value = t; const p = camera.position; if (Math.hypot(p.x - cx, p.z - cz) > RAD * 0.09) { cx = p.x; cz = p.z; rebuild(cx, cz); } },
     setTime(e) { U.gWind.value = 0.4 + e.rain * 0.6; mat.color.setScalar(1 - e.night * 0.55); }
   };
 }
