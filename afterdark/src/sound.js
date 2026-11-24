@@ -85,17 +85,37 @@ export function createSound() {
   score.connect(comp);
   const chords = [[50,57,65,69], [46,53,62,65], [53,60,64,69], [48,55,62,67]];
   let beat = 0, nextBeat = 0;
+  const anthemBus = ctx.createGain(); anthemBus.gain.value = 0; anthemBus.connect(comp);
+  let anthemBuffer, anthemSource, anthemLoading;
+  function playAnthem(active) {
+    if (active && !anthemLoading) {
+      anthemLoading = load('/afterdark/assets/audio/vip-anthem.m4a').then(buffer => { anthemBuffer = buffer; })
+        .catch(error => console.warn('VIP score unavailable',error));
+    }
+    if (active && anthemBuffer && !anthemSource) {
+      anthemSource = ctx.createBufferSource(); anthemSource.buffer = anthemBuffer;
+      anthemSource.loop = true; anthemSource.connect(anthemBus); anthemSource.start();
+    } else if (!active && anthemSource) {
+      const ending = anthemSource; anthemSource = null;
+      ending.stop(ctx.currentTime+.3); ending.onended = () => ending.disconnect();
+    }
+    set(anthemBus.gain,active ? .40 : 0,.07);
+    return active && !!anthemSource;
+  }
   const vipChords = [[50,57,66,69],[55,62,66,71],[47,54,62,66],[45,52,61,64]];
   const siren = ctx.createOscillator(), sirenLevel = ctx.createGain();
   siren.type = 'triangle'; sirenLevel.gain.value = 0;
   const distant = ctx.createBiquadFilter(); distant.type = 'lowpass'; distant.frequency.value = 760;
   siren.connect(distant).connect(sirenLevel).connect(comp); siren.start();
-  function soundtrack(active, vip, sirenDistance) {
-    set(sirenLevel.gain, active && vip ? .007 / (1 + sirenDistance / 18) : 0, .18);
+  function soundtrack(active, vip, sirenDistance = Infinity) {
+    const near = 1 / (1 + (sirenDistance / 19) ** 2);
+    set(sirenLevel.gain, active && vip ? .003 + .067 * near : 0, .22);
+    set(distant.frequency, 590 + 1650 * near, .24);
     if (active && vip) set(siren.frequency, 610 + 135 * Math.sin(ctx.currentTime * 1.5), .035);
-    set(score.gain, active ? (vip ? .68 : .38) : 0, .16);
+    const anthemPlaying = playAnthem(active && vip);
+    set(score.gain, active && !anthemPlaying ? (vip ? .68 : .38) : 0, .16);
     const now = ctx.currentTime;
-    if (!active) { nextBeat = 0; beat = 0; return; }
+    if (!active || anthemPlaying) { nextBeat = 0; beat = 0; return; }
     if (nextBeat < now) nextBeat = now + .015;
     while (nextBeat < now + .12) {
       const chord = (vip ? vipChords : chords)[Math.floor(beat / 8) % chords.length];
