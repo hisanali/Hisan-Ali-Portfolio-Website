@@ -1,3 +1,4 @@
+import { beachHeight } from './water.js';
 import { lampRole } from './vehicle-lamps.js';
 // The player's coupé: model set-up with physically based paint, lights, and the driving model.
 import { vehicleShadowMaterial } from './vehicle-shadow.js';
@@ -138,7 +139,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.addCollider = indexShape; // for scenery that streams in after the car exists
   car.others = []; // moving things to keep clear of (people), set each frame
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
-  const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : 0.17 - Math.min(1, (PROM - x) / 92) ** 2 * 1.5; const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
+  const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : beachHeight(PROM - x, z); const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
   car.surfaceY = groundAt;
   car.updateWetness = (dt, rain) => {
     const water = updateWetPaint(dt, car.tunnel ? 0 : rain);

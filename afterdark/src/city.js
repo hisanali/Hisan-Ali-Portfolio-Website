@@ -4,7 +4,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
 import { loadGLB } from './car.js';
-import { buildSea, wetSand } from './water.js';
+import { buildSea, wetSand, beachHeight } from './water.js';
 import { Q as QUALITY_PRESET } from './render.js';
 
 export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
@@ -634,14 +634,14 @@ export async function buildCity(scene, refl, quality, renderer) {
   { const px = -(HALF + 13.2), len = ext + 200;
     const sandT = canvasTex(512, 512, (c, w) => { c.fillStyle = '#cbb488'; c.fillRect(0, 0, w, w); const r = rng(8), img = c.getImageData(0, 0, w, w); for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 34; img.data[i] += n; img.data[i + 1] += n * 0.95; img.data[i + 2] += n * 0.8; } c.putImageData(img, 0, 0); c.globalAlpha = 0.12; for (let i = 0; i < 90; i++) { c.fillStyle = r() < 0.5 ? '#8f7a55' : '#e6d4ab'; c.beginPath(); c.ellipse(r() * w, r() * w, 20 + r() * 60, 3 + r() * 6, r() * 0.4, 0, 7); c.fill(); } });
     sandT.wrapS = sandT.wrapT = THREE.RepeatWrapping; sandT.repeat.set(10, 110);
-    const sg = new THREE.PlaneGeometry(92, len, 6, 1); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { const t = (46 - sp.getX(i)) / 92; sp.setY(i, 0.17 - t * t * 1.5); } sg.computeVertexNormals();
+    const sg = new THREE.PlaneGeometry(92, len, 24, Math.ceil(len / 5)); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { sp.setY(i, beachHeight(46 - sp.getX(i), mid + sp.getZ(i))); } sg.computeVertexNormals();
     const sandMaterial = new THREE.MeshStandardMaterial({ map: sandT, roughness: 0.95, envMapIntensity: 0.4 });
-    wetSand(sandMaterial);
+    city.sea = buildSea(scene, px, mid, len);
+    wetSand(sandMaterial, city.sea.waterLevel);
     const sand = new THREE.Mesh(sg, sandMaterial);
     sand.position.set(px - 46, 0, mid);
     sand.receiveShadow = SH;
     scene.add(sand);
-    city.sea = buildSea(scene, px, mid, len);
     city.beachX = px;
     hooks.push(city.sea.setTime);
   }
