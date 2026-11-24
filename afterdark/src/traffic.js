@@ -127,6 +127,19 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const posOf = (ax, dir, road, off, s, out) => { if (ax) { out.x = road * P - dir * off; out.z = s; } else { out.x = s; out.z = road * P + dir * off; } return out; };
   function place(c) { posOf(c.ax, c.dir, c.road, laneOff(c), c.s, c); c.h = headingOf(c.ax, c.dir); }
   cars.forEach(c => { if (c.mode !== 2) place(c); });
+  function stageDriveBy(c, shop, playerPos) {
+    const ax = Math.abs(shop.nx), dir = ax ? shop.nx : -shop.nz;
+    const road = Math.round((ax ? shop.x : shop.z) / P);
+    const along = ax ? shop.z : shop.x;
+    for (const gap of [7, 13, 2, 18]) for (const lane of [1, 0]) {
+      const s = along - gap * dir;
+      const pos = posOf(ax, dir, road, 1.9 + lane * 3.6, s, {});
+      if (Math.hypot(pos.x - playerPos.x, pos.z - playerPos.z) < 6 ||
+          cars.some(o => o !== c && Math.hypot(o.x - pos.x, o.z - pos.z) < 6)) continue;
+      Object.assign(c, { ax, dir, road, lane, s, v: 3.5, mode: 0, plan: null, turn: null, slide: 0, stun: 0, go: 0, wait: 0 });
+      c.push.set(0, 0); place(c); return;
+    }
+  }
 
   // Deal each full set outwards from the starting neighbourhood, then across town.
   const distanceFromStart = c => Math.abs(c.x - city.spawn.x) + Math.abs(c.z - city.spawn.z);
@@ -284,5 +297,5 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   }
   // Close pass at speed without contact.
   function nearMiss(player) { let got = 0; if (Math.abs(player.speed) < 17) return 0; for (const c of cars) { const d = Math.hypot(c.x - player.pos.x, c.z - player.pos.z); if (d < 3.6) { if (!c.near2) { c.near2 = true; got++; } } else if (d > 9) c.near2 = false; } return got; }
-  return { modelFiles: trafficFiles, cars, parked, update, collide, nearMiss, setTime };
+  return { stageDriveBy, modelFiles: trafficFiles, cars, parked, update, collide, nearMiss, setTime };
 }

@@ -766,7 +766,16 @@ export async function buildCity(scene, refl, quality, renderer) {
   const screenMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), screenM, Math.max(1, screens.length));
   screenMesh.geometry.setAttribute('featured', new THREE.InstancedBufferAttribute(Float32Array.from(screens, s => s.shop ? 3 : s.flagship ? 2 : Number(!!s.featured)), 1));
   screens.forEach((s2, k) => { dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); screenMesh.setMatrixAt(k, dummy.matrix); decals.push([s2.x + s2.nx * 12, 0.03, s2.z + s2.nz * 12, 40, 0x8fa8ff, 0.16]);
-    if (!s2.featured && !s2.framed) late.push({ x: s2.x - s2.nx * 0.12, y: s2.y, z: s2.z - s2.nz * 0.12, sx: s2.nx ? 0.2 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 0.2 : s2.w + 0.6 }); });
+    if (s2.flagship) {
+      // Support the elevated marquee independently of the varying facade setbacks.
+      for (const side of [-1, 1]) {
+        const x = s2.x + side * s2.nz * 3.5 - s2.nx * .24;
+        const z = s2.z - side * s2.nx * 3.5 - s2.nz * .24;
+        late.push({ x, z, y: 3.83, sy: 7.66, sx: .26, sz: .26 });
+        solid.push({ x, z, r: .2 });
+      }
+    }
+    if (!s2.featured && !s2.framed) late.push({ x: s2.x - s2.nx * 0.55, y: s2.y, z: s2.z - s2.nz * 0.55, sx: s2.nx ? 1.08 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 1.08 : s2.w + 0.6 }); });
   for (const [x, z] of boardPosts) { solid.push({ x, z, r: 0.45 }); late.push({ x, y: 3.51, z, sx: 0.53, sy: 7.02, sz: 0.53 }); late.push({ x, y: 10.2, z, sx: 13.32, sy: 6.79, sz: 0.28 }); }
   { const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.5, metalness: 0.5 }), Math.max(1, late.length)); late.forEach((t, k) => { dummy.position.set(t.x, t.y, t.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(t.sx, t.sy, t.sz); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.scale.set(1, 1, 1); lm.count = late.length; lm.frustumCulled = false; lm.castShadow = SH; scene.add(lm); }
   screenMesh.count = screens.length; screenMesh.frustumCulled = false; scene.add(screenMesh);

@@ -406,6 +406,7 @@ function selectCamera(index) {
     if (index === 6) {
       const kit = traffic.modelFiles.indexOf(player.spec.file || 'sports-coupe');
       cinema.tour = traffic.cars.find(c => c.kit === kit && c.mode !== 2) || traffic.cars.find(c => c.mode !== 2);
+      if (cinema.tour) traffic.stageDriveBy(cinema.tour, city.hisanShop, player.pos);
       S.mode = 'tour';
     }
     document.body.classList.add('cinema');
@@ -429,13 +430,14 @@ function cinemaCamera(dt) {
   const car = cinema.tour, pos = car || player.pos, heading = car ? car.h : player.heading;
   const y = car ? car.y || 0 : player.groundY;
   cinema.elapsed += dt;
-  const intro = cinema.elapsed % 75;
-  if (car && intro < 4.5) {
-    const shop = city.hisanShop, side = -10 + intro * .65;
-    pivot.set(shop.x, 6.9, shop.z);
-    camera.position.set(shop.x + shop.nx * 23 + shop.nz * side, 2.3 + intro * .18,
-      shop.z + shop.nz * 23 - shop.nx * side);
-    camera.lookAt(pivot); camera.fov = 34; camera.updateProjectionMatrix();
+  const shop = city.hisanShop;
+  if (car && cinema.elapsed < 4.5 && Math.hypot(car.x - shop.x, car.z - shop.z) < 24) {
+    const tangent = (car.x - shop.x) * shop.nz - (car.z - shop.z) * shop.nx;
+    const side = tangent * .7 - 6;
+    pivot.set(shop.x * .62 + car.x * .38, 4.8, shop.z * .62 + car.z * .38);
+    camera.position.set(shop.x + shop.nx * 28 + shop.nz * side, 3.4,
+      shop.z + shop.nz * 28 - shop.nx * side);
+    camera.lookAt(pivot); camera.fov = 38; camera.updateProjectionMatrix();
     cinema.shot = -1; return;
   }
   const shot = Math.floor(cinema.elapsed / 8) % shots.length, cut = shot !== cinema.shot;
