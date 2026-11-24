@@ -89,7 +89,7 @@ export function createSound() {
   let anthemBuffer, anthemSource, anthemLoading;
   function playAnthem(active) {
     if (active && !anthemLoading) {
-      anthemLoading = load('/afterdark/assets/audio/vip-anthem.m4a').then(buffer => { anthemBuffer = buffer; })
+      anthemLoading = load('/afterdark/assets/audio/vip-anthem.mp3').then(buffer => { anthemBuffer = buffer; })
         .catch(error => console.warn('VIP score unavailable',error));
     }
     if (active && anthemBuffer && !anthemSource) {
