@@ -23,11 +23,12 @@ export function createMotorcade(scene, kits, traffic, parked) {
   const points = [[3*P-2,2*P-2],[3*P-2,6*P+2],[6*P+2,6*P+2],[6*P+2,2*P-2]].map(([x,z]) => new THREE.Vector2(x,z));
   const route = new THREE.CurvePath();
   const corners = points.map((p,i) => {
-    const offset = j => points[j].clone().sub(p).normalize().multiplyScalar(10).add(p);
+    const offset = j => points[j].clone().sub(p).normalize().multiplyScalar(15).add(p);
     return [offset((i+3)%4),p,offset((i+1)%4)];
   });
   corners.forEach(([entry,corner,exit],i) => {
-    route.add(new THREE.QuadraticBezierCurve(entry,corner,exit));
+    // Coincident controls give zero curvature where each bend meets the straight.
+    route.add(new THREE.CubicBezierCurve(entry,corner,corner,exit));
     route.add(new THREE.LineCurve(exit,corners[(i+1)%4][0]));
   });
   const length = route.getLength(), root = new THREE.Group();
@@ -119,14 +120,19 @@ export function createMotorcade(scene, kits, traffic, parked) {
       const p=sample(c.distance), h=tangent(c.distance);
       const curvature=wrapAngle(tangent(c.distance+1.5)-tangent(c.distance-1.5))/3;
       const lateral=c.v*c.v*curvature;
-      const slipTarget=athletic ? Math.sign(lateral)*clamp((Math.abs(lateral)-7)*.035,0,.26) : 0;
-      c.slide+=(slipTarget-c.slide)*(1-Math.exp(-dt*5));
-      const lateralOffset=.19*Math.sin(c.distance*.026+c.index*1.7)-c.slide*2;
+      const grip=(athletic ? 7.4 : van ? 6.2 : 7.0)*(1-.25*clamp(wet,0,1));
+      const overload=Math.max(0,Math.abs(lateral)-grip);
+      const slipTarget=Math.sign(lateral)*Math.min(athletic ? .34 : .23,overload*.036);
+      const response=Math.abs(slipTarget)>Math.abs(c.slide) ? 4.2 : 2.8;
+      c.slide+=(slipTarget-c.slide)*(1-Math.exp(-dt*response));
+      // The front axle tracks the bend while the rear swings to its outside.
+      const lateralOffset=.19*Math.sin(c.distance*.026+c.index*1.7)-Math.sin(c.slide)*kit.len*.31;
       const next={...box,x:p.x+Math.cos(h)*lateralOffset,z:p.y-Math.sin(h)*lateralOffset,h:h+c.slide};
       const blocked=dt>0 && (near.some(o=>occupied(next,o)) || (front && occupied(next,footprint(front))));
       if(blocked) {c.distance=priorDistance;c.slide=priorSlide;c.accel=-5;c.v=0;}
       else {c.x=next.x;c.z=next.z;c.h=h;}
-      c.wheelAngle=clamp(Math.atan(kit.len*.61*curvature)-c.slide*.65,-.59,.59);
+      const desiredSteer=clamp(Math.atan(kit.len*.61*curvature)-c.slide*.82,-.59,.59);
+      c.wheelAngle+=clamp(desiredSteer-c.wheelAngle,-1.35*dt,1.35*dt);
       c.lean=clamp(lateral*.005,-.055,.055);
       c.bodyPitch=-c.accel*.009; c.braking=c.accel<-.85;
       c.spin+=c.v*dt/.34; c.throttle=c.braking?0:clamp(.19+c.accel*.20,.04,.95);
@@ -153,7 +159,7 @@ export function createMotorcade(scene, kits, traffic, parked) {
     if (!clear) return null;
     for(const c of cars) {
       const kit=kits[c.kit];
-      Object.assign(c,{distance:startDistance-c.index*10.8,v:7-.22*c.index,accel:0,slide:0,spin:0,trail:[]});
+      Object.assign(c,{distance:startDistance-c.index*10.8,v:7-.22*c.index,accel:0,slide:0,wheelAngle:0,spin:0,trail:[]});
       c.tyres={pos:c,wid:kit.width,surfaceY:()=>0,tyreContacts:[-1,1].map(side=>({x:side*kit.width*.37,z:-kit.len*.31}))};
     }
     root.visible=true; step(0); return cars[3];
