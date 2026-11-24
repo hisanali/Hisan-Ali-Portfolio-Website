@@ -19,7 +19,8 @@ export async function buildPlaces(scene, city, world, Q) {
 
   // ---- Harbour: quay sheds, container stacks, gantry cranes, tanks, a pier with boats ----
   { const pl = place('harbour'), y = pl.y, yaw = pl.yaw, CC = [0xb23a2e, 0x2f6fb2, 0x2e8f5a, 0xd9a321, 0x8a8f96, 0xe9e4d8, 0x5b3f8f];
-    for (let k = 0; k < 3; k++) { const [x, z] = at(pl, -46 + k * 46, -30); box(x, y + 5, z, 40, 10, 20, yaw, [0x6f7b86, 0x8a5a3c, 0x59646d][k]); box(x, y + 10.6, z, 41, 1.2, 21, yaw, 0x3a3f45, false); glow(x + pl.vx * 10.1, y + 6.2, z + pl.vz * 10.1, 12, 0.5, 0.2, yaw, 0xfff0c8, 1.6); }
+    // warehouses: real brick buildings from the Poly Haven factory facade kit (facades.js); only their footprint is solid here
+    pl.sheds = []; for (let k = 0; k < 3; k++) { const [x, z] = at(pl, -46 + k * 46, -30); pl.sheds.push({ x, z, y, yaw }); solid.push({ x, z, w: 39.4, d: 21.4, ux: Math.cos(yaw), uz: -Math.sin(yaw), kind: 'warehouse' }); }
     for (let row = 0; row < 4; row++) for (let n = 0; n < 9; n++) { const h = 1 + Math.floor(R() * 3), [x, z] = at(pl, -52 + n * 13, 8 + row * 6.2); for (let s = 0; s < h; s++) box(x, y + 1.3 + s * 2.6, z, 12.2, 2.6, 2.44, yaw, CC[Math.floor(R() * CC.length)], s === 0); }
     for (const u of [-34, 26]) { const [x, z] = at(pl, u, 52); for (const du of [-9, 9]) for (const dv of [-7, 7]) { const [lx, lz] = at(pl, u + du, 52 + dv); box(lx, y + 15, lz, 1.4, 30, 1.4, yaw, 0xd9a321); }
       box(x, y + 30.6, z, 20, 2.2, 16, yaw, 0xd9a321, false); const [bx, bz] = at(pl, u, 66); box(bx, y + 33, bz, 3, 2.4, 64, yaw, 0xc0392b, false); const [cx, cz] = at(pl, u, 52); box(cx, y + 33.6, cz, 5, 4, 6, yaw, 0xe9e4d8, false); glow(bx, y + 31.6, bz, 1, 0.3, 30, yaw, 0xfff0c8, 2.2); beams.push([bx, y + 40, bz]); }
@@ -31,10 +32,6 @@ export async function buildPlaces(scene, city, world, Q) {
     // working detail: roller doors, roof ribs and downpipes on the sheds; bracing, cabs and ladders on the cranes;
     // banded tanks
     const L = (cx, cz, yw, lx, lz) => [cx + lx * Math.cos(yw) + lz * Math.sin(yw), cz - lx * Math.sin(yw) + lz * Math.cos(yw)];
-    for (let k = 0; k < 3; k++) { const [x, z] = at(pl, -46 + k * 46, -30);
-      for (const fz of [-10.06, 10.06]) for (const fx of [-13, 0, 13]) { const [dx, dz] = L(x, z, yaw, fx, fz); box(dx, y + 3.3, dz, 6.4, 6.6, 0.16, yaw, 0x50565c, false); const [hx, hz] = L(x, z, yaw, fx, fz * 1.004); box(hx, y + 6.75, hz, 6.9, 0.3, 0.3, yaw, 0x2d3237, false); }
-      for (let r = -18; r <= 18; r += 3) { const [rx, rz] = L(x, z, yaw, r, 0); box(rx, y + 11.3, rz, 0.18, 0.22, 21.2, yaw, 0x2f343a, false); }
-      for (const [fx, fz] of [[-20.1, -10.1], [20.1, -10.1], [-20.1, 10.1], [20.1, 10.1]]) { const [gx, gz] = L(x, z, yaw, fx, fz); cyl(gx, y + 5.3, gz, 0.09, 10.6, 0x3a3f45, 0.09, false); } }
     const yawU = Math.atan2(-pl.uz, pl.ux), yawV = Math.atan2(-pl.vz, pl.vx);
     for (const u of [-34, 26]) { for (const dv of [-7, 7]) for (const hgt of [9, 19]) { const [bx, bz] = at(pl, u, 52 + dv); box(bx, y + hgt, bz, 18, 0.7, 0.7, yawU, 0xd9a321, false); }
       for (const du of [-9, 9]) for (const hgt of [9, 19]) { const [bx, bz] = at(pl, u + du, 52); box(bx, y + hgt, bz, 14, 0.7, 0.7, yawV, 0xd9a321, false); }

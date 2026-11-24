@@ -10,6 +10,7 @@ They were downloaded at 1k texture resolution and optimised for the web with glT
 | dutch_ship_large_01.glb | https://polyhaven.com/a/dutch_ship_large_01 |
 | dutch_ship_medium.glb | https://polyhaven.com/a/dutch_ship_medium |
 | ship_pinnace.glb | https://polyhaven.com/a/ship_pinnace |
+| kit_factory.glb (selected pieces) | https://polyhaven.com/a/modular_factory_facade |
 | modular_wooden_pier.glb | https://polyhaven.com/a/modular_wooden_pier |
 | coastal_cliff_04.glb | https://polyhaven.com/a/coastal_cliff_04 |
 | coast_rocks_05.glb | https://polyhaven.com/a/coast_rocks_05 |

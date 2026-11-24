@@ -6,6 +6,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { loadGLB } from './car.js';
 import { rng, splitChunks } from './city.js';
 import { coastX, LAKE } from './frontier-land.js';
+import { loadFactoryKit } from './facades.js';
 
 const DIR = '/afterdark/assets/props/';
 const TAU = Math.PI * 2;
@@ -92,6 +93,11 @@ export async function buildProps(scene, city, world, Q, onCollider = () => {}) {
     const cab = place('cabin'); if (cab?.jetty) pierAt(cab.jetty, LAKE.level + 0.2);
   } catch (e) { console.warn('pier unavailable', e); }
 
+  // ---- Brick warehouses on the harbour quay, assembled from the factory facade kit ----
+  let factory = null;
+  try { const hb = place('harbour'); if (hb?.sheds) { factory = await loadFactoryKit(); hb.sheds.forEach((s, k) => factory.building({ x: s.x, y: s.y - 0.05, z: s.z, yaw: s.yaw, bays: 13, depth: 7, floors: k === 1 ? 4 : 3, seed: k + 3 })); factory.build(scene, city.chunks); } }
+  catch (e) { console.warn('warehouses unavailable', e); }
+
   // ---- Dutch ships riding at anchor: off the harbour and in the fjord ----
   try { const [large, medium, pinnace] = await Promise.all([loadGLB(DIR + 'dutch_ship_large_01.glb'), loadGLB(DIR + 'dutch_ship_medium.glb'), loadGLB(DIR + 'ship_pinnace.glb')]);
     const prep = g => { g.scene.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.receiveShadow = true; const m = o.material; m.envMapIntensity = 0.6; if (/sail|rigging/i.test(m.name)) { m.alphaTest = 0.5; m.transparent = false; m.side = THREE.DoubleSide; } }); return g.scene; };
@@ -105,6 +111,6 @@ export async function buildProps(scene, city, world, Q, onCollider = () => {}) {
 
   const w = {};
   out.update = t => { for (const sh of out.ships) { sea.heightAt(sh.x, sh.z, w); const swing = sh.moored ? Math.sin(t * 0.07 + sh.ph) * 0.015 : Math.sin(t * 0.05 + sh.ph) * 0.25; sh.g.position.set(sh.x, w.y + 0.1, sh.z); sh.g.rotation.set(Math.atan(w.gz) * 0.8, sh.yaw + swing, -Math.atan(w.gx) * 0.8, 'YXZ'); } };
-  out.setTime = e => { for (const m of glass) m.emissiveIntensity = 2.6 * e.night; };
+  out.setTime = e => { for (const m of glass) m.emissiveIntensity = 2.6 * e.night; factory?.setNight(e.night); };
   return out;
 }
