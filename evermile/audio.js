@@ -79,9 +79,6 @@ export class DriveAudio {
     this.squealGain = ctx.createGain(); this.squealGain.gain.value = 0;
     const squealBp = ctx.createBiquadFilter(); squealBp.type = 'bandpass'; squealBp.frequency.value = 980; squealBp.Q.value = 3;
     this.squealVoices = [860, 1130].map((f) => { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.connect(squealBp); o.start(); return o; });
-    // Torque eases off and returns continuously as the automatic engages its next ratio.
-    const shiftPulse = Math.sin(Math.PI * Math.max(0, this.shiftDip) / shiftDuration);
-    this.shiftLoadGain = luxuryShift ? 1 - .30 * shiftPulse : this.shiftDip > 0 ? .35 : 1;
     const wobble = loopNoise(), wobbleLp = ctx.createBiquadFilter(), wobbleGain = ctx.createGain(); wobbleLp.type = 'lowpass'; wobbleLp.frequency.value = 9; wobbleGain.gain.value = 140;
     wobble.connect(wobbleLp).connect(wobbleGain); for (const o of this.squealVoices) wobbleGain.connect(o.frequency);
     squealBp.connect(this.squealGain).connect(out);
