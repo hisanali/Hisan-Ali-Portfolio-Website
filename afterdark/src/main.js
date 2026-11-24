@@ -432,8 +432,8 @@ function nextCam() { selectCamera((S.cam + 1) % CAMS.length); }
 const flyby = new THREE.Vector3(), forwardShot = new THREE.Vector3();
 const vipShots = [
   // Duration, subject, longitudinal offset, lateral offset, height, lens.
-  [3.6,0,14,4,1.4,39], [5.2,1,-17,5,11,49], [3.8,2,3,6,1.1,39],
-  [5.4,3,11,-4,2.4,34], [4.2,4,12,6,1.3,43], [4.8,7,-12,4,3.1,38]
+  [3.6,0,14,4,1.4,39], [2.6,3,-17,5,11,49], [3.8,2,3,6,1.1,39],
+  [5.4,3,10,-4,2.1,36], [4.2,4,12,6,1.3,43], [4.8,7,-12,4,3.1,38]
 ];
 const vipAnchor = new THREE.Vector3();
 const shots = [[-8, 3.5, 2.1, 40], [7, -4, 1.35, 36], [-11, -5, 4.2, 43], [2, 6, 1.1, 40], [10, 2, 1.0, 34], [-4, -8, 6.8, 43], [-5, 2.4, .8, 49], [1, -10, 3, 32]];
@@ -444,7 +444,7 @@ function cinemaCamera(dt) {
   if (S.cam === 7) {
     const fleet = traffic.vip.cars;
     // Lead lights, convoy overview, door livery, principal, and departing tail.
-    const cycle = 27, pass = Math.floor(cinema.elapsed/cycle);
+    const cycle = 24.4, pass = Math.floor(cinema.elapsed/cycle);
     let phase = cinema.elapsed % cycle, shotIndex=0;
     while (shotIndex<vipShots.length-1 && phase>=vipShots[shotIndex][0]) phase-=vipShots[shotIndex++][0];
     const [duration,index,along,side,height,fov]=vipShots[shotIndex];
@@ -452,7 +452,7 @@ function cinemaCamera(dt) {
     const cut=cinema.boardBlock!==block || cinema.elapsed<=dt;
     if (cut) {
       cinema.boardBlock=block;
-      cinema.subject=shotIndex===4 ? fleet.reduce((a,b)=>Math.abs(b.wheelAngle)>Math.abs(a.wheelAngle)?b:a,fleet[index]) : fleet[index];
+      cinema.subject=shotIndex===4 ? fleet.reduce((a,b)=>b.role==='escort' && Math.abs(b.wheelAngle)>Math.abs(a.wheelAngle)?b:a,fleet[index]) : fleet[index];
       const subject=cinema.subject;
       cinema.heading=subject.h;
       vipAnchor.set(subject.x+Math.sin(subject.h)*along+Math.cos(subject.h)*side,height,

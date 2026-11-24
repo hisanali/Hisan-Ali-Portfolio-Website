@@ -91,10 +91,19 @@ export function createMotorcade(scene, kits, traffic, parked) {
       if (front) {
         const gap = front.distance - c.distance;
         const bumperGap = gap - (kit.len+kits[front.kit].len)*.5;
-        const desired = (kit.len+kits[front.kit].len)*.5 + 3 + c.v*(.46+.035*(c.index%4));
-        target = Math.min(target+3, front.v + (gap-desired)*.55);
+        const desired = (kit.len+kits[front.kit].len)*.5 + 2.3 + c.v*(.18+.014*(c.index%4));
+        target = Math.min(target+3, front.v + (gap-desired)*.85);
         const safeSpeed=Math.sqrt(front.v**2 + 8*Math.max(0,bumperGap-2));
         target=Math.min(target,safeSpeed);
+      }
+      // Pace the vehicle ahead as well as the follower. A slower van or a
+      // blocked rear escort can then bring the group back together naturally.
+      const rear=cars[c.index+1];
+      let roomToPullAway=Infinity;
+      if(rear) {
+        const clearGap=c.distance-rear.distance-(kit.len+kits[rear.kit].len)*.5;
+        roomToPullAway=Math.max(0,9-clearGap);
+        target=Math.min(target,rear.v+Math.max(0,7-clearGap)*1.15);
       }
       const box=footprint(c);
       const near=obstaclesNow.filter(o=>Math.abs(o.x-c.x)+Math.abs(o.z-c.z)<45);
@@ -115,6 +124,7 @@ export function createMotorcade(scene, kits, traffic, parked) {
         const available = front.distance-c.distance-(kit.len+kits[front.kit].len)*.5-1.7;
         c.v = Math.min(c.v, Math.max(0,available/dt));
       }
+      if(rear && dt>0) c.v=Math.min(c.v,roomToPullAway/dt);
       const priorDistance=c.distance, priorSlide=c.slide;
       c.distance += c.v*dt;
       const p=sample(c.distance), h=tangent(c.distance);
@@ -151,7 +161,7 @@ export function createMotorcade(scene, kits, traffic, parked) {
     let startDistance=344, clear=false;
     for(let n=0;n<Math.ceil(length/3);n++,startDistance+=3) {
       if(cars.every(c=>{
-        const d=startDistance-c.index*10.8,p=sample(d),q=sample(d+1),kit=kits[c.kit];
+        const d=startDistance-c.index*8.5,p=sample(d),q=sample(d+1),kit=kits[c.kit];
         const box={x:p.x,z:p.y,h:Math.atan2(q.x-p.x,q.y-p.y),len:kit.len+1,width:kit.width+1};
         return !taken.some(o=>occupied(box,o));
       })) { clear=true; break; }
@@ -159,7 +169,7 @@ export function createMotorcade(scene, kits, traffic, parked) {
     if (!clear) return null;
     for(const c of cars) {
       const kit=kits[c.kit];
-      Object.assign(c,{distance:startDistance-c.index*10.8,v:7-.22*c.index,accel:0,slide:0,wheelAngle:0,spin:0,trail:[]});
+      Object.assign(c,{distance:startDistance-c.index*8.5,v:7-.22*c.index,accel:0,slide:0,wheelAngle:0,spin:0,trail:[]});
       c.tyres={pos:c,wid:kit.width,surfaceY:()=>0,tyreContacts:[-1,1].map(side=>({x:side*kit.width*.37,z:-kit.len*.31}))};
     }
     root.visible=true; step(0); return cars[3];

@@ -89,7 +89,7 @@ export function createSound() {
   let anthemBuffer, anthemSource, anthemLoading;
   function playAnthem(active) {
     if (active && !anthemLoading) {
-      anthemLoading = load('/afterdark/assets/audio/vip-anthem.mp3').then(buffer => { anthemBuffer = buffer; })
+      anthemLoading = load('/afterdark/assets/audio/vip-procession.mp3').then(buffer => { anthemBuffer = buffer; })
         .catch(error => console.warn('VIP score unavailable',error));
     }
     if (active && anthemBuffer && !anthemSource) {
@@ -109,8 +109,8 @@ export function createSound() {
   siren.connect(distant).connect(sirenLevel).connect(comp); siren.start();
   function soundtrack(active, vip, sirenDistance = Infinity) {
     const near = 1 / (1 + (sirenDistance / 19) ** 2);
-    set(sirenLevel.gain, active && vip ? .003 + .067 * near : 0, .22);
-    set(distant.frequency, 590 + 1650 * near, .24);
+    set(sirenLevel.gain, active && vip ? .0008 + .015 * near : 0, .22);
+    set(distant.frequency, 520 + 970 * near, .24);
     if (active && vip) set(siren.frequency, 610 + 135 * Math.sin(ctx.currentTime * 1.5), .035);
     const anthemPlaying = playAnthem(active && vip);
     set(score.gain, active && !anthemPlaying ? (vip ? .68 : .38) : 0, .16);
