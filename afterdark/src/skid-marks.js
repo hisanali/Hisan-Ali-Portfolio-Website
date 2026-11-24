@@ -51,11 +51,11 @@ export function createSkidMarks(scene) {
   const previous = [];
   function clear() { previous.length = 0; cursor = count = 0; geometry.setDrawRange(0, 0); }
   clear();
-  function update(car, hand, wet) {
+  function update(car, hand, wet, trail = previous) {
     const speed = Math.abs(car.speed);
     const onPavement = speed >= 2 && !car.air && !car.rough && !car.onSand && !car.onKerb;
-    if (vehicle !== car || !onPavement) previous.length = 0;
-    vehicle = car;
+    if ((trail === previous && vehicle !== car) || !onPavement) trail.length = 0;
+    if (trail === previous) vehicle = car;
     if (!onPavement) return;
     const sin = Math.sin(car.heading), cos = Math.cos(car.heading);
     let wrote = false;
@@ -64,9 +64,9 @@ export function createSkidMarks(scene) {
         ? Math.max(0, -car.accel - 4.5) / 7 * Math.min(1, speed / 12) * (wheel.z > 0 ? 1 : .55)
         : 0;
       const slip = Math.max((car.slip - 2.4) / 5, hand && wheel.z < 0 ? speed / 12 : 0, braking);
-      if (slip < .08) { previous[i] = null; return; }
+      if (slip < .08) { trail[i] = null; return; }
       const x = car.pos.x + wheel.x * cos + wheel.z * sin, z = car.pos.z - wheel.x * sin + wheel.z * cos;
-      const old = previous[i], distance = old ? Math.hypot(old.x - x, old.z - z) : Infinity;
+      const old = trail[i], distance = old ? Math.hypot(old.x - x, old.z - z) : Infinity;
       if (distance < .12) return;
       const joined = distance <= 8;
       const half = Math.min(.17, car.wid * .066);
@@ -75,7 +75,7 @@ export function createSkidMarks(scene) {
       const opacity = Math.min(.34, (slip - .08) * .52) * deposit * (1 - wet * .66);
       const point = { x, z, dx: cos * half, dz: -sin * half, y: car.surfaceY(x, z) + .012,
         alpha: joined ? opacity : 0, v: vAlong };
-      previous[i] = point;
+      trail[i] = point;
       if (!joined) return;
       let v = cursor * 4;
       for (const end of [old, point]) for (const side of [-1, 1]) {
