@@ -13,7 +13,7 @@ export const CARS = [
   { id: 'crossover', file: 'road-suv', name: 'Trailcrest', kind: 'Family SUV', vmax: 53, acc: 0.84, grip: 0.99, brake: 1, off: 0.65, eye: 1.45 },
   { id: 'compact', file: 'road-hatch', name: 'Pico City', kind: 'City hatchback', vmax: 48, acc: 0.8, grip: 1.09, brake: 1.08, off: 1, eye: 1.12 },
   { id: 'van', file: 'road-van', name: 'Courier', kind: 'Delivery van', vmax: 44, acc: 0.72, grip: 0.93, brake: 0.92, off: 0.8, eye: 1.55 },
-  { id: 'escalade', file: 'car-escalade', rig: true, name: '2021 Cadillac Escalade Premium Luxury', kind: 'Full-size luxury SUV', vmax: 86, acc: 1.34, grip: 1.18, brake: 1.44, off: 0.62, eye: 1.56 },
+  { id: 'escalade', file: 'car-escalade', rig: true, name: '2021 Cadillac Escalade Premium Luxury', kind: 'Full-size luxury SUV', vmax: 83, acc: 1.23, grip: 1.18, brake: 1.44, off: 0.62, eye: 1.56 },
   { id: 'mercedes', file: 'road-mercedes', rig: true, name: '1982 Mercedes-Benz W201', kind: 'Classic saloon', vmax: 49, acc: 0.73, grip: 0.98, brake: 0.95, off: 1, eye: 1.12 },
   { id: 'bus', file: 'road-bus', name: 'City Bus', kind: 'Local transit', vmax: 25, acc: 0.37, grip: 0.84, brake: 0.76, off: 1, eye: 1.95 },
   { id: 'coach', file: 'road-coach', name: 'Regional Coach', kind: 'Long-distance passenger coach', vmax: 31, acc: 0.42, grip: 0.87, brake: 0.8, off: 1, eye: 2.0 }
