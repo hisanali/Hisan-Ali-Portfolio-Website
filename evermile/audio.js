@@ -17,7 +17,7 @@ const ENGINE = {
   crossover: {idle: 720, red: 6200, firing: 3, falloff: 1.21, sub: 0.32, drive: 1.9, reson: [132, 535], bright: 0.82, pops: false, level: 0.056},
   compact: {idle: 850, red: 6400, firing: 2, falloff: 1.3, sub: 0.18, drive: 1.5, reson: [190, 770], bright: 0.98, pops: false, level: 0.056},
   van: {idle: 740, red: 4500, firing: 2, falloff: 0.98, sub: 0.32, drive: 2.25, reson: [115, 410], bright: 0.62, pops: false, level: 0.056},
-  escalade: {idle: 620, red: 5900, firing: 4, falloff: 1.12, sub: 0.49, drive: 2.2, reson: [98, 410], bright: 0.73, pops: false, level: 0.056},
+  escalade: {idle: 620, red: 5900, firing: 4, falloff: 1.47, sub: 0.82, drive: 2.6, reson: [88, 270], bright: 0.46, pops: false, level: 0.056},
   mercedes: {idle: 780, red: 6200, firing: 2, falloff: 1.15, sub: .3, drive: 1.6, reson: [125,510], bright: .7, pops: false, level: .05},
   grcorolla: {idle: 900, red: 7000, firing: 1.5, falloff: 1.1, sub: .34, drive: 2.4, reson: [170, 700], bright: 1.15, pops: true, level: .058},
   landcruiser: {idle: 650, red: 5600, firing: 3, falloff: .95, sub: .4, drive: 2.6, reson: [120, 480], bright: .75, pops: false, level: .06},

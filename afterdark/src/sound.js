@@ -7,7 +7,7 @@ const SHOTS = { thunder0: REC + 'thunder.mp3', thunder1: '/tideworn/assets/audio
 const TRANSMISSION = { ratio: [360, 255, 185, 144, 117, 98, 82], up: [2700, 4770], down: [1500, 2200], poweredUpshifts: true };
 const GEARBOX = {
   escalade: {
-    ratio: [580, 370, 267, 220, 185, 154, 130, 111, 94, 82],
+    ratio: [580, 370, 267, 211, 171, 140, 116, 96, 78, 64],
     up: [1850, 3650], down: [950, 1450],
     // Fifth is close to sixth. Use a shorter hold and a lower RPM target for that handoff.
     upByGear: { 5: [1850, 2850] }, holdByGear: { 5: .55 },
@@ -23,7 +23,7 @@ const EXHAUST = {
   coupe: [8, 840, .036], hatch: [3, 730, .044], sedan: [4, 410, .029],
   pickup: [8, 420, .055], suv: [6, 460, .043], estate: [4, 355, .034],
   crossover: [6, 390, .031], compact: [4, 630, .032], van: [4, 305, .049],
-  escalade: [8, 540, .084], mercedes: [4, 440, .039],
+  escalade: [8, 340, .13], mercedes: [4, 440, .039],
   bus: [6, 245, .062], coach: [6, 305, .052]
 };
 function exhaustWave(ctx, cylinders, splitBanks) {
