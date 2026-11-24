@@ -1,3 +1,4 @@
+import { applyLivery } from './vip.js';
 import { headlampRange, lampColor } from './low-beams.js';
 import { beachHeight } from './water.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
@@ -95,6 +96,12 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   // Suspension moves the Escalade body around the grounded wheel assemblies.
   const luxurySuspension = spec.file === 'car-escalade' && rigs.length === 4;
   if (luxurySuspension) for (const rig of rigs) root.attach(rig.pivot);
+  if (spec.branded) {
+    root.updateMatrixWorld(true);
+    const panels = [];
+    model.traverse(o => { if (o.isMesh && o.material === paint) panels.push(o); });
+    applyLivery(tilt,{len,width:wid,height},panels);
+  }
   const updateWetPaint = wetCar(tilt, paint, M.glass);
   const hubs = rigs.length ? rigs.map(r => r.pivot) : wheels.map(w => w.node);
   const tyreContacts = hubs.map(hub => {
@@ -153,7 +160,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     car.bodyWetness = water;
   };
   car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
-  car.setPaint = hex => paint.color.set(hex); car.spec = T; car.tune = s => Object.assign(T, s);
+  car.setPaint = hex => paint.color.set(spec.branded ? 0xfafaf6 : hex); car.spec = T; car.tune = s => Object.assign(T, s);
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = lerp(daylightReflection, 0.75, nightK); const lowBeam = Math.max(e.night, e.rain * .55);
     for (const light of lights) light.intensity = 305 * lowBeam;

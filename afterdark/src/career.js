@@ -18,6 +18,7 @@ export const CARS = [
   { id: 'bus', file: 'road-bus', name: 'City Bus', kind: 'Local transit', vmax: 25, acc: 0.37, grip: 0.84, brake: 0.76, off: 1, eye: 1.95 },
   { id: 'coach', file: 'road-coach', name: 'Regional Coach', kind: 'Long-distance passenger coach', vmax: 31, acc: 0.42, grip: 0.87, brake: 0.8, off: 1, eye: 2.0 }
 ];
+CARS.push({ ...CARS.find(c => c.id === 'escalade'), id: 'hisan-escalade', voice:'escalade', branded:true, name:'Hisan Edition Escalade', kind:'White VIP escort' });
 export const UPGRADES = [['e', 'Engine'], ['t', 'Tyres'], ['b', 'Brakes']], UP_COST = [1200, 3000, 6500], UP_MAX = 3;
 export const carById = id => CARS.find(c => c.id === id) || CARS.find(c => c.id === 'escalade');
 
@@ -34,7 +35,7 @@ export const commit = save => { try { localStorage.setItem(KEY, JSON.stringify(s
 export const upLevel = (save, id, k) => Math.min(UP_MAX, Math.max(0, (save.up[id] && +save.up[id][k]) || 0));
 // The handling numbers a car actually drives with: its base figures plus what has been fitted.
 export function carSpec(save, id) { const c = carById(id), e = upLevel(save, id, 'e'), t = upLevel(save, id, 't'), b = upLevel(save, id, 'b');
-  return { voice: c.id, file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
+  return { voice: c.voice || c.id, branded: !!c.branded, file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
 export const cr = n => Math.round(n).toLocaleString() + ' cr';
 export const clockText = (t, tenths) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${tenths ? '.' + Math.floor(t * 10 % 10) : ''}`;
 
