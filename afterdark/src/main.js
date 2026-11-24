@@ -1,3 +1,4 @@
+import { buildPets } from './pets.js';
 import { createSkidMarks } from './skid-marks.js';
 // Afterdark: free-roam night driving. Boot, input, game state, camera, HUD and the frame loop.
 import { THREE, createRenderer, Q, QUALITY } from './render.js';
@@ -24,7 +25,7 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const R = createRenderer($('#scene')), { scene, camera, renderer } = R;
 const S = { mode: 'boot', kind: store.get('kind', 'run'), time: 0, clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, cam: 0, sound: store.get('sound', 'on') === 'on', flash: 0 };
 const input = { left: 0, right: 0, up: 0, down: 0, hand: 0 };
-let city, street, world, places, player, traffic, audio = null;
+let updatePets, city, street, world, places, player, traffic, audio = null;
 const inCity = (x, z) => x <= SPAN + HALF + 4 && z >= -(HALF + 4) && z <= SPAN + HALF + 4;
 
 // ---------- Rain and tyre spray ----------
@@ -650,7 +651,7 @@ function frame() {
   const replaying = S.mode === 'replay', tour = cinema.tour, focus = tour || player.pos;
   if (S.mode === 'photo') photoCam(); else if (S.mode === 'map') { if ((hudTick++ & 7) === 0) drawBig(); }
   else if (S.mode !== 'pause') {
-    stepTime(dt, playing || !!tour || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, focus); places.update(S.time);
+    stepTime(dt, playing || !!tour || replaying || S.mode === 'menu'); city.update(S.time); street.update(dt, S.time, focus); updatePets(dt, focus); places.update(S.time);
     if (replaying) {
       stepReplay(dt);
       if (S.mode === 'replay') spray.emit(dt, player, env.wet, city.puddleAt);
@@ -708,6 +709,7 @@ async function boot() {
     haze.pts = new THREE.Points(haze.geo, new THREE.PointsMaterial({ size: haze.size, map: city.dot, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.35 }));
     for (const o of [sparks, haze]) { o.pts.frustumCulled = false; scene.add(o.pts); R.refl.hide.push(o.pts); R.cube.hide.push(o.pts); } }
   setLoad('Planting the avenues'); await nextFrame();
+  updatePets = buildPets(scene);
   street = buildStreet(scene, city, R, Q); R.refl.hide.push(...street.hide); R.cube.hide.push(...street.hide);
   setLoad('Soaking the streets'); await nextFrame();
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
