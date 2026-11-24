@@ -29,10 +29,11 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const steeringWheel = model.getObjectByName('steering_wheel');
   const restSteering = steeringWheel?.quaternion.clone();
   const steeringAxis = new THREE.Vector3(0, 0, 1);
-  // Steering geometry. Full lock is 33 degrees at the wheels, which gives a kerb-to-kerb turning circle of about 11 m.
+  // Steering geometry. The Escalade has extra steering lock for low-speed manoeuvres.
   // A keyboard is on or off, so above walking pace full lock asks for just under the cornering grip the tyres have at
   // that speed (less in the wet, less while braking, much less in reverse) instead of a fixed angle the car cannot follow.
-  const LOCK = 0.576; let gripNow = 10.3;
+  const escalade = spec.file === 'car-escalade';
+  const LOCK = escalade ? 0.68 : 0.576; let gripNow = 10.3;
   const steerLimit = (speed, reverse) => Math.min(LOCK, Math.atan(wheelbase * (reverse ? Math.min(gripNow * 0.92, 4.4) : gripNow * 0.92) / Math.max(1, speed * speed)));
   const frontAngle = (steer, speed) => steer * steerLimit(Math.abs(speed), speed < -0.3);
   const satinFinish = spec.file === 'car-escalade' || spec.file === 'car-gr-corolla';
@@ -161,7 +162,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const wild = outside(car.pos.x, car.pos.z);
     // The wheel is wound on at a steady rate that slows with speed, and runs back to centre faster than it winds on:
     // a short tap is a small correction, a held key reaches full lock in a fraction of a second.
-    { const k = clamp(speed / 50, 0, 1), unwinding = ctrl.steer === 0 || ctrl.steer * car.steer < 0, rate = (unwinding ? lerp(9, 6, k) : lerp(7.5, 4, k)) * dt;
+    { const k = clamp(speed / 50, 0, 1), unwinding = ctrl.steer === 0 || ctrl.steer * car.steer < 0, rate = (unwinding ? lerp(9, 6, k) : lerp(7.5, 4, k)) * (escalade ? lerp(1.35, 1, k) : 1) * dt;
       car.steer += clamp(ctrl.steer - car.steer, -rate, rate); }
     // A press that starts while moving forward remains a brake until the pedal is released.
     if (!ctrl.brake) brakeToStop = false;
