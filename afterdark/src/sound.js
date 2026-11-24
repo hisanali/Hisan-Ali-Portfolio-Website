@@ -85,13 +85,19 @@ export function createSound() {
   score.connect(comp);
   const chords = [[50,57,65,69], [46,53,62,65], [53,60,64,69], [48,55,62,67]];
   let beat = 0, nextBeat = 0;
-  function soundtrack(active) {
+  const vipChords = [[50,57,66,69],[55,62,66,71],[47,54,62,66],[45,52,61,64]];
+  const siren = ctx.createOscillator(), sirenLevel = ctx.createGain();
+  siren.type = 'triangle'; sirenLevel.gain.value = 0;
+  siren.connect(sirenLevel).connect(comp); siren.start();
+  function soundtrack(active, vip, sirenDistance) {
+    set(sirenLevel.gain, active && vip ? .06 / (1 + sirenDistance / 24) : 0, .18);
+    if (active && vip) set(siren.frequency, 700 + 210 * Math.sin(ctx.currentTime * 2.4), .035);
     set(score.gain, active ? .38 : 0, .16);
     const now = ctx.currentTime;
     if (!active) { nextBeat = 0; beat = 0; return; }
     if (nextBeat < now) nextBeat = now + .015;
     while (nextBeat < now + .12) {
-      const chord = chords[Math.floor(beat / 8) % chords.length];
+      const chord = (vip ? vipChords : chords)[Math.floor(beat / 8) % chords.length];
       const bass = beat % 8 === 0;
       const notes = bass ? [chord[0] - 12, chord[1], chord[2]] : [chord[[0,2,1,3,1,2,3,1][beat % 8]] + 12];
       for (const midi of notes) {
@@ -105,7 +111,7 @@ export function createSound() {
         osc.connect(gain).connect(score); osc.start(nextBeat); osc.stop(end);
         osc.onended = () => { osc.disconnect(); gain.disconnect(); };
       }
-      beat++; nextBeat += .39;
+      beat++; nextBeat += vip ? .34 : .39;
     }
   }
   const api = {
@@ -123,7 +129,7 @@ export function createSound() {
     thunder() { const names = Object.keys(shots); if (!names.length) return false; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = shots[names[Math.floor(Math.random() * names.length)]]; g.gain.value = 0.5 + Math.random() * 0.35; src.playbackRate.value = 0.9 + Math.random() * 0.2; src.connect(g).connect(master); src.start(); return true; },
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
-      soundtrack(on && s.playing && s.cinematic);
+      soundtrack(on && s.playing && s.cinematic, s.vip, s.sirenDistance);
       set(master.gain, on && s.playing ? (s.cinematic ? .32 : 1) : 0, 0.1);
       const elapsed = ctx.currentTime - previewStart;
       if (!s.garage || elapsed > 2.4) previewCar = null;
