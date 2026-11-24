@@ -10,7 +10,7 @@ const GEARBOX = {
     ratio: [580, 370, 267, 211, 171, 140, 116, 96, 78, 64],
     up: [1850, 3650], down: [950, 1450],
     // Fifth is close to sixth. Use a shorter hold and a lower RPM target for that handoff.
-    upByGear: { 5: [1850, 2850] }, holdByGear: { 5: .55 },
+    upByGear: { 5: [1850, 2850] }, holdByGear: { 5: 1.05 },
   },
   bus: { ratio: [510, 300, 192, 137, 106, 86], up: [1450, 750], down: [800, 470] }
 };
@@ -56,6 +56,19 @@ export function createSound() {
   let exhaustCar;
   const loops = {}, shots = {}; let nextThunder = 12, hornHeld = false, honkCool = 4, splashCool = 0, on = true;
   const load = async url => { const data = await (await fetch(url)).arrayBuffer(); return new Promise((res, rej) => { const p = ctx.decodeAudioData(data, res, rej); if (p && p.then) p.then(res, rej); }); };
+  // CC0 field recording by Walking.With.Microphones, freesound.org/s/337809/.
+  const recordedGain = ctx.createGain(), recordedFilter = ctx.createBiquadFilter();
+  recordedGain.gain.value = 0;
+  recordedFilter.type = 'lowpass';
+  recordedFilter.connect(recordedGain).connect(master);
+  let recordedEngine;
+  load('/afterdark/assets/audio/escalade-load.wav').then(buffer => {
+    recordedEngine = ctx.createBufferSource();
+    recordedEngine.buffer = buffer;
+    recordedEngine.loop = true;
+    recordedEngine.connect(recordedFilter);
+    recordedEngine.start();
+  }).catch(error => console.warn('Escalade engine recording unavailable', error));
   for (const [name, url] of Object.entries(LOOPS)) load(url).then(buf => { const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; const g = ctx.createGain(); g.gain.value = 0; src.connect(g).connect(master); src.start(0, Math.random() * Math.max(0, buf.duration - 1)); loops[name] = g; }).catch(e => console.warn('sound', name, e));
   for (const [name, url] of Object.entries(SHOTS)) load(url).then(buf => { shots[name] = buf; }).catch(() => {});
   const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
@@ -80,7 +93,7 @@ export function createSound() {
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
       set(master.gain, on && s.playing ? 1 : 0, 0.1); const e = s.env, sp = Math.abs(s.speed), live = s.playing ? 1 : 0.45;
-      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, shiftHold: s.vehicle === 'escalade' ? 1.25 : 1.05, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
+      try { drive.update(dt, { speed: s.speed, throttle: s.throttle, brake: Math.max(s.brake, s.hand && sp > 6 ? 1 : 0), steer: s.hand ? Math.sign(s.steer || 1) : s.steer * (1 + s.slip * 0.15), offroad: s.offroad, volume: (s.cockpit ? 1.0 : 1.35) * live, vehicle: VOICE[s.vehicle] || s.vehicle, shiftHold: s.vehicle === 'escalade' ? 1.5 : 1.05, transmission: s.vehicle === 'coupe' ? TRANSMISSION : GEARBOX[s.vehicle], reverse: s.reverse, grounded: s.grounded, tyreSlip: s.slip });
         const [cylinders, cutoff, level] = EXHAUST[s.vehicle] || EXHAUST.sedan;
         if (exhaustCar !== s.vehicle) {
           exhaustCar = s.vehicle;
@@ -92,7 +105,13 @@ export function createSound() {
         const load = s.throttle * drive.shiftLoadGain;
         set(exhaust.frequency, drive.rpm / 120, .025);
         set(exhaustFilter.frequency, (cutoff * (.5 + load) + drive.rpm * .1) * (s.cockpit ? .55 : 1), .085);
-        set(exhaustGain.gain, s.playing ? level * (.12 + .88 * load) : 0, .065);
+        const recorded = recordedEngine && s.vehicle === 'escalade';
+        if (recorded) {
+          set(recordedEngine.playbackRate, clamp(drive.rpm / 2600, .55, 1.85), .035);
+          set(recordedFilter.frequency, (650 + load * 2600) * (s.cockpit ? .52 : 1), .08);
+        }
+        set(recordedGain.gain, recorded && s.playing ? .31 * load * clamp((drive.rpm - 900) / 1400) : 0, .035);
+        set(exhaustGain.gain, s.playing ? level * (recorded ? .55 : 1) * (.12 + .88 * load) : 0, .065);
         drive.horn(hornHeld && s.playing, 1.6); drive.townHum(s.urban && !s.sheltered ? 0.55 + 0.45 * e.day : 0); drive.chatter(s.urban && !s.sheltered && s.people && e.rain < 0.4, 'street'); } catch (err) {}
       // Frontier ambience: any open water nearby, the crater, the waterfalls, the high pass, the lake at night, the dunes.
       const a = s.amb || {}, shore = Math.max(clamp(1 - Math.abs(s.x - s.beachX) / 190), a.sea || 0), open = s.cockpit ? 0.8 : 1;
