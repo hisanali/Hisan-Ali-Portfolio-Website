@@ -5,31 +5,21 @@ import { fitEscaladeWrap } from './escalade-wrap.js';
 import { createSkidMarks } from './skid-marks.js';
 import { P } from './city.js';
 
-let material;
-export function applyLivery(group,kit,paint) {
-  if (!material) {
-    const texture = new THREE.TextureLoader().load('./assets/vip-livery.webp');
-    texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
-    material = new THREE.MeshStandardMaterial({map:texture, roughness:.48, polygonOffset:true, polygonOffsetFactor:-2});
+// Separating axes for two oriented vehicle footprints, including a small clearance margin.
+function occupied(a,b) {
+  const dx=b.x-a.x, dz=b.z-a.z;
+  if(Math.abs(dx)+Math.abs(dz)>a.len+b.len+a.width+b.width) return false;
+  const sin=Math.abs(Math.sin(a.h-b.h)), cos=Math.abs(Math.cos(a.h-b.h));
+  for(const [p,q] of [[a,b],[b,a]]) {
+    const x=Math.cos(p.h), z=Math.sin(p.h);
+    if(Math.abs(dx*x-dz*z)>(p.width+q.width*cos+q.len*sin)*.5+.18 ||
+       Math.abs(dx*z+dz*x)>(p.len+q.len*cos+q.width*sin)*.5+.18) return false;
   }
-  const wrap = material;
-  const ray = new THREE.Raycaster();
-  for (const side of [-1,1]) {
-    const geo = new THREE.PlaneGeometry(kit.len*.46,kit.height*.24,14,5);
-    geo.rotateY(side*Math.PI/2);
-    const pos = geo.attributes.position;
-    for(let i=0;i<pos.count;i++){
-      const y=pos.getY(i)+kit.height*.49,z=pos.getZ(i)-kit.len*.06;
-      ray.set(new THREE.Vector3(side*(kit.width+1),y,z),new THREE.Vector3(-side,0,0));
-      const hit=ray.intersectObjects(paint,false)[0];
-      pos.setXYZ(i,hit && hit.point.x*side>0 ? hit.point.x+side*.012 : side*kit.width*.44,y,z);
-    }
-    geo.computeVertexNormals(); group.add(new THREE.Mesh(geo,wrap));
-  }
+  return true;
 }
 
-export function createMotorcade(scene, kits) {
-  const roles = ['police','police','van','van','escort','escort','principal','escort','escort','van','van','police'];
+export function createMotorcade(scene, kits, traffic, parked) {
+  const roles = ['police','van','escort','principal','escort','escort','van','police'];
   const points = [[3*P-2,2*P-2],[3*P-2,6*P+2],[6*P+2,6*P+2],[6*P+2,2*P-2]].map(([x,z]) => new THREE.Vector2(x,z));
   const route = new THREE.CurvePath();
   const corners = points.map((p,i) => {
@@ -65,15 +55,30 @@ export function createMotorcade(scene, kits) {
       } else if (c.role !== 'principal') {
         // Fit the door graphic to the painted sheet metal, including its curvature.
         if (templates.has(c.kit)) { c.rig.add(templates.get(c.kit).clone()); continue; }
-        const paint = kit.parts.filter(p => c.role === 'escort' ? p.bodyPanel || p.wrapGlass : p.paint).map(p => {
+        const paint = kit.parts.filter(p => c.role === 'escort' ? p.bodyPanel || p.wrapGlass : p.paint || p.wrapGlass).map(p => {
           const m = new THREE.Mesh(p.geo,p.mat); m.matrixWorld.copy(p.local); m.userData.wrapGlass = p.wrapGlass; return m;
         });
-        const decals = new THREE.Group(); if (c.role === 'escort') fitEscaladeWrap(decals,kit,paint); else applyLivery(decals,kit,paint); c.rig.add(decals); templates.set(c.kit,decals);
+        const decals = new THREE.Group(); fitEscaladeWrap(decals,kit,paint,c.role === 'van' ? 'vip-van-wrap' : 'escalade-wrap'); c.rig.add(decals); templates.set(c.kit,decals);
       }
     }
   }
+  function footprint(c) {
+    const kit=kits[c.kit], shift=c.shoulder || 0;
+    return {x:c.x-Math.cos(c.h)*shift+(c.push?.x || 0), z:c.z+Math.sin(c.h)*shift+(c.push?.y || 0),
+      h:c.h+(c.slide || 0),width:kit.width,len:kit.len};
+  }
+  const stationary=parked.map(footprint);
+  let playerBody;
+  function obstacles() {
+    return stationary.concat(traffic.filter(c=>Math.abs(c.y || 0)<2.5).map(footprint),playerBody || []);
+  }
+  function blocksTraffic(c) {
+    const box=footprint(c);
+    return Math.abs(c.y || 0)<2.5 && cars.some(v=>occupied(box,footprint(v)));
+  }
   function step(dt,wet = 0) {
     age += dt;
+    const obstaclesNow=obstacles();
     for (const c of cars) {
       const kit = kits[c.kit], front = cars[c.index-1];
       const van = c.role === 'van', athletic = c.role === 'escort' || c.role === 'police';
@@ -90,6 +95,16 @@ export function createMotorcade(scene, kits) {
         const safeSpeed=Math.sqrt(front.v**2 + 8*Math.max(0,bumperGap-2));
         target=Math.min(target,safeSpeed);
       }
+      const box=footprint(c);
+      const near=obstaclesNow.filter(o=>Math.abs(o.x-c.x)+Math.abs(o.z-c.z)<45);
+      if(dt>0 && near.length) {
+        const nose={...box};
+        for(let ahead=1; ahead<=Math.min(26,3+c.v*c.v/9); ahead+=1.5) {
+          const point=sample(c.distance+ahead);
+          Object.assign(nose,{x:point.x,z:point.y,h:tangent(c.distance+ahead)});
+          if(near.some(o=>occupied(nose,o))) {target=Math.min(target,Math.sqrt(8*Math.max(0,ahead-2)));break;}
+        }
+      }
       const cornerSpeed = van ? 8.2 : athletic ? 11.8 : 9.4;
       target = Math.min(target, cornerSpeed + 15*Math.exp(-bend*4));
       const demand = clamp((target-c.v)*1.4,van?-4.9:-6.4,van?2.6:3.7);
@@ -99,6 +114,7 @@ export function createMotorcade(scene, kits) {
         const available = front.distance-c.distance-(kit.len+kits[front.kit].len)*.5-1.7;
         c.v = Math.min(c.v, Math.max(0,available/dt));
       }
+      const priorDistance=c.distance, priorSlide=c.slide;
       c.distance += c.v*dt;
       const p=sample(c.distance), h=tangent(c.distance);
       const curvature=wrapAngle(tangent(c.distance+1.5)-tangent(c.distance-1.5))/3;
@@ -106,27 +122,41 @@ export function createMotorcade(scene, kits) {
       const slipTarget=athletic ? Math.sign(lateral)*clamp((Math.abs(lateral)-7)*.035,0,.26) : 0;
       c.slide+=(slipTarget-c.slide)*(1-Math.exp(-dt*5));
       const lateralOffset=.19*Math.sin(c.distance*.026+c.index*1.7)-c.slide*2;
-      c.x=p.x+Math.cos(h)*lateralOffset; c.z=p.y-Math.sin(h)*lateralOffset; c.h=h;
+      const next={...box,x:p.x+Math.cos(h)*lateralOffset,z:p.y-Math.sin(h)*lateralOffset,h:h+c.slide};
+      const blocked=dt>0 && (near.some(o=>occupied(next,o)) || (front && occupied(next,footprint(front))));
+      if(blocked) {c.distance=priorDistance;c.slide=priorSlide;c.accel=-5;c.v=0;}
+      else {c.x=next.x;c.z=next.z;c.h=h;}
       c.wheelAngle=clamp(Math.atan(kit.len*.61*curvature)-c.slide*.65,-.59,.59);
       c.lean=clamp(lateral*.005,-.055,.055);
       c.bodyPitch=-c.accel*.009; c.braking=c.accel<-.85;
       c.spin+=c.v*dt/.34; c.throttle=c.braking?0:clamp(.19+c.accel*.20,.04,.95);
-      c.rig.position.set(c.x,0,c.z);c.rig.rotation.set(c.bodyPitch,h+c.slide,c.lean,'YXZ');
+      c.rig.position.set(c.x,0,c.z);c.rig.rotation.set(c.bodyPitch,c.h+c.slide,c.lean,'YXZ');
       const tyre=c.tyres;
       Object.assign(tyre,{speed:c.v,heading:h+c.slide,braking:c.braking,accel:c.accel,slip:Math.abs(c.v*Math.sin(c.slide))});
       rubber.update(tyre,false,wet,c.trail);
       if(c.role==='police') c.rig.children.forEach((lamp,i)=>lamp.material.color.setScalar(1).setHex(i?0x227aff:0xff1938).multiplyScalar((Math.floor(age*4+c.index)%2)===i?3:.22));
     }
   }
-  function start() {
+  function start(player) {
     if (!built) { dress(); rubber=createSkidMarks(root); built=true; }
     rubber.clear(); age=0;
+    playerBody=player ? {x:player.pos.x,z:player.pos.z,h:player.heading,width:player.wid,len:player.len} : null;
+    const taken=obstacles();
+    let startDistance=344, clear=false;
+    for(let n=0;n<Math.ceil(length/3);n++,startDistance+=3) {
+      if(cars.every(c=>{
+        const d=startDistance-c.index*10.8,p=sample(d),q=sample(d+1),kit=kits[c.kit];
+        const box={x:p.x,z:p.y,h:Math.atan2(q.x-p.x,q.y-p.y),len:kit.len+1,width:kit.width+1};
+        return !taken.some(o=>occupied(box,o));
+      })) { clear=true; break; }
+    }
+    if (!clear) return null;
     for(const c of cars) {
       const kit=kits[c.kit];
-      Object.assign(c,{distance:344-c.index*10.8,v:7-.22*c.index,accel:0,slide:0,spin:0,trail:[]});
+      Object.assign(c,{distance:startDistance-c.index*10.8,v:7-.22*c.index,accel:0,slide:0,spin:0,trail:[]});
       c.tyres={pos:c,wid:kit.width,surfaceY:()=>0,tyreContacts:[-1,1].map(side=>({x:side*kit.width*.37,z:-kit.len*.31}))};
     }
-    root.visible=true; step(0); return cars[6];
+    root.visible=true; step(0); return cars[3];
   }
-  return {cars,root,step,get age(){return age;},start,stop(){root.visible=false;}};
+  return {cars,root,step,blocksTraffic,get age(){return age;},start,stop(){root.visible=false;}};
 }
