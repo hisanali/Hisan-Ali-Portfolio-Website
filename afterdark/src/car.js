@@ -1,5 +1,5 @@
 import { beachHeight } from './water.js';
-import { lampRole } from './vehicle-lamps.js';
+import { clearLampCover, lampRole } from './vehicle-lamps.js';
 // The player's coupé: model set-up with physically based paint, lights, and the driving model.
 import { vehicleShadowMaterial } from './vehicle-shadow.js';
 import * as THREE from '/evermile/vendor/three.module.js';
@@ -57,10 +57,11 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const headBounds = [new THREE.Box3(), new THREE.Box3()];
   const vertex = new THREE.Vector3();
   model.updateMatrixWorld(true);
-  const lenses = new Map();
+  const lenses = new Map(), covers = new Map();
   model.traverse(o => {
     if (!o.isMesh) return;
-    const role = lampRole(o);
+    const role = lampRole(o, escalade);
+    if (role === 'cover') { covers.set(o, clearLampCover(o.material)); return; }
     if (!role) return;
     lenses.set(o, role);
     if (role === 'head') {
@@ -77,7 +78,10 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   else model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
     o.material = n === 'body' ? paint : /glass/i.test(n) ? M.glass : n === 'lights_red' ? M.tail : n === 'leds' ? M.led : n === 'lights' ? M.lens : /^rim_|^wheel$|^nuts$|^centre$/.test(n) ? M.rim : n === 'chrome' || n === 'metal' ? M.chrome : n === 'tire' ? M.tyre
       : n === 'brakes' || n === 'brake' ? (n === 'brakes' ? M.caliper : M.rim) : /carbon/.test(n) ? M.carbon : /grills|wipers|plastic|trim$/.test(n) ? M.dark : /Leather|Carpet|Interior/i.test(mn) || /interior|leather|carpet|steering/.test(n) ? M.cabin : M.dark; });
-  for (const [mesh, role] of lenses) mesh.material = role === 'tail' ? M.tail : M.lens;
+  for (const [mesh, cover] of covers) mesh.material = cover;
+  const stopLamp = escalade ? M.tail.clone() : null;
+  if (escalade) M.lens.emissive.setHex(0xf2f7ff);
+  for (const [mesh, role] of lenses) mesh.material = role === 'stop' ? stopLamp : role === 'drl' ? M.led : role === 'tail' ? M.tail : M.lens;
   model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const root = new THREE.Group(), tilt = new THREE.Group(); tilt.add(model); root.add(tilt); scene.add(root);
   const wheels = (kitCar ? ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR'] : ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']).map(name => { const node = model.getObjectByName(name); return node && { node, base: node.quaternion.clone(), front: name[6].toLowerCase() === 'f', up: Y.clone().applyQuaternion(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()) }; }).filter(Boolean);
@@ -105,7 +109,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(wid * 1.6, len * 1.32), vehicleShadowMaterial(tyreContacts, wid, len)); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.025; shadow.renderOrder = 3; root.add(shadow);
 
   const lights = headBounds.map((bounds, side) => {
-    const light = new THREE.SpotLight(0xfff1da, 0, 85, .38, .55, 1.7);
+    const light = new THREE.SpotLight(escalade ? 0xf2f7ff : 0xfff1da, 0, 85, .38, .55, 1.7);
     if (bounds.isEmpty()) light.position.set((side ? 1 : -1) * wid * .36, height * .43, len * .47);
     else bounds.getCenter(light.position);
     const p = light.position;
@@ -152,7 +156,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = lerp(daylightReflection, 0.75, nightK); const lowBeam = Math.max(e.night, e.rain * .55);
     for (const light of lights) light.intensity = 305 * lowBeam;
-    M.lens.emissiveIntensity = .18 + 2.1 * lowBeam; M.led.emissiveIntensity = .4 + 2 * lowBeam; shadow.material.opacity = 0.97 - 0.12 * e.night; };
+    M.lens.emissiveIntensity = .18 + 2.1 * lowBeam; M.led.emissiveIntensity = escalade ? 1.9 - .85 * lowBeam : .4 + 2 * lowBeam; shadow.material.opacity = 0.97 - 0.12 * e.night; };
 
   // ctrl: steer (+1 = left), throttle, brake, hand. Returns the strength of any wall impact this step.
   car.drive = (dt, ctrl) => {
@@ -335,6 +339,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     car.spin -= car.speed * dt / wheelR;
     for (const w of wheels) { q1.setFromAxisAngle(w.up, w.front ? steerAngle : 0); q2.setFromAxisAngle(X, kitCar ? -car.spin : car.spin); w.node.quaternion.copy(q1).multiply(w.base).multiply(q2); }
     for (const r of rigs) { if (r.front) r.pivot.rotation.y = steerAngle; r.rotor.rotation.x = -car.spin % (Math.PI * 2); }
+    if (stopLamp) stopLamp.emissiveIntensity = car.braking ? 3.6 : 0;
     M.tail.emissiveIntensity = car.braking ? 3.6 : .12 + .70 * Math.max(nightK, wetK * .55);
   };
   return car;
