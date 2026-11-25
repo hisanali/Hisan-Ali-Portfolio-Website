@@ -40,7 +40,10 @@ function rearPlate(style, i, bounds) {
 export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   count += 5; // Extra city slots keep the expanded garage represented alongside everyday traffic.
   const R = rng(seed), kits = [], headMaterials = [], drlMaterials = [], tailMaterials = [];
-  for (const file of trafficFiles) {
+  // Phones and tablets (reach below 1) leave the 1982 Mercedes, by far the heaviest model in textures, out of traffic:
+  // with it a phone's browser can run out of memory and close the tab. It is still in the garage.
+  const files = reach < 1 ? trafficFiles.filter(f => f !== 'road-mercedes') : trafficFiles;
+  for (const file of files) {
     const coupe = file === 'sports-coupe';
     const style = file.replace(/^(road|car)-/, '');
     const url = coupe ? '/evermile/assets/sports-coupe.glb' : '/evermile/assets/models/' + file + '.glb?v=supplied7';
@@ -326,5 +329,5 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   }
   // Close pass at speed without contact.
   function nearMiss(player) { let got = 0; if (Math.abs(player.speed) < 17) return 0; for (const c of cars) { const d = Math.hypot(c.x - player.pos.x, c.z - player.pos.z); if (d < 3.6) { if (!c.near2) { c.near2 = true; got++; } } else if (d > 9) c.near2 = false; } return got; }
-  return { vip, kits, stageDriveBy, modelFiles: trafficFiles, cars, parked, update, collide, nearMiss, setTime, takeStruck() { const s = struck; struck = 0; return s; } };
+  return { vip, kits, stageDriveBy, modelFiles: files, cars, parked, update, collide, nearMiss, setTime, takeStruck() { const s = struck; struck = 0; return s; } };
 }
