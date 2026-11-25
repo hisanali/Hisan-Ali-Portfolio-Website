@@ -70,8 +70,8 @@ export function createEmergencyLights(parts, height, seed = 0) {
         col.copy(h.colour === 'red' ? RED : BLUE).multiplyScalar(k * glow * (h.roof ? 1 : 0.7)); fc.set([col.r, col.g, col.b], i * 3);
         if (k) { if (h.side < 0) left = Math.max(left, h.roof ? 1 : 0.6); else right = Math.max(right, h.roof ? 1 : 0.6); } });
       fg.attributes.color.needsUpdate = true;
-      S.flare.size = 1.1 + 1.5 * night;
-      spill[0].material.opacity = left * (0.06 + 0.5 * night); spill[1].material.opacity = right * (0.06 + 0.5 * night);
+      S.flare.size = 0.32 + 0.48 * night;
+      spill[0].material.opacity = left * (0.025 + 0.20 * night); spill[1].material.opacity = right * (0.025 + 0.20 * night);
       group.visible = on;
       return [left, right];
     }

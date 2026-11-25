@@ -89,7 +89,7 @@ export function createSound() {
   let anthemBuffer, anthemSource, anthemLoading;
   function playAnthem(active) {
     if (active && !anthemLoading) {
-      anthemLoading = load('/afterdark/assets/audio/vip-procession.mp3').then(buffer => { anthemBuffer = buffer; })
+      anthemLoading = load('/afterdark/assets/audio/vip-arrival.mp3').then(buffer => { anthemBuffer = buffer; })
         .catch(error => console.warn('VIP score unavailable',error));
     }
     if (active && anthemBuffer && !anthemSource) {
@@ -129,7 +129,7 @@ export function createSound() {
   let lastSiren = ctx.currentTime;
   function updateSirens(active, list, L) {
     const now = ctx.currentTime, dt = Math.min(0.1, Math.max(0, now - lastSiren)); lastSiren = now;
-    set(sirenBus.gain, active && list?.length ? 1 : 0, 0.25);
+    set(sirenBus.gain, active && list?.length ? 0.24 : 0, 0.25);
     sirens.forEach((S, i) => { const src = list?.[i];
       if (!active || !src || !L) { set(S.level.gain, 0, 0.2); return; }
       const [f, tc] = sirenSweep(S, i, dt), dx = src.x - L.x, dz = src.z - L.z, d = Math.hypot(dx, dz) + 0.5;

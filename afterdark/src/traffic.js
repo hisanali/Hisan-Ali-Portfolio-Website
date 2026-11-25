@@ -2,7 +2,7 @@ import { createMotorcade } from './vip.js';
 import { beamTexture, lampColor } from './low-beams.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
 import { EMERGENCY } from './emergency-lights.js';
-import { createIndicators } from './indicators.js';
+import { createIndicators, indicatorAnchors } from './indicators.js';
 // Traffic: cars that keep to their lanes, obey the signals, queue behind each other and turn at junctions,
 // plus parked cars along the kerbs. Every body style is drawn with instancing.
 import { vehicleShadowMaterial } from './vehicle-shadow.js';
@@ -52,6 +52,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     if (coupe) g.scene.rotation.y = Math.PI;
     g.scene.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(g.scene, true);
+    const signalAnchors = indicatorAnchors(g.scene, style === 'escalade', box);
     const parts = [], emergency = [];
     g.scene.traverse(o => { if (!o.isMesh) return; let m = o.material; const name = m.name || '';
       // A police car's LED heads: kept for the convoy to light (emergency-lights.js). The glow shells only exist while
@@ -98,7 +99,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     }
 
     parts.push(rearPlate(style, kits.length, box));
-    kits.push({ style, parts, emergency, height: box.max.y, width: box.max.x - box.min.x, len: box.max.z - box.min.z });
+    kits.push({ style, parts, emergency, signalAnchors, height: box.max.y, width: box.max.x - box.min.x, len: box.max.z - box.min.z });
   }
   // Draw from shuffled decks so short runs of spawns include the whole roster.
   function fleetDeck(pool) {
@@ -294,10 +295,10 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
     const moving = vip.root.visible ? cars.concat(vip.cars) : cars;
     blinkers.begin(t, night);
-    if (player?.signal) blinkers.add(player.pos.x, player.groundY || 0, player.pos.z, player.heading, player.wid, player.len, player.signal);
     moving.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x - Math.cos(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.x), c.y || 0, c.z + Math.sin(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h + (c.slide || 0), c.roll || 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
-      if (nearMe) { const slot = used[c.kit]++; if (c.signal) blinkers.add(c.x, c.y || 0, c.z, c.h + (c.slide || 0), kit.width, kit.len, c.signal); chassis.copy(dummy.matrix).multiply(lean.makeRotationX(c.bodyPitch || 0)).multiply(lean.makeRotationZ(c.lean || 0));
+      if (nearMe) { const slot = used[c.kit]++; chassis.copy(dummy.matrix).multiply(lean.makeRotationX(c.bodyPitch || 0)).multiply(lean.makeRotationZ(c.lean || 0));
+        if (c.signal) blinkers.add(chassis, kit.signalAnchors, kit.width, c.signal, (c.id ?? c.index) * 0.237);
         steerWheel.makeRotationY(c.wheelAngle || 0);
         for (const im of groups[c.kit]) { const part = im.userData.part;
           mat.multiplyMatrices(part.wheel ? dummy.matrix : chassis, part.local);

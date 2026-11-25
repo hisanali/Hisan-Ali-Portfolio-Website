@@ -6,7 +6,7 @@ const finishes = new Map();
 export function fitEscaladeWrap(group, kit, panels, artwork = 'escalade-wrap') {
   let finish = finishes.get(artwork);
   if (!finish) {
-    const map = new THREE.TextureLoader().load('./assets/'+artwork+'.webp');
+    const map = new THREE.TextureLoader().load(`./assets/${artwork}.webp?v=champagne-1`);
     map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
     finish = new THREE.MeshStandardMaterial({map,alphaTest:.16,roughness:.34,metalness:.24,
       polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
