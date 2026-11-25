@@ -47,7 +47,7 @@ export function createEmergencyLights(parts, height, seed = 0) {
   // light thrown onto the road on each side of the car
   const spill = [-1, 1].map(side => { const m = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), new THREE.MeshBasicMaterial({ map: S.glow, color: side > 0 ? RED : BLUE, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
     m.material.polygonOffset = true; m.material.polygonOffsetFactor = -6; m.material.polygonOffsetUnits = -6;
-    m.rotation.x = -Math.PI / 2; m.position.set(side * 2.2, 0.09, 0); m.renderOrder = 2; group.add(m); return m; });
+    m.rotation.x = -Math.PI / 2; m.position.set(side * 2.2, 0.025, 0); m.renderOrder = 2; group.add(m); return m; });
 
   const phase = seed * 0.37, col = new THREE.Color();
   function level(h, t) {
