@@ -279,7 +279,7 @@ export function buildStreet(scene, city, R3, Q) {
       if (Math.abs(along - Math.round(along / P) * P) < 15) continue;
       const promenade = ax && r === 0 && fx < 16 && side < 0;
       const fixed = promenade ? -17.4 - Math.random() * 2.6 : r * P + side * (HALF + 2.05 + Math.random() * 0.96);
-      Object.assign(w, { ax, fixed, s: along, dir: Math.random() < 0.5 ? -1 : 1, pause: 0, live: true });
+      Object.assign(w, { ax, fixed, s: along, dir: Math.random() < 0.5 ? -1 : 1, pause: 0, live: true, down: 0 }); w.root.rotation.x = 0;
       w.root.rotation.y = ax ? (w.dir > 0 ? 0 : Math.PI) : (w.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
       w.root.visible = true; return; }
     w.live = false; w.root.visible = false;
@@ -335,6 +335,13 @@ export function buildStreet(scene, city, R3, Q) {
         respawn(w, focus.x, focus.z, !w.seen); w.seen = true;
         if (!w.live) continue;
       }
+      if (w.down > 0) { // knocked down by a car: thrown back, lying in the road a while, then back on their feet
+        w.down -= dt; const fall = Math.min(1, (5 - w.down) * 4), up = Math.min(1, w.down * 1.5);
+        w.root.rotation.order = 'YXZ'; w.root.rotation.x = -1.45 * Math.min(fall, up);
+        w.root.position.set(w.kx + w.vx * Math.min(1, (5 - w.down) * 2.2), 0.17 + 0.05 * Math.min(fall, up), w.kz + w.vz * Math.min(1, (5 - w.down) * 2.2));
+        if (w.down <= 0) { w.root.rotation.x = 0; w.pause = 1.2; if (w.ax) { w.fixed = w.root.position.x; w.s = w.root.position.z; } else { w.s = w.root.position.x; w.fixed = w.root.position.z; } }
+        continue;
+      }
       if (w.pause > 0) w.pause -= dt;
       else {
         w.s += w.dir * w.v * dt;
@@ -357,6 +364,9 @@ export function buildStreet(scene, city, R3, Q) {
   };
   street.setTime = e => { env = e; rail.setTime(e); for (const b of brollies) b.visible = e.rain > 0.2; };
   street.trainZ = () => trainZ; street.loadPeople = loadPeople;
+  // A car hit this walker moving (dx, dz) at speed: they fall away from it.
+  street.knock = (w, dx, dz, speed) => { const d = Math.hypot(dx, dz) || 1, throwBy = Math.min(3.2, 0.6 + speed * 0.12);
+    Object.assign(w, { down: 5, kx: w.root.position.x, kz: w.root.position.z, vx: dx / d * throwBy, vz: dz / d * throwBy }); w.root.rotation.y = Math.atan2(-dx, -dz); };
   later.push([crowns, 520], [trunks, 380], [grates, 150]); for (const [m, d] of later) splitChunks(m, d, city.chunks); street.hide = [...puffs]; street.stats = { trees: spots.length + palmSpots.length, vents: vents.length };
   return street;
 }

@@ -311,6 +311,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     pools.instanceMatrix.needsUpdate = true; if (pools.instanceColor) pools.instanceColor.needsUpdate = true; blobs.instanceMatrix.needsUpdate = true;
   }
   // Player against traffic and parked cars: push apart, return the closing speed of the worst contact.
+  let struck = 0; // the hardest the player has rammed a moving car since last asked
   function collide(player) {
     let worst = 0; const px = player.pos.x, pz = player.pos.z, pfx = Math.sin(player.heading), pfz = Math.cos(player.heading);
     const hitOne = (ox, oz, oh, o) => { const half = o ? Math.max(1.2, kits[o.kit].len * 0.5 - 0.95) : 1.2;
@@ -318,12 +319,12 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       const ofx = Math.sin(oh), ofz = Math.cos(oh);
       for (const a of [-1.15, 1.15]) { const b = clamp((px + pfx * a - ox) * ofx + (pz + pfz * a - oz) * ofz, -half, half); const ax = px + pfx * a, az = pz + pfz * a, bx = ox + ofx * b, bz = oz + ofz * b; let dx = ax - bx, dz = az - bz; const d = Math.hypot(dx, dz);
         if (d < 1.95 && d > 1e-3) { dx /= d; dz /= d; const pen = 1.95 - d; player.pos.x += dx * pen; player.pos.z += dz * pen; const ovx = o ? ofx * o.v : 0, ovz = o ? ofz * o.v : 0;
-          const vn = (player.vel.x - ovx) * dx + (player.vel.z - ovz) * dz; if (vn < 0) { player.vel.x -= dx * vn * 1.25; player.vel.z -= dz * vn * 1.25; player.vel.multiplyScalar(0.9); worst = Math.max(worst, -vn); if (o) { o.push.x -= dx * Math.min(1.2, -vn * 0.12); o.push.y -= dz * Math.min(1.2, -vn * 0.12); o.v *= 0.4; o.stun = 1.4; } } } } };
+          const vn = (player.vel.x - ovx) * dx + (player.vel.z - ovz) * dz; if (vn < 0) { player.vel.x -= dx * vn * 1.25; player.vel.z -= dz * vn * 1.25; player.vel.multiplyScalar(0.9); worst = Math.max(worst, -vn); if (o) { struck = Math.max(struck, -vn); o.push.x -= dx * Math.min(1.2, -vn * 0.12); o.push.y -= dz * Math.min(1.2, -vn * 0.12); o.v *= 0.4; o.stun = 1.4; } } } } };
     for (const c of cars) if (Math.abs((c.y || 0) - (player.groundY || 0)) < 2.5) hitOne(c.x + c.push.x, c.z + c.push.y, c.h, c);
     for (const p of nearParked) hitOne(p.x, p.z, p.h, null);
     return worst;
   }
   // Close pass at speed without contact.
   function nearMiss(player) { let got = 0; if (Math.abs(player.speed) < 17) return 0; for (const c of cars) { const d = Math.hypot(c.x - player.pos.x, c.z - player.pos.z); if (d < 3.6) { if (!c.near2) { c.near2 = true; got++; } } else if (d > 9) c.near2 = false; } return got; }
-  return { vip, stageDriveBy, modelFiles: trafficFiles, cars, parked, update, collide, nearMiss, setTime };
+  return { vip, kits, stageDriveBy, modelFiles: trafficFiles, cars, parked, update, collide, nearMiss, setTime, takeStruck() { const s = struck; struck = 0; return s; } };
 }

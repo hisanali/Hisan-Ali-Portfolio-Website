@@ -6,6 +6,7 @@ import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer } from './car.js';
 import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
+import { createPursuit } from './pursuit.js';
 import { buildWorld } from './world.js';
 import { buildPlaces } from './places.js';
 import { buildFrontier } from './frontier.js';
@@ -25,7 +26,7 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const R = createRenderer($('#scene')), { scene, camera, renderer } = R;
 const S = { mode: 'boot', kind: store.get('kind', 'run'), time: 0, clock: 0, left: 120, score: 0, combo: 0, top: 0, hits: 0, shake: 0, cam: 0, sound: store.get('sound', 'on') === 'on', flash: 0 };
 const input = { left: 0, right: 0, up: 0, down: 0, hand: 0 };
-let updatePets, city, street, world, places, player, traffic, audio = null;
+let updatePets, city, street, world, places, player, traffic, pursuit = null, audio = null;
 const inCity = (x, z) => x <= SPAN + HALF + 4 && z >= -(HALF + 4) && z <= SPAN + HALF + 4;
 
 // ---------- Rain and tyre spray ----------
@@ -103,9 +104,33 @@ const lampLights = Array.from({ length: Q.lights }, () => { const l = new THREE.
 // makes a material recompile.
 const beacons = Q.reach >= 0.7 ? [0x2f6bff, 0xff2030].map(c => { const l = new THREE.PointLight(c, 0, 24, 2); scene.add(l); return l; }) : [];
 function placeBeacons() {
-  const on = player.emergencyMode > 0, h = player.heading, lv = player.emergencyLevels || [0, 0];
-  beacons.forEach((l, i) => { const side = i ? 1 : -1; l.intensity = on ? lv[i] * (10 + 40 * (env ? env.night : 0)) : 0;
-    if (on) l.position.set(player.pos.x + Math.cos(h) * side * 0.55, (player.groundY || 0) + (player.height || 1.5) + 0.35, player.pos.z - Math.sin(h) * side * 0.55); }); }
+  const mine = player.emergencyMode > 0, cop = !mine && pursuit?.pose, lv = mine ? player.emergencyLevels || [0, 0] : cop ? pursuit.levels : [0, 0];
+  const at = mine ? { x: player.pos.x, y: player.groundY || 0, z: player.pos.z, h: player.heading, height: player.height || 1.5 } : cop;
+  beacons.forEach((l, i) => { const side = i ? 1 : -1; l.intensity = at ? lv[i] * (10 + 40 * (env ? env.night : 0)) : 0;
+    if (at) l.position.set(at.x + Math.cos(at.h) * side * 0.55, at.y + at.height + 0.35, at.z - Math.sin(at.h) * side * 0.55); }); }
+// Police pursuit: hit someone, or ram a car, and a patrol car comes after you.
+const wanted = (() => { const el = document.createElement('div'); el.id = 'wanted'; el.innerHTML = '<b>POLICE PURSUIT</b><span></span>'; document.body.appendChild(el); return el; })();
+function offence(kind) {
+  if (!pursuit || player.police || cinema.active) return;
+  S.score = Math.max(0, S.score - (kind === 'person' ? 400 : 150));
+  const r = pursuit.report();
+  toast(kind === 'person' ? (r === 'again' ? 'Another pedestrian down · the police are on you' : 'You hit a pedestrian · police are coming') : (r === 'again' ? 'Another crash · the police are on you' : 'You rammed a car · police are coming'));
+}
+// A walker the car is about to touch while moving is knocked down (checked before the car is pushed clear of people).
+function knockPeople() {
+  if (Math.abs(player.speed) < 2 || S.mode !== 'play') return; const h = player.heading, fx = Math.sin(h), fz = Math.cos(h);
+  for (const w of street.people) { if (!w.live || w.down > 0) continue; const dx = w.root.position.x - player.pos.x, dz = w.root.position.z - player.pos.z, lz = dx * fx + dz * fz, lx = dx * fz - dz * fx;
+    if (Math.abs(lx) < player.wid / 2 + 0.7 && Math.abs(lz) < player.len / 2 + 0.9) { street.knock(w, player.vel.x || dx, player.vel.z || dz, Math.abs(player.speed)); audio?.crash(0.22); S.shake = Math.max(S.shake, 0.25); offence('person'); } }
+}
+function policeStep(dt) {
+  if (Math.abs(traffic.takeStruck()) > 3) offence('car');
+  pursuit.record(player);
+  const ev = pursuit.update(dt, player, env.night);
+  if (ev === 'caught') { const fine = Math.min(save.cash, 300); save.cash -= fine; commit(save); toast(fine ? `Pulled over · fined ${cr(fine)}` : 'Pulled over · let off with a warning'); }
+  if (ev === 'lost') toast('You lost the police');
+  const p = pursuit.pose; wanted.classList.toggle('on', pursuit.active);
+  if (pursuit.active && p) wanted.querySelector('span').textContent = Math.round(Math.hypot(p.x - player.pos.x, p.z - player.pos.z)) + ' m behind · stop to give up';
+}
 let lampTick = 0;
 function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; const L = city.lamps, best = [];
   for (let i = 0; i < L.length; i++) { const d = (L[i].x - p.x) ** 2 + (L[i].z - p.z) ** 2; if (d > 3600) continue; best.push([d, i]); }
@@ -239,7 +264,7 @@ function stepActivity(dt) {
   if (S.kind === 'run') { S.left -= dt; if (S.left <= 0) finish(); }
 }
 function start() {
-  skidMarks.clear();
+  skidMarks.clear(); pursuit?.end(); wanted.classList.remove('on');
   if (S.mode === 'boot' || swapping) return; spray.clear(); ensureAudio(); const k = S.kind; Object.assign(A, { way: false, job: null, stage: '', i: 0, t: 0, go: false, nag: 0 }); REC.n = REC.i = REC.acc = 0;
   if (k === 'trial') { A.route = routes.find(r => r.id === routeSel) || routes[0]; player.place(A.route.start.x, A.route.start.z, A.route.start.h); } else player.place(city.spawn.x, city.spawn.z, 0);
   player.setPaint(paintSel);
@@ -251,7 +276,7 @@ function start() {
   setTimeout(() => { if (S.mode === 'play' && S.clock < 6 && k !== 'trial') toast(coarse ? 'Drag to look around · tap the map to open it' : 'Drag to look around · C camera · M map · O photo'); }, 3200);
 }
 function pause(on) { S.mode = on ? 'pause' : 'play'; show(on ? 'pause' : null); if (on) { $('#pause-replay').disabled = REC.n < 30; commit(save); } }
-function toMenu() { spray.clear(); S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); commit(save); modeUI(); show('menu'); }
+function toMenu() { spray.clear(); pursuit?.end(); wanted.classList.remove('on'); S.mode = 'menu'; beacon.visible = false; player.place(city.spawn.x, city.spawn.z, 0); $('#best').textContent = store.get('best', '0'); commit(save); modeUI(); show('menu'); }
 function finish() {
   S.mode = 'over'; const best = +store.get('best', '0'), isBest = S.score > best, pay = Math.round(S.score / 100) * 10; if (isBest) store.set('best', String(Math.round(S.score))); earn(pay);
   audio?.finish(isBest);
@@ -799,7 +824,7 @@ function frame() {
     } else traffic.update(dt, S.time, playing ? player : null, focus);
     if (!replaying && (playing || S.mode === 'over')) {
       const live = playing; const ctrl = { steer: live ? input.left - input.right : 0, throttle: live ? (input.up ? 1 : 0) : 0, brake: live ? input.down : 1, stopOnly: !live, hand: live ? !!input.hand : false };
-      player.others.length = 0; for (const w of street.people) if (w.live) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
+      player.others.length = 0; knockPeople(); for (const w of street.people) if (w.live && !(w.down > 0)) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
       crashCool -= dt;
       if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
@@ -807,7 +832,7 @@ function frame() {
         for (let k = 0; k < ns && !player.rough; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
         for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, player.groundY + 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
       if (live) {
-        S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed));
+        S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt);
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
         record(dt); stepActivity(dt);
@@ -827,10 +852,10 @@ function frame() {
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
   if (audio) { const ev = audio.update(dt, { vip: S.cam === 7 && cinema.active, sirens: S.cam === 7 && cinema.active ? traffic.vip.cars.filter(c => c.role === 'police').map(c => ({ x: c.x, z: c.z, vx: Math.sin(c.h) * c.v, vz: Math.cos(c.h) * c.v }))
-      : !cinema.active && player.emergencyMode === 1 ? [{ x: player.pos.x, z: player.pos.z, vx: 0, vz: 0, gain: view.inCab ? 0.3 : 0.5 }] : null, // the camera rides with the player's car: no Doppler
+      : !cinema.active ? [player.emergencyMode === 1 && { x: player.pos.x, z: player.pos.z, vx: 0, vz: 0, gain: view.inCab ? 0.3 : 0.5 }, pursuit?.siren(player)].filter(Boolean) : null, // the camera rides with the player's car: no Doppler on its own siren
       listener: (camera.getWorldDirection(sirenEar), { x: camera.position.x, z: camera.position.z, fx: sirenEar.x, fz: sirenEar.z }), featuredCar: tour, cinematic: cinema.active, garage: !$('#garage').hidden, puddleDepth: (playing || replaying) ? spray.depth : 0, hour, urban: inCity(focus.x, focus.z) && focus.x >= -HALF, sheltered: !tour && player.tunnel, vehicle: tour ? (CARS.find(c => (c.file || 'sports-coupe') === traffic.modelFiles[tour.kit])?.id || player.spec.voice) : player.spec.voice, grounded: !!tour || !player.air, offroad: !tour && (player.onSand || player.rough), playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: tour ? false : replaying ? player.speed < -0.5 : player.reversing, throttle: tour ? tour.throttle : playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: tour ? Number(tour.braking) : playing ? input.down : 0, hand: playing && !!input.hand, steer: tour ? tour.slide : player.steer, slip: tour ? Math.abs(Math.sin(tour.slide) * tour.v) : player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
-  player.updateWetness(dt, env.rain); player.updateEmergency(dt); placeBeacons();
+  player.updateWetness(dt, env.rain); player.updateEmergency(dt); if (cinema.active && pursuit?.car) { pursuit.end(); wanted.classList.remove('on'); } placeBeacons();
   probe.set(focus.x, (tour ? tour.y || 0 : player.groundY) + 1.15, focus.z); R.render(probe);
   if (shot) { shot = false; renderer.domElement.toBlob(saveShot, 'image/jpeg', 0.93); }
 }
@@ -860,7 +885,7 @@ async function boot() {
   player = await createPlayer(scene, R.cube.texture, city, carSpec(save, save.car)); R.cube.hide.push(player.root); policeUI();
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
-  traffic = await createTraffic(scene, city, Q.traffic, Q.reach);
+  traffic = await createTraffic(scene, city, Q.traffic, Q.reach); pursuit = createPursuit(scene, traffic.kits);
   traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
   routes = buildRoutes(world, city); spots = jobSpots(world, places); bigmap = createBigMap($('#bigmap-canvas'), world, places); if (!routes.some(r => r.id === routeSel)) routeSel = routes[0].id; modeUI();
   setPerf(perf.on); city.cull(player.pos, true);
@@ -873,7 +898,7 @@ async function boot() {
   buildProps(scene, city, world, Q, shape => player?.addCollider?.(shape)).then(p => { smoothCutouts(); const pu = places.update, ps = places.setTime; places.update = t => { pu(t); p.update(t); }; places.setTime = e => { ps(e); p.setTime(e); }; places.props = p; if (env) p.setTime(env); renderer.shadowMap.needsUpdate = true; }).catch(e => console.warn('props unavailable', e));
   window.__afterdark = { S, A, save, traffic, city, street, world, places, R, start, input, useCar, photo, replay, openMap, closeMap, REC }; Object.defineProperty(window.__afterdark, 'player', { get: () => player }); Object.defineProperty(window.__afterdark, 'routes', { get: () => routes }); window.__afterdark.camTest = { view, step: chase, blocked: cameraBlocked, arm: () => camArm }; // lets the camera audit drive the chase camera at a fixed frame rate
   street.loadPeople().catch(e => console.warn('people', e));
-  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
+  Object.defineProperty(window.__afterdark, 'audio', { get: () => audio }); Object.defineProperty(window.__afterdark, 'pursuit', { get: () => pursuit }); window.__afterdark.gov = gov; window.__afterdark.perf = perf; window.__afterdark.perfText = perfText;
   window.__afterdark.setTime = (mode, h, rain) => { timeMode = mode; if (h != null) { hour = h; TIMES.fixed = h; } if (rain != null) { shower = !!rain; rainyK = rain; if (mode === 'fixed') window.__afterdark.fixedRain = rain; } };
 }
 boot().catch(e => { console.error(e); setLoad('Could not start: ' + (e?.message || e)); });
