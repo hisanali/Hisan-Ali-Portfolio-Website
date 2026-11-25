@@ -1,0 +1,7 @@
+.m5-guide .m5-wrap { display:flex; align-items:center; justify-content:center; gap:26px; flex-wrap:wrap; }
+.m5-guide .m5-grid { display:grid; grid-template-columns:repeat(5,48px); gap:8px; }
+.m5-guide .m5-grid i { width:48px; height:60px; border-radius:8px; background:linear-gradient(160deg,var(--fe-accent),var(--fe-border)); animation:m5-in 7s ease infinite; }
+.m5-guide .m5-grid i:nth-child(2) { animation-delay:.15s; } .m5-guide .m5-grid i:nth-child(3) { animation-delay:.3s; } .m5-guide .m5-grid i:nth-child(4) { animation-delay:.45s; } .m5-guide .m5-grid i:nth-child(5) { animation-delay:.6s; }
+.m5-guide .m5-ad { padding:12px 18px; border-radius:999px; border:2px solid var(--fe-accent); font-weight:800; animation:m5-ad 7s ease infinite; }
+@keyframes m5-in { 0%,10% { transform:none; opacity:1; } 35%,70% { transform:translateX(30px) scale(.85); opacity:.5; } 100% { transform:none; opacity:1; } }
+@keyframes m5-ad { 0%,25% { transform:scale(1); } 40%,70% { transform:scale(1.15); } 100% { transform:scale(1); } }

@@ -1,0 +1,6 @@
+.gt-guide .gt-box { position:relative; display:grid; grid-template-columns:repeat(3,auto); gap:10px; justify-content:center; padding:52px 20px 20px; border:2px solid var(--fe-border); border-radius:16px; max-width:420px; margin:0 auto; }
+.gt-guide .gt-lid { position:absolute; left:0; right:0; top:0; padding:10px; border-radius:14px 14px 0 0; background:var(--fe-accent); color:#06142b; text-align:center; font-weight:800; animation:gt-lid 7s ease infinite; font-size:15px; line-height:1.4; }
+.gt-guide .gt-box span[class^="t"] { padding:8px 12px; border-radius:10px; border:1px solid var(--fe-border); font-weight:800; font-size:13px; opacity:0; animation:gt-in 7s ease infinite; }
+.gt-guide .gt-box .t2 { animation-delay:.4s; } .gt-guide .gt-box .t3 { animation-delay:.8s; }
+@keyframes gt-lid { 0%,10% { transform:none; } 25%,85% { transform:translateY(-10px); } 100% { transform:none; } }
+@keyframes gt-in { 0%,20% { opacity:0; transform:translateY(8px); } 35%,85% { opacity:1; transform:none; } 100% { opacity:0; } }

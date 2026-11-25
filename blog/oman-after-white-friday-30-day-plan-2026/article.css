@@ -1,0 +1,4 @@
+.aw-guide .aw-cal { display:grid; grid-template-columns:repeat(4,minmax(0,110px)); gap:10px; justify-content:center; }
+.aw-guide .aw-cal span { padding:26px 8px; border-radius:12px; border:1px solid var(--fe-border); text-align:center; font-weight:800; font-size:14px; opacity:.25; animation:aw-on 8s ease infinite; }
+.aw-guide .aw-cal .a2 { animation-delay:.7s; } .aw-guide .aw-cal .a3 { animation-delay:1.4s; } .aw-guide .aw-cal .a4 { animation-delay:2.1s; background:var(--fe-accent); color:#1a1204; border-color:transparent; }
+@keyframes aw-on { 0%,8% { opacity:.25; transform:translateY(6px); } 20%,90% { opacity:1; transform:none; } 100% { opacity:.25; } }
