@@ -455,6 +455,7 @@ function selectCamera(index) {
     cinema.elapsed = 0; cinema.shot = -1;
     cinema.beacon = beacon.visible; beacon.visible = false;
     if (index === 7) {
+      cinema.boardBlock = null;
       cinema.tour = traffic.vip.start(player);
       if (!cinema.tour) { leaveCinema(); toast('Convoy route occupied'); return; }
       S.mode = 'tour';
@@ -554,14 +555,13 @@ function cinemaCamera(dt) {
     if (traffic.vip.tour && !inCity(fleet[3].x, fleet[3].z)) { cinema.boardBlock = -1; vipCountryCamera(dt); return; }
     cinema.cShot = null;
     // Passing the Hisan shop: a low shot from the far pavement, the convoy sweeping by under the flagship billboard.
-    const shop = city.hisanShop, toShop = Math.hypot(fleet[3].x - shop.x, fleet[3].z - shop.z), byShop = Math.min(...fleet.map(c => Math.hypot(c.x - shop.x, c.z - shop.z)));
-    if (byShop < 70) {
+    const shop = city.hisanShop, byShop = Math.min(...fleet.map(c => Math.hypot(c.x - shop.x, c.z - shop.z)));
+    if (byShop < (cinema.boardBlock === -2 ? 78 : 70)) {
       if (cinema.boardBlock !== -2) { cinema.boardBlock = -2; cinema.cCut = true; const f = fleet[3], fx = Math.sin(f.h), fz = Math.cos(f.h);
         vipAnchor.set(shop.x + shop.nx * 30.5 - fx * 6, 2.5, shop.z + shop.nz * 30.5 - fz * 6); } // the far pavement, clear of the parked cars
-      const k = clamp(1 - toShop / 70, 0, 1), sub = fleet.reduce((a, b) => Math.hypot(b.x - vipAnchor.x, b.z - vipAnchor.z) < Math.hypot(a.x - vipAnchor.x, a.z - vipAnchor.z) ? b : a);
-      pivot.set(lerp(sub.x, shop.x, 0.35), lerp(1.4, 7.5, 0.25 + 0.35 * k), lerp(sub.z, shop.z, 0.35));
-      if (cinema.cCut) { camera.position.copy(vipAnchor); cinema.cCut = false; cinema.lookAt = pivot.clone(); } else camera.position.lerp(vipAnchor, 0.1);
-      cinema.lookAt.lerp(pivot, 1 - Math.exp(-4 * dt)); camera.lookAt(cinema.lookAt); camera.fov = 46; camera.updateProjectionMatrix(); return;
+      // Lock the tripod and its aim to the crossing. Cars enter and leave the frame naturally.
+      pivot.set(shop.x + shop.nx * 8, 3.45, shop.z + shop.nz * 8);
+      camera.position.copy(vipAnchor); camera.lookAt(pivot); cinema.cCut = false; camera.fov = 46; camera.updateProjectionMatrix(); return;
     }
     // Lead lights, convoy overview, door livery, principal, and departing tail.
     const cycle = vipShots.reduce((a, s) => a + s[0], 0), pass = Math.floor(cinema.elapsed/cycle);
@@ -873,6 +873,7 @@ function frame() {
       spray.emit(dt, player, player.wade > 0.05 ? 1 : env.wet, player.wade > 0.05 ? () => 1 : city.puddleAt); // wading throws water like a flooded road
       if (cinema.active) cinemaCamera(dt); else chase(dt, snapCam); snapCam = false;
     } else if (tour) cinemaCamera(dt); else if (!replaying) orbit(S.time);
+    player.updateSignals(S.time, playing);
     rain.visible = env.rain > 0.03 && !world.tunnelPassage(camera.position.x, camera.position.y, camera.position.z);
     stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); stepRain(dt, camera.position, player.vel.x, player.vel.z);
     placeLampLights(focus);
