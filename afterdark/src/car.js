@@ -76,7 +76,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     }
   });
   // Detailed imported cars keep their own textured trim, cabin and lamps; only the paint, glass and tail lenses are ours.
-  if (rigCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; if (mn === 'BodyPaint') o.material = paint; else if (/^TailLens/.test(mn)) o.material = M.tail; else if (mn === 'EXT_Glass' || mn === 'Window_Glass') o.material = M.glass; else { o.material.envMap = envTexture; o.material.envMapIntensity = 0.9; } });
+  if (rigCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; if (mn === 'BodyPaint') o.material = paint; else if (/^TailLens/.test(mn)) o.material = M.tail; else if (mn === 'EXT_Glass' || mn === 'Window_Glass') o.material = M.glass; else { o.material.envMap = envTexture; o.material.envMapIntensity = 0.9; if (/^ELED_Light_Pipe/.test(mn)) o.material.emissiveIntensity = 0.12; } });
   else if (kitCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; o.material = /paint/i.test(mn) ? paint : /glass/i.test(mn) ? M.glass : /HeadLens/i.test(mn) ? M.lens : /TailLens/i.test(mn) ? M.tail : Object.assign(o.material.clone(), { envMap: envTexture, envMapIntensity: 0.8 }); });
   else model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
     o.material = n === 'body' ? paint : /glass/i.test(n) ? M.glass : n === 'lights_red' ? M.tail : n === 'leds' ? M.led : n === 'lights' ? M.lens : /^rim_|^wheel$|^nuts$|^centre$/.test(n) ? M.rim : n === 'chrome' || n === 'metal' ? M.chrome : n === 'tire' ? M.tyre

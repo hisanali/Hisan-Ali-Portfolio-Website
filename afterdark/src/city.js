@@ -403,7 +403,7 @@ export async function buildCity(scene, refl, quality, renderer) {
 
   // ---- Sky and light: one sun that crosses the sky, setting over the sea, with an overcast neon night between ----
   const skyG = new THREE.Group(); scene.add(skyG); city.sky = skyG;
-  const sky = new Sky(); sky.scale.setScalar(16000); const su = sky.material.uniforms; su.turbidity.value = 3.2; su.rayleigh.value = 2.2; su.mieCoefficient.value = 0.004; su.mieDirectionalG.value = 0.86; skyG.add(sky);
+  const sky = new Sky(); sky.scale.setScalar(16000); const su = sky.material.uniforms; su.turbidity.value = 2.4; su.rayleigh.value = 2.2; su.mieCoefficient.value = 0.004; su.mieDirectionalG.value = 0.86; skyG.add(sky);
   const dome = new THREE.Mesh(new THREE.SphereGeometry(7500, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: { uA: { value: 0 } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `uniform float uA; varying vec3 vD;\n${GLSL_HASH} void main(){ float h = max(vD.y, 0.0); vec2 p = vD.xz / (h + 0.18);
@@ -415,23 +415,50 @@ export async function buildCity(scene, refl, quality, renderer) {
   // Stars and a moon for clear nights, and a layer of drifting cloud lit by the sun.
   const sp = []; { const r = rng(404); while (sp.length < 1500 * 3) { const u = r(), a = r() * Math.PI * 2, y = 0.03 + u * 0.97, q = Math.sqrt(1 - y * y); sp.push(Math.cos(a) * q * 7000, y * 7000, Math.sin(a) * q * 7000); } }
   const sg0 = new THREE.BufferGeometry(); sg0.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
-  const stars = new THREE.Points(sg0, new THREE.PointsMaterial({ size: 1.7, sizeAttenuation: false, color: 0xdfe8ff, transparent: true, opacity: 0, depthWrite: false, fog: false })); stars.renderOrder = -6; stars.frustumCulled = false; skyG.add(stars);
-  const moon = new THREE.Mesh(new THREE.CircleGeometry(190, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 1.5, 1.6), transparent: true, opacity: 0, depthWrite: false, fog: false })); moon.renderOrder = -6; skyG.add(moon);
+  { const r = rng(405), mag = new Float32Array(sp.length / 3), tint = new Float32Array(sp.length); for (let i = 0; i < mag.length; i++) { mag[i] = Math.pow(r(), 3.2); const warm = r(); tint.set(warm < 0.2 ? [1, 0.82, 0.62] : warm > 0.8 ? [0.72, 0.84, 1] : [1, 0.97, 0.92], i * 3); }
+    sg0.setAttribute('mag', new THREE.BufferAttribute(mag, 1)); sg0.setAttribute('tint', new THREE.BufferAttribute(tint, 3)); }
+  // Stars of different brightness and colour, twinkling, dimmed near the horizon.
+  const starU = { uTime: refl.uniforms.uTime, uOpacity: { value: 0 } };
+  const stars = new THREE.Points(sg0, new THREE.ShaderMaterial({ uniforms: starU, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
+    vertexShader: 'attribute float mag; attribute vec3 tint; uniform float uTime; varying vec3 vC; varying float vA; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; float tw = 0.75 + 0.25 * sin(uTime * (2.0 + mag * 5.0) + position.x * 0.37); float h = normalize(position).y; vA = tw * smoothstep(0.02, 0.25, h) * (0.35 + 0.65 * mag); vC = tint; gl_PointSize = 1.2 + mag * 2.8; }',
+    fragmentShader: 'uniform float uOpacity; varying vec3 vC; varying float vA; void main(){ vec2 q = gl_PointCoord - 0.5; float d = length(q); float a = smoothstep(0.5, 0.0, d); gl_FragColor = vec4(vC * a * vA * uOpacity * 1.6, 1.0); }' }));
+  stars.renderOrder = -6; stars.frustumCulled = false; skyG.add(stars);
+  // The moon: maria and craters painted once, a soft halo around it.
+  const moonTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'), r = rng(77);
+    const g = x.createRadialGradient(128, 128, 10, 128, 128, 126); g.addColorStop(0, '#f4f2ea'); g.addColorStop(0.85, '#dcd9cf'); g.addColorStop(1, '#b9b6ad'); x.fillStyle = g; x.beginPath(); x.arc(128, 128, 126, 0, 7); x.fill();
+    x.save(); x.beginPath(); x.arc(128, 128, 126, 0, 7); x.clip();
+    for (const [mx, my, mr] of [[96, 92, 44], [150, 80, 30], [170, 130, 36], [110, 150, 28], [80, 130, 22]]) { x.fillStyle = 'rgba(120,122,128,0.38)'; x.beginPath(); x.ellipse(mx, my, mr, mr * 0.8, r() * 3, 0, 7); x.fill(); }
+    for (let i = 0; i < 90; i++) { const cx = r() * 256, cy = r() * 256, cr = 1.5 + Math.pow(r(), 3) * 12; x.fillStyle = 'rgba(90,92,98,0.3)'; x.beginPath(); x.arc(cx, cy, cr, 0, 7); x.fill(); x.fillStyle = 'rgba(255,255,250,0.25)'; x.beginPath(); x.arc(cx - cr * 0.3, cy - cr * 0.3, cr * 0.6, 0, 7); x.fill(); }
+    x.restore(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(150, 48), new THREE.MeshBasicMaterial({ map: moonTex, color: new THREE.Color(1.6, 1.6, 1.65), transparent: true, opacity: 0, depthWrite: false, fog: false })); moon.renderOrder = -6; skyG.add(moon);
+  const haloTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,0.5)'); g.addColorStop(0.25, 'rgba(220,230,255,0.18)'); g.addColorStop(1, 'rgba(200,215,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(1300, 1300), new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })); halo.renderOrder = -7; moon.add(halo); halo.position.z = -2;
   let sunsetLoaded = false;
   const sunsetSky = new THREE.TextureLoader().load('/afterdark/assets/qwantani-sunset.jpg', () => { sunsetLoaded = true; });
   sunsetSky.colorSpace = THREE.SRGBColorSpace;
   sunsetSky.wrapS = THREE.RepeatWrapping;
-  const cloudU = { uTime: refl.uniforms.uTime, uPhoto: { value: sunsetSky }, uPhotoK: { value: 0 }, uCover: { value: 0.48 }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uLit: { value: new THREE.Color(2, 2, 2) }, uShade: { value: new THREE.Color(1, 1, 1) } };
+  const cloudU = { uTime: refl.uniforms.uTime, uPhoto: { value: sunsetSky }, uPhotoK: { value: 0 }, uCover: { value: 0.48 }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uLit: { value: new THREE.Color(2, 2, 2) }, uShade: { value: new THREE.Color(1, 1, 1) }, uHaze: { value: new THREE.Color(0.9, 0.85, 0.8) } };
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(6800, 48, 20), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, transparent: true, uniforms: cloudU,
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform float uTime, uCover, uPhotoK; uniform sampler2D uPhoto; uniform vec3 uSun, uLit, uShade; varying vec3 vD;\n${GLSL_HASH} float adF(vec2 p){ return adN(p) * 0.5 + adN(p * 2.1 + 3.7) * 0.27 + adN(p * 4.3 + 9.1) * 0.15 + adN(p * 8.9 + 1.3) * 0.08; }
-      void main(){ vec3 d = normalize(vD); if (d.y < 0.0) discard; vec2 p = d.xz / (d.y + 0.17) * 1.35 + uTime * vec2(0.0055, 0.0028);
-        float n = adF(p * vec2(0.72, 1.25)) * 0.78 + adF(p * 0.36 + 5.0) * 0.22;
-        float edge = mix(0.61, 0.19, uCover);
-        float alpha = smoothstep(edge, edge + 0.2, n);
-        float density = smoothstep(edge + 0.02, edge + 0.35, n);
-        vec3 color = mix(uLit, uShade, density);
-        color += uLit * pow(max(dot(d, uSun), 0.0), 12.0) * 0.29 * (1.0 - density);
+    fragmentShader: `uniform float uTime, uCover, uPhotoK; uniform sampler2D uPhoto; uniform vec3 uSun, uLit, uShade, uHaze; varying vec3 vD;\n${GLSL_HASH} float adF(vec2 p){ return adN(p) * 0.5 + adN(p * 2.1 + 3.7) * 0.27 + adN(p * 4.3 + 9.1) * 0.15 + adN(p * 8.9 + 1.3) * 0.08; }
+      float cloud(vec2 p){ return adF(p * vec2(0.72, 1.25)) * 0.78 + adF(p * 0.36 + 5.0) * 0.22; }
+      void main(){ vec3 d = normalize(vD); if (d.y < 0.0) discard; vec2 base = d.xz / (d.y + 0.17) * 1.35, wind = uTime * vec2(0.0055, 0.0028), p = base + wind;
+        float n = cloud(p);
+        float edge = mix(0.66, 0.2, uCover);
+        float alpha = smoothstep(edge, edge + 0.16, n);
+        float density = smoothstep(edge + 0.02, edge + 0.3, n);
+        // light through the cloud: how much cloud lies between this point and the sun
+        vec2 toSun = normalize(uSun.xz + vec2(1e-4)) * 0.11;
+        float shade = max(0.0, cloud(p + toSun) - edge) + max(0.0, cloud(p + toSun * 2.4) - edge) * 0.7;
+        float lit = exp(-shade * 5.5);
+        vec3 color = mix(uShade * 0.62, uLit, lit * (1.0 - 0.45 * density)); // sunlit tops, grey shaded bases
+        float forward = pow(max(dot(d, uSun), 0.0), 8.0);
+        color += uLit * forward * (0.45 * (1.0 - density) + 0.12); // silver lining towards the sun
+        // high cirrus, stretched by the jet stream, over the clear sky
+        float ci = smoothstep(0.56, 0.86, adF(base * vec2(0.22, 1.7) + wind * 2.6 + 11.0)) * 0.38 * (1.0 - 0.6 * uCover);
+        color = mix(color, uLit * 1.04 + uLit * forward * 0.3, ci * (1.0 - alpha)); alpha = max(alpha, ci);
+        // aerial perspective: distant cloud fades into the horizon haze
+        color = mix(uHaze, color, 0.3 + 0.7 * smoothstep(0.0, 0.28, d.y));
         float photo = uPhotoK * smoothstep(0.0, 0.035, d.y);
         if (photo > 0.01) {
           float bearing = atan(d.z, d.x) - atan(uSun.z, uSun.x);
@@ -464,12 +491,12 @@ export async function buildCity(scene, refl, quality, renderer) {
     sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
     C(0xb9cdf2, 0x33325a, night, hemi.color); C(0x8d806e, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(2.7, 3.3, high), mix(0.95, 0.42, rainy), night);
     C(0xe6bd9c, 0xc9d8ea, high, scene.fog.color).lerp(col.set(rainy > 0.5 ? 0x0e0b18 : 0x070b16), night); scene.fog.density = mix(mix(0.00054, 0.00034, high), mix(0.00045, 0.0017, rainy), night) + dawn * 0.0006 * (1 - night);
-    su.rayleigh.value = mix(2.65, 1.45, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night * mix(0.3, 1, rainy); dome.visible = night > 0.01;
-    stars.material.opacity = night * (1 - rainy) * 0.9; stars.visible = stars.material.opacity > 0.02; moon.material.opacity = night * (1 - rainy); moon.visible = moon.material.opacity > 0.02;
+    su.rayleigh.value = mix(2.65, 2.0, high); renderer.toneMappingExposure = mix(mix(0.47, 0.42, high), 1.0, night); dome.material.uniforms.uA.value = night * mix(0.3, 1, rainy); dome.visible = night > 0.01;
+    starU.uOpacity.value = night * (1 - rainy) * 0.9; stars.visible = starU.uOpacity.value > 0.02; moon.material.opacity = night * (1 - rainy); moon.visible = moon.material.opacity > 0.02; halo.material.opacity = moon.material.opacity * 0.8;
     if (moon.visible) { moon.position.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize().multiplyScalar(6600); moon.lookAt(skyG.position); }
-    cloudU.uPhotoK.value = sunsetLoaded ? day * (1 - high * 0.9) * 0.82 : 0;
-    cloudU.uSun.value.copy(sunDir); cloudU.uCover.value = mix(0.32, 0.88, Math.max(e.wet, rainy * sst(0.3, 0.9, night)));
-    { const sunset = (1 - high) * day, k = 1 - night; cloudU.uLit.value.setRGB(mix(0.07, mix(1.55, 1.6, sunset), k), mix(0.07, mix(1.62, 1.0, sunset), k), mix(0.1, mix(1.75, 0.74, sunset), k)); cloudU.uShade.value.setRGB(mix(0.03, mix(1.15, 0.75, sunset), k), mix(0.03, mix(1.2, 0.62, sunset), k), mix(0.05, mix(1.32, 0.7, sunset), k)); if (rainy > 0.5 && night > 0.5) { cloudU.uLit.value.setRGB(0.1, 0.07, 0.12); cloudU.uShade.value.setRGB(0.05, 0.04, 0.07); } }
+    cloudU.uPhotoK.value = sunsetLoaded ? day * (1 - sst(3, 13, el)) * 0.8 : 0; // the photographed sunset only while the sun is low
+    cloudU.uSun.value.copy(sunDir); cloudU.uHaze.value.copy(scene.fog.color).multiplyScalar(1.15 - 0.85 * night); cloudU.uCover.value = mix(0.32, 0.88, Math.max(e.wet, rainy * sst(0.3, 0.9, night)));
+    { const sunset = (1 - high) * day, k = 1 - night; cloudU.uLit.value.setRGB(mix(0.07, mix(1.55, 1.6, sunset), k), mix(0.07, mix(1.62, 1.0, sunset), k), mix(0.1, mix(1.75, 0.74, sunset), k)); cloudU.uShade.value.setRGB(mix(0.03, mix(0.92, 0.75, sunset), k), mix(0.03, mix(0.97, 0.62, sunset), k), mix(0.05, mix(1.1, 0.7, sunset), k)); if (rainy > 0.5 && night > 0.5) { cloudU.uLit.value.setRGB(0.1, 0.07, 0.12); cloudU.uShade.value.setRGB(0.05, 0.04, 0.07); } }
     refl.uniforms.uWet.value = mix(0.06, 1, e.wet); refl.uniforms.uLitK.value = mix(0.04, 1, night);
     for (const f of hooks) f(e, mix, C); return e;
   };

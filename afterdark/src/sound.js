@@ -136,7 +136,7 @@ export function createSound() {
       const away = (src.vx * dx + src.vz * dz) / d, doppler = clamp(343 / (343 + away), 0.85, 1.18), hz = f * S.pitch * doppler;
       S.saw.frequency.setTargetAtTime(hz, now, tc); S.sq.frequency.setTargetAtTime(hz * 1.004, now, tc);
       const near = 1 / (1 + d / 14);
-      set(S.level.gain, (0.004 + 0.12 * near) * (src.gain ?? 1), 0.08); set(S.air.frequency, 1300 + 9000 * near * near, 0.1);
+      set(S.level.gain, (0.003 + 0.055 * near) * (src.gain ?? 1), 0.08); set(S.air.frequency, 1300 + 9000 * near * near, 0.1);
       if (S.pan.pan) set(S.pan.pan, clamp((dz * L.fx - dx * L.fz) / d * 0.85, -1, 1), 0.08); });
   }
   function soundtrack(active, vip) {
@@ -168,6 +168,7 @@ export function createSound() {
     preview(id) { previewCar = id; previewStart = ctx.currentTime; },
     resume() { if (ctx.state !== 'running') ctx.resume?.(); }, setOn(v) { on = v; },
     click() { tone(1500, 0, 0.05, 0.05, 'triangle'); },
+    tick(on) { tone(on ? 2300 : 1700, 0, 0.018, 0.022, 'square'); }, // indicator relay
     start() { try { drive.lastVolume = 1; drive.starter(0.9); } catch (e) {} },
     beacon() { [659, 880, 1319, 1760].forEach((f, i) => { tone(f, i * 0.07, 0.5, 0.11, 'triangle'); tone(f * 2, i * 0.07, 0.3, 0.03); }); burst(6000, 2, 0.05, 0.5, 0, 'highpass'); },
     nearMiss() { burst(500, 0.8, 0.3, 0.45, 0, 'bandpass', 2600); },

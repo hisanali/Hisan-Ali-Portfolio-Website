@@ -30,12 +30,21 @@ function grandTour(world) {
   const legs = ['coast', 'temple', 'lakeside', 'dunes', 'alpine', 'north', 'old'].map(road);
   if (!S || legs.some(r => !r)) return null;
   const [coast, temple, lakeside, dunes, alpine, north, old] = legs, LANE = 2.8, pts = [];
+  // City streets through lane corners, with each corner rounded on a 12 m radius.
+  const streets = corners => { for (let k = 0; k < corners.length - 1; k++) { const [ax, az] = corners[k], [bx, bz] = corners[k + 1], L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L, R = 12;
+    for (let d = k ? R : 0; d <= L - (k < corners.length - 2 ? R : 0); d += 6) pts.push(new THREE.Vector2(ax + ux * d, az + uz * d));
+    if (k < corners.length - 2) { const [cx, cz] = corners[k + 2], M = Math.hypot(cx - bx, cz - bz), vx = (cx - bx) / M, vz = (cz - bz) / M;
+      for (let t = 0.25; t < 1; t += 0.25) { const a = 1 - t; pts.push(new THREE.Vector2(a * a * (bx - ux * R) + 2 * a * t * bx + t * t * (bx + vx * R), a * a * (bz - uz * R) + 2 * a * t * bz + t * t * (bz + vz * R))); } } } };
   const nearest = (rd, x, z) => { let best = rd.from, bd = Infinity; for (let i = rd.from; i <= rd.to; i++) { const d = (S[i].x - x) ** 2 + (S[i].z - z) ** 2; if (d < bd) { bd = d; best = i; } } return best; };
   const run = (a, b) => { for (let i = a; i <= b; i += 4) { const s = S[i]; pts.push(new THREE.Vector2(s.x - s.lx * LANE, s.z - s.lz * LANE)); } };
+  // It sets off from the boulevard loop past the Hisan shop and its billboards, laps the loop, leaves by the seafront
+  // avenue for the coast road, and comes home through the city to where it began.
+  const A = 3 * P - 2, B = 6 * P + 2, C = 2 * P - 2;
+  streets([[A, C + 14], [A, B], [B, B], [B, C], [2, C], [2, 30]]);
   run(coast.from + 6, nearest(coast, S[temple.from].x, S[temple.from].z) - 5);
   for (const rd of [temple, lakeside, dunes, alpine, north]) run(rd.from + 5, rd.to - 5);
   run(nearest(old, S[north.to].x, S[north.to].z) + 5, old.to - 6);
-  for (let z = SPAN - 6; z > 6; z -= 30) pts.push(new THREE.Vector2(2, z)); // south down the seafront avenue to the coast gate
+  streets([[2, SPAN - 8], [2, 2 * P + 2], [A, 2 * P + 2], [A, C + 8]]);
   const curve = new THREE.SplineCurve(pts); curve.arcLengthDivisions = pts.length * 8;
   return curve;
 }
@@ -171,13 +180,20 @@ export function createMotorcade(scene, kits, traffic, parked, world = null) {
       const blocked=dt>0 && (near.some(o=>occupied(next,o)) || (front && occupied(next,footprint(front))));
       if(blocked) {c.distance=priorDistance;c.slide=priorSlide;c.accel=-5;c.v=0;}
       else {c.x=next.x;c.z=next.z;c.h=h;}
+      // indicate ahead of a corner (a rise in heading is a turn to the left) and through it
+      { const turnAhead = wrapAngle(tangent(c.distance + 30) - h); c.signal = Math.abs(turnAhead) > 0.7 ? (turnAhead > 0 ? 'l' : 'r') : null; }
       const desiredSteer=clamp(Math.atan(kit.len*.61*curvature)-c.slide*.82,-.59,.59);
       c.wheelAngle+=clamp(desiredSteer-c.wheelAngle,-1.35*dt,1.35*dt);
       c.lean=clamp(lateral*.005,-.055,.055);
       c.bodyPitch=-c.accel*.009; c.braking=c.accel<-.85;
       c.spin+=c.v*dt/.34; c.throttle=c.braking?0:clamp(.19+c.accel*.20,.04,.95);
-      c.y = heightAt(c.distance); c.pitch = Math.atan2(heightAt(c.distance + kit.len * .5) - heightAt(c.distance - kit.len * .5), kit.len);
-      c.rig.position.set(c.x,c.y,c.z);c.rig.rotation.set(c.bodyPitch-c.pitch,c.h+c.slide,c.lean,'YXZ');
+      // Sit on the real ground under the car: its front and rear axles for pitch, its two sides for roll, so the tyres
+      // touch the surface on camber, banking and crests instead of sinking into it.
+      if (world && !inCity(c.x, c.z)) { const hh = c.h + c.slide, fx = Math.sin(hh), fz = Math.cos(hh), lx = Math.cos(hh), lz = -Math.sin(hh), a = kit.len * .33, w = kit.width * .38;
+        const front = groundY(c.x + fx * a, c.z + fz * a), rear = groundY(c.x - fx * a, c.z - fz * a), left = groundY(c.x + lx * w, c.z + lz * w), right = groundY(c.x - lx * w, c.z - lz * w);
+        c.y = Math.max((front + rear) / 2, (left + right) / 2) + .02; c.pitch = Math.atan2(front - rear, 2 * a); c.roll = Math.atan2(left - right, 2 * w); }
+      else { c.y = heightAt(c.distance); c.pitch = 0; c.roll = 0; }
+      c.rig.position.set(c.x,c.y,c.z);c.rig.rotation.set(c.bodyPitch-c.pitch,c.h+c.slide,c.lean+c.roll,'YXZ');
       const tyre=c.tyres;
       Object.assign(tyre,{speed:c.v,heading:h+c.slide,braking:c.braking,accel:c.accel,slip:Math.abs(c.v*Math.sin(c.slide))});
       rubber.update(tyre,false,wet,c.trail);
@@ -192,7 +208,7 @@ export function createMotorcade(scene, kits, traffic, parked, world = null) {
     rubber.clear(); age=0;
     playerBody=player ? {x:player.pos.x,z:player.pos.z,h:player.heading,width:player.wid,len:player.len} : null;
     const taken=obstacles();
-    let startDistance=344, clear=false;
+    let startDistance=70, clear=false; // the lead just short of the Hisan shop
     for(let n=0;n<Math.ceil(length/3);n++,startDistance+=3) {
       if(cars.every(c=>{
         const d=startDistance-c.index*8.5,p=sample(d),q=sample(d+1),kit=kits[c.kit];

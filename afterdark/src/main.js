@@ -153,8 +153,16 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
   if (k === 'l' && S.mode === 'play') emergencyLights();
+  if ((k === 'q' || k === 'e') && S.mode === 'play') indicate(k === 'q' ? 'l' : 'r');
   if (k === 'enter' && S.mode === 'menu') start(); });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYS[k]) input[KEYS[k]] = 0; if (k === 'h') audio?.horn(false); });
+// Indicators: Q left, E right, the same key again to cancel; they cancel themselves once the turn is made.
+let signalFrom = 0, signalAge = 0;
+function indicate(side) { player.signal = player.signal === side ? null : side; signalFrom = player.heading; signalAge = 0; }
+let signalLit = false;
+function stepIndicators(dt) { if (!player.signal) return; signalAge += dt; const turned = angleDiff(player.heading, signalFrom);
+  if (Math.abs(turned) > 1.05 || signalAge > 14) player.signal = null;
+  const lit = S.time % 0.7 < 0.38; if (lit !== signalLit) { signalLit = lit; audio?.tick(lit); } } // the relay's tick and tock
 // Police cars: lights and siren, then lights only, then off.
 function emergencyLights() {
   if (!player.police) { toast('Lights and siren come with the police cars in the garage'); return; }
@@ -472,7 +480,9 @@ const flyby = new THREE.Vector3(), forwardShot = new THREE.Vector3();
 const vipShots = [
   // Duration, subject, longitudinal offset, lateral offset, height, lens.
   [3.6,0,14,4,1.4,39], [2.6,3,-17,5,11,49], [3.8,2,3,6,1.1,39],
-  [5.4,3,10,-4,2.1,36], [4.2,4,12,6,1.3,43], [4.8,7,-12,4,3.1,38]
+  [5.4,3,10,-4,2.1,36], [4.2,4,12,6,1.3,43], [4.8,7,-12,4,3.1,38],
+  // a high crane over the street, and the principal's wheel at road level
+  [4.4,3,22,12,15,44], [3.4,3,5,-2.6,0.5,32]
 ];
 const vipAnchor = new THREE.Vector3();
 // Out in the country the convoy film cuts between wide, landscape shots: a helicopter chase, a telephoto shot from the
@@ -489,15 +499,17 @@ const VIP_COUNTRY = [
 ];
 const groundUnder = (x, z) => Math.max(world.terrain(x, z), world.ground(x, z));
 function vipCountryCamera(dt) {
-  const fleet = traffic.vip.cars, vip = traffic.vip, lead = fleet[3];
-  const inTunnel = world.nearRoad(lead.x, lead.z, 9)?.s.tunnel;
-  if (!cinema.cShot || cinema.elapsed >= cinema.cutAt || inTunnel && cinema.cShot.type !== 'track') {
+  const fleet = traffic.vip.cars, vip = traffic.vip;
+  // In a tunnel the terrain above is the mountain: film from inside, low behind the convoy, at the road's own height.
+  const tunnelAt = (x, z) => !!world.nearRoad(x, z, 9)?.s.tunnel, inTunnel = fleet.some(c => tunnelAt(c.x, c.z));
+  if (!cinema.cShot || cinema.elapsed >= cinema.cutAt || inTunnel && !cinema.cShot.tunnel) {
     cinema.cShotNo = (cinema.cShotNo ?? -1) + 1;
-    const shot = inTunnel ? { type: 'track', dur: 3, s: 3, along: -10, side: 0.6, up: 1.7, fov: 44 } : VIP_COUNTRY[cinema.cShotNo % VIP_COUNTRY.length];
+    const shot = inTunnel ? { type: 'track', tunnel: true, dur: 4, s: cinema.cShotNo % 2 ? 0 : 7, along: cinema.cShotNo % 2 ? 13 : -13, side: cinema.cShotNo % 2 ? 0.8 : -0.8, up: 1.5, fov: 46 } /* ahead of the lead or behind the tail: the only clear road in a tunnel */ : VIP_COUNTRY[cinema.cShotNo % VIP_COUNTRY.length];
     cinema.cShot = shot; cinema.cutAt = cinema.elapsed + shot.dur; cinema.cStart = cinema.elapsed; cinema.cCut = true; cinema.heading = fleet[shot.s].h;
     if (shot.type === 'tele') { const p = vip.ahead(fleet[shot.s], shot.ahead), sx = Math.cos(p.h) * shot.side, sz = -Math.sin(p.h) * shot.side; vipAnchor.set(p.x + sx, 0, p.z + sz); vipAnchor.y = groundUnder(vipAnchor.x, vipAnchor.z) + shot.up; }
     if (shot.type === 'orbit') cinema.orbitA = Math.random() * Math.PI * 2;
   }
+  if (cinema.cShot.tunnel && !inTunnel) cinema.cutAt = Math.min(cinema.cutAt, cinema.elapsed + 0.6); // out in daylight: back to the wide shots
   const shot = cinema.cShot, subject = fleet[shot.s], t = (cinema.elapsed - cinema.cStart) / shot.dur;
   cinema.heading += angleDiff(subject.h, cinema.heading) * (1 - Math.exp(-3.4 * dt));
   const h = cinema.heading, fx = Math.sin(h), fz = Math.cos(h), rx = Math.cos(h), rz = -Math.sin(h), y = subject.y || 0;
@@ -507,7 +519,8 @@ function vipCountryCamera(dt) {
   else { const along = shot.along + (shot.type === 'heli' ? t * 8 : shot.type === 'drone' ? 0 : (t - 0.5) * 3.4), side = shot.side + (shot.type === 'drone' ? t * 18 : 0);
     want.set(subject.x + fx * along + rx * side, y + shot.up, subject.z + fz * along + rz * side);
     if (shot.type === 'drone') { pivot.set((fleet[0].x + fleet[7].x) / 2, ((fleet[0].y || 0) + (fleet[7].y || 0)) / 2 + 1, (fleet[0].z + fleet[7].z) / 2); } }
-  want.y = Math.max(want.y, groundUnder(want.x, want.z) + (shot.type === 'track' ? 1.0 : 2.5));
+  if (shot.tunnel || tunnelAt(want.x, want.z)) want.y = clamp(want.y, y + 0.9, y + 2.2); // under the tunnel roof, never over the mountain
+  else want.y = Math.max(want.y, groundUnder(want.x, want.z) + (shot.type === 'track' ? 1.0 : 2.5));
   if (shot.type === 'track' || shot.type === 'orbit') want.lerp(pivot, 1 - cameraClearance(pivot, want));
   if (cinema.cCut) { camera.position.copy(want); cinema.cCut = false; } else camera.position.lerp(want, 1 - Math.exp(-(shot.type === 'track' ? 11 : 4.5) * dt));
   camera.lookAt(pivot); camera.fov = shot.fov; camera.updateProjectionMatrix();
@@ -533,8 +546,18 @@ function cinemaCamera(dt) {
     cinemaTitles(dt);
     if (traffic.vip.tour && !inCity(fleet[3].x, fleet[3].z)) { cinema.boardBlock = -1; vipCountryCamera(dt); return; }
     cinema.cShot = null;
+    // Passing the Hisan shop: a low shot from the far pavement, the convoy sweeping by under the flagship billboard.
+    const shop = city.hisanShop, toShop = Math.hypot(fleet[3].x - shop.x, fleet[3].z - shop.z), byShop = Math.min(...fleet.map(c => Math.hypot(c.x - shop.x, c.z - shop.z)));
+    if (byShop < 70) {
+      if (cinema.boardBlock !== -2) { cinema.boardBlock = -2; cinema.cCut = true; const f = fleet[3], fx = Math.sin(f.h), fz = Math.cos(f.h);
+        vipAnchor.set(shop.x + shop.nx * 30.5 - fx * 6, 2.5, shop.z + shop.nz * 30.5 - fz * 6); } // the far pavement, clear of the parked cars
+      const k = clamp(1 - toShop / 70, 0, 1), sub = fleet.reduce((a, b) => Math.hypot(b.x - vipAnchor.x, b.z - vipAnchor.z) < Math.hypot(a.x - vipAnchor.x, a.z - vipAnchor.z) ? b : a);
+      pivot.set(lerp(sub.x, shop.x, 0.35), lerp(1.4, 7.5, 0.25 + 0.35 * k), lerp(sub.z, shop.z, 0.35));
+      if (cinema.cCut) { camera.position.copy(vipAnchor); cinema.cCut = false; cinema.lookAt = pivot.clone(); } else camera.position.lerp(vipAnchor, 0.1);
+      cinema.lookAt.lerp(pivot, 1 - Math.exp(-4 * dt)); camera.lookAt(cinema.lookAt); camera.fov = 46; camera.updateProjectionMatrix(); return;
+    }
     // Lead lights, convoy overview, door livery, principal, and departing tail.
-    const cycle = 24.4, pass = Math.floor(cinema.elapsed/cycle);
+    const cycle = vipShots.reduce((a, s) => a + s[0], 0), pass = Math.floor(cinema.elapsed/cycle);
     let phase = cinema.elapsed % cycle, shotIndex=0;
     while (shotIndex<vipShots.length-1 && phase>=vipShots[shotIndex][0]) phase-=vipShots[shotIndex++][0];
     const [duration,index,along,side,height,fov]=vipShots[shotIndex];
@@ -832,7 +855,7 @@ function frame() {
         for (let k = 0; k < ns && !player.rough; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
         for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, player.groundY + 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
       if (live) {
-        S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt);
+        S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt); stepIndicators(dt);
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
         record(dt); stepActivity(dt);
