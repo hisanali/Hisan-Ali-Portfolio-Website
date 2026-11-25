@@ -136,7 +136,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     tilt.add(light, light.target); return light;
   });
 
-  const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, tyreContacts, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
+  const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, height, tyreContacts, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
   let brakeToStop = false;
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
   const hw = wid / 2 - 0.14, hl = len / 2 - 0.06, CORNERS = [[hw, hl], [-hw, hl], [hw, -hl], [-hw, -hl]], KERB = HALF + SW - 0.06, PROM = -(HALF + 13.2), prevC = [null, null, null, null];

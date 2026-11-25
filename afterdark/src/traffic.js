@@ -294,10 +294,10 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
     const moving = vip.root.visible ? cars.concat(vip.cars) : cars;
     blinkers.begin(t, night);
-    if (player?.signal) blinkers.add(player.pos.x, player.groundY || 0, player.pos.z, player.heading, player.wid, player.len, player.signal);
+    if (player?.signal) blinkers.add(player.pos.x, player.groundY || 0, player.pos.z, player.heading, player.wid, player.len, player.signal, player.height * 0.45, -(player.signalStart || 0));
     moving.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x - Math.cos(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.x), c.y || 0, c.z + Math.sin(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h + (c.slide || 0), c.roll || 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
-      if (nearMe) { const slot = used[c.kit]++; if (c.signal) blinkers.add(c.x, c.y || 0, c.z, c.h + (c.slide || 0), kit.width, kit.len, c.signal); chassis.copy(dummy.matrix).multiply(lean.makeRotationX(c.bodyPitch || 0)).multiply(lean.makeRotationZ(c.lean || 0));
+      if (nearMe) { const slot = used[c.kit]++; if (c.signal) blinkers.add(c.x, c.y || 0, c.z, c.h + (c.slide || 0), kit.width, kit.len, c.signal, kit.height * 0.45, c.id * 0.237); chassis.copy(dummy.matrix).multiply(lean.makeRotationX(c.bodyPitch || 0)).multiply(lean.makeRotationZ(c.lean || 0));
         steerWheel.makeRotationY(c.wheelAngle || 0);
         for (const im of groups[c.kit]) { const part = im.userData.part;
           mat.multiplyMatrices(part.wheel ? dummy.matrix : chassis, part.local);

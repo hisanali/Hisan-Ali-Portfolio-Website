@@ -160,12 +160,13 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if (k === 'enter' && S.mode === 'menu') start(); });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYS[k]) input[KEYS[k]] = 0; if (k === 'h') audio?.horn(false); });
 // Indicators: Q left, E right, the same key again to cancel; they cancel themselves once the turn is made.
-let signalFrom = 0, signalAge = 0;
-function indicate(side) { player.signal = player.signal === side ? null : side; signalFrom = player.heading; signalAge = 0; }
+let signalFrom = 0, signalTurned = false;
+function indicate(side) { player.signal = player.signal === side ? null : side; signalFrom = player.heading; signalTurned = false; player.signalStart = S.time; signalLit = false; }
 let signalLit = false;
-function stepIndicators(dt) { if (!player.signal) return; signalAge += dt; const turned = angleDiff(player.heading, signalFrom);
-  if (Math.abs(turned) > 1.05 || signalAge > 14) player.signal = null;
-  const lit = S.time % 0.7 < 0.38; if (lit !== signalLit) { signalLit = lit; audio?.tick(lit); } } // the relay's tick and tock
+function stepIndicators() { if (!player.signal) return; const turned = angleDiff(player.heading, signalFrom);
+  if (turned * (player.signal === 'l' ? 1 : -1) > 0.45) signalTurned = true;
+  if (signalTurned && Math.abs(player.steer) < 0.12) { player.signal = null; return; }
+  const lit = (S.time - player.signalStart) % 0.7 < 0.38; if (lit !== signalLit) { signalLit = lit; audio?.tick(lit); } } // the relay's tick and tock
 // Police cars: lights and siren, then lights only, then off.
 function emergencyLights() {
   if (!player.police) { toast('Lights and siren come with the police cars in the garage'); return; }
@@ -517,13 +518,16 @@ function vipCountryCamera(dt) {
   cinema.heading += angleDiff(subject.h, cinema.heading) * (1 - Math.exp(-3.4 * dt));
   const h = cinema.heading, fx = Math.sin(h), fz = Math.cos(h), rx = Math.cos(h), rz = -Math.sin(h), y = subject.y || 0;
   pivot.set(subject.x + fx * 1.1, y + 1.05, subject.z + fz * 1.1);
-  if (shot.type === 'tele') want.copy(vipAnchor);
+  if (shot.tunnel) {
+    const road = vip.ahead(subject, shot.along);
+    want.set(road.x + Math.cos(road.h) * shot.side, road.y + shot.up, road.z - Math.sin(road.h) * shot.side);
+  } else if (shot.type === 'tele') want.copy(vipAnchor);
   else if (shot.type === 'orbit') { const a = cinema.orbitA + t * 1.5; want.set(subject.x + Math.cos(a) * shot.r, y + shot.up, subject.z + Math.sin(a) * shot.r); }
   else { const along = shot.along + (shot.type === 'heli' ? t * 8 : shot.type === 'drone' ? 0 : (t - 0.5) * 3.4), side = shot.side + (shot.type === 'drone' ? t * 18 : 0);
     want.set(subject.x + fx * along + rx * side, y + shot.up, subject.z + fz * along + rz * side);
     if (shot.type === 'drone') { pivot.set((fleet[0].x + fleet[7].x) / 2, ((fleet[0].y || 0) + (fleet[7].y || 0)) / 2 + 1, (fleet[0].z + fleet[7].z) / 2); } }
-  if (shot.tunnel || tunnelAt(want.x, want.z)) want.y = clamp(want.y, y + 0.9, y + 2.2); // under the tunnel roof, never over the mountain
-  else want.y = Math.max(want.y, groundUnder(want.x, want.z) + (shot.type === 'track' ? 1.0 : 2.5));
+  if (!shot.tunnel && tunnelAt(want.x, want.z)) want.y = clamp(want.y, y + 0.9, y + 2.2); // under the tunnel roof, never over the mountain
+  else if (!shot.tunnel) want.y = Math.max(want.y, groundUnder(want.x, want.z) + (shot.type === 'track' ? 1.0 : 2.5));
   if (shot.type === 'track' || shot.type === 'orbit') want.lerp(pivot, 1 - cameraClearance(pivot, want));
   if (cinema.cCut) { camera.position.copy(want); cinema.cCut = false; } else camera.position.lerp(want, 1 - Math.exp(-(shot.type === 'track' ? 11 : 4.5) * dt));
   camera.lookAt(pivot); camera.fov = shot.fov; camera.updateProjectionMatrix();
