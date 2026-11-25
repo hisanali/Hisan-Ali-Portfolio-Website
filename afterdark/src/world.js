@@ -2,7 +2,7 @@
 // The coastal highway leaves the south-west corner, crosses a bay on a bridge, tunnels a ridge and returns to the
 // east gate. The mountain road leaves the east side, climbs by hairpins to a summit lay-by and drops to the north gate.
 import * as THREE from '/evermile/vendor/three.module.js';
-import { P, ROADS, HALF, SW, SPAN, rng, splitChunks } from './city.js';
+import { P, ROADS, HALF, SW, SPAN, CITY_PAVEMENT, rng, splitChunks } from './city.js';
 import { buildForest } from './forest.js';
 import { roadClearance } from './road-clearance.js';
 import { NO_TILE_GLSL } from './weathering.js';
@@ -161,6 +161,13 @@ export async function buildWorld(scene, city, Q) {
       h = mix(h, grade - 0.05, Math.max(pad, access) * sst(32, 88, tunnelDistance));
     }
     if (h > roadbed) h = mix(roadbed, h, sst(12, 26, roadDistance));
+    // The country grading also reaches into the city. Keep every corner of a terrain
+    // quad that can cross the asphalt below it, then blend back to the graded verge.
+    const { west, east, south, north } = CITY_PAVEMENT;
+    const distanceFromPavement = Math.max(west - x, x - east, south - z, z - north);
+    if (h > -0.12 && distanceFromPavement < 3 * WORLD.cell) {
+      h = mix(-0.12, h, sst(WORLD.cell, 3 * WORLD.cell, distanceFromPavement));
+    }
     return [h, sst(0.34, 0.66, cover(x, z)) * sst(4, 12, h) * (1 - sst(218, 285, h)) * sst(16, 38, roadDistance)];
   }
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = WORLD.x0 + i * WORLD.cell, z = WORLD.z0 + j * WORLD.cell, [h, wd] = gradeCell(x, z, natural(x, z), canopyCover); H[j * nx + i] = h; woodland[j * nx + i] = wd; }
@@ -299,6 +306,10 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   adC = mix(adC, adGrav, adSh * 0.9);
   adC *= mix(1.0, 0.84, (1.0 - smoothstep(8.5, 13.0, adRd)) * (1.0 - adSh));
   ${regional ? REGION_GLSL : ''}
+  float nearLake = 1.0 - smoothstep(1.1, 1.22, length((adP - vec2(${LAKE.x.toFixed(1)}, ${LAKE.z.toFixed(1)})) / vec2(${LAKE.rx.toFixed(1)}, ${LAKE.rz.toFixed(1)})));
+  float bankHeight = vWPos.y - mix(-0.62, ${LAKE.level.toFixed(1)}, nearLake);
+  float bank = (1.0 - smoothstep(.15, 1.65, bankHeight + .65 * (adN(adP * .21) - .5))) * (1.0 - smoothstep(.25,.55,adSlope));
+  adC = mix(adC, mix(adGrav * vec3(.58,.49,.39), adR * .64, adMeadow), bank * smoothstep(8.0,12.0,adRd));
   diffuseColor.rgb = adC;`).replace('#include <emissivemap_fragment>', regional ? '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(3.2, 0.75, 0.12) * adLava;' : '#include <emissivemap_fragment>').replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   { // tufted grass and forest litter relief, strongest close up and on gentle ground
     float k = (1.0 - smoothstep(0.3, 0.55, adSlope)) * (1.0 - smoothstep(25.0, 140.0, length(cameraPosition - vWPos)));

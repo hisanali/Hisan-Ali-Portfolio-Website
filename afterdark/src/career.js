@@ -13,20 +13,21 @@ export const CARS = [
   { id: 'crossover', file: 'road-suv', name: 'Trailcrest', kind: 'Family SUV', vmax: 53, acc: 0.84, grip: 0.99, brake: 1, off: 0.65, eye: 1.45 },
   { id: 'compact', file: 'road-hatch', name: 'Pico City', kind: 'City hatchback', vmax: 48, acc: 0.8, grip: 1.09, brake: 1.08, off: 1, eye: 1.12 },
   { id: 'van', file: 'road-van', name: 'Courier', kind: 'Delivery van', vmax: 44, acc: 0.72, grip: 0.93, brake: 0.92, off: 0.8, eye: 1.55 },
-  { id: 'escalade', file: 'car-escalade', rig: true, name: '2021 Cadillac Escalade Premium Luxury', kind: 'Full-size luxury SUV', vmax: 51, acc: 0.84, grip: 0.96, brake: 0.96, off: 0.62, eye: 1.56 },
+  { id: 'escalade', file: 'car-escalade', rig: true, name: '2021 Cadillac Escalade Premium Luxury', kind: 'Full-size luxury SUV', vmax: 83, acc: 1.23, grip: 1.18, brake: 1.44, off: 0.62, eye: 1.56 },
   { id: 'mercedes', file: 'road-mercedes', rig: true, name: '1982 Mercedes-Benz W201', kind: 'Classic saloon', vmax: 49, acc: 0.73, grip: 0.98, brake: 0.95, off: 1, eye: 1.12 },
   { id: 'bus', file: 'road-bus', name: 'City Bus', kind: 'Local transit', vmax: 25, acc: 0.37, grip: 0.84, brake: 0.76, off: 1, eye: 1.95 },
   { id: 'coach', file: 'road-coach', name: 'Regional Coach', kind: 'Long-distance passenger coach', vmax: 31, acc: 0.42, grip: 0.87, brake: 0.8, off: 1, eye: 2.0 }
 ];
+CARS.push({ ...CARS.find(c => c.id === 'escalade'), id: 'hisan-escalade', voice:'escalade', branded:true, name:'Hisan Edition Escalade', kind:'White VIP escort' });
 export const UPGRADES = [['e', 'Engine'], ['t', 'Tyres'], ['b', 'Brakes']], UP_COST = [1200, 3000, 6500], UP_MAX = 3;
-export const carById = id => CARS.find(c => c.id === id) || CARS[0];
+export const carById = id => CARS.find(c => c.id === id) || CARS.find(c => c.id === 'escalade');
 
 const KEY = 'afterdark:save';
 export function loadSave() {
-  const d = { cash: 0, car: 'coupe', cars: ['coupe'], up: {}, times: {}, jobs: 0, earned: 0, seen: ['Downtown'] };
+  const d = { cash: 0, car: 'escalade', cars: [], up: {}, times: {}, jobs: 0, earned: 0, seen: ['Downtown'] };
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') Object.assign(d, s); } catch (e) {}
   d.cars = CARS.map(car => car.id);
-  if (!d.cars.includes(d.car)) d.car = 'coupe'; d.cash = Math.max(0, Math.round(+d.cash || 0));
+  if (!d.cars.includes(d.car)) d.car = 'escalade'; d.cash = Math.max(0, Math.round(+d.cash || 0));
   for (const k of ['up', 'times']) if (!d[k] || typeof d[k] !== 'object') d[k] = {}; if (!Array.isArray(d.seen)) d.seen = ['Downtown'];
   return d;
 }
@@ -34,7 +35,7 @@ export const commit = save => { try { localStorage.setItem(KEY, JSON.stringify(s
 export const upLevel = (save, id, k) => Math.min(UP_MAX, Math.max(0, (save.up[id] && +save.up[id][k]) || 0));
 // The handling numbers a car actually drives with: its base figures plus what has been fitted.
 export function carSpec(save, id) { const c = carById(id), e = upLevel(save, id, 'e'), t = upLevel(save, id, 't'), b = upLevel(save, id, 'b');
-  return { voice: c.id, file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
+  return { voice: c.voice || c.id, branded: !!c.branded, file: c.file, rig: c.rig, vmax: c.vmax * (1 + 0.06 * e), acc: c.acc * (1 + 0.1 * e), grip: c.grip * (1 + 0.06 * t), brake: c.brake * (1 + 0.12 * b), off: c.off, eye: c.eye }; }
 export const cr = n => Math.round(n).toLocaleString() + ' cr';
 export const clockText = (t, tenths) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${tenths ? '.' + Math.floor(t * 10 % 10) : ''}`;
 

@@ -1,0 +1,4 @@
+.yr-guide .yr-bars { display:flex; align-items:flex-end; justify-content:center; gap:16px; height:180px; }
+.yr-guide .yr-bars span { position:relative; width:70px; height:var(--h); border-radius:10px 10px 0 0; background:var(--fe-accent); opacity:.45; display:flex; align-items:flex-start; justify-content:center; padding-top:6px; font-size:12px; font-weight:800; color:#04101e; transform-origin:bottom; animation:yr-grow 7s ease infinite; }
+.yr-guide .yr-bars span:nth-child(2) { opacity:1; animation-delay:.3s; } .yr-guide .yr-bars span:nth-child(3) { animation-delay:.6s; } .yr-guide .yr-bars span:nth-child(4) { animation-delay:.9s; }
+@keyframes yr-grow { 0%,8% { transform:scaleY(.1); } 30%,90% { transform:none; } 100% { transform:scaleY(.1); } }

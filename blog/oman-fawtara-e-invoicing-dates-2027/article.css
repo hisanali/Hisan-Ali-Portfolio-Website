@@ -1,0 +1,8 @@
+.fz-guide .fz-wrap { display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap; }
+.fz-guide .fz-src { display:grid; gap:10px; }
+.fz-guide .fz-src span { padding:8px 14px; border-radius:10px; border:1px solid var(--fe-border); font-weight:800; font-size:14px; }
+.fz-guide .fz-line { position:relative; width:110px; height:120px; }
+.fz-guide .fz-line i { position:absolute; left:0; width:16px; height:12px; border-radius:3px; background:var(--fe-accent); opacity:0; animation:fz-go 6s linear infinite; }
+.fz-guide .fz-line i:nth-child(1) { top:14px; } .fz-guide .fz-line i:nth-child(2) { top:54px; animation-delay:1s; } .fz-guide .fz-line i:nth-child(3) { top:94px; animation-delay:2s; }
+.fz-guide .fz-hub { padding:22px 18px; border-radius:16px; background:var(--fe-accent); color:#04201d; font-weight:800; text-align:center; max-width:150px; }
+@keyframes fz-go { 0% { opacity:0; transform:translateX(0); } 10% { opacity:1; } 45% { opacity:1; transform:translateX(94px); } 55%,100% { opacity:0; transform:translateX(94px); } }

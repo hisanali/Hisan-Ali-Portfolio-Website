@@ -17,11 +17,12 @@ const ENGINE = {
   crossover: {idle: 720, red: 6200, firing: 3, falloff: 1.21, sub: 0.32, drive: 1.9, reson: [132, 535], bright: 0.82, pops: false, level: 0.056},
   compact: {idle: 850, red: 6400, firing: 2, falloff: 1.3, sub: 0.18, drive: 1.5, reson: [190, 770], bright: 0.98, pops: false, level: 0.056},
   van: {idle: 740, red: 4500, firing: 2, falloff: 0.98, sub: 0.32, drive: 2.25, reson: [115, 410], bright: 0.62, pops: false, level: 0.056},
-  escalade: {idle: 620, red: 5900, firing: 4, falloff: 1.12, sub: 0.49, drive: 2.2, reson: [98, 410], bright: 0.73, pops: false, level: 0.056},
+  escalade: {idle: 620, red: 5900, firing: 4, falloff: 1.47, sub: 0.82, drive: 2.6, reson: [88, 270], bright: 0.46, pops: false, level: 0.056},
   mercedes: {idle: 780, red: 6200, firing: 2, falloff: 1.15, sub: .3, drive: 1.6, reson: [125,510], bright: .7, pops: false, level: .05},
   grcorolla: {idle: 900, red: 7000, firing: 1.5, falloff: 1.1, sub: .34, drive: 2.4, reson: [170, 700], bright: 1.15, pops: true, level: .058},
   landcruiser: {idle: 650, red: 5600, firing: 3, falloff: .95, sub: .4, drive: 2.6, reson: [120, 480], bright: .75, pops: false, level: .06},
   coupe: {idle: 850, red: 7800, firing: 4, falloff: 1.05, sub: .42, drive: 2.2, reson: [150, 620], bright: 1, pops: true, level: .062},
+  bus: {idle: 590, red: 2350, firing: 3, falloff: 1.04, sub: .34, drive: 3.1, reson: [80, 335], bright: .48, pops: false, level: .066, clatter: true},
   coach: {idle: 650, red: 2600, firing: 3, falloff: .8, sub: .25, drive: 3.4, reson: [95, 420], bright: .55, pops: false, level: .07, clatter: true},
   bike: {idle: 1300, red: 11500, firing: 2, falloff: .82, sub: .18, drive: 1.8, reson: [210, 900], bright: 1.3, pops: true, level: .05},
 };
@@ -198,32 +199,65 @@ export class DriveAudio {
       src.connect(f).connect(g).connect(this.out); src.start(t + delay, Math.random() * 1.5); src.stop(t + delay + len + .05);
     }
   }
-  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission, tyreSlip}) {
+  update(dt, {speed, throttle, brake, steer, offroad, volume, vehicle, reverse, grounded, engineOn = true, transmission, shiftHold = 0, tyreSlip}) {
     this.lastVolume = volume; this.engineOn = engineOn;
+    const changedVehicle = this.voiced !== vehicle;
     this.setVehicle(vehicle);
     const t = this.ctx.currentTime, e = ENGINE[vehicle] || ENGINE.coupe, v = Math.abs(speed);
     const box = transmission || GEARS[vehicle] || GEARS.coupe, ratios = box.ratio;
     let gear = Math.min(this.gear, ratios.length);
-    const push = throttle * throttle, upAt = box.up[0] + push * box.up[1], downAt = box.down[0] + push * box.down[1], rpmIn = (g) => v * ratios[g - 1];
-    if (!reverse && this.shiftDip <= 0) {
-      if ((!box.poweredUpshifts || (throttle > 0.07 && brake < 0.1)) && gear < ratios.length && rpmIn(gear) > Math.min(upAt, e.red * .95) && rpmIn(gear + 1) > e.idle * 1.15) { gear++; this.shiftDip = .18; }
-      else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < e.red * .92) { gear--; this.shiftDip = -.1; }
+    if (shiftHold && changedVehicle) {
+      gear = 1;
+      this.shiftDip = 0;
+      this.gearHold = 0;
+      this.shiftLoad = throttle;
     }
-    if (reverse || v < .5) gear = 1;
+    this.gearHold = Math.max(0, (this.gearHold || 0) - dt);
+    const loadTarget = throttle > (this.shiftLoad || 0) ? .18 : .85;
+    this.shiftLoad = shiftHold ? (this.shiftLoad || 0) + (throttle - (this.shiftLoad || 0)) * (1 - Math.exp(-dt / loadTarget)) : throttle;
+    const push = this.shiftLoad ** 2, downAt = box.down[0] + push * box.down[1], rpmIn = (g) => v * ratios[g - 1];
+    const upshiftAt = (g) => {
+      const [base, load] = box.upByGear?.[g] || box.up;
+      return Math.min(base + push * load, e.red * .95);
+    };
+    const luxuryShift = vehicle === 'escalade' && shiftHold > 0;
+    const shiftDuration = luxuryShift ? .32 : .18;
+    if (!reverse && this.shiftDip <= 0 && !this.gearHold && (!shiftHold || grounded !== false)) {
+      const powered = (!shiftHold && !box.poweredUpshifts) || (throttle > .07 && brake < .1);
+      if (powered && gear < ratios.length && rpmIn(gear) > upshiftAt(gear) && rpmIn(gear + 1) > e.idle * 1.15) {
+        if (luxuryShift) this.shiftEntryRpm = this.rpm;
+        gear++;
+        this.shiftDip = shiftDuration;
+        this.gearHold = box.holdByGear?.[gear] ?? shiftHold;
+      } else if (gear > 1 && rpmIn(gear) < downAt && rpmIn(gear - 1) < (shiftHold ? upshiftAt(gear - 1) * .88 : e.red * .92)) {
+        gear--;
+        this.shiftDip = -.1;
+        this.gearHold = shiftHold * .65;
+      }
+    }
+    if (reverse || v < .5) { gear = 1; this.gearHold = 0; }
     this.gear = gear;
     // Below the clutch take-up speed the engine idles or revs freely; above it the rpm is set by the wheels.
     const wheelRpm = reverse ? v * ratios[0] : rpmIn(gear), free = e.idle + throttle * (e.red - e.idle) * .32;
     let target = Math.min(e.red, Math.max(e.idle, wheelRpm, v < 4 ? free * (1 - v / 4) + wheelRpm * (v / 4) : 0));
     if (this.shiftDip > 0) { this.shiftDip = Math.max(0, this.shiftDip - dt); }
     else if (this.shiftDip < 0) { target *= 1.06; this.shiftDip = Math.min(0, this.shiftDip + dt); }
+    // Torque eases off and returns continuously as the automatic engages its next ratio.
+    if (luxuryShift && this.shiftDip > 0) {
+      const progress = 1 - this.shiftDip / shiftDuration;
+      const transfer = Math.min(1, Math.max(0, (progress - .10) / .62));
+      target = this.shiftEntryRpm + (target - this.shiftEntryRpm) * transfer * transfer * (3 - 2 * transfer);
+    }
+    const shiftPulse = Math.sin(Math.PI * Math.max(0, this.shiftDip) / shiftDuration);
+    this.shiftLoadGain = luxuryShift ? 1 - .72 * shiftPulse : this.shiftDip > 0 ? .35 : 1;
     const wobble = v < .3 ? Math.sin(t * 7.3) * 18 : 0;
-    this.rpm += (target + wobble - this.rpm) * Math.min(1, dt * (this.shiftDip ? 14 : 8));
+    this.rpm += (target + wobble - this.rpm) * Math.min(1, dt * (luxuryShift && this.shiftDip > 0 ? 24 : this.shiftDip ? 14 : 8));
     const firing = this.rpm / 60 * e.firing, load = Math.max(throttle, .12), rev = this.rpm / e.red;
     for (const voice of this.voices) voice.o.frequency.setTargetAtTime(firing * voice.ratio, t, .02);
     this.drive.gain.setTargetAtTime(1 + load * e.drive * .5, t, .05);
     this.rough.gain.setTargetAtTime(.12 + (1 - load) * .12, t, .1);
     this.engineLp.frequency.setTargetAtTime(420 + load * 3200 * e.bright + this.rpm * .22, t, .05);
-    const cut = this.shiftDip > 0 ? .5 : 1;
+    const cut = luxuryShift ? this.shiftLoadGain : this.shiftDip > 0 ? .5 : 1;
     this.engineGain.gain.setTargetAtTime(volume * e.level * (.45 + load * .55) * (.8 + rev * .3) * cut * (engineOn ? 1 : 0), t, engineOn ? .04 : .25);
     this.intake.g.gain.setTargetAtTime(volume * .025 * throttle * rev * e.bright, t, .06);
     this.intake.f.frequency.setTargetAtTime(700 + rev * 1400, t, .1);
@@ -235,7 +269,7 @@ export class DriveAudio {
       if (this.popClock <= 0) { this.pop(volume); this.popClock = .05 + Math.random() * (rev > .7 ? .25 : .6); }
     } else this.popClock = .2;
     this.whine.frequency.setTargetAtTime(v * 26 + 40, t, .1);
-    this.whineGain.gain.setTargetAtTime(volume * (reverse ? .012 : .0035) * Math.min(1, v / 8), t, .1);
+    this.whineGain.gain.setTargetAtTime(volume * (reverse ? .012 : luxuryShift ? .0008 : .0035) * Math.min(1, v / 8), t, .1);
     this.road.g.gain.setTargetAtTime(volume * .16 * Math.min(1, v / 30) * (grounded ? 1 : .2), t, .15);
     this.road.f.frequency.setTargetAtTime(160 + v * 6, t, .2);
     this.gravel.g.gain.setTargetAtTime(offroad && grounded ? volume * .12 * Math.min(1, v / 12) : 0, t, .1);

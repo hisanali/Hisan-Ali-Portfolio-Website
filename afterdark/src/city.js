@@ -4,10 +4,14 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
 import { loadGLB } from './car.js';
-import { buildSea, wetSand } from './water.js';
+import { buildSea, wetSand, beachHeight } from './water.js';
 import { Q as QUALITY_PRESET } from './render.js';
 
 export const P = 120, ROADS = 9, HALF = 10, SW = 4, SPAN = P * (ROADS - 1);
+export const CITY_PAVEMENT = {
+  west: -(HALF + 13.5), east: SPAN + HALF + SW + 1,
+  south: -(HALF + SW + 1), north: SPAN + HALF + SW + 1,
+};
 export function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const NEON = [0x19e3ff, 0xff2bd6, 0xffa329, 0x8a5cff, 0xff3048, 0x38ffb0, 0xfff1d0, 0x2f7bff];
 const dummy = new THREE.Object3D(), col = new THREE.Color(), mtmp = new THREE.Matrix4();
@@ -442,7 +446,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   scene.fog = new THREE.FogExp2(0xe6bd9c, 0.00065);
   const hemi = new THREE.HemisphereLight(0xb9cdf2, 0xa08468, 3.4); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc08c, 5.6), sunDir = new THREE.Vector3(-0.8, 0.3, 0.3).normalize(), lightDir = sunDir.clone(); sun.castShadow = renderer.shadowMap.enabled;
-  { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 150; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.camera.updateProjectionMatrix(); sm.bias = -0.000035; sm.normalBias = 0.045;
+  { const sm = sun.shadow, size = quality.dpr >= 1.5 ? 4096 : 2048, half = 90; sm.mapSize.set(size, size); Object.assign(sm.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 2400 }); sm.camera.updateProjectionMatrix(); sm.bias = -0.000035; sm.normalBias = 0.022;
     scene.add(sun, sun.target); const step = (half * 2) / size * 8;
     city.updateSun = (p, height = 0) => {
       const x = Math.round(p.x / step) * step, y = Math.round(height / step) * step, z = Math.round(p.z / step) * step;
@@ -454,8 +458,8 @@ export async function buildCity(scene, refl, quality, renderer) {
   city.setTime = (hour, rainy = 1) => {
     const h = (hour - 6) / 12 * Math.PI, sn = Math.sin(h), el = (sn > 0 ? sn * 58 : sn * 35), er = THREE.MathUtils.degToRad(el), ce = Math.cos(er);
     sunDir.set(Math.cos(h) * ce, Math.sin(er), 0.38 * ce).normalize(); su.sunPosition.value.copy(sunDir);
-    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: night * rainy, rain: sst(0.75, 1, night) * rainy };
-    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
+    const night = 1 - sst(-7, 5, el), day = sst(-2, 14, el), high = sst(6, 36, el), dawn = Math.exp(-(((hour - 6.3) / 0.9) ** 2)), e = { hour, el, night, day, high, rainy, wet: rainy, rain: rainy };
+    C(0xffa060, 0xfff4e6, high, sun.color).lerp(col.set(0x9db4e8), night); sun.intensity = 5.6 * day * (1 - 0.58 * rainy) * (0.8 + 0.2 * high) + night * (1 - rainy) * 0.5;
     lightDir.copy(sunDir); if (night > 0.5) lightDir.set(-sunDir.x, Math.abs(sunDir.y) + 0.35, -sunDir.z).normalize(); // The same light represents the moon at night.
     sun.castShadow = renderer.shadowMap.enabled && city.shadows !== false && day > 0.02;
     C(0xb9cdf2, 0x33325a, night, hemi.color); C(0x8d806e, 0x120d16, night, hemi.groundColor); hemi.intensity = mix(mix(2.7, 3.3, high), mix(0.95, 0.42, rainy), night);
@@ -471,10 +475,11 @@ export async function buildCity(scene, refl, quality, renderer) {
   };
 
   // ---- Road surface ----
-  const WEST = -(HALF + 13.5), EAST = SPAN + HALF + SW + 1, roadW = EAST - WEST, roadL = SPAN + (HALF + SW + 1) * 2; city.wetUniform = refl.uniforms.uWet;
+  const { west: WEST, east: EAST, south: SOUTH, north: NORTH } = CITY_PAVEMENT;
+  const roadW = EAST - WEST, roadL = NORTH - SOUTH; city.wetUniform = refl.uniforms.uWet;
   const puddles = roadPuddles();
   city.puddleAt = (x, z) => x >= WEST && x <= EAST && z >= -HALF - SW && z <= SPAN + HALF + SW ? puddles.sample(x, z) : 0;
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, roadL), roadMaterial(refl, roadW / 6.3, roadL / 6.3, puddles)); road.rotation.x = -Math.PI / 2; road.position.set(WEST + roadW / 2, 0, SPAN / 2); road.receiveShadow = SH; scene.add(road);
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(roadW, roadL), roadMaterial(refl, roadW / 6.3, roadL / 6.3, puddles)); road.rotation.x = -Math.PI / 2; road.position.set(WEST + roadW / 2, 0, SOUTH + roadL / 2); road.receiveShadow = SH; scene.add(road);
   refl.hide.push(road);
 
   // ---- Pavement slabs ----
@@ -634,14 +639,14 @@ export async function buildCity(scene, refl, quality, renderer) {
   { const px = -(HALF + 13.2), len = ext + 200;
     const sandT = canvasTex(512, 512, (c, w) => { c.fillStyle = '#cbb488'; c.fillRect(0, 0, w, w); const r = rng(8), img = c.getImageData(0, 0, w, w); for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 34; img.data[i] += n; img.data[i + 1] += n * 0.95; img.data[i + 2] += n * 0.8; } c.putImageData(img, 0, 0); c.globalAlpha = 0.12; for (let i = 0; i < 90; i++) { c.fillStyle = r() < 0.5 ? '#8f7a55' : '#e6d4ab'; c.beginPath(); c.ellipse(r() * w, r() * w, 20 + r() * 60, 3 + r() * 6, r() * 0.4, 0, 7); c.fill(); } });
     sandT.wrapS = sandT.wrapT = THREE.RepeatWrapping; sandT.repeat.set(10, 110);
-    const sg = new THREE.PlaneGeometry(92, len, 6, 1); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { const t = (46 - sp.getX(i)) / 92; sp.setY(i, 0.17 - t * t * 1.5); } sg.computeVertexNormals();
+    const sg = new THREE.PlaneGeometry(92, len, 24, Math.ceil(len / 5)); sg.rotateX(-Math.PI / 2); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { sp.setY(i, beachHeight(46 - sp.getX(i), mid + sp.getZ(i))); } sg.computeVertexNormals();
     const sandMaterial = new THREE.MeshStandardMaterial({ map: sandT, roughness: 0.95, envMapIntensity: 0.4 });
-    wetSand(sandMaterial);
+    city.sea = buildSea(scene, px, mid, len);
+    wetSand(sandMaterial, city.sea.waterLevel);
     const sand = new THREE.Mesh(sg, sandMaterial);
     sand.position.set(px - 46, 0, mid);
     sand.receiveShadow = SH;
     scene.add(sand);
-    city.sea = buildSea(scene, px, mid, len);
     city.beachX = px;
     hooks.push(city.sea.setTime);
   }
@@ -683,6 +688,23 @@ export async function buildCity(scene, refl, quality, renderer) {
   const beaconPts = new THREE.Points(bg, new THREE.PointsMaterial({ size: 7, map: dot, color: new THREE.Color(3, 0.15, 0.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(beaconPts);
 
   // ---- Neon signs (one atlas, one draw call) ----
+  const storefronts = signs.filter(s => s.kind === 0);
+  const distanceToSpawn = s => Math.hypot(s.x - city.spawn.x, s.z - city.spawn.z);
+  const shop = storefronts.reduce((a, b) => distanceToSpawn(a) < distanceToSpawn(b) ? a : b);
+  city.hisanShop = shop;
+  signs.splice(signs.indexOf(shop), 1);
+  screens.push({ ...shop, w: 6.4, h: 1.35, shop: true });
+  screens.push({ ...shop, x: shop.x + shop.nx * .65, z: shop.z + shop.nz * .65, y: 9.5, w: 8, h: 4, flagship: true });
+  // Small digital displays above individual storefronts also carry the local rotation.
+  for (let i = 1; i < storefronts.length; i += 5) {
+    const s = storefronts[i];
+    if (s !== shop) screens.push({ ...s, y: 6.9, w: 3.2, h: 1.6 });
+  }
+  const shopName = canvasTex(768, 162, ctx => {
+    ctx.fillStyle = '#0a2629'; ctx.fillRect(0, 0, 768, 162);
+    ctx.font = 'bold 110px Arial'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#b9ffdf'; ctx.fillText('HISAN', 384, 122);
+  });
   const atlas = signAtlas();
   const signG = new THREE.PlaneGeometry(1, 1), aUv = new Float32Array(signs.length * 4), aSeed = new Float32Array(signs.length);
   const signM = new THREE.MeshBasicMaterial({ map: atlas.tex, side: THREE.DoubleSide, color: new THREE.Color().setScalar(1.15) });
@@ -702,7 +724,38 @@ export async function buildCity(scene, refl, quality, renderer) {
   const adTex = adAtlas();
   const late = [], boardPosts = [];
   { const px = city.beachX; for (let z = 60; z < SPAN; z += P) { const x = px - 7; boardPosts.push([x, z]);
-      for (const sgn of [-1, 1]) ads.push({ x, y: 10.2, z: z + sgn * 0.16, nx: 0, nz: sgn, w: 13, h: 6.5 }); } }
+      const featured = true;
+      for (const sgn of [-1, 1]) screens.push({ featured, x, y: 10.2, z: z + sgn * 0.16, nx: 0, nz: sgn, w: 13, h: 6.5 }); } }
+  // Keep a handful of printed posters among the larger digital placements.
+  for (let i = ads.length - 1; i >= 0; i--) {
+    if (i % 4 !== 0) screens.push({ ...ads.splice(i, 1)[0], framed: true });
+  }
+  // Use mounted facade screens facing each leg of the VIP circuit.
+  city.convoyBoards = screens.filter(s => {
+    if (s.shop || s.w < 5 || s.y > 21) return false;
+    const across = s.nx ? s.x : s.z, along = s.nx ? s.z : s.x;
+    const roads = s.nx ? [3*P-2,6*P+2] : [2*P-2,6*P+2];
+    const inside = along > (s.nx ? 2 : 3)*P && along < 6*P;
+    return inside && roads.some(road => {
+      const offset=(road-across)*(s.nx || s.nz);
+      return offset > 6 && offset < 27;
+    });
+  });
+  // Freestanding panels face the motorcade from the outer sidewalk on each avenue.
+  for (const [ax, road, normal, from, to] of [[1,3,1,2,6],[1,6,-1,2,6],[0,2,1,3,6],[0,6,-1,3,6]]) {
+    for (let block=from; block<to; block++) {
+      const cross = road*P - normal*(HALF+2.3), along=(block+.52)*P;
+      const x=ax?cross:along, z=ax?along:cross, nx=ax?normal:0, nz=ax?0:normal;
+      const panel={x:x+nx*.18,y:6.2,z:z+nz*.18,nx,nz,w:7.6,h:3.8,convoy:true,framed:true};
+      screens.push(panel); city.convoyBoards.push(panel);
+      late.push({x,y:6.2,z,sx:ax ? .32 : 7.9,sy:4.08,sz:ax?7.9:.32});
+      for (const side of [-2.7,2.7]) {
+        const px=x+nz*side,pz=z+nx*side;
+        late.push({x:px,y:2.14,z:pz,sx:.24,sy:4.28,sz:.24}); solid.push({x:px,z:pz,r:.17});
+      }
+    }
+  }
+  for (const board of city.convoyBoards) board.convoy = true;
   const adG = new THREE.PlaneGeometry(1, 1), adUv = new Float32Array(ads.length * 4);
   const adM = new THREE.MeshStandardMaterial({ map: adTex, emissiveMap: adTex, emissive: 0xffffff, emissiveIntensity: 0.05, roughness: 0.55, metalness: 0, envMapIntensity: 0.4 });
   adM.onBeforeCompile = sh => { sh.vertexShader = 'attribute vec4 aUv;\n' + sh.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\nvMapUv = aUv.xy + uv * aUv.zw; vEmissiveMapUv = vMapUv;'); };
@@ -710,21 +763,45 @@ export async function buildCity(scene, refl, quality, renderer) {
   ads.forEach((s2, k) => { const cell = Math.floor(R() * 32); adUv.set([(cell % 4) / 4, 1 - (Math.floor(cell / 4) + 1) / 8, 0.25, 0.125], k * 4); dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); adMesh.setMatrixAt(k, dummy.matrix); });
   adG.setAttribute('aUv', new THREE.InstancedBufferAttribute(adUv, 4)); adMesh.count = ads.length; adMesh.frustumCulled = false; adMesh.receiveShadow = SH; scene.add(adMesh);
   hooks.push((e, mix) => { adM.emissiveIntensity = mix(0.04, 0.85, e.night); });
-  const ledU = { uTime: timeU, uAds: { value: adTex }, uGain: { value: 1.2 } };
+  const portraitAd = new THREE.TextureLoader().load('./assets/hisan-campaign.webp');
+  portraitAd.colorSpace = THREE.SRGBColorSpace;
+  const ledU = { uShopName: { value: shopName }, uPortrait: { value: portraitAd }, uTime: timeU, uAds: { value: adTex }, uGain: { value: 1.2 } };
   const screenM = new THREE.ShaderMaterial({ uniforms: ledU, fog: false,
-    vertexShader: 'varying vec2 vUv; varying float vId; void main(){ vUv = uv; vId = fract(instanceMatrix[3].x * 0.137 + instanceMatrix[3].z * 0.071); gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform float uTime, uGain; uniform sampler2D uAds; varying vec2 vUv; varying float vId;
+    vertexShader: 'attribute float featured; varying float vFeatured; varying vec2 vUv; varying float vId; void main(){ vFeatured = featured; vUv = uv; vId = fract(instanceMatrix[3].x * 0.137 + instanceMatrix[3].z * 0.071); gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform float uTime, uGain; uniform sampler2D uAds, uPortrait, uShopName; varying float vFeatured; varying vec2 vUv; varying float vId;
       vec3 ad(float k, vec2 uv){ k = mod(k, 32.0); return texture2D(uAds, (vec2(mod(k, 4.0), 7.0 - floor(k / 4.0)) + uv) / vec2(4.0, 8.0)).rgb; }
       void main(){ float t = uTime / 5.5 + vId * 32.0, k = floor(t), f = fract(t);
         float wipe = smoothstep(0.9, 1.0, f); vec2 uv = clamp(vUv, 0.003, 0.997);
         vec3 c = mix(ad(k, uv), ad(k + 1.0, uv), step(uv.x, wipe * 1.02));
         c += vec3(1.0) * (1.0 - smoothstep(0.0, 0.02, abs(uv.x - wipe * 1.02))) * step(0.001, wipe) * 0.6;
-        vec2 px = fract(vUv * vec2(220.0, 110.0)) - 0.5; c *= 0.72 + 0.4 * smoothstep(0.5, 0.2, length(px));
+        float slot = floor(uTime / 6.0 + vId * 12.0);
+        if (mod(slot, 5.0) < 3.0 || vFeatured > 1.5) {
+          c = texture2D(uPortrait, vec2(uv.x, (2.0 - mod(slot, 3.0) + uv.y) / 3.0)).rgb;
+          float phase = fract(uTime / 7.0 + vId);
+          float underline = 1.0 - smoothstep(0.003, 0.008, abs(uv.y - 0.815));
+          c += vec3(0.18, 0.56, 0.43) * underline * step(0.05, uv.x) * (1.0 - smoothstep(phase * 0.55, phase * 0.55 + 0.01, uv.x));
+        }
+        if (vFeatured > 2.5) {
+          float t = mod(uTime, 4.1);
+          float dip = exp(-80.0 * abs(t - 1.4)) + 0.6 * exp(-65.0 * abs(t - 1.63));
+          c = texture2D(uShopName, uv).rgb * (1.0 - 0.40 * dip);
+        }
+        vec2 px = fract(vUv * vec2(220.0, 110.0)) - 0.5; c *= 0.72 + 0.4 * (1.0 - smoothstep(0.2, 0.5, length(px)));
         c *= 0.94 + 0.06 * sin(vUv.y * 60.0 - uTime * 9.0);
         gl_FragColor = vec4(c * uGain, 1.0); }` });
   const screenMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), screenM, Math.max(1, screens.length));
+  screenMesh.geometry.setAttribute('featured', new THREE.InstancedBufferAttribute(Float32Array.from(screens, s => s.shop ? 3 : s.flagship || s.convoy ? 2 : Number(!!s.featured)), 1));
   screens.forEach((s2, k) => { dummy.position.set(s2.x, s2.y, s2.z); dummy.rotation.set(0, Math.atan2(s2.nx, s2.nz), 0); dummy.scale.set(s2.w, s2.h, 1); dummy.updateMatrix(); screenMesh.setMatrixAt(k, dummy.matrix); decals.push([s2.x + s2.nx * 12, 0.03, s2.z + s2.nz * 12, 40, 0x8fa8ff, 0.16]);
-    late.push({ x: s2.x - s2.nx * 0.12, y: s2.y, z: s2.z - s2.nz * 0.12, sx: s2.nx ? 0.2 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 0.2 : s2.w + 0.6 }); });
+    if (s2.flagship) {
+      // Support the elevated marquee independently of the varying facade setbacks.
+      for (const side of [-1, 1]) {
+        const x = s2.x + side * s2.nz * 3.5 - s2.nx * .24;
+        const z = s2.z - side * s2.nx * 3.5 - s2.nz * .24;
+        late.push({ x, z, y: 3.83, sy: 7.66, sx: .26, sz: .26 });
+        solid.push({ x, z, r: .2 });
+      }
+    }
+    if (!s2.featured && !s2.framed) late.push({ x: s2.x - s2.nx * 0.55, y: s2.y, z: s2.z - s2.nz * 0.55, sx: s2.nx ? 1.08 : s2.w + 0.6, sy: s2.h + 0.6, sz: s2.nz ? 1.08 : s2.w + 0.6 }); });
   for (const [x, z] of boardPosts) { solid.push({ x, z, r: 0.45 }); late.push({ x, y: 3.51, z, sx: 0.53, sy: 7.02, sz: 0.53 }); late.push({ x, y: 10.2, z, sx: 13.32, sy: 6.79, sz: 0.28 }); }
   { const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.5, metalness: 0.5 }), Math.max(1, late.length)); late.forEach((t, k) => { dummy.position.set(t.x, t.y, t.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(t.sx, t.sy, t.sz); dummy.updateMatrix(); lm.setMatrixAt(k, dummy.matrix); }); dummy.scale.set(1, 1, 1); lm.count = late.length; lm.frustumCulled = false; lm.castShadow = SH; scene.add(lm); }
   screenMesh.count = screens.length; screenMesh.frustumCulled = false; scene.add(screenMesh);
