@@ -32,6 +32,6 @@ export function beamTexture() {
 
 export function lampColor(style) {
   if (['mercedes', 'van', 'pickup', 'coach'].includes(style)) return 0xffe3bb;
-  if (['escalade', 'gr-corolla', 'land-cruiser', 'sports-coupe'].includes(style)) return 0xf0f5ff;
+  if (['escalade', 'gr-corolla', 'land-cruiser', 'sports-coupe', 'police-interceptor', 'police-gt500'].includes(style)) return 0xf0f5ff;
   return 0xfff2da;
 }

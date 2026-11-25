@@ -99,6 +99,13 @@ function moveBeacon() {
 
 // ---------- Street-lamp light pool ----------
 const lampLights = Array.from({ length: Q.lights }, () => { const l = new THREE.PointLight(0xffcf9a, 42, 34, 1.7); scene.add(l); return l; });
+// Red and blue light from the player's police light bar. Always in the scene, dark when unused, so changing cars never
+// makes a material recompile.
+const beacons = Q.reach >= 0.7 ? [0x2f6bff, 0xff2030].map(c => { const l = new THREE.PointLight(c, 0, 24, 2); scene.add(l); return l; }) : [];
+function placeBeacons() {
+  const on = player.emergencyMode > 0, h = player.heading, lv = player.emergencyLevels || [0, 0];
+  beacons.forEach((l, i) => { const side = i ? 1 : -1; l.intensity = on ? lv[i] * (10 + 40 * (env ? env.night : 0)) : 0;
+    if (on) l.position.set(player.pos.x + Math.cos(h) * side * 0.55, (player.groundY || 0) + (player.height || 1.5) + 0.35, player.pos.z - Math.sin(h) * side * 0.55); }); }
 let lampTick = 0;
 function placeLampLights(p) { if ((lampTick++ & 7) && lampTick > 1) return; const L = city.lamps, best = [];
   for (let i = 0; i < L.length; i++) { const d = (L[i].x - p.x) ** 2 + (L[i].z - p.z) ** 2; if (d > 3600) continue; best.push([d, i]); }
@@ -120,8 +127,15 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if (k === 'escape' && (S.mode === 'map' || S.mode === 'photo' || S.mode === 'replay')) { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else replay(false); return; }
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
+  if (k === 'l' && S.mode === 'play') emergencyLights();
   if (k === 'enter' && S.mode === 'menu') start(); });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYS[k]) input[KEYS[k]] = 0; if (k === 'h') audio?.horn(false); });
+// Police cars: lights and siren, then lights only, then off.
+function emergencyLights() {
+  if (!player.police) { toast('Lights and siren come with the police cars in the garage'); return; }
+  player.emergencyMode = (player.emergencyMode + 1) % 3; toast(['Lights off', 'Lights and siren', 'Lights only · siren off'][player.emergencyMode]); }
+$('[data-lights]')?.addEventListener('pointerdown', e => { e.preventDefault(); if (S.mode === 'play') emergencyLights(); });
+const policeUI = () => { const b = $('[data-lights]'); if (b) b.hidden = !player.police; };
 addEventListener('keydown', e => { if (!cinema.active && e.key.toLowerCase() === 'h' && S.mode === 'play') audio?.horn(true); });
 addEventListener('blur', () => { for (const k in input) input[k] = 0; });
 document.querySelectorAll('#touch [data-k]').forEach(b => { const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = 1; b.classList.add('on'); }, off = e => { e.preventDefault(); input[k] = 0; b.classList.remove('on'); };
@@ -264,7 +278,7 @@ async function useCar(id) { // builds the new car off-scene, then swaps it in wi
       for (const key of ['groundY', 'slopeF', 'slopeL', 'air', 'vy', 'speed', 'steer', 'yawRate', 'reversing']) p[key] = old[key];
       p.pos.copy(old.pos); p.vel.copy(old.vel); p.sync(0); snapCam = true;
     } else p.place(city.spawn.x, city.spawn.z, 0);
-    p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); }
+    p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); policeUI(); }
   catch (e) { console.warn('car', e); toast('That car would not load'); } finally { swapping = false; }
 }
 function drawGarage() {
@@ -423,7 +437,7 @@ function selectCamera(index) {
 function leaveCinema() {
   if (traffic.vip.root.visible) traffic.vip.stop();
   if (S.mode === 'tour') S.mode = 'play';
-  cinema.active = false; cinema.tour = null;
+  cinema.active = false; cinema.tour = null; cinema.cShot = null; cineTitle.classList.remove('on'); titleSeen = '';
   S.cam = cinema.prior; $('#btn-cam').value = String(S.cam);
   document.body.classList.remove('cinema'); beacon.visible = cinema.beacon;
   snapCam = true; view.drag = false;
@@ -436,6 +450,54 @@ const vipShots = [
   [5.4,3,10,-4,2.1,36], [4.2,4,12,6,1.3,43], [4.8,7,-12,4,3.1,38]
 ];
 const vipAnchor = new THREE.Vector3();
+// Out in the country the convoy film cuts between wide, landscape shots: a helicopter chase, a telephoto shot from the
+// roadside as the convoy comes on, the lead light bar up close, a high drone reveal, tracking beside the principal, a
+// slow orbit and the tail car. Heights are taken from the ground under the convoy.
+const VIP_COUNTRY = [
+  { type: 'heli', dur: 6.5, s: 3, along: -32, side: 14, up: 18, fov: 44 },
+  { type: 'tele', dur: 6, s: 3, ahead: 95, side: 9, up: 1.7, fov: 21 },
+  { type: 'track', dur: 4.2, s: 0, along: 9, side: 3.2, up: 1.3, fov: 38 },
+  { type: 'drone', dur: 7, s: 3, along: 60, side: -45, up: 55, fov: 52 },
+  { type: 'track', dur: 5, s: 3, along: 2, side: 6, up: 1.2, fov: 36 },
+  { type: 'orbit', dur: 6, s: 3, r: 16, up: 4.5, fov: 40 },
+  { type: 'track', dur: 4.5, s: 7, along: -11, side: 3, up: 2.2, fov: 40 }
+];
+const groundUnder = (x, z) => Math.max(world.terrain(x, z), world.ground(x, z));
+function vipCountryCamera(dt) {
+  const fleet = traffic.vip.cars, vip = traffic.vip, lead = fleet[3];
+  const inTunnel = world.nearRoad(lead.x, lead.z, 9)?.s.tunnel;
+  if (!cinema.cShot || cinema.elapsed >= cinema.cutAt || inTunnel && cinema.cShot.type !== 'track') {
+    cinema.cShotNo = (cinema.cShotNo ?? -1) + 1;
+    const shot = inTunnel ? { type: 'track', dur: 3, s: 3, along: -10, side: 0.6, up: 1.7, fov: 44 } : VIP_COUNTRY[cinema.cShotNo % VIP_COUNTRY.length];
+    cinema.cShot = shot; cinema.cutAt = cinema.elapsed + shot.dur; cinema.cStart = cinema.elapsed; cinema.cCut = true; cinema.heading = fleet[shot.s].h;
+    if (shot.type === 'tele') { const p = vip.ahead(fleet[shot.s], shot.ahead), sx = Math.cos(p.h) * shot.side, sz = -Math.sin(p.h) * shot.side; vipAnchor.set(p.x + sx, 0, p.z + sz); vipAnchor.y = groundUnder(vipAnchor.x, vipAnchor.z) + shot.up; }
+    if (shot.type === 'orbit') cinema.orbitA = Math.random() * Math.PI * 2;
+  }
+  const shot = cinema.cShot, subject = fleet[shot.s], t = (cinema.elapsed - cinema.cStart) / shot.dur;
+  cinema.heading += angleDiff(subject.h, cinema.heading) * (1 - Math.exp(-3.4 * dt));
+  const h = cinema.heading, fx = Math.sin(h), fz = Math.cos(h), rx = Math.cos(h), rz = -Math.sin(h), y = subject.y || 0;
+  pivot.set(subject.x + fx * 1.1, y + 1.05, subject.z + fz * 1.1);
+  if (shot.type === 'tele') want.copy(vipAnchor);
+  else if (shot.type === 'orbit') { const a = cinema.orbitA + t * 1.5; want.set(subject.x + Math.cos(a) * shot.r, y + shot.up, subject.z + Math.sin(a) * shot.r); }
+  else { const along = shot.along + (shot.type === 'heli' ? t * 8 : shot.type === 'drone' ? 0 : (t - 0.5) * 3.4), side = shot.side + (shot.type === 'drone' ? t * 18 : 0);
+    want.set(subject.x + fx * along + rx * side, y + shot.up, subject.z + fz * along + rz * side);
+    if (shot.type === 'drone') { pivot.set((fleet[0].x + fleet[7].x) / 2, ((fleet[0].y || 0) + (fleet[7].y || 0)) / 2 + 1, (fleet[0].z + fleet[7].z) / 2); } }
+  want.y = Math.max(want.y, groundUnder(want.x, want.z) + (shot.type === 'track' ? 1.0 : 2.5));
+  if (shot.type === 'track' || shot.type === 'orbit') want.lerp(pivot, 1 - cameraClearance(pivot, want));
+  if (cinema.cCut) { camera.position.copy(want); cinema.cCut = false; } else camera.position.lerp(want, 1 - Math.exp(-(shot.type === 'track' ? 11 : 4.5) * dt));
+  camera.lookAt(pivot); camera.fov = shot.fov; camera.updateProjectionMatrix();
+}
+// Film titles: the name of each place as the convoy reaches it, set in the letterbox.
+const cineTitle = (() => { const el = document.createElement('div'); el.id = 'cine-title'; el.innerHTML = '<b></b><span></span>'; document.body.appendChild(el); return el; })();
+let titleSeen = '', titleCheck = 0, titleHide = 0;
+function cinemaTitles(dt) {
+  titleCheck -= dt; titleHide -= dt; if (titleHide <= 0) cineTitle.classList.remove('on');
+  if (titleCheck > 0) return; titleCheck = 0.5;
+  const lead = traffic.vip.cars[3]; let here = null;
+  for (const p of [...world.places, ...(world.strips || [])]) if (Math.hypot(p.x - lead.x, p.z - lead.z) < (p.r || 40) + 90) here = p;
+  if (!here && inCity(lead.x, lead.z)) here = { name: 'Downtown', note: 'The city at the heart of the valley' };
+  if (here && here.name !== titleSeen) { titleSeen = here.name; cineTitle.querySelector('b').textContent = here.name; cineTitle.querySelector('span').textContent = here.note || ''; cineTitle.classList.add('on'); titleHide = 4.2; }
+}
 const shots = [[-8, 3.5, 2.1, 40], [7, -4, 1.35, 36], [-11, -5, 4.2, 43], [2, 6, 1.1, 40], [10, 2, 1.0, 34], [-4, -8, 6.8, 43], [-5, 2.4, .8, 49], [1, -10, 3, 32]];
 function cinemaCamera(dt) {
   const car = cinema.tour, pos = car || player.pos, heading = car ? car.h : player.heading;
@@ -443,6 +505,9 @@ function cinemaCamera(dt) {
   cinema.elapsed += dt;
   if (S.cam === 7) {
     const fleet = traffic.vip.cars;
+    cinemaTitles(dt);
+    if (traffic.vip.tour && !inCity(fleet[3].x, fleet[3].z)) { cinema.boardBlock = -1; vipCountryCamera(dt); return; }
+    cinema.cShot = null;
     // Lead lights, convoy overview, door livery, principal, and departing tail.
     const cycle = 24.4, pass = Math.floor(cinema.elapsed/cycle);
     let phase = cinema.elapsed % cycle, shotIndex=0;
@@ -525,6 +590,7 @@ function keepInStreet(v) { if (!inCity(v.x, v.z)) { if (!player.tunnel) v.y = Ma
   if (v.x >= 0 && ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
   v.x = clamp(v.x, -(HALF + 95), SPAN + CAMW); v.z = clamp(v.z, -CAMW, SPAN + CAMW); if (Math.abs(v.x - city.viaduct) < 12 && v.y > 8) v.y = 8; return v; }
 let camYaw = 0, camHeight = 0, camArm = 1, snapCam = true;
+const sirenEar = new THREE.Vector3(); // camera facing, for placing the sirens in stereo
 const UP_CAMERA = new THREE.Vector3(0, 1, 0), cameraRoad = {};
 const camPos = new THREE.Vector3(), pivot = new THREE.Vector3(), look = new THREE.Vector3(), want = new THREE.Vector3();
 const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -760,10 +826,11 @@ function frame() {
   city.sky.position.copy(camera.position); city.updateSun(focus, tour ? tour.y || 0 : player.groundY); city.cull(camera.position);
   S.flash = Math.max(0, S.flash - dt * 1.6); R.film.uniforms.uFlash.value = S.flash;
   R.film.uniforms.uSpeed.value = playing ? clamp((Math.abs(player.speed) - 22) / 55, 0, 1) : 0;
-  if (audio) { const ev = audio.update(dt, { vip: S.cam === 7 && cinema.active, sirenDistance: S.cam === 7 ? Math.min(...traffic.vip.cars.filter(c => c.role === 'police').map(c =>
-      Math.hypot(camera.position.x-c.x, camera.position.y-1.5, camera.position.z-c.z))) : Infinity, featuredCar: tour, cinematic: cinema.active, garage: !$('#garage').hidden, puddleDepth: (playing || replaying) ? spray.depth : 0, hour, urban: inCity(focus.x, focus.z) && focus.x >= -HALF, sheltered: !tour && player.tunnel, vehicle: tour ? (CARS.find(c => (c.file || 'sports-coupe') === traffic.modelFiles[tour.kit])?.id || player.spec.voice) : player.spec.voice, grounded: !!tour || !player.air, offroad: !tour && (player.onSand || player.rough), playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: tour ? false : replaying ? player.speed < -0.5 : player.reversing, throttle: tour ? tour.throttle : playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: tour ? Number(tour.braking) : playing ? input.down : 0, hand: playing && !!input.hand, steer: tour ? tour.slide : player.steer, slip: tour ? Math.abs(Math.sin(tour.slide) * tour.v) : player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
+  if (audio) { const ev = audio.update(dt, { vip: S.cam === 7 && cinema.active, sirens: S.cam === 7 && cinema.active ? traffic.vip.cars.filter(c => c.role === 'police').map(c => ({ x: c.x, z: c.z, vx: Math.sin(c.h) * c.v, vz: Math.cos(c.h) * c.v }))
+      : !cinema.active && player.emergencyMode === 1 ? [{ x: player.pos.x, z: player.pos.z, vx: 0, vz: 0, gain: view.inCab ? 0.3 : 0.5 }] : null, // the camera rides with the player's car: no Doppler
+      listener: (camera.getWorldDirection(sirenEar), { x: camera.position.x, z: camera.position.z, fx: sirenEar.x, fz: sirenEar.z }), featuredCar: tour, cinematic: cinema.active, garage: !$('#garage').hidden, puddleDepth: (playing || replaying) ? spray.depth : 0, hour, urban: inCity(focus.x, focus.z) && focus.x >= -HALF, sheltered: !tour && player.tunnel, vehicle: tour ? (CARS.find(c => (c.file || 'sports-coupe') === traffic.modelFiles[tour.kit])?.id || player.spec.voice) : player.spec.voice, grounded: !!tour || !player.air, offroad: !tour && (player.onSand || player.rough), playing: playing || replaying || !!tour, speed: tour ? tour.v : player.speed, reverse: tour ? false : replaying ? player.speed < -0.5 : player.reversing, throttle: tour ? tour.throttle : playing ? (input.up ? 1 : 0) : replaying ? 0.5 : 0, brake: tour ? Number(tour.braking) : playing ? input.down : 0, hand: playing && !!input.hand, steer: tour ? tour.slide : player.steer, slip: tour ? Math.abs(Math.sin(tour.slide) * tour.v) : player.slip, env, x: focus.x, z: focus.z, heading: tour ? tour.h : player.heading, beachX: city.beachX, amb: places.frontier?.ambience(focus.x, focus.z, S.time), cars: traffic.cars, trainX: city.viaduct, trainZ: street.trainZ(), cockpit: S.cam === 3, people: street.people.some(w => w.live && Math.abs(w.root.position.x - player.pos.x) + Math.abs(w.root.position.z - player.pos.z) < 26) });
     if (ev === 'thunder') S.flash = 0.35; }
-  player.updateWetness(dt, env.rain);
+  player.updateWetness(dt, env.rain); player.updateEmergency(dt); placeBeacons();
   probe.set(focus.x, (tour ? tour.y || 0 : player.groundY) + 1.15, focus.z); R.render(probe);
   if (shot) { shot = false; renderer.domElement.toBlob(saveShot, 'image/jpeg', 0.93); }
 }
@@ -790,7 +857,7 @@ async function boot() {
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
   env = city.setTime(hour, rainyK); captureEnv();
   setLoad('Rolling out the ' + carById(save.car).name); await nextFrame();
-  player = await createPlayer(scene, R.cube.texture, city, carSpec(save, save.car)); R.cube.hide.push(player.root);
+  player = await createPlayer(scene, R.cube.texture, city, carSpec(save, save.car)); R.cube.hide.push(player.root); policeUI();
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
   traffic = await createTraffic(scene, city, Q.traffic, Q.reach);

@@ -215,3 +215,9 @@ The on-foot player can wear any of the Quaternius civilian outfits (CC0, listed 
 ### Afterdark Cadillac Escalade
 
 [2021 Cadillac Escalade Premium Luxury](https://sketchfab.com/3d-models/2021-cadillac-escalade-premium-luxury-3a63c01d768840aaacbd22cfc5885583) by Es-star kings (KINGSLEY_king), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The Afterdark version scales and grounds the model, simplifies its geometry, groups its wheels for steering and rotation, and adapts the body paint.
+
+### Afterdark police cars
+
+[2013 Ford Shelby GT500 - Patrol](https://sketchfab.com/3d-models/2013-ford-shelby-gt500-patrol-6cef8f01bd924bac8e28903c8d5e7596) by Ddiaz Design, [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). The Afterdark version (`car-police-gt500.glb`) scales the model to the real car, splits its wheels for steering and rotation, removes the manufacturer badges, repaints the livery and number plate as Port Aurora Police, splits the light bar into red and blue heads and compresses the geometry and textures. The adapted model is shared under the same licence, CC BY-NC-SA 4.0, for non-commercial use.
+
+The 2020 Ford Police Interceptor Utility (`car-police-interceptor.glb`) was supplied by the site owner; its original author and licence are not recorded in the file. The Afterdark version scales it to the real vehicle, groups its wheels, bakes in the Port Aurora Police livery (`scripts/afterdark-police-livery.py`), simplifies the geometry and compresses it.

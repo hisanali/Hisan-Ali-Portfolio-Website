@@ -1,6 +1,7 @@
 import { createMotorcade } from './vip.js';
 import { beamTexture, lampColor } from './low-beams.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
+import { EMERGENCY } from './emergency-lights.js';
 // Traffic: cars that keep to their lanes, obey the signals, queue behind each other and turn at junctions,
 // plus parked cars along the kerbs. Every body style is drawn with instancing.
 import { vehicleShadowMaterial } from './vehicle-shadow.js';
@@ -47,8 +48,11 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     if (coupe) g.scene.rotation.y = Math.PI;
     g.scene.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(g.scene, true);
-    const parts = [];
+    const parts = [], emergency = [];
     g.scene.traverse(o => { if (!o.isMesh) return; let m = o.material; const name = m.name || '';
+      // A police car's LED heads: kept for the convoy to light (emergency-lights.js). The glow shells only exist while
+      // lit, so traffic never draws them; the lenses stay on the body, dark, like a patrol car's bar when it is off.
+      if (EMERGENCY.test(name)) { emergency.push({ geo: o.geometry, local: o.matrixWorld.clone(), name, map: m.emissiveMap || null }); if (/^Emergency_Glow/i.test(name)) return; }
       const role = lampRole(o, style === 'escalade');
       const painted = /paint/i.test(name) || (coupe && o.name === 'body');
       if (painted) m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: m.map, metalness: 0.51, roughness: 0.28, clearcoat: 0.84, clearcoatRoughness: 0.11, envMapIntensity: 1.5 });
@@ -90,7 +94,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     }
 
     parts.push(rearPlate(style, kits.length, box));
-    kits.push({ style, parts, height: box.max.y, width: box.max.x - box.min.x, len: box.max.z - box.min.z });
+    kits.push({ style, parts, emergency, height: box.max.y, width: box.max.x - box.min.x, len: box.max.z - box.min.z });
   }
   // Draw from shuffled decks so short runs of spawns include the whole roster.
   function fleetDeck(pool) {
@@ -100,9 +104,11 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       return remaining.splice(Math.floor(R() * remaining.length), 1)[0];
     };
   }
-  const fleet = kits.map((_, i) => i);
-  const parkedKit = fleetDeck(fleet.filter(i => kits[i].len <= 6.2 && !TRANSIT.includes(kits[i].style)));
-  const cityKit = fleetDeck(fleet), countryKit = fleetDeck(fleet);
+  const fleet = kits.map((_, i) => i), patrol = fleet.filter(i => /^police-/.test(kits[i].style)), civil = fleet.filter(i => !patrol.includes(i));
+  // Police cars are on patrol, one car in fourteen, and never parked at the kerb.
+  const withPatrols = deck => { const cop = fleetDeck(patrol); let n = 0; return () => ++n % 14 === 0 && patrol.length ? cop() : deck(); };
+  const parkedKit = fleetDeck(civil.filter(i => kits[i].len <= 6.2 && !TRANSIT.includes(kits[i].style)));
+  const cityKit = withPatrols(fleetDeck(civil)), countryKit = withPatrols(fleetDeck(civil));
   // ---- Parked cars ----
   const parked = [];
   for (let r = 0; r < ROADS; r++) for (let s = 24; s < SPAN - 20; s += 6.4) { if (Math.abs(s - Math.round(s / P) * P) < 25) continue;
@@ -155,7 +161,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     const paint = p.mat.clone(); paint.map = null;
     return { ...p, mat:paint };
   }) });
-  const vip = createMotorcade(scene, kits, cars, parked);
+  const vip = createMotorcade(scene, kits, cars, parked, city.world);
   const groups = kits.map((kit, ki) => { const nM = cars.filter(c => c.kit === ki).length + vip.cars.filter(c => c.kit === ki).length;
     return kit.parts.map(part => { const im = new THREE.InstancedMesh(part.geo, part.mat, nM + PARK_MAX); im.frustumCulled = false; im.userData.part = part; im.userData.nM = nM; im.count = 0; im.castShadow = part.castShadow !== false; im.receiveShadow = true; scene.add(im); return im; }); });
   kits.forEach((kit, ki) => { let m = 0; for (const c of cars) { if (c.kit !== ki) continue; c.slot = m++; }
@@ -181,7 +187,7 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const blobG = new THREE.PlaneGeometry(1.6, 1.32); blobG.rotateX(-Math.PI / 2); blobG.translate(0, 0.028, 0);
   const blobs = new THREE.InstancedMesh(blobG, vehicleShadowMaterial(), n + PARK_MAX * kits.length); blobs.frustumCulled = false; blobs.renderOrder = 3; scene.add(blobs);
   function setTime(e) {
-    vip.wet = e.wet;
+    vip.wet = e.wet; vip.night = e.night;
     const beam = Math.max(e.night, .55 * e.rain);
     pools.visible = beam > .05; pools.material.opacity = .23 * beam;
     blobs.material.opacity = 0.97 - 0.12 * e.night;

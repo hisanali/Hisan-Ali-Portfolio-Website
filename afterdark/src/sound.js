@@ -14,7 +14,7 @@ const GEARBOX = {
   },
   bus: { ratio: [510, 300, 192, 137, 106, 86], up: [1450, 750], down: [800, 470] }
 };
-const VOICE = { hatch: 'grcorolla', suv: 'landcruiser' };
+const VOICE = { hatch: 'grcorolla', suv: 'landcruiser', gt500: 'coupe', interceptor: 'landcruiser' }; // supercharged V8; twin-turbo V6 with a 10-speed
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 // A repeating two-revolution combustion cycle. On the cross-plane V8s the
@@ -23,7 +23,7 @@ const EXHAUST = {
   coupe: [8, 840, .036], hatch: [3, 730, .044], sedan: [4, 410, .029],
   pickup: [8, 420, .055], suv: [6, 460, .043], estate: [4, 355, .034],
   crossover: [6, 390, .031], compact: [4, 630, .032], van: [4, 305, .049],
-  escalade: [8, 340, .13], mercedes: [4, 440, .039],
+  escalade: [8, 340, .13], mercedes: [4, 440, .039], gt500: [8, 470, .085], interceptor: [6, 400, .05],
   bus: [6, 245, .062], coach: [6, 305, .052]
 };
 function exhaustWave(ctx, cylinders, splitBanks) {
@@ -103,15 +103,43 @@ export function createSound() {
     return active && !!anthemSource;
   }
   const vipChords = [[50,57,66,69],[55,62,66,71],[47,54,62,66],[45,52,61,64]];
-  const siren = ctx.createOscillator(), sirenLevel = ctx.createGain();
-  siren.type = 'triangle'; sirenLevel.gain.value = 0;
-  const distant = ctx.createBiquadFilter(); distant.type = 'lowpass'; distant.frequency.value = 760;
-  siren.connect(distant).connect(sirenLevel).connect(comp); siren.start();
-  function soundtrack(active, vip, sirenDistance = Infinity) {
-    const near = 1 / (1 + (sirenDistance / 19) ** 2);
-    set(sirenLevel.gain, active && vip ? .0008 + .015 * near : 0, .22);
-    set(distant.frequency, 520 + 970 * near, .24);
-    if (active && vip) set(siren.frequency, 610 + 135 * Math.sin(ctx.currentTime * 1.5), .035);
+  // Electronic sirens, one per police car: a buzzy saw-and-square tone driven hard into a horn speaker (soft clipping
+  // and the horn's two resonances), sweeping in the standard wail and breaking into yelp ahead of junctions. Each one is
+  // placed in the stereo field, pitched by the Doppler shift of its own speed, dulled with distance, and echoes off the
+  // street walls.
+  const sirenBus = ctx.createGain(); sirenBus.gain.value = 0; sirenBus.connect(comp);
+  const echo = ctx.createDelay(0.6), echoBack = ctx.createGain(), echoTone = ctx.createBiquadFilter(), echoWet = ctx.createGain();
+  echo.delayTime.value = 0.19; echoBack.gain.value = 0.32; echoTone.type = 'lowpass'; echoTone.frequency.value = 1800; echoWet.gain.value = 0.34;
+  sirenBus.connect(echo); echo.connect(echoTone).connect(echoBack).connect(echo); echoTone.connect(echoWet).connect(comp);
+  const hornCurve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 1023 * 2 - 1; hornCurve[i] = Math.tanh(2.6 * x) / Math.tanh(2.6); }
+  const sirens = [0, 1].map(k => {
+    const saw = ctx.createOscillator(), sq = ctx.createOscillator(), a = ctx.createGain(), b = ctx.createGain(), shaper = ctx.createWaveShaper(), low = ctx.createBiquadFilter(), horn1 = ctx.createBiquadFilter(), horn2 = ctx.createBiquadFilter(), air = ctx.createBiquadFilter(), level = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
+    saw.type = 'sawtooth'; sq.type = 'square'; a.gain.value = 0.55; b.gain.value = 0.3; shaper.curve = hornCurve; shaper.oversample = '2x';
+    low.type = 'highpass'; low.frequency.value = 380; horn1.type = 'peaking'; horn1.frequency.value = 1150; horn1.Q.value = 1.1; horn1.gain.value = 7; horn2.type = 'peaking'; horn2.frequency.value = 2750; horn2.Q.value = 2.2; horn2.gain.value = 5;
+    air.type = 'lowpass'; air.frequency.value = 6000; level.gain.value = 0;
+    saw.connect(a).connect(shaper); sq.connect(b).connect(shaper); shaper.connect(low).connect(horn1).connect(horn2).connect(air).connect(level).connect(pan).connect(sirenBus); saw.start(); sq.start();
+    return { saw, sq, air, level, pan, t: k * 2.1, pitch: 1 + k * 0.035 };
+  });
+  function sirenSweep(S, i, dt) {
+    S.t += dt; const cycle = (S.t + i * 5.3) % 13, yelp = cycle > 9.4 && cycle < 12.2;
+    if (yelp) return [700 + 820 * Math.pow((S.t * 3.2 + i * 0.4) % 1, 0.7), 0.012];
+    const p = (S.t / 4.4 + i * 0.31) % 1, rise = 0.38, k = p < rise ? Math.sin(p / rise * Math.PI / 2) : Math.cos((p - rise) / (1 - rise) * Math.PI / 2) ** 1.4;
+    return [620 + 830 * k, 0.03];
+  }
+  let lastSiren = ctx.currentTime;
+  function updateSirens(active, list, L) {
+    const now = ctx.currentTime, dt = Math.min(0.1, Math.max(0, now - lastSiren)); lastSiren = now;
+    set(sirenBus.gain, active && list?.length ? 1 : 0, 0.25);
+    sirens.forEach((S, i) => { const src = list?.[i];
+      if (!active || !src || !L) { set(S.level.gain, 0, 0.2); return; }
+      const [f, tc] = sirenSweep(S, i, dt), dx = src.x - L.x, dz = src.z - L.z, d = Math.hypot(dx, dz) + 0.5;
+      const away = (src.vx * dx + src.vz * dz) / d, doppler = clamp(343 / (343 + away), 0.85, 1.18), hz = f * S.pitch * doppler;
+      S.saw.frequency.setTargetAtTime(hz, now, tc); S.sq.frequency.setTargetAtTime(hz * 1.004, now, tc);
+      const near = 1 / (1 + d / 14);
+      set(S.level.gain, (0.004 + 0.12 * near) * (src.gain ?? 1), 0.08); set(S.air.frequency, 1300 + 9000 * near * near, 0.1);
+      if (S.pan.pan) set(S.pan.pan, clamp((dz * L.fx - dx * L.fz) / d * 0.85, -1, 1), 0.08); });
+  }
+  function soundtrack(active, vip) {
     const anthemPlaying = playAnthem(active && vip);
     set(score.gain, active && !anthemPlaying ? (vip ? .68 : .38) : 0, .16);
     const now = ctx.currentTime;
@@ -150,7 +178,8 @@ export function createSound() {
     thunder() { const names = Object.keys(shots); if (!names.length) return false; const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = shots[names[Math.floor(Math.random() * names.length)]]; g.gain.value = 0.5 + Math.random() * 0.35; src.playbackRate.value = 0.9 + Math.random() * 0.2; src.connect(g).connect(master); src.start(); return true; },
     // Called every frame. s: { playing, speed, reverse, throttle, brake, hand, steer, slip, env, x, z, heading, beachX, cars, trainX, trainZ, cockpit, people }
     update(dt, s) {
-      soundtrack(on && s.playing && s.cinematic, s.vip, s.sirenDistance);
+      updateSirens(on && s.playing && (s.cinematic ? !!s.vip : true), s.sirens, s.listener); // the convoy's in the film, the player's own police car in play
+      soundtrack(on && s.playing && s.cinematic, s.vip);
       set(master.gain, on && s.playing ? (s.cinematic ? .32 : 1) : 0, 0.1);
       const elapsed = ctx.currentTime - previewStart;
       if (!s.garage || elapsed > 2.4) previewCar = null;
@@ -163,7 +192,7 @@ export function createSound() {
         const [cylinders, cutoff, level] = EXHAUST[s.vehicle] || EXHAUST.sedan;
         if (exhaustCar !== s.vehicle) {
           exhaustCar = s.vehicle;
-          const split = s.vehicle === 'escalade' || s.vehicle === 'pickup';
+          const split = s.vehicle === 'escalade' || s.vehicle === 'pickup' || s.vehicle === 'gt500';
           const key = cylinders + ':' + split;
           if (!waves.has(key)) waves.set(key, exhaustWave(ctx, cylinders, split));
           exhaust.setPeriodicWave(waves.get(key));

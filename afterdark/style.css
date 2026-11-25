@@ -48,6 +48,7 @@ body.is-touch[data-mode=play] #touch{display:flex}
 #touch button{width:clamp(72px,11vw,104px);height:clamp(72px,11vw,104px);border-radius:50%;background:rgba(12,14,22,.46);border:1.5px solid rgba(255,255,255,.26);color:#fff;font-weight:800;font-size:12px;letter-spacing:.1em;display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);touch-action:none;-webkit-tap-highlight-color:transparent}
 #touch button svg{width:34px;height:34px;stroke-width:2.4}
 #touch button.sm{width:clamp(54px,7.5vw,72px);height:clamp(54px,7.5vw,72px);font-size:10px}
+#touch button[hidden]{display:none}
 #touch button.gas{width:clamp(84px,13vw,124px);height:clamp(104px,17vw,156px);border-radius:26px;background:rgba(40,220,190,.2);border-color:rgba(110,255,235,.6)}
 #touch button.brake{height:clamp(84px,13vw,124px);border-radius:24px;background:rgba(255,70,90,.16);border-color:rgba(255,120,135,.5)}
 #touch button.on{background:rgba(95,255,235,.4);border-color:#5ff;transform:scale(.96)}
@@ -140,4 +141,10 @@ body[data-mode=photo] #scene{cursor:grab}
 .camera-picker:focus-within{outline:2px solid white}
 body.cinema>*:not(#scene){visibility:hidden!important;pointer-events:none!important}
 body.cinema,body.cinema #scene{cursor:none}
+/* film titles for the convoy: a place name set in the lower letterbox bar */
+#cine-title{position:fixed;left:0;right:0;bottom:max(1.6vh,calc((100vh - 100vw / 2.39) / 2 * .28));z-index:100000;display:grid;justify-items:center;gap:4px;pointer-events:none;opacity:0;transition:opacity 1.1s ease;visibility:hidden;color:#f4f1ea;text-align:center;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#cine-title b{font-weight:300;font-size:clamp(15px,2.3vw,30px);letter-spacing:.42em;text-transform:uppercase;padding-left:.42em}
+#cine-title span{font-size:clamp(10px,1vw,13px);letter-spacing:.18em;color:rgba(244,241,234,.66)}
+body.cinema #cine-title{visibility:visible!important}
+body.cinema #cine-title.on{opacity:1}
 body.cinema::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;border-block:clamp(4vh,calc((100vh - 100vw / 2.39) / 2),16vh) solid black}

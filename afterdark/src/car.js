@@ -6,6 +6,7 @@ import { clearLampCover, lampRole } from './vehicle-lamps.js';
 import { vehicleShadowMaterial } from './vehicle-shadow.js';
 import * as THREE from '/evermile/vendor/three.module.js';
 import { wetCar } from './wet-car.js';
+import { EMERGENCY, createEmergencyLights } from './emergency-lights.js';
 import { GLTFLoader } from '/evermile/vendor/loaders/GLTFLoader.js';
 import { DRACOLoader } from '/evermile/vendor/loaders/DRACOLoader.js';
 import { P, ROADS, HALF, SW, SPAN } from './city.js';
@@ -75,17 +76,26 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     }
   });
   // Detailed imported cars keep their own textured trim, cabin and lamps; only the paint, glass and tail lenses are ours.
-  if (rigCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; if (mn === 'BodyPaint') o.material = paint; else if (/^TailLens/.test(mn)) o.material = M.tail; else if (mn === 'EXT_Glass') o.material = M.glass; else { o.material.envMap = envTexture; o.material.envMapIntensity = 0.9; } });
+  if (rigCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; if (mn === 'BodyPaint') o.material = paint; else if (/^TailLens/.test(mn)) o.material = M.tail; else if (mn === 'EXT_Glass' || mn === 'Window_Glass') o.material = M.glass; else { o.material.envMap = envTexture; o.material.envMapIntensity = 0.9; } });
   else if (kitCar) model.traverse(o => { if (!o.isMesh) return; const mn = o.material?.name || ''; o.material = /paint/i.test(mn) ? paint : /glass/i.test(mn) ? M.glass : /HeadLens/i.test(mn) ? M.lens : /TailLens/i.test(mn) ? M.tail : Object.assign(o.material.clone(), { envMap: envTexture, envMapIntensity: 0.8 }); });
   else model.traverse(o => { if (!o.isMesh) return; const n = o.name, mn = o.material?.name || '';
     o.material = n === 'body' ? paint : /glass/i.test(n) ? M.glass : n === 'lights_red' ? M.tail : n === 'leds' ? M.led : n === 'lights' ? M.lens : /^rim_|^wheel$|^nuts$|^centre$/.test(n) ? M.rim : n === 'chrome' || n === 'metal' ? M.chrome : n === 'tire' ? M.tyre
       : n === 'brakes' || n === 'brake' ? (n === 'brakes' ? M.caliper : M.rim) : /carbon/.test(n) ? M.carbon : /grills|wipers|plastic|trim$/.test(n) ? M.dark : /Leather|Carpet|Interior/i.test(mn) || /interior|leather|carpet|steering/.test(n) ? M.cabin : M.dark; });
   for (const [mesh, cover] of covers) mesh.material = cover;
+  // Police cars light their own LED heads (emergency-lights.js); the glow shells are drawn only while lit.
+  const emergencyParts = [];
+  if (rigCar) { model.updateMatrixWorld(true); const inv = model.matrixWorld.clone().invert();
+    model.traverse(o => { const mn = o.material?.name || ''; if (!o.isMesh || !EMERGENCY.test(mn)) return;
+      emergencyParts.push({ geo: o.geometry, local: inv.clone().multiply(o.matrixWorld), name: mn, map: o.material.emissiveMap || null });
+      if (/^Emergency_Glow/i.test(mn)) o.visible = false; }); }
+  const emergency = emergencyParts.length ? createEmergencyLights(emergencyParts, height) : null;
   const stopLamp = escalade ? M.tail.clone() : null;
   if (escalade) M.lens.emissive.setHex(0xf2f7ff);
   for (const [mesh, role] of lenses) mesh.material = role === 'stop' ? stopLamp : role === 'drl' ? M.led : role === 'tail' ? M.tail : M.lens;
   model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const root = new THREE.Group(), tilt = new THREE.Group(); tilt.add(model); root.add(tilt); scene.add(root);
+  if (emergency) { model.add(emergency.group); emergency.update(0, 0, false); }
+  let emergencyT = 0;
   const wheels = (kitCar ? ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR'] : ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']).map(name => { const node = model.getObjectByName(name); return node && { node, base: node.quaternion.clone(), front: name[6].toLowerCase() === 'f', up: Y.clone().applyQuaternion(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()) }; }).filter(Boolean);
   let wheelR = kitCar ? 0.34 : 0.358; const rigs = [];
   if (rigCar) { wheels.length = 0; const found = [], calipers = []; model.traverse(o => { if (/^Wheel_[FR][LR]$/.test(o.name)) found.push(o); if (/^Caliper_[FR][LR]$/.test(o.name)) calipers.push(o); }); model.updateWorldMatrix(true, true);
@@ -161,6 +171,9 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   };
   car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(spec.branded ? 0xfafaf6 : hex); car.spec = T; car.tune = s => Object.assign(T, s);
+  // 0: off, 1: lights and siren, 2: lights only. emergencyLevels: how lit each side of the bar is, [passenger, driver].
+  car.police = !!emergency; car.emergencyMode = 0; car.emergencyLevels = [0, 0]; car.height = height;
+  car.updateEmergency = dt => { if (!emergency) return; emergencyT += dt; car.emergencyLevels = emergency.update(emergencyT, nightK, car.emergencyMode > 0); };
   car.setInterior = on => { M.glass.opacity = on ? 0.14 : 0.82; };
   car.setTime = e => { nightK = e.night; wetK = e.wet; paint.envMapIntensity = lerp(daylightReflection, 0.75, nightK); const lowBeam = Math.max(e.night, e.rain * .55);
     for (const light of lights) light.intensity = 305 * lowBeam;
