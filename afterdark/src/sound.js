@@ -45,7 +45,7 @@ export function createSound() {
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOS: play even with the silent switch on
   const ctx = new (window.AudioContext || window.webkitAudioContext)(); ctx.resume?.();
   const master = ctx.createGain(); master.gain.value = 0;
-  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2; master.connect(comp).connect(ctx.destination);
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2; const muffle = ctx.createBiquadFilter(); muffle.type = 'lowpass'; muffle.frequency.value = 22000; muffle.Q.value = 0.5; master.connect(comp).connect(muffle).connect(ctx.destination); // under water: muffled
   const engineBus = ctx.createGain(); engineBus.gain.value = 0; engineBus.connect(comp);
   const drive = new DriveAudio(ctx, engineBus);
   let previewCar, previewStart;
@@ -168,6 +168,7 @@ export function createSound() {
     preview(id) { previewCar = id; previewStart = ctx.currentTime; },
     resume() { if (ctx.state !== 'running') ctx.resume?.(); }, setOn(v) { on = v; },
     click() { tone(1500, 0, 0.05, 0.05, 'triangle'); },
+    underwater(k) { set(muffle.frequency, k > 0 ? 380 + 900 * (1 - k) : 22000, 0.15); },
     tick(on) { tone(on ? 2300 : 1700, 0, 0.018, 0.022, 'square'); }, // indicator relay
     start() { try { drive.lastVolume = 1; drive.starter(0.9); } catch (e) {} },
     beacon() { [659, 880, 1319, 1760].forEach((f, i) => { tone(f, i * 0.07, 0.5, 0.11, 'triangle'); tone(f * 2, i * 0.07, 0.3, 0.03); }); burst(6000, 2, 0.05, 0.5, 0, 'highpass'); },

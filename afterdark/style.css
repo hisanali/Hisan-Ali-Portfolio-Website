@@ -154,3 +154,7 @@ body.cinema::after{content:"";position:fixed;inset:0;pointer-events:none;z-index
 #wanted span{font-size:11px;letter-spacing:.04em;opacity:.8}
 body[data-mode=play] #wanted.on{display:flex}
 @keyframes wanted{50%{border-color:#2f6bff;box-shadow:0 0 18px rgba(47,107,255,.5)}0%{box-shadow:0 0 18px rgba(255,42,58,.5)}}
+/* under water: the edges of the view darken into the murk, with a slow wobble of refraction */
+body.underwater::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;background:rgb(70,170,170);mix-blend-mode:multiply;opacity:.55} /* water soaks up the reds first */
+body.underwater::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 50% 38%,rgba(10,60,70,0) 35%,rgba(2,22,32,.62) 100%);animation:uw-sway 5s ease-in-out infinite alternate}
+@keyframes uw-sway{to{transform:scale(1.04) translateY(-1%)}}
