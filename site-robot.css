@@ -119,3 +119,6 @@ body.menu-open .paper-ball,body:has(dialog[open]) .paper-ball{visibility:hidden}
 
 .site-robot{transition:opacity .45s ease}
 .site-robot.is-away{opacity:0!important;pointer-events:none!important;visibility:hidden;transition:opacity .45s ease,visibility 0s .45s}
+
+/* Bring the inked edge of the ball to the floor inside its 44px touch target. */
+.paper-ball[data-state="ready"] svg{display:block;transform:translateY(6px)}

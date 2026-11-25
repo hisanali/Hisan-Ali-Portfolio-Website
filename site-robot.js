@@ -43,12 +43,17 @@
   const ball=document.createElement('button');ball.className='paper-ball';ball.type='button';ball.setAttribute('aria-label','Throw paper ball: drag and release, or press Enter');ball.title='Drag and throw · Click to toss';
   ball.innerHTML='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6L22 3L32 10L36 23L29 34L15 37L5 28L3 16Z" fill="#f9f6ed" stroke="#9ca49b" stroke-width="1.3"/><path d="M10 6L15 18L3 16M15 18L22 3M15 18L29 15L32 10M29 15L25 27L36 23M25 27L15 37M15 18L12 28L25 27M5 28L12 28" fill="none" stroke="#ced0c4" stroke-width="1.2"/><path d="M29 15L25 27L36 23" fill="#e1e3d8"/></svg>';
   document.body.append(ball);
-  let game='ready',bx=clamp(x-48,24,innerWidth-24),by=floor()-26,home={x:bx,y:by},ballDrag=null,vx=0,vy=0,flight=0,spin=0,catchUntil=0;
+  // Fixed-position ball coordinates follow the visible viewport on mobile too.
+  const ballGround = () => {
+    const viewport = window.visualViewport;
+    return (viewport ? viewport.offsetTop + viewport.height : innerHeight) - 22;
+  };
+  let game='ready',bx=clamp(x-48,24,innerWidth-24),by=ballGround(),home={x:bx,y:by},ballDrag=null,vx=0,vy=0,flight=0,spin=0,catchUntil=0;
   const ballPaint=()=>{ball.style.translate=`${bx-22}px ${by-22}px`;ball.style.setProperty('--ball-spin',`${spin}deg`);ball.dataset.state=game;};
-  const resetBall=()=>{game='ready';ballDrag=null;bx=clamp(home.x,24,innerWidth-24);by=clamp(home.y,120,floor()-10);ballPaint();};
+  const resetBall=()=>{game='ready';ballDrag=null;bx=clamp(home.x,24,innerWidth-24);by=ballGround();home.y=by;spin=0;ballPaint();};
   const toss=(dx=300,dy=-220)=>{if(reduced.matches){resetBall();state('happy',1200);return;}game='flight';flight=0;vx=clamp(dx,-850,850);vy=clamp(dy,-650,500);target=null;state('curious',300);};
   ball.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.stopPropagation();lastActivity=performance.now();home={x:bx,y:by};ballDrag={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),vx:0,vy:0,moved:false};game='held';target=null;ball.setPointerCapture(e.pointerId);state('curious',5000);});
-  ball.addEventListener('pointermove',e=>{if(!ballDrag||e.pointerId!==ballDrag.id)return;const now=performance.now(),dt=Math.max(16,now-ballDrag.time)/1000;const dx=e.clientX-ballDrag.x,dy=e.clientY-ballDrag.y;ballDrag.moved ||= Math.hypot(e.clientX-home.x,e.clientY-home.y)>8;ballDrag.vx=ballDrag.vx*.4+dx/dt*.6;ballDrag.vy=ballDrag.vy*.4+dy/dt*.6;ballDrag.x=e.clientX;ballDrag.y=e.clientY;ballDrag.time=now;bx=clamp(e.clientX,24,innerWidth-24);by=clamp(e.clientY,120,floor()-10);moveEyes(bx,by);ballPaint();});
+  ball.addEventListener('pointermove',e=>{if(!ballDrag||e.pointerId!==ballDrag.id)return;const now=performance.now(),dt=Math.max(16,now-ballDrag.time)/1000;const dx=e.clientX-ballDrag.x,dy=e.clientY-ballDrag.y;ballDrag.moved ||= Math.hypot(e.clientX-home.x,e.clientY-home.y)>8;ballDrag.vx=ballDrag.vx*.4+dx/dt*.6;ballDrag.vy=ballDrag.vy*.4+dy/dt*.6;ballDrag.x=e.clientX;ballDrag.y=e.clientY;ballDrag.time=now;bx=clamp(e.clientX,24,innerWidth-24);by=clamp(e.clientY,22,ballGround());moveEyes(bx,by);ballPaint();});
   ball.addEventListener('pointerup',e=>{if(!ballDrag||e.pointerId!==ballDrag.id)return;const d=ballDrag;if(performance.now()-d.time>120){d.vx=0;d.vy=-150;}ballDrag=null;ball.releasePointerCapture(e.pointerId);toss(d.moved?d.vx:(bx>innerWidth/2?-380:380),d.moved?d.vy:-260);});
   ball.addEventListener('pointercancel',()=>{resetBall();state('idle',1000);});
   ball.addEventListener('click',e=>{if(e.detail===0){home={x:bx,y:by};toss(bx>innerWidth/2?-380:380,-260);}});
@@ -56,7 +61,7 @@
     if(game==='ready'||game==='held')return;
     if(game==='flight'||game==='chase'){flight+=dt;vy+=320*dt;bx+=vx*dt;by+=vy*dt;spin+=vx*dt*.3;
       if(bx<24||bx>innerWidth-24){bx=clamp(bx,24,innerWidth-24);vx=-Math.sign(vx||1)*Math.max(120,Math.abs(vx)*.92);}
-      if(by<120||by>floor()-12){by=clamp(by,120,floor()-12);vy=by>=floor()-12?-Math.max(240,Math.abs(vy)*.88):Math.max(160,Math.abs(vy)*.9);}
+      if(by<22||by>ballGround()){by=clamp(by,22,ballGround());vy=by>=ballGround()?-Math.max(240,Math.abs(vy)*.88):Math.max(160,Math.abs(vy)*.9);}
       if(flight>.8)game='chase';
     }
     if(game==='flight'||game==='chase'||game==='return'){
@@ -73,7 +78,10 @@
 
   const tick=now=>{
     if(gone)return;
-    if(game==='ready'&&by>floor()-12){by=floor()-26;home.y=by;ballPaint();}
+    if(game==='ready'){
+      const ground=ballGround(), restingX=clamp(bx,24,innerWidth-24);
+      if(by!==ground || bx!==restingX){by=ground;bx=restingX;home={x:bx,y:by};ballPaint();}
+    }
     if(now>nextBlink){blinkUntil=now+140;nextBlink=now+2800+Math.random()*3000;}
     const mood=robot.dataset.state;
     express(game==='catch'||game==='return'?'proud':game==='flight'||game==='chase'?'excited':mood==='sleep'?'sleepy':mood==='wake'?'surprised':mood==='carried'?'surprised':mood==='charge'?'determined':mood==='pet'?'loved':['happy','wave','dance','jump','victory','reveal'].includes(mood)?'happy':now<blinkUntil?'blink':'calm');const dt=Math.min((now-last)/1000,.05);last=now;
