@@ -91,7 +91,7 @@ export function createTyreSpray(capacity) {
   function emit(dt, car, wet, puddleAt) {
     contactDepth = 0;
     const speed = Math.abs(car.speed);
-    if (wet < 0.24 || speed < 3.5 || car.air || car.onSand || car.rough || car.tunnel || car.onKerb) {
+    if (wet < 0.24 || speed < 3.5 || car.air || ((car.onSand || car.rough) && !(car.wade > 0.05)) || car.tunnel || car.onKerb) { // wading throws spray off-road too
       carry.fill(0);
       return;
     }
@@ -101,7 +101,7 @@ export function createTyreSpray(capacity) {
       const side = Math.sign(wheel.x), rear = wheel.z * sign < 0;
       const tx = car.pos.x + wheel.x * cos + wheel.z * sin;
       const tz = car.pos.z - wheel.x * sin + wheel.z * cos;
-      const ground = car.surfaceY(tx, tz);
+      const ground = car.surfaceY(tx, tz) + (car.wade || 0); // off the water's surface when wading
       const depth = puddleAt(tx, tz) * wet;
       if (depth < 0.32) { carry[index] = 0; continue; }
       contactDepth = Math.max(contactDepth, depth);

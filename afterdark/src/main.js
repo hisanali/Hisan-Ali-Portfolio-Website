@@ -122,6 +122,9 @@ function knockPeople() {
   for (const w of street.people) { if (!w.live || w.down > 0) continue; const dx = w.root.position.x - player.pos.x, dz = w.root.position.z - player.pos.z, lz = dx * fx + dz * fz, lx = dx * fz - dz * fx;
     if (Math.abs(lx) < player.wid / 2 + 0.7 && Math.abs(lz) < player.len / 2 + 0.9) { street.knock(w, player.vel.x || dx, player.vel.z || dz, Math.abs(player.speed)); audio?.crash(0.22); S.shake = Math.max(S.shake, 0.25); offence('person'); } }
 }
+// Deep water: after a few seconds afloat the car is towed back to the nearest road.
+let drownT = 0;
+function waterStep(dt) { drownT = player.wade > 1 ? drownT + dt : 0; if (drownT > 3) { drownT = 0; respawn(); toast('Your car went into the water · towed back to the road'); } }
 function policeStep(dt) {
   if (Math.abs(traffic.takeStruck()) > 3) offence('car');
   pursuit.record(player);
@@ -855,7 +858,7 @@ function frame() {
         for (let k = 0; k < ns && !player.rough; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
         for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, player.groundY + 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
       if (live) {
-        S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt); stepIndicators(dt);
+        S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt); stepIndicators(dt); waterStep(dt);
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
         record(dt); stepActivity(dt);
@@ -863,7 +866,7 @@ function frame() {
         if (S.mode === 'play') drawHud();
       }
       if (playing) skidMarks.update(player, ctrl.hand, env.wet); else skidMarks.breakTrail();
-      spray.emit(dt, player, env.wet, city.puddleAt);
+      spray.emit(dt, player, player.wade > 0.05 ? 1 : env.wet, player.wade > 0.05 ? () => 1 : city.puddleAt); // wading throws water like a flooded road
       if (cinema.active) cinemaCamera(dt); else chase(dt, snapCam); snapCam = false;
     } else if (tour) cinemaCamera(dt); else if (!replaying) orbit(S.time);
     rain.visible = env.rain > 0.03 && !world.tunnelPassage(camera.position.x, camera.position.y, camera.position.z);

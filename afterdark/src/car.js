@@ -1,6 +1,7 @@
 import { fitEscaladeWrap } from './escalade-wrap.js';
 import { headlampRange, lampColor } from './low-beams.js';
-import { beachHeight } from './water.js';
+import { beachHeight, SEA_LEVEL } from './water.js';
+import { LAKE } from './frontier-land.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
 // The player's coupé: model set-up with physically based paint, lights, and the driving model.
 import { vehicleShadowMaterial } from './vehicle-shadow.js';
@@ -138,7 +139,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const car = { pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, tyreContacts, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
   let brakeToStop = false;
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
-  const hw = wid / 2 - 0.14, hl = len / 2 - 0.06, CORNERS = [[hw, hl], [-hw, hl], [hw, -hl], [-hw, -hl]], KERB = HALF + SW - 0.06, SEA = -(HALF + 13.2) - 71, PROM = -(HALF + 13.2), prevC = [null, null, null, null];
+  const hw = wid / 2 - 0.14, hl = len / 2 - 0.06, CORNERS = [[hw, hl], [-hw, hl], [hw, -hl], [-hw, -hl]], KERB = HALF + SW - 0.06, PROM = -(HALF + 13.2), prevC = [null, null, null, null];
   const grid = new Map(), boxGrid = new Map();
   const gridKey = (x, z) => x * 4096 + z;
   const addToCell = (map, x, z, shape) => {
@@ -163,7 +164,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.others = []; // moving things to keep clear of (people), set each frame
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
   const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : beachHeight(PROM - x, z); const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
-  car.surfaceY = groundAt;
+  car.surfaceY = groundAt; car.wade = 0;
   car.updateWetness = (dt, rain) => {
     const water = updateWetPaint(dt, car.tunnel ? 0 : rain);
     paint.clearcoatRoughness = lerp(dryCoatRoughness, 0.068, water);
@@ -263,9 +264,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     for (let pass = 0; pass < 2; pass++) { const sn = Math.sin(car.heading), cs = Math.cos(car.heading); let bx = 0, bz = 0, bm = 0;
       for (let ci = 0; ci < 4; ci++) { const lx = CORNERS[ci][0], lz = CORNERS[ci][1], ox0 = cs * lx + sn * lz, oz0 = -sn * lx + cs * lz, x = p.x + ox0, z = p.z + oz0;
         const rx = clamp(Math.round(x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(z / P), 0, ROADS - 1) * P, dx = x - rx, dz = z - rz, ox = Math.abs(dx) - KERB, oz = Math.abs(dz) - KERB; let px = 0, pz = 0;
-        if (outside(x, z)) { // open country: no kerbs, but the shore of the sea, the fjord and the lake is a wall
-          const q = prevC[ci]; if (q && world.isWater?.(x, z) && !world.isWater(q[0], q[1])) { px = q[0] - x; pz = q[1] - z; } }
-        else if (x < 0) { if (x < SEA) px = SEA - x; } // the seafront is open down to the water
+        if (outside(x, z)) { /* open country: no kerbs; the sea, the fjord and the lake can be driven into (see wading) */ }
+        else if (x < 0) { /* the seafront beach runs down into the sea */ }
         else if (ox > 0 && oz > 0) { // which face did this corner come through? Decide from where it was a moment ago, so block corners are not snagged.
           const q = prevC[ci]; let useX = ox <= oz;
           if (q) { const oxp = Math.abs(q[0] - rx) - KERB, ozp = Math.abs(q[1] - rz) - KERB; if (oxp <= 0 && ozp > 0) useX = true; else if (ozp <= 0 && oxp > 0) useX = false; else if (oxp <= 0 && ozp <= 0) useX = Math.abs(car.vel.x) < Math.abs(car.vel.z); }
@@ -327,7 +327,11 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     { let gy = groundAt(p.x, p.z, ginfo); const rd = ginfo.road;
       if (rd) { const lim = 6 - hw - 0.15; for (const [flag, sg] of [['wallL', 1], ['wallR', -1]]) { const over = ginfo.lat * sg - lim; if (rd[flag] && over > 0 && over < 5) { p.x -= rd.lx * sg * over; p.z -= rd.lz * sg * over; const vn = (car.vel.x * rd.lx + car.vel.z * rd.lz) * sg; if (vn > 0) { hit = Math.max(hit, vn); car.vel.x -= rd.lx * sg * vn * 1.15; car.vel.z -= rd.lz * sg * vn * 1.15; }
             const al = Math.sin(car.heading) * rd.tx + Math.cos(car.heading) * rd.tz, want = Math.atan2(rd.tx * Math.sign(al || 1), rd.tz * Math.sign(al || 1)), df = Math.atan2(Math.sin(want - car.heading), Math.cos(want - car.heading)); car.heading += clamp(df, -2.2 * dt, 2.2 * dt); gy = groundAt(p.x, p.z, ginfo); } } }
-      if (outside(p.x, p.z) && world.terrain(p.x, p.z) < -1.25 && !(ginfo.road && ginfo.road.bridge)) { p.x = ox0; p.z = oz0; car.vel.multiplyScalar(-0.25); gy = groundAt(p.x, p.z, ginfo); } // the sea
+      // Water: the car wades in, slowed hard by the depth, and in deep water floats half under, going nowhere.
+      { const bridge = ginfo.road && ginfo.road.bridge, lake = ((p.x - LAKE.x) / LAKE.rx) ** 2 + ((p.z - LAKE.z) / LAKE.rz) ** 2 < 1.5, level = lake ? LAKE.level : SEA_LEVEL;
+        const depth = bridge || (!outside(p.x, p.z) && p.x >= 0) ? 0 : level - gy; car.wade = Math.max(0, depth);
+        if (depth > 0.05) { const k = Math.exp(-dt * (0.5 + depth * 2.6)); car.vel.x *= k; car.vel.z *= k;
+          if (depth > 1.05) gy = level - 1.05; } }
       car.rough = outside(p.x, p.z) && !ginfo.paved && !(ginfo.road && Math.abs(ginfo.lat) < 7.5); car.tunnel = !!(ginfo.road?.tunnel && Math.abs(ginfo.lat) <= 7.5 && Math.abs(gy - ginfo.road.y) < 2);
       const kerb = !outside(p.x, p.z) && gy > 0.08; if (kerb !== car.onKerb) { car.onKerb = kerb; car.bump = Math.min(1, Math.abs(car.speed) * 0.06); }
       // A rise too sharp to drive up is a wall: stop against it rather than popping to the top.
