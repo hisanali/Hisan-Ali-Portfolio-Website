@@ -1,5 +1,5 @@
 .dg-guide .dg-chart { position:relative; width:min(420px,84vw); height:160px; margin:0 auto; border-left:2px solid var(--fe-border); border-bottom:2px solid var(--fe-border); overflow:hidden; }
 .dg-guide .dg-win { position:absolute; left:45%; width:22%; top:0; bottom:0; background:color-mix(in srgb,var(--fe-accent) 18%,transparent); display:flex; justify-content:center; padding-top:6px; font-size:12px; font-weight:800; }
-.dg-guide .dg-line { position:absolute; left:0; right:0; bottom:40px; height:3px; background:var(--fe-accent); clip-path:inset(-80px 100% 0 0); animation:dg-line 7s linear infinite; }
+.dg-guide .dg-line { position:absolute; left:0; right:0; bottom:40px; height:3px; background:var(--fe-accent); clip-path:inset(-80px 0 0 0); animation:dg-line 7s linear infinite; }
 .dg-guide .dg-line::after { content:""; position:absolute; left:45%; width:22%; bottom:0; height:70px; border:3px solid var(--fe-accent); border-bottom:0; border-radius:6px 6px 0 0; }
-@keyframes dg-line { 0% { clip-path:inset(-80px 100% 0 0); } 70%,100% { clip-path:inset(-80px 0 0 0); } }
+@keyframes dg-line { 0% { clip-path:inset(-80px 0 0 0); } 8% { clip-path:inset(-80px 100% 0 0); } 75%,100% { clip-path:inset(-80px 0 0 0); } }
