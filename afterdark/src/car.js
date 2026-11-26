@@ -171,7 +171,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   car.addCollider = indexShape; // for scenery that streams in after the car exists
   car.others = []; // moving things to keep clear of (people), set each frame
   const world = city.world, ginfo = { road: null, lat: 0 }, outside = (x, z) => x > SPAN + KERB || z < -KERB || z > SPAN + KERB;
-  const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) return x > PROM ? 0.17 : beachHeight(PROM - x, z); const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
+  const groundAt = (x, z, info) => { if (outside(x, z)) return world.ground(x, z, info); if (info) { info.road = null; info.paved = false; } if (x < -HALF) { if (x > PROM) return 0.17; const b = beachHeight(PROM - x, z), k = clamp((PROM - x - 80) / 60, 0, 1); return k > 0 ? b + (Math.min(b, world.terrain(x, z)) - b) * k : b; } /* past the beach the sea floor falls away into the deep */ const dx = Math.abs(x - clamp(Math.round(x / P), 0, ROADS - 1) * P), dz = Math.abs(z - clamp(Math.round(z / P), 0, ROADS - 1) * P); return Math.min(dx, dz) > HALF ? 0.17 : 0; };
   car.surfaceY = groundAt; car.wade = 0;
   car.updateWetness = (dt, rain) => {
     const water = updateWetPaint(dt, car.tunnel ? 0 : rain);

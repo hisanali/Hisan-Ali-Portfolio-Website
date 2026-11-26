@@ -6,6 +6,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { GLTFLoader } from '/evermile/vendor/loaders/GLTFLoader.js';
 import { SEA_LEVEL } from './water.js';
 import { LAKE } from './frontier-land.js';
+import { CAUSTICS } from './caustics.js';
 
 const clamp = THREE.MathUtils.clamp;
 
@@ -97,7 +98,9 @@ export function createUnderwater(scene, world, sea, sky) {
     // Each frame, after the time of day has set the fog: if the camera is under, turn the world to water.
     update(dt, camera, car, env) {
       const c = camera.position, level = levelAt(c.x, c.z), under = world.ground(c.x, c.z) < level - 0.2 && c.y < level - 0.05;
-      U.uTime.value += dt; bubbleU.time.value = U.uTime.value; bubbleU.surface.value = level; bubbleU.scale.value = innerHeight;
+      U.uTime.value += dt; bubbleU.time.value = U.uTime.value;
+      // sunlight focused by the waves onto the bed, from above in the shallows and all around below
+      CAUSTICS.uCausticT.value = U.uTime.value * 0.55; CAUSTICS.uWaterLevel.value = sea ? sea.waterLevel.value : SEA_LEVEL; CAUSTICS.uCausticK.value = (1 - (env?.night || 0)) * (1 - 0.6 * (env?.rain || 0)) * 6.0; bubbleU.surface.value = level; bubbleU.scale.value = innerHeight;
       // bubbles from the car whenever it is under, seen from above or below
       bubbleClock += dt; if (bubbleClock > 0.07) { bubbleClock = 0; const cy = car.groundY || 0, cl = levelAt(car.pos.x, car.pos.z);
         if (cl - cy > 1.3) { const fx = Math.sin(car.heading), fz = Math.cos(car.heading); bubble(car.pos.x - fx * car.len * 0.5, cy + 0.4, car.pos.z - fz * car.len * 0.5, 1.0); if (Math.random() < 0.5) bubble(car.pos.x, cy + 1.2, car.pos.z, 0.7); bubbles.visible = true; group.visible = true; }

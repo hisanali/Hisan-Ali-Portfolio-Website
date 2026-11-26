@@ -5,6 +5,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { P, ROADS, HALF, SW, SPAN, CITY_PAVEMENT, rng, splitChunks } from './city.js';
 import { buildForest } from './forest.js';
 import { roadClearance } from './road-clearance.js';
+import { CAUSTICS, CAUSTIC_GLSL } from './caustics.js';
 import { NO_TILE_GLSL } from './weathering.js';
 import { planAirfield, sitePaved, sitePosition } from './landmarks.js';
 import { INNER, EXT, FRONTIER_ROADS, FRONTIER_PLACES, VOLCANO, LAKE, blendLand, zones, lushness, outside, inFjord } from './frontier-land.js';
@@ -264,9 +265,9 @@ export async function buildWorld(scene, city, Q) {
   function landMaterial(clearance, regional) {
   const landM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0, envMapIntensity: 0.35 });
   if (regional) regionTex ||= { uDune: { value: EW('dune_d.jpg') }, uSnow: { value: EW('snow_d.jpg') }, uBasalt: { value: EW('basalt_d.jpg') }, uMoss: { value: EW('moss_d.jpg') }, uVolc: { value: new THREE.Vector3(VOLCANO.x, VOLCANO.z, 0) } };
-  landM.onBeforeCompile = sh => { Object.assign(sh.uniforms, clearance.uniforms); sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata }; Object.assign(sh.uniforms, groundTex); if (regional) Object.assign(sh.uniforms, regionTex);
+  landM.onBeforeCompile = sh => { Object.assign(sh.uniforms, clearance.uniforms, CAUSTICS); sh.uniforms.uGrass = { value: grass }; sh.uniforms.uRock = { value: rock }; sh.uniforms.uStrata = { value: strata }; Object.assign(sh.uniforms, groundTex); if (regional) Object.assign(sh.uniforms, regionTex);
     sh.vertexShader = (regional ? 'attribute vec4 aZone; varying vec4 vZone;\n' : '') + 'attribute float aWoodland; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = transformed; vWN = normal; vWoodland = aWoodland;' + (regional ? ' vZone = aZone;' : ''));
-    sh.fragmentShader = clearance.glsl + (regional ? 'uniform sampler2D uDune, uSnow, uBasalt, uMoss; uniform vec3 uVolc; varying vec4 vZone; float adLava = 0.0;\n' : '') + NO_TILE_GLSL + `uniform sampler2D uGrass, uRock, uStrata, uGrass2, uForestG, uGrassN, uForestN, uGravel, uCliff; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
+    sh.fragmentShader = CAUSTIC_GLSL + clearance.glsl + (regional ? 'uniform sampler2D uDune, uSnow, uBasalt, uMoss; uniform vec3 uVolc; varying vec4 vZone; float adLava = 0.0;\n' : '') + NO_TILE_GLSL + `uniform sampler2D uGrass, uRock, uStrata, uGrass2, uForestG, uGrassN, uForestN, uGravel, uCliff; varying float vWoodland; varying vec3 vWPos; varying vec3 vWN;
 float adH(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(adH(i), adH(i + vec2(1, 0)), f.x), mix(adH(i + vec2(0, 1)), adH(i + vec2(1, 1)), f.x), f.y); }\n` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
   clearRoad(vWPos);
@@ -310,7 +311,7 @@ float adN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   float bankHeight = vWPos.y - mix(-0.62, ${LAKE.level.toFixed(1)}, nearLake);
   float bank = (1.0 - smoothstep(.15, 1.65, bankHeight + .65 * (adN(adP * .21) - .5))) * (1.0 - smoothstep(.25,.55,adSlope));
   adC = mix(adC, mix(adGrav * vec3(.58,.49,.39), adR * .64, adMeadow), bank * smoothstep(8.0,12.0,adRd));
-  diffuseColor.rgb = adC;`).replace('#include <emissivemap_fragment>', regional ? '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(3.2, 0.75, 0.12) * adLava;' : '#include <emissivemap_fragment>').replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  diffuseColor.rgb = adC;`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += adCaustics(vWPos, diffuseColor.rgb);' + (regional ? '\n  totalEmissiveRadiance += vec3(3.2, 0.75, 0.12) * adLava;' : '')).replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   { // tufted grass and forest litter relief, strongest close up and on gentle ground
     float k = (1.0 - smoothstep(0.3, 0.55, adSlope)) * (1.0 - smoothstep(25.0, 140.0, length(cameraPosition - vWPos)));
     vec3 g = noTile(uGrassN, adP / 4.6 + 17.0).xyz * 2.0 - 1.0, f = noTile(uForestN, adP / 3.8 + 5.0).xyz * 2.0 - 1.0, d = mix(g, f, adWood);

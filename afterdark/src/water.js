@@ -2,6 +2,7 @@
 // used by boats), whitecaps where the crests fold, breaking bands on every shore, and colour that follows the depth
 // of the water. It is a physically based material, so the sky, sun and moon light it like everything else.
 import * as THREE from '/evermile/vendor/three.module.js';
+import { CAUSTICS, CAUSTIC_GLSL } from './caustics.js';
 
 export const SEA_LEVEL = -0.62;
 // Two tides per twelve-minute game day. Keep high water below the promenade.
@@ -152,10 +153,11 @@ float oNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
 
 /** Match the darker saturated sand to the lowest part of the beach profile. */
 export function wetSand(material, level) {
+  material.customProgramCacheKey = () => 'afterdark-wet-sand';
   material.onBeforeCompile = shader => {
-    shader.uniforms.uTide = level;
-    shader.vertexShader = 'varying vec3 beachPos;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nbeachPos = position;');
-    shader.fragmentShader = 'uniform float uTide; varying vec3 beachPos;\n' + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+    shader.uniforms.uTide = level; Object.assign(shader.uniforms, CAUSTICS);
+    shader.vertexShader = 'varying vec3 beachPos; varying vec3 beachW;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nbeachPos = position; beachW = (modelMatrix * vec4(position, 1.0)).xyz;');
+    shader.fragmentShader = CAUSTIC_GLSL + 'uniform float uTide; varying vec3 beachPos; varying vec3 beachW;\n' + shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += adCaustics(beachW, diffuseColor.rgb);').replace('#include <color_fragment>', `#include <color_fragment>
   float edge = beachPos.y - uTide + .035*sin(beachPos.z*.43);
   float soaked = 1.0 - smoothstep(-.04, .34, edge);
   diffuseColor.rgb *= mix(vec3(1.0), vec3(0.53, 0.57, 0.61), soaked);
