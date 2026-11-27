@@ -10,6 +10,7 @@ import * as THREE from '/evermile/vendor/three.module.js';
 import { wetCar } from './wet-car.js';
 import { EMERGENCY, createEmergencyLights } from './emergency-lights.js';
 import { GLTFLoader } from '/evermile/vendor/loaders/GLTFLoader.js';
+import { createDamage } from './damage.js';
 import { DRACOLoader } from '/evermile/vendor/loaders/DRACOLoader.js';
 import { P, ROADS, HALF, SW, SPAN } from './city.js';
 
@@ -178,6 +179,13 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     paint.clearcoatRoughness = lerp(dryCoatRoughness, 0.068, water);
     car.bodyWetness = water;
   };
+  // Crash damage: crumple the body where the last hard contact struck it (car.hitN is the push of that contact, in the
+  // world), at bumper height.
+  car.damage = createDamage(root, model);
+  car.dent = speed => { if (!car.hitN) return; const [nx, nz] = car.hitN, sn = Math.sin(car.heading), cs = Math.cos(car.heading);
+    const ix = nx * cs - nz * sn, iz = nx * sn + nz * cs, l = Math.hypot(ix, iz) || 1, ux = -ix / l, uz = -iz / l;
+    const t = Math.min(wid / 2 / Math.max(Math.abs(ux), 1e-3), len / 2 / Math.max(Math.abs(uz), 1e-3));
+    car.damage.hit({ x: ux * t, y: 0.62, z: uz * t }, new THREE.Vector3(ix / l, 0, iz / l), speed); car.hitN = null; };
   car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(spec.branded ? 0xfafaf6 : hex); car.spec = T; car.tune = s => Object.assign(T, s);
   // 0: off, 1: lights and siren, 2: lights only. emergencyLevels: how lit each side of the bar is, [passenger, driver].
@@ -204,12 +212,12 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const serviceBrake = ctrl.brake > 0 && brakeToStop;
     if (!serviceBrake && ctrl.brake > 0 && !ctrl.throttle) car.reversing = true;
     else if (serviceBrake || ctrl.throttle || vF > -0.08) car.reversing = false;
-    const VMAX = T.vmax; let a = 0;
+    const hurt = car.damage ? car.damage.level : 0, VMAX = T.vmax * (1 - 0.3 * hurt); let a = 0;
     if (serviceBrake) {
       const decel = (10.5 - wetK * 2.7) * T.brake;
       a -= Math.sign(vF) * ctrl.brake * decel;
     } else if (ctrl.throttle > 0) {
-      const engine = T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
+      const engine = (1 - 0.35 * hurt) * T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
       // Ease the accelerator at full lock on city streets. Holding W through a turn
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && vF > 0
@@ -268,7 +276,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     // Stay inside the street canyon: carriageway plus pavement, up to the building line.
     // Keep the whole body on the carriageway. Each corner is tested against the kerb line; a touching corner pushes
     // the car back and turns its nose along the kerb, so a glancing hit slides instead of sticking.
-    const p = car.pos; let hit = 0;
+    const p = car.pos; let hit = 0; const strike = (s, nx, nz) => { if (s > hit) { hit = s; car.hitN = [nx, nz]; } }; // the hardest contact, and the way it pushed the car
     for (let pass = 0; pass < 2; pass++) { const sn = Math.sin(car.heading), cs = Math.cos(car.heading); let bx = 0, bz = 0, bm = 0;
       for (let ci = 0; ci < 4; ci++) { const lx = CORNERS[ci][0], lz = CORNERS[ci][1], ox0 = cs * lx + sn * lz, oz0 = -sn * lx + cs * lz, x = p.x + ox0, z = p.z + oz0;
         const rx = clamp(Math.round(x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(z / P), 0, ROADS - 1) * P, dx = x - rx, dz = z - rz, ox = Math.abs(dx) - KERB, oz = Math.abs(dz) - KERB; let px = 0, pz = 0;
@@ -281,7 +289,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
         const m = Math.abs(px) + Math.abs(pz); if (m > bm) { bm = m; bx = px; bz = pz; } }
       if (bm <= 0) break;
       p.x += bx; p.z += bz; const nl = Math.hypot(bx, bz), nx = bx / nl, nz = bz / nl, vn = car.vel.x * nx + car.vel.z * nz;
-      if (vn < 0) { hit = Math.max(hit, -vn); car.vel.x -= nx * vn * 1.12; car.vel.z -= nz * vn * 1.12; car.vel.multiplyScalar(-vn > 6 ? 0.8 : 0.992); }
+      if (vn < 0) { strike(-vn, nx, nz); car.vel.x -= nx * vn * 1.02; car.vel.z -= nz * vn * 1.02; car.vel.multiplyScalar(-vn > 6 ? 0.72 : 0.992); }
       const into = -(sn * nx + cs * nz);
       const tx = -nz, tz = nx, along = sn * tx + cs * tz;
       // Only a glancing hit or active steering can guide the nose along the wall.
@@ -301,10 +309,10 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
         p.z += nz * depth;
         const vn = car.vel.x * nx + car.vel.z * nz;
         if (vn < 0) {
-          if (!soft) hit = Math.max(hit, -vn);
-          car.vel.x -= nx * vn * 1.1;
-          car.vel.z -= nz * vn * 1.1;
-          if (-vn > 6) car.vel.multiplyScalar(0.8);
+          if (!soft) strike(-vn, nx, nz);
+          car.vel.x -= nx * vn * 1.02;
+          car.vel.z -= nz * vn * 1.02;
+          if (-vn > 6) car.vel.multiplyScalar(0.72);
         }
       };
       // Four separating axes for the car and the actual rectangular footprint of the obstacle.
@@ -333,7 +341,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       for (let ix = gx - 1; ix <= gx + 1; ix++) for (let iz = gz - 1; iz <= gz + 1; iz++) { const cell = grid.get(gridKey(ix, iz)); if (cell) for (const o of cell) pushOff(o, false); }
       for (const o of car.others) pushOff(o, true); }
     { let gy = groundAt(p.x, p.z, ginfo); const rd = ginfo.road;
-      if (rd) { const lim = 6 - hw - 0.15; for (const [flag, sg] of [['wallL', 1], ['wallR', -1]]) { const over = ginfo.lat * sg - lim; if (rd[flag] && over > 0 && over < 5) { p.x -= rd.lx * sg * over; p.z -= rd.lz * sg * over; const vn = (car.vel.x * rd.lx + car.vel.z * rd.lz) * sg; if (vn > 0) { hit = Math.max(hit, vn); car.vel.x -= rd.lx * sg * vn * 1.15; car.vel.z -= rd.lz * sg * vn * 1.15; }
+      if (rd) { const lim = 6 - hw - 0.15; for (const [flag, sg] of [['wallL', 1], ['wallR', -1]]) { const over = ginfo.lat * sg - lim; if (rd[flag] && over > 0 && over < 5) { p.x -= rd.lx * sg * over; p.z -= rd.lz * sg * over; const vn = (car.vel.x * rd.lx + car.vel.z * rd.lz) * sg; if (vn > 0) { strike(vn, -rd.lx * sg, -rd.lz * sg); car.vel.x -= rd.lx * sg * vn * 1.02; car.vel.z -= rd.lz * sg * vn * 1.02; if (vn > 6) car.vel.multiplyScalar(0.8); }
             const al = Math.sin(car.heading) * rd.tx + Math.cos(car.heading) * rd.tz, want = Math.atan2(rd.tx * Math.sign(al || 1), rd.tz * Math.sign(al || 1)), df = Math.atan2(Math.sin(want - car.heading), Math.cos(want - car.heading)); car.heading += clamp(df, -2.2 * dt, 2.2 * dt); gy = groundAt(p.x, p.z, ginfo); } } }
       // Water: the car wades in, slowed hard by the depth; deeper, it sinks slowly to the bed and crawls along it.
       { const bridge = ginfo.road && ginfo.road.bridge, lake = ((p.x - LAKE.x) / LAKE.rx) ** 2 + ((p.z - LAKE.z) / LAKE.rz) ** 2 < 1.5, level = lake ? LAKE.level : SEA_LEVEL;
@@ -343,7 +351,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       car.rough = outside(p.x, p.z) && !ginfo.paved && !(ginfo.road && Math.abs(ginfo.lat) < 7.5); car.tunnel = !!(ginfo.road?.tunnel && Math.abs(ginfo.lat) <= 7.5 && Math.abs(gy - ginfo.road.y) < 2);
       const kerb = !outside(p.x, p.z) && gy > 0.08; if (kerb !== car.onKerb) { car.onKerb = kerb; car.bump = Math.min(1, Math.abs(car.speed) * 0.06); }
       // A rise too sharp to drive up is a wall: stop against it rather than popping to the top.
-      if (!car.air && outside(p.x, p.z) && gy - car.groundY > 0.55 + Math.hypot(p.x - ox0, p.z - oz0) * 1.6) { const mx = p.x - ox0, mz = p.z - oz0, ml = Math.hypot(mx, mz) || 1; hit = Math.max(hit, Math.hypot(car.vel.x, car.vel.z) * 0.6); p.x = ox0; p.z = oz0; const vn = (car.vel.x * mx + car.vel.z * mz) / ml; car.vel.x -= mx / ml * vn * 1.3; car.vel.z -= mz / ml * vn * 1.3; gy = groundAt(p.x, p.z, ginfo); }
+      if (!car.air && outside(p.x, p.z) && gy - car.groundY > 0.55 + Math.hypot(p.x - ox0, p.z - oz0) * 1.6) { const mx = p.x - ox0, mz = p.z - oz0, ml = Math.hypot(mx, mz) || 1; strike(Math.hypot(car.vel.x, car.vel.z) * 0.6, -mx / ml, -mz / ml); p.x = ox0; p.z = oz0; const vn = (car.vel.x * mx + car.vel.z * mz) / ml; car.vel.x -= mx / ml * vn * 1.02; car.vel.z -= mz / ml * vn * 1.02; gy = groundAt(p.x, p.z, ginfo); }
       // Leaving the ground over a crest: fall under gravity until the wheels meet the road again.
       if (car.air) { car.groundY += car.vy * dt - 0.5 * 9.81 * dt * dt; car.vy -= 9.81 * dt; if (car.groundY <= gy) { car.air = false; car.bump = Math.min(1, -car.vy * 0.18); if (car.vy < -7) hit = Math.max(hit, -car.vy * 0.6); car.groundY = gy; car.vy = 0; } }
       else { const fall = car.groundY + car.vy * dt - 4.9 * dt * dt; if (outside(p.x, p.z) && fall - gy > 0.3 && Math.hypot(car.vel.x, car.vel.z) > 9) { car.air = true; car.groundY = fall; car.vy -= 9.81 * dt; } else { const vy = (gy - car.groundY) / Math.max(dt, 1e-4); car.vy += (clamp(vy, -40, 40) - car.vy) * Math.min(1, dt * 30); car.groundY = gy; } }

@@ -247,7 +247,7 @@ function ensureAudio() { // must run inside the tap itself or iOS keeps the audi
 }
 for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, () => audio?.resume(), { passive: true });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); else if (S.mode === 'play') pause(true); });
-function respawn() { snapCam = true; spray.clear(); const p = player.pos;
+function respawn() { snapCam = true; spray.clear(); player.damage?.repair(); const p = player.pos; // a fresh, repaired car
   if (!inCity(p.x, p.z)) { const r = world.nearRoad(p.x, p.z, 900); if (r) { player.place(r.s.x - r.s.lx * 2.5, r.s.z - r.s.lz * 2.5, Math.atan2(r.s.tx, r.s.tz)); toast('Back on the road'); return; } }
   const ax = Math.abs(p.x - Math.round(p.x / P) * P) < Math.abs(p.z - Math.round(p.z / P) * P), rx = clamp(Math.round(p.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(p.z / P), 0, ROADS - 1) * P;
   if (ax) player.place(rx - 5.5, clamp(p.z, 20, SPAN - 20), 0); else player.place(clamp(p.x, 20, SPAN - 20), rz + 5.5, Math.PI / 2); toast('Back on the road'); }
@@ -861,10 +861,13 @@ function frame() {
       player.others.length = 0; knockPeople(); for (const w of street.people) if (w.live && !(w.down > 0)) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
       crashCool -= dt;
-      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
+      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; { const was = player.damage?.level || 0; player.dent?.(hit); const now = player.damage?.level || 0; if (now >= 0.85 && was < 0.85) toast('Heavy damage · respawn for a repaired car'); else if (now >= 0.45 && was < 0.45) toast('Damaged · the engine is losing power'); } S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
         const hx = player.pos.x + Math.sin(player.heading) * 1.9, hz = player.pos.z + Math.cos(player.heading) * 1.9, ns = Math.round(clamp(hit * 1.2, 6, 26));
         for (let k = 0; k < ns && !player.rough; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
         for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, player.groundY + 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
+      // A badly damaged car steams, then smokes, from under the bonnet; so does a crashed car in the traffic.
+      { const dmg = player.damage?.level || 0; if (dmg > 0.35 && Math.random() < dt * (4 + dmg * 14)) { const f = player.len * 0.32, g = clamp((dmg - 0.35) * 1.6, 0, 1); emit(haze, player.pos.x + Math.sin(player.heading) * f + (Math.random() - 0.5) * 0.6, player.groundY + 1.0, player.pos.z + Math.cos(player.heading) * f + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.8 - player.vel.x * 0.3, 1.1 + Math.random() * 0.6, (Math.random() - 0.5) * 0.8 - player.vel.z * 0.3, 1.6, 0.42 - 0.3 * g, 0.42 - 0.3 * g, 0.43 - 0.3 * g); } }
+      for (const c of traffic.cars) if (c.wreck > 0 && Math.random() < dt * 5 && Math.abs(c.x - player.pos.x) + Math.abs(c.z - player.pos.z) < 120) emit(haze, c.x + c.push.x + (Math.random() - 0.5) * 0.8, (c.y || 0) + 1.0, c.z + c.push.y + (Math.random() - 0.5) * 0.8, (Math.random() - 0.5) * 0.6, 1 + Math.random() * 0.5, (Math.random() - 0.5) * 0.6, 1.5, 0.3, 0.3, 0.31);
       if (live) {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt); stepIndicators(dt);
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }

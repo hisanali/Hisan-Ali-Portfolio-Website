@@ -1,7 +1,7 @@
 import { createMotorcade } from './vip.js';
 import { beamTexture, lampColor } from './low-beams.js';
 import { clearLampCover, lampRole } from './vehicle-lamps.js';
-import { EMERGENCY } from './emergency-lights.js';
+import { EMERGENCY, createEmergencyLights } from './emergency-lights.js';
 import { createIndicators, indicatorAnchors } from './indicators.js';
 // Traffic: cars that keep to their lanes, obey the signals, queue behind each other and turn at junctions,
 // plus parked cars along the kerbs. Every body style is drawn with instancing.
@@ -212,8 +212,113 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
     else if (!straight) kind = ok(rDir) ? 'r' : 'l';
     return { k, kind, dir: kind === 'r' ? rDir : lDir };
   }
+  // ---- Road closure for the convoy ----
+  // While the convoy runs, its road is closed ahead of it: traffic already on the route well ahead is moved away
+  // (out of sight of the camera), the side streets that join the route are shut with police barricades where traffic
+  // stops and waits, and a car that still stalls the convoy is cleared. The route window runs from just behind the
+  // tail car to 320 m ahead of the lead.
+  const closed = []; let closeTick = 0, stall = 0, blinkT = 0;
+  function closeRoute() {
+    closed.length = 0; if (!vip.root.visible) return;
+    const lead = vip.cars[0], tail = vip.cars[vip.cars.length - 1];
+    for (let d = tail.distance - 25; d <= lead.distance + 320; d += 4) { const q = vip.sample(d); closed.push(q.x, q.y, d - lead.distance); }
+  }
+  const onRoute = (x, z, r) => { for (let i = 0; i < closed.length; i += 3) { const dx = x - closed[i], dz = z - closed[i + 1]; if (dx * dx + dz * dz < r * r) return closed[i + 2]; } return null; };
+  function clearAway(c, focus) {
+    for (let n = 0; n < 40; n++) {
+      if (c.mode === 2) { putOn(c, focus); placeOnRoad(c); } else {
+        const ax = R() < 0.5 ? 0 : 1, dir = R() < 0.5 ? 1 : -1, road = Math.floor(R() * ROADS), seg = Math.floor(R() * (ROADS - 1));
+        Object.assign(c, { ax, dir, road, lane: R() < 0.5 ? 0 : 1, s: seg * P + 24 + R() * (P - 48), v: 6, mode: 0, turn: null, plan: null, signal: null, slide: 0, stun: 0, go: 0, wait: 0, shoulder: 0 }); place(c); }
+      if (onRoute(c.x, c.z, 30) === null && (!focus || Math.hypot(c.x - focus.x, c.z - focus.z) > 140) && !cars.some(o => o !== c && Math.hypot(o.x - c.x, o.z - c.z) < 9)) break;
+    }
+    c.push.set(0, 0); c.kick = null; c.knock = 0; c.wreck = 0;
+  }
+  // Barricades: three striped sawhorses with amber lamps across each side street where it meets the route.
+  const barricades = (() => {
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 32; const g = cv.getContext('2d');
+    g.fillStyle = '#f4f1ea'; g.fillRect(0, 0, 256, 32); g.fillStyle = '#d0141e';
+    for (let x = -32; x < 288; x += 40) { g.beginPath(); g.moveTo(x, 32); g.lineTo(x + 20, 32); g.lineTo(x + 52, 0); g.lineTo(x + 32, 0); g.fill(); }
+    const stripes = new THREE.CanvasTexture(cv); stripes.colorSpace = THREE.SRGBColorSpace; stripes.anisotropy = 4;
+    const boardM = new THREE.MeshStandardMaterial({ map: stripes, roughness: 0.55, emissive: 0xffffff, emissiveMap: stripes, emissiveIntensity: 0.08 });
+    const legM = new THREE.MeshStandardMaterial({ color: 0xe8e4dc, roughness: 0.7 }), lampM = new THREE.MeshBasicMaterial({ color: 0xffa21a, toneMapped: false });
+    const board = new THREE.BoxGeometry(3.6, 0.26, 0.05), leg = new THREE.BoxGeometry(0.07, 1.12, 0.07), lamp = new THREE.SphereGeometry(0.09, 10, 8);
+    const pool = [], tried = new Set();
+    for (let k = 0; k < 14; k++) {
+      const arm = new THREE.Group();
+      for (const off of [-4.6, 0, 4.6]) {
+        const horse = new THREE.Group(); horse.position.x = off;
+        for (const y of [0.98, 0.62]) { const b = new THREE.Mesh(board, boardM); b.position.y = y; b.castShadow = true; horse.add(b); }
+        for (const sx of [-1.55, 1.55]) for (const sz of [-1, 1]) { const l = new THREE.Mesh(leg, legM); l.position.set(sx, 0.54, sz * 0.2); l.rotation.x = sz * 0.36; horse.add(l); }
+        const lp = new THREE.Mesh(lamp, lampM); lp.position.set(1.55, 1.2, 0); horse.add(lp); horse.userData.lamp = lp;
+        arm.add(horse);
+      }
+      arm.visible = false; scene.add(arm); pool.push(arm);
+    }
+    // Patrol cars that close the side streets: one comes in fast from down the street, lights and siren on, swings
+    // across the road behind the barricade and stops; once the convoy is by it pulls away.
+    const patrolKits = kits.filter(k => /^police-/.test(k.style)), blockers = [];
+    for (let k = 0; k < 5 && patrolKits.length; k++) {
+      const kit = patrolKits[k % patrolKits.length], root = new THREE.Group();
+      for (const part of kit.parts) { const m = new THREE.Mesh(part.geo, part.mat); m.matrixAutoUpdate = false; m.matrix.copy(part.local); m.castShadow = part.castShadow !== false; root.add(m); }
+      const lights = createEmergencyLights(kit.emergency, kit.height, 11 + k); root.add(lights.group);
+      const blob = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.32).rotateX(-Math.PI / 2).translate(0, 0.028, 0), vehicleShadowMaterial()); blob.scale.set(kit.width, 1, kit.len); blob.renderOrder = 3; root.add(blob);
+      root.visible = false; scene.add(root); blockers.push({ kit, root, lights, key: null, phase: 'off', u: 0, x: 0, z: 0, h: 0, t: 0 });
+    }
+    const armsNow = new Map(); // key -> { x, z, ax, az }: the side streets closed right now
+    function stepBlockers(dt, night) {
+      for (const b of blockers) {
+        if (b.phase === 'off') continue;
+        b.t += dt; const arm = b.arm, inward = Math.atan2(-arm.ax, -arm.az), across = b.side * Math.PI / 2 * 0.82;
+        let along, h, settle;
+        if (b.phase === 'away' || (b.phase === 'hold' && !armsNow.has(b.key))) {
+          if (b.phase === 'hold') { b.phase = 'away'; b.u = 0; b.t = 0; }
+          b.u += dt * Math.min(18, 2 + b.t * 6) / 70; if (b.u >= 1) { b.phase = 'off'; b.root.visible = false; b.key = null; continue; }
+          settle = Math.max(0, 1 - b.u * 8); along = b.u * 70; h = inward + Math.PI + across * settle; // straightens up and drives off down the street
+        } else {
+          if (b.phase === 'in') { b.u = Math.min(1, b.u + dt * (22 * (1 - b.u) + 1.5) / 70); if (b.u >= 1) b.phase = 'hold'; } // in hard, braking to the stop
+          settle = Math.max(0, Math.min(1, (b.u - 0.72) / 0.28)); along = (1 - b.u) * 70; h = inward + across * settle; // swings across the road as it stops
+        }
+        // the stop: 7 m behind the barricade, across the street
+        const x = arm.x + arm.ax * (7 + along), z = arm.z + arm.az * (7 + along);
+        b.h = h; b.root.position.set(x, 0, z); b.root.rotation.set(0, h, 0);
+        b.lights.update(b.t + b.seed, night, true);
+      }
+    }
+    return {
+      blockers, stepBlockers,
+      place(t, focus) {
+        let n = 0; const seen = new Set(); armsNow.clear();
+        if (closed.length) for (let i = 0; i < closed.length && n < pool.length; i += 3) {
+          const x = closed[i], z = closed[i + 1], ix = Math.round(x / P), iz = Math.round(z / P);
+          if (ix < 0 || iz < 0 || ix >= ROADS || iz >= ROADS || Math.abs(x - ix * P) > 4 || Math.abs(z - iz * P) > 4 || seen.has(ix * 100 + iz)) continue;
+          seen.add(ix * 100 + iz);
+          for (const [ax, az] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const bx = ix * P + ax * (HALF + 3), bz = iz * P + az * (HALF + 3);
+            if (n >= pool.length || onRoute(ix * P + ax * (HALF + 8), iz * P + az * (HALF + 8), 5) !== null) continue; // the convoy's own way in and out
+            if (ax ? (ix + ax < 0 || ix + ax >= ROADS) : (iz + az < 0 || iz + az >= ROADS)) continue;
+            const arm = pool[n++]; arm.position.set(bx, 0, bz); arm.rotation.y = ax ? Math.PI / 2 : 0; arm.visible = true;
+            const key = ix * 1000 + iz * 10 + ax * 3 + az; armsNow.set(key, { x: bx, z: bz, ax, az, ahead: closed[i + 2] });
+          }
+        }
+        for (let k = n; k < pool.length; k++) pool[k].visible = false;
+        // send a patrol car to some of the newly closed streets well ahead of the convoy, at random
+        for (const [key, arm] of armsNow) {
+          if (arm.ahead < 50 || tried.has(key) || blockers.some(b => b.key === key)) continue;
+          tried.add(key); if (R() > 0.65) continue;
+          const b = blockers.find(b => b.phase === 'off'); if (!b) break;
+          Object.assign(b, { key, arm, phase: 'in', u: 0, t: 0, side: R() < 0.5 ? 1 : -1, seed: R() * 3 }); b.root.visible = true;
+        }
+        for (const k of tried) if (!armsNow.has(k)) tried.delete(k);
+      },
+      blink(t) { lampM.color.setHex((t * 1.6) % 1 < 0.5 ? 0xffa21a : 0x3a2004); }
+    };
+  })();
   function update(dt, t, player, focus, drawOnly = false, recorded = false) {
     if (vip.root.visible) vip.step(dt,vip.wet);
+    blinkT += dt; if (!drawOnly && (closeTick++ % 15 === 0 || !vip.root.visible !== !closed.length)) { closeRoute(); barricades.place(blinkT, focus); } barricades.blink(blinkT); barricades.stepBlockers(dt, vip.night || 0);
+    // the convoy stalled: clear whatever traffic is in front of the car that cannot move
+    if (!drawOnly && vip.root.visible) { const stuck = vip.cars.find(v => v.v < 0.3); stall = stuck ? stall + dt : 0;
+      if (stall > 2.5) { stall = 0; for (const v of vip.cars) if (v.v < 0.3) { const q = vip.sample(v.distance + 7); for (const c of cars) if (Math.hypot(c.x - q.x, c.z - q.y) < 11 || Math.hypot(c.x - v.x, c.z - v.z) < 7) clearAway(c, focus); } } }
     if (focus && (parkTick++ % 40) === 0) refreshParked(focus.x, focus.z);
     for (const c of drawOnly ? [] : cars) {
       const nearbyConvoy=vip.root.visible && vip.cars.some(v=>Math.abs(v.x-c.x)+Math.abs(v.z-c.z)<35);
@@ -226,6 +331,9 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       });
       c.shoulder = (c.shoulder || 0) + ((yielding ? Math.max(0, 8.1-laneOff(c)) : 0) - (c.shoulder || 0)) * (1-Math.exp(-2.8*dt));
       if (yielding) target = Math.min(target, 1.4);
+      if (closed.length && !drawOnly) { const at = onRoute(c.x, c.z, 7.5);
+        if (at !== null && at > 45) { clearAway(c, focus); continue; } // well ahead of the convoy on its route: gone before it gets there
+        if (at === null && onRoute(c.x + fx * (11 + c.v * 1.2), c.z + fz * (11 + c.v * 1.2), 9) !== null) target = 0; } // the closed road ahead: wait at the barricade
       if (c.stun > 0) { c.stun -= dt; target = 0; }
       // Anything ahead in my path?
       const look = 7 + c.v * 1.3;
@@ -288,17 +396,22 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       c.bodyPitch = (c.bodyPitch || 0) + ((featured ? clamp(-accel * .010, -.055, .07) : 0) - (c.bodyPitch || 0)) * response;
       c.lean = (c.lean || 0) + ((featured ? clamp(yawRate * c.v * .006, -.055, .055) : 0) - (c.lean || 0)) * response;
       c.wheelAngle = featured ? clamp(Math.atan2(yawRate * 2.85, Math.max(c.v, 1)) - c.slide, -.55, .55) : 0;
-      c.push.multiplyScalar(Math.exp(-2.2 * dt));
+      // Rammed: shoved along by the blow, sliding to a stop and slewed round, then left standing (hazards, smoke)
+      // until it can pull back into its lane.
+      if (c.wreck > 0) c.wreck -= dt;
+      if (c.kick) { c.push.x += c.kick.x * dt; c.push.y += c.kick.y * dt; c.kick.multiplyScalar(Math.exp(-2.6 * dt)); c.knock = (c.knock || 0) + (c.knockV || 0) * dt; c.knockV = (c.knockV || 0) * Math.exp(-2.6 * dt); }
+      const back = c.stun > 0 ? 0 : (c.kick ? 0.5 : 2.2); c.push.multiplyScalar(Math.exp(-back * dt)); if (c.knock) c.knock *= Math.exp(-back * dt);
+      if (c.kick && c.stun <= 0 && c.push.lengthSq() < 0.01) { c.kick = null; c.knock = 0; }
     }
     // Write instance transforms and lamp positions. Only cars near the focus are drawn; each body style packs its
     // visible moving cars into the first slots, with the nearby parked cars after them.
     const fx0 = focus ? focus.x : 0, fz0 = focus ? focus.z : 0, used = kits.map(() => 0); let shown = 0;
     const moving = vip.root.visible ? cars.concat(vip.cars) : cars;
     blinkers.begin(t, night);
-    moving.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x - Math.cos(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.x), c.y || 0, c.z + Math.sin(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h + (c.slide || 0), c.roll || 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
+    moving.forEach((c, k) => { const kit = kits[c.kit]; dummy.position.set(c.x - Math.cos(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.x), c.y || 0, c.z + Math.sin(c.h)*(c.shoulder || 0) + (recorded ? 0 : c.push.y)); dummy.rotation.set(-(c.pitch || 0), c.h + (c.slide || 0) + (recorded ? 0 : c.knock || 0), c.roll || 0, 'YXZ'); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); spinM.makeRotationX(c.spin || 0);
       const nearMe = !focus || Math.abs(c.x - fx0) + Math.abs(c.z - fz0) < DRAW_R * 1.3;
       if (nearMe) { const slot = used[c.kit]++; chassis.copy(dummy.matrix).multiply(lean.makeRotationX(c.bodyPitch || 0)).multiply(lean.makeRotationZ(c.lean || 0));
-        if (c.signal) blinkers.add(chassis, kit.signalAnchors, kit.width, c.signal, (c.id ?? c.index) * 0.237);
+        if (c.signal) blinkers.add(chassis, kit.signalAnchors, kit.width, c.signal, (c.id ?? c.index) * 0.237); else if (c.wreck > 0) for (const side of ['l', 'r']) blinkers.add(chassis, kit.signalAnchors, kit.width, side, 0); // hazards on a crashed car
         steerWheel.makeRotationY(c.wheelAngle || 0);
         for (const im of groups[c.kit]) { const part = im.userData.part;
           mat.multiplyMatrices(part.wheel ? dummy.matrix : chassis, part.local);
@@ -328,9 +441,16 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
       const ofx = Math.sin(oh), ofz = Math.cos(oh);
       for (const a of [-1.15, 1.15]) { const b = clamp((px + pfx * a - ox) * ofx + (pz + pfz * a - oz) * ofz, -half, half); const ax = px + pfx * a, az = pz + pfz * a, bx = ox + ofx * b, bz = oz + ofz * b; let dx = ax - bx, dz = az - bz; const d = Math.hypot(dx, dz);
         if (d < 1.95 && d > 1e-3) { dx /= d; dz /= d; const pen = 1.95 - d; player.pos.x += dx * pen; player.pos.z += dz * pen; const ovx = o ? ofx * o.v : 0, ovz = o ? ofz * o.v : 0;
-          const vn = (player.vel.x - ovx) * dx + (player.vel.z - ovz) * dz; if (vn < 0) { player.vel.x -= dx * vn * 1.25; player.vel.z -= dz * vn * 1.25; player.vel.multiplyScalar(0.9); worst = Math.max(worst, -vn); if (o) { struck = Math.max(struck, -vn); o.push.x -= dx * Math.min(1.2, -vn * 0.12); o.push.y -= dz * Math.min(1.2, -vn * 0.12); o.v *= 0.4; o.stun = 1.4; } } } } };
+          const vn = (player.vel.x - ovx) * dx + (player.vel.z - ovz) * dz; if (vn < 0) {
+            // A crash, not a bounce: the cars hardly spring apart. A moving car of about the same weight takes half the
+            // blow and is shoved on; a parked one, braked, takes less and the player stops harder.
+            const share = o ? 0.55 : 0.7; player.vel.x -= dx * vn * share; player.vel.z -= dz * vn * share; player.vel.multiplyScalar(-vn > 6 ? 0.86 : 0.97);
+            if (-vn > worst) { worst = -vn; player.hitN = [dx, dz]; }
+            if (o) { struck = Math.max(struck, -vn); o.kick ||= new THREE.Vector2(); o.kick.x -= dx * -vn * 0.45; o.kick.y -= dz * -vn * 0.45;
+              o.knockV = (o.knockV || 0) + Math.sign(ofx * dz - ofz * dx) * Math.min(1.6, -vn * 0.09); o.v *= 0.15; o.stun = Math.max(o.stun, Math.min(9, 2 + -vn * 0.35)); if (-vn > 5) o.wreck = Math.max(o.wreck || 0, Math.min(14, -vn * 0.8)); } } } } };
     for (const c of cars) if (Math.abs((c.y || 0) - (player.groundY || 0)) < 2.5) hitOne(c.x + c.push.x, c.z + c.push.y, c.h, c);
     for (const p of nearParked) hitOne(p.x, p.z, p.h, null);
+    for (const b of barricades.blockers) if (b.phase !== 'off') hitOne(b.root.position.x, b.root.position.z, b.h, null);
     return worst;
   }
   // Close pass at speed without contact.
