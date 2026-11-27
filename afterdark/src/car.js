@@ -259,12 +259,12 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     if (ctrl.hand && speed > 7 && !car.air && vF > 0) { if (!car.drift) { car.drift = true; car.yawRate += (ctrl.steer || Math.sign(car.yawRate) || 1) * clamp(speed * 0.045, 0.5, 1.4); } }
     else if (car.drift && (!ctrl.throttle || slideNow < 1.2 || speed < 4)) car.drift = false;
     const drifting = !!car.drift;
-    const sport = car.sport ? 1 : 0, hurt = car.damage ? car.damage.level : 0, VMAX = T.vmax * (1 + 0.55 * sport) * (1 - 0.3 * hurt); let a = 0; // sport mode: far more top speed
+    const sport = car.sport ? 1 : 0, hurt = car.damage ? car.damage.level : 0, VMAX = T.vmax * (1 + 1.4 * sport) * (1 - 0.3 * hurt); let a = 0; // sport mode: extreme top speed, about 2.4x
     if (serviceBrake) {
       const decel = (10.5 - wetK * 2.7) * T.brake;
       a -= Math.sign(vF) * ctrl.brake * decel;
     } else if (ctrl.throttle > 0) {
-      const engine = (1 - 0.35 * hurt) * T.acc * (1 + 0.7 * sport) * Math.min(10.5 + 4 * sport, (13.5 + 5 * sport) * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
+      const engine = (1 - 0.35 * hurt) * T.acc * (1 + 1.6 * sport) * Math.min(10.5 + 9 * sport, (13.5 + 12 * sport) * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
       // Ease the accelerator at full lock on city streets. Holding W through a turn
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && !drifting && vF > 0
@@ -277,7 +277,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     }
     if (!ctrl.throttle && !ctrl.brake && Math.abs(vF) > 0.3) a -= Math.sign(vF) * Math.min(2.4, Math.abs(vF) / dt);
     if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, drifting ? 2.6 : 9); // locked rears scrub speed in a slide, stop the car when slow
-    a -= 0.00105 * vF * Math.abs(vF) + 0.035 * vF + (car.onSand ? 0.55 * vF : 0) + (drifting ? Math.sign(vF) * Math.min(4, slideNow * 0.32) : 0); // tyres scrubbing sideways cost speed
+    a -= (car.sport ? 0.00045 : 0.00105) * vF * Math.abs(vF) + 0.035 * vF + /* sport mode: slipperier through the air */ (car.onSand ? 0.55 * vF : 0) + (drifting ? Math.sign(vF) * Math.min(4, slideNow * 0.32) : 0); // tyres scrubbing sideways cost speed
     let sF = 0, sL = 0;
     if (wild) { const px = car.pos.x, pz = car.pos.z; sF = (groundAt(px + fwd.x * 1.6, pz + fwd.z * 1.6) - groundAt(px - fwd.x * 1.6, pz - fwd.z * 1.6)) / 3.2; sL = (groundAt(px + left.x * 0.9, pz + left.z * 0.9) - groundAt(px - left.x * 0.9, pz - left.z * 0.9)) / 1.8;
       sF = clamp(sF, -1.5, 1.5); sL = clamp(sL, -1.5, 1.5); if (!car.air) { a -= 9.81 * sF / Math.sqrt(1 + sF * sF); if (Math.abs(sL) > 0.18) vL -= 9.81 * (sL - Math.sign(sL) * 0.18) * dt * 0.8; if (car.rough) a -= 0.32 * T.off * vF; } }
