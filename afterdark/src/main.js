@@ -3,7 +3,7 @@ import { createSkidMarks } from './skid-marks.js';
 // Afterdark: free-roam night driving. Boot, input, game state, camera, HUD and the frame loop.
 import { THREE, createRenderer, Q, QUALITY, QUALITY_STEPPED, bootFinished } from './render.js';
 import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
-import { createPlayer } from './car.js';
+import { createPlayer, releaseDecoders } from './car.js';
 import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
 import { createPursuit } from './pursuit.js';
@@ -928,7 +928,7 @@ async function boot() {
   traffic.update(0.016, 0, null, player.pos); if (TIMES[timeMode] != null) hour = TIMES[timeMode]; stepTime(0, false); captureEnv();
   routes = buildRoutes(world, city); spots = jobSpots(world, places); bigmap = createBigMap($('#bigmap-canvas'), world, places); if (!routes.some(r => r.id === routeSel)) routeSel = routes[0].id; modeUI();
   setPerf(perf.on); city.cull(player.pos, true);
-  S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900); bootFinished();
+  S.mode = 'menu'; show('menu'); loadEl.classList.add('out'); setTimeout(() => loadEl.remove(), 900); bootFinished(); releaseDecoders(); // the decoder's memory goes back to the game
   if (QUALITY_STEPPED) setTimeout(() => toast('Graphics lowered (' + QUALITY_STEPPED + ') so the game could load'), 1200);
   // Leaves, grass and other cut-out materials: with multisampling on, alpha-to-coverage softens their edges so they
   // do not crawl and flicker as the camera moves.

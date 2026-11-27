@@ -14,8 +14,19 @@ import { createDamage } from './damage.js';
 import { DRACOLoader } from '/evermile/vendor/loaders/DRACOLoader.js';
 import { P, ROADS, HALF, SW, SPAN } from './city.js';
 
-// Draco decoding in up to three workers, so models decode side by side off the main thread.
-export const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('/evermile/vendor/draco/').setWorkerLimit(Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1))));
+// One Draco worker: each worker keeps its own decoder memory, which on a tablet is memory the game cannot spare. It is
+// released once loading is done (releaseDecoders) and comes back by itself if a car is loaded later.
+const draco = new DRACOLoader().setDecoderPath('/evermile/vendor/draco/').setWorkerLimit(1);
+export const loader = new GLTFLoader().setDRACOLoader(draco);
+export const releaseDecoders = () => draco.dispose();
+// A model loaded twice (the Escalade, as the player's car and in the convoy) shares its texture images: each copy has
+// its own textures and settings, but the images are decoded and held on the GPU once.
+const images = new Map();
+loader.register(parser => {
+  const own = parser.loadImageSource.bind(parser), json = parser.json, file = (json.buffers?.[0]?.byteLength || 0) + '|' + (json.images?.length || 0) + '|' + (json.meshes?.length || 0);
+  parser.loadImageSource = (i, l) => { const k = file + '|' + i; if (!images.has(k)) images.set(k, own(i, l)); return images.get(k).then(t => t.clone()); };
+  return { name: 'afterdark_shared_images' };
+});
 export const loadGLB = url => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 // For models only read, never changed, by those that load them (the city building kit): one download, one decode.
 const shared = new Map();

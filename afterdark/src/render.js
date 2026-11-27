@@ -31,6 +31,9 @@ export const QUALITY = (() => {
 })();
 export const bootFinished = () => { try { localStorage.removeItem('afterdark:booting'); } catch (e) {} };
 export const Q = PRESETS[QUALITY];
+// Phones and tablets: the HDR, multisampled frame buffers at full Retina resolution cost hundreds of megabytes, more
+// than a tablet's browser allows alongside the world. Cap the resolution scale and the multisampling there.
+if (matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1) { Q.dpr = Math.min(Q.dpr, 1.5); Q.msaa = Math.min(Q.msaa, 2); }
 
 const VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
 // Removes NaN/Inf pixels and caps runaway highlights before bloom spreads them.
