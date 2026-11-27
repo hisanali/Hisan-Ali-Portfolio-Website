@@ -171,17 +171,59 @@ export async function buildFrontier(scene, city, world, Q) {
       const bx = sx + Math.sin(qyaw) * (k - 1.5) * 11 + dx * (9 + (k % 2) * 2), bz = sz + Math.cos(qyaw) * (k - 1.5) * 11 + dz * (9 + (k % 2) * 2); g.userData = { x: bx, z: bz, yaw: qyaw + (R() - 0.5) * 0.3 }; scene.add(g); boats.push(g); } }
 
   // ---- Waterfalls down the north wall of the fjord: ribbons draped over the rock, with spray at the foot ----
-  { const fallT = new THREE.CanvasTexture((() => { const c = document.createElement('canvas'); c.width = 64; c.height = 256; const x = c.getContext('2d'); x.fillStyle = 'rgba(230,240,245,0.55)'; x.fillRect(0, 0, 64, 256); for (let i = 0; i < 260; i++) { const w = 1 + R() * 3, a = 0.25 + R() * 0.6; x.fillStyle = `rgba(255,255,255,${a})`; x.fillRect(R() * 64, R() * 256, w, 18 + R() * 70); } return c; })());
-    fallT.wrapS = fallT.wrapT = THREE.RepeatWrapping; fallT.repeat.set(1, 6); const fm = new THREE.MeshBasicMaterial({ map: fallT, transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide, color: 0xe8f0f2 });
+  { // Falling water: streaks that run faster as they fall, breaking into bright white cores and see-through gaps with
+    // ragged, shifting edges; a wider, fainter veil of spray around it; and at the foot a churning pool of foam and
+    // drifting mist. Dimmed at night. uv.x runs across the stream, uv.y down it in 40 m units.
+    const NOISE = `float wh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float wn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(wh(i), wh(i + vec2(1, 0)), f.x), mix(wh(i + vec2(0, 1)), wh(i + vec2(1, 1)), f.x), f.y); }`;
+    const fallU = { uTime: { value: 0 }, uLight: { value: 1 } };
+    const fallMat = (speed, alpha, cross) => new THREE.ShaderMaterial({
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uSpeed: { value: speed }, uAlpha: { value: alpha }, uCross: { value: cross } }]), fog: true,
+      transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      vertexShader: `varying vec2 vUv; #include <fog_pars_vertex>
+        void main(){ vUv = uv; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition; #include <fog_vertex> }`.replace(/#include <fog_pars_vertex>/, '\n#include <fog_pars_vertex>\n').replace(/#include <fog_vertex>/, '\n#include <fog_vertex>\n'),
+      fragmentShader: `uniform float uTime, uSpeed, uAlpha, uCross, uLight; varying vec2 vUv; ${NOISE}
+        #include <fog_pars_fragment>
+        void main(){ float x = vUv.x, y = vUv.y, fall = y * 8.0 - uTime * uSpeed * (1.0 + y * 0.04);
+          float s1 = wn(vec2(x * uCross, fall)), s2 = wn(vec2(x * uCross * 2.7 + 3.1, fall * 2.3 + 7.0)), s3 = wn(vec2(x * 5.0, y * 1.5 - uTime * 0.6));
+          float streak = s1 * 0.55 + s2 * 0.45;
+          float edge = smoothstep(0.0, 0.18 + 0.22 * s3, x) * smoothstep(1.0, 0.82 - 0.22 * s2, x);
+          float core = smoothstep(0.38, 0.78, streak);
+          float a = edge * (0.28 + 0.72 * core) * uAlpha * smoothstep(0.0, 0.08, y);
+          if (a < 0.01) discard;
+          vec3 col = mix(vec3(0.58, 0.66, 0.70), vec3(0.97, 0.99, 1.0), core) * uLight;
+          gl_FragColor = vec4(col, a);
+          #include <fog_fragment>
+        }`
+    });
+    const mats = [], foamMats = [];
     const FJ = [[-4200, 3600], [-2500, 3560], [-1200, 3470], [0, 3520], [700, 3470]], cz = x => { for (let i = 0; i < FJ.length - 1; i++) if (x >= FJ[i][0] && x <= FJ[i + 1][0]) return FJ[i][1] + (FJ[i + 1][1] - FJ[i][1]) * (x - FJ[i][0]) / (FJ[i + 1][0] - FJ[i][0]); return 3500; };
+    const mistTex = loader.load(TEX + 'smoke.png'), mists = [];
     for (const fx of [-2050, -1150, -350, 380]) { let z = cz(fx) + 120; while (terrain(fx, z) < 4 && z < cz(fx) + 600) z += 4; const foot = z - 6; let top = z; while (terrain(fx, top) < 230 && top < z + 600) top += 6; if (terrain(fx, top) < 120) continue;
-      // only down a real cliff: on a gentler slope a ribbon reads as a grey slab lying on the hillside, not falling water
       { let steep = 0, n = 0; for (let zz = foot + 6; zz < top - 6; zz += 6) { steep += Math.abs(terrain(fx, zz + 3) - terrain(fx, zz - 3)) / 6; n++; } if (!n || steep / n < 1.4) continue; }
-      const pos = [], uv = [], idx = []; let n = 0; for (let zz = top; zz >= foot; zz -= 3) { const y = Math.max(terrain(fx, zz) + 0.8, -0.5); const wob = Math.sin(zz * 0.05) * 3 + Math.sin(zz * 0.13) * 1.2, half = 2 + (top - zz) * 0.0015; /* a narrow stream, spreading a little toward the foot */ pos.push(fx + wob - half, y, zz, fx + wob + half, y, zz); uv.push(0, (top - zz) / 40, 1, (top - zz) / 40); if (n) idx.push((n - 1) * 2, n * 2, (n - 1) * 2 + 1, (n - 1) * 2 + 1, n * 2, n * 2 + 1); n++; }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); const m = new THREE.Mesh(g, fm); m.frustumCulled = false; scene.add(m);
-      const mist = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(TEX + 'smoke.png'), color: 0xf2f6f8, transparent: true, opacity: 0.45, depthWrite: false })); mist.position.set(fx, 4, foot - 4); mist.scale.set(26, 18, 1); scene.add(mist);
+      // the stream, and a wider veil of spray standing a little off the rock
+      for (const [width, lift, speed, alpha, cross] of [[1, 0.7, 2.4, 0.95, 7], [1.9, 1.6, 3.4, 0.32, 4]]) {
+        const pos = [], uv = [], idx = []; let n = 0;
+        for (let zz = top; zz >= foot; zz -= 3) { const y = Math.max(terrain(fx, zz) + lift, -0.5), wob = Math.sin(zz * 0.05) * 3 + Math.sin(zz * 0.13) * 1.2, half = (2 + (top - zz) * 0.0015) * width;
+          pos.push(fx + wob - half, y, zz, fx + wob + half, y, zz); uv.push(0, (top - zz) / 40, 1, (top - zz) / 40); if (n) idx.push((n - 1) * 2, n * 2, (n - 1) * 2 + 1, (n - 1) * 2 + 1, n * 2, n * 2 + 1); n++; }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+        const mat = fallMat(speed, alpha, cross); mats.push(mat); const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = width > 1 ? 3 : 2; scene.add(m);
+      }
+      // a churning pool of foam where it lands, spreading out in rings
+      const fy = Math.max(terrain(fx, foot), -0.55) + 0.12;
+      const foam = new THREE.Mesh(new THREE.CircleGeometry(13, 40).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {}]), fog: true, transparent: true, depthWrite: false,
+        vertexShader: `varying vec2 vP;\n#include <fog_pars_vertex>\nvoid main(){ vP = position.xz; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}`,
+        fragmentShader: `uniform float uTime, uLight; varying vec2 vP; ${NOISE}\n#include <fog_pars_fragment>\nvoid main(){ float r = length(vP) / 13.0; float ring = wn(vec2(r * 9.0 - uTime * 1.6, atan(vP.y, vP.x) * 3.0)), churn = wn(vP * 0.7 + vec2(uTime * 0.8, -uTime * 0.5));
+          float a = (1.0 - smoothstep(0.25, 1.0, r)) * (0.35 + 0.65 * smoothstep(0.35, 0.8, ring * 0.5 + churn * 0.5)) * 0.85; if (a < 0.01) discard; gl_FragColor = vec4(vec3(0.95, 0.98, 1.0) * uLight, a);\n#include <fog_fragment>\n}` }));
+      foam.material.uniforms.uTime = fallU.uTime; foam.material.uniforms.uLight = fallU.uLight; foamMats.push(foam.material);
+      foam.position.set(fx, fy, foot - 3); foam.renderOrder = 2; scene.add(foam);
+      // drifting mist clouds billowing from the foot
+      for (let k = 0; k < 4; k++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTex, color: 0xf2f6f8, transparent: true, opacity: 0, depthWrite: false })); sp.position.set(fx, fy + 3, foot - 4); scene.add(sp); mists.push({ sp, fx, fy, fz: foot - 4, ph: k / 4 }); }
       (world.waterfalls ||= []).push({ x: fx, z: foot, top: terrain(fx, top) }); }
-    updates.push(t => { fallT.offset.y = t * 0.9; }); }
+    for (const m of mats) { m.uniforms.uTime = fallU.uTime; m.uniforms.uLight = fallU.uLight; }
+    updates.push(t => { fallU.uTime.value = t;
+      for (const m of mists) { const u = (t * 0.12 + m.ph) % 1; m.sp.position.set(m.fx + Math.sin(m.ph * 9 + t * 0.2) * 4 * u, m.fy + 2 + u * 14, m.fz - u * 10); const s = 10 + u * 26; m.sp.scale.set(s, s * 0.75, 1); m.sp.material.opacity = 0.42 * Math.sin(u * Math.PI) * fallU.uLight.value; } });
+    timers.push(e => { fallU.uLight.value = 0.25 + 0.75 * (1 - (e.night || 0)); }); }
 
   // ---- Fjord Mouth lookout ----
   const mouth = place('mouth');
