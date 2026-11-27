@@ -269,15 +269,15 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && !drifting && vF > 0
         ? THREE.MathUtils.smoothstep(Math.abs(car.steer), 0.52, 0.96) : 0;
-      const cornerSpeed = ((escalade ? 5.6 : 6.4) - wetK * 0.9) * Math.sqrt(T.grip);
+      const cornerSpeed = ((escalade ? 9.5 : 11) - wetK * 1.4) * Math.sqrt(T.grip); // full lock eases the power only to a brisk corner speed, not a crawl
       const cornerAccel = clamp((cornerSpeed - vF) * (escalade ? 2.5 : 1.72), escalade ? -9 : -6.5, engine);
-      a += ctrl.throttle * lerp(engine, cornerAccel, lock);
+      a += ctrl.throttle * lerp(engine, cornerAccel, lock) * (drifting ? 0.38 : 1); // in a slide the spinning rears put down little drive
     } else if (ctrl.brake > 0) {
       a -= ctrl.brake * 5.6 * Math.max(0, 1 + vF / 6.5);
     }
     if (!ctrl.throttle && !ctrl.brake && Math.abs(vF) > 0.3) a -= Math.sign(vF) * Math.min(2.4, Math.abs(vF) / dt);
     if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, drifting ? 2.6 : 9); // locked rears scrub speed in a slide, stop the car when slow
-    a -= 0.00105 * vF * Math.abs(vF) + 0.035 * vF + (car.onSand ? 0.55 * vF : 0);
+    a -= 0.00105 * vF * Math.abs(vF) + 0.035 * vF + (car.onSand ? 0.55 * vF : 0) + (drifting ? Math.sign(vF) * Math.min(4, slideNow * 0.32) : 0); // tyres scrubbing sideways cost speed
     let sF = 0, sL = 0;
     if (wild) { const px = car.pos.x, pz = car.pos.z; sF = (groundAt(px + fwd.x * 1.6, pz + fwd.z * 1.6) - groundAt(px - fwd.x * 1.6, pz - fwd.z * 1.6)) / 3.2; sL = (groundAt(px + left.x * 0.9, pz + left.z * 0.9) - groundAt(px - left.x * 0.9, pz - left.z * 0.9)) / 1.8;
       sF = clamp(sF, -1.5, 1.5); sL = clamp(sL, -1.5, 1.5); if (!car.air) { a -= 9.81 * sF / Math.sqrt(1 + sF * sF); if (Math.abs(sL) > 0.18) vL -= 9.81 * (sL - Math.sign(sL) * 0.18) * dt * 0.8; if (car.rough) a -= 0.32 * T.off * vF; } }
