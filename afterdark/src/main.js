@@ -214,7 +214,7 @@ for (const id of ['#seg-weather', '#pause-weather']) {
     if (player && env) stepTime(0, false);
   });
 }
-seg($('#seg-gfx'), [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], QUALITY, v => { if (v === QUALITY) return; store.set('gfx', v); const u = new URL(location.href); u.searchParams.delete('gfx'); location.href = u.href; });
+seg($('#seg-gfx'), [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], QUALITY, v => { if (v === QUALITY) return; store.set('gfx', v); try { sessionStorage.setItem('afterdark:skipPick', '1'); } catch (e) {} const u = new URL(location.href); u.searchParams.delete('gfx'); location.href = u.href; });
 $('#best').textContent = store.get('best', '0');
 $('#play').addEventListener('click', () => start());
 $('#again').addEventListener('click', () => start());

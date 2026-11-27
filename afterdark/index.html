@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.png">
   <link rel="modulepreload" href="/evermile/vendor/three.module.js">
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=17">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Afterdark","url":"https://hisanali.com/afterdark/","description":"An open-world driving game in your browser: a coastal city and a wide frontier of sea cliffs, temple ruins, a volcano, a forest lake, a dune sea, an alpine pass and a fjord on a living ocean, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to drive and upgrade, photo mode and replays.","genre":["Driving","Open world"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/about/"},"image":"https://hisanali.com/games/thumbs/afterdark.webp"}</script>
 </head>
 <body data-mode="boot"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) --><canvas id="scene" aria-label="Afterdark driving game"></canvas>
@@ -80,20 +80,41 @@
   box.id = 'load-diag'; box.style.cssText = 'margin-top:14px;font:12px/1.5 system-ui,sans-serif;color:#cfd6dc;max-width:86vw;text-align:center;white-space:pre-wrap';
   document.getElementById('loading').appendChild(box);
   function note(t) { errs.push(String(t).slice(0, 220)); draw(); }
-  addEventListener('error', function (e) { note((e.message || 'error') + (e.filename ? ' · ' + e.filename.replace(/.*\//, '') + ':' + e.lineno : '') || (e.target && e.target.src)); }, true);
+  addEventListener('error', function (e) { var src = e.target && (e.target.src || e.target.href); if (!e.message && !(src && /\/afterdark\/|\/evermile\//.test(src))) return; /* a blocked analytics or tracking script is not the game's problem */ note((e.message || 'error') + (e.filename ? ' · ' + e.filename.replace(/.*\//, '') + ':' + e.lineno : '') || (e.target && e.target.src)); }, true);
   addEventListener('unhandledrejection', function (e) { note('promise: ' + (e.reason && (e.reason.message || e.reason))); });
   function down() { var order = ['low', 'medium', 'high', 'ultra'], q = 'medium'; try { q = localStorage.getItem('afterdark:gfx') || q; } catch (e) {} var i = Math.max(0, order.indexOf(q) - 1); try { localStorage.setItem('afterdark:gfx', order[i]); localStorage.removeItem('afterdark:booting'); } catch (e) {} location.replace(location.pathname + '?r=' + Date.now()); }
   function draw() {
-    if (!document.getElementById('loading')) return;
+    if (!document.getElementById('loading')) return; if (window.__adPicking) { box.innerHTML = ''; return; }
     var secs = Math.round((Date.now() - since) / 1000), stuck = secs > 40;
     var gl = errs.join(' '); if (/getShaderPrecisionFormat|WebGL|context/i.test(gl)) { box.innerHTML = '<b style="color:#ff9a8a">3D graphics are blocked for this page</b>\nAfter earlier crashes the browser has switched off 3D graphics for this site. Close every hisanali.com tab, quit the browser completely (on iPhone or iPad: swipe up and swipe Safari away), then open the game again.\n<button id="load-retry" style="margin-top:8px;padding:9px 16px;border-radius:10px;border:0;background:#2ec4a6;color:#062;font-weight:700">Reopen with lighter graphics</button>'; var rb = document.getElementById('load-retry'); if (rb) rb.onclick = down; return; }
     box.innerHTML = (errs.length ? '<b style="color:#ff9a8a">Error</b>\n' + errs.slice(-3).join('\n').replace(/</g, '&lt;') + '\n' : '') +
       (stuck || errs.length ? '<span style="opacity:.8">Step "' + last + '" · ' + secs + ' s</span>\n<button id="load-retry" style="margin-top:8px;padding:9px 16px;border-radius:10px;border:0;background:#2ec4a6;color:#062;font-weight:700">Try again with lighter graphics</button>' : '');
     var b = document.getElementById('load-retry'); if (b) b.onclick = down;
   }
-  setInterval(function () { if (!msg) return; if (msg.textContent !== last) { last = msg.textContent; since = Date.now(); } draw(); }, 1000);
+  setInterval(function () { if (!msg) return; if (window.__adPicking) { since = Date.now(); return; } if (msg.textContent !== last) { last = msg.textContent; since = Date.now(); } draw(); }, 1000);
 })();
 </script>
-<script type="module" src="src/main.js?v=44"></script>
+<script>
+/* Quality picker: chosen before anything heavy loads, so the game loads at that quality from the start. Skipped when the
+   address names a quality (?gfx=), just after changing quality in the game's settings, and for automated tests. */
+(function () {
+  var Q = [['low', 'Low', 'Fastest · for older phones'], ['medium', 'Medium', 'Smooth · best for phones and tablets'], ['high', 'High', 'Sharp · for laptops and desktops'], ['ultra', 'Ultra', 'Maximum detail · powerful computers']];
+  var touch = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1, get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set = function (k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+  function go() { import('./src/main.js?v=45'); }
+  var skip = /[?&]gfx=/.test(location.search) || navigator.webdriver; try { if (sessionStorage.getItem('afterdark:skipPick')) { sessionStorage.removeItem('afterdark:skipPick'); skip = true; } } catch (e) {}
+  if (skip) return go();
+  var order = ['low', 'medium', 'high', 'ultra'], saved = get('afterdark:gfx'), failed = get('afterdark:booting'), rec = touch ? 'medium' : 'high';
+  var pick = order.indexOf(saved) >= 0 ? saved : rec; if (failed && order.indexOf(pick) > 0) pick = order[order.indexOf(pick) - 1];
+  var msg = document.getElementById('load-msg'), bar = document.querySelector('.ld-bar'); msg.textContent = 'Choose graphics quality'; if (bar) bar.style.visibility = 'hidden'; window.__adPicking = true;
+  var box = document.createElement('div'); box.id = 'gfx-pick';
+  box.innerHTML = (failed ? '<p class="gp-warn">The game did not finish loading last time. A lighter setting is selected.</p>' : '') + Q.map(function (q) {
+    return '<button data-q="' + q[0] + '"' + (q[0] === pick ? ' class="on"' : '') + '><b>' + q[1] + (q[0] === rec ? ' <i>Recommended</i>' : '') + '</b><span>' + q[2] + '</span></button>'; }).join('') + '<button class="gp-go">Start</button>';
+  document.getElementById('loading').appendChild(box);
+  box.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.q) { pick = b.dataset.q; [].forEach.call(box.querySelectorAll('[data-q]'), function (x) { x.classList.toggle('on', x === b); }); return; }
+    set('afterdark:gfx', pick); set('afterdark:booting', null); box.remove(); if (bar) bar.style.visibility = ''; msg.textContent = 'Starting the engine'; window.__adPicking = false; go(); });
+})();
+</script>
+
 </body>
 </html>
