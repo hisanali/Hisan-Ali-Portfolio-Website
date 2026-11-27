@@ -877,10 +877,10 @@ function frame() {
           for (let k = 0; k < n; k++) smoke.emit(player.pos.x - hn[0] * player.len * 0.45 + (Math.random() - 0.5) * 1.2, player.groundY + 0.3 + Math.random() * 0.7, player.pos.z - hn[1] * player.len * 0.45 + (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 3 + player.vel.x * 0.3, 0.5 + Math.random() * 1.2, (Math.random() - 0.5) * 3 + player.vel.z * 0.3, 0.7 + Math.random() * 0.6, 0.3, 1.6 + hit * 0.04, 0.55, 0.53, 0.5, 0.35); } }
       // A badly damaged car steams, then smokes, from under the bonnet; so does a crashed car in the traffic.
       // A damaged engine: wisps of white steam from the bonnet's edges, then, badly hurt, dark oily smoke pouring out.
-      { const dmg = player.damage?.level || 0; if (dmg > 0.3 && !player.wade) { const heavy = clamp((dmg - 0.55) / 0.35, 0, 1), sn = Math.sin(player.heading), cs = Math.cos(player.heading), h = (player.height || 1.6) * 0.78;
-        if (Math.random() < dt * (7 + dmg * 26)) { const lx = (Math.random() - 0.5) * player.wid * 0.7, lz = player.len * (0.3 + Math.random() * 0.14), shade = 0.86 - 0.72 * heavy;
+      { const dmg = player.damage?.level || 0; if (dmg > 0.3 && !player.wade) { const heavy = clamp((dmg - 0.7) / 0.3, 0, 1), sn = Math.sin(player.heading), cs = Math.cos(player.heading), h = (player.height || 1.6) * 0.78;
+        if (Math.random() < dt * (5 + dmg * 14)) { const lx = (Math.random() - 0.5) * player.wid * 0.6, lz = player.len * (0.3 + Math.random() * 0.12), shade = 0.88 - 0.5 * heavy;
           smoke.emit(player.pos.x + lx * cs + lz * sn, player.groundY + h, player.pos.z - lx * sn + lz * cs, player.vel.x * 0.5 + (Math.random() - 0.5) * 0.4, 0.7 + Math.random() * 0.7 + heavy * 0.6, player.vel.z * 0.5 + (Math.random() - 0.5) * 0.4,
-            1.6 + heavy * 1.6 + Math.random(), 0.25 + heavy * 0.2, 1.4 + heavy * 2.2, shade, shade, shade * 1.02, 0.28 + heavy * 0.42); } } }
+            1.3 + heavy * 1.2 + Math.random() * 0.8, 0.18 + heavy * 0.12, 0.9 + heavy * 1.1, shade, shade, shade * 1.02, 0.16 + heavy * 0.18); } } } // thin wisps, a grey plume only when badly hurt
       for (const c of traffic.cars) if (c.wreck > 0 && Math.random() < dt * 9 && Math.abs(c.x - player.pos.x) + Math.abs(c.z - player.pos.z) < 120) { const fx = Math.sin(c.h), fz = Math.cos(c.h), shade = 0.35 + Math.random() * 0.15;
         smoke.emit(c.x + c.push.x + fx * 1.6 + (Math.random() - 0.5) * 0.8, (c.y || 0) + 1.1, c.z + c.push.y + fz * 1.6 + (Math.random() - 0.5) * 0.8, (Math.random() - 0.5) * 0.4, 0.8 + Math.random() * 0.6, (Math.random() - 0.5) * 0.4, 2.4 + Math.random(), 0.3, 2.4, shade, shade, shade, 0.4); }
       if (live) {
