@@ -49,12 +49,16 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   // Fetch every model at once (the decoding runs in workers) and build the kits in order as each arrives. A car the
   // player can drive uses the same address as the player's copy, so it is not downloaded twice.
   const urlOf = file => file === 'sports-coupe' ? '/evermile/assets/sports-coupe.glb' : '/evermile/assets/models/' + file + '.glb?v=' + (CARS.find(c => c.file === file)?.rig ? '20261123b' : 'supplied7');
-  const loads = files.map(file => loadGLB(urlOf(file)));
-  loads.forEach(l => l.catch(() => {}));
+  // Two at a time, so a tablet never holds every model decoded at once; a model that fails or takes over 45 s is left
+  // out rather than holding up the game.
+  const loads = []; let next = 0;
+  const startNext = () => { if (next >= files.length) return; const i = next++; loads[i] = loadGLB(urlOf(files[i])); loads[i].catch(() => {}).finally(startNext); };
+  startNext(); startNext();
   for (const [fi, file] of files.entries()) {
     const coupe = file === 'sports-coupe';
     const style = file.replace(/^(road|car)-/, '');
-    const g = await loads[fi];
+    while (!loads[fi]) await new Promise(r => setTimeout(r, 30));
+    let g; try { g = await Promise.race([loads[fi], new Promise((res, rej) => setTimeout(() => rej(new Error('timed out')), 45000))]); } catch (e) { console.warn('traffic model skipped', file, e); continue; }
     if (coupe) g.scene.rotation.y = Math.PI;
     g.scene.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(g.scene, true);

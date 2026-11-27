@@ -72,6 +72,27 @@
 <div class="bar" id="photo-bar"><button type="button" id="photo-out" aria-label="Zoom out">−</button><button type="button" id="photo-in" aria-label="Zoom in">+</button><button type="button" id="photo-save" class="main">Save photo</button><button type="button" id="photo-back">Back</button></div>
 <div class="bar" id="replay-bar"><span>Replay</span><button type="button" id="replay-stop">Stop</button></div>
 <p class="credit">Sports coupé model by vicent091036 via three.js. Traffic: Generic Passenger Car Pack by Comrade1280 (CC BY 4.0). Asphalt, <a href="https://polyhaven.com/a/rocky_terrain">Rocky Terrain</a>, <a href="https://polyhaven.com/a/rock_face">Rock Face</a> and <a href="https://polyhaven.com/a/qwantani_sunset_puresky">Qwantani Sunset</a>: Poly Haven (CC0). Fuel station by <a href="https://elbolilloduro.itch.io/gas-station">Elbolilloduro</a>. Buildings, people and vehicles: <a href="https://github.com/hisanali/Hisan-Ali-Portfolio-Website/blob/main/evermile/ASSET-CREDITS.md">Evermile asset credits</a>. Ambient recordings via the Moodist project. Ships, piers, rocks, desert plants and street props: <a href="https://polyhaven.com">Poly Haven</a> (CC0). The ocean, the brig and the frontier textures come from <a href="/eight-worlds/">Eight Worlds</a> (<a href="https://github.com/hisanali/Hisan-Ali-Portfolio-Website/blob/main/eight-worlds/CREDITS.md">credits</a>).</p>
-<script type="module" src="src/main.js?v=39"></script>
+<script>
+/* Loading watchdog: shows the stage the load is on, any error that stops it, and, if one stage takes too long, a button to
+   try again with lighter graphics. Inline so it also catches a module that fails to load before the game's code runs. */
+(function () {
+  var msg = document.getElementById('load-msg'), box = document.createElement('div'), last = '', since = Date.now(), errs = [];
+  box.id = 'load-diag'; box.style.cssText = 'margin-top:14px;font:12px/1.5 system-ui,sans-serif;color:#cfd6dc;max-width:86vw;text-align:center;white-space:pre-wrap';
+  document.getElementById('loading').appendChild(box);
+  function note(t) { errs.push(String(t).slice(0, 220)); draw(); }
+  addEventListener('error', function (e) { note((e.message || 'error') + (e.filename ? ' · ' + e.filename.replace(/.*\//, '') + ':' + e.lineno : '') || (e.target && e.target.src)); }, true);
+  addEventListener('unhandledrejection', function (e) { note('promise: ' + (e.reason && (e.reason.message || e.reason))); });
+  function down() { var order = ['low', 'medium', 'high', 'ultra'], q = 'medium'; try { q = localStorage.getItem('afterdark:gfx') || q; } catch (e) {} var i = Math.max(0, order.indexOf(q) - 1); try { localStorage.setItem('afterdark:gfx', order[i]); localStorage.removeItem('afterdark:booting'); } catch (e) {} location.replace(location.pathname + '?r=' + Date.now()); }
+  function draw() {
+    if (!document.getElementById('loading')) return;
+    var secs = Math.round((Date.now() - since) / 1000), stuck = secs > 40;
+    box.innerHTML = (errs.length ? '<b style="color:#ff9a8a">Error</b>\n' + errs.slice(-3).join('\n').replace(/</g, '&lt;') + '\n' : '') +
+      (stuck || errs.length ? '<span style="opacity:.8">Step "' + last + '" · ' + secs + ' s</span>\n<button id="load-retry" style="margin-top:8px;padding:9px 16px;border-radius:10px;border:0;background:#2ec4a6;color:#062;font-weight:700">Try again with lighter graphics</button>' : '');
+    var b = document.getElementById('load-retry'); if (b) b.onclick = down;
+  }
+  setInterval(function () { if (!msg) return; if (msg.textContent !== last) { last = msg.textContent; since = Date.now(); } draw(); }, 1000);
+})();
+</script>
+<script type="module" src="src/main.js?v=40"></script>
 </body>
 </html>
