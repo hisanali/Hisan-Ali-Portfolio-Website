@@ -14,7 +14,7 @@ const hash = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7)
 export function createDamage(root, model) {
   const parts = []; let level = 0;
   model.traverse(o => { if (o.isMesh && o.geometry?.attributes.position && !excluded(o)) parts.push({ mesh: o, original: o.geometry, own: null }); });
-  const toCar = new THREE.Matrix4(), toMesh = new THREE.Matrix4(), v = new THREE.Vector3(), d = new THREE.Vector3(), n = new THREE.Vector3(), rootInv = new THREE.Matrix4();
+  const toCar = new THREE.Matrix4(), toMesh = new THREE.Matrix4(), v = new THREE.Vector3(), d = new THREE.Vector3(), n = new THREE.Vector3(), rootInv = new THREE.Matrix4(), near = new THREE.Vector3();
   return {
     get level() { return level; },
     // point: impact in the car's frame (x, y, z); dir: unit vector in the car's frame pointing into the car; speed in m/s
@@ -25,7 +25,11 @@ export function createDamage(root, model) {
       root.updateWorldMatrix(true, true); rootInv.copy(root.matrixWorld).invert();
       for (const p of parts) {
         const m = p.mesh;
-        toCar.multiplyMatrices(rootInv, m.matrixWorld); toMesh.copy(toCar).invert();
+        toCar.multiplyMatrices(rootInv, m.matrixWorld);
+        // skip panels nowhere near the blow (most of the car), measured on their bounds in the car's frame
+        if (!p.box) { if (!p.original.boundingBox) p.original.computeBoundingBox(); p.box = p.original.boundingBox.clone().applyMatrix4(toCar).expandByScalar(MAX_DENT); }
+        if (p.box.distanceToPoint(near.set(point.x, point.y, point.z)) > radius) continue;
+        toMesh.copy(toCar).invert();
         if (!p.own) { p.own = p.original.clone(); p.rest = p.original.attributes.position; m.geometry = p.own; }
         const pos = p.own.attributes.position, nor = p.own.attributes.normal, rest = p.rest; let moved = false;
         const lin = new THREE.Matrix3().setFromMatrix4(toMesh); // directions from the car's frame into the mesh's
