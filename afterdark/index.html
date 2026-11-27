@@ -86,6 +86,7 @@
   function draw() {
     if (!document.getElementById('loading')) return;
     var secs = Math.round((Date.now() - since) / 1000), stuck = secs > 40;
+    var gl = errs.join(' '); if (/getShaderPrecisionFormat|WebGL|context/i.test(gl)) { box.innerHTML = '<b style="color:#ff9a8a">3D graphics are blocked for this page</b>\nAfter earlier crashes the browser has switched off 3D graphics for this site. Close every hisanali.com tab, quit the browser completely (on iPhone or iPad: swipe up and swipe Safari away), then open the game again.\n<button id="load-retry" style="margin-top:8px;padding:9px 16px;border-radius:10px;border:0;background:#2ec4a6;color:#062;font-weight:700">Reopen with lighter graphics</button>'; var rb = document.getElementById('load-retry'); if (rb) rb.onclick = down; return; }
     box.innerHTML = (errs.length ? '<b style="color:#ff9a8a">Error</b>\n' + errs.slice(-3).join('\n').replace(/</g, '&lt;') + '\n' : '') +
       (stuck || errs.length ? '<span style="opacity:.8">Step "' + last + '" · ' + secs + ' s</span>\n<button id="load-retry" style="margin-top:8px;padding:9px 16px;border-radius:10px;border:0;background:#2ec4a6;color:#062;font-weight:700">Try again with lighter graphics</button>' : '');
     var b = document.getElementById('load-retry'); if (b) b.onclick = down;
@@ -93,6 +94,6 @@
   setInterval(function () { if (!msg) return; if (msg.textContent !== last) { last = msg.textContent; since = Date.now(); } draw(); }, 1000);
 })();
 </script>
-<script type="module" src="src/main.js?v=41"></script>
+<script type="module" src="src/main.js?v=42"></script>
 </body>
 </html>
