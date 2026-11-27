@@ -43,12 +43,18 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   const R = rng(seed), kits = [], headMaterials = [], drlMaterials = [], tailMaterials = [];
   // Phones and tablets (reach below 1) leave the 1982 Mercedes, by far the heaviest model in textures, out of traffic:
   // with it a phone's browser can run out of memory and close the tab. It is still in the garage.
-  const files = reach < 1 ? trafficFiles.filter(f => f !== 'road-mercedes') : trafficFiles;
-  for (const file of files) {
+  // The Mercedes is left out of traffic on every device now (a tablet's browser could run out of memory with it and
+  // reload the page during loading); it still loads when chosen in the garage.
+  const files = trafficFiles.filter(f => f !== 'road-mercedes');
+  // Fetch every model at once (the decoding runs in workers) and build the kits in order as each arrives. A car the
+  // player can drive uses the same address as the player's copy, so it is not downloaded twice.
+  const urlOf = file => file === 'sports-coupe' ? '/evermile/assets/sports-coupe.glb' : '/evermile/assets/models/' + file + '.glb?v=' + (CARS.find(c => c.file === file)?.rig ? '20261123b' : 'supplied7');
+  const loads = files.map(file => loadGLB(urlOf(file)));
+  loads.forEach(l => l.catch(() => {}));
+  for (const [fi, file] of files.entries()) {
     const coupe = file === 'sports-coupe';
     const style = file.replace(/^(road|car)-/, '');
-    const url = coupe ? '/evermile/assets/sports-coupe.glb' : '/evermile/assets/models/' + file + '.glb?v=supplied7';
-    const g = await loadGLB(url);
+    const g = await loads[fi];
     if (coupe) g.scene.rotation.y = Math.PI;
     g.scene.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(g.scene, true);

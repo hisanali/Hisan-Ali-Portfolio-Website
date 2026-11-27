@@ -14,8 +14,12 @@ import { createDamage } from './damage.js';
 import { DRACOLoader } from '/evermile/vendor/loaders/DRACOLoader.js';
 import { P, ROADS, HALF, SW, SPAN } from './city.js';
 
-export const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('/evermile/vendor/draco/').setWorkerLimit(1));
+// Draco decoding in up to three workers, so models decode side by side off the main thread.
+export const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('/evermile/vendor/draco/').setWorkerLimit(Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1))));
 export const loadGLB = url => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+// For models only read, never changed, by those that load them (the city building kit): one download, one decode.
+const shared = new Map();
+export const loadShared = url => { if (!shared.has(url)) shared.set(url, loadGLB(url)); return shared.get(url); };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
 const Y = new THREE.Vector3(0, 1, 0), X = new THREE.Vector3(1, 0, 0);
 

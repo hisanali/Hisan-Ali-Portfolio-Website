@@ -14,10 +14,22 @@ const PRESETS = {
   medium: { dpr: 1.3, msaa: 2, refl: 0.35, cube: 128, cubeEvery: 4, rain: 2200, traffic: 28, lights: 5, people: 4, reach: 0.7 },
   low: { dpr: 1, msaa: 0, refl: 0, cube: 64, cubeEvery: 0, rain: 1200, traffic: 18, lights: 4, people: 0, reach: 0.5 }
 };
+// If the last load never reached the menu (on a phone or tablet that usually means the browser ran out of memory and
+// reloaded the page), this load steps the graphics down a level, and keeps that setting, so the game can start.
+const ORDER = ['low', 'medium', 'high', 'ultra'];
+export let QUALITY_STEPPED = '';
 export const QUALITY = (() => {
-  try { const q = new URLSearchParams(location.search).get('gfx') || localStorage.getItem('afterdark:gfx'); if (PRESETS[q]) return q; } catch (e) {}
-  return matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1 ? 'medium' : 'high';
+  let q = null; const touch = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1;
+  try { q = new URLSearchParams(location.search).get('gfx') || localStorage.getItem('afterdark:gfx'); } catch (e) {}
+  if (!PRESETS[q]) q = touch ? 'medium' : 'high';
+  try {
+    const failed = localStorage.getItem('afterdark:booting');
+    if (touch && failed && Date.now() - Number(failed) < 10 * 60 * 1000 && ORDER.indexOf(q) > 1) { const was = q; q = ORDER[ORDER.indexOf(q) - 1]; localStorage.setItem('afterdark:gfx', q); QUALITY_STEPPED = was + ' → ' + q; }
+    localStorage.setItem('afterdark:booting', String(Date.now()));
+  } catch (e) {}
+  return q;
 })();
+export const bootFinished = () => { try { localStorage.removeItem('afterdark:booting'); } catch (e) {} };
 export const Q = PRESETS[QUALITY];
 
 const VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';

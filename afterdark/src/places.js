@@ -2,7 +2,7 @@
 // Everything is assembled from instanced boxes and cylinders plus the small photo-textured houses from the city kit.
 import * as THREE from '/evermile/vendor/three.module.js';
 import { rng, splitChunks, kitMaterial } from './city.js';
-import { loadGLB } from './car.js';
+import { loadGLB, loadShared } from './car.js';
 import { buildAirfield, buildFuelStation } from './landmarks.js';
 import { weather } from './weathering.js';
 
@@ -68,7 +68,7 @@ export async function buildPlaces(scene, city, world, Q) {
     for (let k = -5; k <= 5; k++) { const [x, z] = at(pl, k * 5, 27); box(x, y + 0.55, z, 0.14, 1.1, 0.14, yaw, 0x3a2e24, false); } const [rx, rz] = at(pl, 0, 27); box(rx, y + 1.05, rz, 50, 0.12, 0.12, yaw, 0x3a2e24, false); out.markers.push(pl); }
 
   // ---- Houses: a suburb on the valley road and a village on the mountain ----
-  try { const kit = await loadGLB('/evermile/assets/models/city-kit.glb?v=maps2'); kit.scene.updateMatrixWorld(true);
+  try { const kit = await loadShared('/evermile/assets/models/city-kit.glb?v=maps2'); kit.scene.updateMatrixWorld(true);
     const names = ['c7-00', 'c7-01', 'c7-02', 'c7-03', 'c7-04', 'c7-09', 'c7-11', 'c7-15'], kinds = names.map(n => kit.scene.getObjectByName(n)).filter(Boolean).map(node => { const bb = new THREE.Box3().setFromObject(node), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()), fix = new THREE.Matrix4().makeTranslation(-c.x, -bb.min.y, -c.z), parts = []; node.traverse(o => { if (o.isMesh) parts.push({ geo: o.geometry, mat: kitMaterial(o.material, city.litU), local: fix.clone().multiply(o.matrixWorld) }); }); return { w: sz.x, d: sz.z, h: sz.y, parts, uses: [] }; });
     const scale = 1.25, façades = [];
     for (const st of world.strips) {

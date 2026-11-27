@@ -3,7 +3,7 @@
 import * as THREE from '/evermile/vendor/three.module.js';
 import { mergeGeometries } from '/evermile/vendor/utils/BufferGeometryUtils.js';
 import { Sky } from '/penalty/vendor/three-addons/objects/Sky.js';
-import { loadGLB } from './car.js';
+import { loadGLB, loadShared } from './car.js';
 import { buildSea, wetSand, beachHeight } from './water.js';
 import { Q as QUALITY_PRESET } from './render.js';
 
@@ -537,7 +537,7 @@ export async function buildCity(scene, refl, quality, renderer) {
   // Photo-textured building models; each lot gets one standing on a row of shops. Only the intact models are used.
   const KIT_OK = new Set(['c7-06', 'c7-07', 'c7-08', 'c7-18', 'c7-19', 'c7-20', 'c7-21', 'c8-22', 'c8-25', 'c8-28', 'c8-29', 'c8-30', 'c8-31', 'ls-35']);
   const kit = [];
-  try { const g = await loadGLB('/evermile/assets/models/city-kit.glb?v=maps2'); g.scene.updateMatrixWorld(true);
+  try { const g = await loadShared('/evermile/assets/models/city-kit.glb?v=maps2'); g.scene.updateMatrixWorld(true);
     for (const node of g.scene.children.slice()) { const bb = new THREE.Box3().setFromObject(node), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()); if (!KIT_OK.has(node.name)) continue;
       const fix = new THREE.Matrix4().makeTranslation(-c.x, -bb.min.y, -c.z), meshes = []; node.traverse(o => { if (o.isMesh) meshes.push({ geo: o.geometry, mat: kitMaterial(o.material, litU), local: fix.clone().multiply(o.matrixWorld) }); });
       kit.push({ w: sz.x, h: sz.y, d: sz.z, meshes, uses: [] }); } } catch (e) { console.warn('building kit unavailable', e); }
