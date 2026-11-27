@@ -450,7 +450,7 @@ function selectCamera(index) {
   if (index >= 5) {
     cinema.prior = S.cam;
     cinema.active = true;
-    cinema.elapsed = 0; cinema.shot = -1;
+    cinema.elapsed = 0; cinema.shot = -1; cinema.cycleBase = 0; cinema.shopDone = false;
     cinema.beacon = beacon.visible; beacon.visible = false;
     if (index === 7) {
       cinema.boardBlock = null;
@@ -553,17 +553,23 @@ function cinemaCamera(dt) {
     if (traffic.vip.tour && !inCity(fleet[3].x, fleet[3].z)) { cinema.boardBlock = -1; vipCountryCamera(dt); return; }
     cinema.cShot = null;
     // Passing the Hisan shop: a low shot from the far pavement, the convoy sweeping by under the flagship billboard.
-    const shop = city.hisanShop, byShop = Math.min(...fleet.map(c => Math.hypot(c.x - shop.x, c.z - shop.z)));
-    if (byShop < (cinema.boardBlock === -2 ? 78 : 70)) {
-      if (cinema.boardBlock !== -2) { cinema.boardBlock = -2; cinema.cCut = true; const f = fleet[3], fx = Math.sin(f.h), fz = Math.cos(f.h);
+    // Held only while the convoy is actually in frame: cut in as the lead is about 32 m short of the shop, cut away as
+    // soon as the tail has gone by (or after 9 s at most), and film each pass by the shop once.
+    const shop = city.hisanShop, gone = c => (shop.x - c.x) * Math.sin(c.h) + (shop.z - c.z) * Math.cos(c.h), lead = fleet[0], tail = fleet[fleet.length - 1];
+    const near = Math.hypot(lead.x - shop.x, lead.z - shop.z) < 60 || Math.hypot(tail.x - shop.x, tail.z - shop.z) < 60;
+    if (!near) cinema.shopDone = false;
+    const shopOn = cinema.boardBlock === -2 ? gone(tail) > -14 && cinema.elapsed - cinema.shopAt < 9 : !cinema.shopDone && near && gone(lead) < 32 && gone(tail) > 0;
+    if (cinema.boardBlock === -2 && !shopOn) { cinema.boardBlock = -1; cinema.shopDone = true; cinema.cycleBase = cinema.elapsed; } // then the shot list from the top
+    if (shopOn) {
+      if (cinema.boardBlock !== -2) { cinema.boardBlock = -2; cinema.shopAt = cinema.elapsed; cinema.cCut = true; const f = fleet[3], fx = Math.sin(f.h), fz = Math.cos(f.h);
         vipAnchor.set(shop.x + shop.nx * 30.5 - fx * 6, 2.5, shop.z + shop.nz * 30.5 - fz * 6); } // the far pavement, clear of the parked cars
       // Lock the tripod and its aim to the crossing. Cars enter and leave the frame naturally.
       pivot.set(shop.x + shop.nx * 8, 3.45, shop.z + shop.nz * 8);
       camera.position.copy(vipAnchor); camera.lookAt(pivot); cinema.cCut = false; camera.fov = 46; camera.updateProjectionMatrix(); return;
     }
     // Lead lights, convoy overview, door livery, principal, and departing tail.
-    const cycle = vipShots.reduce((a, s) => a + s[0], 0), pass = Math.floor(cinema.elapsed/cycle);
-    let phase = cinema.elapsed % cycle, shotIndex=0;
+    const cycle = vipShots.reduce((a, s) => a + s[0], 0), run = cinema.elapsed - (cinema.cycleBase || 0), pass = Math.floor(run/cycle);
+    let phase = run % cycle, shotIndex=0;
     while (shotIndex<vipShots.length-1 && phase>=vipShots[shotIndex][0]) phase-=vipShots[shotIndex++][0];
     const [duration,index,along,side,height,fov]=vipShots[shotIndex];
     const block=pass*vipShots.length+shotIndex;
