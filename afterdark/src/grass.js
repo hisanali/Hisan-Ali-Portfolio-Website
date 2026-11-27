@@ -23,9 +23,11 @@ export function createGrass(scene, world, camera, quality = 1) {
     sh.vertexShader = 'uniform float gTime, gWind;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
   { vec3 base = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz; float tip = position.y / 0.55;
     float sway = sin(gTime * 1.7 + base.x * 0.21 + base.z * 0.17) * 0.6 + sin(gTime * 3.1 + base.x * 0.7) * 0.25;
-    transformed.x += sway * tip * tip * (0.08 + 0.18 * gWind); transformed.z += sway * tip * tip * 0.06; }`);
+    transformed.x += sway * tip * tip * (0.08 + 0.18 * gWind); transformed.z += sway * tip * tip * 0.06;
+    // far clumps shrink away into the ground rather than turning see-through (half-transparent cut-out grass shows as grey blobs)
+    transformed *= 1.0 - smoothstep(` + (RAD * 0.55).toFixed(1) + `, ` + (RAD * 0.86).toFixed(1) + `, distance(base.xz, cameraPosition.xz)); }`);
     // fade the far ring out so the edge of the field never shows
-    sh.fragmentShader = sh.fragmentShader.replace('#include <alphatest_fragment>', 'diffuseColor.a *= 1.0 - smoothstep(' + (RAD * 0.72).toFixed(1) + ', ' + (RAD * 0.90).toFixed(1) + ', length(vViewPosition));\n#include <alphatest_fragment>')
+    sh.fragmentShader = sh.fragmentShader
       .replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\n  normal = normalize(mix(normal, (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz, 0.7));');
   };
   mat.customProgramCacheKey = () => 'afterdark-grass';
