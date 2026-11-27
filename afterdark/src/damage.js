@@ -37,7 +37,7 @@ export function createDamage(root, model) {
           v.fromBufferAttribute(pos, i).applyMatrix4(toCar);
           const dx = v.x - point.x, dy = (v.y - point.y) * 1.4, dz = v.z - point.z, r = Math.sqrt(dx * dx + dy * dy + dz * dz);
           if (r >= radius) continue;
-          const w = (1 - r / radius) ** 2, crinkle = 0.65 + 0.7 * hash(v.x * 3.1, v.y * 3.1, v.z * 3.1);
+          const w = (1 - r / radius) ** 2, crinkle = 0.75 + 0.5 * (Math.sin(v.x * 4.3 + v.z * 2.9) * Math.sin(v.y * 5.1 - v.z * 3.7) * 0.5 + 0.5);
           // pushed in along the blow, a little down and sideways as metal folds
           d.copy(dir).multiplyScalar(depth * w * crinkle); d.y -= depth * w * 0.25 * (hash(v.z, v.x, v.y) - 0.3);
           v.add(d).applyMatrix4(toMesh);
@@ -46,7 +46,8 @@ export function createDamage(root, model) {
           const len = d.length(), limit = MAX_DENT / Math.max(1e-6, m.matrixWorld.getMaxScaleOnAxis() / root.matrixWorld.getMaxScaleOnAxis());
           if (len > limit) v.set(ox, oy, oz).addScaledVector(d, limit / len);
           pos.setXYZ(i, v.x, v.y, v.z);
-          if (nor) { n.fromBufferAttribute(nor, i); d.set(hash(v.x, v.y, i) - 0.5, hash(i, v.z, v.x) - 0.5, hash(v.y, i, v.z) - 0.5).applyMatrix3(lin); n.addScaledVector(d, w * 1.1).normalize(); nor.setXYZ(i, n.x, n.y, n.z); }
+          if (nor) { const q = (k, o) => Math.sin(k * 5.3 + o) * 0.5 + Math.sin(k * 2.1 + o * 1.7) * 0.5; // smooth folds, not speckle
+            n.fromBufferAttribute(nor, i); d.set(q(point.x + dx + dz, 1), q(point.y + dy, 2.3), q(point.z + dz - dx, 4.1)).applyMatrix3(lin); n.addScaledVector(d, w * 0.42).normalize(); nor.setXYZ(i, n.x, n.y, n.z); }
           moved = true;
         }
         if (moved) { pos.needsUpdate = true; if (nor) nor.needsUpdate = true; p.own.computeBoundingSphere(); }
