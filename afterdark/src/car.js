@@ -181,7 +181,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   };
   // Crash damage: crumple the body where the last hard contact struck it (car.hitN is the push of that contact, in the
   // world), at bumper height.
-  car.damage = createDamage(root, model);
+  car.damage = createDamage(root, tilt); // the body and its wrap, which sit side by side under the tilt group
   car.dent = speed => { if (!car.hitN) return; const [nx, nz] = car.hitN, sn = Math.sin(car.heading), cs = Math.cos(car.heading);
     const ix = nx * cs - nz * sn, iz = nx * sn + nz * cs, l = Math.hypot(ix, iz) || 1, ux = -ix / l, uz = -iz / l;
     const t = Math.min(wid / 2 / Math.max(Math.abs(ux), 1e-3), len / 2 / Math.max(Math.abs(uz), 1e-3));

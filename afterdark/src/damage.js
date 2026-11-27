@@ -13,7 +13,9 @@ const hash = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7)
 // root: the car's root object (its frame: +z forward, +x the car's left, y up from the ground)
 export function createDamage(root, model) {
   const parts = []; let level = 0;
-  model.traverse(o => { if (o.isMesh && o.geometry?.attributes.position && !excluded(o)) parts.push({ mesh: o, original: o.geometry, own: null }); });
+  // everything on the body crumples together: the panels and any wrap or decal laid over them (left behind, a decal would
+  // show through the dent as speckle); not lamps' glow sprites, the instanced indicator lenses or additive light layers
+  model.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o.geometry?.attributes.position && o.material?.blending !== THREE.AdditiveBlending && !excluded(o)) parts.push({ mesh: o, original: o.geometry, own: null }); });
   const toCar = new THREE.Matrix4(), toMesh = new THREE.Matrix4(), v = new THREE.Vector3(), d = new THREE.Vector3(), n = new THREE.Vector3(), rootInv = new THREE.Matrix4(), near = new THREE.Vector3();
   return {
     get level() { return level; },
