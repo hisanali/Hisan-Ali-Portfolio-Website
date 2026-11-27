@@ -77,7 +77,7 @@ export function createMotorcade(scene, kits, traffic, parked, world = null) {
   const cars = roles.map((role,i) => {
     // the Interceptor Utility leads, the GT500 brings up the rear; both wear the Port Aurora Police livery in the model
     const style = role === 'van' ? 'vip-van' : role === 'police' ? (i === 0 ? 'police-interceptor' : 'police-gt500') : 'escalade';
-    return { role, kit:kits.findIndex(k => k.style === style), tint: role === 'principal' ? 0x101115 : role === 'police' ? 0x0c0d10 : 0xfafaf6,
+    return { role, kit:kits.findIndex(k => k.style === style), tint: role === 'principal' ? 0x101115 : role === 'police' ? 0x0c0d10 : role === 'van' ? 0xc8b087 : 0xfafaf6, // the vans in champagne gold, light enough for their dark wrap graphics to read
       push:new THREE.Vector2(), x:0,z:0,h:0,slide:0,spin:0,v:0, index:i };
   });
   let age = 0, built = false, rubber;
@@ -118,6 +118,7 @@ export function createMotorcade(scene, kits, traffic, parked, world = null) {
   }
   function step(dt,wet = 0) {
     age += dt;
+    for (const c of cars) c.hazard = wet > 0.25 && (c.role === 'van' || c.role === 'escort'); // hazards on in the rain: the vans and the branded white Escalades
     const obstaclesNow=obstacles();
     for (const c of cars) {
       const kit = kits[c.kit], front = cars[c.index-1];
