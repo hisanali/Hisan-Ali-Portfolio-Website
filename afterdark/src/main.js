@@ -366,7 +366,15 @@ $('#bigmap-canvas').addEventListener('click', e => { if (S.mode !== 'map') retur
     if (destination) t = destination.arrival;
     else { const n = world.nearRoad(w.x, w.z, 340); if (n && !n.s.tunnel) t = { x: n.s.x, z: n.s.z, y: n.s.y }; }
   }
-  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, t.name || 'Waypoint'); $('#map-note').textContent = 'Waypoint set · tap again to move it'; drawBig(); });
+  if (!t) { toast('Tap closer to a road'); return; } A.way = true; setTarget(t, t.name || 'Waypoint'); $('#map-note').textContent = 'Waypoint set · Teleport to jump there'; drawBig();
+  mapPick = { x: t.x, z: t.z }; $('#map-tp').disabled = false; });
+// Teleport: onto the road at the waypoint, in the lane, facing along the road.
+let mapPick = null;
+$('#map-tp').addEventListener('click', () => { if (S.mode !== 'map' || !mapPick) return; const w = mapPick; let x, z, h;
+  if (inCity(w.x, w.z) && w.x >= -HALF) { const rx = clamp(Math.round(w.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(w.z / P), 0, ROADS - 1) * P;
+    if (Math.abs(w.x - rx) < Math.abs(w.z - rz)) { x = rx - 5.5; z = clamp(w.z, 20, SPAN - 20); h = 0; } else { x = clamp(w.x, 20, SPAN - 20); z = rz + 5.5; h = Math.PI / 2; } }
+  else { const n = world.nearRoad(w.x, w.z, 400); if (!n) { toast('No road there'); return; } x = n.s.x - n.s.lx * 2.5; z = n.s.z - n.s.lz * 2.5; h = Math.atan2(n.s.tx, n.s.tz); }
+  pursuit?.end?.(); player.place(x, z, h); snapCam = true; spray.clear(); skidMarks.breakTrail?.(); mapPick = null; $('#map-tp').disabled = true; closeMap(); toast('Teleported'); });
 
 // ---------- Photo mode (O) ----------
 let shot = false;

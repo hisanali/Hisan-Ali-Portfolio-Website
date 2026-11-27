@@ -173,3 +173,6 @@ body.underwater::after{content:'';position:fixed;inset:0;pointer-events:none;z-i
 #touch button.sport.on{background:linear-gradient(160deg,#ff3b2f,#b3121d);color:#fff;box-shadow:0 0 18px rgba(255,59,47,.55);border-color:#ff8a80}
 #sport-badge{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:12;padding:4px 12px;border-radius:999px;font:800 11px/1.4 system-ui,sans-serif;letter-spacing:.22em;color:#fff;background:linear-gradient(90deg,#ff3b2f,#ff8a1f);box-shadow:0 0 16px rgba(255,80,40,.5);pointer-events:none}
 #sport-badge[hidden]{display:none}
+
+#map-tp{background:linear-gradient(90deg,#2ec4a6,#3fa8ff);color:#04121a;font-weight:800;border:0}
+#map-tp:disabled{opacity:.4}
