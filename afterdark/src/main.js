@@ -233,7 +233,7 @@ $('#btn-pause').addEventListener('click', () => { if (S.mode === 'play') pause(t
 $('#btn-cam').addEventListener('change', e => { selectCamera(Number(e.target.value)); e.target.blur(); });
 $('#btn-map').addEventListener('click', () => openMap()); $('#map').addEventListener('click', () => openMap()); $('#map-close').addEventListener('click', () => closeMap()); $('#pause-map').addEventListener('click', () => openMap());
 $('#pause-photo').addEventListener('click', () => photo(true)); $('#pause-replay').addEventListener('click', () => replay(true)); $('#photo-back').addEventListener('click', () => photo(false)); $('#photo-save').addEventListener('click', () => { shot = true; }); $('#replay-stop').addEventListener('click', () => replay(false));
-$('#photo-in').addEventListener('click', () => { view.zoom = clamp(view.zoom * 0.85, 0.55, 2.6); }); $('#photo-out').addEventListener('click', () => { view.zoom = clamp(view.zoom * 1.18, 0.55, 2.6); });
+$('#photo-in').addEventListener('click', () => { view.zoom = clamp(view.zoom * 0.85, ZOOM[0], ZOOM[1]); }); $('#photo-out').addEventListener('click', () => { view.zoom = clamp(view.zoom * 1.18, ZOOM[0], ZOOM[1]); });
 $('#open-garage').addEventListener('click', () => { drawGarage(); show('garage'); }); $('#pause-garage').addEventListener('click', () => { drawGarage(); show('garage'); });
 function closeGarage() {
   if (swapping) return;
@@ -461,6 +461,8 @@ const CAMS = ['Chase', 'Far chase', 'Bonnet', 'Cockpit', 'Low wheel', 'Cinematic
 const cinema = { active: false, tour: null, prior: 0, elapsed: 0, shot: -1, heading: 0, beacon: false };
 CAMS.forEach((name, i) => $('#btn-cam').add(new Option(name, String(i))));
 const view = { yaw: 0, pitch: 0, zoom: 1, drag: false, idle: 9, x: 0, y: 0, id: -1 };
+// Camera freedom: zoom from close in to far out (wheel, pinch or the photo buttons); drag down to look up at the sky.
+const ZOOM = [0.35, 4.5], touches = new Map(); let pinchFrom = 0, pinchZoom = 1;
 function selectCamera(index) {
   if (S.mode !== 'play') return;
   if (index >= 5) {
@@ -655,11 +657,16 @@ function cinemaCamera(dt) {
   cv.addEventListener('pointerdown', e => { if (cinema.active) {
     if (e.pointerType === 'touch' && e.timeStamp - lastCinemaTap < 350) leaveCinema();
     lastCinemaTap = e.timeStamp; return;
-  } if (S.mode === 'replay') { replay(false); return; } if (S.mode !== 'play' && S.mode !== 'photo') return; view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.setPointerCapture?.(e.pointerId); cv.classList.add('dragging'); });
-  cv.addEventListener('pointermove', e => { if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, S.mode === 'photo' ? -0.1 : -0.3, 1.1); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
-  const end = e => { if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
+  } if (S.mode === 'replay') { replay(false); return; } if (S.mode !== 'play' && S.mode !== 'photo') return;
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture?.(e.pointerId);
+    if (touches.size === 2) { const [a, b] = [...touches.values()]; pinchFrom = Math.hypot(a.x - b.x, a.y - b.y); pinchZoom = view.zoom; view.drag = false; return; } // two fingers: pinch to zoom
+    view.drag = true; view.id = e.pointerId; view.x = e.clientX; view.y = e.clientY; view.idle = 0; cv.classList.add('dragging'); });
+  cv.addEventListener('pointermove', e => { if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.size === 2 && pinchFrom) { const [a, b] = [...touches.values()]; view.zoom = clamp(pinchZoom * pinchFrom / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), ZOOM[0], ZOOM[1]); view.idle = 0; return; }
+    if (!view.drag || e.pointerId !== view.id) return; view.yaw -= (e.clientX - view.x) * 0.0055; view.pitch = clamp(view.pitch + (e.clientY - view.y) * 0.004, S.mode === 'photo' ? -0.6 : -1.05, 1.35); view.x = e.clientX; view.y = e.clientY; view.idle = 0; });
+  const end = e => { touches.delete(e.pointerId); if (touches.size < 2) pinchFrom = 0; if (e.pointerId !== view.id) return; view.drag = false; cv.classList.remove('dragging'); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
-  cv.addEventListener('wheel', e => { if (S.mode !== 'play' && S.mode !== 'photo') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), 0.55, 2.6); }, { passive: false }); }
+  cv.addEventListener('wheel', e => { if (S.mode !== 'play' && S.mode !== 'photo') return; e.preventDefault(); view.zoom = clamp(view.zoom * (e.deltaY > 0 ? 1.1 : 0.9), ZOOM[0], ZOOM[1]); view.idle = 0; }, { passive: false }); }
 const CAMW = HALF + 3.4;
 function keepInStreet(v) { if (!inCity(v.x, v.z)) { if (!player.tunnel) v.y = Math.max(v.y, world.terrain(v.x, v.z) + 0.9); return v; } const rx = clamp(Math.round(v.x / P), 0, ROADS - 1) * P, rz = clamp(Math.round(v.z / P), 0, ROADS - 1) * P, dx = v.x - rx, dz = v.z - rz, ox = Math.abs(dx) - CAMW, oz = Math.abs(dz) - CAMW;
   if (v.x >= 0 && ox > 0 && oz > 0) { if (ox <= oz) v.x = rx + Math.sign(dx) * CAMW; else v.z = rz + Math.sign(dz) * CAMW; }
@@ -719,7 +726,7 @@ function chase(dt, snap) {
   if (view.inCab !== cockpit) { view.inCab = cockpit; player.setInterior(cockpit); }
   if (!view.drag) {
     view.idle += dt;
-    if (view.idle > 1.55 && speed > 2) {
+    if (view.idle > 3 && speed > 2) {
       const recenter = Math.exp(-3.5 * dt);
       view.yaw *= recenter;
       view.pitch *= recenter;
@@ -791,6 +798,7 @@ function chase(dt, snap) {
     look.set(player.pos.x + Math.sin(bearing) * ahead + Math.cos(bearing) * recoil * 0.22,
       camHeight + 0.68 + bob * 0.11 + Math.min(0.65, Math.max(-0.45, player.slopeF * ahead * 0.55)),
       player.pos.z + Math.cos(bearing) * ahead - Math.sin(bearing) * recoil * 0.22);
+    if (view.pitch < -0.05) look.y += Math.tan(Math.min(1.25, -view.pitch * 1.25)) * 9; // dragged down: the camera sinks low and tilts up to the sky
   }
   camera.position.copy(camPos);
   camera.lookAt(look);
