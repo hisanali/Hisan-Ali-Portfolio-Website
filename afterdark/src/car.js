@@ -38,7 +38,12 @@ loader.register(parser => {
   parser.loadImageSource = (i, l) => { const k = file + '|' + i; if (!images.has(k)) images.set(k, own(i, l).then(shrink)); return images.get(k).then(t => t.clone()); };
   return { name: 'afterdark_shared_images' };
 });
-export const loadGLB = url => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+// Compressed copies of the models the game loads at the start (Draco geometry, WebP textures where that is smaller), kept
+// in the game's own folder so other pages that use the originals are untouched: the start-up download goes from about
+// 42 MB to 16 MB for these, the Escalade alone from 13.7 MB to 4.1 MB.
+const LIGHT = new Set(['car-escalade', 'road-sedan', 'road-hatch', 'road-suv', 'road-wagon', 'road-van', 'road-pickup', 'road-bus', 'road-coach', 'city-kit', 'prop-shop', 'cat-imported', 'dog-imported']);
+const lighter = url => { const m = /^\/evermile\/assets\/models\/([\w-]+)\.glb/.exec(url); return m && LIGHT.has(m[1]) ? '/afterdark/assets/models/' + m[1] + '.glb?v=c1' : url; };
+export const loadGLB = url => new Promise((res, rej) => loader.load(lighter(url), res, undefined, rej));
 // For models only read, never changed, by those that load them (the city building kit): one download, one decode.
 const shared = new Map();
 export const loadShared = url => { if (!shared.has(url)) shared.set(url, loadGLB(url)); return shared.get(url); };

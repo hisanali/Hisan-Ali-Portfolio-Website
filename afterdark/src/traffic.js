@@ -45,7 +45,8 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   // with it a phone's browser can run out of memory and close the tab. It is still in the garage.
   // The Mercedes is left out of traffic on every device now (a tablet's browser could run out of memory with it and
   // reload the page during loading); it still loads when chosen in the garage.
-  const files = trafficFiles.filter(f => f !== 'road-mercedes');
+  // On Medium and Low the three garage sports cars (each 1.3 to 1.8 MB) are left out of traffic too.
+  const files = trafficFiles.filter(f => f !== 'road-mercedes' && !(reach < 1 && ['sports-coupe', 'car-gr-corolla', 'car-land-cruiser'].includes(f)));
   // Fetch every model at once (the decoding runs in workers) and build the kits in order as each arrives. A car the
   // player can drive uses the same address as the player's copy, so it is not downloaded twice.
   const urlOf = file => file === 'sports-coupe' ? '/evermile/assets/sports-coupe.glb' : '/evermile/assets/models/' + file + '.glb?v=' + (CARS.find(c => c.file === file)?.rig ? '20261123b' : 'supplied7');
