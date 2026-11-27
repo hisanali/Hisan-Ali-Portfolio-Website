@@ -54,6 +54,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   let nightK = 0, wetK = 0; const T = { vmax: 82, acc: 1, grip: 1, brake: 1, off: 1, ...spec }, kitCar = !!spec.file, rigCar = !!spec.rig;
   const gltf = await loadGLB(kitCar ? `/evermile/assets/models/${spec.file}.glb?v=${rigCar ? '20261123b' : 'supplied7'}` : '/evermile/assets/sports-coupe.glb');
   const model = gltf.scene; if (!kitCar) model.rotation.y = Math.PI; model.updateMatrixWorld(true);
+  const amber = []; model.traverse(o => { if (o.isMesh && /amber/i.test(o.material?.name || '')) amber.push(o); }); // side-marker lenses, found before materials are swapped
   const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3());
   model.position.set(-c.x, -box.min.y, -c.z);
   const len = box.max.z - box.min.z, wid = box.max.x - box.min.x, height = box.max.y - box.min.y;
@@ -71,7 +72,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   // that speed (less in the wet, less while braking, much less in reverse) instead of a fixed angle the car cannot follow.
   const escalade = spec.file === 'car-escalade';
   const LOCK = escalade ? 0.76 : 0.576; let gripNow = 10.3;
-  const steerLimit = (speed, reverse) => Math.min(LOCK, Math.atan(wheelbase * (reverse ? Math.min(gripNow * 0.92, 4.4) : gripNow * 0.92) / Math.max(1, speed * speed)));
+  const TURN = 1.45; // game handling: the tyres corner harder than a real road car's would, so the car turns in sharply at speed
+  const steerLimit = (speed, reverse) => Math.min(LOCK, Math.atan(wheelbase * (reverse ? Math.min(gripNow * 0.92, 4.4) : gripNow * 0.92 * TURN) / Math.max(1, speed * speed)));
   const frontAngle = (steer, speed) => steer * steerLimit(Math.abs(speed), speed < -0.3);
   const satinFinish = spec.file === 'car-escalade' || spec.file === 'car-gr-corolla';
   const dryCoatRoughness = satinFinish ? 0.18 : 0.03;
@@ -127,6 +129,11 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
   const stopLamp = escalade ? M.tail.clone() : null;
   if (escalade) M.lens.emissive.setHex(0xf2f7ff);
   for (const [mesh, role] of lenses) mesh.material = role === 'stop' ? stopLamp : role === 'drl' ? M.led : role === 'tail' ? M.tail : M.lens;
+  // The amber side markers on the wings flash with the indicator on their side (and both for hazards); unlit they are
+  // amber glass. +x is the car's left.
+  const markerM = () => new THREE.MeshStandardMaterial({ color: 0x8a3a06, emissive: 0xff8c12, emissiveIntensity: 0.04, roughness: 0.25, metalness: 0, toneMapped: false });
+  const marker = { l: markerM(), r: markerM() }, mc = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3()), mb = new THREE.Box3();
+  for (const o of amber) { mb.setFromObject(o); o.material = (mb.min.x + mb.max.x) / 2 > mc.x ? marker.l : marker.r; }
   model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const root = new THREE.Group(), tilt = new THREE.Group(); tilt.add(model); root.add(tilt); scene.add(root);
   if (emergency) { model.add(emergency.group); emergency.update(0, 0, false); }
@@ -176,6 +183,8 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     playerSignals.begin(time);
     if (enabled && car.signal) playerSignals.add(localLampFrame, signalAnchors, wid, car.signal, -(car.signalStart || 0));
     playerSignals.end();
+    const lit = enabled && car.signal && (time - (car.signalStart || 0)) % 0.7 < 0.38;
+    marker.l.emissiveIntensity = lit && car.signal !== 'r' ? 7 : 0.04; marker.r.emissiveIntensity = lit && car.signal !== 'l' ? 7 : 0.04;
   }, pinDir: 1, groundY: 0, onSand: false, slopeF: 0, slopeL: 0, vy: 0, air: false, rough: false, tunnel: false, root, tilt, model, paint, len, wid, signalAnchors, tyreContacts, pos: new THREE.Vector3(), vel: new THREE.Vector3(), heading: 0, speed: 0, steer: 0, yawRate: 0, slip: 0, accel: 0, spin: 0, onKerb: false, braking: false, reversing: false, bump: 0, impact: 0, cubeHide: [root] };
   let brakeToStop = false;
   const fwd = new THREE.Vector3(), left = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
@@ -217,7 +226,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const ix = nx * cs - nz * sn, iz = nx * sn + nz * cs, l = Math.hypot(ix, iz) || 1, ux = -ix / l, uz = -iz / l;
     const t = Math.min(wid / 2 / Math.max(Math.abs(ux), 1e-3), len / 2 / Math.max(Math.abs(uz), 1e-3));
     car.damage.hit({ x: ux * t, y: 0.62, z: uz * t }, new THREE.Vector3(ix / l, 0, iz / l), speed); car.hitN = null; };
-  car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; tilt.rotation.set(0, 0, 0); car.sync(0); };
+  car.place = (x, z, h) => { prevC.fill(null); brakeToStop = false; car.air = false; car.vy = 0; car.groundY = groundAt(x, z); car.slopeF = car.slopeL = 0; car.pos.set(x, 0, z); car.heading = h; car.vel.set(0, 0, 0); car.speed = 0; car.yawRate = 0; car.steer = 0; car.braking = car.reversing = false; car.accel = car.bump = car.slip = 0; car.drift = false; tilt.rotation.set(0, 0, 0); car.sync(0); };
   car.setPaint = hex => paint.color.set(spec.branded ? 0xfafaf6 : hex); car.spec = T; car.tune = s => Object.assign(T, s);
   // 0: off, 1: lights and siren, 2: lights only. emergencyLevels: how lit each side of the bar is, [passenger, driver].
   car.police = !!emergency; car.emergencyMode = 0; car.emergencyLevels = [0, 0]; car.height = height;
@@ -235,7 +244,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const wild = outside(car.pos.x, car.pos.z);
     // The wheel is wound on at a steady rate that slows with speed, and runs back to centre faster than it winds on:
     // a short tap is a small correction, a held key reaches full lock in a fraction of a second.
-    { const k = clamp(speed / 50, 0, 1), unwinding = ctrl.steer === 0 || ctrl.steer * car.steer < 0, rate = (unwinding ? lerp(9, 6, k) : lerp(7.5, 4, k)) * (escalade ? lerp(1.35, 1, k) : 1) * dt;
+    { const k = clamp(speed / 50, 0, 1), unwinding = ctrl.steer === 0 || ctrl.steer * car.steer < 0, rate = (unwinding ? lerp(12, 8.5, k) : lerp(11, 6.5, k)) * (escalade ? lerp(1.3, 1, k) : 1) * dt;
       car.steer += clamp(ctrl.steer - car.steer, -rate, rate); }
     // A press that starts while moving forward remains a brake until the pedal is released.
     if (!ctrl.brake) brakeToStop = false;
@@ -243,6 +252,13 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const serviceBrake = ctrl.brake > 0 && brakeToStop;
     if (!serviceBrake && ctrl.brake > 0 && !ctrl.throttle) car.reversing = true;
     else if (serviceBrake || ctrl.throttle || vF > -0.08) car.reversing = false;
+    // Drift: pull the handbrake (DRIFT) at speed and the rear lets go. The tail swings out, the car slides sideways while
+    // it keeps most of its speed, and it is held in the slide with throttle and steering (steer into the slide to catch
+    // it). Let go of the handbrake with the power on and it carries on as a power slide until the angle is caught.
+    const slideNow = Math.abs(vL);
+    if (ctrl.hand && speed > 7 && !car.air && vF > 0) { if (!car.drift) { car.drift = true; car.yawRate += (ctrl.steer || Math.sign(car.yawRate) || 1) * clamp(speed * 0.045, 0.5, 1.4); } }
+    else if (car.drift && (!ctrl.throttle || slideNow < 1.2 || speed < 4)) car.drift = false;
+    const drifting = !!car.drift;
     const hurt = car.damage ? car.damage.level : 0, VMAX = T.vmax * (1 - 0.3 * hurt); let a = 0;
     if (serviceBrake) {
       const decel = (10.5 - wetK * 2.7) * T.brake;
@@ -251,7 +267,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       const engine = (1 - 0.35 * hurt) * T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
       // Ease the accelerator at full lock on city streets. Holding W through a turn
       // should not keep adding speed once the front tyres are at their grip limit.
-      const lock = !wild && !ctrl.hand && vF > 0
+      const lock = !wild && !ctrl.hand && !drifting && vF > 0
         ? THREE.MathUtils.smoothstep(Math.abs(car.steer), 0.52, 0.96) : 0;
       const cornerSpeed = ((escalade ? 5.6 : 6.4) - wetK * 0.9) * Math.sqrt(T.grip);
       const cornerAccel = clamp((cornerSpeed - vF) * (escalade ? 2.5 : 1.72), escalade ? -9 : -6.5, engine);
@@ -260,7 +276,7 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
       a -= ctrl.brake * 5.6 * Math.max(0, 1 + vF / 6.5);
     }
     if (!ctrl.throttle && !ctrl.brake && Math.abs(vF) > 0.3) a -= Math.sign(vF) * Math.min(2.4, Math.abs(vF) / dt);
-    if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, 9);
+    if (ctrl.hand) a -= Math.sign(vF) * Math.min(Math.abs(vF) / dt, drifting ? 2.6 : 9); // locked rears scrub speed in a slide, stop the car when slow
     a -= 0.00105 * vF * Math.abs(vF) + 0.035 * vF + (car.onSand ? 0.55 * vF : 0);
     let sF = 0, sL = 0;
     if (wild) { const px = car.pos.x, pz = car.pos.z; sF = (groundAt(px + fwd.x * 1.6, pz + fwd.z * 1.6) - groundAt(px - fwd.x * 1.6, pz - fwd.z * 1.6)) / 3.2; sL = (groundAt(px + left.x * 0.9, pz + left.z * 0.9) - groundAt(px - left.x * 0.9, pz - left.z * 0.9)) / 1.8;
@@ -278,18 +294,22 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     const grip = (onDirt ? (T.off < 1 ? 8.2 : 6.5) : 10.3 - wetK * 2.65) * T.grip * Math.sqrt(1 - (escalade ? 0.43 : 0.62) * braking * braking);
     gripNow = grip;
     const yaw = vF * Math.tan(frontAngle(car.steer, vF)) / wheelbase;
-    const cap = (ctrl.hand ? grip * 1.56 : grip) / Math.max(2.8, Math.abs(vF));
-    const targetYaw = car.air ? car.yawRate * Math.exp(-1.2 * dt) : clamp(yaw, -cap, cap);
-    const yawResponse = lerp(15, 8.5, clamp(speed / 39, 0, 1));
+    const cap = (drifting ? grip * 2.4 : ctrl.hand ? grip * 1.56 : grip * TURN) / Math.max(2.8, Math.abs(vF));
+    // In a slide the car rotates further than the front wheels alone would turn it (the rear is stepping out); steering
+    // against the slide (counter-steer) pulls the rotation back.
+    const slideDir = Math.sign(vL), counter = drifting && car.steer * slideDir < -0.05;
+    const driftYaw = drifting ? yaw * 1.7 + (counter ? 0 : Math.sign(yaw || car.yawRate) * Math.min(1.1, slideNow * 0.12)) : yaw;
+    const targetYaw = car.air ? car.yawRate * Math.exp(-1.2 * dt) : clamp(driftYaw, -cap, cap);
+    const yawResponse = drifting ? 6 : lerp(19, 12, clamp(speed / 39, 0, 1));
     car.yawRate = lerp(car.yawRate, targetYaw, 1 - Math.exp(-yawResponse * dt));
     const turn = car.yawRate * dt;
-    const wheelTracking = car.air ? 0 : ctrl.hand ? 0.12 : lerp(0.83, 0.44, clamp(speed / 32, 0, 1));
+    const wheelTracking = car.air ? 0 : drifting ? 0.3 : ctrl.hand ? 0.12 : lerp(0.92, 0.62, clamp(speed / 32, 0, 1));
     const travel = car.heading + turn * wheelTracking;
     fwd.set(Math.sin(travel), 0, Math.cos(travel));
     left.set(fwd.z, 0, -fwd.x);
     car.heading += turn;
     // The tires track the steering on normal throttle, while the handbrake can still loosen the rear.
-    const lateralDamping = car.air ? 0 : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 3.2;
+    const lateralDamping = car.air ? 0 : drifting ? (ctrl.hand ? 0.9 : 1.8) * (1 - wetK * 0.3) : ctrl.hand ? 1.35 : onDirt ? 5 : 10.8 - wetK * 3.2;
     const lateralCorrection = vL * (1 - Math.exp(-lateralDamping * dt));
     vL -= clamp(lateralCorrection, -grip * dt, grip * dt);
     car.vel.copy(fwd).multiplyScalar(vF).addScaledVector(left, vL);
