@@ -1,0 +1,4 @@
+.cb-guide .cb-card { position:relative; display:grid; gap:6px; max-width:320px; margin:0 auto; padding:22px 24px; border-radius:16px; border:2px solid var(--fe-border); }
+.cb-guide .cb-card b { font-size:18px; } .cb-guide .cb-card span { font-size:13px; opacity:.8; }
+.cb-guide .cb-tick { position:absolute; top:-14px; right:-14px; width:36px; height:36px; border-radius:50%; background:var(--fe-accent); color:#04201d; display:grid; place-items:center; font-style:normal; font-weight:800; animation:cb-t 6s ease infinite; }
+@keyframes cb-t { 0%,60% { transform:none; opacity:1; } 70% { transform:scale(.4); opacity:0; } 85%,100% { transform:none; opacity:1; } }

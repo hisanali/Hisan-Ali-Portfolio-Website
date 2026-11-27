@@ -1,0 +1,5 @@
+.sk-guide .sk-map { position:relative; width:min(360px,84vw); height:190px; margin:0 auto; border-radius:16px; border:1px solid var(--fe-border); background:repeating-linear-gradient(45deg,transparent 0 18px,color-mix(in srgb,var(--fe-border) 60%,transparent) 18px 19px); }
+.sk-guide .sk-pin { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); padding:8px 14px; border-radius:999px; background:var(--fe-accent); color:#1a1402; font-weight:800; font-size:13px; }
+.sk-guide .sk-map i { position:absolute; width:30px; height:30px; border-radius:50%; border:3px solid var(--fe-accent); background:var(--fe-border); animation:sk-pop 6s ease infinite; }
+.sk-guide .sk-map i:nth-of-type(1) { left:18%; top:20%; } .sk-guide .sk-map i:nth-of-type(2) { right:16%; top:24%; animation-delay:.5s; } .sk-guide .sk-map i:nth-of-type(3) { left:30%; bottom:14%; animation-delay:1s; }
+@keyframes sk-pop { 0%,60% { opacity:1; transform:none; } 70% { opacity:0; transform:scale(.5); } 85%,100% { opacity:1; transform:none; } }

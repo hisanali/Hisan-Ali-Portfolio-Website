@@ -1,0 +1,7 @@
+.iv-guide .iv-wrap { display:flex; align-items:center; justify-content:center; gap:16px; }
+.iv-guide .iv-flow { display:flex; gap:10px; }
+.iv-guide .iv-flow i { width:22px; height:22px; border-radius:50%; background:var(--fe-accent); }
+.iv-guide .iv-flow i.x { background:var(--fe-border); animation:iv-x 6s ease infinite; }
+.iv-guide .iv-flow i.x:nth-child(5) { animation-delay:.6s; }
+.iv-guide .iv-filter { padding:10px 16px; border-radius:12px; border:2px solid var(--fe-accent); font-weight:800; }
+@keyframes iv-x { 0%,50% { opacity:1; transform:none; } 65%,85% { opacity:0; transform:translateY(-22px); } 100% { opacity:1; transform:none; } }

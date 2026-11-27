@@ -1,0 +1,5 @@
+.ev-guide .ev-cal { display:grid; grid-template-columns:repeat(7,40px); gap:8px; justify-content:center; }
+.ev-guide .ev-cal i { height:40px; border-radius:8px; border:1px solid var(--fe-border); }
+.ev-guide .ev-cal i.on { background:var(--fe-accent); border-color:transparent; animation:ev-on 6s ease infinite; }
+.ev-guide .ev-cal i.on:nth-child(6) { animation-delay:.6s; } .ev-guide .ev-cal i.on:nth-child(10) { animation-delay:1.2s; }
+@keyframes ev-on { 0%,60% { opacity:1; transform:none; } 70% { opacity:.3; transform:scale(.8); } 85%,100% { opacity:1; transform:none; } }

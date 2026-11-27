@@ -1,0 +1,5 @@
+.oz-guide .oz-wrap { position:relative; width:min(360px,84vw); height:200px; margin:0 auto; }
+.oz-guide .oz-hub { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); padding:12px 18px; border-radius:999px; background:var(--fe-accent); color:#0b0518; font-weight:800; z-index:1; }
+.oz-guide .oz-wrap i { position:absolute; width:26px; height:26px; border-radius:8px; border:2px solid var(--fe-accent); animation:oz-p 6s ease infinite; }
+.oz-guide .oz-wrap i:nth-of-type(1) { left:6%; top:8%; } .oz-guide .oz-wrap i:nth-of-type(2) { right:6%; top:8%; animation-delay:.4s; } .oz-guide .oz-wrap i:nth-of-type(3) { left:6%; bottom:8%; animation-delay:.8s; } .oz-guide .oz-wrap i:nth-of-type(4) { right:6%; bottom:8%; animation-delay:1.2s; }
+@keyframes oz-p { 0%,60% { background:var(--fe-accent); } 75% { background:transparent; } 90%,100% { background:var(--fe-accent); } }
