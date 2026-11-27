@@ -11,6 +11,7 @@ import { wetCar } from './wet-car.js';
 import { EMERGENCY, createEmergencyLights } from './emergency-lights.js';
 import { GLTFLoader } from '/evermile/vendor/loaders/GLTFLoader.js';
 import { createDamage } from './damage.js';
+import { QUALITY } from './render.js';
 import { DRACOLoader } from '/evermile/vendor/loaders/DRACOLoader.js';
 import { P, ROADS, HALF, SW, SPAN } from './city.js';
 
@@ -22,12 +23,14 @@ export const releaseDecoders = () => draco.dispose();
 // A model loaded twice (the Escalade, as the player's car and in the convoy) shares its texture images: each copy has
 // its own textures and settings, but the images are decoded and held on the GPU once.
 const images = new Map(), TOUCH = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1;
-// On phones and tablets a texture over 2048 px is scaled down to 2048 as it loads: a 4K map is a quarter of the memory
-// and on a tablet's screen the car looks the same.
+// On phones and tablets a model's textures are capped as they load: 1024 px on High and Ultra, 512 on Medium and Low. A
+// 2048 map capped at 1024 is a quarter of the memory, and on a tablet's screen it looks the same. (At the menu the
+// textures came to over 600 MB, more than a tablet's browser allows.)
+const CAP = QUALITY === 'low' || QUALITY === 'medium' ? 512 : 1024;
 async function shrink(t) {
   const im = t.image, big = im && Math.max(im.width || 0, im.height || 0);
-  if (!TOUCH || !(big > 2048) || typeof createImageBitmap !== 'function') return t;
-  try { const k = 2048 / big, small = await createImageBitmap(im, { resizeWidth: Math.round(im.width * k), resizeHeight: Math.round(im.height * k), resizeQuality: 'high' }); im.close?.(); t.image = small; t.needsUpdate = true; } catch (e) {}
+  if (!TOUCH || !(big > CAP) || typeof createImageBitmap !== 'function') return t;
+  try { const k = CAP / big, small = await createImageBitmap(im, { resizeWidth: Math.round(im.width * k), resizeHeight: Math.round(im.height * k), resizeQuality: 'high' }); im.close?.(); t.image = small; t.needsUpdate = true; } catch (e) {}
   return t;
 }
 loader.register(parser => {
