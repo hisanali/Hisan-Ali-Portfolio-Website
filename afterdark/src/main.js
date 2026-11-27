@@ -4,6 +4,7 @@ import { createSkidMarks } from './skid-marks.js';
 import { THREE, createRenderer, Q, QUALITY, QUALITY_STEPPED, bootFinished } from './render.js';
 import { buildCity, P, ROADS, SPAN, HALF } from './city.js';
 import { createPlayer, releaseDecoders } from './car.js';
+import { createSmoke } from './smoke.js';
 import { createTraffic } from './traffic.js';
 import { buildStreet } from './street.js';
 import { createPursuit } from './pursuit.js';
@@ -77,6 +78,7 @@ function stepRain(dt, position, vx, vz) {
 // Collision sparks and soft dust or tyre smoke. Water mist uses its own transparent geometry.
 function particles(n, size, additive, grav, drag) { const o = { n, i: 0, grav, drag, pos: new Float32Array(n * 3), vel: new Float32Array(n * 3), life: new Float32Array(n), col: new Float32Array(n * 3), geo: new THREE.BufferGeometry(), size, additive, pts: null };
   o.pos.fill(-50); o.geo.setAttribute('position', new THREE.BufferAttribute(o.pos, 3)); o.geo.setAttribute('color', new THREE.BufferAttribute(o.col, 3)); return o; }
+const smoke = createSmoke(scene, Q.reach < 1 ? 360 : 700); R.refl?.hide?.push?.(smoke.points);
 const sparks = particles(150, 0.046, true, 13, 0.6), haze = particles(160, 2.2, false, -0.6, 1.8);
 function emit(o, x, y, z, vx, vy, vz, life, r, g, b) { const i = o.i++ % o.n, k = i * 3; o.pos[k] = x; o.pos[k + 1] = y; o.pos[k + 2] = z; o.vel[k] = vx; o.vel[k + 1] = vy; o.vel[k + 2] = vz; o.life[i] = life; o.col[k] = r; o.col[k + 1] = g; o.col[k + 2] = b; }
 function stepParticles(o, dt) { const f = Math.exp(-o.drag * dt), fade = Math.exp(-(o.additive ? 2.2 : 1.6) * dt); for (let i = 0; i < o.n; i++) { const k = i * 3; if (o.life[i] <= 0) { o.pos[k + 1] = -50; continue; } o.life[i] -= dt; o.vel[k + 1] -= o.grav * dt; o.vel[k] *= f; o.vel[k + 2] *= f; o.pos[k] += o.vel[k] * dt; o.pos[k + 1] += o.vel[k + 1] * dt; o.pos[k + 2] += o.vel[k + 2] * dt; if (o.additive && o.pos[k + 1] < 0.02) o.life[i] = 0; o.col[k] *= fade; o.col[k + 1] *= fade; o.col[k + 2] *= fade; }
@@ -867,20 +869,27 @@ function frame() {
       player.others.length = 0; knockPeople(); for (const w of street.people) if (w.live && !(w.down > 0)) player.others.push({ x: w.root.position.x, z: w.root.position.z, r: 0.5 });
       const steps = clamp(Math.ceil(Math.abs(player.speed) * dt / 0.4), 2, 10); let hit = 0; for (let i = 0; i < steps; i++) { hit = Math.max(hit, player.drive(dt / steps, ctrl)); hit = Math.max(hit, traffic.collide(player)); }
       crashCool -= dt;
-      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; { const was = player.damage?.level || 0; player.dent?.(hit); const now = player.damage?.level || 0; if (now >= 0.85 && was < 0.85) toast('Heavy damage · respawn for a repaired car'); else if (now >= 0.45 && was < 0.45) toast('Damaged · the engine is losing power'); } S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
+      if (hit > 2.5 && crashCool <= 0) { crashCool = 0.5; const hn0 = player.hitN ? [...player.hitN] : null; { const was = player.damage?.level || 0; player.dent?.(hit); const now = player.damage?.level || 0; if (now >= 0.85 && was < 0.85) toast('Heavy damage · respawn for a repaired car'); else if (now >= 0.45 && was < 0.45) toast('Damaged · the engine is losing power'); } S.shake = Math.min(1.1, hit * 0.07); S.hits++; S.combo = 0; S.score = Math.max(0, S.score - Math.round(hit * 6)); audio?.crash(clamp(hit / 30, 0.2, 1));
         const hx = player.pos.x + Math.sin(player.heading) * 1.9, hz = player.pos.z + Math.cos(player.heading) * 1.9, ns = Math.round(clamp(hit * 1.2, 6, 26));
         for (let k = 0; k < ns && !player.rough; k++) emit(sparks, hx + (Math.random() - 0.5), player.groundY + 0.22 + Math.random() * 0.36, hz + (Math.random() - 0.5), (Math.random() - 0.5) * 11 - player.vel.x * 0.1, 1.5 + Math.random() * 4.5, (Math.random() - 0.5) * 11 - player.vel.z * 0.1, 0.25 + Math.random() * 0.3, 3.2, 2.3, 1.0);
-        for (let k = 0; k < 5; k++) emit(haze, hx + (Math.random() - 0.5) * 1.5, player.groundY + 0.4, hz + (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2, 0.6, (Math.random() - 0.5) * 2, 1.1, 0.16, 0.16, 0.17); }
+        // the hit throws up a burst of dust and grit where the cars met, bigger the harder the blow
+        { const n = Math.round(clamp(hit * 0.5, 3, 14)), hn = hn0 || [-Math.sin(player.heading), -Math.cos(player.heading)];
+          for (let k = 0; k < n; k++) smoke.emit(player.pos.x - hn[0] * player.len * 0.45 + (Math.random() - 0.5) * 1.2, player.groundY + 0.3 + Math.random() * 0.7, player.pos.z - hn[1] * player.len * 0.45 + (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 3 + player.vel.x * 0.3, 0.5 + Math.random() * 1.2, (Math.random() - 0.5) * 3 + player.vel.z * 0.3, 0.7 + Math.random() * 0.6, 0.3, 1.6 + hit * 0.04, 0.55, 0.53, 0.5, 0.35); } }
       // A badly damaged car steams, then smokes, from under the bonnet; so does a crashed car in the traffic.
-      { const dmg = player.damage?.level || 0; if (dmg > 0.35 && Math.random() < dt * (4 + dmg * 14)) { const f = player.len * 0.32, g = clamp((dmg - 0.35) * 1.6, 0, 1); emit(haze, player.pos.x + Math.sin(player.heading) * f + (Math.random() - 0.5) * 0.6, player.groundY + 1.0, player.pos.z + Math.cos(player.heading) * f + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.8 - player.vel.x * 0.3, 1.1 + Math.random() * 0.6, (Math.random() - 0.5) * 0.8 - player.vel.z * 0.3, 1.6, 0.42 - 0.3 * g, 0.42 - 0.3 * g, 0.43 - 0.3 * g); } }
-      for (const c of traffic.cars) if (c.wreck > 0 && Math.random() < dt * 5 && Math.abs(c.x - player.pos.x) + Math.abs(c.z - player.pos.z) < 120) emit(haze, c.x + c.push.x + (Math.random() - 0.5) * 0.8, (c.y || 0) + 1.0, c.z + c.push.y + (Math.random() - 0.5) * 0.8, (Math.random() - 0.5) * 0.6, 1 + Math.random() * 0.5, (Math.random() - 0.5) * 0.6, 1.5, 0.3, 0.3, 0.31);
+      // A damaged engine: wisps of white steam from the bonnet's edges, then, badly hurt, dark oily smoke pouring out.
+      { const dmg = player.damage?.level || 0; if (dmg > 0.3 && !player.wade) { const heavy = clamp((dmg - 0.55) / 0.35, 0, 1), sn = Math.sin(player.heading), cs = Math.cos(player.heading), h = (player.height || 1.6) * 0.78;
+        if (Math.random() < dt * (7 + dmg * 26)) { const lx = (Math.random() - 0.5) * player.wid * 0.7, lz = player.len * (0.3 + Math.random() * 0.14), shade = 0.86 - 0.72 * heavy;
+          smoke.emit(player.pos.x + lx * cs + lz * sn, player.groundY + h, player.pos.z - lx * sn + lz * cs, player.vel.x * 0.5 + (Math.random() - 0.5) * 0.4, 0.7 + Math.random() * 0.7 + heavy * 0.6, player.vel.z * 0.5 + (Math.random() - 0.5) * 0.4,
+            1.6 + heavy * 1.6 + Math.random(), 0.25 + heavy * 0.2, 1.4 + heavy * 2.2, shade, shade, shade * 1.02, 0.28 + heavy * 0.42); } } }
+      for (const c of traffic.cars) if (c.wreck > 0 && Math.random() < dt * 9 && Math.abs(c.x - player.pos.x) + Math.abs(c.z - player.pos.z) < 120) { const fx = Math.sin(c.h), fz = Math.cos(c.h), shade = 0.35 + Math.random() * 0.15;
+        smoke.emit(c.x + c.push.x + fx * 1.6 + (Math.random() - 0.5) * 0.8, (c.y || 0) + 1.1, c.z + c.push.y + fz * 1.6 + (Math.random() - 0.5) * 0.8, (Math.random() - 0.5) * 0.4, 0.8 + Math.random() * 0.6, (Math.random() - 0.5) * 0.4, 2.4 + Math.random(), 0.3, 2.4, shade, shade, shade, 0.4); }
       if (live) {
         S.clock += dt; S.top = Math.max(S.top, Math.abs(player.speed)); policeStep(dt); stepIndicators(dt);
         const nm = crashCool < -0.6 ? traffic.nearMiss(player) : 0; if (nm) { S.score += 40 * nm; toast('Near miss +' + 40 * nm); audio?.nearMiss(); }
         if (player.slip > 4 && Math.abs(player.speed) > 9) S.score += player.slip * dt * 3;
         // Tyre smoke from the rear wheels in a slide, thicker the harder it slides (not on dirt, sand or wet road).
         if (player.slip > 3.2 && Math.abs(player.speed) > 4 && !player.air && !player.rough && !player.onSand && player.wade < 0.05) { const k = clamp((player.slip - 3.2) / 6, 0, 1) * (1 - 0.7 * (env?.wet || 0)), sn = Math.sin(player.heading), cs = Math.cos(player.heading);
-          for (const side of [-1, 1]) if (Math.random() < dt * 34 * k) { const wx = side * player.wid * 0.4, wz = -player.len * 0.32; emit(haze, player.pos.x + wx * cs + wz * sn + (Math.random() - 0.5) * 0.4, player.groundY + 0.25, player.pos.z - wx * sn + wz * cs + (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 1.6 - player.vel.x * 0.15, 0.5 + Math.random() * 0.8, (Math.random() - 0.5) * 1.6 - player.vel.z * 0.15, 1.6 + Math.random(), 0.62, 0.62, 0.64); } }
+          for (const side of [-1, 1]) if (Math.random() < dt * 40 * k) { const wx = side * player.wid * 0.42, wz = -player.len * 0.32; smoke.emit(player.pos.x + wx * cs + wz * sn + (Math.random() - 0.5) * 0.3, player.groundY + 0.3, player.pos.z - wx * sn + wz * cs + (Math.random() - 0.5) * 0.3, player.vel.x * 0.25 + (Math.random() - 0.5) * 1.4, 0.4 + Math.random() * 0.6, player.vel.z * 0.25 + (Math.random() - 0.5) * 1.4, 1.8 + Math.random() * 1.2, 0.5, 3.4 + k * 1.6, 0.86, 0.86, 0.88, 0.22 + 0.28 * k); } }
         record(dt); stepActivity(dt);
         if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (pm.contains ? pm.contains(player.pos.x, player.pos.z, 12) : Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
         if (S.mode === 'play') drawHud();
@@ -892,7 +901,7 @@ function frame() {
     } else if (tour) cinemaCamera(dt); else if (!replaying) orbit(S.time);
     player.updateSignals(S.time, playing);
     rain.visible = env.rain > 0.03 && !world.tunnelPassage(camera.position.x, camera.position.y, camera.position.z);
-    stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); stepRain(dt, camera.position, player.vel.x, player.vel.z);
+    stepParticles(sparks, dt); spray.update(dt, env.night); stepParticles(haze, dt); smoke.update(dt, camera, 0.22 + 0.78 * (1 - (env?.night || 0)), renderer.getPixelRatio()); stepRain(dt, camera.position, player.vel.x, player.vel.z);
     placeLampLights(focus);
   }
   if (window.__afterdark?.cam) { const c = window.__afterdark.cam; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; camera.updateProjectionMatrix(); }
