@@ -21,10 +21,18 @@ export const loader = new GLTFLoader().setDRACOLoader(draco);
 export const releaseDecoders = () => draco.dispose();
 // A model loaded twice (the Escalade, as the player's car and in the convoy) shares its texture images: each copy has
 // its own textures and settings, but the images are decoded and held on the GPU once.
-const images = new Map();
+const images = new Map(), TOUCH = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1;
+// On phones and tablets a texture over 2048 px is scaled down to 2048 as it loads: a 4K map is a quarter of the memory
+// and on a tablet's screen the car looks the same.
+async function shrink(t) {
+  const im = t.image, big = im && Math.max(im.width || 0, im.height || 0);
+  if (!TOUCH || !(big > 2048) || typeof createImageBitmap !== 'function') return t;
+  try { const k = 2048 / big, small = await createImageBitmap(im, { resizeWidth: Math.round(im.width * k), resizeHeight: Math.round(im.height * k), resizeQuality: 'high' }); im.close?.(); t.image = small; t.needsUpdate = true; } catch (e) {}
+  return t;
+}
 loader.register(parser => {
   const own = parser.loadImageSource.bind(parser), json = parser.json, file = (json.buffers?.[0]?.byteLength || 0) + '|' + (json.images?.length || 0) + '|' + (json.meshes?.length || 0);
-  parser.loadImageSource = (i, l) => { const k = file + '|' + i; if (!images.has(k)) images.set(k, own(i, l)); return images.get(k).then(t => t.clone()); };
+  parser.loadImageSource = (i, l) => { const k = file + '|' + i; if (!images.has(k)) images.set(k, own(i, l).then(shrink)); return images.get(k).then(t => t.clone()); };
   return { name: 'afterdark_shared_images' };
 });
 export const loadGLB = url => new Promise((res, rej) => loader.load(url, res, undefined, rej));
