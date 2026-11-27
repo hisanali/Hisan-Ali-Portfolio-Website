@@ -487,5 +487,5 @@ export async function createTraffic(scene, city, count, reach = 1, seed = 7) {
   }
   // Close pass at speed without contact.
   function nearMiss(player) { let got = 0; if (Math.abs(player.speed) < 17) return 0; for (const c of cars) { const d = Math.hypot(c.x - player.pos.x, c.z - player.pos.z); if (d < 3.6) { if (!c.near2) { c.near2 = true; got++; } } else if (d > 9) c.near2 = false; } return got; }
-  return { vip, kits, stageDriveBy, modelFiles: files, cars, parked, update, collide, nearMiss, setTime, takeStruck() { const s = struck; struck = 0; return s; } };
+  return { vip, kits, blockers: barricades.blockers, stageDriveBy, modelFiles: files, cars, parked, update, collide, nearMiss, setTime, takeStruck() { const s = struck; struck = 0; return s; } };
 }
