@@ -153,6 +153,7 @@ addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if (k === 'escape' && (S.mode === 'map' || S.mode === 'photo' || S.mode === 'replay')) { if (S.mode === 'map') closeMap(); else if (S.mode === 'photo') photo(false); else replay(false); return; }
   if ((k === 'p' || k === 'escape') && (S.mode === 'play' || S.mode === 'pause')) pause(S.mode === 'play');
   if (k === 'r' && S.mode === 'play') respawn();
+  if (k === 'x') toggleSport();
   if (k === 'l' && S.mode === 'play') emergencyLights();
   if ((k === 'q' || k === 'e') && S.mode === 'play') indicate(k === 'q' ? 'l' : 'r');
   if (k === 'enter' && S.mode === 'menu') start(); });
@@ -171,6 +172,11 @@ function emergencyLights() {
   player.emergencyMode = (player.emergencyMode + 1) % 3; toast(['Lights off', 'Lights and siren', 'Lights only · siren off'][player.emergencyMode]); }
 $('[data-lights]')?.addEventListener('pointerdown', e => { e.preventDefault(); if (S.mode === 'play') emergencyLights(); });
 const policeUI = () => { const b = $('[data-lights]'); if (b) b.hidden = !player.police; };
+// Sport mode: the Escalade only. Much stronger acceleration and a far higher top speed; a red badge shows while it is on.
+const sportBadge = (() => { const el = document.createElement('div'); el.id = 'sport-badge'; el.textContent = 'SPORT'; el.hidden = true; document.body.appendChild(el); return el; })();
+const sportUI = () => { const ok = player?.spec?.file === 'car-escalade', b = $('[data-sport]'); if (!ok && player) player.sport = false; if (b) { b.hidden = !ok; b.classList.toggle('on', !!player?.sport); } sportBadge.hidden = !(ok && player?.sport && S.mode === 'play'); };
+function toggleSport() { if (S.mode !== 'play' || player?.spec?.file !== 'car-escalade') return; player.sport = !player.sport; sportUI(); toast(player.sport ? 'Sport mode on · hold on' : 'Sport mode off'); audio?.tick?.(true); }
+$('[data-sport]')?.addEventListener('pointerdown', e => { e.preventDefault(); toggleSport(); });
 addEventListener('keydown', e => { if (!cinema.active && e.key.toLowerCase() === 'h' && S.mode === 'play') audio?.horn(true); });
 addEventListener('blur', () => { for (const k in input) input[k] = 0; });
 document.querySelectorAll('#touch [data-k]').forEach(b => { const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = 1; b.classList.add('on'); }, off = e => { e.preventDefault(); input[k] = 0; b.classList.remove('on'); };
@@ -313,7 +319,7 @@ async function useCar(id) { // builds the new car off-scene, then swaps it in wi
       for (const key of ['groundY', 'slopeF', 'slopeL', 'air', 'vy', 'speed', 'steer', 'yawRate', 'reversing']) p[key] = old[key];
       p.pos.copy(old.pos); p.vel.copy(old.vel); p.sync(0); snapCam = true;
     } else p.place(city.spawn.x, city.spawn.z, 0);
-    p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); policeUI(); }
+    p.setPaint(paintSel); if (env) p.setTime(env); view.inCab = false; player = p; save.car = id; commit(save); policeUI(); sportUI(); }
   catch (e) { console.warn('car', e); toast('That car would not load'); } finally { swapping = false; }
 }
 function drawGarage() {
@@ -878,6 +884,7 @@ function frame() {
         record(dt); stepActivity(dt);
         if ((arriveTick++ & 31) === 0) { let here = null; for (const pm of places.markers) if (pm.contains ? pm.contains(player.pos.x, player.pos.z, 12) : Math.hypot(pm.x - player.pos.x, pm.z - player.pos.z) < pm.r + 40) here = pm; if (!here && inCity(player.pos.x, player.pos.z)) here = CITY; if (here && here !== lastPlace) { lastPlace = here; const fresh = !seen.has(here.name) && here !== CITY; toast(here.name + (here.key === 'summit' ? ` · ${Math.round(here.y)} m` : '') + (fresh ? ' · found +100 cr' : '')); if (!seen.has(here.name)) { seen.add(here.name); save.seen = [...seen]; if (fresh) { S.score += 150; earn(100); } else commit(save); } } else if (!here) lastPlace = null; }
         if (S.mode === 'play') drawHud();
+        { const on = !!player.sport && S.mode === 'play' && !cinema.active; if (sportBadge.hidden === on) sportBadge.hidden = !on; }
       }
       if (playing) skidMarks.update(player, ctrl.hand, env.wet); else skidMarks.breakTrail();
       spray.emit(dt, player, player.wade > 0.05 ? 1 : env.wet, player.wade > 0.05 ? () => 1 : city.puddleAt); // wading throws water like a flooded road
@@ -924,7 +931,7 @@ async function boot() {
   // Image-based lighting captured from the street itself, so every surface carries the city's neon.
   env = city.setTime(hour, rainyK); captureEnv();
   setLoad('Rolling out the ' + carById(save.car).name); await nextFrame();
-  player = await createPlayer(scene, R.cube.texture, city, carSpec(save, save.car)); R.cube.hide.push(player.root); policeUI();
+  player = await createPlayer(scene, R.cube.texture, city, carSpec(save, save.car)); R.cube.hide.push(player.root); policeUI(); sportUI();
   player.place(city.spawn.x, city.spawn.z, 0); player.setPaint(paintSel);
   setLoad('Releasing the traffic'); await nextFrame();
   traffic = await createTraffic(scene, city, Q.traffic, Q.reach); pursuit = createPursuit(scene, traffic.kits); underwater = createUnderwater(scene, world, city.sea, city.sky);

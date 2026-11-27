@@ -259,12 +259,12 @@ export async function createPlayer(scene, envTexture, city, spec = {}) {
     if (ctrl.hand && speed > 7 && !car.air && vF > 0) { if (!car.drift) { car.drift = true; car.yawRate += (ctrl.steer || Math.sign(car.yawRate) || 1) * clamp(speed * 0.045, 0.5, 1.4); } }
     else if (car.drift && (!ctrl.throttle || slideNow < 1.2 || speed < 4)) car.drift = false;
     const drifting = !!car.drift;
-    const hurt = car.damage ? car.damage.level : 0, VMAX = T.vmax * (1 - 0.3 * hurt); let a = 0;
+    const sport = car.sport ? 1 : 0, hurt = car.damage ? car.damage.level : 0, VMAX = T.vmax * (1 + 0.55 * sport) * (1 - 0.3 * hurt); let a = 0; // sport mode: far more top speed
     if (serviceBrake) {
       const decel = (10.5 - wetK * 2.7) * T.brake;
       a -= Math.sign(vF) * ctrl.brake * decel;
     } else if (ctrl.throttle > 0) {
-      const engine = (1 - 0.35 * hurt) * T.acc * Math.min(10.5, 13.5 * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
+      const engine = (1 - 0.35 * hurt) * T.acc * (1 + 0.7 * sport) * Math.min(10.5 + 4 * sport, (13.5 + 5 * sport) * (1 - Math.pow(Math.max(0, vF) / VMAX, 1.6)) + 0.4);
       // Ease the accelerator at full lock on city streets. Holding W through a turn
       // should not keep adding speed once the front tyres are at their grip limit.
       const lock = !wild && !ctrl.hand && !drifting && vF > 0

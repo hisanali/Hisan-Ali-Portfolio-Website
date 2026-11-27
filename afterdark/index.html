@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.png">
   <link rel="modulepreload" href="/evermile/vendor/three.module.js">
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Afterdark","url":"https://hisanali.com/afterdark/","description":"An open-world driving game in your browser: a coastal city and a wide frontier of sea cliffs, temple ruins, a volcano, a forest lake, a dune sea, an alpine pass and a fjord on a living ocean, from daylight to a rainy neon night. Free roam, time trials, taxi and delivery jobs, a garage of cars to drive and upgrade, photo mode and replays.","genre":["Driving","Open world"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Hisan Ali","url":"https://hisanali.com/about/"},"image":"https://hisanali.com/games/thumbs/afterdark.webp"}</script>
 </head>
 <body data-mode="boot"><!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PNT5FCX5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><!-- End Google Tag Manager (noscript) --><canvas id="scene" aria-label="Afterdark driving game"></canvas>
@@ -44,7 +44,7 @@
 </div>
 <div id="touch" aria-hidden="true">
   <div class="pad steer"><button type="button" data-k="left" aria-label="Steer left"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" data-k="right" aria-label="Steer right"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
-  <div class="pad pedals"><div class="col"><button type="button" data-lights class="sm" hidden>LIGHTS</button><button type="button" data-horn class="sm">HORN</button><button type="button" data-k="hand" class="sm">DRIFT</button></div><button type="button" data-k="down" class="brake">BRAKE</button><button type="button" data-k="up" class="gas">GAS</button></div>
+  <div class="pad pedals"><div class="col"><button type="button" data-lights class="sm" hidden>LIGHTS</button><button type="button" data-sport class="sm sport" hidden>SPORT</button><button type="button" data-horn class="sm">HORN</button><button type="button" data-k="hand" class="sm">DRIFT</button></div><button type="button" data-k="down" class="brake">BRAKE</button><button type="button" data-k="up" class="gas">GAS</button></div>
 </div>
 <div id="perf" hidden></div>
 <div id="toast" role="status"></div>
@@ -62,7 +62,7 @@
     <div class="field"><span>Graphics</span><div class="seg" id="seg-gfx"></div></div>
     <button class="primary" id="play" type="button"><span>Drive</span><span aria-hidden="true">→</span></button>
     <button class="secondary" id="open-garage" type="button">Garage · <b id="menu-cash">0 cr</b></button>
-    <p class="keys"><b>W / ↑</b> throttle · <b>S / ↓</b> brake · press again to reverse · <b>A D</b> steer · <b>Space</b> handbrake · <b>C</b> camera · <b>M</b> map · <b>O</b> photo · <b>drag</b> look around · <b>wheel</b> zoom · <b>R</b> reset · <b>H</b> horn · <b>Q E</b> indicators · <b>L</b> police lights and siren · hit someone and the police chase you · <b>T</b> skip time · <b>F</b> frame rate · <b>P</b> pause<br>Best run: <b id="best">0</b></p>
+    <p class="keys"><b>W / ↑</b> throttle · <b>S / ↓</b> brake · press again to reverse · <b>A D</b> steer · <b>Space</b> handbrake · <b>X</b> sport mode (Escalade) · <b>C</b> camera · <b>M</b> map · <b>O</b> photo · <b>drag</b> look around · <b>wheel</b> zoom · <b>R</b> reset · <b>H</b> horn · <b>Q E</b> indicators · <b>L</b> police lights and siren · hit someone and the police chase you · <b>T</b> skip time · <b>F</b> frame rate · <b>P</b> pause<br>Best run: <b id="best">0</b></p>
   </div>
 </section>
 <section class="panel" id="pause" hidden aria-label="Paused"><div class="card small"><p class="eyebrow">Paused</p><h2>Engine idling</h2><button class="primary" id="resume" type="button"><span>Resume</span><span aria-hidden="true">→</span></button><div class="row3"><button class="secondary" id="pause-map" type="button">Map</button><button class="secondary" id="pause-photo" type="button">Photo</button><button class="secondary" id="pause-replay" type="button">Replay</button></div><div class="field"><span>Time</span><div class="seg" id="pause-tod"></div></div><div class="field"><span>Weather</span><div class="seg" id="pause-weather"></div></div><button class="secondary" id="pause-garage" type="button">Change vehicle</button><button class="secondary" id="quit" type="button">Back to menu</button><button class="secondary" id="btn-fps" type="button">Show frame rate</button><button class="secondary" id="btn-report" type="button">Copy performance report</button><textarea id="report-text" rows="5" hidden readonly></textarea></div></section>
@@ -100,7 +100,7 @@
 (function () {
   var Q = [['low', 'Low', 'Fastest · for older phones'], ['medium', 'Medium', 'Smooth · best for phones and tablets'], ['high', 'High', 'Sharp · for laptops and desktops'], ['ultra', 'Ultra', 'Maximum detail · powerful computers']];
   var touch = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1, get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set = function (k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
-  function go() { import('./src/main.js?v=47'); }
+  function go() { import('./src/main.js?v=48'); }
   var skip = /[?&]gfx=/.test(location.search) || navigator.webdriver; try { if (sessionStorage.getItem('afterdark:skipPick')) { sessionStorage.removeItem('afterdark:skipPick'); skip = true; } } catch (e) {}
   if (skip) return go();
   var order = ['low', 'medium', 'high', 'ultra'], saved = get('afterdark:gfx'), failed = get('afterdark:booting'), rec = touch ? 'medium' : 'high';
