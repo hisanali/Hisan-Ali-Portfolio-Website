@@ -100,7 +100,7 @@
 (function () {
   var Q = [['low', 'Low', 'Fastest · for older phones'], ['medium', 'Medium', 'Smooth · best for phones and tablets'], ['high', 'High', 'Sharp · for laptops and desktops'], ['ultra', 'Ultra', 'Maximum detail · powerful computers']];
   var touch = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 1, get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set = function (k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
-  function go() { import('./src/main.js?v=53'); }
+  function go() { import('./src/main.js?v=54'); }
   var skip = /[?&]gfx=/.test(location.search) || navigator.webdriver; try { if (sessionStorage.getItem('afterdark:skipPick')) { sessionStorage.removeItem('afterdark:skipPick'); skip = true; } } catch (e) {}
   if (skip) return go();
   var order = ['low', 'medium', 'high', 'ultra'], saved = get('afterdark:gfx'), failed = get('afterdark:booting'), rec = touch ? 'medium' : 'high';
